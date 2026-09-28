@@ -1,0 +1,75 @@
+from rest_framework import serializers
+from .models import Item
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = [
+            "id",
+            "title",
+            "description",
+            "quantity",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+class SendRegistrationOTPSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=150)
+    email = serializers.EmailField()
+    mobile_number = serializers.CharField(max_length=20)
+    country_code = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    business_location = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    category_interested = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+class CompleteProfileSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")))
+    company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    business_location = serializers.CharField(max_length=255, required=True)
+    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")))
+    category_interested = serializers.JSONField(required=False, default=list)
+
+class SendLoginOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+from AdminApp.models import PartnershipEnquiry, Product, Lot
+
+class PartnershipEnquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PartnershipEnquiry
+        fields = [
+            'name', 
+            'email', 
+            'business_location', 
+            'partnership_interest', 
+            'subject', 
+            'collaboration_details'
+        ]
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        exclude = ['is_active', 'enquiry_status']
+        read_only_fields = ['product_id', 'created_at', 'updated_at']
+
+class SellerProductEnquirySerializer(ProductSerializer):
+    pass
+
+class LotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lot
+        exclude = ['active_status', 'enquiry_status']
+        read_only_fields = ['lot_number', 'created_at', 'updated_at']
+
+class LotBatchEnquirySerializer(LotSerializer):
+    pass
+

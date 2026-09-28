@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.product_name }} | Admin Panel{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/enquiry_detail.css' %}">
+
+<div class="container-fluid detail-page-wrapper py-2">
+    
+    <!-- Custom Breadcrumb Navigation -->
+    <nav class="custom-breadcrumb" aria-label="breadcrumb">
+        <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item"><a href="/admin/products/all/">Products</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item active" aria-current="page"><span>{{ product.product_id|default:product.model_no }}</span></li>
+        </ol>
+    </nav>
+
+    <!-- Top Header & Action Controls Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                <h4 class="fw-bold mb-0 text-dark">{{ product.product_name }}</h4>
+                <span class="badge bg-secondary-subtle text-secondary font-monospace px-2.5 py-1 rounded-2">#{{ product.product_id|default:product.model_no }}</span>
+                
+                <!-- Enquiry Status Badge -->
+                {% if product.enquiry_status|lower == 'approved' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-check-circle-fill me-1"></i> Approved
+                </span>
+                {% elif product.enquiry_status|lower == 'pending' %}
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-clock-fill me-1"></i> Pending Approval
+                </span>
+                {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-x-circle-fill me-1"></i> {{ product.enquiry_status|title }}
+                </span>
+                {% endif %}
+
+                <!-- Active Visibility Badge -->
+                {% if product.is_active %}
+                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-broadcast me-1"></i> Live Listing
+                </span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-eye-slash me-1"></i> Inactive
+                </span>
+                {% endif %}
+            </div>
+            <p class="text-muted small mb-0">Master catalog entry & comprehensive product profile</p>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="/admin/products/{{ product.id }}/toggle-status/" 
+               class="btn btn-sm {% if product.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
+               title="Toggle Active Listing Status">
+                {% if product.is_active %}
+                <i class="bi bi-toggle-on fs-6"></i> Set Inactive
+                {% else %}
+                <i class="bi bi-toggle-off fs-6"></i> Set Active
+                {% endif %}
+            </a>
+
+            <a href="/admin/products/all/" class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm">
+                <i class="bi bi-arrow-left"></i> Back to Catalog
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Grid Header (Same layout as Seller Enquiry Detail page) -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-md-3">
+            <div class="metric-card p-3 rounded-3 border bg-white shadow-sm h-100">
+                <span class="d-block text-muted small fw-semibold text-uppercase mb-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">Available Stock</span>
+                {% if product.stock_quantity > 10 %}
+                <span class="fs-5 fw-bold text-dark d-block"><i class="bi bi-box-seam text-success me-1"></i> {{ product.stock_quantity }} Units</span>
+                {% elif product.stock_quantity > 0 %}
+                <span class="fs-5 fw-bold text-warning d-block"><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ product.stock_quantity }} Low</span>
+                {% else %}
+                <span class="fs-5 fw-bold text-danger d-block"><i class="bi bi-x-circle-fill me-1"></i> Out of Stock</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="metric-card p-3 rounded-3 border bg-white shadow-sm h-100">
+                <span class="d-block text-muted small fw-semibold text-uppercase mb-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">Category</span>
+                <span class="fs-6 fw-bold text-dark text-truncate d-block" title="{% if product.category %}{{ product.category.name }}{% else %}Uncategorized{% endif %}">
+                    {% if product.category %}
+                        {{ product.category.name }}
+                    {% else %}
+                        Uncategorized
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="metric-card p-3 rounded-3 border bg-white shadow-sm h-100">
+                <span class="d-block text-muted small fw-semibold text-uppercase mb-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">Subcategory</span>
+                <span class="fs-6 fw-bold text-dark text-truncate d-block" title="{% if product.subcategory %}{{ product.subcategory.name }}{% else %}N/A{% endif %}">
+                    {% if product.subcategory %}
+                        {{ product.subcategory.name }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="metric-card p-3 rounded-3 border bg-white shadow-sm h-100">
+                <span class="d-block text-muted small fw-semibold text-uppercase mb-1" style="font-size: 0.725rem; letter-spacing: 0.5px;">Date Added</span>
+                <span class="fs-6 fw-bold text-dark d-block">{{ product.created_at|date:"M d, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seller / Vendor Details Banner Card -->
+    <div class="premium-card mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                <i class="bi bi-person-badge me-2 text-primary"></i> User Details
+            </h6>
+            
+            <div class="row g-3">
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Company</span>
+                        <span class="data-value fw-medium">{{ user_data.company|default:"N/A" }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Contact Person</span>
+                        <span class="data-value">{{ user_data.full_name|default:"N/A" }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Contact Number</span>
+                        <span class="data-value" style="color: #f59e0b; font-weight: 500;">{{ user_data.phone_no|default:"N/A" }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Email</span>
+                        <span class="data-value" style="color: #2563eb; font-weight: 500;">{{ user_data.email|default:"N/A" }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Inventory Location</span>
+                        <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 col-sm-6">
+                    <div class="data-box">
+                        <span class="data-label">Industry</span>
+                        <span class="data-value">{{ user_data.industry|default:"N/A" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Two-Column Layout -->
+    <div class="row g-4">
+        
+        <!-- Left Main Information Column (8 Cols) -->
+        <div class="col-lg-8">
+            
+            <!-- Pricing & Financial Summary Card -->
+            <div class="premium-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <i class="bi bi-currency-dollar me-2 text-success"></i> Pricing & Commercial Terms
+                    </h6>
+                    <span class="badge bg-secondary-subtle text-secondary font-monospace">Currency: {{ product.currency }}</span>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="inline-card border-left-success flex-fill shadow-sm">
+                        <span class="inline-label"><i class="bi bi-tag-fill text-success"></i> Current Price</span>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success-subtle text-success me-2 fs-6">{{ product.currency }}</span>
+                            <span class="fs-4 fw-bold text-dark">{{ product.current_price|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="inline-card border-left-primary flex-fill shadow-sm">
+                        <span class="inline-label"><i class="bi bi-cash text-primary"></i> Liquidating Price</span>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary-subtle text-primary me-2 fs-6">{{ product.currency }}</span>
+                            <span class="fs-4 fw-bold text-dark">{{ product.liquidating_price|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="inline-card border-left-warning flex-fill shadow-sm">
+                        <span class="inline-label"><i class="bi bi-clock-history text-warning"></i> Previous / Market Price</span>
+                        <div class="d-flex align-items-center">
+                            {% if product.previous_price %}
+                            <span class="badge bg-warning-subtle text-warning me-2 fs-6">{{ product.currency }}</span>
+                            <span class="fs-4 fw-bold text-dark">{{ product.previous_price|floatformat:2 }}</span>
+                            {% else %}
+                            <span class="fs-5 fw-medium text-muted">N/A</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="inline-card border-left-info flex-fill shadow-sm">
+                        <span class="inline-label"><i class="bi bi-hand-thumbs-up-fill text-info"></i> Available for Offers</span>
+                        <div class="d-flex align-items-center">
+                            <button type="button" 
+                                    class="btn btn-sm {% if product.is_available_for_offers %}btn-outline-success{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm btn-toggle-offers" 
+                                    data-id="{{ product.id }}" 
+                                    data-offers="{% if product.is_available_for_offers %}false{% else %}true{% endif %}"
+                                    title="Click to toggle Available for Offers">
+                                {% if product.is_available_for_offers %}
+                                <i class="bi bi-toggle-on fs-5 text-success"></i> <span class="ms-2">Yes</span>
+                                {% else %}
+                                <i class="bi bi-toggle-off fs-5 text-secondary"></i> <span class="ms-2">No</span>
+                                {% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Specifications Card -->
+            <div class="premium-card p-4 mb-4">
+                <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                    <i class="bi bi-list-check me-2 text-primary"></i> Technical & Catalog Specifications
+                </h6>
+
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Product Title</span>
+                            <span class="text-dark fw-bold">{{ product.product_name }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Model / Part No</span>
+                            <span class="text-dark fw-bold font-monospace">{{ product.model_no|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Brand Name</span>
+                            <span class="text-dark fw-bold">{{ product.brand|default:"Unbranded" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Main Category</span>
+                            <span class="text-dark fw-medium">
+                                {% if product.category %}{{ product.category.name }}{% else %}<span class="text-muted fst-italic">Uncategorized</span>{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Subcategory</span>
+                            <span class="text-dark fw-medium">
+                                {% if product.subcategory %}{{ product.subcategory.name }}{% else %}<span class="text-muted fst-italic">None</span>{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Condition</span>
+                            <span class="text-dark fw-semibold">{{ product.condition|default:"Surplus / New" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
+                            <span class="text-dark fw-medium">{{ product.manufacturing_country|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Year</span>
+                            <span class="text-dark fw-medium">{{ product.manufacturing_year|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Dimensions (L x W x H)</span>
+                            <span class="text-dark fw-medium">{{ product.dimensions|default:"N/A" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Expiry Date</span>
+                            <span class="text-dark fw-medium">
+                                {% if product.expiry_date %}{{ product.expiry_date|date:"d M Y" }}{% else %}<span class="text-muted fst-italic">No Expiry</span>{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Warranty Period</span>
+                            <span class="text-dark fw-medium">{{ product.warranty|default:"No Warranty" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Available For Offers</span>
+                            <span class="fw-semibold {% if product.is_available_for_offers %}text-success{% else %}text-secondary{% endif %}">
+                                {% if product.is_available_for_offers %}<i class="bi bi-check-circle-fill me-1"></i> Yes{% else %}<i class="bi bi-x-circle me-1"></i> No{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Excluded Countries</span>
+                            <span class="text-dark fw-medium">
+                                {% if product.excluded_countries %}
+                                    {{ product.excluded_countries|join:", " }}
+                                {% else %}
+                                    <span class="text-muted fst-italic">None (Worldwide)</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Approval Date</span>
+                            <span class="text-dark fw-medium">
+                                {% if product.date_approved %}{{ product.date_approved|date:"d M Y, H:i" }}{% else %}<span class="text-muted fst-italic">Not Approved</span>{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">3rd Party Certificate</span>
+                            {% if product.third_party_certificate %}
+                            <a href="{{ product.third_party_certificate.url }}" target="_blank" class="badge bg-primary text-white rounded px-2.5 py-1 text-decoration-none">
+                                <i class="bi bi-file-earmark-arrow-down me-1"></i> View Certificate
+                            </a>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1">Not Uploaded</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description & Context Section -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="premium-card p-4 h-100">
+                        <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-card-text me-2 text-primary"></i> Product Description
+                        </h6>
+                        {% if product.description %}
+                        <p class="text-dark mb-0" style="line-height: 1.75; white-space: pre-wrap; font-size: 0.95rem;">{{ product.description }}</p>
+                        {% else %}
+                        <p class="text-muted fst-italic mb-0">No detailed product description provided.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if product.reason_to_sell %}
+                <div class="col-12">
+                    <div class="premium-card p-4 h-100 border-start border-warning border-4">
+                        <h6 class="fw-bold text-uppercase text-warning mb-2" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-info-circle-fill me-2"></i> Reason for Selling / Surplus Context
+                        </h6>
+                        <p class="text-dark mb-0" style="line-height: 1.65; font-size: 0.925rem;">{{ product.reason_to_sell }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Right Side Media & Metadata Column (4 Cols) -->
+        <div class="col-lg-4">
+            
+            <!-- Product Media Card -->
+            <div class="premium-card p-4 mb-4 text-center">
+                <h6 class="fw-bold text-uppercase text-muted mb-3 text-start" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                    <i class="bi bi-image me-2 text-primary"></i> Product Media Showcase
+                </h6>
+
+                <div class="rounded-3 overflow-hidden bg-light p-3 border mb-3 d-flex align-items-center justify-content-center" style="min-height: 280px; background-color: #f8fafc !important;">
+                    {% if product.image %}
+                    <img id="main-showcase-image" src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;">
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 3rem;"></i>
+                        <span class="small fw-medium d-block">No Primary Image</span>
+                        <span class="small text-muted">No media file uploaded</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Gallery Thumbnails -->
+                {% if product.images.all %}
+                <div class="d-flex gap-2 flex-wrap justify-content-center pt-2 border-top">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" 
+                         onclick="document.getElementById('main-showcase-image').src = this.src"
+                         class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75" 
+                         style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                         alt="Main Thumbnail">
+                    {% endif %}
+                    {% for img_obj in product.images.all %}
+                    <img src="{{ img_obj.image.url }}" 
+                         onclick="document.getElementById('main-showcase-image').src = this.src"
+                         class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75" 
+                         style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                         alt="Gallery Thumbnail">
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Audit Trail & System Metadata -->
+            <div class="premium-card p-4">
+                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                    <i class="bi bi-clock-history me-2 text-primary"></i> Listing Audit Trail
+                </h6>
+
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 bg-transparent">
+                        <span class="text-muted"><i class="bi bi-hash me-1"></i> Database ID</span>
+                        <span class="fw-bold font-monospace text-dark">#{{ product.id }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 bg-transparent">
+                        <span class="text-muted"><i class="bi bi-calendar-plus me-1"></i> Date Created</span>
+                        <span class="fw-semibold text-dark">{{ product.created_at|date:"d M Y, H:i" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 bg-transparent">
+                        <span class="text-muted"><i class="bi bi-arrow-repeat me-1"></i> Last Updated</span>
+                        <span class="fw-semibold text-dark">{{ product.updated_at|date:"d M Y, H:i" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 bg-transparent">
+                        <span class="text-muted"><i class="bi bi-shield-check me-1"></i> Listing Status</span>
+                        {% if product.is_active %}
+                        <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1">Inactive</span>
+                        {% endif %}
+                    </li>
+                </ul>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.btn-toggle-offers').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const newOffersState = this.dataset.offers === 'true';
+
+            fetch(`/admin/api/enquiries/seller/${id}/edit/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ is_available_for_offers: newOffersState })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to update offer availability status.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred while updating offer availability status.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Blog: {{ blog.title }}{% else %}Create New Blog Post{% endif %} - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Quill CSS -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<style>
+    /* Quill Custom Styling */
+    .ql-toolbar.ql-snow {
+        border-top-left-radius: 0.6rem;
+        border-top-right-radius: 0.6rem;
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        padding: 0.6rem 0.8rem;
+    }
+    .ql-container.ql-snow {
+        border-bottom-left-radius: 0.6rem;
+        border-bottom-right-radius: 0.6rem;
+        border-color: #cbd5e1;
+        font-family: inherit;
+        font-size: 0.95rem;
+        min-height: 400px;
+        background-color: #ffffff;
+    }
+    .ql-editor {
+        min-height: 400px;
+        line-height: 1.6;
+        color: #1e293b;
+    }
+    .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor h4 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .ql-editor p {
+        margin-bottom: 0.75rem;
+    }
+    .html-source-editor {
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.88rem;
+        background-color: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.6rem;
+        min-height: 440px;
+        resize: vertical;
+        line-height: 1.5;
+        padding: 1rem;
+    }
+    .html-source-editor:focus {
+        background-color: #020617;
+        color: #f8fafc;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Custom Breadcrumb Navigation -->
+    <nav class="custom-breadcrumb" aria-label="breadcrumb">
+        <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item"><span>Content Manager</span></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item"><a href="/admin/content/blogs/">Blogs</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item active" aria-current="page"><span>{% if is_edit %}Edit Blog{% else %}Create Blog{% endif %}</span></li>
+        </ol>
+    </nav>
+
+    <!-- Page Header Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-journal-text text-primary"></i>
+                {% if is_edit %}Edit Blog Post{% else %}Create New Blog Post{% endif %}
+                {% if is_edit %}
+                    {% if blog.status == 'published' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fs-6">Published</span>
+                    {% else %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fs-6">Draft</span>
+                    {% endif %}
+                {% endif %}
+            </h4>
+            <p class="text-muted small mb-0">Write articles, format rich content, and set SEO metadata</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/content/blogs/" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Blogs
+            </a>
+            <button type="submit" form="blogEditorForm" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold shadow-sm" id="saveBlogBtn">
+                <i class="bi bi-check2-circle me-1"></i>
+                {% if is_edit %}Save Changes{% else %}Publish Blog{% endif %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Editor Form -->
+    <form id="blogEditorForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" id="editBlogId" value="{{ blog.id|default:'' }}">
+        <!-- Hidden input storing raw HTML for form submit -->
+        <textarea id="blogContentInput" class="d-none">{{ blog.content|default:'' }}</textarea>
+
+        <div class="row g-4">
+            <!-- Left Main Information Column (8 Cols) -->
+            <div class="col-lg-8">
+                <!-- Title & Slug Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <div class="mb-3">
+                        <label for="blogTitleInput" class="form-label fw-semibold text-dark">Blog Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-lg fs-5 fw-bold" id="blogTitleInput" placeholder="Enter post title..." value="{{ blog.title|default:'' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="blogSlugInput" class="form-label fw-semibold text-dark small">URL Permalink Slug</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light text-muted font-monospace">/blog/</span>
+                            <input type="text" class="form-control font-monospace" id="blogSlugInput" placeholder="auto-generated-slug" value="{{ blog.slug|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="blogCodeInput" class="form-label fw-semibold text-dark small">Blog Code / Identifier</label>
+                            <input type="text" class="form-control form-control-sm font-monospace" id="blogCodeInput" placeholder="e.g. BLOG-001" value="{{ blog.blog_code|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="blogAuthorInput" class="form-label fw-semibold text-dark small">Author Name</label>
+                            <input type="text" class="form-control form-control-sm" id="blogAuthorInput" placeholder="e.g. Admin" value="{{ blog.author|default:'Admin' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Excerpt Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-text-paragraph text-primary me-2"></i>Short Excerpt / Summary</h6>
+                    <textarea class="form-control" id="blogExcerptInput" rows="3" placeholder="Write a brief teaser summary for blog cards and search engines...">{{ blog.excerpt|default:'' }}</textarea>
+                </div>
+
+                <!-- Rich Text Article Content Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-fonts text-primary fs-5"></i> Article Content Editor
+                        </h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" id="toggleCodeViewBtn">
+                                <i class="bi bi-code-slash me-1"></i> <span id="toggleBtnText">HTML Code View</span>
+                            </button>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">Rich WYSIWYG</span>
+                        </div>
+                    </div>
+
+                    <!-- Quill Visual Rich Text Container -->
+                    <div id="quillEditorWrapper">
+                        <div id="quillToolbar">
+                            <span class="ql-formats">
+                                <select class="ql-header">
+                                    <option value="1">Heading 1</option>
+                                    <option value="2">Heading 2</option>
+                                    <option value="3">Heading 3</option>
+                                    <option value="4">Heading 4</option>
+                                    <option selected>Normal Text</option>
+                                </select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-bold" title="Bold"></button>
+                                <button class="ql-italic" title="Italic"></button>
+                                <button class="ql-underline" title="Underline"></button>
+                                <button class="ql-strike" title="Strikethrough"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <select class="ql-color" title="Text Color"></select>
+                                <select class="ql-background" title="Background Color"></select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered" title="Ordered List"></button>
+                                <button class="ql-list" value="bullet" title="Bullet List"></button>
+                                <button class="ql-indent" value="-1" title="Outdent"></button>
+                                <button class="ql-indent" value="+1" title="Indent"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <select class="ql-align" title="Text Alignment">
+                                    <option selected></option>
+                                    <option value="center"></option>
+                                    <option value="right"></option>
+                                    <option value="justify"></option>
+                                </select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-blockquote" title="Blockquote"></button>
+                                <button class="ql-code-block" title="Code Block"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link" title="Insert Link"></button>
+                                <button class="ql-image" title="Insert Image"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-clean" title="Clear Formatting"></button>
+                            </span>
+                        </div>
+                        <div id="quillEditorContainer"></div>
+                    </div>
+
+                    <!-- Raw HTML Source Editor (Hidden by default) -->
+                    <div id="htmlSourceWrapper" style="display: none;">
+                        <textarea class="form-control html-source-editor" id="htmlSourceTextarea" rows="18" placeholder="Write or edit raw HTML tags directly here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- SEO & Meta Tags Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-search text-success me-2"></i>SEO & Search Engine Metadata</h6>
+                    
+                    <div class="mb-3">
+                        <label for="metaTitleInput" class="form-label fw-semibold text-dark small">SEO Meta Title</label>
+                        <input type="text" class="form-control form-control-sm" id="metaTitleInput" placeholder="Meta title for Google search results..." value="{{ blog.meta_title|default:'' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="metaDescInput" class="form-label fw-semibold text-dark small">SEO Meta Description</label>
+                        <textarea class="form-control form-control-sm" id="metaDescInput" rows="3" placeholder="Brief summary for Google search snippets (150-160 chars)...">{{ blog.meta_description|default:'' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="metaKeywordsInput" class="form-label fw-semibold text-dark small">Meta Keywords</label>
+                        <input type="text" class="form-control form-control-sm" id="metaKeywordsInput" placeholder="Comma-separated keywords e.g. surplus, inventory, b2b" value="{{ blog.meta_keywords|default:'' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar Settings Column (4 Cols) -->
+            <div class="col-lg-4">
+                <!-- Publish Status Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-gear-fill text-primary me-2"></i>Publishing Controls</h6>
+                    
+                    <div class="mb-3">
+                        <label for="blogStatusSelect" class="form-label fw-semibold text-dark small">Publish Status</label>
+                        <select class="form-select" id="blogStatusSelect">
+                            <option value="published" {% if blog.status == 'published' or not is_edit %}selected{% endif %}>Published</option>
+                            <option value="draft" {% if blog.status == 'draft' %}selected{% endif %}>Draft</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="blogCategoryInput" class="form-label fw-semibold text-dark small">Category</label>
+                        <input type="text" class="form-control" id="blogCategoryInput" placeholder="e.g. Inventory, Tech, Supplies" value="{{ blog.category_name|default:'General' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="readTimeInput" class="form-label fw-semibold text-dark small">Estimated Read Time (Minutes)</label>
+                        <input type="number" class="form-control" id="readTimeInput" min="1" max="120" value="{{ blog.read_time|default:'3' }}">
+                    </div>
+                </div>
+
+                <!-- Featured Image Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-image text-primary me-2"></i>Featured Banner Image</h6>
+                    
+                    <div class="mb-3">
+                        <label for="featuredImageUrlInput" class="form-label fw-semibold text-dark small">Featured Image URL</label>
+                        <input type="url" class="form-control form-control-sm" id="featuredImageUrlInput" placeholder="https://example.com/image.jpg" value="{{ blog.featured_image_url|default:'' }}">
+                    </div>
+
+                    {% if blog.featured_image_url %}
+                    <div class="mt-3 p-2 bg-light rounded border text-center">
+                        <img src="{{ blog.featured_image_url }}" class="img-fluid rounded shadow-sm" style="max-height: 160px; object-fit: cover;">
+                    </div>
+                    {% elif blog.image %}
+                    <div class="mt-3 p-2 bg-light rounded border text-center">
+                        <img src="{{ blog.image.url }}" class="img-fluid rounded shadow-sm" style="max-height: 160px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Quill JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const titleInput = document.getElementById('blogTitleInput');
+    const slugInput = document.getElementById('blogSlugInput');
+    const form = document.getElementById('blogEditorForm');
+    const hiddenInput = document.getElementById('blogContentInput');
+    const quillWrapper = document.getElementById('quillEditorWrapper');
+    const htmlSourceWrapper = document.getElementById('htmlSourceWrapper');
+    const htmlSourceTextarea = document.getElementById('htmlSourceTextarea');
+    const toggleCodeViewBtn = document.getElementById('toggleCodeViewBtn');
+    const toggleBtnText = document.getElementById('toggleBtnText');
+
+    // Initialize Quill Rich Text Editor
+    const quill = new Quill('#quillEditorContainer', {
+        theme: 'snow',
+        placeholder: 'Write your rich blog post article content here...',
+        modules: {
+            toolbar: '#quillToolbar'
+        }
+    });
+
+    // Populate initial HTML content into Quill
+    const initialHTML = hiddenInput ? hiddenInput.value : '';
+    if (initialHTML) {
+        quill.root.innerHTML = initialHTML;
+        htmlSourceTextarea.value = initialHTML;
+    }
+
+    // Toggle between Quill Visual Editor and Raw HTML Code View
+    let isCodeViewActive = false;
+
+    if (toggleCodeViewBtn) {
+        toggleCodeViewBtn.addEventListener('click', () => {
+            isCodeViewActive = !isCodeViewActive;
+            if (isCodeViewActive) {
+                // Switch to Code View: copy latest Quill HTML to Textarea
+                htmlSourceTextarea.value = quill.root.innerHTML;
+                quillWrapper.style.display = 'none';
+                htmlSourceWrapper.style.display = 'block';
+                toggleBtnText.textContent = 'Visual Rich Editor';
+                toggleCodeViewBtn.innerHTML = '<i class="bi bi-eye me-1"></i> Visual Rich Editor';
+                toggleCodeViewBtn.classList.replace('btn-outline-secondary', 'btn-outline-primary');
+            } else {
+                // Switch to Visual Editor: update Quill with edited HTML source
+                quill.root.innerHTML = htmlSourceTextarea.value;
+                htmlSourceWrapper.style.display = 'none';
+                quillWrapper.style.display = 'block';
+                toggleBtnText.textContent = 'HTML Code View';
+                toggleCodeViewBtn.innerHTML = '<i class="bi bi-code-slash me-1"></i> HTML Code View';
+                toggleCodeViewBtn.classList.replace('btn-outline-primary', 'btn-outline-secondary');
+            }
+        });
+    }
+
+    // Auto slugify when title changes if slug is empty
+    if (titleInput && slugInput) {
+        titleInput.addEventListener('input', () => {
+            if (!slugInput.dataset.manual) {
+                slugInput.value = titleInput.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9 -]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+            }
+        });
+        slugInput.addEventListener('input', () => {
+            slugInput.dataset.manual = "true";
+        });
+    }
+
+    // Submit handler
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const blogId = document.getElementById('editBlogId').value;
+            const submitBtn = document.getElementById('saveBlogBtn');
+
+            // Obtain final HTML content depending on active view mode
+            const finalContent = isCodeViewActive ? htmlSourceTextarea.value : quill.root.innerHTML;
+
+            const payload = {
+                title: document.getElementById('blogTitleInput').value,
+                slug: document.getElementById('blogSlugInput').value,
+                blog_code: document.getElementById('blogCodeInput').value,
+                author: document.getElementById('blogAuthorInput').value,
+                category_name: document.getElementById('blogCategoryInput').value,
+                excerpt: document.getElementById('blogExcerptInput').value,
+                content: finalContent,
+                featured_image_url: document.getElementById('featuredImageUrlInput').value,
+                meta_title: document.getElementById('metaTitleInput').value,
+                meta_description: document.getElementById('metaDescInput').value,
+                meta_keywords: document.getElementById('metaKeywordsInput').value,
+                read_time: document.getElementById('readTimeInput').value,
+                status: document.getElementById('blogStatusSelect').value,
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+            try {
+                const endpoint = blogId ? `/admin/api/content/blogs/${blogId}/` : `/admin/api/content/blogs/`;
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.href = data.redirect_url || '/admin/content/blogs/';
+                } else {
+                    alert(data.message || 'Failed to save blog post.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Changes';
+                }
+            } catch (err) {
+                alert('Server error occurred while saving.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Changes';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

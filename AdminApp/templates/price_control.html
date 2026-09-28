@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}System Price Controls - Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+    /* Price Control Custom Styling */
+    .price-control-card {
+        background-color: #ffffff;
+        border-radius: 0.85rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .btn-orange {
+        background-color: #f97316;
+        border-color: #ea580c;
+        color: #ffffff;
+        font-weight: 600;
+    }
+    .btn-orange:hover {
+        background-color: #ea580c;
+        border-color: #c2410c;
+        color: #ffffff;
+    }
+    .custom-radio-increase .form-check-input:checked {
+        background-color: #16a34a;
+        border-color: #16a34a;
+    }
+    .custom-radio-decrease .form-check-input:checked {
+        background-color: #dc2626;
+        border-color: #dc2626;
+    }
+    .preview-box {
+        min-height: 480px;
+        display: flex;
+        flex-direction: column;
+    }
+    .history-table thead {
+        background-color: #f8fafc;
+    }
+    .history-table thead th {
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .history-table tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        font-size: 0.88rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+        <div>
+            <h3 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-sliders text-primary"></i> System Price Controls
+            </h3>
+            <p class="text-muted small mb-0">Configure system-wide operational charges and bulk-adjust product prices with safe backup logs.</p>
+        </div>
+    </div>
+
+    <!-- Main Grid: Settings & Form Left (7 Cols), Live Preview Right (5 Cols) -->
+    <div class="row g-4 mb-4">
+        <!-- Left Column: Global Charge & Bulk Form -->
+        <div class="col-lg-7">
+            <!-- 1. Global Operational Charge Settings Card -->
+            <div class="card price-control-card p-4 mb-4">
+                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2" style="font-size: 1.05rem;">
+                    <i class="bi bi-percent text-primary fs-5"></i> Global Operational Charge Settings
+                </h5>
+                
+                <form method="POST" action="/admin/products/price-control/update-charge/">
+                    {% csrf_token %}
+                    <div class="row align-items-end g-3">
+                        <div class="col-sm-8">
+                            <label class="form-label text-dark fw-semibold small mb-2">Operational Charge Percentage (%)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0" class="form-control form-control-lg fs-6 fw-bold text-dark" name="operational_charge_percentage" value="{{ sys_settings.operational_charge_percentage|default:'10.00' }}" required>
+                                <span class="input-group-text bg-light text-muted fw-bold">%</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <button type="submit" class="btn btn-orange w-100 py-2.5 rounded-3 d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
+                                <i class="bi bi-floppy-fill"></i> Update Global %
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 2. Bulk Price Adjustments Card -->
+            <div class="card price-control-card p-4">
+                <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2" style="font-size: 1.05rem;">
+                    <i class="bi bi-boxes text-primary fs-5"></i> Bulk Price Adjustments
+                </h5>
+
+                <form method="POST" action="/admin/products/price-control/apply/" id="bulkAdjustForm">
+                    {% csrf_token %}
+
+                    <!-- Action Radios -->
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold small mb-2 d-block">Action</label>
+                        <div class="d-flex align-items-center gap-4">
+                            <div class="form-check custom-radio-increase">
+                                <input class="form-check-input" type="radio" name="adjustment_action" id="actionIncrease" value="increase" checked>
+                                <label class="form-check-label text-success fw-bold d-inline-flex align-items-center gap-1" for="actionIncrease">
+                                    <i class="bi bi-graph-up-arrow"></i> Increase Prices
+                                </label>
+                            </div>
+                            <div class="form-check custom-radio-decrease">
+                                <input class="form-check-input" type="radio" name="adjustment_action" id="actionDecrease" value="decrease">
+                                <label class="form-check-label text-danger fw-bold d-inline-flex align-items-center gap-1" for="actionDecrease">
+                                    <i class="bi bi-graph-down-arrow"></i> Decrease Prices
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Method & Value Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-semibold small mb-2">Adjustment Method</label>
+                            <select class="form-select text-dark fw-medium" name="adjustment_method" id="adjustmentMethodSelect">
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount ($)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-dark fw-semibold small mb-2">Value</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="adjustment_value" id="adjustmentValueInput" placeholder="e.g. 10" required>
+                        </div>
+                    </div>
+
+                    <!-- Product Selection Filters Section -->
+                    <div class="pt-3 border-top mb-4">
+                        <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.78rem; letter-spacing: 0.05em;">Product Selection Filters</h6>
+                        
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-dark fw-semibold small mb-2">Filter by Subcategory</label>
+                                <select class="form-select text-dark" name="filter_category" id="filterCategorySelect">
+                                    <option value="all">All Categories</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.main_category.name }} &raquo; {{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-dark fw-semibold small mb-2">Filter by Brand</label>
+                                <select class="form-select text-dark" name="filter_brand" id="filterBrandSelect">
+                                    <option value="all">All Brands</option>
+                                    {% for brand in brands %}
+                                    <option value="{{ brand }}">{{ brand }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-semibold small mb-2">Or target Specific Product IDs / Codes (comma/line separated)</label>
+                            <textarea class="form-control font-monospace" name="target_skus" id="targetSkusInput" rows="3" placeholder="e.g. 101, 102, PROD-0049" style="font-size: 0.88rem;"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Adjustment Note -->
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold small mb-2">Adjustment Note</label>
+                        <input type="text" class="form-control" name="adjustment_note" id="adjustmentNoteInput" placeholder="e.g. 10% Increase on Electronics Category">
+                    </div>
+
+                    <!-- Form Action Buttons -->
+                    <div class="d-flex align-items-center gap-3">
+                        <button type="button" class="btn btn-secondary w-50 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" id="previewChangesBtn">
+                            <i class="bi bi-eye-fill"></i> Preview Changes
+                        </button>
+                        <button type="submit" class="btn btn-orange w-50 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" id="applyChangesBtn">
+                            <i class="bi bi-lightning-fill"></i> Apply Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Change Preview Panel -->
+        <div class="col-lg-5">
+            <div class="card price-control-card preview-box p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 1.05rem;">
+                        <i class="bi bi-search text-primary fs-5"></i> Live Change Preview
+                    </h5>
+                    <span id="previewBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1" style="display: none;">0 Products</span>
+                </div>
+
+                <!-- Empty State -->
+                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-4" id="previewEmptyState">
+                    <div class="rounded-circle bg-light p-4 mb-3 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="bi bi-bar-chart-line-fill fs-1 text-muted opacity-50"></i>
+                    </div>
+                    <p class="text-muted small mb-0" style="max-width: 280px;">Fill in the bulk adjustment details and click <strong>Preview Changes</strong> to see simulation details.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-4" id="previewLoadingState" style="display: none;">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                        <span class="visually-hidden">Simulating...</span>
+                    </div>
+                    <p class="text-muted small mb-0">Simulating price adjustments across catalog...</p>
+                </div>
+
+                <!-- Results State -->
+                <div id="previewResultsState" style="display: none;">
+                    <div class="alert alert-info py-2 px-3 small rounded-3 d-flex align-items-center justify-content-between mb-3">
+                        <span><i class="bi bi-info-circle me-1"></i> Total Matching Products:</span>
+                        <strong id="previewTotalCount" class="fs-6">0</strong>
+                    </div>
+
+                    <div class="table-responsive mb-3" style="max-height: 320px; overflow-y: auto;">
+                        <table class="table table-sm align-middle small mb-0 border">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-end">Old</th>
+                                    <th class="text-end">New</th>
+                                    <th class="text-end">Diff</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" class="btn btn-orange w-100 py-2.5 rounded-3 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" id="confirmAndApplyBtn">
+                        <i class="bi bi-lightning-fill"></i> Confirm & Apply Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Adjustment History & Backup Logs -->
+    <div class="card price-control-card p-4" id="adjustmentHistoryCard">
+        <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2" style="font-size: 1.05rem;">
+            <i class="bi bi-clock-history text-primary fs-5"></i> Adjustment History & Backup Logs
+        </h5>
+
+        <div class="table-responsive">
+            <table class="table history-table align-middle mb-0 border">
+                <thead>
+                    <tr>
+                        <th scope="col">Date & Time</th>
+                        <th scope="col">Admin</th>
+                        <th scope="col">Action Description</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Note</th>
+                        <th scope="col">Products</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="fw-medium text-dark small">
+                            {{ log.created_at|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="text-dark small">
+                            <i class="bi bi-person me-1 text-muted"></i>{{ log.admin_name }}
+                        </td>
+                        <td>
+                            {% if "Increase" in log.action_type %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                <i class="bi bi-graph-up-arrow me-1"></i> {{ log.action_type }}
+                            </span>
+                            {% elif "Decrease" in log.action_type %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1">
+                                <i class="bi bi-graph-down-arrow me-1"></i> {{ log.action_type }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
+                                <i class="bi bi-gear-fill me-1"></i> {{ log.action_type }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-dark font-monospace">
+                            {{ log.value }} {% if "Percentage" in log.adjustment_method %}%{% else %}${% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {{ log.note|default:"-" }}
+                        </td>
+                        <td class="fw-semibold text-dark">
+                            {{ log.affected_products_count }} item(s)
+                        </td>
+                        <td>
+                            {% if log.status == "Applied" %}
+                            <span class="badge bg-success text-white rounded-pill px-2.5 py-1 small">Applied</span>
+                            {% else %}
+                            <span class="badge bg-secondary text-white rounded-pill px-2.5 py-1 small">Rolled Back</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if log.status == "Applied" and log.backup_snapshot %}
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-2 rollback-log-btn" data-id="{{ log.id }}">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Rollback
+                            </button>
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-history fs-1 d-block mb-2 opacity-40"></i>
+                            <p class="mb-0 small fw-semibold">No price adjustments recorded yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const previewBtn = document.getElementById('previewChangesBtn');
+    const bulkForm = document.getElementById('bulkAdjustForm');
+    const confirmAndApplyBtn = document.getElementById('confirmAndApplyBtn');
+
+    const emptyState = document.getElementById('previewEmptyState');
+    const loadingState = document.getElementById('previewLoadingState');
+    const resultsState = document.getElementById('previewResultsState');
+    const tableBody = document.getElementById('previewTableBody');
+    const totalCountEl = document.getElementById('previewTotalCount');
+    const previewBadge = document.getElementById('previewBadge');
+
+    // Run Preview Simulation via AJAX
+    if (previewBtn) {
+        previewBtn.addEventListener('click', async () => {
+            const action = document.querySelector('input[name="adjustment_action"]:checked')?.value || 'increase';
+            const method = document.getElementById('adjustmentMethodSelect').value;
+            const value = document.getElementById('adjustmentValueInput').value || '0';
+            const category = document.getElementById('filterCategorySelect').value;
+            const brand = document.getElementById('filterBrandSelect').value;
+            const target_skus = document.getElementById('targetSkusInput').value;
+
+            emptyState.style.display = 'none';
+            resultsState.style.display = 'none';
+            loadingState.style.display = 'flex';
+
+            try {
+                const res = await fetch('/admin/api/products/price-control/preview/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        method: method,
+                        value: value,
+                        category: category,
+                        brand: brand,
+                        target_skus: target_skus
+                    })
+                });
+
+                const data = await res.json();
+                loadingState.style.display = 'none';
+
+                if (res.ok && data.success) {
+                    totalCountEl.textContent = data.total_affected;
+                    previewBadge.textContent = `${data.total_affected} Products`;
+                    previewBadge.style.display = 'inline-block';
+
+                    tableBody.innerHTML = '';
+                    if (data.sample_products && data.sample_products.length > 0) {
+                        data.sample_products.forEach(item => {
+                            const tr = document.createElement('tr');
+                            const isIncrease = item.diff.startsWith('+');
+                            tr.innerHTML = `
+                                <td>
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 140px;" title="${item.name}">${item.name}</div>
+                                    <div class="text-muted font-monospace" style="font-size: 0.72rem;">#${item.code}</div>
+                                </td>
+                                <td class="text-end text-muted font-monospace">${item.old_price}</td>
+                                <td class="text-end fw-bold text-dark font-monospace">${item.new_price}</td>
+                                <td class="text-end fw-bold font-monospace ${isIncrease ? 'text-success' : 'text-danger'}">${item.diff}</td>
+                            `;
+                            tableBody.appendChild(tr);
+                        });
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No matching products found for filter.</td></tr>';
+                    }
+
+                    resultsState.style.display = 'block';
+                } else {
+                    alert(data.message || 'Failed to generate preview simulation.');
+                    emptyState.style.display = 'flex';
+                }
+            } catch (err) {
+                loadingState.style.display = 'none';
+                alert('Server error occurred during simulation.');
+                emptyState.style.display = 'flex';
+            }
+        });
+    }
+
+    // Confirm & Apply Button from Preview Panel
+    if (confirmAndApplyBtn && bulkForm) {
+        confirmAndApplyBtn.addEventListener('click', () => {
+            bulkForm.submit();
+        });
+    }
+
+    // Rollback Handler
+    document.addEventListener('click', async (e) => {
+        const rollbackBtn = e.target.closest('.rollback-log-btn');
+        if (rollbackBtn) {
+            const logId = rollbackBtn.getAttribute('data-id');
+            if (confirm('Are you sure you want to rollback this price adjustment? Product prices will be restored to their previous state.')) {
+                try {
+                    const res = await fetch(`/admin/api/products/price-control/rollback/${logId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to rollback adjustment.');
+                    }
+                } catch (err) {
+                    alert('Server error occurred during rollback.');
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Page Title Header -->
+<header class="dashboard-header-title mb-4">
+    <h1 class="h4 fw-bold mb-1">Dashboard</h1>
+    <p class="text-secondary small mb-0">Super Admin Dashboard</p>
+</header>
+
+<!-- Row 1: Top KPI Summary Cards -->
+<section class="row g-3 mb-4">
+    <!-- Total Sales Due -->
+    <div class="col-xl-4 col-md-6">
+        <div class="kpi-stat-card">
+            <div class="kpi-icon-circle badge-green">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-value-row">
+                    <span class="currency-unit">QAR</span>
+                    <span class="kpi-num text-due">{{ stats.total_sales_due|default:"0.00" }}</span>
+                </div>
+                <div class="kpi-label">Total Sales Due</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Sales Amount -->
+    <div class="col-xl-4 col-md-6">
+        <div class="kpi-stat-card">
+            <div class="kpi-icon-circle badge-cyan">
+                <i class="bi bi-box-arrow-in-down"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-value-row">
+                    <span class="currency-unit">QAR</span>
+                    <span class="kpi-num text-sales">{{ stats.total_sales_amount|default:"0.00" }}</span>
+                </div>
+                <div class="kpi-label">Total Sales Amount</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Products Qty -->
+    <div class="col-xl-4 col-md-6">
+        <div class="kpi-stat-card">
+            <div class="kpi-icon-circle badge-blue">
+                <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-value-row">
+                    <span class="kpi-num text-sales">{{ stats.active_products_qty|default:"0" }}</span>
+                </div>
+                <div class="kpi-label">Active Products Qty</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Row 2: Metric Banners (Orange, Cyan, Navy, Green) -->
+<section class="row g-3 mb-3">
+    <!-- Custom Landing Users -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-orange">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.custom_landing_users|default:"0" }}</div>
+                <div class="banner-title">Custom Landing Users</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-person"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-cyan">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.companies|default:"0" }}</div>
+                <div class="banner-title">Companies</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-briefcase"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Invoice -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-navy">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.purchase_invoices|default:"0" }}</div>
+                <div class="banner-title">Purchase Invoice</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Invoice -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-green">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.sales_invoices|default:"0" }}</div>
+                <div class="banner-title">Sales Invoice</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-file-earmark"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Row 3: Metric Banners (Navy, Green, Orange, Cyan) -->
+<section class="row g-3 mb-4">
+    <!-- Products -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-navy">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.products|default:"0" }}</div>
+                <div class="banner-title">Products</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-box-seam"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-green">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.categories|default:"0" }}</div>
+                <div class="banner-title">Categories</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-folder2"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spin Wheel -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-orange">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.spin_wheel|default:"0" }}</div>
+                <div class="banner-title">Spin Wheel</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-aperture"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registered Users -->
+    <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="dashboard-metric-banner banner-cyan">
+            <div class="banner-text-content">
+                <div class="banner-number">{{ stats.registered_users|default:"0" }}</div>
+                <div class="banner-title">Registered Users</div>
+            </div>
+            <div class="banner-icon-right">
+                <i class="bi bi-people"></i>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

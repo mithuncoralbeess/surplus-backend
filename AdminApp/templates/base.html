@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Surplus Admin Portal{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Scoped Styles -->
+    <link rel="stylesheet" href="{% static 'css/admin_login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('surplus_theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    <style>
+        /* Global sizing per user request */
+        .btn, .form-select {
+            font-size: 14px !important;
+        }
+
+        /* Common Unified Custom Breadcrumb Component Style */
+        .custom-breadcrumb {
+            display: inline-flex !important;
+            align-items: center !important;
+            background-color: var(--color-bg-surface, #ffffff);
+            border: 1px solid var(--color-border, #e2e8f0);
+            border-radius: 30px !important;
+            padding: 0.35rem 0.95rem !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            margin-bottom: 0.85rem !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list {
+            display: flex !important;
+            align-items: center !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            gap: 0.45rem !important;
+            font-size: 0.84rem !important;
+            font-weight: 500 !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item {
+            display: inline-flex !important;
+            align-items: center !important;
+            color: var(--color-text-secondary, #64748b) !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item a {
+            color: var(--color-text-secondary, #64748b) !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.35rem !important;
+            transition: color 0.15s ease !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item a i {
+            font-size: 0.88rem !important;
+            color: var(--color-text-muted, #94a3b8) !important;
+            transition: color 0.15s ease !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item a:hover,
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item a:hover i {
+            color: var(--color-primary, #2563eb) !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item.active {
+            color: var(--color-text-main, #0f172a) !important;
+            font-weight: 600 !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-item.active span {
+            color: var(--color-primary, #2563eb) !important;
+        }
+
+        .custom-breadcrumb .breadcrumb-list .breadcrumb-separator {
+            color: var(--color-text-muted, #94a3b8) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            font-size: 0.7rem !important;
+            user-select: none !important;
+            opacity: 0.65 !important;
+        }
+
+        /* Pagination Styling using --bs-warning-rgb */
+        .pagination {
+            --bs-pagination-color: rgb(var(--bs-warning-rgb));
+            --bs-pagination-hover-color: #d97706;
+            --bs-pagination-hover-bg: rgba(var(--bs-warning-rgb), 0.12);
+            --bs-pagination-active-color: #ffffff;
+            --bs-pagination-active-bg: rgb(var(--bs-warning-rgb));
+            --bs-pagination-active-border-color: rgb(var(--bs-warning-rgb));
+            --bs-pagination-focus-color: #d97706;
+            --bs-pagination-focus-bg: rgba(var(--bs-warning-rgb), 0.15);
+            --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.25);
+        }
+
+        .pagination .page-link {
+            color: rgb(var(--bs-warning-rgb)) !important;
+            border-color: rgba(var(--bs-warning-rgb), 0.25) !important;
+        }
+
+        .pagination .page-link:hover {
+            color: #b45309 !important;
+            background-color: rgba(var(--bs-warning-rgb), 0.12) !important;
+            border-color: rgba(var(--bs-warning-rgb), 0.35) !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            color: #ffffff !important;
+            background-color: rgb(var(--bs-warning-rgb)) !important;
+            border-color: rgb(var(--bs-warning-rgb)) !important;
+            box-shadow: 0 2px 4px rgba(var(--bs-warning-rgb), 0.3) !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #94a3b8 !important;
+            background-color: transparent !important;
+            border-color: #e2e8f0 !important;
+        }
+    </style>
+</head>
+<body class="bg-body text-main">
+    <div class="dashboard-wrapper">
+        <!-- Common Sidebar -->
+        {% include "partials/sidebar.html" %}
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Common Top Navbar -->
+            {% include "partials/navbar.html" %}
+
+            <!-- Dynamic Page Content -->
+            <main class="dashboard-main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Global Admin Announcement Pop Up Modal -->
+    {% if is_maintenance_mode and popup_setting and popup_setting.is_active %}
+    <div class="modal fade" id="globalAdminPopupModal" tabindex="-1" aria-labelledby="globalAdminPopupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Modal Header -->
+                <div class="modal-header {% if popup_setting.popup_type == 'danger' %}bg-danger text-white{% elif popup_setting.popup_type == 'warning' %}bg-warning text-dark{% elif popup_setting.popup_type == 'success' %}bg-success text-white{% elif popup_setting.popup_type == 'promotion' %}bg-gradient text-white{% else %}bg-primary text-white{% endif %} p-3">
+                    <h5 class="modal-title fw-bold fs-6 d-flex align-items-center gap-2 mb-0" id="globalAdminPopupModalLabel">
+                        <i class="bi bi-bell-fill fs-5"></i>
+                        <span>{{ popup_setting.title }}</span>
+                    </h5>
+                    <button type="button" class="btn-close {% if popup_setting.popup_type != 'warning' %}btn-close-white{% endif %}" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    {% if popup_setting.banner_image %}
+                    <div class="text-center mb-3">
+                        <img src="{{ popup_setting.banner_image.url }}" class="img-fluid rounded-3 shadow-xs" style="max-height: 180px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                    <p class="text-dark fs-6 mb-3" style="line-height: 1.55;">
+                        {{ popup_setting.message|linebreaksbr }}
+                    </p>
+                    <div class="alert alert-light border small text-muted mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-primary fs-5"></i>
+                        <span>Notice will re-trigger <strong>{{ popup_setting.delay_minutes|default:'1' }} minute(s)</strong> after closing.</span>
+                    </div>
+                </div>
+                <!-- Modal Footer -->
+                <div class="modal-footer bg-light border-top-0 p-3">
+                    {% if popup_setting.button_link %}
+                    <a href="{{ popup_setting.button_link }}" class="btn btn-primary rounded-3 px-4 fw-semibold shadow-sm me-auto">
+                        {{ popup_setting.button_label|default:"View Details" }} <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary rounded-3 px-4 fw-semibold" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        // Mobile Sidebar Toggle
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+        const sidebar = document.getElementById('dashboardSidebar');
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+            });
+        }
+
+        // Global Admin Re-triggering Pop Up Handler (1 Minute Re-trigger Delay - Maintenance Mode Only)
+        (function() {
+            const popupActive = "{{ is_maintenance_mode|yesno:'true,false,false' }}" === "true" && "{{ popup_setting.is_active|yesno:'true,false,false' }}" === "true";
+            if (!popupActive) return;
+
+            const delayMs = Math.max(1, parseInt("{{ popup_setting.delay_minutes|default:'1' }}")) * 60 * 1000;
+            let popupModalInstance = null;
+            let timerId = null;
+
+            function getModalInstance() {
+                const modalEl = document.getElementById('globalAdminPopupModal');
+                if (!modalEl) return null;
+                if (!popupModalInstance) {
+                    popupModalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+                }
+                return popupModalInstance;
+            }
+
+            window.showGlobalAdminPopup = function(force = false) {
+                const modal = getModalInstance();
+                if (!modal) return;
+
+                const lastClosedStr = localStorage.getItem('surplus_admin_popup_closed_at');
+                const now = Date.now();
+
+                if (force || !lastClosedStr || (now - parseInt(lastClosedStr, 10)) >= delayMs) {
+                    modal.show();
+                } else {
+                    const remaining = delayMs - (now - parseInt(lastClosedStr, 10));
+                    scheduleNextPopup(remaining);
+                }
+            };
+
+            function scheduleNextPopup(ms) {
+                if (timerId) clearTimeout(timerId);
+                timerId = setTimeout(() => {
+                    window.showGlobalAdminPopup(true);
+                }, Math.max(1000, ms));
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const modalEl = document.getElementById('globalAdminPopupModal');
+                if (modalEl) {
+                    modalEl.addEventListener('hidden.bs.modal', () => {
+                        const now = Date.now();
+                        localStorage.setItem('surplus_admin_popup_closed_at', now.toString());
+                        scheduleNextPopup(delayMs);
+                    });
+
+                    window.showGlobalAdminPopup(false);
+                }
+            });
+        })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

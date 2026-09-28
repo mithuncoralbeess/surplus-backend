@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Brand Management In Landing Page - Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+    /* Brand Management Scoped Styling */
+    .brand-header-title {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 1.5rem;
+    }
+    .brand-header-subtitle {
+        color: #64748b;
+        font-size: 0.88rem;
+    }
+    .brand-total-badge {
+        background-color: #06b6d4;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+    }
+    .brand-form-card {
+        background-color: #ffffff;
+        border-radius: 0.85rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .btn-orange {
+        background-color: #f97316;
+        border-color: #ea580c;
+        color: #ffffff;
+        font-weight: 600;
+    }
+    .btn-orange:hover {
+        background-color: #ea580c;
+        border-color: #c2410c;
+        color: #ffffff;
+    }
+    .btn-outline-orange {
+        color: #ea580c;
+        border-color: #f97316;
+        font-weight: 600;
+    }
+    .btn-outline-orange:hover {
+        background-color: #fff7ed;
+        color: #c2410c;
+        border-color: #ea580c;
+    }
+    
+    /* Table styling */
+    .brand-table-container {
+        border-radius: 0.6rem;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .brand-table thead {
+        background-color: #1e293b;
+        color: #f8fafc;
+    }
+    .brand-table thead th {
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 0.85rem 1rem;
+        border: none;
+        color: #f8fafc;
+    }
+    .brand-table tbody td {
+        padding: 0.9rem 1rem;
+        vertical-align: middle;
+        font-size: 0.88rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+    .brand-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    .brand-logo-preview {
+        max-width: 80px;
+        max-height: 40px;
+        object-fit: contain;
+        background-color: #ffffff;
+        padding: 4px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+    }
+    .brand-logo-fallback {
+        width: 60px;
+        height: 36px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .btn-action-yellow {
+        background-color: #eab308;
+        color: #1e293b;
+        border: none;
+        padding: 0.35rem 0.55rem;
+        border-radius: 0.35rem;
+    }
+    .btn-action-yellow:hover {
+        background-color: #ca8a04;
+        color: #ffffff;
+    }
+    .btn-action-red {
+        background-color: #ef4444;
+        color: #ffffff;
+        border: none;
+        padding: 0.35rem 0.55rem;
+        border-radius: 0.35rem;
+    }
+    .btn-action-red:hover {
+        background-color: #dc2626;
+        color: #ffffff;
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Top Alert Messages -->
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Page Header Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-2 border-bottom">
+        <div>
+            <h3 class="brand-header-title mb-0">Brand Management In Landing Page</h3>
+            <p class="brand-header-subtitle mb-0">Add, Edit, or Delete Brands</p>
+        </div>
+        <div>
+            <span class="brand-total-badge shadow-sm">Total: {{ total_brands_count|default:brands.count|default:0 }} brand(s)</span>
+        </div>
+    </div>
+
+    <!-- Section 1: Add/Edit Brand Form Card -->
+    <div class="card brand-form-card p-4 mb-4" id="brandFormSection">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                {% if editing_brand %}
+                <i class="bi bi-pencil-square text-warning"></i> Edit Brand: {{ editing_brand.name }}
+                {% else %}
+                <i class="bi bi-plus-circle text-primary"></i> Add New Brand
+                {% endif %}
+            </h5>
+            <a href="#existingBrandsSection" class="btn btn-sm btn-outline-orange px-3 rounded-2 d-inline-flex align-items-center gap-1">
+                <i class="bi bi-list-ul"></i> View List
+            </a>
+        </div>
+
+        <form method="POST" action="/admin/brands/" enctype="multipart/form-data" id="brandForm">
+            {% csrf_token %}
+            {% if editing_brand %}
+            <input type="hidden" name="edit_brand_id" value="{{ editing_brand.id }}">
+            {% endif %}
+
+            <div class="row g-3">
+                <!-- Left Column -->
+                <div class="col-lg-6">
+                    <!-- Brand Name -->
+                    <div class="mb-3">
+                        <label for="brandNameInput" class="form-label fw-semibold text-dark small">Brand Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="brandNameInput" name="name" placeholder="Enter brand name e.g. Uken" value="{{ editing_brand.name|default:'' }}" required>
+                    </div>
+
+                    <!-- Alt Text -->
+                    <div class="mb-3">
+                        <label for="altTextInput" class="form-label fw-semibold text-dark small">Alt Text</label>
+                        <input type="text" class="form-control" id="altTextInput" name="alt_text" placeholder="Alternative text for accessibility & SEO" value="{{ editing_brand.alt_text|default:'' }}">
+                    </div>
+
+                    <!-- Redirect Link -->
+                    <div class="mb-3">
+                        <label for="redirectLinkInput" class="form-label fw-semibold text-dark small">Redirect Link</label>
+                        <input type="text" class="form-control" id="redirectLinkInput" name="redirect_link" placeholder="https://example.com" value="{{ editing_brand.redirect_link|default:'' }}">
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-lg-6">
+                    <!-- Brand Image -->
+                    <div class="mb-3">
+                        <label for="brandImageInput" class="form-label fw-semibold text-dark small">Brand Image</label>
+                        <input type="file" class="form-control" id="brandImageInput" name="image" accept="image/*">
+                        {% if editing_brand and editing_brand.image %}
+                        <div class="mt-2 small text-muted d-flex align-items-center gap-2">
+                            <span>Current Logo:</span>
+                            <img src="{{ editing_brand.image.url }}" class="brand-logo-preview">
+                        </div>
+                        {% elif editing_brand and editing_brand.image_url %}
+                        <div class="mt-2 small text-muted d-flex align-items-center gap-2">
+                            <span>Current Logo:</span>
+                            <img src="{{ editing_brand.image_url }}" class="brand-logo-preview">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="descriptionInput" class="form-label fw-semibold text-dark small">Description</label>
+                        <textarea class="form-control" id="descriptionInput" name="description" rows="4" placeholder="Optional brand description">{{ editing_brand.description|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Buttons -->
+            <div class="d-flex align-items-center gap-2 mt-3">
+                <button type="submit" class="btn btn-orange px-4 py-2 rounded-2 d-inline-flex align-items-center gap-2">
+                    {% if editing_brand %}
+                    <i class="bi bi-check2-circle"></i> Save Changes
+                    {% else %}
+                    <i class="bi bi-plus-lg"></i> Add Brand
+                    {% endif %}
+                </button>
+                {% if editing_brand %}
+                <a href="/admin/brands/" class="btn btn-secondary px-4 py-2 rounded-2 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-x-circle"></i> Cancel Edit
+                </a>
+                {% else %}
+                <button type="reset" class="btn btn-secondary px-4 py-2 rounded-2 d-inline-flex align-items-center gap-2" id="resetBrandFormBtn">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Section 2: Existing Brands Table Card -->
+    <div class="card brand-form-card p-4" id="existingBrandsSection">
+        <!-- Table Toolbar -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <h5 class="fw-bold text-dark mb-0">Existing Brands</h5>
+            
+            <div class="d-flex align-items-center gap-2">
+                <!-- Search Form -->
+                <form method="GET" action="/admin/brands/" class="d-flex align-items-center gap-2">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search brands..." style="min-width: 220px;">
+                        <button type="submit" class="btn btn-orange"><i class="bi bi-search"></i></button>
+                    </div>
+                    {% if search_query %}
+                    <a href="/admin/brands/" class="btn btn-sm btn-outline-secondary">Reset</a>
+                    {% endif %}
+                </form>
+
+                <a href="#brandFormSection" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 fw-semibold">
+                    <i class="bi bi-plus-lg"></i> Add Brand
+                </a>
+            </div>
+        </div>
+
+        <!-- Batch Selection Actions Row -->
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <button type="button" class="btn btn-sm btn-outline-orange px-3" id="selectAllBrandsBtn">Select All</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="deselectAllBrandsBtn">Deselect All</button>
+            <button type="button" class="btn btn-sm btn-danger px-3 d-inline-flex align-items-center gap-1" id="deleteSelectedBrandsBtn">
+                <i class="bi bi-trash-fill"></i> Delete Selected
+            </button>
+        </div>
+
+        <!-- Brands Table -->
+        <div class="brand-table-container">
+            <table class="table brand-table align-middle mb-0" id="brandsTable">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="masterCheckbox">
+                        </th>
+                        <th scope="col" style="width: 110px;">Image</th>
+                        <th scope="col" style="width: 180px;">Name</th>
+                        <th scope="col" style="width: 160px;">Alt Text</th>
+                        <th scope="col">Link</th>
+                        <th scope="col" style="width: 140px;">Created</th>
+                        <th scope="col" class="text-end" style="width: 110px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for brand in brands %}
+                    <tr data-brand-id="{{ brand.id }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input brand-row-checkbox" value="{{ brand.id }}">
+                        </td>
+                        <td>
+                            {% if brand.image %}
+                            <img src="{{ brand.image.url }}" class="brand-logo-preview" alt="{{ brand.alt_text|default:brand.name }}">
+                            {% elif brand.image_url %}
+                            <img src="{{ brand.image_url }}" class="brand-logo-preview" alt="{{ brand.alt_text|default:brand.name }}" onerror="this.onerror=null; this.outerHTML='<div class=\'brand-logo-fallback\'>{{ brand.name|slice:':4' }}</div>';">
+                            {% else %}
+                            <div class="brand-logo-fallback">
+                                {{ brand.name|slice:":4" }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-dark">
+                            {{ brand.name }}
+                        </td>
+                        <td class="text-muted">
+                            {{ brand.alt_text|default:"-" }}
+                        </td>
+                        <td>
+                            {% if brand.redirect_link %}
+                            <a href="{{ brand.redirect_link }}" target="_blank" rel="noopener noreferrer" class="text-primary text-decoration-none text-truncate d-inline-block" style="max-width: 280px;" title="{{ brand.redirect_link }}">
+                                {{ brand.redirect_link }} <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-secondary small">
+                            {{ brand.created_at|date:"b d, Y" }}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <a href="/admin/brands/?edit={{ brand.id }}" class="btn btn-action-yellow" title="Edit Brand">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <button type="button" class="btn btn-action-red delete-single-brand-btn" data-id="{{ brand.id }}" data-name="{{ brand.name }}" title="Delete Brand">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-award fs-1 d-block mb-3 opacity-50"></i>
+                            <h6 class="fw-bold mb-1">No Brands Found</h6>
+                            <p class="small mb-0">Use the form above to add your first landing page brand logo.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const rowCheckboxes = document.querySelectorAll('.brand-row-checkbox');
+    const selectAllBtn = document.getElementById('selectAllBrandsBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBrandsBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBrandsBtn');
+
+    // Master checkbox toggle
+    if (masterCheckbox) {
+        masterCheckbox.addEventListener('change', () => {
+            rowCheckboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+        });
+    }
+
+    // Select All Button
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            rowCheckboxes.forEach(cb => cb.checked = true);
+            if (masterCheckbox) masterCheckbox.checked = true;
+        });
+    }
+
+    // Deselect All Button
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', () => {
+            rowCheckboxes.forEach(cb => cb.checked = false);
+            if (masterCheckbox) masterCheckbox.checked = false;
+        });
+    }
+
+    // Single Delete Button Handler
+    document.addEventListener('click', async (e) => {
+        const delBtn = e.target.closest('.delete-single-brand-btn');
+        if (delBtn) {
+            const brandId = delBtn.getAttribute('data-id');
+            const brandName = delBtn.getAttribute('data-name');
+            if (confirm(`Are you sure you want to delete brand "${brandName}"?`)) {
+                try {
+                    const res = await fetch(`/admin/api/brands/${brandId}/delete/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to delete brand.');
+                    }
+                } catch (err) {
+                    alert('Server error occurred while deleting brand.');
+                }
+            }
+        }
+    });
+
+    // Batch Delete Selected Handler
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', async () => {
+            const selectedIds = Array.from(document.querySelectorAll('.brand-row-checkbox:checked')).map(cb => cb.value);
+            if (selectedIds.length === 0) {
+                alert('Please select at least one brand to delete.');
+                return;
+            }
+            if (confirm(`Are you sure you want to delete the ${selectedIds.length} selected brand(s)?`)) {
+                try {
+                    const res = await fetch('/admin/api/brands/batch-delete/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ ids: selectedIds })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to delete selected brands.');
+                    }
+                } catch (err) {
+                    alert('Server error occurred during batch delete.');
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

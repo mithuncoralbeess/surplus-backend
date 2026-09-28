@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f7fb; margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .header { background: #3b82f6; padding: 25px; text-align: center; color: #ffffff; }
+        .content { padding: 30px; }
+        .footer { padding: 15px; text-align: center; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h2>Password Updated</h2></div>
+        <div class="content">
+            <p>Hello <strong>{{ first_name|default:"User" }}</strong>,</p>
+            <p>Your Surplus Market account password was recently changed. If this was you, you can safely ignore this email.</p>
+        </div>
+        <div class="footer">&copy; Surplus Market</div>
+    </div>
+</body>
+</html>

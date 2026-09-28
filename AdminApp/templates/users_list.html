@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Header Section -->
+    <div class="mb-4">
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><span>User Management</span></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>Manage Users</span></li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-1 text-dark" style="font-size: 1.5rem;">Manage Users</h2>
+        <p class="text-muted small mb-0">Directory of registered buyers, sellers, and business accounts</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4 row-cols-2 row-cols-md-3 row-cols-lg-6">
+        <!-- Total Registered Users -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-dark">{{ stats.total_users }}</h4>
+                    <span class="text-muted small">Total Users</span>
+                </div>
+            </div>
+        </div>
+        <!-- Sellers -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-info">{{ stats.sellers_only }}</h4>
+                    <span class="text-muted small">Sellers</span>
+                </div>
+            </div>
+        </div>
+        <!-- Buyers -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-primary">{{ stats.buyers_only }}</h4>
+                    <span class="text-muted small">Buyers</span>
+                </div>
+            </div>
+        </div>
+        <!-- Both -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-dark">{{ stats.both }}</h4>
+                    <span class="text-muted small">Both (Buyer & Seller)</span>
+                </div>
+            </div>
+        </div>
+        <!-- Active Users -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 3px solid #10b981 !important;">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-success">{{ stats.active }}</h4>
+                    <span class="text-muted small">Active Accounts</span>
+                </div>
+            </div>
+        </div>
+        <!-- Inactive Users -->
+        <div class="col">
+            <div class="card border-0 shadow-sm rounded-3 h-100" style="border-left: 3px solid #ef4444 !important;">
+                <div class="card-body py-3">
+                    <h4 class="fw-bold mb-1 text-danger">{{ stats.inactive }}</h4>
+                    <span class="text-muted small">Inactive Accounts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <!-- Filters Row -->
+            <form method="GET" action="/admin/users/" class="d-flex flex-wrap gap-3 mb-4 align-items-center">
+                <div class="flex-grow-1" style="min-width: 250px;">
+                    <div class="input-group">
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control rounded-end-0" placeholder="Search by name, email, company, phone...">
+                        <button class="btn btn-primary rounded-start-0 px-3" type="submit">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+                <div style="min-width: 150px;">
+                    <select name="type" class="form-select text-secondary" onchange="this.form.submit()">
+                        <option value="all" {% if not type_filter or type_filter == 'all' %}selected{% endif %}>All Types</option>
+                        <option value="Seller" {% if type_filter == 'Seller' %}selected{% endif %}>Seller</option>
+                        <option value="Buyer" {% if type_filter == 'Buyer' %}selected{% endif %}>Buyer</option>
+                        <option value="Both" {% if type_filter == 'Both' %}selected{% endif %}>Both</option>
+                    </select>
+                </div>
+                <div style="min-width: 150px;">
+                    <select name="status" class="form-select text-secondary" onchange="this.form.submit()">
+                        <option value="any" {% if not status_filter or status_filter == 'any' %}selected{% endif %}>Any Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <a href="/admin/users/" class="btn btn-outline-secondary px-3">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </a>
+            </form>
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-secondary rounded-pill px-3 py-2" style="font-size: 0.75rem;">
+                    {{ users|length }} User{% if users|length != 1 %}s{% endif %} Listed
+                </span>
+            </div>
+
+            <!-- Users Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.875rem;">
+                    <thead class="table-light">
+                        <tr class="text-muted">
+                            <th class="fw-semibold pb-3 ps-3">Name</th>
+                            <th class="fw-semibold pb-3">Email</th>
+                            <th class="fw-semibold pb-3">User Type</th>
+                            <th class="fw-semibold pb-3">Entity</th>
+                            <th class="fw-semibold pb-3">Phone</th>
+                            <th class="fw-semibold pb-3">Status</th>
+                            <th class="fw-semibold pb-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="border-bottom">
+                            <td class="ps-3 py-3">
+                                <div class="fw-bold text-dark">{{ user.name }}</div>
+                                <small class="text-muted">@{{ user.username }}</small>
+                            </td>
+                            <td class="py-3">
+                                <span class="text-secondary">{{ user.email }}</span>
+                            </td>
+                            <td class="py-3">
+                                {% if user.type == 'Seller' %}
+                                <span class="badge text-white rounded px-2 py-1" style="background-color: #06b6d4;">Seller</span>
+                                {% elif user.type == 'Buyer' %}
+                                <span class="badge text-white rounded px-2 py-1" style="background-color: #3b82f6;">Buyer</span>
+                                {% elif user.type == 'Both' %}
+                                <span class="badge text-white rounded px-2 py-1" style="background-color: #6b21a8;">Both</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-light text-dark border px-2 py-1">{{ user.entity_type }}</span>
+                            </td>
+                            <td class="py-3">
+                                <span class="text-secondary">{{ user.phone }}</span>
+                            </td>
+                            <td class="py-3">
+                                {% if user.status == 'Active' %}
+                                <span class="badge text-white rounded px-2 py-1" style="background-color: #10b981;">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger text-white rounded px-2 py-1">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center">
+                                <div class="d-inline-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-circle shadow-sm" style="width: 34px; height: 34px; padding: 0;" data-bs-toggle="modal" data-bs-target="#userModal{{ user.id }}" title="View User Profile">
+                                        <i class="bi bi-eye-fill"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle shadow-sm" style="width: 34px; height: 34px; padding: 0;" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}" title="Remove User">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modern Premium User Detail Modal -->
+                        <div class="modal fade" id="userModal{{ user.id }}" tabindex="-1" aria-labelledby="userModalLabel{{ user.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    
+                                    <!-- Modal Header Banner -->
+                                    <div class="p-4 text-white position-relative" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        
+                                        <div class="d-flex align-items-center gap-3">
+                                            <!-- Avatar -->
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow" style="width: 56px; height: 56px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); font-size: 1.5rem; color: #ffffff;">
+                                                {{ user.name|slice:":1"|upper }}
+                                            </div>
+                                            
+                                            <!-- Title & Badges -->
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                                    <h5 class="fw-bold text-white mb-0" id="userModalLabel{{ user.id }}">{{ user.name }}</h5>
+                                                    {% if user.type == 'Seller' %}
+                                                    <span class="badge text-white rounded-pill px-2.5 py-1 small" style="background-color: #06b6d4;">Seller</span>
+                                                    {% elif user.type == 'Buyer' %}
+                                                    <span class="badge text-white rounded-pill px-2.5 py-1 small" style="background-color: #3b82f6;">Buyer</span>
+                                                    {% elif user.type == 'Both' %}
+                                                    <span class="badge text-white rounded-pill px-2.5 py-1 small" style="background-color: #a855f7;">Both</span>
+                                                    {% endif %}
+
+                                                    {% if user.status == 'Active' %}
+                                                    <span class="badge bg-success text-white rounded-pill px-2.5 py-1 small">
+                                                        <i class="bi bi-check-circle-fill me-1"></i> Active
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 small">
+                                                        <i class="bi bi-x-circle-fill me-1"></i> Inactive
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                                <small style="color: #94a3b8;">@{{ user.username }} &bull; Registered Member</small>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Body -->
+                                    <div class="modal-body p-4 bg-light">
+                                        <div class="row g-3">
+                                            
+                                            <!-- Card 1: Account Information -->
+                                            <div class="col-md-6">
+                                                <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+                                                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2 pb-2 border-bottom" style="font-size: 0.85rem;">
+                                                        <i class="bi bi-person-vcard text-primary fs-5"></i> Account Details
+                                                    </h6>
+                                                    
+                                                    <div class="d-flex flex-column gap-3">
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-envelope"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Email Address</span>
+                                                                <span class="fw-semibold text-dark">{{ user.email }}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-telephone"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Phone Number</span>
+                                                                <span class="fw-semibold text-dark">{{ user.phone }}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-shield-check"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Account Status</span>
+                                                                <span class="fw-semibold text-dark">{{ user.status }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Card 2: Business Details -->
+                                            <div class="col-md-6">
+                                                <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+                                                    <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2 pb-2 border-bottom" style="font-size: 0.85rem;">
+                                                        <i class="bi bi-building text-primary fs-5"></i> Business Profile
+                                                    </h6>
+                                                    
+                                                    <div class="d-flex flex-column gap-3">
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-briefcase"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Entity Type</span>
+                                                                <span class="fw-semibold text-dark">{{ user.entity_type }}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-buildings"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Company Name</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.company and user.company != '-' %}{{ user.company }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-geo-alt"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Location / Country</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.country and user.country != '-' %}{{ user.country }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-tags"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Category Interested</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.category_interested and user.category_interested != '-' %}{{ user.category_interested }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-calendar-event"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Joined Date</span>
+                                                                <span class="fw-semibold text-dark">{{ user.joined|date:"d M Y, H:i" }}</span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Footer -->
+                                    <div class="modal-footer bg-white border-top px-4 py-3 d-flex justify-content-between">
+                                        <button type="button" class="btn btn-outline-danger px-3 rounded-3" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.id }}">
+                                            <i class="bi bi-trash3-fill me-1"></i> Remove User
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-lg me-1"></i> Close
+                                        </button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete User Confirmation Modal -->
+                        <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 bg-danger text-white p-3">
+                                        <h5 class="modal-title fw-bold" id="deleteUserModalLabel{{ user.id }}">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i> Remove User
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4 text-center">
+                                        <div class="rounded-circle bg-danger-subtle text-danger mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.75rem;">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </div>
+                                        <h5 class="fw-bold text-dark mb-2">Are you sure?</h5>
+                                        <p class="text-muted mb-0">
+                                            You are about to permanently remove user <strong class="text-dark">{{ user.name }}</strong> ({{ user.email }}). This action cannot be undone.
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer border-top bg-light px-4 py-3 justify-content-center gap-2">
+                                        <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">
+                                            Cancel
+                                        </button>
+                                        <button type="button" class="btn btn-danger px-4 rounded-3 btn-confirm-delete-user" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">
+                                            <i class="bi bi-trash3-fill me-1"></i> Delete User
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-1 d-block mb-3 opacity-50"></i>
+                                No registered users found matching your filters.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.btn-confirm-delete-user').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            const originalText = this.innerHTML;
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Deleting...';
+            
+            fetch(`/admin/users/${userId}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to delete user.');
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting user.');
+                this.disabled = false;
+                this.innerHTML = originalText;
+            });
+        });
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

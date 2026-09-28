@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Content Pages Management - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Page Header & Action -->
+<div class="page-header-container">
+    <div>
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><span>Content Manager</span></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>Pages</span></li>
+            </ol>
+        </nav>
+        <h1 class="header-title">Pages Management</h1>
+        <p class="header-subtitle">Create, edit, and manage public policies, information pages, and SEO metadata</p>
+    </div>
+    <div>
+        <a href="/admin/content/pages/create/" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 fw-semibold">
+            <i class="bi bi-plus-lg"></i>
+            <span>Create New Page</span>
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="content-stat-card stat-card-total">
+            <div class="stat-card-content">
+                <div class="stat-meta">
+                    <span class="stat-label">Total Pages</span>
+                    <h3 class="stat-number" id="statTotalPages">{{ stats.total_pages|default:"0" }}</h3>
+                </div>
+                <div class="stat-icon-wrapper icon-indigo">
+                    <i class="bi bi-files"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="content-stat-card stat-card-published">
+            <div class="stat-card-content">
+                <div class="stat-meta">
+                    <span class="stat-label">Published</span>
+                    <h3 class="stat-number text-success" id="statPublishedPages">{{ stats.published_pages|default:"0" }}</h3>
+                </div>
+                <div class="stat-icon-wrapper icon-green">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="content-stat-card stat-card-draft">
+            <div class="stat-card-content">
+                <div class="stat-meta">
+                    <span class="stat-label">Drafts</span>
+                    <h3 class="stat-number text-warning" id="statDraftPages">{{ stats.draft_pages|default:"0" }}</h3>
+                </div>
+                <div class="stat-icon-wrapper icon-amber">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="content-stat-card stat-card-nav">
+            <div class="stat-card-content">
+                <div class="stat-meta">
+                    <span class="stat-label">Header & Footer Nav</span>
+                    <h3 class="stat-number text-info" id="statHeaderPages">{{ stats.header_pages|default:"0" }}</h3>
+                </div>
+                <div class="stat-icon-wrapper icon-cyan">
+                    <i class="bi bi-layout-navbar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Table Card with Search -->
+<div class="content-table-card">
+    <!-- Card Toolbar -->
+    <div class="table-toolbar">
+        <div class="flex-grow-1" style="max-width: 480px;">
+            <div class="input-group">
+                <input type="text" id="pageTableSearch" class="form-control rounded-end-0" placeholder="Search by title, slug, or category...">
+                <button class="btn btn-primary rounded-start-0 px-3" type="button">Search</button>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-secondary small fw-medium" id="filterCountBadge">Showing {{ pages|length }} pages</span>
+            <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 px-3 py-2" id="refreshPagesBtn" title="Refresh Table">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Table Responsive View -->
+    <div class="table-responsive">
+        <table class="content-data-table" id="contentPagesTable">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">Page Title & Slug</th>
+                    <th style="width: 16%;">Category</th>
+                    <th style="width: 14%;">Status</th>
+                    <th style="width: 15%;">Placement</th>
+                    <th style="width: 12%;">Last Modified</th>
+                    <th style="width: 8%; text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="pagesTableBody">
+                {% for page in pages %}
+                <tr data-id="{{ page.id }}" data-category="{{ page.category }}" data-status="{{ page.status }}">
+                    <td>
+                        <div class="page-title-text">{{ page.title }}</div>
+                        <div class="slug-badge">
+                            <span>/{{ page.slug }}/</span>
+                            <button class="copy-icon-btn copy-slug-btn" title="Copy URL Path" data-slug="{{ page.slug }}">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="category-tag">{{ page.category }}</span>
+                    </td>
+                    <td>
+                        {% if page.status == "published" %}
+                        <span class="status-pill status-published">
+                            <span class="status-dot"></span>
+                            <span>Published</span>
+                        </span>
+                        {% else %}
+                        <span class="status-pill status-draft">
+                            <span class="status-dot"></span>
+                            <span>Draft</span>
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="placement-badges">
+                            {% if page.show_in_header %}
+                            <span class="badge-placement" title="Visible in Header Navbar">Header</span>
+                            {% endif %}
+                            {% if page.show_in_footer %}
+                            <span class="badge-placement" title="Visible in Footer">Footer</span>
+                            {% endif %}
+                            {% if not page.show_in_header and not page.show_in_footer %}
+                            <span class="text-muted small">Standard Page</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="small text-secondary">{{ page.updated_at|date:"M d, Y H:i" }}</span>
+                    </td>
+                    <td>
+                        <div class="action-button-group">
+                            <a href="/admin/content/pages/{{ page.id }}/edit/" class="table-action-btn btn-edit" title="Edit Page & Content">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button class="table-action-btn btn-delete delete-page-btn" data-id="{{ page.id }}" data-title="{{ page.title }}" title="Delete Page">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr id="emptyRow">
+                    <td colspan="6" class="text-center py-5">
+                        <div class="text-secondary mb-2" style="font-size: 2.5rem;"><i class="bi bi-folder2-open"></i></div>
+                        <h6 class="fw-bold mb-1">No Content Pages Found</h6>
+                        <p class="text-muted small mb-3">Get started by creating your first platform page or legal policy.</p>
+                        <a href="/admin/content/pages/create/" class="btn btn-primary px-3 py-2 fw-semibold">
+                            <i class="bi bi-plus-lg me-1"></i> Create Page
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Copy slug
+    document.querySelectorAll('.copy-slug-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const slug = btn.getAttribute('data-slug');
+            navigator.clipboard.writeText(`/${slug}/`);
+            btn.innerHTML = '<i class="bi bi-check text-success"></i>';
+            setTimeout(() => { btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        });
+    });
+
+    // Delete Page Handler
+    document.addEventListener('click', async (e) => {
+        const delBtn = e.target.closest('.delete-page-btn');
+        if (delBtn) {
+            const id = delBtn.getAttribute('data-id');
+            const title = delBtn.getAttribute('data-title');
+            if (confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+                try {
+                    const res = await fetch(`/admin/api/content/pages/${id}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || "Failed to delete page.");
+                    }
+                } catch (err) {
+                    alert("Server error occurred while deleting.");
+                }
+            }
+        }
+    });
+
+    // Realtime search
+    const searchInput = document.getElementById('pageTableSearch');
+    const filterCountBadge = document.getElementById('filterCountBadge');
+
+    function applySearch() {
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const rows = document.querySelectorAll('#pagesTableBody tr:not(#emptyRow)');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const matchesSearch = !query || text.includes(query);
+
+            if (matchesSearch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (filterCountBadge) {
+            filterCountBadge.textContent = `Showing ${visibleCount} of ${rows.length} pages`;
+        }
+    }
+
+    searchInput?.addEventListener('input', applySearch);
+    document.getElementById('refreshPagesBtn')?.addEventListener('click', () => window.location.reload());
+});
+</script>
+{% endblock %}

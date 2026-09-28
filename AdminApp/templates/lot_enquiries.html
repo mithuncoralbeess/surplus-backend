@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Lot Batch Enquiries - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Page Header & Action -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><span>Enquiries</span></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>Lot Enquiries</span></li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0 fs-3">Lot Batch Enquiries</h2>
+        <p class="text-muted small mb-0">Review and manage bulk batch lot inventory packages and seller enquiries</p>
+    </div>
+    <div>
+        <a href="/admin/lots/add/" class="btn btn-primary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-2 font-weight-bold">
+            <i class="bi bi-plus-lg fs-6"></i> Create Lot Package
+        </a>
+    </div>
+</div>
+
+<!-- KPI Metric Filter Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <a href="/admin/enquiries/lots/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">All Lot Enquiries</span>
+                        <h3 class="stat-number text-dark">{{ counts.total|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-indigo">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="/admin/enquiries/lots/pending/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Pending Review</span>
+                        <h3 class="stat-number text-warning">{{ counts.pending|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-amber">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="/admin/enquiries/lots/approved/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'approved' %}border-success shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Approved Lots</span>
+                        <h3 class="stat-number text-success">{{ counts.approved|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-green">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="/admin/enquiries/lots/declined/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'declined' %}border-danger shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Declined</span>
+                        <h3 class="stat-number text-danger">{{ counts.declined|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Main Table Card with Search & Filter Tabs -->
+<div class="content-table-card">
+    <!-- Card Toolbar -->
+    <div class="table-toolbar">
+        <div class="flex-grow-1" style="max-width: 480px;">
+            <div class="input-group">
+                <input type="text" id="lotSearch" class="form-control rounded-end-0" placeholder="Search by Batch ID (e.g. BAT-00001)..." value="{{ search }}">
+                <button class="btn btn-primary rounded-start-0 px-3" type="button">Search</button>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm filter-select" id="dateFilter" style="width: 140px; font-size: 14px !important; height: 38px;">
+                <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+            </select>
+            <div class="btn-group" role="group" aria-label="Status filter">
+                <a href="/admin/enquiries/lots/" class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">All</a>
+                <a href="/admin/enquiries/lots/pending/" class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Pending</a>
+                <a href="/admin/enquiries/lots/approved/" class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Approved</a>
+                <a href="/admin/enquiries/lots/declined/" class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Declined</a>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" onclick="window.location.reload()" title="Refresh Table" style="font-size: 14px !important;">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Enquiries Table -->
+    <div class="table-responsive" style="min-height: 250px;">
+        <table class="table content-data-table align-middle mb-0" id="lotTable">
+            <thead>
+                <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <th style="width: 240px; font-weight: 600;">Batch ID</th>
+                    <th style="width: 250px; font-weight: 600;">Attached Spreadsheet</th>
+                    <th style="width: 250px; font-weight: 600;">Date &amp; Time</th>
+                    <th style="width: 180px; font-weight: 600;">Status</th>
+                    <th class="text-end pe-4" style="width: 220px; font-weight: 600;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in enquiries %}
+                <tr id="lot-row-{{ item.id }}">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                <i class="bi bi-boxes fs-6"></i>
+                            </div>
+                            <div>
+                                <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{ item.lot_number }}</span>
+                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.title|default:'Lot Inventory Package' }}">
+                                    {{ item.title|default:'Lot Inventory Package' }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.file %}
+                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-1 fw-medium" style="font-size: 0.78rem;">
+                            <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
+                            <span>Download File</span>
+                            <i class="bi bi-download small"></i>
+                        </a>
+                        {% else %}
+                        <span class="badge bg-light text-muted fw-normal" style="font-size: 0.75rem;">No file attached</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 0.85rem;">
+                            <i class="bi bi-calendar3 text-muted"></i>
+                            <span>{{ item.created_at|date:"M d, Y" }}</span>
+                            <span class="text-muted">•</span>
+                            <i class="bi bi-clock text-muted"></i>
+                            <span>{{ item.created_at|date:"H:i" }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.enquiry_status|lower == 'approved' %}
+                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                            <i class="bi bi-check-circle-fill me-1"></i>Approved
+                        </span>
+                        {% elif item.enquiry_status|lower == 'declined' %}
+                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                            <i class="bi bi-x-circle-fill me-1"></i>Declined
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex align-items-center justify-content-end gap-2">
+                            {% if item.enquiry_status|lower == 'approved' %}
+                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 14px !important;">
+                                <i class="bi bi-x-lg"></i> Decline
+                            </button>
+                            {% elif item.enquiry_status|lower == 'declined' %}
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 14px !important;">
+                                <i class="bi bi-check-lg"></i> Approve
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 14px !important;">
+                                <i class="bi bi-check-lg"></i> Approve
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 14px !important;">
+                                <i class="bi bi-x-lg"></i> Decline
+                            </button>
+                            {% endif %}
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-outline-secondary btn-sm px-2 py-1" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 0.82rem;">
+                                    <li><a class="dropdown-item py-1.5" href="{% url 'lot_enquiry_detail' enquiry_id=item.id %}"><i class="bi bi-eye text-primary me-2"></i> View Details</a></li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    {% if item.active_status == 'active' %}
+                                    <li><a class="dropdown-item py-1.5 text-secondary btn-lot-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive"><i class="bi bi-pause-circle me-2"></i> Mark as Inactive</a></li>
+                                    {% else %}
+                                    <li><a class="dropdown-item py-1.5 text-success btn-lot-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active"><i class="bi bi-play-circle-fill me-2"></i> Mark as Active</a></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    {% if item.enquiry_status != 'pending' %}
+                                    <li><a class="dropdown-item py-1.5 btn-lot-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending"><i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending</a></li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item py-1.5 text-danger btn-lot-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-lid="{{ item.lot_number }}"><i class="bi bi-trash3 me-2"></i> Delete Lot Enquiry</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5">
+                        <div class="empty-table-state">
+                            <div class="empty-icon text-muted mb-3" style="font-size: 2.5rem;">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <h5 class="fw-bold text-dark mb-1">No Lot Enquiries Found</h5>
+                            <p class="text-secondary small mb-0">No lot batch file enquiries match your current filter.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between px-4 py-3 border-top gap-3 bg-white rounded-bottom">
+        <div class="text-secondary small">
+            Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+            <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+            <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+        </div>
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}" title="First Page">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">
+                        Previous
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
+                </li>
+                {% endif %}
+
+                {% for p in page_obj.paginator.page_range %}
+                    {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                        {% if p == page_obj.number %}
+                        <li class="page-item active">
+                            <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">
+                        Next
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}" title="Last Page">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Search input handler
+    const searchInput = document.getElementById('lotSearch');
+    if (searchInput) {
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const query = e.target.value.trim();
+                const url = new URL(window.location.href);
+                url.searchParams.delete('page');
+                if (query) {
+                    url.searchParams.set('search', query);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.location.href = url.toString();
+            }, 500);
+        });
+    }
+
+    // Date filter handler
+    const dateFilter = document.getElementById('dateFilter');
+    if (dateFilter) {
+        dateFilter.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const url = new URL(window.location.href);
+            url.searchParams.delete('page');
+            if (val && val !== 'all') {
+                url.searchParams.set('date_filter', val);
+            } else {
+                url.searchParams.delete('date_filter');
+            }
+            window.location.href = url.toString();
+        });
+    }
+
+    // Status Change Click Handler
+    document.querySelectorAll('.btn-lot-status').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const newStatus = btn.dataset.status;
+            
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/admin/api/enquiries/lots/${id}/status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to update status.");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert("Connection error. Please try again.");
+                btn.disabled = false;
+            }
+        });
+    });
+
+    // Active Status Handler
+    document.querySelectorAll('.btn-lot-active-status').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const newActive = btn.dataset.active;
+            
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/admin/api/enquiries/lots/${id}/status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ active_status: newActive })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Failed to update active status.");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert("Connection error. Please try again.");
+                btn.disabled = false;
+            }
+        });
+    });
+
+    // Delete Enquiry Handler
+    document.querySelectorAll('.btn-lot-delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const lid = btn.dataset.lid;
+            if (confirm(`Are you sure you want to delete lot enquiry "${lid}"?`)) {
+                try {
+                    const res = await fetch(`/admin/api/enquiries/lots/${id}/status/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        const row = document.getElementById(`lot-row-${id}`);
+                        if (row) row.remove();
+                    } else {
+                        alert(data.message || "Failed to delete.");
+                    }
+                } catch (err) {
+                    alert("Error deleting lot enquiry.");
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

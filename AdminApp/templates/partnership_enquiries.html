@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Partnership Enquiries | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <!-- Page Header & Action -->
+    <div class="page-header-container mb-4">
+        <div>
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list mb-1" style="font-size: 0.85rem;">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item"><span>General Enquiries</span></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>Partnership Enquiries</span></li>
+                </ol>
+            </nav>
+            <h1 class="header-title h3 fw-bold text-dark mb-1">Partnership Enquiries</h1>
+            <p class="header-subtitle text-muted mb-0" style="font-size: 0.9rem;">
+                Review and manage strategic partnership proposals, affiliate requests, and regional vendor collaborations.
+            </p>
+        </div>
+    </div>
+
+    <!-- KPI Metric Filter Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total Proposals</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1" style="font-size: 1.75rem;">{{ counts.total|default:enquiries|length }}</h2>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(79, 70, 229, 0.1); color: #4f46e5;">
+                        <i class="bi bi-handshake fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #fefce8 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Pending Review</span>
+                        <h2 class="fw-bold text-amber mb-0 mt-1" style="font-size: 1.75rem; color: #d97706;">{{ counts.pending|default:"0" }}</h2>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.1); color: #d97706;">
+                        <i class="bi bi-clock-history fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Contacted / Active</span>
+                        <h2 class="fw-bold text-success mb-0 mt-1" style="font-size: 1.75rem; color: #059669;">{{ counts.contacted|default:"0" }}</h2>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.1); color: #059669;">
+                        <i class="bi bi-check-circle fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Referral & GCC</span>
+                        <h2 class="fw-bold text-primary mb-0 mt-1" style="font-size: 1.75rem; color: #2563eb;">{{ counts.referral|default:"0" }}</h2>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.1); color: #2563eb;">
+                        <i class="bi bi-globe-americas fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <!-- Filters & Toolbar Row -->
+            <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                <!-- Search -->
+                <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" id="partnershipSearch" class="form-control border-start-0" placeholder="Search by name, email, location, or subject...">
+                    </div>
+                </div>
+
+                <!-- Export & Bulk Actions -->
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn text-white px-3 d-flex align-items-center gap-2 rounded-3"
+                        style="background-color: #10b981; font-size: 14px; font-weight: 500;">
+                        <i class="bi bi-file-earmark-excel-fill"></i> Export to Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" style="font-size: 0.875rem;">
+                    <thead>
+                        <tr class="text-secondary border-bottom" style="background-color: #f8fafc; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <th class="ps-3 py-3" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                            </th>
+                            <th class="py-3 fw-bold">Applicant Details</th>
+                            <th class="py-3 fw-bold">Location</th>
+                            <th class="py-3 fw-bold">Interest Type</th>
+                            <th class="py-3 fw-bold" style="width: 32%;">Subject & Proposal</th>
+                            <th class="py-3 fw-bold">Date & Time</th>
+                            <th class="py-3 fw-bold">Status</th>
+                            <th class="py-3 fw-bold text-center" style="width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnershipTableBody">
+                        {% for item in enquiries %}
+                        <tr class="border-bottom hover-row" style="transition: background-color 0.15s ease;">
+                            <td class="ps-3 py-3">
+                                <input class="form-check-input" type="checkbox" value="{{ item.id }}">
+                            </td>
+                            <td class="py-3">
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
+                                         style="width: 38px; height: 38px; font-size: 0.9rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                                        {{ item.name|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ item.name }}</div>
+                                        <div class="text-muted" style="font-size: 0.8rem;">
+                                            <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted">{{ item.email }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge rounded-pill bg-light text-dark border px-2.5 py-1.5 fw-normal d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-geo-alt-fill text-danger" style="font-size: 0.75rem;"></i>
+                                    {{ item.location|default:"Dubai, UAE" }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge rounded-pill px-3 py-1.5 fw-medium" 
+                                      style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">
+                                    <i class="bi bi-pie-chart-fill me-1" style="font-size: 0.7rem;"></i>
+                                    {{ item.interest|default:"General Partnership" }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <div class="fw-semibold text-dark text-truncate mb-1" style="max-width: 280px;" title="{{ item.subject }}">
+                                    {{ item.subject|default:"Strategic Proposal" }}
+                                </div>
+                                <div class="text-muted text-truncate" style="max-width: 280px; font-size: 0.8rem;">
+                                    {{ item.collaboration_details }}
+                                </div>
+                                <button type="button" class="btn btn-link p-0 border-0 text-primary text-decoration-none fw-semibold mt-1" 
+                                        style="font-size: 0.78rem;" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#proposalModal{{ item.id }}">
+                                    Read Full Proposal <i class="bi bi-arrow-right-short"></i>
+                                </button>
+                            </td>
+                            <td class="py-3">
+                                <div class="text-dark fw-medium">{{ item.date }}</div>
+                                <div class="text-muted" style="font-size: 0.78rem;">{{ item.time }}</div>
+                            </td>
+                            <td class="py-3">
+                                {% if item.status == 'CONTACTED' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill">Contacted</span>
+                                {% elif item.status == 'REVIEWED' %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill">Reviewed</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1 rounded-pill">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center">
+                                <div class="d-flex justify-content-center gap-1.5">
+                                    <button class="btn btn-sm btn-light border text-dark px-2.5 rounded-3" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#proposalModal{{ item.id }}" 
+                                            title="View Details">
+                                        <i class="bi bi-eye-fill text-primary"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proposal Detail Modal -->
+                        <div class="modal fade" id="proposalModal{{ item.id }}" tabindex="-1" aria-labelledby="proposalModalLabel{{ item.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <!-- Modal Header -->
+                                    <div class="modal-header border-bottom p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow" 
+                                                 style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                                                {{ item.name|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <h5 class="modal-title fw-bold text-white mb-0" id="proposalModalLabel{{ item.id }}">{{ item.name }}</h5>
+                                                <span class="text-slate-300 opacity-75" style="font-size: 0.85rem;">Partnership Enquiry #{{ item.id }}</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    
+                                    <!-- Modal Body -->
+                                    <div class="modal-body p-4" style="background-color: #f8fafc;">
+                                        <!-- Info Grid Card -->
+                                        <div class="card border-0 shadow-sm rounded-3 p-3 mb-4 bg-white">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Applicant Email</div>
+                                                    <a href="mailto:{{ item.email }}" class="text-decoration-none fw-semibold text-primary" style="font-size: 0.9rem;">
+                                                        <i class="bi bi-envelope me-1"></i> {{ item.email }}
+                                                    </a>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Business Location</div>
+                                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+                                                        <i class="bi bi-geo-alt me-1 text-danger"></i> {{ item.location|default:"Dubai, UAE" }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Interest Category</div>
+                                                    <span class="badge rounded-pill px-3 py-1.5 fw-medium" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">
+                                                        {{ item.interest|default:"General Partnership" }}
+                                                    </span>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Submitted On</div>
+                                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
+                                                        <i class="bi bi-calendar3 me-1 text-muted"></i> {{ item.date }} at {{ item.time }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Proposal Content Box -->
+                                        <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+                                            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                                <h6 class="fw-bold text-dark mb-0">
+                                                    <i class="bi bi-file-text text-primary me-2"></i>Subject: {{ item.subject }}
+                                                </h6>
+                                            </div>
+                                            <div class="text-secondary p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.92rem; white-space: pre-line; line-height: 1.6;">{{ item.collaboration_details }}</div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Footer -->
+                                    <div class="modal-footer border-top p-3 bg-white justify-content-between">
+                                        <span class="text-muted small">Status: <strong>{{ item.status }}</strong></span>
+                                        <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-handshake fs-1 d-block mb-3 opacity-50 text-indigo"></i>
+                                <h6 class="fw-semibold">No partnership enquiries found</h6>
+                                <p class="small text-muted mb-0">Submitted proposals will appear here automatically.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live Search Filter for Partnership Enquiries Table
+    document.getElementById('partnershipSearch')?.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#partnershipTableBody tr.hover-row');
+        
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

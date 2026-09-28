@@ -1,0 +1,1839 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit Page: {{ page.title }}{% else %}Create New Page{% endif %} - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Page Header Bar -->
+<div class="editor-header-bar">
+    <div>
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><a href="/admin/content/pages/">Pages</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>{% if is_edit %}Edit Page{% else %}Create Page{% endif %}</span></li>
+            </ol>
+        </nav>
+        <div class="editor-title-group">
+            <h1 class="editor-main-heading">{% if is_edit %}{{ page.title }}{% else %}Create New Page{% endif %}</h1>
+            {% if is_edit %}
+                {% if page.status == 'published' %}
+                <span class="status-pill status-published">
+                    <span class="status-dot"></span>
+                    <span>Published</span>
+                </span>
+                {% else %}
+                <span class="status-pill status-draft">
+                    <span class="status-dot"></span>
+                    <span>Draft</span>
+                </span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <a href="/admin/content/pages/" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back to Pages</span>
+        </a>
+        <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 fw-semibold" id="savePageTopBtn">
+            <i class="bi bi-check2"></i>
+            <span>{% if is_edit %}Save Changes{% else %}Publish Page{% endif %}</span>
+        </button>
+    </div>
+</div>
+
+<form id="pageEditorForm">
+    {% csrf_token %}
+    <input type="hidden" id="editPageId" value="{{ page.id|default:'' }}">
+
+    <!-- Success, Unsaved Warning, and Error Alerts -->
+    <div id="unsavedChangesAlert" class="alert alert-warning d-none py-3 px-4 rounded-3 mb-4 shadow-sm d-flex align-items-center justify-content-between border-2 border-warning bg-warning-subtle">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2 rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            </div>
+            <div>
+                <strong class="d-block text-dark fw-bold mb-0">Unsaved Content Changes Detected</strong>
+                <span class="small text-dark-emphasis">You have unsaved content on this page. Please click <strong>"Save Changes"</strong> to preserve your updates, otherwise your data will be removed if you leave.</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-warning text-dark fw-bold px-3 py-2 d-flex align-items-center gap-2 shadow-sm" onclick="document.getElementById('savePageTopBtn').click()">
+                <i class="bi bi-save2-fill"></i>
+                <span>Save Now</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="formSuccessAlert" class="alert alert-success d-none py-3 px-4 rounded-3 mb-4 shadow-sm d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-check-circle-fill fs-4 text-success"></i>
+            <div>
+                <strong class="d-block" id="successAlertTitle">Changes saved successfully!</strong>
+                <span class="small text-secondary" id="successAlertDesc">Your updates are live and saved to the database.</span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" onclick="document.getElementById('formSuccessAlert').classList.add('d-none')"></button>
+    </div>
+
+    <div id="formAlert" class="alert alert-danger d-none py-3 px-4 rounded-3 mb-4 shadow-sm"></div>
+
+    <div class="row g-4">
+        <!-- Main Column (Left: SEO, Title, Content) -->
+        <div class="col-lg-8">
+
+            <!-- ============================================================= -->
+            <!-- CARD 1: FULL YOAST-STYLE SEO PLUGIN BOX (ON TOP) -->
+            <!-- ============================================================= -->
+            <div class="yoast-seo-box">
+                <div class="yoast-header">
+                    <h5 class="yoast-title">
+                        <i class="bi bi-google text-primary fs-5"></i>
+                        <span>Search Engine Optimization (SEO &amp; Meta Tags)</span>
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="seo-score-pill score-ok" id="overallSeoScoreBadge">
+                            <i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i>
+                            <span id="overallSeoScoreText">SEO: Needs Analysis</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Yoast Tabs Nav -->
+                <div class="yoast-nav-tabs">
+                    <button type="button" class="yoast-tab-btn active" data-tab="tab-seo-general">
+                        <i class="bi bi-search"></i>
+                        <span>SEO General</span>
+                    </button>
+                    <button type="button" class="yoast-tab-btn" data-tab="tab-seo-social">
+                        <i class="bi bi-share"></i>
+                        <span>Social (OG / Twitter)</span>
+                    </button>
+                    <button type="button" class="yoast-tab-btn" data-tab="tab-seo-advanced">
+                        <i class="bi bi-gear"></i>
+                        <span>Advanced Robots</span>
+                    </button>
+                    <button type="button" class="yoast-tab-btn" data-tab="tab-seo-schema">
+                        <i class="bi bi-code-square"></i>
+                        <span>Schema &amp; JSON-LD</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: SEO General -->
+                <div class="yoast-tab-content" id="tab-seo-general">
+                    <!-- Focus Keyphrase -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="pageFocusKeyphrase">Focus Keyphrase</label>
+                            <span class="text-muted small">Target keyword you want this page to rank for</span>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key text-primary"></i></span>
+                            <input type="text" class="form-control" id="pageFocusKeyphrase" value="{{ page.focus_keyphrase|default:'' }}" placeholder="e.g. surplus electronics liquidation">
+                        </div>
+                    </div>
+
+                    <!-- SEO Title & Meta Keywords Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="pageMetaTitle">SEO / Meta Title</label>
+                                <span class="text-muted small" id="metaTitleCounter">0 / 60 chars</span>
+                            </div>
+                            <input type="text" class="form-control" id="pageMetaTitle" value="{{ page.meta_title|default:'' }}" placeholder="Custom browser tab and search result title">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="pageMetaKeywords">Meta Keywords</label>
+                                <span class="text-muted small">Comma separated</span>
+                            </div>
+                            <input type="text" class="form-control" id="pageMetaKeywords" value="{{ page.meta_keywords|default:'' }}" placeholder="e.g. surplus, terms, policy, wholesale">
+                        </div>
+                    </div>
+
+                    <!-- Meta Description -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="pageMetaDesc">Meta Description</label>
+                            <span class="text-muted small" id="metaDescCounter">0 / 160 chars</span>
+                        </div>
+                        <textarea class="form-control" id="pageMetaDesc" rows="3" maxlength="200" placeholder="Brief summary displayed in Google search results (120-160 characters recommended)">{{ page.meta_description|default:'' }}</textarea>
+                        <div class="char-counter-bar">
+                            <div class="char-counter-fill" id="metaDescBar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Google Search Result Preview Simulation -->
+                    <div class="google-serp-preview-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="small fw-bold text-secondary text-uppercase"><i class="bi bi-google me-1 text-primary"></i> Google Search Snippet Preview</div>
+                            <span class="badge bg-secondary-subtle text-secondary small">Desktop &amp; Mobile</span>
+                        </div>
+                        <div class="serp-brand-row">
+                            <div class="serp-favicon">S</div>
+                            <span class="serp-sitename">Surplus Marketplace</span>
+                            <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplus.com/{{ page.slug|default:"page-slug" }}/</span>
+                        </div>
+                        <div class="serp-result-headline" id="serpTitlePreview">{% if page.meta_title %}{{ page.meta_title }}{% elif page.title %}{{ page.title }}{% else %}Page Title{% endif %} - Surplus</div>
+                        <p class="serp-result-snippet" id="serpDescPreview">{{ page.meta_description|default:"Page description snippet will appear in search results. Write a descriptive summary to maximize click-through rate." }}</p>
+                    </div>
+
+                    <!-- Real-Time Yoast SEO Checklist Analysis -->
+                    <div class="seo-analysis-panel">
+                        <div class="analysis-header">
+                            <i class="bi bi-clipboard-check text-primary"></i>
+                            <span>Real-Time SEO Analysis Checklist</span>
+                        </div>
+                        <ul class="analysis-list">
+                            <li id="chkKeyphraseTitle" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in SEO Title</span></li>
+                            <li id="chkKeyphraseDesc" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in Meta Description</span></li>
+                            <li id="chkKeyphraseSlug" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in URL Slug</span></li>
+                            <li id="chkTitleLength" class="warning"><i class="bi bi-circle-fill"></i> <span>SEO Title optimal length (40-60 characters)</span></li>
+                            <li id="chkDescLength" class="warning"><i class="bi bi-circle-fill"></i> <span>Meta Description optimal length (120-160 characters)</span></li>
+                            <li id="chkContentLength" class="warning"><i class="bi bi-circle-fill"></i> <span>Content body length check</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Social Media (Open Graph & Twitter Cards) -->
+                <div class="yoast-tab-content d-none" id="tab-seo-social">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-facebook me-1"></i> Facebook &amp; LinkedIn (Open Graph)</h6>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageOgTitle">Facebook Title (OG Title)</label>
+                                <input type="text" class="form-control" id="pageOgTitle" value="{{ page.og_title|default:'' }}" placeholder="Defaults to SEO Title if empty">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageOgDesc">Facebook Description</label>
+                                <textarea class="form-control" id="pageOgDesc" rows="3" placeholder="Defaults to Meta Description if empty">{{ page.og_description|default:'' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageOgImage">Social Share Image URL</label>
+                                <input type="text" class="form-control" id="pageOgImage" value="{{ page.og_image|default:'' }}" placeholder="https://surplus.com/static/images/og-cover.jpg">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-twitter-x me-1"></i> Twitter / X Cards</h6>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageTwitterTitle">Twitter Title</label>
+                                <input type="text" class="form-control" id="pageTwitterTitle" value="{{ page.twitter_title|default:'' }}" placeholder="Defaults to Facebook Title if empty">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageTwitterDesc">Twitter Description</label>
+                                <textarea class="form-control" id="pageTwitterDesc" rows="3" placeholder="Defaults to Facebook Description if empty">{{ page.twitter_description|default:'' }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageTwitterImage">Twitter Image URL</label>
+                                <input type="text" class="form-control" id="pageTwitterImage" value="{{ page.twitter_image|default:'' }}" placeholder="https://surplus.com/static/images/twitter-card.jpg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Card Preview -->
+                    <div class="mt-3">
+                        <div class="small fw-bold text-secondary text-uppercase mb-2"><i class="bi bi-eye me-1"></i> Social Card Preview Simulation</div>
+                        <div class="social-preview-card">
+                            <div class="social-preview-image" id="socialPreviewImgBox">
+                                <i class="bi bi-image"></i>
+                            </div>
+                            <div class="social-preview-body">
+                                <div class="social-domain">SURPLUS.COM</div>
+                                <div class="social-title" id="socialPreviewTitle">{% if page.og_title %}{{ page.og_title }}{% elif page.meta_title %}{{ page.meta_title }}{% elif page.title %}{{ page.title }}{% else %}Page Title{% endif %}</div>
+                                <p class="social-desc" id="socialPreviewDesc">{% if page.og_description %}{{ page.og_description }}{% elif page.meta_description %}{{ page.meta_description }}{% else %}Page description will be displayed when shared on social networks.{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Advanced Technical SEO -->
+                <div class="yoast-tab-content d-none" id="tab-seo-advanced">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageRobotsIndex">Robots Index</label>
+                            <select class="form-select" id="pageRobotsIndex">
+                                <option value="index" {% if page.robots_index == 'index' or not page %}selected{% endif %}>🟢 index (Allow search engines to show this page in results)</option>
+                                <option value="noindex" {% if page.robots_index == 'noindex' %}selected{% endif %}>🔴 noindex (Do not show this page in search results)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageRobotsFollow">Robots Follow</label>
+                            <select class="form-select" id="pageRobotsFollow">
+                                <option value="follow" {% if page.robots_follow == 'follow' or not page %}selected{% endif %}>🟢 follow (Follow links on this page)</option>
+                                <option value="nofollow" {% if page.robots_follow == 'nofollow' %}selected{% endif %}>🔴 nofollow (Do not follow links on this page)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageRobotsAdvanced">Advanced Robots Directives</label>
+                            <input type="text" class="form-control" id="pageRobotsAdvanced" value="{{ page.robots_advanced|default:'' }}" placeholder="e.g. noarchive, nosnippet, noimageindex">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageCanonicalUrl">Canonical URL Override</label>
+                            <input type="text" class="form-control" id="pageCanonicalUrl" value="{{ page.canonical_url|default:'' }}" placeholder="https://surplus.com/canonical-path/">
+                            <span class="text-muted small mt-1 d-block">Leave blank to use default self-referencing canonical URL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Schema & JSON-LD -->
+                <div class="yoast-tab-content d-none" id="tab-seo-schema">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageSchemaType">Schema Page Type</label>
+                        <select class="form-select" id="pageSchemaType">
+                            <option value="WebPage" {% if page.schema_type == 'WebPage' or not page %}selected{% endif %}>WebPage (Standard Page)</option>
+                            <option value="Article" {% if page.schema_type == 'Article' %}selected{% endif %}>Article / Blog Post</option>
+                            <option value="AboutPage" {% if page.schema_type == 'AboutPage' %}selected{% endif %}>AboutPage (About Us)</option>
+                            <option value="ContactPage" {% if page.schema_type == 'ContactPage' %}selected{% endif %}>ContactPage (Contact &amp; Assistance)</option>
+                            <option value="FAQPage" {% if page.schema_type == 'FAQPage' %}selected{% endif %}>FAQPage (Help &amp; Frequently Asked Questions)</option>
+                            <option value="PolicyPage" {% if page.schema_type == 'PolicyPage' %}selected{% endif %}>PolicyPage (Terms, Warranty, Privacy Policy)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageStructuredData">Custom JSON-LD / Additional Meta Tags</label>
+                        <textarea class="form-control font-monospace" id="pageStructuredData" rows="6" placeholder='<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Page Title"
+}
+</script>'>{{ page.structured_data|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- CARD 2: PAGE TITLE & API SLUG IDENTIFIER -->
+            <!-- ============================================================= -->
+            <div class="editor-card">
+                <div class="editor-card-header">
+                    <h5 class="editor-card-title">
+                        <i class="bi bi-file-earmark-text text-primary"></i>
+                        <span>Page Title &amp; API Endpoint Route</span>
+                    </h5>
+                    <span class="editor-card-subtitle">Define the page title, frontend URL route, and headless REST API endpoint identifier</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageTitle">Page Title <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control page-title-input" id="pageTitle" value="{{ page.title|default:'' }}" placeholder="e.g. Terms and Conditions" required>
+                </div>
+
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="pageSlug">
+                            API Endpoint Key / URL Slug <span class="text-danger">*</span>
+                        </label>
+                        <span class="badge bg-primary-subtle text-primary small">
+                            <i class="bi bi-code-slash me-1"></i>Headless API Route
+                        </span>
+                    </div>
+                    <div class="permalink-pill-box">
+                        <span class="permalink-label"><i class="bi bi-hdd-network text-primary"></i> /api/pages/</span>
+                        <input type="text" class="permalink-input" id="pageSlug" value="{{ page.slug|default:'' }}" placeholder="terms-and-conditions" required>
+                        <span class="permalink-domain">/</span>
+                        <button type="button" class="permalink-copy-btn me-1" id="syncSlugBtn" title="Sync / Regenerate from Page Title">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                        <button type="button" class="permalink-copy-btn" id="copySlugBtn" title="Copy API Endpoint">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="form-text small text-muted mt-1">
+                        <i class="bi bi-info-circle me-1"></i> The React frontend fetches this page JSON via <code>/api/pages/<span id="slugHintPreview">{{ page.slug|default:"slug" }}</span>/</code> and routes it at <code>/<span id="slugRoutePreview">{{ page.slug|default:"slug" }}</span>/</code>.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- CARD 3: STRAPI-STYLE DYNAMIC COMPONENT BUILDER -->
+            <!-- ============================================================= -->
+            <div class="editor-card">
+                <div class="editor-card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="editor-card-title mb-1">
+                            <i class="bi bi-boxes text-primary"></i>
+                            <span>Page Content &amp; Modular Components</span>
+                        </h5>
+                        <span class="editor-card-subtitle">Strapi-style dynamic zone with modular, customizable component blocks</span>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm px-3 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" id="openComponentModalBtn">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Add Component</span>
+                    </button>
+                </div>
+
+                <div class="component-builder-wrapper">
+                    <div class="component-builder-topbar">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="component-count-badge" id="componentCountBadge">0 Components</span>
+                            <span class="text-muted small">Arrange and configure content blocks</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="collapseAllComponentsBtn" title="Collapse All">
+                                <i class="bi bi-arrows-collapse me-1"></i>Collapse All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="expandAllComponentsBtn" title="Expand All">
+                                <i class="bi bi-arrows-expand me-1"></i>Expand All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Component Stack List -->
+                    <div class="component-stack-list" id="componentStackList">
+                        <!-- Dynamic components rendered by JavaScript -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="component-empty-state text-center p-5 rounded-4 bg-light border border-2 border-dashed" id="componentEmptyState">
+                        <div class="empty-icon text-primary mb-2" style="font-size: 2.2rem;"><i class="bi bi-puzzle"></i></div>
+                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">No Components Added Yet</h6>
+                        <p class="text-secondary small mb-3 max-w-450 mx-auto" style="font-size: 0.82rem;">This page has no component blocks. Click below to add a component block and add any fields (text, number, media, rich text, boolean, etc.) you need.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-primary px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" id="emptyStateAddBtn" style="font-size: 0.82rem;">
+                                <i class="bi bi-plus-circle-fill"></i>
+                                <span>Add Component Block</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2" id="emptyStateBrowseSchemasBtn" style="font-size: 0.82rem;">
+                                <i class="bi bi-collection"></i>
+                                <span>Saved Schemas</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column (Right: Status, Category, Placement) -->
+        <div class="col-lg-4">
+            <!-- Publish Status Card -->
+            <div class="editor-card">
+                <div class="editor-card-header">
+                    <h5 class="editor-card-title">
+                        <i class="bi bi-sliders text-primary"></i>
+                        <span>Publish Settings</span>
+                    </h5>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageCategory">Page Category</label>
+                    <select class="form-select" id="pageCategory">
+                        <option value="General" {% if page.category == 'General' or not page %}selected{% endif %}>General</option>
+                        <option value="Policy" {% if page.category == 'Policy' %}selected{% endif %}>Policy &amp; Legal</option>
+                        <option value="Information" {% if page.category == 'Information' %}selected{% endif %}>Information &amp; About</option>
+                        <option value="Help" {% if page.category == 'Help' %}selected{% endif %}>Help &amp; Support</option>
+                        <option value="Custom" {% if page.category == 'Custom' %}selected{% endif %}>Custom Landing</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageStatus">Publication Status</label>
+                    <select class="form-select" id="pageStatus">
+                        <option value="published" {% if page.status == 'published' %}selected{% endif %}>🟢 Published (Live on site)</option>
+                        <option value="draft" {% if page.status == 'draft' or not page %}selected{% endif %}>🟡 Draft (Hidden from public)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="pageSortOrder">Navigation Sort Order</label>
+                    <input type="number" class="form-control" id="pageSortOrder" value="{{ page.sort_order|default:0 }}" min="0">
+                    <span class="text-muted small mt-1 d-block">Lower index values are positioned first</span>
+                </div>
+
+                <div class="pt-2 border-top">
+                    <button type="button" class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" id="savePageSidebarBtn">
+                        <i class="bi bi-check2-circle"></i>
+                        <span id="savePageBtnText">{% if is_edit %}Save Changes{% else %}Publish Page{% endif %}</span>
+                    </button>
+                </div>
+
+                {% if is_edit %}
+                <div class="border-top pt-3 mt-3 text-secondary small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Created:</span>
+                        <strong class="text-main">{{ page.created_at|date:"M d, Y H:i" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Last Updated:</span>
+                        <strong class="text-main">{{ page.updated_at|date:"M d, Y H:i" }}</strong>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Header & Footer Navigation Visibility -->
+            <div class="editor-card">
+                <div class="editor-card-header">
+                    <h5 class="editor-card-title">
+                        <i class="bi bi-layout-navbar text-primary"></i>
+                        <span>Navigation Placement</span>
+                    </h5>
+                </div>
+
+                <div class="switch-nav-card mb-3">
+                    <div class="switch-nav-info">
+                        <div class="switch-title"><i class="bi bi-layout-navbar-inset me-1 text-primary"></i> Header Navbar</div>
+                        <p class="switch-desc">Display direct link in top primary navigation</p>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="pageShowHeader" style="width: 2.4rem; height: 1.25rem;" {% if page.show_in_header %}checked{% endif %}>
+                    </div>
+                </div>
+
+                <div class="switch-nav-card">
+                    <div class="switch-nav-info">
+                        <div class="switch-title"><i class="bi bi-layout-text-window me-1 text-primary"></i> Footer Menu</div>
+                        <p class="switch-desc">Display link in footer column links</p>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="pageShowFooter" style="width: 2.4rem; height: 1.25rem;" {% if page.show_in_footer %}checked{% endif %}>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Modern Component Picker Modal -->
+<div class="modal fade" id="addComponentModal" tabindex="-1" aria-labelledby="addComponentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 rounded-3 bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 40px; height: 40px;">
+                        <i class="bi bi-puzzle-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="addComponentModalLabel">Add Content Component</h5>
+                        <span class="small text-muted">Insert a ready-to-use field block or select from your saved database schemas</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">Choose Component Source</h6>
+                        <span class="small text-muted">Create a blank component block or use a saved schema from Component Builder</span>
+                    </div>
+                    <a href="/admin/content/components/create/" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold" style="font-size: 0.78rem;">
+                        <i class="bi bi-plus-lg me-1"></i> New Schema in Component Builder
+                    </a>
+                </div>
+
+                <div class="mb-4">
+                    <div class="p-3 rounded-3 border bg-light d-flex align-items-center justify-content-between cursor-pointer hover-shadow transition-all" id="modalCreateBlankBtn" style="cursor: pointer; border-left: 4px solid var(--color-primary) !important;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="p-2.5 rounded-3 text-white d-flex align-items-center justify-content-center" style="background-color: var(--color-primary); width: 42px; height: 42px;">
+                                <i class="bi bi-plus-square-fill fs-5"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-dark fw-bold mb-0" style="font-size: 0.9rem;">+ Create Blank Custom Block</strong>
+                                <span class="small text-secondary" style="font-size: 0.78rem;">Start with an empty block and add your choice of fields (text, number, media, rich text, boolean, etc.)</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm px-3 py-1.5 fw-semibold" style="font-size: 0.8rem;">
+                            Add Block
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <span class="small fw-bold text-uppercase text-secondary tracking-wide d-block mb-2.5" style="font-size: 0.75rem;">
+                        <i class="bi bi-collection-fill text-primary me-1"></i> Saved Schemas from Component Builder (<span id="modalSavedCount">0</span>)
+                    </span>
+
+                    <div class="component-picker-modal-grid" id="modalComponentPickerGrid">
+                        <!-- Injected by JS -->
+                    </div>
+
+                    <div id="modalNoComponentsState" class="text-center py-4 px-3 bg-light rounded-3 border border-dashed d-none">
+                        <div class="mb-2 text-secondary" style="font-size: 1.8rem;">
+                            <i class="bi bi-puzzle"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1" style="font-size: 0.88rem;">No Saved Schemas in Database</h6>
+                        <p class="text-secondary small mb-2 max-w-400 mx-auto" style="font-size: 0.78rem;">You haven't saved any schemas in the Component Builder yet. You can create blank blocks directly here or save reusable schemas.</p>
+                        <a href="/admin/content/components/create/" target="_blank" class="btn btn-outline-primary btn-sm px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
+                            <i class="bi bi-plus-lg me-1"></i> Open Component Builder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const saveTopBtn = document.getElementById('savePageTopBtn');
+    const saveSidebarBtn = document.getElementById('savePageSidebarBtn');
+    const saveBtnText = document.getElementById('savePageBtnText');
+    const formAlert = document.getElementById('formAlert');
+
+    const titleInput = document.getElementById('pageTitle');
+    const slugInput = document.getElementById('pageSlug');
+    const categorySelect = document.getElementById('pageCategory');
+    const statusSelect = document.getElementById('pageStatus');
+    const sortOrderInput = document.getElementById('pageSortOrder');
+    const showHeaderCheck = document.getElementById('pageShowHeader');
+    const showFooterCheck = document.getElementById('pageShowFooter');
+
+    // Yoast SEO Inputs
+    const focusKeyphraseInput = document.getElementById('pageFocusKeyphrase');
+    const metaTitleInput = document.getElementById('pageMetaTitle');
+    const metaDescTextarea = document.getElementById('pageMetaDesc');
+    const metaKeywordsInput = document.getElementById('pageMetaKeywords');
+    const canonicalUrlInput = document.getElementById('pageCanonicalUrl');
+    const robotsIndexSelect = document.getElementById('pageRobotsIndex');
+    const robotsFollowSelect = document.getElementById('pageRobotsFollow');
+    const robotsAdvancedInput = document.getElementById('pageRobotsAdvanced');
+    const ogTitleInput = document.getElementById('pageOgTitle');
+    const ogDescTextarea = document.getElementById('pageOgDesc');
+    const ogImageInput = document.getElementById('pageOgImage');
+    const twitterTitleInput = document.getElementById('pageTwitterTitle');
+    const twitterDescTextarea = document.getElementById('pageTwitterDesc');
+    const twitterImageInput = document.getElementById('pageTwitterImage');
+    const schemaTypeSelect = document.getElementById('pageSchemaType');
+    const structuredDataTextarea = document.getElementById('pageStructuredData');
+
+    const editPageId = document.getElementById('editPageId');
+    const metaTitleCounter = document.getElementById('metaTitleCounter');
+    const metaDescCounter = document.getElementById('metaDescCounter');
+    const metaDescBar = document.getElementById('metaDescBar');
+    const serpUrlPreview = document.getElementById('serpUrlPreview');
+    const serpTitlePreview = document.getElementById('serpTitlePreview');
+    const serpDescPreview = document.getElementById('serpDescPreview');
+    const copySlugBtn = document.getElementById('copySlugBtn');
+    const syncSlugBtn = document.getElementById('syncSlugBtn');
+
+    // Social Preview elements
+    const socialPreviewTitle = document.getElementById('socialPreviewTitle');
+    const socialPreviewDesc = document.getElementById('socialPreviewDesc');
+    const socialPreviewImgBox = document.getElementById('socialPreviewImgBox');
+
+    // Unsaved Changes State Management
+    let hasUnsavedChanges = false;
+    const unsavedAlert = document.getElementById('unsavedChangesAlert');
+    const successAlert = document.getElementById('formSuccessAlert');
+
+    function markDirty() {
+        if (!hasUnsavedChanges) {
+            hasUnsavedChanges = true;
+            if (unsavedAlert) unsavedAlert.classList.remove('d-none');
+            if (successAlert) successAlert.classList.add('d-none');
+        }
+    }
+
+    function markClean() {
+        hasUnsavedChanges = false;
+        if (unsavedAlert) unsavedAlert.classList.add('d-none');
+    }
+
+    // Helper: Slugify string
+    function slugify(text) {
+        return (text || '').toString().toLowerCase().trim()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/[\s_-]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    function syncSlugPreviews() {
+        const sVal = slugInput.value.trim() || 'slug';
+        const hint1 = document.getElementById('slugHintPreview');
+        const hint2 = document.getElementById('slugRoutePreview');
+        if (hint1) hint1.textContent = sVal;
+        if (hint2) hint2.textContent = sVal;
+    }
+
+    // Yoast Tab Switching
+    document.querySelectorAll('.yoast-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.yoast-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.yoast-tab-content').forEach(c => c.classList.add('d-none'));
+
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-tab');
+            document.getElementById(targetId)?.classList.remove('d-none');
+        });
+    });
+
+    // =========================================================
+    // DYNAMIC COMPONENT BUILDER / STRAPI DYNAMIC ZONE ENGINE
+    // =========================================================
+    const componentStackList = document.getElementById('componentStackList');
+    const componentEmptyState = document.getElementById('componentEmptyState');
+    const componentCountBadge = document.getElementById('componentCountBadge');
+    const openComponentModalBtn = document.getElementById('openComponentModalBtn');
+    const addComponentModalEl = document.getElementById('addComponentModal');
+    let addComponentModal = null;
+    if (addComponentModalEl && typeof bootstrap !== 'undefined') {
+        addComponentModal = new bootstrap.Modal(addComponentModalEl);
+    }
+
+    // Available Custom Component Schemas loaded from Django context
+    let availableComponents = [];
+    try {
+        const rawDefs = `{{ available_components_json|default:"[]"|safe }}`;
+        availableComponents = JSON.parse(rawDefs || '[]');
+    } catch (e) {
+        availableComponents = [];
+    }
+
+    // Helper: Normalize component object
+    function normalizeComponent(c) {
+        if (!c) return null;
+        
+        const vals = c.values || c.data || {};
+        let fields = Array.isArray(c.fields_schema) ? c.fields_schema : [];
+
+        // If no fields_schema, infer from values
+        if (fields.length === 0) {
+            fields = Object.keys(vals).map(k => {
+                const val = vals[k];
+                let fType = 'text';
+                let subFields = [];
+                if (Array.isArray(val)) {
+                    fType = 'repeatable';
+                    if (val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
+                        subFields = Object.keys(val[0]).map(subK => ({
+                            id: 'sf_' + subK,
+                            name: subK.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                            key: subK,
+                            type: typeof val[0][subK] === 'number' ? 'number' : 'text'
+                        }));
+                    } else {
+                        subFields = [{ id: 'sf_title', name: 'Title', key: 'title', type: 'text' }];
+                    }
+                } else if (typeof val === 'number') {
+                    fType = 'number';
+                } else if (typeof val === 'boolean') {
+                    fType = 'boolean';
+                } else if (typeof val === 'string' && (k.includes('image') || k.includes('media') || k.includes('banner') || val.startsWith('http'))) {
+                    fType = 'media';
+                } else if (k === 'body' || k === 'content' || k === 'description' || (typeof val === 'string' && val.length > 100)) {
+                    fType = 'rich_text';
+                }
+
+                return {
+                    id: 'f_' + k,
+                    name: k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    key: k,
+                    type: fType,
+                    sub_fields: subFields,
+                    required: false
+                };
+            });
+        } else {
+            // Auto-heal field types if value is array but schema says text
+            fields.forEach(f => {
+                if (Array.isArray(vals[f.key]) && f.type !== 'repeatable') {
+                    f.type = 'repeatable';
+                    if (!f.sub_fields || f.sub_fields.length === 0) {
+                        const firstItem = vals[f.key][0];
+                        if (firstItem && typeof firstItem === 'object') {
+                            f.sub_fields = Object.keys(firstItem).map(sk => ({
+                                id: 'sf_' + sk,
+                                name: sk.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                                key: sk,
+                                type: typeof firstItem[sk] === 'number' ? 'number' : 'text'
+                            }));
+                        } else {
+                            f.sub_fields = [{ id: 'sf_title', name: 'Title', key: 'title', type: 'text' }];
+                        }
+                    }
+                }
+            });
+        }
+
+        const compKey = c.component_key || c.type || c.key || 'custom_block';
+        const compName = c.name || compKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+        return {
+            id: c.id || ('c_' + Math.random().toString(36).substr(2, 9)),
+            component_id: c.component_id || null,
+            component_key: compKey,
+            name: compName,
+            icon: c.icon || 'bi-puzzle',
+            category: c.category || 'General',
+            fields_schema: fields,
+            values: vals
+        };
+    }
+
+    // Load initial page components from Django context
+    let rawInitial = JSON.parse('{{ components_json|escapejs|default:"[]" }}');
+    let pageComponents = (Array.isArray(rawInitial) ? rawInitial : []).map(normalizeComponent).filter(Boolean);
+
+    // Populate Component Picker Modal with Available Schemas
+    const modalPickerGrid = document.getElementById('modalComponentPickerGrid');
+    const modalNoComponentsState = document.getElementById('modalNoComponentsState');
+    const modalSavedCount = document.getElementById('modalSavedCount');
+
+    function populateModalPicker() {
+        if (modalSavedCount) modalSavedCount.textContent = availableComponents.length;
+        if (!modalPickerGrid) return;
+        modalPickerGrid.innerHTML = '';
+
+        if (availableComponents.length === 0) {
+            modalNoComponentsState?.classList.remove('d-none');
+            return;
+        }
+
+        modalNoComponentsState?.classList.add('d-none');
+
+        availableComponents.forEach(def => {
+            const opt = document.createElement('div');
+            opt.className = 'component-picker-option';
+            opt.setAttribute('data-comp-key', def.key);
+            opt.innerHTML = `
+                <div class="picker-icon-box" style="background-color: rgba(76, 175, 80, 0.12); color: var(--color-primary);">
+                    <i class="bi ${def.icon || 'bi-puzzle'}"></i>
+                </div>
+                <div class="picker-title">${escapeHtml(def.name)}</div>
+                <p class="picker-desc">${escapeHtml(def.description || (def.fields_schema?.length + ' configured fields'))}</p>
+                <span class="badge bg-secondary-subtle text-secondary small font-monospace">${def.key}</span>
+            `;
+            opt.addEventListener('click', () => {
+                addComponentFromDef(def);
+                if (addComponentModal) addComponentModal.hide();
+            });
+            modalPickerGrid.appendChild(opt);
+        });
+    }
+
+    populateModalPicker();
+
+    // Helper: Add clean custom component block
+    function addNewBlankComponent(suggestedName) {
+        syncStateFromDom();
+        const name = suggestedName || prompt('Enter component block name (e.g. Hero Section, Features, Overview):', `Section ${pageComponents.length + 1}`);
+        if (!name || !name.trim()) return;
+
+        const compKey = slugify(name).replace(/-/g, '_') || ('block_' + Date.now().toString(36).substr(4));
+        const newComp = {
+            id: 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            component_id: null,
+            component_key: compKey,
+            name: name.trim(),
+            icon: 'bi-puzzle',
+            category: 'Custom',
+            fields_schema: [],
+            values: {}
+        };
+
+        pageComponents.push(newComp);
+        renderAllComponents();
+        markDirty();
+
+        setTimeout(() => {
+            const lastCard = componentStackList.lastElementChild;
+            if (lastCard) {
+                lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                lastCard.classList.add('border-primary');
+                setTimeout(() => lastCard.classList.remove('border-primary'), 1500);
+            }
+        }, 100);
+    }
+
+    // Helper: Add component instance from saved schema definition
+    function addComponentFromDef(def) {
+        syncStateFromDom();
+
+        const defaultVals = {};
+        if (Array.isArray(def.fields_schema)) {
+            def.fields_schema.forEach(f => {
+                if (f.default_value !== undefined && f.default_value !== '') {
+                    defaultVals[f.key] = f.default_value;
+                } else if (f.type === 'boolean') {
+                    defaultVals[f.key] = false;
+                } else if (f.type === 'number') {
+                    defaultVals[f.key] = 0;
+                } else if (f.type === 'repeatable') {
+                    defaultVals[f.key] = [];
+                } else {
+                    defaultVals[f.key] = '';
+                }
+            });
+        }
+
+        const newComp = {
+            id: 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            component_id: def.id || null,
+            component_key: def.key || 'custom_block',
+            name: def.name || 'Custom Block',
+            icon: def.icon || 'bi-puzzle',
+            category: def.category || 'General',
+            fields_schema: JSON.parse(JSON.stringify(def.fields_schema || [])),
+            values: defaultVals
+        };
+
+        pageComponents.push(newComp);
+        renderAllComponents();
+        markDirty();
+
+        setTimeout(() => {
+            const lastCard = componentStackList.lastElementChild;
+            if (lastCard) {
+                lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                lastCard.classList.add('border-primary');
+                setTimeout(() => lastCard.classList.remove('border-primary'), 1500);
+            }
+        }, 100);
+    }
+
+    // Bind Empty State & Modal buttons
+    document.getElementById('emptyStateAddBtn')?.addEventListener('click', () => {
+        addNewBlankComponent();
+    });
+
+    document.getElementById('emptyStateBrowseSchemasBtn')?.addEventListener('click', () => {
+        if (addComponentModal) addComponentModal.show();
+    });
+
+    document.getElementById('modalCreateBlankBtn')?.addEventListener('click', () => {
+        if (addComponentModal) addComponentModal.hide();
+        addNewBlankComponent();
+    });
+
+    openComponentModalBtn?.addEventListener('click', () => {
+        if (availableComponents.length > 0 && addComponentModal) {
+            addComponentModal.show();
+        } else {
+            addNewBlankComponent();
+        }
+    });
+
+    // Add Field to existing Component
+    function addFieldToComponent(compIndex, fieldType) {
+        syncStateFromDom();
+        const comp = pageComponents[compIndex];
+        if (!comp) return;
+
+        const defaultNames = {
+            text: 'Text Field',
+            rich_text: 'Rich Text Body',
+            number: 'Number Value',
+            media: 'Media Image URL',
+            boolean: 'Toggle Switch',
+            date: 'Date Field',
+            select: 'Dropdown Option',
+            repeatable: 'Repeatable List'
+        };
+
+        const fieldName = prompt(`Enter label for new ${fieldType.replace('_', ' ')} field:`, defaultNames[fieldType] || 'Custom Field');
+        if (!fieldName || !fieldName.trim()) return;
+
+        const fieldKey = slugify(fieldName).replace(/-/g, '_') || ('field_' + Date.now().toString(36).substr(4));
+
+        if (!Array.isArray(comp.fields_schema)) comp.fields_schema = [];
+
+        // Check duplicates
+        if (comp.fields_schema.some(f => f.key === fieldKey)) {
+            alert(`A field with key "${fieldKey}" already exists in this block.`);
+            return;
+        }
+
+        const newField = {
+            id: 'f_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            name: fieldName.trim(),
+            key: fieldKey,
+            type: fieldType,
+            required: false,
+            placeholder: `Enter ${fieldName.trim()}`
+        };
+
+        if (fieldType === 'repeatable') {
+            newField.sub_fields = [
+                { id: 'sf_1', name: 'Item Title', key: 'title', type: 'text' },
+                { id: 'sf_2', name: 'Item Detail', key: 'detail', type: 'text' }
+            ];
+            comp.values[fieldKey] = [];
+        } else if (fieldType === 'boolean') {
+            comp.values[fieldKey] = false;
+        } else if (fieldType === 'number') {
+            comp.values[fieldKey] = 0;
+        } else {
+            comp.values[fieldKey] = '';
+        }
+
+        comp.fields_schema.push(newField);
+        renderAllComponents();
+        markDirty();
+    }
+
+    // Remove Field from Component
+    function removeFieldFromComponent(compIndex, fieldKey) {
+        syncStateFromDom();
+        const comp = pageComponents[compIndex];
+        if (!comp || !Array.isArray(comp.fields_schema)) return;
+
+        if (confirm(`Remove field "${fieldKey}" from this block?`)) {
+            comp.fields_schema = comp.fields_schema.filter(f => f.key !== fieldKey);
+            if (comp.values) delete comp.values[fieldKey];
+            renderAllComponents();
+            markDirty();
+        }
+    }
+
+    // Rename Component Block
+    function renameComponentBlock(compIndex) {
+        syncStateFromDom();
+        const comp = pageComponents[compIndex];
+        if (!comp) return;
+
+        const newName = prompt('Enter new component block name:', comp.name);
+        if (newName && newName.trim()) {
+            comp.name = newName.trim();
+            renderAllComponents();
+            markDirty();
+        }
+    }
+
+    // Render individual component card
+    function renderComponentCard(comp, index) {
+        const card = document.createElement('div');
+        card.className = 'strapi-component-card';
+        card.dataset.index = index;
+        card.dataset.id = comp.id;
+
+        // Determine title preview
+        let summaryTitle = comp.name;
+        if (comp.values) {
+            const firstStrVal = Object.values(comp.values).find(v => typeof v === 'string' && v.trim().length > 0 && !v.startsWith('http') && v.length < 80);
+            if (firstStrVal) summaryTitle = `${comp.name}: ${firstStrVal}`;
+        }
+
+        // Build dynamic fields HTML
+        let fieldsHtml = '';
+        const fields = Array.isArray(comp.fields_schema) ? comp.fields_schema : [];
+
+        if (fields.length === 0) {
+            fieldsHtml = `
+                <div class="text-center py-3 bg-light rounded-3 border border-dashed">
+                    <p class="text-secondary small mb-2" style="font-size: 0.8rem;">No input fields in this component block yet.</p>
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-primary btn-sm dropdown-toggle fw-semibold px-2 py-1" type="button" data-bs-toggle="dropdown" style="font-size: 0.78rem;">
+                            <i class="bi bi-plus-lg me-1"></i> Add Your First Field
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 py-1" style="font-size: 0.82rem;">
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="text"><i class="bi bi-fonts text-primary"></i> Single-line Text</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="rich_text"><i class="bi bi-textarea-t text-info"></i> Rich Text Area</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="number"><i class="bi bi-123 text-success"></i> Number</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="media"><i class="bi bi-image text-warning"></i> Media / Image URL</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="boolean"><i class="bi bi-toggle-on text-primary"></i> Boolean Switch</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="date"><i class="bi bi-calendar-date text-secondary"></i> Date Picker</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="select"><i class="bi bi-menu-button-wide text-danger"></i> Select Dropdown</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="repeatable"><i class="bi bi-repeat text-dark"></i> Repeatable List</a></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } else {
+            fieldsHtml = '<div class="row g-2.5">';
+            fields.forEach(f => {
+                const fKey = f.key;
+                let fVal = comp.values ? (comp.values[fKey] !== undefined ? comp.values[fKey] : '') : '';
+                const fLabel = f.name || fKey;
+                const fPlaceholder = f.placeholder || '';
+                const fRequired = f.required ? '<span class="text-danger">*</span>' : '';
+                const fHelp = f.help_text ? `<div class="form-text text-muted" style="font-size: 0.72rem;">${escapeHtml(f.help_text)}</div>` : '';
+
+                // Is value an array? Force repeatable view if so
+                const isArrayVal = Array.isArray(fVal);
+
+                const isIdentical = fLabel.toLowerCase().replace(/[\s_-]/g, '') === fKey.toLowerCase().replace(/[\s_-]/g, '');
+                const keyBadge = isIdentical ? '' : `<span class="badge bg-light text-muted font-monospace ms-1 fw-normal" style="font-size: 0.68rem;">${fKey}</span>`;
+
+                const fieldHeader = `
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label mb-0" style="font-size: 0.76rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.02em;">
+                            ${escapeHtml(fLabel)} ${fRequired}
+                            ${keyBadge}
+                        </label>
+                        <button type="button" class="btn btn-link text-danger p-0 text-decoration-none btn-delete-field-row" data-field-key="${fKey}" title="Delete this field" style="font-size: 0.72rem;">
+                            <i class="bi bi-x-circle me-1"></i>Remove
+                        </button>
+                    </div>
+                `;
+
+                if (f.type === 'repeatable' || isArrayVal) {
+                    const subItems = Array.isArray(fVal) ? fVal : [];
+                    const subFields = Array.isArray(f.sub_fields) && f.sub_fields.length > 0 ? f.sub_fields : [
+                        { key: 'title', name: 'Title' },
+                        { key: 'description', name: 'Description' }
+                    ];
+                    
+                    let subItemsHtml = subItems.map((sItem, sIdx) => {
+                        const itemData = typeof sItem === 'object' && sItem !== null ? sItem : { title: String(sItem || '') };
+                        return `
+                            <div class="repeatable-item-card p-2 rounded-2 mb-2 bg-light border" data-repeatable-key="${fKey}" data-subitem-index="${sIdx}">
+                                <div class="repeatable-item-header d-flex justify-content-between align-items-center pb-1 mb-1 border-bottom">
+                                    <span class="item-order-badge text-muted fw-semibold" style="font-size: 0.72rem;"><i class="bi bi-stack me-1 text-primary"></i> ${escapeHtml(fLabel)} Item #${sIdx + 1}</span>
+                                    <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1.5 btn-remove-repeatable-item" title="Delete item" style="font-size: 0.7rem;"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                                <div class="row g-1.5">
+                                    ${subFields.map(sf => `
+                                        <div class="col-${subFields.length > 2 ? '4' : '6'}">
+                                            <label class="form-label text-muted mb-0" style="font-size: 0.7rem; font-weight: 500;">${escapeHtml(sf.name || sf.key)}</label>
+                                            <input type="${sf.type === 'number' ? 'number' : 'text'}" class="form-control form-control-sm repeatable-subfield" data-subfield-key="${sf.key}" value="${escapeHtml(itemData[sf.key] || '')}" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    fieldsHtml += `
+                        <div class="col-12 mt-1 comp-field-container" data-field-key="${fKey}">
+                            <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                                <span class="fw-bold text-secondary text-uppercase" style="font-size: 0.76rem;"><i class="bi bi-repeat me-1 text-primary"></i> ${escapeHtml(fLabel)} (${subItems.length})</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm btn-add-repeatable-item" data-repeatable-key="${fKey}" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">
+                                        <i class="bi bi-plus-lg me-1"></i> Add ${escapeHtml(fLabel)} Item
+                                    </button>
+                                    <button type="button" class="btn btn-link text-danger p-0 text-decoration-none btn-delete-field-row" data-field-key="${fKey}" title="Delete this list" style="font-size: 0.72rem;">
+                                        <i class="bi bi-x-circle me-1"></i>Remove
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="repeatable-items-container" data-repeatable-key="${fKey}">
+                                ${subItemsHtml || '<div class="text-center py-2 text-muted bg-light rounded border border-dashed" style="font-size: 0.75rem;">No items yet. Click "+ Add Item" above.</div>'}
+                            </div>
+                        </div>
+                    `;
+                } else if (f.type === 'rich_text') {
+                    const strVal = typeof fVal === 'string' ? fVal : (typeof fVal === 'number' ? String(fVal) : '');
+                    fieldsHtml += `
+                        <div class="col-12 comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <textarea class="form-control comp-field" data-field-key="${fKey}" rows="3" placeholder="${escapeHtml(fPlaceholder)}" style="font-size: 0.82rem; padding: 0.4rem 0.65rem;">${escapeHtml(strVal)}</textarea>
+                            ${fHelp}
+                        </div>
+                    `;
+                } else if (f.type === 'number') {
+                    fieldsHtml += `
+                        <div class="col-md-6 comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <input type="number" class="form-control comp-field" data-field-key="${fKey}" value="${fVal}" placeholder="${escapeHtml(fPlaceholder)}" style="font-size: 0.82rem; padding: 0.32rem 0.65rem; height: 34px;">
+                            ${fHelp}
+                        </div>
+                    `;
+                } else if (f.type === 'media') {
+                    const strVal = typeof fVal === 'string' ? fVal : '';
+                    fieldsHtml += `
+                        <div class="col-12 comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-image"></i></span>
+                                <input type="url" class="form-control comp-field media-field-input" data-field-key="${fKey}" value="${escapeHtml(strVal)}" placeholder="https://domain.com/image.jpg" style="font-size: 0.82rem; padding: 0.32rem 0.65rem; height: 34px;">
+                                ${strVal ? `<a href="${escapeHtml(strVal)}" target="_blank" class="btn btn-outline-secondary btn-sm d-flex align-items-center" title="Open Link"><i class="bi bi-box-arrow-up-right"></i></a>` : ''}
+                            </div>
+                            ${fHelp}
+                            ${strVal ? `
+                                <div class="mt-1.5 p-1.5 bg-light rounded border d-inline-flex align-items-center gap-2">
+                                    <img src="${escapeHtml(strVal)}" alt="Preview" class="rounded" style="max-height: 55px; max-width: 120px; object-fit: cover;" onerror="this.parentElement.style.display='none'">
+                                    <span class="text-muted font-monospace" style="font-size: 0.72rem;">${escapeHtml(strVal.length > 40 ? strVal.substring(0, 40) + '...' : strVal)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else if (f.type === 'boolean') {
+                    fieldsHtml += `
+                        <div class="col-md-6 comp-field-container d-flex flex-column justify-content-center" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <div class="form-check form-switch mt-1 mb-0">
+                                <input class="form-check-input comp-field" type="checkbox" role="switch" data-field-key="${fKey}" id="switch_${comp.id}_${fKey}" ${fVal ? 'checked' : ''} style="width: 2rem; height: 1.05rem;">
+                                <label class="form-check-label text-secondary ms-2" for="switch_${comp.id}_${fKey}" style="font-size: 0.78rem; font-weight: 500;">Active / Enabled</label>
+                            </div>
+                        </div>
+                    `;
+                } else if (f.type === 'date') {
+                    fieldsHtml += `
+                        <div class="col-md-6 comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <input type="date" class="form-control comp-field" data-field-key="${fKey}" value="${escapeHtml(fVal)}" style="font-size: 0.82rem; padding: 0.32rem 0.65rem; height: 34px;">
+                            ${fHelp}
+                        </div>
+                    `;
+                } else if (f.type === 'select') {
+                    const rawOptions = (f.options || '').split(',').map(o => o.trim()).filter(Boolean);
+                    fieldsHtml += `
+                        <div class="col-md-6 comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <select class="form-select comp-field" data-field-key="${fKey}" style="font-size: 0.82rem; padding: 0.32rem 0.65rem; height: 34px;">
+                                <option value="">-- Select Option --</option>
+                                ${rawOptions.map(opt => `<option value="${escapeHtml(opt)}" ${fVal === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+                            </select>
+                            ${fHelp}
+                        </div>
+                    `;
+                } else {
+                    // Default: Single Line Text
+                    const strVal = typeof fVal === 'string' ? fVal : (typeof fVal === 'number' ? String(fVal) : '');
+                    fieldsHtml += `
+                        <div class="col-md-${fields.length === 1 ? '12' : '6'} comp-field-container" data-field-key="${fKey}">
+                            ${fieldHeader}
+                            <input type="text" class="form-control comp-field" data-field-key="${fKey}" value="${escapeHtml(strVal)}" placeholder="${escapeHtml(fPlaceholder)}" style="font-size: 0.82rem; padding: 0.32rem 0.65rem; height: 34px;">
+                            ${fHelp}
+                        </div>
+                    `;
+                }
+            });
+
+            // Card footer field adder
+            fieldsHtml += `
+                <div class="col-12 mt-2 pt-2 border-top">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-semibold w-100 py-1.5 border-dashed" type="button" data-bs-toggle="dropdown" style="font-size: 0.78rem;">
+                            <i class="bi bi-plus-lg me-1 text-primary"></i> + Add Another Field to this Block
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 py-1 w-100" style="font-size: 0.82rem;">
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="text"><i class="bi bi-fonts text-primary"></i> Single-line Text</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="rich_text"><i class="bi bi-textarea-t text-info"></i> Rich Text Area</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="number"><i class="bi bi-123 text-success"></i> Number</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="media"><i class="bi bi-image text-warning"></i> Media / Image URL</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="boolean"><i class="bi bi-toggle-on text-primary"></i> Boolean Switch</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="date"><i class="bi bi-calendar-date text-secondary"></i> Date Picker</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="select"><i class="bi bi-menu-button-wide text-danger"></i> Select Dropdown</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="repeatable"><i class="bi bi-repeat text-dark"></i> Repeatable List</a></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            fieldsHtml += '</div>';
+        }
+
+        card.innerHTML = `
+            <div class="strapi-component-header py-2 px-3">
+                <div class="component-meta-left d-flex align-items-center gap-2">
+                    <span class="drag-handle" title="Drag to reorder" style="cursor: grab; font-size: 0.95rem;"><i class="bi bi-grip-vertical"></i></span>
+                    <span class="component-index-badge text-muted fw-bold" style="font-size: 0.72rem;">#${index + 1}</span>
+                    <span class="component-type-tag cursor-pointer btn-rename-comp px-2 py-0.5 rounded-2 d-inline-flex align-items-center gap-1" title="Click to rename" style="background: rgba(76, 175, 80, 0.12); color: var(--color-primary); font-size: 0.78rem; font-weight: 600;">
+                        <i class="bi ${comp.icon || 'bi-puzzle'}"></i>
+                        <span>${escapeHtml(comp.name || comp.component_key)}</span>
+                        <i class="bi bi-pencil-fill ms-0.5 opacity-50" style="font-size: 0.6rem;"></i>
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.68rem; padding: 0.2rem 0.4rem;">${comp.component_key}</span>
+                </div>
+                <div class="component-meta-actions d-flex align-items-center gap-1">
+                    <div class="dropdown d-inline-block">
+                        <button type="button" class="btn btn-outline-primary btn-sm px-2 py-0.5 fw-semibold dropdown-toggle" data-bs-toggle="dropdown" title="Add Field to this Component" style="font-size: 0.75rem;">
+                            <i class="bi bi-plus-lg me-1"></i>Add Field
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 0.82rem;">
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="text"><i class="bi bi-fonts text-primary"></i> Single-line Text</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="rich_text"><i class="bi bi-textarea-t text-info"></i> Rich Text Area</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="number"><i class="bi bi-123 text-success"></i> Number</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="media"><i class="bi bi-image text-warning"></i> Media / Image URL</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="boolean"><i class="bi bi-toggle-on text-primary"></i> Boolean Switch</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="date"><i class="bi bi-calendar-date text-secondary"></i> Date Picker</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="select"><i class="bi bi-menu-button-wide text-danger"></i> Select Dropdown</a></li>
+                            <li><a class="dropdown-item py-1.5 d-flex align-items-center gap-2 btn-card-add-field" href="javascript:void(0)" data-field-type="repeatable"><i class="bi bi-repeat text-dark"></i> Repeatable List</a></li>
+                        </ul>
+                    </div>
+                    <button type="button" class="comp-btn btn-move-up" title="Move Up" ${index === 0 ? 'disabled' : ''} style="width: 28px; height: 28px; font-size: 0.8rem;">
+                        <i class="bi bi-arrow-up"></i>
+                    </button>
+                    <button type="button" class="comp-btn btn-move-down" title="Move Down" ${index === pageComponents.length - 1 ? 'disabled' : ''} style="width: 28px; height: 28px; font-size: 0.8rem;">
+                        <i class="bi bi-arrow-down"></i>
+                    </button>
+                    <button type="button" class="comp-btn btn-duplicate" title="Duplicate Component" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                    <button type="button" class="comp-btn btn-collapse-toggle" title="Collapse / Expand" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <button type="button" class="comp-btn btn-delete text-danger" title="Delete Component" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="strapi-component-body p-3">
+                ${fieldsHtml}
+            </div>
+        `;
+
+        // Card Event Listeners
+        const header = card.querySelector('.strapi-component-header');
+        header.addEventListener('click', (e) => {
+            if (e.target.closest('.component-meta-actions') || e.target.closest('.drag-handle') || e.target.closest('.btn-rename-comp')) return;
+            card.classList.toggle('collapsed');
+        });
+
+        card.querySelector('.btn-rename-comp')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            renameComponentBlock(index);
+        });
+
+        card.querySelector('.btn-collapse-toggle').addEventListener('click', (e) => {
+            e.stopPropagation();
+            card.classList.toggle('collapsed');
+        });
+
+        card.querySelector('.btn-move-up').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (index > 0) {
+                syncStateFromDom();
+                const temp = pageComponents[index];
+                pageComponents[index] = pageComponents[index - 1];
+                pageComponents[index - 1] = temp;
+                renderAllComponents();
+                markDirty();
+            }
+        });
+
+        card.querySelector('.btn-move-down').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (index < pageComponents.length - 1) {
+                syncStateFromDom();
+                const temp = pageComponents[index];
+                pageComponents[index] = pageComponents[index + 1];
+                pageComponents[index + 1] = temp;
+                renderAllComponents();
+                markDirty();
+            }
+        });
+
+        card.querySelector('.btn-duplicate').addEventListener('click', (e) => {
+            e.stopPropagation();
+            syncStateFromDom();
+            const clone = JSON.parse(JSON.stringify(pageComponents[index]));
+            clone.id = 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            pageComponents.splice(index + 1, 0, clone);
+            renderAllComponents();
+            markDirty();
+        });
+
+        card.querySelector('.btn-delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm(`Remove "${comp.name}" component from page?`)) {
+                syncStateFromDom();
+                pageComponents.splice(index, 1);
+                renderAllComponents();
+                markDirty();
+            }
+        });
+
+        // Add Field dropdown triggers
+        card.querySelectorAll('.btn-card-add-field').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fType = e.currentTarget.dataset.fieldType;
+                addFieldToComponent(index, fType);
+            });
+        });
+
+        // Delete field row
+        card.querySelectorAll('.btn-delete-field-row').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fKey = e.currentTarget.dataset.fieldKey;
+                removeFieldFromComponent(index, fKey);
+            });
+        });
+
+        // Field change tracking
+        card.querySelectorAll('.comp-field').forEach(field => {
+            field.addEventListener('input', () => {
+                const key = field.dataset.fieldKey;
+                if (!comp.values) comp.values = {};
+                comp.values[key] = field.type === 'checkbox' ? field.checked : field.value;
+                markDirty();
+                updateYoastSeoAnalysis();
+            });
+            field.addEventListener('change', () => {
+                const key = field.dataset.fieldKey;
+                if (!comp.values) comp.values = {};
+                comp.values[key] = field.type === 'checkbox' ? field.checked : field.value;
+                markDirty();
+                updateYoastSeoAnalysis();
+            });
+        });
+
+        // Add Repeatable Item
+        card.querySelectorAll('.btn-add-repeatable-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                syncStateFromDom();
+                const repKey = e.currentTarget.dataset.repeatableKey;
+                if (!comp.values) comp.values = {};
+                if (!Array.isArray(comp.values[repKey])) comp.values[repKey] = [];
+                
+                const fDef = (comp.fields_schema || []).find(f => f.key === repKey);
+                const subFields = fDef?.sub_fields || [{ key: 'title', name: 'Title' }];
+                const newItem = {};
+                subFields.forEach(sf => { newItem[sf.key] = ''; });
+                
+                comp.values[repKey].push(newItem);
+                renderAllComponents();
+                markDirty();
+            });
+        });
+
+        // Remove Repeatable Item
+        card.querySelectorAll('.btn-remove-repeatable-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const repCard = e.currentTarget.closest('.repeatable-item-card');
+                const repKey = repCard.dataset.repeatableKey;
+                const subIdx = parseInt(repCard.dataset.subitemIndex);
+                syncStateFromDom();
+                if (comp.values && Array.isArray(comp.values[repKey])) {
+                    comp.values[repKey].splice(subIdx, 1);
+                    renderAllComponents();
+                    markDirty();
+                }
+            });
+        });
+
+        return card;
+    }
+
+    function syncStateFromDom() {
+        if (!componentStackList) return;
+        const cards = componentStackList.querySelectorAll('.strapi-component-card');
+        cards.forEach((card, idx) => {
+            if (!pageComponents[idx]) return;
+            const comp = pageComponents[idx];
+            if (!comp.values) comp.values = {};
+
+            // Read direct fields
+            card.querySelectorAll('.comp-field').forEach(field => {
+                const key = field.dataset.fieldKey;
+                if (key) {
+                    comp.values[key] = field.type === 'checkbox' ? field.checked : field.value;
+                }
+            });
+
+            // Read repeatable nested items
+            const repContainers = card.querySelectorAll('.repeatable-items-container');
+            repContainers.forEach(container => {
+                const repKey = container.dataset.repeatableKey;
+                if (!repKey) return;
+                const itemCards = container.querySelectorAll('.repeatable-item-card');
+                comp.values[repKey] = [];
+                itemCards.forEach(itemCard => {
+                    const itemObj = {};
+                    itemCard.querySelectorAll('.repeatable-subfield').forEach(subInput => {
+                        const subKey = subInput.dataset.subfieldKey;
+                        if (subKey) itemObj[subKey] = subInput.value;
+                    });
+                    comp.values[repKey].push(itemObj);
+                });
+            });
+        });
+    }
+
+    function renderAllComponents() {
+        if (!componentStackList) return;
+        componentStackList.innerHTML = '';
+
+        if (pageComponents.length === 0) {
+            if (componentEmptyState) componentEmptyState.classList.remove('d-none');
+            if (componentCountBadge) componentCountBadge.textContent = '0 Components';
+        } else {
+            if (componentEmptyState) componentEmptyState.classList.add('d-none');
+            if (componentCountBadge) componentCountBadge.textContent = `${pageComponents.length} Component${pageComponents.length > 1 ? 's' : ''}`;
+
+            pageComponents.forEach((comp, idx) => {
+                const cardEl = renderComponentCard(comp, idx);
+                componentStackList.appendChild(cardEl);
+            });
+        }
+        updateYoastSeoAnalysis();
+    }
+
+    // Modal Trigger
+    openComponentModalBtn?.addEventListener('click', () => {
+        if (addComponentModal) addComponentModal.show();
+    });
+
+    // Collapse / Expand All
+    document.getElementById('collapseAllComponentsBtn')?.addEventListener('click', () => {
+        componentStackList?.querySelectorAll('.strapi-component-card').forEach(c => c.classList.add('collapsed'));
+    });
+    document.getElementById('expandAllComponentsBtn')?.addEventListener('click', () => {
+        componentStackList?.querySelectorAll('.strapi-component-card').forEach(c => c.classList.remove('collapsed'));
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function generateHtmlFallback(components) {
+        let html = '';
+        components.forEach(c => {
+            html += `<!-- Component: ${c.name} (${c.component_key}) -->\n`;
+            html += `<section class="custom-component-${c.component_key}">\n`;
+            if (c.values) {
+                Object.entries(c.values).forEach(([k, v]) => {
+                    if (typeof v === 'string' && v.trim()) {
+                        if (k.includes('title') || k.includes('heading')) {
+                            html += `  <h2>${escapeHtml(v)}</h2>\n`;
+                        } else if (k.includes('desc') || k.includes('body') || k.includes('text')) {
+                            html += `  <p>${v}</p>\n`;
+                        } else if (k.includes('image') || k.includes('media') || k.includes('url')) {
+                            html += `  <img src="${escapeHtml(v)}" alt="${escapeHtml(k)}" />\n`;
+                        }
+                    } else if (Array.isArray(v) && v.length > 0) {
+                        html += `  <ul>\n`;
+                        v.forEach(it => {
+                            html += `    <li>${Object.values(it).join(' - ')}</li>\n`;
+                        });
+                        html += `  </ul>\n`;
+                    }
+                });
+            }
+            html += `</section>\n\n`;
+        });
+        return html;
+    }
+
+    // =========================================================
+    // REAL-TIME SEO & SNIPPET ANALYSIS
+    // =========================================================
+    function updateYoastSeoAnalysis() {
+        const title = metaTitleInput.value.trim() || titleInput.value.trim() || 'Untitled Page';
+        const slug = slugInput.value.trim() || 'page-slug';
+        const desc = metaDescTextarea.value.trim() || 'Page description snippet will appear in search results...';
+        const keyphrase = focusKeyphraseInput.value.toLowerCase().trim();
+
+        // Calculate text length across components
+        let combinedText = '';
+        pageComponents.forEach(c => {
+            const vals = c.values || c.data || {};
+            Object.values(vals).forEach(v => {
+                if (typeof v === 'string') {
+                    combinedText += ' ' + v.replace(/<[^>]*>/g, ' ');
+                } else if (Array.isArray(v)) {
+                    v.forEach(it => {
+                        if (typeof it === 'object' && it !== null) {
+                            Object.values(it).forEach(iv => {
+                                if (typeof iv === 'string') combinedText += ' ' + iv;
+                            });
+                        }
+                    });
+                }
+            });
+        });
+        const words = combinedText.trim() ? combinedText.trim().split(/\s+/).length : 0;
+
+        // Update SERP
+        if (serpTitlePreview) serpTitlePreview.textContent = title + ' - Surplus';
+        if (serpUrlPreview) serpUrlPreview.textContent = 'https://surplus.com/' + slug + '/';
+        if (serpDescPreview) serpDescPreview.textContent = desc;
+
+        // Sync API hints
+        syncSlugPreviews();
+
+        // Counters
+        if (metaTitleCounter) metaTitleCounter.textContent = `${metaTitleInput.value.length} / 60 chars`;
+        if (metaDescCounter) {
+            const len = metaDescTextarea.value.length;
+            metaDescCounter.textContent = `${len} / 160 chars`;
+            if (metaDescBar) {
+                const pct = Math.min(100, Math.round((len / 160) * 100));
+                metaDescBar.style.width = pct + '%';
+                metaDescBar.className = 'char-counter-fill';
+                if (len > 160) metaDescBar.classList.add('fill-danger');
+                else if (len >= 120) metaDescBar.classList.add('fill-success');
+                else if (len > 0) metaDescBar.classList.add('fill-warning');
+            }
+        }
+
+        // Social Preview
+        if (socialPreviewTitle) {
+            socialPreviewTitle.textContent = ogTitleInput.value.trim() || title;
+        }
+        if (socialPreviewDesc) {
+            socialPreviewDesc.textContent = ogDescTextarea.value.trim() || desc;
+        }
+        if (socialPreviewImgBox) {
+            const ogImg = ogImageInput.value.trim() || twitterImageInput.value.trim();
+            if (ogImg) {
+                socialPreviewImgBox.style.backgroundImage = `url(${ogImg})`;
+                socialPreviewImgBox.innerHTML = '';
+            } else {
+                socialPreviewImgBox.style.backgroundImage = '';
+                socialPreviewImgBox.innerHTML = '<i class="bi bi-image"></i>';
+            }
+        }
+
+        // Checklist checks
+        let passedChecks = 0;
+
+        function setCheck(id, condition) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (condition) {
+                el.className = 'good';
+                el.querySelector('i').className = 'bi bi-check-circle-fill';
+                passedChecks++;
+            } else {
+                el.className = 'warning';
+                el.querySelector('i').className = 'bi bi-circle-fill';
+            }
+        }
+
+        setCheck('chkKeyphraseTitle', keyphrase && title.toLowerCase().includes(keyphrase));
+        setCheck('chkKeyphraseDesc', keyphrase && desc.toLowerCase().includes(keyphrase));
+        setCheck('chkKeyphraseSlug', keyphrase && slug.toLowerCase().includes(keyphrase.replace(/\s+/g, '-')));
+        setCheck('chkTitleLength', title.length >= 40 && title.length <= 60);
+        setCheck('chkDescLength', desc.length >= 120 && desc.length <= 160);
+        setCheck('chkContentLength', words >= 50 || pageComponents.length >= 2);
+
+        // Overall Score Pill
+        const scoreBadge = document.getElementById('overallSeoScoreBadge');
+        const scoreText = document.getElementById('overallSeoScoreText');
+        if (scoreBadge && scoreText) {
+            if (passedChecks >= 5) {
+                scoreBadge.className = 'seo-score-pill score-good';
+                scoreText.textContent = 'SEO: Good';
+            } else if (passedChecks >= 3) {
+                scoreBadge.className = 'seo-score-pill score-ok';
+                scoreText.textContent = 'SEO: OK';
+            } else {
+                scoreBadge.className = 'seo-score-pill score-bad';
+                scoreText.textContent = 'SEO: Incomplete';
+            }
+        }
+    }
+
+    // Auto-generate / change API endpoint & slug when Page Title changes
+    titleInput.addEventListener('input', () => {
+        slugInput.value = slugify(titleInput.value);
+        updateYoastSeoAnalysis();
+    });
+
+    // Manual sync button
+    if (syncSlugBtn) {
+        syncSlugBtn.addEventListener('click', () => {
+            slugInput.value = slugify(titleInput.value);
+            updateYoastSeoAnalysis();
+            syncSlugBtn.innerHTML = '<i class="bi bi-check text-success"></i>';
+            setTimeout(() => { syncSlugBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i>'; }, 1000);
+        });
+    }
+
+    [slugInput, metaTitleInput, metaDescTextarea, focusKeyphraseInput, ogTitleInput, ogDescTextarea, ogImageInput, twitterImageInput, categorySelect, statusSelect, sortOrderInput, showHeaderCheck, showFooterCheck].forEach(input => {
+        input?.addEventListener('input', () => {
+            markDirty();
+            updateYoastSeoAnalysis();
+        });
+        input?.addEventListener('change', markDirty);
+    });
+
+    // Copy slug / API endpoint
+    if (copySlugBtn) {
+        copySlugBtn.addEventListener('click', () => {
+            const slug = slugInput.value.trim() || 'slug';
+            const apiEndpoint = `/api/pages/${slug}/`;
+            navigator.clipboard.writeText(apiEndpoint);
+            copySlugBtn.innerHTML = '<i class="bi bi-check text-success"></i>';
+            setTimeout(() => { copySlugBtn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 1500);
+        });
+    }
+
+    // Browser Close / Reload Guard
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes. If you leave this page, your unsaved content will be lost.';
+            return e.returnValue;
+        }
+    });
+
+    // Intercept link clicks (breadcrumbs, back buttons, sidebar links)
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (hasUnsavedChanges) {
+                const href = link.getAttribute('href');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+                    const confirmLeave = confirm('⚠️ Unsaved Changes Detected!\n\nYou have unsaved changes in your page content. If you leave now, your unsaved data will be removed.\n\nClick "OK" to discard changes and leave, or "Cancel" to stay on this page.');
+                    if (!confirmLeave) {
+                        e.preventDefault();
+                    } else {
+                        hasUnsavedChanges = false;
+                    }
+                }
+            }
+        });
+    });
+
+    // Helper: Retrieve CSRF Token
+    function getCsrfToken() {
+        const input = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (input && input.value) return input.value;
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+
+    // =========================================================
+    // SAVE PAGE HANDLER
+    // =========================================================
+    async function handleSavePage() {
+        if (formAlert) formAlert.classList.add('d-none');
+        const title = titleInput ? titleInput.value.trim() : '';
+        const slug = slugInput ? slugInput.value.trim() : '';
+
+        if (!title) {
+            if (formAlert) {
+                formAlert.textContent = "Please enter a valid page title.";
+                formAlert.classList.remove('d-none');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        // Sync DOM into components data array
+        syncStateFromDom();
+
+        if (saveTopBtn) saveTopBtn.disabled = true;
+        if (saveSidebarBtn) saveSidebarBtn.disabled = true;
+        if (saveBtnText) saveBtnText.textContent = "Saving...";
+
+        const payload = {
+            title: title,
+            slug: slug,
+            category: categorySelect ? categorySelect.value : 'General',
+            status: statusSelect ? statusSelect.value : 'published',
+            sort_order: sortOrderInput ? (parseInt(sortOrderInput.value) || 0) : 0,
+            show_in_header: showHeaderCheck ? showHeaderCheck.checked : false,
+            show_in_footer: showFooterCheck ? showFooterCheck.checked : false,
+            components: pageComponents,
+            content: generateHtmlFallback(pageComponents),
+            
+            // Comprehensive Yoast SEO Fields
+            focus_keyphrase: focusKeyphraseInput ? focusKeyphraseInput.value.trim() : '',
+            meta_title: metaTitleInput ? metaTitleInput.value.trim() : '',
+            meta_description: metaDescTextarea ? metaDescTextarea.value.trim() : '',
+            meta_keywords: metaKeywordsInput ? metaKeywordsInput.value.trim() : '',
+            canonical_url: canonicalUrlInput ? canonicalUrlInput.value.trim() : '',
+            robots_index: robotsIndexSelect ? robotsIndexSelect.value : 'index',
+            robots_follow: robotsFollowSelect ? robotsFollowSelect.value : 'follow',
+            robots_advanced: robotsAdvancedInput ? robotsAdvancedInput.value.trim() : '',
+            og_title: ogTitleInput ? ogTitleInput.value.trim() : '',
+            og_description: ogDescTextarea ? ogDescTextarea.value.trim() : '',
+            og_image: ogImageInput ? ogImageInput.value.trim() : '',
+            twitter_title: twitterTitleInput ? twitterTitleInput.value.trim() : '',
+            twitter_description: twitterDescTextarea ? twitterDescTextarea.value.trim() : '',
+            twitter_image: twitterImageInput ? twitterImageInput.value.trim() : '',
+            schema_type: schemaTypeSelect ? schemaTypeSelect.value : 'WebPage',
+            structured_data: structuredDataTextarea ? structuredDataTextarea.value.trim() : '',
+        };
+
+        const id = editPageId ? editPageId.value : '';
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/admin/api/content/pages/${id}/` : '/admin/api/content/pages/';
+
+        try {
+            const csrf = getCsrfToken();
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf,
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                const savedPage = data.page;
+                markClean();
+                if (formAlert) formAlert.classList.add('d-none');
+
+                if (successAlert) {
+                    const alertTitle = document.getElementById('successAlertTitle');
+                    const alertDesc = document.getElementById('successAlertDesc');
+                    if (alertTitle) alertTitle.textContent = id ? "Changes saved successfully!" : "Page published successfully!";
+                    if (alertDesc) alertDesc.textContent = `"${title}" has been saved with ${pageComponents.length} component block${pageComponents.length !== 1 ? 's' : ''}.`;
+                    successAlert.classList.remove('d-none');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => { successAlert.classList.add('d-none'); }, 5000);
+                }
+
+                // If newly created, update the state without reloading
+                if (!id && savedPage && savedPage.id) {
+                    if (editPageId) editPageId.value = savedPage.id;
+                    history.replaceState(null, '', `/admin/content/pages/${savedPage.id}/edit/`);
+                    const mainHeading = document.querySelector('.editor-main-heading');
+                    if (mainHeading) mainHeading.textContent = savedPage.title;
+                    if (saveBtnText) saveBtnText.textContent = "Save Changes";
+                    const topBtnSpan = saveTopBtn?.querySelector('span');
+                    if (topBtnSpan) topBtnSpan.textContent = "Save Changes";
+                }
+            } else {
+                let errSummary = data.message || "Failed to save page.";
+                if (data.errors) {
+                    const errFields = Object.entries(data.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
+                    errSummary += ` (${errFields})`;
+                }
+                if (formAlert) {
+                    formAlert.textContent = errSummary;
+                    formAlert.classList.remove('d-none');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (err) {
+            console.error("Save Page Error:", err);
+            if (formAlert) {
+                formAlert.textContent = `Connection or Script Error: ${err.message || "Please try again."}`;
+                formAlert.classList.remove('d-none');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } finally {
+            if (saveTopBtn) saveTopBtn.disabled = false;
+            if (saveSidebarBtn) saveSidebarBtn.disabled = false;
+            const currentId = editPageId ? editPageId.value : '';
+            if (saveBtnText) saveBtnText.textContent = currentId ? "Save Changes" : "Publish Page";
+            const topBtnSpan = saveTopBtn?.querySelector('span');
+            if (topBtnSpan) topBtnSpan.textContent = currentId ? "Save Changes" : "Publish Page";
+        }
+    }
+
+    saveTopBtn?.addEventListener('click', handleSavePage);
+    saveSidebarBtn?.addEventListener('click', handleSavePage);
+
+    // Delete Direct
+    const delDirectBtn = document.getElementById('deletePageDirectBtn');
+    if (delDirectBtn) {
+        delDirectBtn.addEventListener('click', async () => {
+            const id = editPageId.value;
+            const title = titleInput.value;
+            if (confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+                try {
+                    const res = await fetch(`/admin/api/content/pages/${id}/`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.href = '/admin/content/pages/';
+                    } else {
+                        alert(data.message || "Failed to delete page.");
+                    }
+                } catch (err) {
+                    alert("Server error occurred while deleting.");
+                }
+            }
+        });
+    }
+
+    // Initial render of components
+    renderAllComponents();
+});
+</script>
+{% endblock %}

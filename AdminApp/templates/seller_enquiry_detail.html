@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/enquiry_detail.css' %}">
+
+<div class="container-fluid detail-page-wrapper">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+        <div>
+            <a href="{% url 'seller_enquiries_list' %}"
+                class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2 fw-medium">
+                <i class="bi bi-arrow-left"></i> Back to Seller Enquiries
+            </a>
+            <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2 flex-wrap">
+                <i class="bi bi-box-seam text-primary"></i> {{ enquiry.product_id }} Details
+                {% if enquiry.enquiry_status|lower == 'approved' %}
+                <span class="badge bg-success-subtle text-success ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                {% elif enquiry.enquiry_status|lower == 'declined' %}
+                <span class="badge bg-danger-subtle text-danger ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-x-circle-fill me-1"></i>Declined</span>
+                {% else %}
+                <span class="badge bg-warning-subtle text-warning ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                {% endif %}
+
+                {% if enquiry.is_active %}
+                <span class="badge bg-info-subtle text-info ms-1 fs-6 rounded-pill" id="header-active-badge-{{ enquiry.id }}"><i class="bi bi-broadcast me-1"></i>Active</span>
+                {% else %}
+                <span class="badge bg-secondary-subtle text-secondary ms-1 fs-6 rounded-pill" id="header-active-badge-{{ enquiry.id }}"><i class="bi bi-eye-slash me-1"></i>Inactive</span>
+                {% endif %}
+            </h4>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button"
+                class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3"
+                data-bs-toggle="modal" data-bs-target="#editSellerEnquiryModal">
+                <i class="bi bi-pencil-square"></i> Edit Details
+            </button>
+            {% if enquiry.is_active %}
+            <button type="button"
+                class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 btn-action-active-status"
+                data-id="{{ enquiry.id }}" data-active="inactive">
+                <i class="bi bi-pause-circle"></i> Set Inactive
+            </button>
+            {% else %}
+            <button type="button"
+                class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-action-active-status"
+                data-id="{{ enquiry.id }}" data-active="active">
+                <i class="bi bi-play-circle-fill"></i> Set Active
+            </button>
+            {% endif %}
+            {% if enquiry.enquiry_status|lower == 'approved' %}
+            <button type="button"
+                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="declined">
+                <i class="bi bi-x-circle-fill"></i> Decline
+            </button>
+            {% elif enquiry.enquiry_status|lower == 'declined' %}
+            <button type="button"
+                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="approved">
+                <i class="bi bi-check-circle-fill"></i> Approve
+            </button>
+            {% else %}
+            <button type="button"
+                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="approved">
+                <i class="bi bi-check-circle-fill"></i> Approve
+            </button>
+            <button type="button"
+                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="declined">
+                <i class="bi bi-x-circle-fill"></i> Decline
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- User Details -->
+        <div class="col-12">
+            <div class="premium-card mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-uppercase text-muted mb-4"
+                        style="letter-spacing: 0.5px; font-size: 0.8rem;"><i
+                            class="bi bi-person-badge me-2 text-primary"></i>User Details</h6>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Company</span>
+                                <span class="data-value fw-medium">{{ user_data.company|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Contact Person</span>
+                                <span class="data-value">{{ user_data.full_name|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Contact Number</span>
+                                <span class="data-value" style="color: #f59e0b; font-weight: 500;">{{ user_data.phone_no|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Email</span>
+                                <span class="data-value" style="color: #f59e0b; font-weight: 500;">{{ user_data.email|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Inventory Location</span>
+                                <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 col-sm-6">
+                            <div class="data-box">
+                                <span class="data-label">Industry</span>
+                                <span class="data-value">{{ user_data.industry|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Main Product Details -->
+        <div class="col-12">
+            <h5 class="fw-bold text-dark mb-3 px-1"><i class="bi bi-box-seam text-primary me-2"></i>Product Details</h5>
+            
+            <div class="row g-4">
+                <!-- Left Column (Data) -->
+                <div class="col-lg-8">
+                    
+                    <!-- Key Metrics Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="metric-card p-3 rounded-3 border bg-white h-100">
+                                <span class="d-block text-muted small fw-semibold text-uppercase mb-1">Quantity</span>
+                                <span class="fs-5 fw-bold text-dark"><i class="bi bi-box-seam text-primary me-1"></i> {{ product_data.quantity|default:"0" }}</span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="metric-card p-3 rounded-3 border bg-white h-100">
+                                <span class="d-block text-muted small fw-semibold text-uppercase mb-1">Category</span>
+                                <span class="fs-6 fw-bold text-dark text-truncate d-block" title="{% if enquiry.category %}{{ enquiry.category.name }}{% else %}{{ product_data.product_category|default:'N/A' }}{% endif %}">
+                                    {% if enquiry.category %}
+                                        {{ enquiry.category.name }}
+                                    {% else %}
+                                        {{ product_data.product_category|default:"N/A" }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="metric-card p-3 rounded-3 border bg-white h-100">
+                                <span class="d-block text-muted small fw-semibold text-uppercase mb-1">Subcategory</span>
+                                <span class="fs-6 fw-bold text-dark text-truncate d-block" title="{% if enquiry.subcategory %}{{ enquiry.subcategory.name }}{% else %}N/A{% endif %}">
+                                    {% if enquiry.subcategory %}
+                                        {{ enquiry.subcategory.name }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="metric-card p-3 rounded-3 border bg-white h-100">
+                                <span class="d-block text-muted small fw-semibold text-uppercase mb-1">Date Added</span>
+                                <span class="fs-6 fw-bold text-dark d-block">{{ enquiry.created_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Section -->
+                    <div class="premium-card p-4 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
+                        </h6>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="inline-card border-left-success py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-success me-1"></i> Current Price</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{{ product_data.current_price|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="inline-card border-left-primary py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-cash me-1 text-primary"></i> Liquidating Price</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{{ product_data.liquidating_price|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="inline-card border-left-warning py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-clock-history text-warning me-1"></i> Previous Price</span>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{{ product_data.previous_price|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="inline-card border-left-info py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-hand-thumbs-up-fill text-info me-1"></i> Available for Offers</span>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" 
+                                            class="btn btn-sm {% if enquiry.is_available_for_offers %}btn-outline-success{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm btn-toggle-offers" 
+                                            data-id="{{ enquiry.id }}" 
+                                            data-offers="{% if enquiry.is_available_for_offers %}false{% else %}true{% endif %}"
+                                            title="Click to toggle Available for Offers">
+                                        {% if enquiry.is_available_for_offers %}
+                                        <i class="bi bi-toggle-on fs-5 text-success"></i> <span class="ms-2">Yes</span>
+                                        {% else %}
+                                        <i class="bi bi-toggle-off fs-5 text-secondary"></i> <span class="ms-2">No</span>
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Specifications Section -->
+                    <div class="premium-card p-4 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-list-check me-2 text-primary"></i>Specifications
+                        </h6>
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Product Name</span>
+                                    <span class="text-dark fw-medium">{{ product_data.product_name|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Brand Name</span>
+                                    <span class="text-dark fw-medium">{{ product_data.brand_name|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Model No. / Part No.</span>
+                                    <span class="text-dark fw-medium">{{ product_data.model_no|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
+                                    <span class="text-dark fw-medium">{{ product_data.manufacturing_country|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Year</span>
+                                    <span class="text-dark fw-medium">{{ product_data.manufacturing_year|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Dimensions</span>
+                                    <span class="text-dark fw-medium">{{ product_data.dimensions|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Expiry Date</span>
+                                    <span class="text-dark fw-medium">{{ product_data.expiry_date|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Excluded Countries</span>
+                                    <span class="text-dark fw-medium">{{ product_data.excluded_countries|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Warranty</span>
+                                    <span class="text-dark fw-medium">{{ product_data.warranty|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Stock Condition</span>
+                                    <span class="text-dark fw-medium">{{ product_data.condition|default:"Surplus / New" }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Date Approved</span>
+                                    <span class="text-dark fw-medium">{{ product_data.date_approved|default:"Not Approved Yet" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">3rd Party Certificate</span>
+                                    {% if product_data.certificate %}
+                                        <a href="{{ product_data.certificate }}" target="_blank" class="badge bg-primary text-white rounded px-2 py-1 text-decoration-none">View Certificate</a>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white rounded px-2 py-1">No</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Extra Dynamic Fields -->
+                            {% for key, val in product_data.items %}
+                                {% if key not in "product_name,product_category,brand_name,model_no,manufacturing_country,manufacturing_year,dimensions,expiry_date,excluded_countries,quantity,currency,liquidating_price,current_price,previous_price,description,reason_to_sell,warranty,certificate,title,condition,target_price,is_available_for_offers,date_approved,featured_image_url,third_party_certificate,documents,seller_email" %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="spec-item">
+                                        <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key|title }}</span>
+                                        <span class="text-dark fw-medium">{{ val|default:"N/A" }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Description & Long Text Section -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <div class="premium-card p-4 h-100">
+                                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                                    <i class="bi bi-file-text me-2 text-primary"></i>Description
+                                </h6>
+                                <p class="text-dark mb-0" style="line-height: 1.7; white-space: pre-wrap;">{{ product_data.description|default:"No description provided." }}</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="premium-card p-4 h-100">
+                                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                                    <i class="bi bi-info-circle me-2 text-warning"></i>Reason to Sell
+                                </h6>
+                                <p class="text-dark mb-0" style="line-height: 1.7; white-space: pre-wrap;">{{ product_data.reason_to_sell|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Image) -->
+                <div class="col-lg-4">
+                    <div class="premium-card p-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-4 text-center" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-image me-2 text-primary"></i>Product Media
+                        </h6>
+                        <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
+                            {% if enquiry.image %}
+                            <img src="{{ enquiry.image.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            {% elif enquiry.raw_data.featured_image_url %}
+                            <img src="{{ enquiry.raw_data.featured_image_url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            {% elif enquiry.raw_data.image %}
+                            <img src="{{ enquiry.raw_data.image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            {% elif enquiry.raw_data.product_image %}
+                            <img src="{{ enquiry.raw_data.product_image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            {% else %}
+                            <div class="p-5 text-muted fst-italic">
+                                <i class="bi bi-image text-muted opacity-50 mb-3 d-block" style="font-size: 3rem;"></i>
+                                No images available
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Status update handler
+        document.querySelectorAll('.btn-action-status').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const newStatus = this.dataset.status;
+
+                fetch(`/admin/api/enquiries/seller/${id}/status/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating status.');
+                    });
+            });
+        });
+
+        // Active status toggle handler
+        document.querySelectorAll('.btn-action-active-status').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const newActive = this.dataset.active;
+
+                fetch(`/admin/api/enquiries/seller/${id}/status/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ active_status: newActive })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating active status.');
+                    });
+            });
+        });
+
+        // Toggle Available for Offers handler
+        document.querySelectorAll('.btn-toggle-offers').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const newOffersState = this.dataset.offers === 'true';
+
+                fetch(`/admin/api/enquiries/seller/${id}/edit/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ is_available_for_offers: newOffersState })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.message || 'Error updating offer availability status.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while updating offer availability status.');
+                    });
+            });
+        });
+
+        // Edit Form Submit Handler
+        const editForm = document.getElementById('editSellerEnquiryForm');
+        if (editForm) {
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('saveEditBtn');
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+
+                const formData = new FormData(editForm);
+                const payload = {};
+                formData.forEach((val, key) => { payload[key] = val; });
+
+                try {
+                    const res = await fetch(`/admin/api/enquiries/seller/{{ enquiry.id }}/edit/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Failed to update enquiry.');
+                        btn.disabled = false;
+                        btn.textContent = 'Save Changes';
+                    }
+                } catch (err) {
+                    alert('Connection error. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Save Changes';
+                }
+            });
+        }
+    });
+</script>
+
+<!-- Edit Seller Enquiry Modal -->
+<div class="modal fade" id="editSellerEnquiryModal" tabindex="-1" aria-labelledby="editSellerEnquiryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editSellerEnquiryModalLabel">
+                    <i class="bi bi-pencil-square text-primary"></i> Edit Product Enquiry ({{ enquiry.product_id }})
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editSellerEnquiryForm">
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Product Name / Title</label>
+                            <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:product_data.product_name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
+                            <select class="form-select" name="enquiry_status">
+                                <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
+                                <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-dark">Active Status</label>
+                            <select class="form-select" name="active_status">
+                                <option value="active" {% if enquiry.is_active %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if not enquiry.is_active %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Category</label>
+                            <select class="form-select" name="subcategory_id">
+                                <option value="">-- Select Category --</option>
+                                {% for main in categories %}
+                                <optgroup label="{{ main.name }}">
+                                    {% for sub in main.subcategories.all %}
+                                    <option value="{{ sub.id }}" {% if enquiry.category_id == sub.id or product_data.product_category == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Brand Name</label>
+                            <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Liquidating Price ({{ product_data.currency|default:'AED' }})</label>
+                            <input type="number" step="0.01" class="form-control" name="price" value="{{ enquiry.price|default:product_data.liquidating_price|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Original / Previous Price</label>
+                            <input type="number" step="0.01" class="form-control" name="original_price" value="{{ product_data.previous_price|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Quantity</label>
+                            <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Model / Part No</label>
+                            <input type="text" class="form-control" name="model_no" value="{{ product_data.model_no|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Manufacturing Country</label>
+                            <input type="text" class="form-control" name="manufacturing_country" value="{{ enquiry.manufacturing_country|default:product_data.manufacturing_country|default:'' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold text-dark">Manufacturing Year</label>
+                            <input type="number" class="form-control" name="manufacturing_year" value="{{ enquiry.manufacturing_year|default:product_data.manufacturing_year|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Dimensions</label>
+                            <input type="text" class="form-control" name="dimensions" value="{{ enquiry.dimensions|default:product_data.dimensions|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Warranty</label>
+                            <input type="text" class="form-control" name="warranty" value="{{ enquiry.warranty|default:product_data.warranty|default:'' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-dark">Inventory Location</label>
+                            <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:user_data.business_location|default:'' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
+                            <textarea class="form-control" name="reason_to_sell" rows="2">{{ enquiry.reason_to_sell|default:product_data.reason_to_sell|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold text-dark">Description</label>
+                            <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4" id="saveEditBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

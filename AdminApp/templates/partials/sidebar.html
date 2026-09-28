@@ -1,0 +1,328 @@
+{% load static %}
+<aside class="dashboard-sidebar" id="dashboardSidebar">
+    <!-- Sidebar Brand -->
+    <a href="/admin/dashboard/" class="sidebar-brand">
+        <img src="{% static 'images/surplus_main_logo.png' %}" alt="Surplus Market" class="sidebar-brand-logo">
+    </a>
+
+    <!-- Menu Search Filter -->
+    <div class="sidebar-search-box px-3 pt-3 pb-2">
+        <div class="input-group input-group-sm">
+            <input
+                type="text"
+                id="menuSearchInput"
+                class="form-control rounded-2 border"
+                placeholder="Search menu..."
+                aria-label="Search menu"
+            >
+        </div>
+    </div>
+
+    <!-- Navigation Content -->
+    <div class="sidebar-content pt-2">
+        
+        <!-- SECTION: MAIN -->
+        <div class="nav-section-title">MAIN</div>
+        <ul class="sidebar-nav" id="mainNavList">
+            <li class="nav-item">
+                <a href="/admin/dashboard/" class="nav-link {% if request.path == '/admin/dashboard/' %}active{% endif %}">
+                    <i class="bi bi-grid-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/excel-test/" class="nav-link {% if request.path == '/admin/excel-test/' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    <span>Excel Test</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/popup/" class="nav-link {% if request.path == '/admin/popup/' %}active{% endif %}">
+                    <i class="bi bi-camera"></i>
+                    <span>Pop Up</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/product-url/" class="nav-link {% if request.path == '/admin/product-url/' %}active{% endif %}">
+                    <i class="bi bi-link-45deg"></i>
+                    <span>Product URL</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/brands/" class="nav-link {% if request.path == '/admin/brands/' %}active{% endif %}">
+                    <i class="bi bi-award"></i>
+                    <span>Brands Manage</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/resources/" class="nav-link {% if request.path == '/admin/resources/' %}active{% endif %}">
+                    <i class="bi bi-download"></i>
+                    <span>Resources Manage</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- SECTION: ENQUIRIES -->
+        <div class="nav-section-title">ENQUIRIES</div>
+        <ul class="sidebar-nav" id="enquiriesNavList">
+            <!-- Lot Enquiries Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {% if '/admin/enquiries/lot' in request.path %}active{% endif %}" data-bs-toggle="collapse" href="#lotEnquiriesCollapse" role="button" aria-expanded="{% if '/admin/enquiries/lot' in request.path %}true{% else %}false{% endif %}" aria-controls="lotEnquiriesCollapse">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-box-seam"></i>
+                        <span>Lot Enquiries</span>
+                    </div>
+                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                </a>
+                <div class="collapse submenu-collapse {% if '/admin/enquiries/lot' in request.path %}show{% endif %}" id="lotEnquiriesCollapse">
+                    <ul class="submenu-list">
+                        <li><a href="/admin/enquiries/lots/pending/" class="submenu-link {% if request.path == '/admin/enquiries/lots/pending/' %}active{% endif %}">Pending</a></li>
+                        <li><a href="/admin/enquiries/lots/approved/" class="submenu-link {% if request.path == '/admin/enquiries/lots/approved/' %}active{% endif %}">Approved</a></li>
+                        <li><a href="/admin/enquiries/lots/declined/" class="submenu-link {% if request.path == '/admin/enquiries/lots/declined/' %}active{% endif %}">Declined</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- General Enquiries Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {% if '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}active{% endif %}" data-bs-toggle="collapse" href="#generalEnquiriesCollapse" role="button" aria-expanded="{% if '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}true{% else %}false{% endif %}" aria-controls="generalEnquiriesCollapse">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-dots"></i>
+                        <span>General Enquiries</span>
+                    </div>
+                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                </a>
+                <div class="collapse submenu-collapse {% if '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}show{% endif %}" id="generalEnquiriesCollapse">
+                    <ul class="submenu-list">
+                        <li><a href="/admin/enquiries/whatsapp/" class="submenu-link {% if '/admin/enquiries/whatsapp' in request.path %}active{% endif %}">WhatsApp Enquiries</a></li>
+                        <li><a href="/admin/enquiries/contact-us/" class="submenu-link {% if '/admin/enquiries/contact-us' in request.path %}active{% endif %}">Contact Us</a></li>
+                        <li><a href="/admin/enquiries/partnership/" class="submenu-link {% if '/admin/enquiries/partnership' in request.path %}active{% endif %}">Partnership Enquiries</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Seller Enquiries Dropdown -->
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {% if '/admin/enquiries/seller' in request.path %}active{% endif %}" data-bs-toggle="collapse" href="#sellerEnquiriesCollapse" role="button" aria-expanded="{% if '/admin/enquiries/seller' in request.path %}true{% else %}false{% endif %}" aria-controls="sellerEnquiriesCollapse">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-envelope"></i>
+                        <span>Seller Enquiries</span>
+                    </div>
+                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                </a>
+                <div class="collapse submenu-collapse {% if '/admin/enquiries/seller' in request.path %}show{% endif %}" id="sellerEnquiriesCollapse">
+                    <ul class="submenu-list">
+                        <li><a href="/admin/enquiries/seller/pending/" class="submenu-link {% if request.path == '/admin/enquiries/seller/pending/' %}active{% endif %}">Pending</a></li>
+                        <li><a href="/admin/enquiries/seller/approved/" class="submenu-link {% if request.path == '/admin/enquiries/seller/approved/' %}active{% endif %}">Approved</a></li>
+                        <li><a href="/admin/enquiries/seller/declined/" class="submenu-link {% if request.path == '/admin/enquiries/seller/declined/' %}active{% endif %}">Declined</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- RFQ Requests -->
+            <li class="nav-item">
+                <a href="/admin/rfq-requests/" class="nav-link {% if request.path == '/admin/rfq-requests/' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>RFQ Requests</span>
+                </a>
+            </li>
+
+        </ul>
+
+        <!-- SECTION: USER MANAGEMENT -->
+        <div class="nav-section-title">USER MANAGEMENT</div>
+        <ul class="sidebar-nav" id="userManagementNavList">
+            <li class="nav-item">
+                <a href="/admin/users/" class="nav-link {% if '/admin/users/' in request.path or '/admin/manage-users/' in request.path %}active{% endif %}">
+                    <i class="bi bi-people"></i>
+                    <span>Manage Users</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/sellers-buyers/" class="nav-link {% if '/admin/sellers-buyers/' in request.path %}active{% endif %}">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>Sellers & Buyers</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- SECTION: CATEGORY -->
+        <div class="nav-section-title">CATEGORY</div>
+        <ul class="sidebar-nav" id="categoryNavList">
+            <li class="nav-item">
+                <a href="/admin/categories/main/" class="nav-link {% if '/admin/categories/main/' in request.path %}active{% endif %}">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    <span>Categories Management</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- SECTION: PRODUCTS -->
+        <div class="nav-section-title">PRODUCTS</div>
+        <ul class="sidebar-nav" id="productsNavList">
+            <li class="nav-item">
+                <a href="/admin/products/add/" class="nav-link {% if request.path == '/admin/products/add/' %}active{% endif %}">
+                    <i class="bi bi-plus-square"></i>
+                    <span>Add Product</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/lots/add/" class="nav-link {% if request.path == '/admin/lots/add/' %}active{% endif %}">
+                    <i class="bi bi-plus-square-dotted"></i>
+                    <span>Add Lot Batch</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="/admin/lots/list/" class="nav-link {% if request.path == '/admin/lots/list/' %}active{% endif %}">
+                    <i class="bi bi-collection"></i>
+                    <span>Lot List</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/products/all/" class="nav-link {% if request.path == '/admin/products/all/' %}active{% endif %}">
+                    <i class="bi bi-archive"></i>
+                    <span>All Products</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/products/price-control/" class="nav-link {% if request.path == '/admin/products/price-control/' %}active{% endif %}">
+                    <i class="bi bi-sliders"></i>
+                    <span>Price Control</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/products/similar/" class="nav-link {% if request.path == '/admin/products/similar/' %}active{% endif %}">
+                    <i class="bi bi-copy"></i>
+                    <span>Similar Products</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/products/expired/" class="nav-link {% if request.path == '/admin/products/expired/' %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>Expired Products</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- SECTION: CONTENT MANAGER -->
+        <div class="nav-section-title">CONTENT MANAGER</div>
+        <ul class="sidebar-nav" id="contentNavList">
+            <li class="nav-item">
+                <a href="/admin/content/pages/" class="nav-link {% if '/admin/content/pages/' in request.path %}active{% endif %}">
+                    <i class="bi bi-file-earmark-richtext"></i>
+                    <span>Pages</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/content/blogs/" class="nav-link {% if '/admin/content/blogs/' in request.path %}active{% endif %}">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Blogs</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/content/webinars/" class="nav-link {% if '/admin/content/webinars/' in request.path %}active{% endif %}">
+                    <i class="bi bi-camera-video"></i>
+                    <span>Webinar</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- SECTION: SYSTEM MAINTENANCE -->
+        <div class="nav-section-title">SYSTEM</div>
+        <ul class="sidebar-nav" id="systemNavList">
+            <li class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#maintenanceCollapse" role="button" aria-expanded="true" aria-controls="maintenanceCollapse">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check fs-5" style="color: #f97316;"></i>
+                        <span class="fw-semibold" style="color: #f97316;">Maintenance</span>
+                    </div>
+                    <i class="bi bi-chevron-down small arrow-indicator"></i>
+                </a>
+                <div class="collapse show submenu-collapse px-2 py-2" id="maintenanceCollapse">
+                    <div class="card border-0 shadow-xs p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important;">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="text-secondary small fw-medium" style="font-size: 0.8rem;">Website Status:</span>
+                            <span id="sidebarStatusBadge" class="badge {% if is_maintenance_mode %}bg-danger-subtle text-danger border-danger-subtle{% else %}bg-success-subtle text-success border-success-subtle{% endif %} border rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                                <span id="sidebarStatusDot" class="rounded-circle {% if is_maintenance_mode %}bg-danger{% else %}bg-success{% endif %} d-inline-block" style="width: 7px; height: 7px;"></span>
+                                <span id="sidebarStatusText">{% if is_maintenance_mode %}Maintenance{% else %}Live{% endif %}</span>
+                            </span>
+                        </div>
+                        <p id="sidebarStatusSubtext" class="text-muted small mb-3" style="font-size: 0.76rem; line-height: 1.35;">
+                            {% if is_maintenance_mode %}Website is under maintenance{% else %}Visitors can access the website normally{% endif %}
+                        </p>
+                        <button type="button" id="sidebarToggleMaintenanceBtn" class="btn {% if is_maintenance_mode %}btn-success{% else %}btn-danger{% endif %} w-100 py-2 fw-bold text-white shadow-xs rounded-3" style="font-size: 0.84rem;">
+                            {% if is_maintenance_mode %}Set to Live{% else %}Set to Maintenance{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </li>
+        </ul>
+
+    </div>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Realtime sidebar menu search filter
+        const searchInput = document.getElementById('menuSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                const navItems = document.querySelectorAll('.dashboard-sidebar .nav-item');
+                navItems.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Maintenance Toggle API Handler
+        const toggleMaintBtn = document.getElementById('sidebarToggleMaintenanceBtn');
+        const statusBadge = document.getElementById('sidebarStatusBadge');
+        const statusDot = document.getElementById('sidebarStatusDot');
+        const statusText = document.getElementById('sidebarStatusText');
+        const statusSubtext = document.getElementById('sidebarStatusSubtext');
+
+        if (toggleMaintBtn) {
+            toggleMaintBtn.addEventListener('click', async () => {
+                toggleMaintBtn.disabled = true;
+                try {
+                    const res = await fetch('/admin/api/maintenance/toggle/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        if (data.is_maintenance_mode) {
+                            statusBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1';
+                            statusDot.className = 'rounded-circle bg-danger d-inline-block';
+                            statusText.textContent = 'Maintenance';
+                            statusSubtext.textContent = 'Website is under maintenance';
+                            toggleMaintBtn.className = 'btn btn-success w-100 py-2 fw-bold text-white shadow-xs rounded-3';
+                            toggleMaintBtn.textContent = 'Set to Live';
+                        } else {
+                            statusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1';
+                            statusDot.className = 'rounded-circle bg-success d-inline-block';
+                            statusText.textContent = 'Live';
+                            statusSubtext.textContent = 'Visitors can access the website normally';
+                            toggleMaintBtn.className = 'btn btn-danger w-100 py-2 fw-bold text-white shadow-xs rounded-3';
+                            toggleMaintBtn.textContent = 'Set to Maintenance';
+                        }
+                    } else {
+                        alert(data.message || 'Failed to toggle maintenance mode.');
+                    }
+                } catch (err) {
+                    alert('Server error occurred while toggling maintenance mode.');
+                } finally {
+                    toggleMaintBtn.disabled = false;
+                }
+            });
+        }
+    });
+</script>
+

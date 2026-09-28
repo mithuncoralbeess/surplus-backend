@@ -1,0 +1,147 @@
+{% load static %}
+<header class="top-navbar">
+    <!-- Left: Mobile Toggle & Product Search Pill -->
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-secondary d-lg-none p-1 px-2 border" id="sidebarToggleBtn" type="button" aria-label="Toggle sidebar">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+
+        <div class="navbar-search-pill">
+            <i class="bi bi-search search-icon"></i>
+            <input
+                type="text"
+                class="form-control pill-input"
+                placeholder="Products Search"
+                aria-label="Products Search"
+            >
+        </div>
+    </div>
+
+    <!-- Right: Theme Switcher, Fullscreen & User Profile Dropdown -->
+    <div class="d-flex align-items-center gap-2 gap-md-3">
+        <!-- Theme Switching Button (Gear Icon) -->
+        <button class="navbar-action-btn" id="themeSwitchBtn" type="button" title="Switch Theme (Light / Dark)" aria-label="Switch Theme">
+            <i class="bi bi-gear-fill" id="themeIcon"></i>
+        </button>
+
+        <!-- Fullscreen Button -->
+        <button class="navbar-action-btn" id="fullscreenToggleBtn" type="button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+            <i class="bi bi-fullscreen" id="fullscreenIcon"></i>
+        </button>
+
+        <!-- User Profile Dropdown -->
+        <div class="dropdown user-profile-dropdown">
+            <button class="btn user-profile-btn d-flex align-items-center gap-2 p-1 text-start" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="user-display-name fw-semibold" id="userProfileName">{{ admin.username|default:"MainAdmin" }}</span>
+                        <i class="bi bi-chevron-down text-secondary" style="font-size: 0.75rem;"></i>
+                    </div>
+                    <div class="user-display-role text-secondary small">{{ admin.account_type|default:"Super Admin" }}</div>
+                </div>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border rounded-3 mt-2 py-2">
+                <li class="px-3 py-1 mb-1 border-bottom pb-2">
+                    <span class="fw-bold d-block small user-dropdown-header-name">{{ admin.username }}</span>
+                    <span class="text-secondary small text-truncate d-block" style="max-width: 180px;">{{ admin.email }}</span>
+                </li>
+                <li>
+                    <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="/admin/dashboard/">
+                        <i class="bi bi-grid-1x2 text-secondary"></i> Dashboard Overview
+                    </a>
+                </li>
+                <li>
+                    <button class="dropdown-item small py-2 d-flex align-items-center gap-2" type="button" id="themeDropdownSwitchBtn">
+                        <i class="bi bi-circle-half text-secondary"></i> <span id="themeToggleText">Switch to Dark Theme</span>
+                    </button>
+                </li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <li>
+                    <a class="dropdown-item small py-2 text-danger d-flex align-items-center gap-2" href="/admin/logout/">
+                        <i class="bi bi-box-arrow-right"></i> Log Out
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Theme Switching Logic
+        const themeBtn = document.getElementById('themeSwitchBtn');
+        const themeDropdownBtn = document.getElementById('themeDropdownSwitchBtn');
+        const themeToggleText = document.getElementById('themeToggleText');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+
+        // Load saved theme or default to light
+        const currentTheme = localStorage.getItem('surplus_theme') || 'light';
+        applyTheme(currentTheme);
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                htmlElement.setAttribute('data-bs-theme', 'dark');
+                document.body.classList.remove('bg-light', 'text-dark');
+                document.body.classList.add('bg-dark', 'text-light');
+                if (themeIcon) {
+                    themeIcon.className = 'bi bi-moon-stars-fill text-warning';
+                }
+                if (themeToggleText) {
+                    themeToggleText.textContent = 'Switch to Light Theme';
+                }
+                if (themeBtn) {
+                    themeBtn.setAttribute('title', 'Theme: Dark Mode (Click to switch to Light)');
+                }
+            } else {
+                htmlElement.setAttribute('data-bs-theme', 'light');
+                document.body.classList.remove('bg-dark', 'text-light');
+                document.body.classList.add('bg-light', 'text-dark');
+                if (themeIcon) {
+                    themeIcon.className = 'bi bi-gear-fill';
+                }
+                if (themeToggleText) {
+                    themeToggleText.textContent = 'Switch to Dark Theme';
+                }
+                if (themeBtn) {
+                    themeBtn.setAttribute('title', 'Theme: Light Mode (Click to switch to Dark)');
+                }
+            }
+            localStorage.setItem('surplus_theme', theme);
+        }
+
+        function toggleCurrentTheme() {
+            const current = htmlElement.getAttribute('data-bs-theme') || 'light';
+            const nextTheme = current === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        }
+
+        if (themeBtn) {
+            themeBtn.addEventListener('click', toggleCurrentTheme);
+        }
+
+        if (themeDropdownBtn) {
+            themeDropdownBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleCurrentTheme();
+            });
+        }
+
+        // Fullscreen Toggle Handler
+        const fsBtn = document.getElementById('fullscreenToggleBtn');
+        const fsIcon = document.getElementById('fullscreenIcon');
+        if (fsBtn && fsIcon) {
+            fsBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().then(() => {
+                        fsIcon.className = 'bi bi-fullscreen-exit';
+                    }).catch(err => console.log(err));
+                } else {
+                    document.exitFullscreen().then(() => {
+                        fsIcon.className = 'bi bi-fullscreen';
+                    }).catch(err => console.log(err));
+                }
+            });
+        }
+    });
+</script>

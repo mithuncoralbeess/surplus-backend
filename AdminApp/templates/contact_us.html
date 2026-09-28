@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<!-- Page Header & Action -->
+<div class="page-header-container">
+    <div>
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><span>General Enquiries</span></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>{{ page_title }}</span></li>
+            </ol>
+        </nav>
+        <h1 class="header-title">{{ page_title }}</h1>
+        <p class="header-subtitle">{{ page_subtitle }}</p>
+    </div>
+</div>
+
+    <!-- Main Content Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <!-- Filters & Toolbar Row -->
+            <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                <!-- Search -->
+                <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
+                    <input type="text" class="form-control rounded-end-0" placeholder="Search In Messages"
+                        style="min-width: 250px;">
+                    <button class="btn btn-primary rounded-start-0 px-4">Search</button>
+                </div>
+
+                <!-- Export & Bulk Actions -->
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn text-white px-3 d-flex align-items-center gap-2"
+                        style="background-color: #2e7d32; font-size: 14px !important;">
+                        <i class="bi bi-file-earmark-excel-fill"></i> Export to Excel
+                    </button>
+
+                    <div class="d-flex align-items-center">
+                        <select class="form-select rounded-end-0 text-secondary" style="min-width: 150px; font-size: 14px !important;">
+                            <option>Bulk Actions</option>
+                            <option>Delete</option>
+                            <option>Block</option>
+                        </select>
+                        <button class="btn text-white rounded-start-0 px-4" style="background-color: #f97316; border-color: #f97316; font-size: 14px !important;">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr class="border-bottom text-dark">
+                            <th class="fw-semibold pb-3 ps-3" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" value="">
+                            </th>
+                            <th class="fw-semibold pb-3">User name</th>
+                            <th class="fw-semibold pb-3">contact No.</th>
+                            <th class="fw-semibold pb-3">Email</th>
+                            <th class="fw-semibold pb-3">Date</th>
+                            <th class="fw-semibold pb-3">Time</th>
+                            <th class="fw-semibold pb-3">Contact Type</th>
+                            <th class="fw-semibold pb-3" style="width: 35%;">Message</th>
+                            <th class="fw-semibold pb-3 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in contacts %}
+                        <tr class="border-bottom">
+                            <td class="ps-3 py-4">
+                                <input class="form-check-input border-secondary" type="checkbox"
+                                    value="{{ contact.id }}">
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.name }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.phone }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.email }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.date }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.time }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary">{{ contact.type }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="text-secondary d-inline-block text-truncate align-middle" style="max-width: 180px;" title="{{ contact.message }}">
+                                    {{ contact.message }}
+                                </span>
+                                <a href="#" class="text-primary text-decoration-none ms-1 align-middle" style="font-size: 13px;" data-bs-toggle="modal" data-bs-target="#messageModal{{ contact.id }}">Show more</a>
+
+                                <!-- Message Modal -->
+                                <div class="modal fade" id="messageModal{{ contact.id }}" tabindex="-1" aria-labelledby="messageModalLabel{{ contact.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow">
+                                            <div class="modal-header border-bottom-0 pb-0">
+                                                <h5 class="modal-title fw-bold" id="messageModalLabel{{ contact.id }}">Message from {{ contact.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body py-4">
+                                                <p class="text-secondary mb-0" style="white-space: pre-wrap;">{{ contact.message }}</p>
+                                            </div>
+                                            <div class="modal-footer border-top-0 pt-0">
+                                                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-sm text-dark px-3"
+                                        style="background-color: #fbbf24; font-weight: 500; font-size: 14px !important;">Block</button>
+                                    <button class="btn btn-sm text-white px-3"
+                                        style="background-color: #e11d48; font-weight: 500; font-size: 14px !important;">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                                No contact enquiries found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

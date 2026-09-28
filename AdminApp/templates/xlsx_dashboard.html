@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk XLSX Portal - Surplus{% endblock %}
+{% block page_title %}Bulk XLSX Management{% endblock %}
+
+{% block content %}
+<div class="card border rounded-4 p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="h5 fw-bold mb-1">
+                <i class="bi bi-file-earmark-spreadsheet-fill text-primary-custom me-2"></i>Bulk Data Feeds & Inventory Sync
+            </h3>
+            <p class="text-secondary small mb-0">Upload structured Excel (.xlsx) or CSV files to bulk update the catalog.</p>
+        </div>
+        <span class="badge badge-primary-custom px-3 py-2">XLSX Engine Active</span>
+    </div>
+    
+    <div class="p-4 rounded-3 border border-dashed text-center my-3">
+        <i class="bi bi-cloud-arrow-up-fill fs-1 text-primary-custom"></i>
+        <h5 class="fw-bold mt-2">Drag and drop your spreadsheet here</h5>
+        <p class="text-secondary small">Supports .xlsx, .xls, and .csv files up to 25MB</p>
+        <button class="btn btn-primary btn-sm px-4 fw-semibold mt-2">Browse Files</button>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Vendor Portal - Surplus{% endblock %}
+{% block page_title %}Vendor Self-Service Portal{% endblock %}
+
+{% block content %}
+<div class="card border rounded-4 p-4 shadow-sm mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="h5 fw-bold mb-1">
+                <i class="bi bi-shop text-primary-custom me-2"></i>Vendor Surplus Inventory
+            </h3>
+            <p class="text-secondary small mb-0">Manage surplus batches, distribution requests, and pickup scheduling.</p>
+        </div>
+        <span class="badge badge-primary-custom px-3 py-2">Vendor Verified</span>
+    </div>
+
+    <div class="row g-3 mt-2">
+        <div class="col-md-6">
+            <div class="p-4 rounded-3 border h-100">
+                <h5 class="fw-bold"><i class="bi bi-plus-circle-dotted text-primary-custom me-2"></i>Submit Surplus Batch</h5>
+                <p class="text-secondary small mb-3">List items near expiry, clearance lots, or excess factory inventory.</p>
+                <button class="btn btn-primary btn-sm fw-semibold">Create New Submission</button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="p-4 rounded-3 border h-100">
+                <h5 class="fw-bold"><i class="bi bi-truck text-primary-custom me-2"></i>Active Distributions</h5>
+                <p class="text-secondary small mb-3">Track buyer orders, carrier pickups, and proof-of-delivery receipts.</p>
+                <button class="btn btn-outline-secondary btn-sm fw-semibold">View Dispatches</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

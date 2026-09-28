@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Excel Parser & Field Validation Test{% endblock %}
+
+{% block content %}
+<style>
+    /* Strict layout containment: prevent page-level horizontal scrollbar */
+    html, body, .dashboard-wrapper, .main-layout, .dashboard-main-content {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+
+    /* Wrap pre tags so JSON doesn't stretch outer page width */
+    pre {
+        white-space: pre-wrap !important;
+        word-break: break-all !important;
+        overflow-x: auto !important;
+        max-width: 100% !important;
+    }
+
+    /* Isolate scrollbars strictly to the table container */
+    .table-scroll-box {
+        max-height: 520px;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+    }
+</style>
+
+<div class="container-fluid px-4 py-4" style="max-width: 100%; overflow-x: hidden;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1 text-body">Excel Parser & Field Validation Test</h2>
+            <p class="text-secondary small mb-0">Upload spreadsheets to test column mapping and field validation against all 45 fixed product fields.</p>
+        </div>
+        <div>
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                All 45 Fixed Schema Fields (8 Mandatory *)
+            </span>
+        </div>
+    </div>
+
+    <!-- Upload Card -->
+    <div class="card border shadow-sm rounded-4 mb-4 bg-body-tertiary" style="max-width: 100%;">
+        <div class="card-header bg-body border-bottom px-4 py-3">
+            <h5 class="fw-bold mb-0 text-body fs-6"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Upload Inventory Spreadsheet (.xlsx / .csv)</h5>
+        </div>
+        <div class="card-body p-4">
+            <form id="excelTestForm">
+                <div class="mb-3">
+                    <label for="excelFile" class="form-label fw-semibold text-body small">Select .xlsx or .csv file</label>
+                    <input class="form-control rounded-3" type="file" id="excelFile" accept=".csv, .xlsx, .xls" required>
+                    <div class="form-text small">Mandatory columns: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*, MOQ*, Product Condition*</div>
+                </div>
+                <button type="submit" class="btn btn-primary px-4 py-2 rounded-3 fw-semibold" id="parseBtn">
+                    <i class="bi bi-gear-fill me-1"></i> Parse & Validate Spreadsheet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Validation Result Card -->
+    <div class="card border shadow-sm rounded-4 d-none overflow-hidden" id="resultCard" style="max-width: 100%;">
+        <div class="card-header bg-body border-bottom px-4 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-body fs-6" id="resultTitle">Parsing & Validation Results</h5>
+            </div>
+            <div id="statusBadgeContainer">
+                <span class="badge bg-success fs-6 px-3 py-1.5 rounded-pill" id="summaryBadge"></span>
+            </div>
+        </div>
+        <div class="card-body p-4" style="max-width: 100%; overflow-x: hidden;">
+
+            <!-- Validation Warnings / Alerts Container -->
+            <div id="validationAlerts" class="mb-4"></div>
+
+            <!-- Mapping Summary -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border rounded-3 p-3 bg-body-secondary h-100" style="max-width: 100%; overflow: hidden;">
+                        <h6 class="fw-bold text-body small mb-2"><i class="bi bi-check2-square text-success me-1"></i>Detected & Mapped Fields (<span id="mappedCount">0</span>/45)</h6>
+                        <pre id="mappingResult" class="bg-body p-3 rounded-3 border mb-0 small text-body font-monospace" style="max-height: 250px; overflow: auto; font-size: 0.82rem; white-space: pre-wrap; word-break: break-all;"></pre>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border rounded-3 p-3 bg-body-secondary h-100">
+                        <h6 class="fw-bold text-body small mb-2"><i class="bi bi-bar-chart-fill text-primary me-1"></i>Summary Statistics</h6>
+                        <div class="p-3 bg-body rounded-3 border">
+                            <ul class="list-group list-group-flush mb-0 small">
+                                <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-1">
+                                    <span class="text-secondary">Total Rows Processed:</span>
+                                    <strong class="text-body" id="statTotalItems">0</strong>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-1">
+                                    <span class="text-secondary">Valid Items:</span>
+                                    <strong class="text-success" id="statValidItems">0</strong>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-1">
+                                    <span class="text-secondary">Invalid Items:</span>
+                                    <strong class="text-danger" id="statInvalidItems">0</strong>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-1">
+                                    <span class="text-secondary">Total Quantity Units:</span>
+                                    <strong class="text-body" id="statTotalUnits">0</strong>
+                                </li>
+                                <li class="list-group-item bg-transparent d-flex justify-content-between px-0 py-1">
+                                    <span class="text-secondary">Calculated Total Asking Value:</span>
+                                    <strong class="text-primary" id="statTotalValue">$0.00</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Items Table with Isolated Scrollbar -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-body mb-0"><i class="bi bi-table me-1 text-primary"></i>Parsed Products Preview <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace ms-2" id="previewCountBadge">All Items</span></h6>
+                <span class="text-secondary small"><i class="bi bi-arrows-expand me-1"></i>Scroll table to view all 45 columns</span>
+            </div>
+
+            <div class="border rounded-3 mb-4 shadow-sm table-scroll-box">
+                <table class="table table-hover table-bordered align-middle mb-0 text-nowrap" id="previewTable" style="font-size: 0.82rem;">
+                    <thead class="table-light sticky-top shadow-sm">
+                        <tr class="text-uppercase text-secondary" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                            <th class="py-2.5 px-3 bg-light">S.No*</th>
+                            <th class="py-2.5 bg-light">Product Name*</th>
+                            <th class="py-2.5 bg-light">Product Description*</th>
+                            <th class="py-2.5 bg-light">Product Category*</th>
+                            <th class="py-2.5 bg-light">Subcategory*</th>
+                            <th class="py-2.5 bg-light">Brand / Manufacturer</th>
+                            <th class="py-2.5 bg-light">Model / Part Number</th>
+                            <th class="py-2.5 bg-light">Available Quantity*</th>
+                            <th class="py-2.5 bg-light">MOQ*</th>
+                            <th class="py-2.5 bg-light">Product Condition*</th>
+                            <th class="py-2.5 bg-light">Original Price</th>
+                            <th class="py-2.5 bg-light">Asking Price</th>
+                            <th class="py-2.5 bg-light">Price Negotiable?</th>
+                            <th class="py-2.5 bg-light">Country of Origin</th>
+                            <th class="py-2.5 bg-light">Year of Manufacture</th>
+                            <th class="py-2.5 bg-light">Datasheet / Certificate Link</th>
+                            <th class="py-2.5 bg-light">Qty per Box / Carton</th>
+                            <th class="py-2.5 bg-light">No. of Boxes / Cartons</th>
+                            <th class="py-2.5 bg-light">Packaging Type</th>
+                            <th class="py-2.5 bg-light">Packaging Condition</th>
+                            <th class="py-2.5 bg-light">Net Weight per Unit</th>
+                            <th class="py-2.5 bg-light">Gross Weight per Unit</th>
+                            <th class="py-2.5 bg-light">Length</th>
+                            <th class="py-2.5 bg-light">Width</th>
+                            <th class="py-2.5 bg-light">Height</th>
+                            <th class="py-2.5 bg-light">Measurement Unit</th>
+                            <th class="py-2.5 bg-light">Total Weight</th>
+                            <th class="py-2.5 bg-light">Pallet Count</th>
+                            <th class="py-2.5 bg-light">Lot / Bundle Size</th>
+                            <th class="py-2.5 bg-light">Stock Age</th>
+                            <th class="py-2.5 bg-light">Tested and verified</th>
+                            <th class="py-2.5 bg-light">Functional Status</th>
+                            <th class="py-2.5 bg-light">Visible Damage?</th>
+                            <th class="py-2.5 bg-light">Missing Parts?</th>
+                            <th class="py-2.5 bg-light">Warranty Available?</th>
+                            <th class="py-2.5 bg-light">Inspection Available?</th>
+                            <th class="py-2.5 bg-light">Safety Certificate Available?</th>
+                            <th class="py-2.5 bg-light">Certificate Type</th>
+                            <th class="py-2.5 bg-light">Regulatory Approval</th>
+                            <th class="py-2.5 bg-light">Hazardous Material?</th>
+                            <th class="py-2.5 bg-light">Special Handling Required?</th>
+                            <th class="py-2.5 bg-light">Recyclable?</th>
+                            <th class="py-2.5 bg-light">Est. Life Remaining</th>
+                            <th class="py-2.5 bg-light">Custom Field 1</th>
+                            <th class="py-2.5 bg-light pe-3">Custom Field 2</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Raw Output -->
+            <h6 class="fw-bold text-body mb-2"><i class="bi bi-code-slash me-1 text-secondary"></i>Full Raw JSON Output</h6>
+            <pre id="rawResult" class="bg-dark text-light p-3 rounded-3 font-monospace" style="max-height: 350px; overflow: auto; font-size: 0.8rem; white-space: pre-wrap; word-break: break-all;"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+const ALL_45_FIELDS = [
+    's_no',
+    'product_name',
+    'product_description',
+    'product_category',
+    'subcategory',
+    'brand',
+    'model_part_number',
+    'available_quantity',
+    'moq',
+    'product_condition',
+    'original_price',
+    'asking_price',
+    'price_negotiable',
+    'country_of_origin',
+    'year_of_manufacture',
+    'datasheet_certificate_link',
+    'quantity_per_box',
+    'number_of_boxes',
+    'packaging_type',
+    'packaging_condition',
+    'net_weight_per_unit',
+    'gross_weight_per_unit',
+    'length',
+    'width',
+    'height',
+    'measurement_unit',
+    'total_weight',
+    'pallet_count',
+    'lot_bundle_size',
+    'stock_age',
+    'tested_and_verified',
+    'functional_status',
+    'visible_damage',
+    'missing_parts',
+    'warranty_available',
+    'inspection_available',
+    'safety_certificate_available',
+    'certificate_type',
+    'regulatory_approval',
+    'hazardous_material',
+    'special_handling_required',
+    'recyclable',
+    'estimated_product_life_remaining',
+    'seller_custom_field_1',
+    'seller_custom_field_2'
+];
+
+document.getElementById('excelTestForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const fileInput = document.getElementById('excelFile');
+    const parseBtn = document.getElementById('parseBtn');
+    const resultCard = document.getElementById('resultCard');
+    const alertsContainer = document.getElementById('validationAlerts');
+
+    if (fileInput.files.length === 0) return;
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    parseBtn.disabled = true;
+    parseBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Parsing...';
+
+    try {
+        const response = await fetch('/api/lots/parse/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            resultCard.classList.remove('d-none');
+            alertsContainer.innerHTML = '';
+
+            // 1. Overall Status Badge
+            const summaryBadge = document.getElementById('summaryBadge');
+            if (data.is_valid) {
+                summaryBadge.className = 'badge bg-success fs-6 px-3 py-1.5 rounded-pill';
+                summaryBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Fully Valid Spreadsheet';
+            } else {
+                summaryBadge.className = 'badge bg-danger fs-6 px-3 py-1.5 rounded-pill';
+                summaryBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Validation Errors Found';
+            }
+
+            // 2. Render Validation Alerts
+            if (data.missing_mandatory_columns && data.missing_mandatory_columns.length > 0) {
+                const missingLabels = data.missing_mandatory_columns.map(c => `<strong>${c.label}</strong>`).join(', ');
+                const missingAlert = document.createElement('div');
+                missingAlert.className = 'alert alert-danger border-0 shadow-sm rounded-3 mb-3';
+                missingAlert.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-x-circle-fill fs-4 me-3"></i>
+                        <div>
+                            <h6 class="fw-bold mb-0">Missing Mandatory Columns in Header</h6>
+                            <div class="small">The following mandatory header columns were not detected: ${missingLabels}</div>
+                        </div>
+                    </div>
+                `;
+                alertsContainer.appendChild(missingAlert);
+            }
+
+            if (data.row_errors && data.row_errors.length > 0) {
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-warning border-0 shadow-sm rounded-3 mb-3';
+                let errListHtml = data.row_errors.slice(0, 10).map(err => `<li>${err.message}</li>`).join('');
+                if (data.row_errors.length > 10) {
+                    errListHtml += `<li>...and ${data.row_errors.length - 10} more row errors</li>`;
+                }
+                errorAlert.innerHTML = `
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 mt-0.5"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Row-Level Mandatory Field Errors (${data.row_errors.length} rows)</h6>
+                            <ul class="mb-0 small ps-3">${errListHtml}</ul>
+                        </div>
+                    </div>
+                `;
+                alertsContainer.appendChild(errorAlert);
+            }
+
+            // 3. Render Mapping
+            const mappedKeys = Object.keys(data.mapping || {});
+            document.getElementById('mappedCount').textContent = mappedKeys.length;
+            document.getElementById('mappingResult').textContent = JSON.stringify(data.mapping, null, 2);
+
+            // 4. Render Summary Stats
+            const summary = data.summary || {};
+            document.getElementById('statTotalItems').textContent = summary.total_items || 0;
+            document.getElementById('statValidItems').textContent = summary.valid_items_count || 0;
+            document.getElementById('statInvalidItems').textContent = summary.invalid_items_count || 0;
+            document.getElementById('statTotalUnits').textContent = summary.total_units || 0;
+            document.getElementById('statTotalValue').textContent = '$' + (summary.total_asking_value || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // 5. Render Preview Table for All 45 Fields across ALL parsed items
+            const tbody = document.querySelector('#previewTable tbody');
+            tbody.innerHTML = '';
+            const itemsToRender = data.all_items || data.preview_items || [];
+            document.getElementById('previewCountBadge').textContent = `Showing all ${itemsToRender.length} items`;
+
+            if (itemsToRender && itemsToRender.length > 0) {
+                itemsToRender.forEach(item => {
+                    const tr = document.createElement('tr');
+                    let cellsHtml = '';
+
+                    ALL_45_FIELDS.forEach(fieldKey => {
+                        let val = item[fieldKey];
+                        if (val === null || val === undefined || val === '' || val === 'NIL' || val === 'nill') {
+                            cellsHtml += `<td><span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle font-monospace px-2 py-0.5 fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">NIL</span></td>`;
+                        } else {
+                            if (fieldKey === 's_no') {
+                                cellsHtml += `<td class="fw-bold font-monospace px-3 text-body-emphasis">${val}</td>`;
+                            } else if (fieldKey === 'product_name') {
+                                cellsHtml += `<td class="fw-bold text-body-emphasis">${val}</td>`;
+                            } else if (fieldKey === 'product_category' || fieldKey === 'subcategory') {
+                                cellsHtml += `<td><span class="badge bg-body-secondary text-body-emphasis border px-2.5 py-1 font-monospace fw-semibold" style="font-size: 0.76rem;">${val}</span></td>`;
+                            } else if (fieldKey === 'product_condition') {
+                                let condClass = 'bg-primary-subtle text-primary-emphasis border-primary-subtle';
+                                const cLower = String(val).toLowerCase();
+                                if (cLower.includes('new')) {
+                                    condClass = 'bg-success-subtle text-success-emphasis border-success-subtle';
+                                } else if (cLower.includes('used') || cLower.includes('fair')) {
+                                    condClass = 'bg-warning-subtle text-warning-emphasis border-warning-subtle';
+                                } else if (cLower.includes('refurbished') || cLower.includes('reconditioned')) {
+                                    condClass = 'bg-info-subtle text-info-emphasis border-info-subtle';
+                                }
+                                cellsHtml += `<td><span class="badge ${condClass} border px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.78rem; letter-spacing: 0.2px;">${val}</span></td>`;
+                            } else if (fieldKey === 'asking_price' || fieldKey === 'original_price') {
+                                cellsHtml += `<td class="fw-bold text-primary-emphasis">$${Number(val).toFixed(2)}</td>`;
+                            } else if (fieldKey === 'available_quantity' || fieldKey === 'moq') {
+                                cellsHtml += `<td class="fw-bold text-body-emphasis">${val}</td>`;
+                            } else {
+                                cellsHtml += `<td class="text-body-emphasis">${val}</td>`;
+                            }
+                        }
+                    });
+
+                    tr.innerHTML = cellsHtml;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="45" class="text-center py-4 text-secondary">No rows parsed from spreadsheet</td></tr>';
+            }
+
+            // 6. Render Raw JSON
+            document.getElementById('rawResult').textContent = JSON.stringify(data, null, 2);
+
+        } else {
+            alert('Error parsing file: ' + (data.error || JSON.stringify(data)));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('An unexpected error occurred while parsing spreadsheet.');
+    } finally {
+        parseBtn.disabled = false;
+        parseBtn.innerHTML = '<i class="bi bi-gear-fill me-1"></i> Parse & Validate Spreadsheet';
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

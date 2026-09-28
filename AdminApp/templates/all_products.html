@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header & Action -->
+    <div class="page-header-container d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>{{ page_title }}</span></li>
+                </ol>
+            </nav>
+            <h1 class="header-title">{{ page_title }}</h1>
+            <p class="header-subtitle">Manage your entire product inventory</p>
+        </div>
+        <div>
+            <a href="/admin/products/add/" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 fw-semibold">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Product</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            
+            <!-- Bulk Action Form -->
+            <form method="POST" action="/admin/products/all/">
+                {% csrf_token %}
+                <!-- Filters & Toolbar Row -->
+                <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                    <!-- Search -->
+                    <div class="flex-grow-1" style="max-width: 450px;">
+                        <div class="input-group">
+                            <input type="text" name="q" value="{{ search_query }}" class="form-control rounded-end-0" placeholder="Search products by SKU or Name..." style="min-width: 250px;">
+                            <a href="/admin/products/all/" class="btn btn-outline-secondary">Reset</a>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="d-flex align-items-center">
+                            <select name="bulk_action" class="form-select rounded-end-0 text-secondary" style="min-width: 160px;">
+                                <option value="">Bulk Actions</option>
+                                <option value="Mark Active">Mark Active</option>
+                                <option value="Mark Inactive">Mark Inactive</option>
+                                <option value="Delete Selected">Delete Selected</option>
+                            </select>
+                            <button class="btn text-white rounded-start-0 px-4" type="submit" style="background-color: #f97316; border-color: #f97316;">Apply</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                        <thead class="table-light">
+                            <tr class="text-secondary">
+                                <th scope="col" style="width: 40px;">
+                                    <div class="form-check">
+                                        <input class="form-check-input select-all-cb" type="checkbox">
+                                    </div>
+                                </th>
+                                <th scope="col">Product Info</th>
+                                <th scope="col">Pricing</th>
+                                <th scope="col">Stock</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            {% for product in products %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input item-cb" type="checkbox" name="selected_products" value="{{ product.id }}">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold fs-6">
+                                        <a href="/admin/products/{{ product.id }}/" class="text-dark text-decoration-none hover-primary">{{ product.product_name }}</a>
+                                    </div>
+                                    <div class="text-secondary font-monospace small mt-1">ID: {{ product.product_id|default:product.model_no|default:"-" }}</div>
+                                </td>
+                                <td>
+                                    {% if product.previous_price %}
+                                    <div class="fw-bold text-success">{{ product.currency }} {{ product.current_price|default:product.liquidating_price }}</div>
+                                    <div class="text-muted text-decoration-line-through small">{{ product.currency }} {{ product.previous_price }}</div>
+                                    {% else %}
+                                    <div class="fw-bold text-dark">{{ product.currency }} {{ product.current_price|default:product.liquidating_price }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.stock_quantity > 10 %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">{{ product.stock_quantity }} in stock</span>
+                                    {% elif product.stock_quantity > 0 %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">Low: {{ product.stock_quantity }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1">Out of Stock</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/admin/products/{{ product.id }}/" class="btn btn-sm btn-light text-primary" title="View Details"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% for enquiry in approved_enquiries %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input item-cb" type="checkbox" value="{{ enquiry.id }}" disabled>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark fs-6">
+                                    {% if enquiry.raw_data.product_name %}
+                                        {{ enquiry.raw_data.product_name }}
+                                    {% elif enquiry.raw_data.title %}
+                                        {{ enquiry.raw_data.title }}
+                                    {% else %}
+                                        Seller Enquiry Product
+                                    {% endif %}
+                                </div>
+                                <div class="text-secondary font-monospace small mt-1">ID: {{ enquiry.product_id }}</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">
+                                    {% if enquiry.raw_data.price %}
+                                        ${{ enquiry.raw_data.price }}
+                                    {% else %}
+                                        <span class="text-muted fst-italic">N/A</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1">
+                                    {% if enquiry.raw_data.quantity %}
+                                        Qty: {{ enquiry.raw_data.quantity }}
+                                    {% else %}
+                                        Unknown
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="/admin/seller-enquiries/{{ enquiry.id }}/" class="btn btn-sm btn-light text-primary"><i class="bi bi-eye"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {% if not products and not approved_enquiries %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i>
+                                <h5>No Products Found</h5>
+                                <p class="mb-0">You haven't added any products or approved any enquiries yet.</p>
+                                <a href="/admin/products/add/" class="btn btn-primary mt-3">Add First Product</a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-3 border-top gap-3 bg-white">
+                <div class="text-secondary small">
+                    Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                    <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                    <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> products
+                </div>
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}" title="First Page">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                Previous
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
+                        </li>
+                        {% endif %}
+
+                        {% for p in page_obj.paginator.page_range %}
+                            {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                                {% if p == page_obj.number %}
+                                <li class="page-item active">
+                                    <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                                </li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ p }}</a>
+                                </li>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                Next
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}" title="Last Page">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+            </form>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

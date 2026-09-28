@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pop Up Settings - Surplus Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2" style="max-width: 960px; margin: 0 auto;">
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Page Header Bar -->
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+        <div>
+            <h3 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-camera text-primary"></i> Pop Up Notifications Manager
+            </h3>
+            <p class="text-muted small mb-0">Configure announcement popup message, re-trigger intervals, and banner media.</p>
+        </div>
+        <div>
+            <span class="badge {% if popup.is_active %}bg-success-subtle text-success border-success-subtle{% else %}bg-secondary-subtle text-secondary border-secondary-subtle{% endif %} border rounded-pill px-3 py-1.5 fs-6">
+                {% if popup.is_active %}● Pop Up Active (Delay: {{ popup.delay_minutes }}m){% else %}○ Pop Up Disabled{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Settings Form Card -->
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
+        <form method="POST" action="/admin/popup/" enctype="multipart/form-data" id="popupSettingsForm">
+            {% csrf_token %}
+
+            <!-- Enable Toggle -->
+            <div class="form-check form-switch bg-light p-3 rounded-3 mb-4 d-flex align-items-center justify-content-between">
+                <label class="form-check-label fw-bold text-dark mb-0 ps-2" for="popupActiveSwitch">
+                    <i class="bi bi-power me-1 text-primary"></i> Enable Automatic Admin Pop Up
+                </label>
+                <input class="form-check-input fs-4 m-0" type="checkbox" role="switch" id="popupActiveSwitch" name="is_active" {% if popup.is_active %}checked{% endif %}>
+            </div>
+
+            <div class="row g-3">
+                <!-- Popup Title -->
+                <div class="col-md-8">
+                    <label for="popupTitleInput" class="form-label fw-semibold text-dark small">Popup Title <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-lg fs-6 fw-bold" id="popupTitleInput" name="title" value="{{ popup.title|default:'Important Admin Notification' }}" required>
+                </div>
+
+                <!-- Popup Type -->
+                <div class="col-md-4">
+                    <label for="popupTypeSelect" class="form-label fw-semibold text-dark small">Popup Visual Style</label>
+                    <select class="form-select form-select-lg fs-6" id="popupTypeSelect" name="popup_type">
+                        <option value="info" {% if popup.popup_type == 'info' %}selected{% endif %}>Info / Announcement</option>
+                        <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning Notice</option>
+                        <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Alert</option>
+                        <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success Banner</option>
+                        <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Special Promotion</option>
+                    </select>
+                </div>
+
+                <!-- Re-trigger Delay (Minutes) -->
+                <div class="col-md-6">
+                    <label for="delayMinutesInput" class="form-label fw-semibold text-dark small">
+                        Re-trigger Interval Delay (Minutes) <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <input type="number" min="1" max="1440" class="form-control font-monospace fw-bold" id="delayMinutesInput" name="delay_minutes" value="{{ popup.delay_minutes|default:'1' }}" required>
+                        <span class="input-group-text bg-light text-muted fw-semibold">Minute(s)</span>
+                    </div>
+                    <div class="form-text small text-muted">
+                        <i class="bi bi-clock-history me-1"></i> When closed by an admin, the popup will trigger <strong>again after this specified duration (e.g. 1 minute)</strong>.
+                    </div>
+                </div>
+
+                <!-- Button Label -->
+                <div class="col-md-6">
+                    <label for="buttonLabelInput" class="form-label fw-semibold text-dark small">CTA Action Button Label</label>
+                    <input type="text" class="form-control" id="buttonLabelInput" name="button_label" placeholder="e.g. Got It / View Enquiries" value="{{ popup.button_label|default:'Got It' }}">
+                </div>
+
+                <!-- Button Link -->
+                <div class="col-md-12">
+                    <label for="buttonLinkInput" class="form-label fw-semibold text-dark small">CTA Action Button URL / Path (Optional)</label>
+                    <input type="text" class="form-control font-monospace" id="buttonLinkInput" name="button_link" placeholder="e.g. /admin/enquiries/seller/ or https://example.com" value="{{ popup.button_link|default:'' }}">
+                </div>
+
+                <!-- Popup Message -->
+                <div class="col-12">
+                    <label for="popupMessageInput" class="form-label fw-semibold text-dark small">Popup Message Content <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="popupMessageInput" name="message" rows="4" placeholder="Enter announcement text or notice..." required>{{ popup.message|default:'' }}</textarea>
+                </div>
+
+                <!-- Banner Image -->
+                <div class="col-12">
+                    <label for="bannerImageInput" class="form-label fw-semibold text-dark small">Banner Media Image (Optional)</label>
+                    <input type="file" class="form-control" id="bannerImageInput" name="banner_image" accept="image/*">
+                    {% if popup.banner_image %}
+                    <div class="mt-2 p-2 bg-light rounded border text-center" style="max-width: 240px;">
+                        <img src="{{ popup.banner_image.url }}" class="img-fluid rounded shadow-sm" style="max-height: 120px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="d-flex align-items-center gap-3 mt-4 pt-3 border-top">
+                <button type="submit" class="btn btn-primary px-4 py-2.5 rounded-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-check2-circle"></i> Save Pop Up Configuration
+                </button>
+                <button type="button" class="btn btn-outline-secondary px-4 py-2.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-2" id="triggerPreviewBtn">
+                    <i class="bi bi-eye"></i> Test Popup Preview Now
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const triggerPreviewBtn = document.getElementById('triggerPreviewBtn');
+    if (triggerPreviewBtn) {
+        triggerPreviewBtn.addEventListener('click', () => {
+            if (typeof window.showGlobalAdminPopup === 'function') {
+                window.showGlobalAdminPopup(true);
+            } else {
+                alert('Popup component initialized on template base.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
