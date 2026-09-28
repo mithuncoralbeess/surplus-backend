@@ -6,6 +6,7 @@ Configured with production-grade security, scalability, and performance optimiza
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,26 +76,38 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database & Connection Pooling
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
-DB_NAME = os.getenv("DB_NAME", "surplus_db")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_CONN_MAX_AGE = int(os.getenv("DB_CONN_MAX_AGE", "600"))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DATABASES = {
-    "default": {
-        "ENGINE": DB_ENGINE,
-        "NAME": DB_NAME,
-        "USER": DB_USER,
-        "PASSWORD": DB_PASSWORD,
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
-        "CONN_MAX_AGE": DB_CONN_MAX_AGE,
-        "CONN_HEALTH_CHECKS": True,
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            ssl_require=os.getenv("DB_SSL_REQUIRE", "False").lower() in ("true", "1", "t"),
+        )
     }
-}
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+else:
+    DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
+    DB_NAME = os.getenv("DB_NAME", "surplus_db")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_CONN_MAX_AGE = int(os.getenv("DB_CONN_MAX_AGE", "600"))
+
+    DATABASES = {
+        "default": {
+            "ENGINE": DB_ENGINE,
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASSWORD,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+            "CONN_MAX_AGE": DB_CONN_MAX_AGE,
+            "CONN_HEALTH_CHECKS": True,
+        }
+    }
 
 
 # High-Performance Caching Layer
@@ -126,6 +139,7 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -158,7 +172,7 @@ REST_FRAMEWORK = {
 }
 
 
-# CORS Settings
+# CORS & CSRF Settings
 CORS_ALLOW_ALL_ORIGINS = (
     os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("true", "1", "t")
 )
@@ -166,6 +180,12 @@ cors_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if cors_origins_raw:
     CORS_ALLOWED_ORIGINS = [
         origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()
+    ]
+
+csrf_origins_raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if csrf_origins_raw:
+    CSRF_TRUSTED_ORIGINS = [
+        origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()
     ]
 
 
@@ -204,6 +224,31 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# Cloudflare R2 / AWS S3 Media Storage Configuration
+USE_R2 = os.getenv("USE_R2", "False").lower() in ("true", "1", "t")
+if USE_R2:
+    if "storages" not in INSTALLED_APPS:
+        INSTALLED_APPS.append("storages")
+
+    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "app-staging-media")
+    AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_S3_FILE_OVERWRITE = False
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "location": "media",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
