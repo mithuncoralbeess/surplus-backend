@@ -429,6 +429,7 @@ def submit_lot_enquiry(request):
 
 
 
+import json
 import random
 import uuid
 import hashlib
@@ -472,7 +473,7 @@ def send_registration_otp(request):
         VendorOTP.objects.create(
             email=email,
             otp=otp_code,
-            registration_data={k: v for k, v in data.items()}
+            registration_data=json.loads(json.dumps(data, default=str))
         )
     
         subject = "Surplus Market - Your Registration OTP Code"
