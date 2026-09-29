@@ -473,14 +473,34 @@ def send_registration_otp(request):
         registration_data=data
     )
     
-    subject = "Surplus - Your Registration OTP"
-    message = f"Hello,\n\nYour OTP for registration is: {otp_code}.\n\nPlease do not share this code with anyone.\n\nThank you,\nSurplus Team"
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@yourdomain.com')
+    subject = "Surplus Market - Your Registration OTP Code"
+    message = f"Hello,\n\nYour OTP for registration on Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <h2 style="color: #2563eb; margin-bottom: 8px;">Surplus Market</h2>
+        <p style="color: #374151; font-size: 15px;">Hello,</p>
+        <p style="color: #374151; font-size: 15px;">Your 6-digit verification code for vendor registration is:</p>
+        <div style="background-color: #f3f4f6; padding: 18px; text-align: center; border-radius: 8px; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1e40af;">{otp_code}</span>
+        </div>
+        <p style="color: #6b7280; font-size: 13px;">This code is valid for 10 minutes. Please do not share this OTP with anyone.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #9ca3af; font-size: 12px; text-align: center;">Surplus Market B2B Wholesale Platform</p>
+    </div>
+    """
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
     try:
-        send_mail(subject, message, from_email, [email], fail_silently=True)
-        print(f"--- REGISTRATION OTP FOR {email}: {otp_code} ---")
+        send_mail(
+            subject=subject,
+            message=message,
+            html_message=html_message,
+            from_email=from_email,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        print(f"--- REGISTRATION OTP SENT TO {email}: {otp_code} ---")
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error dispatching registration OTP email to {email}: {e}")
     
     return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
 
@@ -590,14 +610,34 @@ def send_login_otp(request):
         vendor=vendor
     )
     
-    subject = "Surplus - Your Login OTP"
-    message = f"Hello,\n\nYour OTP to log in is: {otp_code}.\n\nPlease do not share this code with anyone.\n\nThank you,\nSurplus Team"
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@yourdomain.com')
+    subject = "Surplus Market - Your Login OTP Code"
+    message = f"Hello,\n\nYour OTP to log in to Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
+    html_message = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <h2 style="color: #2563eb; margin-bottom: 8px;">Surplus Market</h2>
+        <p style="color: #374151; font-size: 15px;">Hello,</p>
+        <p style="color: #374151; font-size: 15px;">Your 6-digit verification code to log in is:</p>
+        <div style="background-color: #f3f4f6; padding: 18px; text-align: center; border-radius: 8px; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1e40af;">{otp_code}</span>
+        </div>
+        <p style="color: #6b7280; font-size: 13px;">This code is valid for 10 minutes. Please do not share this OTP with anyone.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #9ca3af; font-size: 12px; text-align: center;">Surplus Market B2B Wholesale Platform</p>
+    </div>
+    """
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
     try:
-        send_mail(subject, message, from_email, [email], fail_silently=True)
-        print(f"--- LOGIN OTP FOR {email}: {otp_code} ---")
+        send_mail(
+            subject=subject,
+            message=message,
+            html_message=html_message,
+            from_email=from_email,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        print(f"--- LOGIN OTP SENT TO {email}: {otp_code} ---")
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error dispatching login OTP email to {email}: {e}")
     
     return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
 
