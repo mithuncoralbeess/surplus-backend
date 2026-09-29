@@ -18,7 +18,7 @@ class MaintenanceModeMiddleware:
             path.startswith('/admin/') or 
             path.startswith('/static/') or 
             path.startswith('/media/') or 
-            path == '/favicon.ico'
+            path == '/favicon.ico' or path.startswith('/send-') or path.startswith('/verify-') or path.startswith('/complete-')
         ):
             return self.get_response(request)
 
