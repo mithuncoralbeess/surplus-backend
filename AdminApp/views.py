@@ -159,22 +159,31 @@ def admin_register(request):
 def admin_login(request):
     """
     Admin Login Flow:
-    - Takes user_email and user_pass
+    - Supports JSON API, HTML Form POST, and GET query string logins
     - Hash verification with salted SHA-256
     - Fallback auth to standard Django superusers
     - Session setup: adminid and session_version
     - Role-based routing: SuperAdmin, XLSX Admin, Admin, Vendor
     """
+    req_data = dict(request.data or {})
     if request.method == "GET":
-        if request.headers.get("Accept", "").find("text/html") != -1:
-            return admin_login_page(request)
-        return Response(
-            {"message": "Submit POST with user_email and user_pass to login."},
-            status=status.HTTP_200_OK,
-        )
+        # If no credentials passed in GET parameters, render the HTML login page
+        if "user_email" not in request.GET and "email" not in request.GET and "username" not in request.GET:
+            if request.headers.get("Accept", "").find("text/html") != -1:
+                return admin_login_page(request)
+            return Response(
+                {"message": "Submit POST with user_email and user_pass to login."},
+                status=status.HTTP_200_OK,
+            )
+        req_data = {
+            "user_email": request.GET.get("user_email") or request.GET.get("email") or request.GET.get("username"),
+            "user_pass": request.GET.get("user_pass") or request.GET.get("password"),
+        }
 
-    serializer = AdminLoginSerializer(data=request.data)
+    serializer = AdminLoginSerializer(data=req_data)
     if not serializer.is_valid():
+        if request.headers.get("Accept", "").find("text/html") != -1 and request.content_type != "application/json":
+            return admin_login_page(request)
         return Response(
             {"success": False, "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
@@ -224,6 +233,8 @@ def admin_login(request):
             )
 
     if not admin_user:
+        if request.headers.get("Accept", "").find("text/html") != -1 and request.content_type != "application/json":
+            return render(request, "login.html", {"error": "Invalid email/username or password."})
         return Response(
             {"success": False, "message": "Invalid email/username or password."},
             status=status.HTTP_401_UNAUTHORIZED,
@@ -249,6 +260,9 @@ def admin_login(request):
     else:
         redirect_route = "adminDashBoard"
         redirect_url = "/admin/dashboard/"
+
+    if request.headers.get("Accept", "").find("text/html") != -1 and request.content_type != "application/json":
+        return redirect(redirect_url)
 
     return Response(
         {

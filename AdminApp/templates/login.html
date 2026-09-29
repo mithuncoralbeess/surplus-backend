@@ -40,7 +40,8 @@
                 <span id="alertText"></span>
             </div>
 
-            <form id="adminLoginForm">
+            <form id="adminLoginForm" method="POST" action="/admin/login/">
+                {% csrf_token %}
                 <div class="mb-3">
                     <label class="form-label text-dark small fw-semibold" for="user_email">Staff Email / Username</label>
                     <div class="input-group">
