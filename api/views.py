@@ -483,6 +483,8 @@ def send_registration_otp(request):
             html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+
         def _send_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
                 send_mail(
@@ -621,6 +623,8 @@ def send_login_otp(request):
             html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+
         def _send_login_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
                 send_mail(
