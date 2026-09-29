@@ -19,7 +19,7 @@ SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-default-key-change-in-production"
 )
 
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
+DEBUG = True
 
 allowed_hosts_raw = os.getenv("ALLOWED_HOSTS", "*")
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_raw.split(",") if host.strip()]
