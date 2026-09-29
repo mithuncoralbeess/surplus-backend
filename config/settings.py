@@ -123,8 +123,8 @@ CACHES = {
 }
 
 
-# High-Performance Cached Session Storage & Cookie Security
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+# High-Performance Session Storage & Cookie Security
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 86400 * 7  # 7 days
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
