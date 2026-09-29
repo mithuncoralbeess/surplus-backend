@@ -176,9 +176,8 @@ REST_FRAMEWORK = {
 
 
 # CORS & CSRF Settings
-CORS_ALLOW_ALL_ORIGINS = (
-    os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("true", "1", "t")
-)
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
@@ -195,12 +194,25 @@ if cors_origins_raw:
 else:
     CORS_ALLOWED_ORIGINS = DEFAULT_CORS_ORIGINS
 
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
 csrf_origins_raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_origins_raw:
     env_csrf = [origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()]
     CSRF_TRUSTED_ORIGINS = list(set(DEFAULT_CORS_ORIGINS + env_csrf))
 else:
     CSRF_TRUSTED_ORIGINS = DEFAULT_CORS_ORIGINS
+
 
 
 # Password validation

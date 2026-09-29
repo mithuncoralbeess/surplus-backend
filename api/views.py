@@ -1,3 +1,4 @@
+import threading
 from django.utils import timezone
 from django.db import connection
 from rest_framework.decorators import api_view
@@ -482,19 +483,25 @@ def send_registration_otp(request):
             html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
-        try:
-            send_mail(
-                subject=subject,
-                message=message,
-                html_message=html_message,
-                from_email=from_email,
-                recipient_list=[email],
-                fail_silently=True,
-            )
-            print(f"--- REGISTRATION OTP SENT TO {email}: {otp_code} ---")
-        except Exception as e:
-            print(f"Error dispatching registration OTP email to {email}: {e}")
+        def _send_email_bg(sub, msg, html_msg, frm, to_email, code):
+            try:
+                send_mail(
+                    subject=sub,
+                    message=msg,
+                    html_message=html_msg,
+                    from_email=frm,
+                    recipient_list=[to_email],
+                    fail_silently=True,
+                )
+                print(f"--- REGISTRATION OTP SENT TO {to_email}: {code} ---")
+            except Exception as e:
+                print(f"Error dispatching registration OTP email to {to_email}: {e}")
+
+        threading.Thread(
+            target=_send_email_bg,
+            args=(subject, message, html_message, from_email, email, otp_code),
+            daemon=True
+        ).start()
     
         return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
     except Exception as exc:
@@ -614,19 +621,25 @@ def send_login_otp(request):
             html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
-        try:
-            send_mail(
-                subject=subject,
-                message=message,
-                html_message=html_message,
-                from_email=from_email,
-                recipient_list=[email],
-                fail_silently=True,
-            )
-            print(f"--- LOGIN OTP SENT TO {email}: {otp_code} ---")
-        except Exception as e:
-            print(f"Error dispatching login OTP email to {email}: {e}")
+        def _send_login_email_bg(sub, msg, html_msg, frm, to_email, code):
+            try:
+                send_mail(
+                    subject=sub,
+                    message=msg,
+                    html_message=html_msg,
+                    from_email=frm,
+                    recipient_list=[to_email],
+                    fail_silently=True,
+                )
+                print(f"--- LOGIN OTP SENT TO {to_email}: {code} ---")
+            except Exception as e:
+                print(f"Error dispatching login OTP email to {to_email}: {e}")
+
+        threading.Thread(
+            target=_send_login_email_bg,
+            args=(subject, message, html_message, from_email, email, otp_code),
+            daemon=True
+        ).start()
         
         return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
     except Exception as exc:
