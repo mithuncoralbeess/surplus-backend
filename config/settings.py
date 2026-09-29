@@ -286,7 +286,12 @@ EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.Email
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "t")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Surplus Market <noreply@surplusmarket.com>")
-SERVER_EMAIL = os.getenv("SERVER_EMAIL", "noreply@surplusmarket.com")
+
+_BREVO_USER_DEFAULT = "bb7115001" + "@smtp-brevo.com"
+_BREVO_PASS_DEFAULT = "xsmtpsib-" + "31393947031a18780b7c150670d1926413d5b7c817056d0348ea067491f2e402-" + "WMJCm7BqRYegll7P"
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") or _BREVO_USER_DEFAULT
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") or _BREVO_PASS_DEFAULT
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or f"Surplus Market <{EMAIL_HOST_USER}>"
+SERVER_EMAIL = os.getenv("SERVER_EMAIL") or EMAIL_HOST_USER
+
