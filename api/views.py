@@ -588,45 +588,49 @@ def complete_profile(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def send_login_otp(request):
-    serializer = SendLoginOTPSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-    email = serializer.validated_data["email"].strip().lower()
-    
-    vendor = VendorDetails.objects.filter(email=email).first()
-    if not vendor:
-        return Response({"success": False, "message": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+    try:
+        serializer = SendLoginOTPSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-    otp_code = generate_otp()
-    
-    VendorOTP.objects.create(
-        email=email,
-        otp=otp_code,
-        vendor=vendor
-    )
-    
-    subject = "Surplus Market - Your Login Security Code"
-    message = f"Hello,\n\nYour OTP to log in to Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
-    try:
-        html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
-    except Exception:
-        html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            html_message=html_message,
-            from_email=from_email,
-            recipient_list=[email],
-            fail_silently=True,
+        email = serializer.validated_data["email"].strip().lower()
+        
+        vendor = VendorDetails.objects.filter(email=email).first()
+        if not vendor:
+            return Response({"success": False, "message": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+            
+        otp_code = generate_otp()
+        
+        VendorOTP.objects.create(
+            email=email,
+            otp=otp_code,
+            vendor=vendor
         )
-        print(f"--- LOGIN OTP SENT TO {email}: {otp_code} ---")
-    except Exception as e:
-        print(f"Error dispatching login OTP email to {email}: {e}")
-    
-    return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
+        
+        subject = "Surplus Market - Your Login Security Code"
+        message = f"Hello,\n\nYour OTP to log in to Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
+        try:
+            html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
+        except Exception:
+            html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                html_message=html_message,
+                from_email=from_email,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            print(f"--- LOGIN OTP SENT TO {email}: {otp_code} ---")
+        except Exception as e:
+            print(f"Error dispatching login OTP email to {email}: {e}")
+        
+        return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
+    except Exception as exc:
+        print(f"send_login_otp Exception: {exc}")
+        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

@@ -177,17 +177,28 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = (
     os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("true", "1", "t")
 )
+
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://surplus-frontend-staging.vercel.app",
+]
+
 cors_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if cors_origins_raw:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()
-    ]
+    env_origins = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()]
+    CORS_ALLOWED_ORIGINS = list(set(DEFAULT_CORS_ORIGINS + env_origins))
+else:
+    CORS_ALLOWED_ORIGINS = DEFAULT_CORS_ORIGINS
 
 csrf_origins_raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_origins_raw:
-    CSRF_TRUSTED_ORIGINS = [
-        origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()
-    ]
+    env_csrf = [origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()]
+    CSRF_TRUSTED_ORIGINS = list(set(DEFAULT_CORS_ORIGINS + env_csrf))
+else:
+    CSRF_TRUSTED_ORIGINS = DEFAULT_CORS_ORIGINS
 
 
 # Password validation
