@@ -45,3 +45,17 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+
+from django.http import JsonResponse
+
+def custom_handler500(request):
+    response = JsonResponse({
+        "success": False,
+        "status": 500,
+        "message": "Internal Server Error. Please try again later."
+    }, status=500)
+    response["Access-Control-Allow-Origin"] = "*"
+    return response
+
+handler500 = "config.urls.custom_handler500"
