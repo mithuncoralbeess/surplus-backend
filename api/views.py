@@ -456,45 +456,49 @@ def generate_otp():
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def send_registration_otp(request):
-    serializer = SendRegistrationOTPSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        serializer = SendRegistrationOTPSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-    data = serializer.validated_data
-    email = data["email"].strip().lower()
+        data = serializer.validated_data
+        email = data["email"].strip().lower()
     
-    if VendorDetails.objects.filter(email=email).exists():
-        return Response({"success": False, "message": "Email is already registered. Please login."}, status=status.HTTP_400_BAD_REQUEST)
+        if VendorDetails.objects.filter(email=email).exists():
+            return Response({"success": False, "message": "Email is already registered. Please login."}, status=status.HTTP_400_BAD_REQUEST)
 
-    otp_code = generate_otp()
+        otp_code = generate_otp()
     
-    VendorOTP.objects.create(
-        email=email,
-        otp=otp_code,
-        registration_data=data
-    )
-    
-    subject = "Surplus Market - Your Registration OTP Code"
-    message = f"Hello,\n\nYour OTP for registration on Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
-    try:
-        html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
-    except Exception:
-        html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
-    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            html_message=html_message,
-            from_email=from_email,
-            recipient_list=[email],
-            fail_silently=False,
+        VendorOTP.objects.create(
+            email=email,
+            otp=otp_code,
+            registration_data={k: v for k, v in data.items()}
         )
-        print(f"--- REGISTRATION OTP SENT TO {email}: {otp_code} ---")
-    except Exception as e:
-        print(f"Error dispatching registration OTP email to {email}: {e}")
     
-    return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
+        subject = "Surplus Market - Your Registration OTP Code"
+        message = f"Hello,\n\nYour OTP for registration on Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
+        try:
+            html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
+        except Exception:
+            html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                html_message=html_message,
+                from_email=from_email,
+                recipient_list=[email],
+                fail_silently=True,
+            )
+            print(f"--- REGISTRATION OTP SENT TO {email}: {otp_code} ---")
+        except Exception as e:
+            print(f"Error dispatching registration OTP email to {email}: {e}")
+    
+        return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
+    except Exception as exc:
+        print(f"send_registration_otp Exception: {exc}")
+        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -616,7 +620,7 @@ def send_login_otp(request):
             html_message=html_message,
             from_email=from_email,
             recipient_list=[email],
-            fail_silently=False,
+            fail_silently=True,
         )
         print(f"--- LOGIN OTP SENT TO {email}: {otp_code} ---")
     except Exception as e:
