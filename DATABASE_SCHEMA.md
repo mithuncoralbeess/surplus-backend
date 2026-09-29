@@ -1,431 +1,296 @@
-# Surplus Backend Database Schema
+# Surplus Platform Database Structure & Data Guide
 
-This document provides a comprehensive overview of the database schema for the **Surplus Backend** application built on Django.
-
----
-
-## 1. User & Authentication Module
-
-### `admin_details` ([`AdminDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L10))
-Stores administrative user accounts for managing the platform.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key, Auto-increment | Internal Unique Identifier |
-| `username` | CharField(150) | `unique=True`, `db_index=True` | Admin login username |
-| `email` | EmailField | `unique=True`, `db_index=True` | Admin contact/login email |
-| `pass_word` | CharField(255) | | Salted SHA-256 hash (`hash:salt`) |
-| `account_type` | CharField(50) | Default: `"Admin"`, Choices: `SuperAdmin`, `Admin`, `XLSXAdmin` | Role/Permission level |
-| `status` | BooleanField | Default: `True`, `db_index=True` | Account active/inactive status |
-| `session_version` | PositiveIntegerField | Default: `1` | Session invalidation counter |
-| `web_is_active` | CharField(50) | Default: `"live"` | Controls global site maintenance state |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Account creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update timestamp |
+This document explains the data structure of the **Surplus** platform in clear, simple terms. It describes how information about users, products, categories, bulk lots, seller submissions, and website content is stored and organized.
 
 ---
 
-### `vendor_details` ([`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86))
-Stores buyer and seller accounts operating on the platform.
+## 💡 Overview of How the Platform Works
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Internal Unique Identifier |
-| `username` | CharField(150) | `unique=True`, `db_index=True` | Vendor username |
-| `email` | EmailField | `unique=True`, `db_index=True` | Vendor email address |
-| `mobile_number` | CharField(20) | Blank, Default: `""` | Vendor contact number |
-| `account_entity_type` | CharField(20) | Default: `"COMPANY"`, Choices: `INDIVIDUAL`, `COMPANY` | Account classification |
-| `company_name` | CharField(255) | Blank | Registered business/company name |
-| `business_location` | CharField(255) | Blank | Registered operating location |
-| `category_interested`| JSONField | Default: `list`, Blank | Interested product categories |
-| `user_type` | CharField(20) | Default: `"BUYER"`, Choices: `BUYER`, `SELLER`, `BOTH` | Role on marketplace |
-| `pass_word` | CharField(255) | Null, Blank | Salted SHA-256 hash (`hash:salt`) |
-| `status` | BooleanField | Default: `True`, `db_index=True` | Active/Inactive status |
-| `session_version` | PositiveIntegerField | Default: `1` | Invalidation token |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Account creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update timestamp |
+```
+                     ┌────────────────────────────────────────┐
+                     │          Categories & Brands           │
+                     └───────────────────┬────────────────────┘
+                                         │
+                                         ▼
+┌────────────────────────┐      ┌─────────────────┐      ┌────────────────────────┐
+│     Sellers / Users    │ ───► │    Products     │ ◄─── │    Buyers & Offers     │
+└────────────────────────┘      └────────┬────────┘      └────────────────────────┘
+            │                            │
+            ▼                            ▼
+┌────────────────────────┐      ┌─────────────────┐
+│ Bulk Lot Excel Uploads │ ───► │  Lot Packages   │
+└────────────────────────┘      └─────────────────┘
+```
 
----
-
-### `vendor_otps` ([`VendorOTP`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L179))
-Stores one-time passwords for vendor login & registration.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Identifier |
-| `email` | EmailField | `db_index=True` | Targeted vendor email |
-| `otp` | CharField(6) | | 6-digit verification code |
-| `is_used` | BooleanField | Default: `False`, `db_index=True` | Flag indicating usage |
-| `vendor` | ForeignKey | FK to [`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86), `on_delete=CASCADE`, Null | Linked vendor account |
-| `registration_data`| JSONField | Null, Blank | Temporary registration details |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Expiry validation window (10 mins) |
+1. **Users & Authentication**: Stores accounts for platform Admins, Sellers, and Buyers, along with security verification codes (OTPs).
+2. **Product Catalog**: Organizes items into Main Categories and Sub-Categories.
+3. **Products & Marketplace**: Manages single item listings, pricing rules, stock count, and images.
+4. **Bulk Lots**: Stores large inventories sold together as a single batch/lot.
+5. **Seller Submissions**: Holds new product and lot requests submitted by sellers until approved by an Admin.
+6. **Website & Content Management (CMS)**: Powers custom web pages, SEO details, blog posts, partner brands, and popup banners.
+7. **System & Pricing Controls**: Stores global operational fees, maintenance mode settings, and records of price changes.
 
 ---
 
-### `admin_password_reset_otp` ([`AdminPasswordResetOTP`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L211))
-OTP records for password resets on Admin accounts.
+## 1. Users & Security Module
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Identifier |
-| `admin` | ForeignKey | FK to [`AdminDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L10), `on_delete=CASCADE` | Targeted admin user |
-| `email` | EmailField | `db_index=True` | Target email address |
-| `otp` | CharField(6) | | 6-digit OTP code |
-| `is_used` | BooleanField | Default: `False`, `db_index=True` | Usage flag |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Creation timestamp |
+### 1.1 Admin Accounts (`AdminDetails`)
+Stores login accounts for platform managers and administrators.
 
----
-
-## 2. Category & Catalog Structure
-
-### `main_categories` ([`MainCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L445))
-Top-level product categories.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Category ID |
-| `name` | CharField(150) | `unique=True`, `db_index=True` | Display category name |
-| `slug` | SlugField(150) | `unique=True`, `db_index=True` | URL slug |
-| `description` | TextField | Blank | Overview / text details |
-| `image` | ImageField | Upload: `categories/main/`, Null | Category banner/thumbnail |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Visibility toggle |
-| `created_at` | DateTimeField | `auto_now_add=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last updated |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `username` | Text | Admin login username |
+| `email` | Email Address | Admin contact & notification email |
+| `account_type` | Choice | Admin role (`SuperAdmin`, `Admin`, or `XLSX Admin`) |
+| `status` | Yes / No | Account status (`Active` or `Disabled`) |
+| `web_is_active` | Text | Controls site-wide operational mode (`live` or `maintenance`) |
+| `created_at` | Date & Time | Date when the admin account was created |
 
 ---
 
-### `sub_categories` ([`SubCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L467))
-Second-tier categories linked to a parent `MainCategory`.
+### 1.2 Seller & Buyer Accounts (`VendorDetails`)
+Stores accounts for platform users (Buyers, Sellers, or both).
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Sub-category ID |
-| `main_category` | ForeignKey | FK to [`MainCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L445), `on_delete=CASCADE` | Parent main category |
-| `name` | CharField(150) | `db_index=True` | Sub-category name |
-| `slug` | SlugField(150) | `unique=True`, `db_index=True` | URL slug |
-| `description` | TextField | Blank | Sub-category summary |
-| `image` | ImageField | Upload: `categories/sub/`, Null | Thumbnail image |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Visibility toggle |
-| `created_at` | DateTimeField | `auto_now_add=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last updated |
-
----
-
-## 3. Products & Lots Engine
-
-### `products` ([`Product`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L588))
-Single product listings and approved marketplace products.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Database primary key |
-| `product_id` | CharField(30) | Blank, `db_index=True` | Formatted ID (`PRO-00001`) |
-| `vendor` | ForeignKey | FK to [`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86), `on_delete=SET_NULL`, Null | Listing owner / seller |
-| `product_name` | CharField(255) | `db_index=True` | Item title |
-| `model_no` | CharField(255) | Blank, `db_index=True` | Model / Part No / SKU |
-| `description` | TextField | Blank | Comprehensive item details |
-| `liquidating_price` | Decimal(12,2)| Default: `0.00`, `db_index=True` | Seller base price |
-| `previous_price` | Decimal(12,2)| Null, Blank | Original listing or discount price |
-| `current_price` | Decimal(12,2)| Default: `0.00`, `db_index=True` | Calculated price (`Liquidating * 1.10`) |
-| `stock_quantity` | PositiveInteger | Default: `0` | Available stock count |
-| `brand` | CharField(255) | Blank | Manufacturer / Brand name |
-| `category` | ForeignKey | FK to [`MainCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L445), `on_delete=SET_NULL`, Null | Primary category |
-| `subcategory` | ForeignKey | FK to [`SubCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L467), `on_delete=SET_NULL`, Null | Sub-category |
-| `is_available_for_offers`| BooleanField | Default: `True`, `db_index=True` | Allow buyers to submit custom offers |
-| `condition` | CharField(255) | Blank, `db_index=True` | e.g. New, Refurbished, Used |
-| `inventory_location` | CharField(255) | Blank | Warehouse / stock location |
-| `manufacturing_country`| CharField(100) | Blank | Country of Origin |
-| `manufacturing_year` | PositiveInteger | Null, Blank | Year of manufacture |
-| `dimensions` | CharField(100) | Blank | Physical dimensions |
-| `expiry_date` | DateField | Null, Blank | Expiration date if applicable |
-| `currency` | CharField(10) | Default: `"USD"` | Currency denomination |
-| `excluded_countries` | JSONField | Default: `list`, Blank | Country restriction list |
-| `reason_to_sell` | TextField | Blank | Liquidation rationale |
-| `warranty` | CharField(255) | Blank | Warranty coverage info |
-| `third_party_certificate`| FileField | Upload: `products/certificates/`, Null | Compliance / QC cert files |
-| `enquiry_status` | CharField(20) | Default: `'PENDING'`, Choices: `PENDING`, `APPROVED`, `DECLINED` | Moderation status |
-| `image` | ImageField | Upload: `products/images/`, Null | Main featured image |
-| `is_active` | BooleanField | Default: `False`, `db_index=True` | Display toggle on storefront |
-| `date_approved` | DateTimeField | Null, Blank, `db_index=True` | Approval timestamp |
-| `raw_data` | JSONField | Default: `dict`, Blank | Extra dynamic properties |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `username` | Text | Unique user handle or username |
+| `email` | Email Address | User email address |
+| `mobile_number` | Phone Number | Contact mobile number |
+| `account_entity_type` | Choice | Type of business entity (`Individual` or `Company/Business`) |
+| `company_name` | Text | Registered company or business name |
+| `business_location` | Text | City, state, or country of operation |
+| `category_interested`| List | Product categories the user is interested in buying or selling |
+| `user_type` | Choice | User role (`Buyer`, `Seller`, or `Both`) |
+| `status` | Yes / No | Account status (`Active` or `Disabled`) |
+| `created_at` | Date & Time | Date when the account was registered |
 
 ---
 
-### `ProductImage` ([`ProductImage`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L728))
-Gallery images attached to a [`Product`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L588).
+### 1.3 Security OTP Codes (`VendorOTP` & `AdminPasswordResetOTP`)
+Stores short-lived 6-digit verification codes sent via email for secure login and password resets.
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Image ID |
-| `product` | ForeignKey | FK to [`Product`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L588), `on_delete=CASCADE` | Associated product |
-| `image` | ImageField | Upload: `products/images/gallery/` | Image file |
-| `uploaded_at` | DateTimeField | `auto_now_add=True` | Upload timestamp |
-
----
-
-### `lots` ([`Lot`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L492))
-Bulk product batches and surplus lot packages.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Internal Lot ID |
-| `vendor` | ForeignKey | FK to [`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86), `on_delete=SET_NULL`, Null | Seller submitting the lot |
-| `lot_number` | CharField(30) | `unique=True`, `db_index=True` | Auto-generated ID (`LOT-00001`) |
-| `title` | CharField(255) | Blank, `db_index=True` | Bulk package title |
-| `description` | TextField | Blank | Lot details & manifest summary |
-| `category` | ForeignKey | FK to [`SubCategory`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L467), `on_delete=SET_NULL`, Null | Primary category |
-| `category_name` | CharField(255) | Blank | Fallback category name |
-| `inventory_location` | CharField(255) | Blank | Stock location |
-| `total_price` | Decimal(12,2)| Default: `0.00` | Package total price |
-| `currency` | CharField(10) | Default: `"USD"` | Currency code |
-| `reason_to_sell` | TextField | Blank | Reason for liquidating |
-| `file` | FileField | Upload: `lot_enquiries/%Y/%m/`, Null | Uploaded Excel manifest |
-| `enquiry_status` | CharField(20) | Default: `"pending"`, Choices: `pending`, `approved`, `declined` | Moderation state |
-| `active_status` | CharField(20) | Default: `"inactive"`, Choices: `active`, `inactive` | Status string |
-| `is_active` | BooleanField | Default: `False`, `db_index=True` | Live listing boolean |
-| `raw_data` | JSONField | Default: `dict`, Blank | Raw specs / manifest JSON |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `email` | Email Address | Recipient email address |
+| `otp` | 6-Digit Code | Security code (e.g. `123456`) |
+| `is_used` | Yes / No | Whether the code has already been redeemed |
+| `created_at` | Date & Time | Time sent (codes expire after 10 minutes) |
 
 ---
 
-### `lot_products` ([`LotProduct`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L554))
-Individual items included inside a bulk [`Lot`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L492) or [`LotBatchEnquiry`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L384).
+## 2. Product Categories & Catalog
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Item ID |
-| `lot` | ForeignKey | FK to [`Lot`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L492), `on_delete=CASCADE`, Null | Linked active Lot |
-| `enquiry` | ForeignKey | FK to [`LotBatchEnquiry`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L384), `on_delete=CASCADE`, Null | Linked raw enquiry batch |
-| `product_id` | CharField(30) | `unique=True`, `db_index=True` | Bulk item ID (`BLK-00001`) |
-| `product_name` | CharField(255) | Blank | Sub-item name |
-| `quantity` | PositiveInteger | Default: `0` | Item quantity within lot |
-| `condition` | CharField(255) | Blank | Item condition |
-| `raw_data` | JSONField | Default: `dict`, Blank | Extra row details |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update timestamp |
+### 2.1 Top-Level Categories (`MainCategory`)
+Primary product groupings (e.g., *Industrial Equipment*, *Electronics*, *Consumer Goods*).
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `name` | Text | Category title displayed on the website |
+| `slug` | Web Address Slug | Friendly URL link (e.g., `industrial-equipment`) |
+| `description` | Text | Brief overview of items under this category |
+| `image` | Picture File | Category banner image |
+| `is_active` | Yes / No | Controls whether category is visible to visitors |
 
 ---
 
-## 4. Seller Enquiries
+### 2.2 Sub-Categories (`SubCategory`)
+Specific categories nested under a Main Category (e.g., *Motors & Pumps* under *Industrial Equipment*).
 
-### `seller_product_enquiries` ([`SellerProductEnquiry`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L320))
-Form submissions from sellers offering single items.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Primary Key |
-| `product_id` | CharField(30) | `unique=True`, `db_index=True` | Enquiry ID (`PRO-00001`) |
-| `vendor` | ForeignKey | FK to [`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86), `on_delete=SET_NULL`, Null | Submitting seller |
-| `title` | CharField(255) | `db_index=True` | Item title |
-| `sku` | CharField(100) | Blank | SKU / Part number |
-| `description` | TextField | Blank | Item description |
-| `price` | Decimal(12,2)| Default: `0.00` | Seller target price |
-| `discount_price` | Decimal(12,2)| Null, Blank | Discounted price |
-| `stock_quantity` | PositiveInteger | Default: `0` | Available stock |
-| `brand` | CharField(255) | Blank | Brand |
-| `category_name` | CharField(255) | Blank | Raw category string |
-| `inventory_location` | CharField(255) | Blank | Stock location |
-| `manufacturing_country`| CharField(100) | Blank | Country of origin |
-| `manufacturing_year` | PositiveInteger | Null, Blank | Year manufactured |
-| `dimensions` | CharField(100) | Blank | Dimensions |
-| `expiry_date` | DateField | Null, Blank | Expiration date |
-| `currency` | CharField(10) | Default: `"USD"` | Currency |
-| `excluded_countries` | JSONField | Default: `list`, Blank | Restricted delivery countries |
-| `reason_to_sell` | TextField | Blank | Seller explanation |
-| `warranty` | CharField(255) | Blank | Warranty info |
-| `third_party_certificate`| FileField | Upload: `enquiries/certificates/`, Null | PDF / Cert uploaded |
-| `image` | ImageField | Upload: `enquiries/images/`, Null | Product photo |
-| `enquiry_status` | CharField(20) | Default: `"pending"`, Choices: `pending`, `approved`, `declined` | Moderation state |
-| `active_status` | CharField(20) | Default: `"inactive"`, Choices: `active`, `inactive` | Listing status |
-| `raw_data` | JSONField | Default: `dict`, Blank | Dynamic metadata |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Submission date |
-| `updated_at` | DateTimeField | `auto_now=True` | Last update |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `main_category` | Category Link | Parent Main Category |
+| `name` | Text | Sub-category title |
+| `slug` | Web Address Slug | Friendly URL link |
+| `description` | Text | Summary of sub-category contents |
+| `image` | Picture File | Sub-category thumbnail picture |
+| `is_active` | Yes / No | Controls visibility on the store |
 
 ---
 
-### `lot_batch_enquiries` ([`LotBatchEnquiry`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L384))
-Uploaded bulk lot spreadsheets (.xlsx/.csv) pending verification.
+## 3. Products & Bulk Lots Engine
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Key |
-| `batch_id` | CharField(30) | `unique=True`, `db_index=True` | Batch ID (`BAT-00001`) |
-| `uploaded_by` | ForeignKey | FK to [`VendorDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L86), `on_delete=SET_NULL`, Null | Submitting seller |
-| `file` | FileField | Upload: `lot_enquiries/%Y/%m/`, Null | Original manifest spreadsheet |
-| `title` | CharField(255) | Blank | Batch title |
-| `description` | TextField | Blank | Batch description |
-| `category_name` | CharField(255) | Blank | Primary category string |
-| `inventory_location` | CharField(255) | Blank | Warehouse location |
-| `total_price` | Decimal(12,2)| Default: `0.00` | Valuation price |
-| `currency` | CharField(10) | Default: `"USD"` | Currency code |
-| `reason_to_sell` | TextField | Blank | Seller reason |
-| `enquiry_status` | CharField(20) | Default: `"pending"`, Choices: `pending`, `approved`, `declined` | Verification state |
-| `active_status` | CharField(20) | Default: `"inactive"`, Choices: `active`, `inactive` | Status |
-| `raw_data` | JSONField | Default: `dict`, Blank | Parsed manifest data |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Submission time |
-| `updated_at` | DateTimeField | `auto_now=True` | Last updated |
+### 3.1 Individual Marketplace Products (`Product`)
+Individual items listed for sale on the marketplace.
 
----
-
-## 5. Content Management & Marketing (CMS)
-
-### `content_pages` ([`ContentPage`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L244))
-Dynamic CMS landing pages, help guides, and policy documents.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Page ID |
-| `title` | CharField(255) | `db_index=True` | Page headline |
-| `slug` | SlugField(255) | `unique=True`, `db_index=True` | URL slug |
-| `category` | CharField(100) | Default: `"General"`, Choices: `General`, `Policy`, `Information`, `Help`, `Custom` | Section grouping |
-| `content` | TextField | Blank | Fallback HTML / Markdown |
-| `components` | JSONField | Default: `list`, Blank | Dynamic zone block schemas |
-| `focus_keyphrase` | CharField(255) | Blank | Primary SEO keyword |
-| `meta_title` | CharField(255) | Blank | `<title>` tag content |
-| `meta_description` | TextField | Blank | `<meta name="description">` |
-| `meta_keywords` | CharField(255) | Blank | `<meta name="keywords">` |
-| `canonical_url` | CharField(500) | Blank | Canonical URL string |
-| `robots_index` | CharField(20) | Default: `"index"`, Choices: `index`, `noindex` | Robots index setting |
-| `robots_follow` | CharField(20) | Default: `"follow"`, Choices: `follow`, `nofollow` | Robots link follow |
-| `robots_advanced` | CharField(100) | Blank | `noarchive`, `nosnippet`, etc. |
-| `og_title`, `og_description`, `og_image` | CharField / Text | Blank | OpenGraph meta attributes |
-| `twitter_title`, `twitter_description`, `twitter_image` | CharField / Text | Blank | Twitter card meta |
-| `schema_type` | CharField(100) | Default: `"WebPage"` | JSON-LD schema type |
-| `structured_data` | TextField | Blank | Custom JSON-LD payload |
-| `status` | CharField(20) | Default: `"published"`, Choices: `published`, `draft` | Publication state |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Live toggle |
-| `show_in_header` | BooleanField | Default: `False` | Render in navigation bar |
-| `show_in_footer` | BooleanField | Default: `False` | Render in footer menu |
-| `sort_order` | PositiveInteger | Default: `0` | Display sorting priority |
-| `created_by` | ForeignKey | FK to [`AdminDetails`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L10), `on_delete=SET_NULL`, Null | Author |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Created timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Updated timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `product_id` | Unique ID | Auto-generated product code (e.g., `PRO-00042`) |
+| `product_name` | Text | Item title |
+| `model_no` | Text | Model number, Part number, or SKU |
+| `brand` | Text | Manufacturer or brand name |
+| `description` | Text | Full item specifications & description |
+| `liquidating_price` | Currency Amount | Base seller listing price |
+| `current_price` | Currency Amount | Final selling price (Auto-calculated: `Base Price + 10% Markup`) |
+| `previous_price` | Currency Amount | Original retail price or previous discounted price |
+| `stock_quantity` | Whole Number | Available units in stock |
+| `condition` | Text | Item state (e.g., *Brand New*, *Refurbished*, *Used*) |
+| `inventory_location` | Text | Warehouse or storage location |
+| `manufacturing_country`| Country Name | Country where the product was made |
+| `manufacturing_year` | Year Number | Year of production |
+| `dimensions` | Text | Size and physical dimensions |
+| `currency` | Currency Code | Currency (Default: `USD`) |
+| `warranty` | Text | Warranty coverage details |
+| `third_party_certificate`| Document File | Uploaded quality certificate or inspection report |
+| `image` | Picture File | Main product featured image |
+| `enquiry_status` | Choice | Review state (`Pending`, `Approved`, or `Declined`) |
+| `is_active` | Yes / No | Visible for sale on website (`Yes` or `No`) |
 
 ---
 
-### `blog_posts` ([`BlogPost`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L765))
-Articles and blog posts.
+### 3.2 Product Gallery Images (`ProductImage`)
+Extra photos attached to a product listing.
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Blog Post ID |
-| `title` | CharField(255) | `db_index=True` | Post title |
-| `slug` | SlugField(255) | `unique=True`, `db_index=True` | URL path slug |
-| `blog_code` | CharField(50) | Blank, `db_index=True` | Reference code |
-| `author` | CharField(150) | Default: `"Admin"` | Author name |
-| `category_name` | CharField(100) | Default: `"General"`, `db_index=True` | Category |
-| `excerpt` | TextField | Blank | Short summary snippet |
-| `content` | TextField | Blank | Full article content |
-| `image` | ImageField | Upload: `blog_images/`, Null | Uploaded header image |
-| `featured_image_url`| CharField(500) | Blank | External image URL |
-| `meta_title`, `meta_description`, `meta_keywords` | CharField / Text | Blank | Yoast SEO Meta tags |
-| `read_time` | PositiveInteger | Default: `3` | Estimated read time (mins) |
-| `total_reads` | PositiveInteger | Default: `0` | View count counter |
-| `status` | CharField(20) | Default: `"published"`, Choices: `published`, `draft` | Post status |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Active status |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Publication date |
-| `updated_at` | DateTimeField | `auto_now=True` | Modification date |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `product` | Product Link | The product this image belongs to |
+| `image` | Picture File | High-resolution product photo |
+| `uploaded_at` | Date & Time | Upload date |
 
 ---
 
-### `landing_brands` ([`Brand`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L804))
-Partner brand logos and links displayed on the homepage.
+### 3.3 Bulk Lot Packages (`Lot` & `LotProduct`)
+Large inventories or inventory packages sold as one bulk batch.
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Brand ID |
-| `name` | CharField(255) | `db_index=True` | Brand name |
-| `image` | ImageField | Upload: `brand_logos/`, Null | Uploaded logo file |
-| `image_url` | CharField(500) | Blank | External logo URL |
-| `alt_text` | CharField(255) | Blank | Image alt text |
-| `redirect_link` | CharField(500) | Blank | Destination URL on click |
-| `description` | TextField | Blank | Brand description |
-| `order` | PositiveInteger | Default: `0` | Sort order |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Display status |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Creation timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `lot_number` | Unique ID | Lot code (e.g., `LOT-00015`) |
+| `title` | Text | Bulk package title |
+| `description` | Text | Manifest summary and description |
+| `total_price` | Currency Amount | Total asking price for the whole package |
+| `inventory_location` | Text | Stock warehouse location |
+| `file` | Excel / File | Original uploaded inventory spreadsheet (.xlsx) |
+| `enquiry_status` | Choice | Review state (`Pending`, `Approved`, or `Declined`) |
+| `is_active` | Yes / No | Controls if lot is visible for purchase |
 
 ---
 
-### `partnership_enquiries` ([`PartnershipEnquiry`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L737))
-B2B Partnership contact form submissions.
+## 4. Seller Submissions (Enquiries)
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | ID |
-| `name` | CharField(255) | | Contact person name |
-| `email` | EmailField | | Contact email address |
-| `business_location` | CharField(255) | Blank | Business location |
-| `partnership_interest`| CharField(255) | Blank | Area of interest |
-| `subject` | CharField(255) | Blank | Message subject |
-| `collaboration_details`| TextField | Blank | Detailed message |
-| `status` | CharField(20) | Default: `"PENDING"`, Choices: `PENDING`, `REVIEWED`, `CONTACTED` | Processing status |
-| `created_at` | DateTimeField | `auto_now_add=True` | Timestamp |
+### 4.1 Seller Item Submissions (`SellerProductEnquiry`)
+Forms submitted by sellers wanting to list a single product. Held in review until approved by an Admin.
 
----
-
-## 6. System Configuration & Audit Logs
-
-### `system_settings` ([`SystemSettings`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L708))
-Global application operational parameters.
-
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Identifier |
-| `operational_charge_percentage` | Decimal(5,2) | Default: `0.00` | Global platform markup percentage |
-| `is_maintenance_mode` | BooleanField | Default: `False`, `db_index=True` | Global maintenance toggle |
-| `maintenance_message` | TextField | Default: `"Website is under maintenance..."` | Message displayed to users |
-| `updated_at` | DateTimeField | `auto_now=True` | Last modification timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `product_id` | Unique ID | Reference code (e.g., `PRO-00102`) |
+| `vendor` | User Link | The seller submitting the item |
+| `title` | Text | Item title |
+| `price` | Currency Amount | Expected selling price |
+| `stock_quantity` | Whole Number | Available units |
+| `brand` | Text | Brand name |
+| `reason_to_sell` | Text | Reason for liquidating stock |
+| `enquiry_status` | Choice | Admin decision (`Pending`, `Approved`, `Declined`) |
 
 ---
 
-### `price_adjustment_logs` ([`PriceAdjustmentLog`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L826))
-Audit log recording bulk price updates and rollback snapshots.
+### 4.2 Seller Bulk Excel Submissions (`LotBatchEnquiry`)
+Spreadsheets uploaded by sellers containing hundreds of inventory items.
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Log ID |
-| `admin_name` | CharField(150) | Default: `"Admin"` | Executing administrator |
-| `action_type` | CharField(50) | | e.g. "Increase Prices", "Decrease Prices" |
-| `adjustment_method` | CharField(50) | Blank | "Percentage (%)", "Fixed Amount" |
-| `value` | Decimal(10,2)| Default: `0.00` | Value applied |
-| `note` | CharField(255) | Blank | Rationale / admin memo |
-| `affected_products_count`| PositiveInteger | Default: `0` | Number of modified products |
-| `status` | CharField(20) | Default: `"Applied"` | Status ("Applied", "Rolled Back") |
-| `backup_snapshot` | JSONField | Default: `dict`, Blank | `{product_id: old_price}` backup JSON |
-| `created_at` | DateTimeField | `auto_now_add=True`, `db_index=True` | Timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `batch_id` | Unique ID | Batch code (e.g., `BAT-00008`) |
+| `uploaded_by` | User Link | The seller who uploaded the file |
+| `file` | Excel Spreadsheet | Uploaded .xlsx / .csv document |
+| `total_price` | Currency Amount | Total package value |
+| `enquiry_status` | Choice | Admin decision (`Pending`, `Approved`, `Declined`) |
 
 ---
 
-### `popup_settings` ([`PopupSetting`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py#L847))
-Admin modal popup settings.
+## 5. Website Content & Marketing (CMS)
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Setting ID |
-| `title` | CharField(255) | Default: `"Important Admin Notification"` | Header title |
-| `message` | TextField | Default: `"Welcome to Surplus Admin Portal..."` | Message content |
-| `popup_type` | CharField(50) | Default: `"info"` | `info`, `warning`, `success`, `danger` |
-| `is_active` | BooleanField | Default: `True`, `db_index=True` | Active toggle |
-| `delay_minutes` | PositiveInteger | Default: `1` | Reshow delay window in minutes |
-| `banner_image` | ImageField | Upload: `popup_banners/`, Null | Banner image |
-| `banner_url` | CharField(500) | Blank | Image URL |
-| `button_label` | CharField(100) | Blank, Default: `"Got It"` | Action button text |
-| `button_link` | CharField(500) | Blank | Action button URL |
-| `updated_at` | DateTimeField | `auto_now=True` | Last updated timestamp |
+### 5.1 Dynamic Pages (`ContentPage`)
+Custom website pages like *Privacy Policy*, *Terms of Service*, *About Us*, and custom landing pages. Includes built-in Google SEO controls.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `title` | Text | Page title (e.g., *Terms and Conditions*) |
+| `slug` | Web Link Slug | Page URL (e.g., `/terms-and-conditions/`) |
+| `category` | Choice | Page type (`Policy`, `Help`, `Information`, `Custom`) |
+| `content` | HTML / Text | Page body content |
+| `meta_title` | Text | Google search result title |
+| `meta_description` | Text | Google search description summary |
+| `show_in_header` | Yes / No | Display link in the main navigation menu |
+| `show_in_footer` | Yes / No | Display link in the website footer |
+| `status` | Choice | Page status (`Published` or `Draft`) |
 
 ---
 
-### `api_item` ([`Item`](file:///d:/CORALBEES/surplus-backend/api/models.py#L16))
-Starter model in `api/models.py`.
+### 5.2 Articles & Blog Posts (`BlogPost`)
+News and articles published on the platform blog.
 
-| Field Name | Data Type | Constraints / Attributes | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | BigAutoField | Primary Key | Item ID |
-| `title` | CharField(200) | | Item title |
-| `description` | TextField | Blank, Default: `""` | Item summary |
-| `quantity` | PositiveInteger | Default: `1` | Stock quantity |
-| `is_active` | BooleanField | Default: `True` | Active flag |
-| `created_at` | DateTimeField | `auto_now_add=True` | Creation timestamp |
-| `updated_at` | DateTimeField | `auto_now=True` | Update timestamp |
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `title` | Text | Article headline |
+| `slug` | Web Link Slug | URL path for the article |
+| `author` | Text | Author name |
+| `content` | Text / Article | Article body text |
+| `image` | Picture File | Cover image |
+| `read_time` | Number (Minutes) | Estimated reading duration (e.g. 5 mins) |
+| `total_reads` | Number | Total reader views count |
+| `status` | Choice | State (`Published` or `Draft`) |
+
+---
+
+### 5.3 Partner Brands (`Brand`)
+Logos of featured manufacturers and partner brands displayed on the homepage slider.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `name` | Text | Brand name |
+| `image` | Picture File | Uploaded logo image |
+| `redirect_link` | Web Address | Link opened when clicking on the brand logo |
+| `order` | Number | Display priority order |
+| `is_active` | Yes / No | Show on homepage slider |
+
+---
+
+### 5.4 Partnership Inquiries (`PartnershipEnquiry`)
+Submissions from companies interested in B2B collaborations.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `name` | Text | Contact person name |
+| `email` | Email Address | Contact email |
+| `business_location` | Text | Company location |
+| `partnership_interest`| Text | Subject / Area of collaboration |
+| `collaboration_details`| Text | Message details |
+| `status` | Choice | Follow-up status (`Pending`, `Reviewed`, `Contacted`) |
+
+---
+
+## 6. System Settings & Audit Logs
+
+### 6.1 System Settings (`SystemSettings`)
+Platform-wide rules controlled by Super Admins.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `operational_charge_percentage` | Percentage (%) | Default commission/markup rate added to product prices |
+| `is_maintenance_mode` | Yes / No | Temporary maintenance switch (turns off public browsing) |
+| `maintenance_message` | Text | Notice displayed to visitors when maintenance is active |
+
+---
+
+### 6.2 Price Change Audit History (`PriceAdjustmentLog`)
+Logs every mass price change or fee adjustment made by admins, including backup snapshots for easy rollbacks.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `admin_name` | Text | Name of the admin who updated prices |
+| `action_type` | Text | Operation description (e.g. *Increase Prices*, *Fee Update*) |
+| `value` | Number | Adjustment value applied (e.g. `5%` or `$10`) |
+| `affected_products_count`| Number | Total number of items updated |
+| `backup_snapshot` | Data Snapshot | Saved price backup allowing instant undo/rollback |
+| `created_at` | Date & Time | Timestamp of change |
+
+---
+
+### 6.3 Notification Popups (`PopupSetting`)
+Announcement popups displayed on the admin portal dashboard.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `title` | Text | Popup heading title |
+| `message` | Text | Announcement message content |
+| `popup_type` | Choice | Style (`info`, `warning`, `danger`, `promotion`) |
+| `delay_minutes` | Number | Minutes before reminding closed popup again |
+| `is_active` | Yes / No | Active status toggle |
