@@ -483,14 +483,7 @@ def send_registration_otp(request):
             html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
-        sender = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
-        if not sender or 'noreply@surplusmarket.com' in sender:
-            host_user = getattr(settings, 'EMAIL_HOST_USER', '')
-            if host_user:
-                sender = f"Surplus Market <{host_user}>"
-            else:
-                sender = "Surplus Market <bb7115001@smtp-brevo.com>"
-        from_email = sender
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <mithun.coralbees@gmail.com>')
 
         def _send_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
@@ -630,14 +623,7 @@ def send_login_otp(request):
             html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
-        sender = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
-        if not sender or 'noreply@surplusmarket.com' in sender:
-            host_user = getattr(settings, 'EMAIL_HOST_USER', '')
-            if host_user:
-                sender = f"Surplus Market <{host_user}>"
-            else:
-                sender = "Surplus Market <bb7115001@smtp-brevo.com>"
-        from_email = sender
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <mithun.coralbees@gmail.com>')
 
         def _send_login_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
