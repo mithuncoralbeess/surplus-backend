@@ -21,8 +21,10 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
 
-allowed_hosts_raw = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
+allowed_hosts_raw = os.getenv("ALLOWED_HOSTS", "*")
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_raw.split(",") if host.strip()]
+if "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
 
 # Application definition
