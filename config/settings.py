@@ -84,7 +84,7 @@ if DATABASE_URL:
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "False").lower() in ("true", "1", "t"),
+            ssl_require=os.getenv("DB_SSL_REQUIRE", "True").lower() in ("true", "1", "t"),
         )
     }
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
