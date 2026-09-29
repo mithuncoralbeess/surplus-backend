@@ -433,6 +433,7 @@ import random
 import uuid
 import hashlib
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -475,19 +476,10 @@ def send_registration_otp(request):
     
     subject = "Surplus Market - Your Registration OTP Code"
     message = f"Hello,\n\nYour OTP for registration on Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
-        <h2 style="color: #2563eb; margin-bottom: 8px;">Surplus Market</h2>
-        <p style="color: #374151; font-size: 15px;">Hello,</p>
-        <p style="color: #374151; font-size: 15px;">Your 6-digit verification code for vendor registration is:</p>
-        <div style="background-color: #f3f4f6; padding: 18px; text-align: center; border-radius: 8px; margin: 20px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1e40af;">{otp_code}</span>
-        </div>
-        <p style="color: #6b7280; font-size: 13px;">This code is valid for 10 minutes. Please do not share this OTP with anyone.</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #9ca3af; font-size: 12px; text-align: center;">Surplus Market B2B Wholesale Platform</p>
-    </div>
-    """
+    try:
+        html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
+    except Exception:
+        html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
     try:
         send_mail(
@@ -610,21 +602,12 @@ def send_login_otp(request):
         vendor=vendor
     )
     
-    subject = "Surplus Market - Your Login OTP Code"
+    subject = "Surplus Market - Your Login Security Code"
     message = f"Hello,\n\nYour OTP to log in to Surplus Market is: {otp_code}.\n\nThis OTP is valid for 10 minutes. Please do not share this code with anyone.\n\nThank you,\nSurplus Market Team"
-    html_message = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
-        <h2 style="color: #2563eb; margin-bottom: 8px;">Surplus Market</h2>
-        <p style="color: #374151; font-size: 15px;">Hello,</p>
-        <p style="color: #374151; font-size: 15px;">Your 6-digit verification code to log in is:</p>
-        <div style="background-color: #f3f4f6; padding: 18px; text-align: center; border-radius: 8px; margin: 20px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1e40af;">{otp_code}</span>
-        </div>
-        <p style="color: #6b7280; font-size: 13px;">This code is valid for 10 minutes. Please do not share this OTP with anyone.</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-        <p style="color: #9ca3af; font-size: 12px; text-align: center;">Surplus Market B2B Wholesale Platform</p>
-    </div>
-    """
+    try:
+        html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
+    except Exception:
+        html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
     try:
         send_mail(

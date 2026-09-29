@@ -7,9 +7,14 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from django.contrib.staticfiles.storage import staticfiles_storage
+from django.views.generic.base import RedirectView
 from api import views as api_views
 
 urlpatterns = [
+    # Favicon route
+    path("favicon.ico", RedirectView.as_view(url=staticfiles_storage.url("images/favicon.ico"))),
+
     # Django Dashboard for registration & staff management
     path("django-admin/", admin.site.urls),
 
