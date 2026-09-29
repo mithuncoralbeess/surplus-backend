@@ -483,7 +483,14 @@ def send_registration_otp(request):
             html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+        sender = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+        if not sender or 'noreply@surplusmarket.com' in sender:
+            host_user = getattr(settings, 'EMAIL_HOST_USER', '')
+            if host_user:
+                sender = f"Surplus Market <{host_user}>"
+            else:
+                sender = "Surplus Market <bb7115001@smtp-brevo.com>"
+        from_email = sender
 
         def _send_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
@@ -493,11 +500,11 @@ def send_registration_otp(request):
                     html_message=html_msg,
                     from_email=frm,
                     recipient_list=[to_email],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
-                print(f"--- REGISTRATION OTP SENT TO {to_email}: {code} ---")
+                print(f"--- REGISTRATION OTP SENT SUCCESSFULLY TO {to_email}: {code} ---")
             except Exception as e:
-                print(f"Error dispatching registration OTP email to {to_email}: {e}")
+                print(f"FAILED TO DISPATCH REGISTRATION OTP EMAIL TO {to_email}: {e}")
 
         threading.Thread(
             target=_send_email_bg,
@@ -623,7 +630,14 @@ def send_login_otp(request):
             html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@surplusmarket.com')
+        sender = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+        if not sender or 'noreply@surplusmarket.com' in sender:
+            host_user = getattr(settings, 'EMAIL_HOST_USER', '')
+            if host_user:
+                sender = f"Surplus Market <{host_user}>"
+            else:
+                sender = "Surplus Market <bb7115001@smtp-brevo.com>"
+        from_email = sender
 
         def _send_login_email_bg(sub, msg, html_msg, frm, to_email, code):
             try:
@@ -633,11 +647,11 @@ def send_login_otp(request):
                     html_message=html_msg,
                     from_email=frm,
                     recipient_list=[to_email],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
-                print(f"--- LOGIN OTP SENT TO {to_email}: {code} ---")
+                print(f"--- LOGIN OTP SENT SUCCESSFULLY TO {to_email}: {code} ---")
             except Exception as e:
-                print(f"Error dispatching login OTP email to {to_email}: {e}")
+                print(f"FAILED TO DISPATCH LOGIN OTP EMAIL TO {to_email}: {e}")
 
         threading.Thread(
             target=_send_login_email_bg,
