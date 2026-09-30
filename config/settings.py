@@ -243,8 +243,11 @@ if USE_R2:
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Email Configuration (Brevo SMTP / Standard SMTP)
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+# Email Configuration (Brevo HTTP API Bypass)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "config.backends.BrevoHTTPEmailBackend")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+
+# Fallback SMTP Settings (Not used by BrevoHTTPEmailBackend)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 2525))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "t")
