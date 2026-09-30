@@ -576,6 +576,14 @@ def complete_profile(request):
         vendor.company_name = ""
         
     vendor.business_location = data["business_location"]
+    
+    if "business_address" in data:
+        vendor.business_address = data["business_address"]
+    if "tax_registration_number" in data:
+        vendor.tax_registration_number = data["tax_registration_number"]
+    if "business_type" in data:
+        vendor.business_type = data["business_type"]
+        
     vendor.user_type = data["user_type"]
     
     cat_inst = data.get("category_interested", [])
@@ -594,7 +602,10 @@ def complete_profile(request):
         "username": vendor.username,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
-        "business_location": vendor.business_location
+        "business_location": vendor.business_location,
+        "business_address": vendor.business_address,
+        "tax_registration_number": vendor.tax_registration_number,
+        "business_type": vendor.business_type
     })
 
 
@@ -680,7 +691,10 @@ def verify_login_otp(request):
         "full_name": vendor.full_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
-        "business_location": vendor.business_location
+        "business_location": vendor.business_location,
+        "business_address": vendor.business_address,
+        "tax_registration_number": vendor.tax_registration_number,
+        "business_type": vendor.business_type
     })
 
 

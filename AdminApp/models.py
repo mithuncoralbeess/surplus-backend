@@ -103,6 +103,9 @@ class VendorDetails(models.Model):
     
     company_name = models.CharField(max_length=255, blank=True, default="")
     business_location = models.CharField(max_length=255, blank=True, default="")
+    business_address = models.TextField(blank=True, default="")
+    tax_registration_number = models.CharField(max_length=100, blank=True, default="")
+    business_type = models.CharField(max_length=100, blank=True, default="")
     category_interested = models.JSONField(default=list, blank=True, help_text="Interested categories (supports 1 or more categories)")
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default="BUYER")
 
