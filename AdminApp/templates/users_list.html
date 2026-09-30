@@ -283,6 +283,42 @@
 
                                                         <div class="d-flex align-items-start gap-2">
                                                             <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-card-heading"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Business Type</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.business_type and user.business_type != '-' %}{{ user.business_type }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-building-add"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Business Address</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.business_address and user.business_address != '-' %}{{ user.business_address }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-receipt"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Tax Registration Number (TRN)</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.tax_registration_number and user.tax_registration_number != '-' %}{{ user.tax_registration_number }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
                                                                 <i class="bi bi-buildings"></i>
                                                             </div>
                                                             <div>

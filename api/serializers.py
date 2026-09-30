@@ -20,11 +20,6 @@ class SendRegistrationOTPSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     mobile_number = serializers.CharField(max_length=20)
-    country_code = serializers.CharField(max_length=10, required=False, allow_blank=True)
-    company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    business_location = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    category_interested = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
 
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -32,13 +27,13 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 class CompleteProfileSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")))
+    account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")), required=False)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    business_location = serializers.CharField(max_length=255, required=True)
+    business_location = serializers.CharField(max_length=255, required=False, allow_blank=True)
     business_address = serializers.CharField(required=False, allow_blank=True)
     tax_registration_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
     business_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")))
+    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
     category_interested = serializers.JSONField(required=False, default=list)
 
 class SendLoginOTPSerializer(serializers.Serializer):

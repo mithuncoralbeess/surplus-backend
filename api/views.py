@@ -567,15 +567,17 @@ def complete_profile(request):
     if not vendor:
         return Response({"success": False, "message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         
-    vendor.account_entity_type = data["account_entity_type"]
-    if vendor.account_entity_type == "COMPANY":
-        if not data.get("company_name"):
-            return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
-        vendor.company_name = data["company_name"]
-    else:
-        vendor.company_name = ""
+    if "account_entity_type" in data:
+        vendor.account_entity_type = data["account_entity_type"]
+        if vendor.account_entity_type == "COMPANY":
+            if not data.get("company_name"):
+                return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
+            vendor.company_name = data["company_name"]
+        else:
+            vendor.company_name = ""
         
-    vendor.business_location = data["business_location"]
+    if "business_location" in data:
+        vendor.business_location = data["business_location"]
     
     if "business_address" in data:
         vendor.business_address = data["business_address"]
@@ -584,7 +586,8 @@ def complete_profile(request):
     if "business_type" in data:
         vendor.business_type = data["business_type"]
         
-    vendor.user_type = data["user_type"]
+    if "user_type" in data:
+        vendor.user_type = data["user_type"]
     
     cat_inst = data.get("category_interested", [])
     if isinstance(cat_inst, str):
