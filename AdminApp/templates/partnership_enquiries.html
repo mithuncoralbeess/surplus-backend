@@ -367,9 +367,9 @@
                                     </span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" aria-labelledby="statusDropdown{{ item.id }}">
-                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-warning d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'PENDING');"><i class="bi bi-clock-history"></i> Pending</button></li>
-                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-primary d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'REVIEWED');"><i class="bi bi-eye"></i> Reviewed</button></li>
-                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-success d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'CONTACTED');"><i class="bi bi-check-circle"></i> Contacted</button></li>
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-warning d-flex align-items-center gap-2" onclick="changeStatus('{{ item.id }}', 'PENDING');"><i class="bi bi-clock-history"></i> Pending</button></li>
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-primary d-flex align-items-center gap-2" onclick="changeStatus('{{ item.id }}', 'REVIEWED');"><i class="bi bi-eye"></i> Reviewed</button></li>
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-success d-flex align-items-center gap-2" onclick="changeStatus('{{ item.id }}', 'CONTACTED');"><i class="bi bi-check-circle"></i> Contacted</button></li>
                                 </ul>
                             </div>
                         </td>
@@ -381,7 +381,7 @@
                                 <a href="mailto:{{ item.email }}?subject=Re:%20{{ item.subject|urlencode }}" class="action-icon-btn btn-mail" title="Email Applicant">
                                     <i class="bi bi-envelope"></i>
                                 </a>
-                                <button class="action-icon-btn btn-delete" onclick="deleteSingle({{ item.id }});" title="Delete Proposal">
+                                <button class="action-icon-btn btn-delete" onclick="deleteSingle('{{ item.id }}');" title="Delete Proposal">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -459,9 +459,9 @@
                                 <div class="modal-footer border-top p-3 bg-white justify-content-between">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="small text-muted fw-medium">Update Status:</span>
-                                        <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="changeStatus({{ item.id }}, 'PENDING');">Pending</button>
-                                        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="changeStatus({{ item.id }}, 'REVIEWED');">Reviewed</button>
-                                        <button class="btn btn-sm btn-outline-success rounded-pill" onclick="changeStatus({{ item.id }}, 'CONTACTED');">Contacted</button>
+                                        <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="changeStatus('{{ item.id }}', 'PENDING');">Pending</button>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="changeStatus('{{ item.id }}', 'REVIEWED');">Reviewed</button>
+                                        <button class="btn btn-sm btn-outline-success rounded-pill" onclick="changeStatus('{{ item.id }}', 'CONTACTED');">Contacted</button>
                                     </div>
                                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
                                 </div>
