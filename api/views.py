@@ -603,12 +603,16 @@ def complete_profile(request):
         "vendor_id": vendor.id,
         "email": vendor.email,
         "username": vendor.username,
+        "full_name": vendor.full_name,
+        "account_entity_type": vendor.account_entity_type,
+        "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
         "business_location": vendor.business_location,
         "business_address": vendor.business_address,
         "tax_registration_number": vendor.tax_registration_number,
-        "business_type": vendor.business_type
+        "business_type": vendor.business_type,
+        "category_interested": vendor.category_interested
     })
 
 
@@ -692,12 +696,15 @@ def verify_login_otp(request):
         "email": vendor.email,
         "username": vendor.username,
         "full_name": vendor.full_name,
+        "account_entity_type": vendor.account_entity_type,
+        "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
         "business_location": vendor.business_location,
         "business_address": vendor.business_address,
         "tax_registration_number": vendor.tax_registration_number,
-        "business_type": vendor.business_type
+        "business_type": vendor.business_type,
+        "category_interested": vendor.category_interested
     })
 
 
