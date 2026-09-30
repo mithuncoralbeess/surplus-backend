@@ -85,7 +85,7 @@ if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "0")),
             ssl_require=os.getenv("DB_SSL_REQUIRE", "False").lower() in ("true", "1", "t"),
         )
     }
@@ -101,7 +101,7 @@ else:
                 "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
                 "HOST": os.getenv("DB_HOST", "localhost"),
                 "PORT": os.getenv("DB_PORT", "5432"),
-                "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
+                "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "0")),
                 "CONN_HEALTH_CHECKS": True,
             }
         }

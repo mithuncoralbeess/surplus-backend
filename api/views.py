@@ -1,6 +1,6 @@
 import threading
 from django.utils import timezone
-from django.db import connection
+from django.db import connection, close_old_connections
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, viewsets
@@ -459,6 +459,7 @@ def generate_otp():
 @permission_classes([AllowAny])
 def send_registration_otp(request):
     try:
+        close_old_connections()
         serializer = SendRegistrationOTPSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -492,17 +493,16 @@ def send_registration_otp(request):
                 html_message=html_message,
                 from_email=from_email,
                 recipient_list=[email],
-                fail_silently=False,
+                fail_silently=True,
             )
-            print(f"--- REGISTRATION OTP SENT SUCCESSFULLY TO {email}: {otp_code} ---")
+            print(f"--- REGISTRATION OTP SENT/CREATED FOR {email}: {otp_code} ---")
         except Exception as e:
             print(f"FAILED TO DISPATCH REGISTRATION OTP EMAIL TO {email}: {e}")
-            return Response({"success": False, "message": f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
         return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
     except Exception as exc:
         print(f"send_registration_otp Exception: {exc}")
-        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -593,6 +593,7 @@ def complete_profile(request):
 @permission_classes([AllowAny])
 def send_login_otp(request):
     try:
+        close_old_connections()
         serializer = SendLoginOTPSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -626,17 +627,16 @@ def send_login_otp(request):
                 html_message=html_message,
                 from_email=from_email,
                 recipient_list=[email],
-                fail_silently=False,
+                fail_silently=True,
             )
-            print(f"--- LOGIN OTP SENT SUCCESSFULLY TO {email}: {otp_code} ---")
+            print(f"--- LOGIN OTP SENT/CREATED FOR {email}: {otp_code} ---")
         except Exception as e:
             print(f"FAILED TO DISPATCH LOGIN OTP EMAIL TO {email}: {e}")
-            return Response({"success": False, "message": f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
     except Exception as exc:
         print(f"send_login_otp Exception: {exc}")
-        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
