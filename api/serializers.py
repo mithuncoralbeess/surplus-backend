@@ -39,7 +39,63 @@ class CompleteProfileSerializer(serializers.Serializer):
 class SendLoginOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-from AdminApp.models import PartnershipEnquiry, Product, Lot
+from AdminApp.models import PartnershipEnquiry, ContactUsEnquiry, AnalyticsViewLog, PageViewLog, Product, Lot
+
+class PageViewLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PageViewLog
+        fields = [
+            'id',
+            'entity_type',
+            'entity_id',
+            'entity_slug',
+            'path',
+            'ip_address',
+            'user_agent',
+            'referrer',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+class AnalyticsViewLogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AnalyticsViewLog
+        fields = [
+            'id',
+            'entity_type',
+            'entity_id',
+            'entity_slug',
+            'path',
+            'referrer',
+            'user_agent',
+            'ip_address',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+class ContactUsEnquirySerializer(serializers.ModelSerializer):
+
+    fullName = serializers.CharField(source='full_name', required=False)
+    enquiryType = serializers.CharField(source='enquiry_type', required=False)
+
+    class Meta:
+        model = ContactUsEnquiry
+        fields = [
+            'id',
+            'full_name',
+            'fullName',
+            'email',
+            'phone',
+            'enquiry_type',
+            'enquiryType',
+            'message',
+            'status',
+            'is_blocked',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PartnershipEnquirySerializer(serializers.ModelSerializer):
     class Meta:
@@ -52,6 +108,7 @@ class PartnershipEnquirySerializer(serializers.ModelSerializer):
             'subject', 
             'collaboration_details'
         ]
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:

@@ -525,8 +525,10 @@ class Lot(models.Model):
     active_status = models.CharField(max_length=20, choices=ACTIVE_STATUS_CHOICES, default="inactive", db_index=True)
     is_active = models.BooleanField(default=False, db_index=True)
     raw_data = models.JSONField(default=dict, blank=True, help_text="Flexible storage for extra lot specifications and product manifest")
+    views_count = models.PositiveIntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -657,8 +659,10 @@ class Product(models.Model):
     is_active = models.BooleanField(default=False, db_index=True)
     date_approved = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp when product enquiry status was set to APPROVED")
     raw_data = models.JSONField(default=dict, blank=True, help_text="Flexible storage for extra product fields and seller contact details")
+    views_count = models.PositiveIntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -766,6 +770,95 @@ class PartnershipEnquiry(models.Model):
         return f"{self.name} - {self.partnership_interest}"
 
 
+class ContactUsEnquiry(models.Model):
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.CharField(max_length=50, blank=True, default="")
+    enquiry_type = models.CharField(max_length=255, blank=True, default="")
+    message = models.TextField(blank=True, default="")
+    
+    STATUS_CHOICES = (
+        ("PENDING", "Pending"),
+        ("REVIEWED", "Reviewed"),
+        ("CONTACTED", "Contacted"),
+        ("BLOCKED", "Blocked"),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    is_blocked = models.BooleanField(default=False, db_index=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Contact Us Enquiry"
+        verbose_name_plural = "Contact Us Enquiries"
+        db_table = "contact_us_enquiries"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.full_name} ({self.email}) - {self.enquiry_type}"
+
+
+class AnalyticsViewLog(models.Model):
+    ENTITY_TYPE_CHOICES = (
+        ("blog", "Blog Post"),
+        ("product", "Product"),
+        ("lot", "Lot Batch"),
+        ("page", "Page"),
+        ("other", "Other"),
+    )
+
+    entity_type = models.CharField(max_length=50, choices=ENTITY_TYPE_CHOICES, default="other", db_index=True)
+    entity_id = models.IntegerField(null=True, blank=True, db_index=True)
+    entity_slug = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    path = models.CharField(max_length=500, blank=True, default="", db_index=True)
+    referrer = models.CharField(max_length=500, blank=True, default="")
+    user_agent = models.TextField(blank=True, default="")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user = models.ForeignKey(VendorDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="view_logs")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Analytics View Log"
+        verbose_name_plural = "Analytics View Logs"
+        db_table = "analytics_view_logs"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["entity_type", "entity_id"], name="idx_view_type_id"),
+            models.Index(fields=["entity_type", "entity_slug"], name="idx_view_type_slug"),
+        ]
+
+class PageViewLog(models.Model):
+    ENTITY_TYPE_CHOICES = (
+        ("lot", "Lot Batch"),
+        ("product", "Product"),
+        ("blog", "Blog Post"),
+        ("page", "Page"),
+    )
+
+    entity_type = models.CharField(max_length=20, choices=ENTITY_TYPE_CHOICES, db_index=True)
+    entity_id = models.IntegerField(null=True, blank=True, db_index=True)
+    entity_slug = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    path = models.CharField(max_length=500, blank=True, default="", db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    user_agent = models.TextField(blank=True, default="")
+    referrer = models.CharField(max_length=500, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Page View Log"
+        verbose_name_plural = "Page View Logs"
+        db_table = "page_view_logs"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["entity_type", "entity_id", "ip_address", "created_at"], name="idx_page_view_dedup_id"),
+            models.Index(fields=["entity_type", "entity_slug", "ip_address", "created_at"], name="idx_page_view_dedup_slug"),
+        ]
+
+    def __str__(self):
+        return f"{self.entity_type} ({self.entity_slug or self.entity_id}) - {self.ip_address} @ {self.created_at}"
+
+
 class BlogPost(models.Model):
     STATUS_CHOICES = (
         ("published", "Published"),
@@ -790,9 +883,11 @@ class BlogPost(models.Model):
     # Metrics & Status
     read_time = models.PositiveIntegerField(default=3)
     total_reads = models.PositiveIntegerField(default=0)
+    views_count = models.PositiveIntegerField(default=0, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="published", db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

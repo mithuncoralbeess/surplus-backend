@@ -12,6 +12,7 @@ from .views import (
     submit_seller_enquiry,
     submit_lot_enquiry,
     submit_partnership_enquiry,
+    submit_contact_us_enquiry,
     send_registration_otp,
     verify_registration_otp,
     complete_profile,
@@ -19,6 +20,7 @@ from .views import (
     verify_login_otp,
     submit_product_request,
     submit_lot_request,
+    track_view_api,
 )
 
 router = DefaultRouter()
@@ -27,6 +29,11 @@ router.register(r"items", ItemViewSet, basename="item")
 urlpatterns = [
     path("", api_root, name="api-root"),
     path("health/", health_check, name="health-check"),
+    
+    # Analytics View Tracking
+    path("analytics/track-view/", track_view_api, name="track_view_api"),
+    path("track-view/", track_view_api, name="track_view_api_alt"),
+
     
     # Headless CMS Public REST APIs for Frontend Server
     path("pages/", get_public_pages_list, name="public_pages_list"),
@@ -40,7 +47,13 @@ urlpatterns = [
     # Public Enquiry Submissions
     path("enquiries/seller/", submit_seller_enquiry, name="public_seller_enquiry_submit"),
     path("enquiries/lots/", submit_lot_enquiry, name="public_lot_enquiry_submit"),
-    path("partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit"),
+    path("enquiries/contact-us/", submit_contact_us_enquiry, name="public_contact_us_enquiry_submit"),
+    path("enquiries/partnership/", submit_partnership_enquiry, name="public_partnership_enquiry_submit"),
+    path("enquiries/partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_alias"),
+    path("partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_legacy"),
+    path("contact-us/", submit_contact_us_enquiry, name="public_contact_us_enquiry_submit_alt"),
+
+
 
     # Vendor Registration and Login OTP flows
     path("auth/register/send-otp/", send_registration_otp, name="send_registration_otp"),
