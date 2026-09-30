@@ -532,13 +532,13 @@ def verify_registration_otp(request):
     
     vendor = VendorDetails.objects.create(
         username=username,
-        full_name=reg_data.get("full_name", ""),
+        full_name=reg_data.get("full_name") or "",
         email=email,
-        mobile_number=reg_data.get("mobile_number", ""),
-        company_name=reg_data.get("company_name", ""),
-        business_location=reg_data.get("business_location", ""),
-        category_interested=reg_data.get("category_interested", ""),
-        user_type=reg_data.get("user_type", "BUYER"),
+        mobile_number=reg_data.get("mobile_number") or "",
+        company_name=reg_data.get("company_name") or "",
+        business_location=reg_data.get("business_location") or "",
+        category_interested=reg_data.get("category_interested") or "",
+        user_type=reg_data.get("user_type") or "BUYER",
         status=True
     )
     
