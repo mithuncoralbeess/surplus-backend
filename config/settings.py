@@ -244,7 +244,7 @@ if USE_R2:
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Email Configuration (Brevo HTTP API Bypass)
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "config.backends.BrevoHTTPEmailBackend")
+EMAIL_BACKEND = "config.backends.BrevoHTTPEmailBackend"
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
 # Fallback SMTP Settings (Not used by BrevoHTTPEmailBackend)
