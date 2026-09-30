@@ -246,8 +246,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Email Configuration (Brevo SMTP / Standard SMTP)
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 2525))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "t")
+EMAIL_TIMEOUT = 10
 
 _BREVO_USER_DEFAULT = "bb7115001" + "@smtp-brevo.com"
 _BREVO_PASS_DEFAULT = "xsmtpsib-" + "31393947031a18780b7c150670d19264" + "13d5b7c817056d0348ea067491f2e402-" + "WMJCm7BqRYegll7P"
