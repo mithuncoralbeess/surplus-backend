@@ -532,6 +532,7 @@ def verify_registration_otp(request):
     
     vendor = VendorDetails.objects.create(
         username=username,
+        full_name=reg_data.get("full_name", ""),
         email=email,
         mobile_number=reg_data.get("mobile_number", ""),
         company_name=reg_data.get("company_name", ""),
@@ -676,6 +677,7 @@ def verify_login_otp(request):
         "vendor_id": vendor.id,
         "email": vendor.email,
         "username": vendor.username,
+        "full_name": vendor.full_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
         "business_location": vendor.business_location
