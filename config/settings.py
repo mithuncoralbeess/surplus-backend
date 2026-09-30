@@ -79,14 +79,15 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database & Connection Pooling
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-DATABASE_URL = os.getenv("DATABASE_URL")
+_NEON_DB_DEFAULT = "postgresql://neondb_owner:npg_kONtdCLz1I8Y@ep-gentle-surf-b4efeymw-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL = os.getenv("DATABASE_URL") or _NEON_DB_DEFAULT
 
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "0")),
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "False").lower() in ("true", "1", "t"),
+            ssl_require=True,
         )
     }
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
