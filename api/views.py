@@ -541,9 +541,12 @@ def verify_registration_otp(request):
         status=True
     )
     
-    otp_record.is_used = True
-    otp_record.vendor = vendor
-    otp_record.save()
+    # We do NOT mark the OTP as used here because the frontend will immediately 
+    # use this same OTP to call /api/auth/login/verify-otp/ to generate the auth session.
+    # The login verify endpoint will mark it as used.
+    # otp_record.is_used = True
+    # otp_record.vendor = vendor
+    # otp_record.save()
     
     return Response({"success": True, "status": "verified", "message": "OTP verified successfully. Proceed to complete profile."})
 
