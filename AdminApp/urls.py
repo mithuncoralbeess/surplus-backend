@@ -36,8 +36,10 @@ from .views import (
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
+    page_views_analytics_view,
     whatsapp_enquiries_view,
     partnership_enquiries_view,
+
     main_categories_view,
     all_products_view,
     toggle_product_status_view,
@@ -120,8 +122,13 @@ urlpatterns = [
     # Sellers & Buyers Aggregation
     path("sellers-buyers/", sellers_buyers_view, name="sellers_buyers"),
 
+    # Analytics & Traffic Tracking
+    path("analytics/page-views/", page_views_analytics_view, name="page_views_analytics"),
+    path("analytics/traffic/", page_views_analytics_view, name="page_views_analytics_alt"),
+
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),
+
     path("enquiries/whatsapp/", whatsapp_enquiries_view, name="whatsapp_enquiries"),
     path("enquiries/partnership/", partnership_enquiries_view, name="partnership_enquiries"),
 

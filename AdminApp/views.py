@@ -20,10 +20,12 @@ from .models import (
     VendorDetails,
     AdminPasswordResetOTP,
     ContentPage,
+    BlogPost,
     SellerProductEnquiry,
     LotBatchEnquiry,
     PartnershipEnquiry,
     ContactUsEnquiry,
+    PageViewLog,
     MainCategory,
     SubCategory,
     Lot,
@@ -2377,6 +2379,62 @@ def contact_enquiries_view(request):
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
+
+
+def page_views_analytics_view(request):
+    """
+    Dedicated view for Page Visits & Traffic Analytics in the Admin Portal.
+    Displays search, filtering by entity type (blog, product, lot, page),
+    KPI cards (Total Views, Today Views, Unique Visitors, System Status),
+    and top viewed content lists alongside detailed view logs.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    entity_type_filter = request.GET.get("entity_type", "").strip().lower()
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+
+    logs = PageViewLog.objects.all().order_by("-created_at")
+
+    if entity_type_filter:
+        logs = logs.filter(entity_type=entity_type_filter)
+
+    if search_query:
+        logs = logs.filter(
+            Q(path__icontains=search_query) |
+            Q(entity_slug__icontains=search_query) |
+            Q(ip_address__icontains=search_query) |
+            Q(user_agent__icontains=search_query) |
+            Q(referrer__icontains=search_query)
+        )
+
+    # Computations
+    total_views = PageViewLog.objects.count()
+    today_views = PageViewLog.objects.filter(created_at__date=timezone.now().date()).count()
+    unique_visitors = PageViewLog.objects.exclude(ip_address__isnull=True).values("ip_address").distinct().count()
+
+    # Top entity breakdown
+    top_blogs = BlogPost.objects.all().order_by("-views_count")[:5]
+    top_products = Product.objects.all().order_by("-views_count")[:5]
+    top_lots = Lot.objects.all().order_by("-views_count")[:5]
+
+    context = {
+        "admin": admin_user,
+        "logs": logs[:100],  # Show latest 100 entries
+        "total_views": total_views,
+        "today_views": today_views,
+        "unique_visitors": unique_visitors,
+        "top_blogs": top_blogs,
+        "top_products": top_products,
+        "top_lots": top_lots,
+        "search_query": search_query,
+        "selected_entity_type": entity_type_filter,
+        "page_title": "Page Visits & Traffic Analytics",
+        "page_subtitle": "Real-time Traffic Tracking, Unique Visitor Counts, and Content Performance"
+    }
+    return render(request, "page_views_analytics.html", context)
+
 
 
 

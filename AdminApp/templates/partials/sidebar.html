@@ -62,8 +62,20 @@
             </li>
         </ul>
 
+        <!-- SECTION: ANALYTICS -->
+        <div class="nav-section-title">ANALYTICS</div>
+        <ul class="sidebar-nav" id="analyticsNavList">
+            <li class="nav-item">
+                <a href="/admin/analytics/page-views/" class="nav-link {% if '/admin/analytics/page-views' in request.path %}active{% endif %}">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Page Visits & Traffic</span>
+                </a>
+            </li>
+        </ul>
+
         <!-- SECTION: ENQUIRIES -->
         <div class="nav-section-title">ENQUIRIES</div>
+
         <ul class="sidebar-nav" id="enquiriesNavList">
             <!-- Lot Enquiries Dropdown -->
             <li class="nav-item">
