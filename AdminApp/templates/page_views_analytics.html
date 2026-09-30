@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header Container -->
+    <div class="page-header-container mb-4">
+        <div>
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item"><span>Analytics</span></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>Page Visits & Traffic</span></li>
+                </ol>
+            </nav>
+            <h1 class="header-title">{{ page_title }}</h1>
+            <p class="header-subtitle">{{ page_subtitle }}</p>
+        </div>
+    </div>
+
+    <!-- Analytics Summary Cards Row -->
+    <section class="row g-3 mb-4">
+        <!-- Total Views -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-white-50 fw-semibold text-uppercase small">Total Page Views</span>
+                    <i class="bi bi-eye fs-3 opacity-75"></i>
+                </div>
+                <h2 class="fw-bold mb-0 display-6">{{ total_views }}</h2>
+                <span class="small text-white-50 mt-1 d-block">All-time traffic views</span>
+            </div>
+        </div>
+
+        <!-- Today Views -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-white-50 fw-semibold text-uppercase small">Today's Visits</span>
+                    <i class="bi bi-graph-up-arrow fs-3 opacity-75"></i>
+                </div>
+                <h2 class="fw-bold mb-0 display-6">{{ today_views }}</h2>
+                <span class="small text-white-50 mt-1 d-block">Recorded today</span>
+            </div>
+        </div>
+
+        <!-- Unique Visitors -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-white-50 fw-semibold text-uppercase small">Unique IP Visitors</span>
+                    <i class="bi bi-people fs-3 opacity-75"></i>
+                </div>
+                <h2 class="fw-bold mb-0 display-6">{{ unique_visitors }}</h2>
+                <span class="small text-white-50 mt-1 d-block">Distinct IP addresses</span>
+            </div>
+        </div>
+
+        <!-- System Traffic Status -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-white-50 fw-semibold text-uppercase small">Traffic Tracker</span>
+                    <i class="bi bi-activity fs-3 opacity-75"></i>
+                </div>
+                <h2 class="fw-bold mb-0 display-6">Active</h2>
+                <span class="small text-white-50 mt-1 d-block">1-hr deduplication enabled</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Performance Cards (Blogs, Products, Lots) -->
+    <section class="row g-3 mb-4">
+        <!-- Top Blogs -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Top Viewed Blogs</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush">
+                        {% for blog in top_blogs %}
+                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
+                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ blog.title }}">
+                                <span class="fw-medium text-dark small d-block text-truncate">{{ blog.title }}</span>
+                                <span class="text-muted extra-small">slug: /{{ blog.slug }}</span>
+                            </div>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1.5 fw-semibold">{{ blog.views_count }} views</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small py-2 mb-0">No blog view metrics recorded yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam text-success me-2"></i> Top Viewed Products</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush">
+                        {% for prod in top_products %}
+                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
+                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ prod.product_name }}">
+                                <span class="fw-medium text-dark small d-block text-truncate">{{ prod.product_name }}</span>
+                                <span class="text-muted extra-small">{{ prod.product_id }}</span>
+                            </div>
+                            <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1.5 fw-semibold">{{ prod.views_count }} views</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small py-2 mb-0">No product view metrics recorded yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Lot Batches -->
+        <div class="col-lg-4 col-md-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-collection text-warning me-2"></i> Top Viewed Lot Batches</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush">
+                        {% for lot in top_lots %}
+                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
+                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ lot.title }}">
+                                <span class="fw-medium text-dark small d-block text-truncate">{{ lot.title|default:lot.lot_number }}</span>
+                                <span class="text-muted extra-small">{{ lot.lot_number }}</span>
+                            </div>
+                            <span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 py-1.5 fw-semibold">{{ lot.views_count }} views</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small py-2 mb-0">No lot view metrics recorded yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed View Logs Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <!-- Search & Filter Toolbar -->
+            <form method="GET" action="" class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                <!-- Search Box -->
+                <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
+                    <input type="text" name="search" class="form-control rounded-end-0" placeholder="Search path, slug, IP address, user agent..." value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary rounded-start-0 px-4">Search</button>
+                </div>
+
+                <!-- Entity Type Filter -->
+                <div class="d-flex gap-2 align-items-center">
+                    <select name="entity_type" class="form-select text-secondary" style="min-width: 180px;" onchange="this.form.submit()">
+                        <option value="" {% if not selected_entity_type %}selected{% endif %}>All Entity Types</option>
+                        <option value="blog" {% if selected_entity_type == 'blog' %}selected{% endif %}>Blogs</option>
+                        <option value="product" {% if selected_entity_type == 'product' %}selected{% endif %}>Products</option>
+                        <option value="lot" {% if selected_entity_type == 'lot' %}selected{% endif %}>Lot Batches</option>
+                        <option value="page" {% if selected_entity_type == 'page' %}selected{% endif %}>Pages</option>
+                    </select>
+                    {% if search_query or selected_entity_type %}
+                    <a href="/admin/analytics/page-views/" class="btn btn-outline-secondary px-3">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr class="table-light text-dark fw-semibold">
+                            <th class="ps-3 py-3">#</th>
+                            <th class="py-3">Entity Type</th>
+                            <th class="py-3">Path / Slug</th>
+                            <th class="py-3">Entity ID</th>
+                            <th class="py-3">IP Address</th>
+                            <th class="py-3" style="max-width: 200px;">User Agent</th>
+                            <th class="py-3">Referrer</th>
+                            <th class="py-3 text-end pe-3">Date & Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="border-bottom">
+                            <td class="ps-3 py-3 text-muted">{{ log.id }}</td>
+                            <td class="py-3">
+                                {% if log.entity_type == 'blog' %}
+                                    <span class="badge bg-primary-subtle text-primary text-uppercase px-2.5 py-1">Blog</span>
+                                {% elif log.entity_type == 'product' %}
+                                    <span class="badge bg-success-subtle text-success text-uppercase px-2.5 py-1">Product</span>
+                                {% elif log.entity_type == 'lot' %}
+                                    <span class="badge bg-warning-subtle text-warning text-uppercase px-2.5 py-1">Lot</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase px-2.5 py-1">{{ log.entity_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="fw-medium text-dark">{{ log.path|default:log.entity_slug }}</span>
+                            </td>
+                            <td class="py-3 text-secondary">{{ log.entity_id|default:"-" }}</td>
+                            <td class="py-3">
+                                <span class="badge bg-light text-dark border px-2 py-1 font-monospace">{{ log.ip_address|default:"Anonymous" }}</span>
+                            </td>
+                            <td class="py-3">
+                                <span class="text-secondary d-inline-block text-truncate" style="max-width: 200px;" title="{{ log.user_agent }}">
+                                    {{ log.user_agent|default:"-" }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-secondary">
+                                <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ log.referrer }}">
+                                    {{ log.referrer|default:"Direct" }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-end pe-3 text-secondary">
+                                {{ log.created_at|date:"M. d, Y, g:i a" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                                No page view logs found for the selected filters.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
