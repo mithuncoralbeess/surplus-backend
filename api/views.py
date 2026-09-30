@@ -439,6 +439,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
 from AdminApp.models import VendorDetails, VendorOTP
 from .serializers import (
     SendRegistrationOTPSerializer,
@@ -455,6 +456,7 @@ import secrets
 def generate_otp():
     return str(secrets.SystemRandom().randint(100000, 999999))
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def send_registration_otp(request):
@@ -484,7 +486,7 @@ def send_registration_otp(request):
             html_message = render_to_string("emails/register_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your registration verification code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <mithun.coralbees@gmail.com>')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <noreply@surplusmarket.com>')
 
         try:
             send_mail(
@@ -504,6 +506,7 @@ def send_registration_otp(request):
         print(f"send_registration_otp Exception: {exc}")
         return Response({"success": False, "message": f"Server error: {str(exc)}"}, status=status.HTTP_400_BAD_REQUEST)
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def verify_registration_otp(request):
@@ -544,6 +547,7 @@ def verify_registration_otp(request):
     return Response({"success": True, "status": "verified", "message": "OTP verified successfully. Proceed to complete profile."})
 
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def complete_profile(request):
@@ -589,6 +593,7 @@ def complete_profile(request):
     })
 
 
+@csrf_exempt
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def send_login_otp(request):
@@ -618,7 +623,7 @@ def send_login_otp(request):
             html_message = render_to_string("emails/login_otp.html", {"otp_code": otp_code})
         except Exception:
             html_message = f"<h2>Surplus Market</h2><p>Your login security code: <strong>{otp_code}</strong></p>"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <mithun.coralbees@gmail.com>')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <noreply@surplusmarket.com>')
 
         try:
             send_mail(
