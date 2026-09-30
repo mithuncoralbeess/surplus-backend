@@ -143,6 +143,31 @@
     .action-icon-btn.btn-mail:hover { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
     .action-icon-btn.btn-delete:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 
+    /* Table Container & Minimum Height */
+    .table-container-card {
+        min-height: 560px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .table-responsive-custom {
+        min-height: 450px;
+        overflow-x: auto;
+        overflow-y: visible !important;
+    }
+
+    /* Table row padding & height */
+    .table-modern tbody tr td {
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+        position: relative;
+    }
+
+    .table-modern .dropdown-menu {
+        z-index: 1050 !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+    }
+
     /* Custom Toast */
     #statusToast {
         position: fixed;
@@ -231,7 +256,7 @@
     </div>
 
     <!-- Table Container Card -->
-    <div class="glass-card p-4">
+    <div class="glass-card table-container-card p-4">
         <!-- Filter Tabs & Toolbar Row -->
         <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4 border-bottom pb-3">
             <!-- Filter Tabs -->
@@ -264,7 +289,7 @@
         </div>
 
         <!-- Proposals Table -->
-        <div class="table-responsive">
+        <div class="table-responsive table-responsive-custom">
             <table class="table table-modern align-middle mb-0">
                 <thead>
                     <tr class="text-muted border-bottom" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.6px; background: #f8fafc;">
