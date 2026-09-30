@@ -50,12 +50,15 @@ if settings.DEBUG:
 from django.http import JsonResponse
 
 def custom_handler500(request):
+    origin = request.headers.get("Origin", "*")
     response = JsonResponse({
         "success": False,
         "status": 500,
         "message": "Internal Server Error. Please try again later."
     }, status=500)
-    response["Access-Control-Allow-Origin"] = "*"
+    response["Access-Control-Allow-Origin"] = origin
+    response["Access-Control-Allow-Credentials"] = "true"
+    response["Access-Control-Allow-Headers"] = "*"
     return response
 
 handler500 = "config.urls.custom_handler500"
