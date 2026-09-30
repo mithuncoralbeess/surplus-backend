@@ -4,284 +4,566 @@
 {% block title %}Partnership Enquiries | Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3">
-    <!-- Page Header & Action -->
-    <div class="page-header-container mb-4">
+<style>
+    /* Custom Design System & Glassmorphism Utilities */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .glass-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-card-gradient-1 { background: linear-gradient(135deg, #ffffff 0%, #f4f4ff 100%); }
+    .stat-card-gradient-2 { background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); }
+    .stat-card-gradient-3 { background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); }
+    .stat-card-gradient-4 { background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); }
+
+    /* Pill Badges */
+    .badge-glass-location {
+        background: rgba(239, 68, 68, 0.08);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        font-weight: 600;
+        font-size: 0.76rem;
+        padding: 5px 12px;
+        border-radius: 50px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge-glass-interest {
+        background: rgba(99, 102, 241, 0.09);
+        color: #4f46e5;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 5px 12px;
+        border-radius: 50px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Table & Row Hover */
+    .table-modern {
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+    .table-modern tbody tr {
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .table-modern tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+        background-color: #fafbfc !important;
+    }
+    .table-modern td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    .table-modern td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+    /* Interactive Status Selector Pill */
+    .status-select-btn {
+        border-radius: 50px;
+        padding: 5px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+    .status-pending { background-color: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .status-reviewed { background-color: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .status-contacted { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    
+    .status-select-btn:hover {
+        transform: scale(1.04);
+        filter: brightness(0.97);
+    }
+
+    /* Filter Nav Tabs */
+    .nav-tabs-glass {
+        border-bottom: none;
+        gap: 8px;
+    }
+    .nav-tabs-glass .nav-link {
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.85rem;
+        padding: 7px 18px;
+        background: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .nav-tabs-glass .nav-link:hover {
+        border-color: #cbd5e1;
+        color: #1e293b;
+        background: #f8fafc;
+    }
+    .nav-tabs-glass .nav-link.active {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    /* Action Buttons */
+    .action-icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        transition: all 0.18s ease;
+    }
+    .action-icon-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+        transform: translateY(-1px);
+    }
+    .action-icon-btn.btn-view:hover { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
+    .action-icon-btn.btn-mail:hover { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .action-icon-btn.btn-delete:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    /* Custom Toast */
+    #statusToast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: none;
+    }
+</style>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <div>
-            <nav class="custom-breadcrumb" aria-label="breadcrumb">
-                <ol class="breadcrumb-list mb-1" style="font-size: 0.85rem;">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item"><span>General Enquiries</span></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item active" aria-current="page"><span>Partnership Enquiries</span></li>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1" style="font-size: 0.85rem;">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/" class="text-decoration-none text-muted"><i class="bi bi-house-door"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item text-muted">General Enquiries</li>
+                    <li class="breadcrumb-item active fw-semibold text-primary" aria-current="page">Partnership Enquiries</li>
                 </ol>
             </nav>
-            <h1 class="header-title h3 fw-bold text-dark mb-1">Partnership Enquiries</h1>
-            <p class="header-subtitle text-muted mb-0" style="font-size: 0.9rem;">
-                Review and manage strategic partnership proposals, affiliate requests, and regional vendor collaborations.
-            </p>
+            <h2 class="fw-bold text-dark mb-0">Partnership Enquiries</h2>
+            <p class="text-muted small mb-0">Review, manage, and track strategic business proposals & vendor collaborations</p>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+            <button class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-inline-flex align-items-center gap-1.5" onclick="window.location.reload();">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <!-- KPI Metric Filter Cards -->
+    <!-- KPI Metric Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card stat-card-gradient-1 p-3.5 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total Proposals</span>
-                        <h2 class="fw-bold text-dark mb-0 mt-1" style="font-size: 1.75rem;">{{ counts.total|default:enquiries|length }}</h2>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Proposals</span>
+                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ counts.total|default:enquiries|length }}</h2>
                     </div>
-                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(79, 70, 229, 0.1); color: #4f46e5;">
-                        <i class="bi bi-handshake fs-4"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(79, 70, 229, 0.12); color: #4f46e5;">
+                        <i class="bi bi-handshake-fill fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #fefce8 100%);">
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card stat-card-gradient-2 p-3.5 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Pending Review</span>
-                        <h2 class="fw-bold text-amber mb-0 mt-1" style="font-size: 1.75rem; color: #d97706;">{{ counts.pending|default:"0" }}</h2>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pending Review</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: #d97706;">{{ counts.pending|default:"0" }}</h2>
                     </div>
-                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.1); color: #d97706;">
-                        <i class="bi bi-clock-history fs-4"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.12); color: #d97706;">
+                        <i class="bi bi-hourglass-split fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);">
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card stat-card-gradient-3 p-3.5 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Contacted / Active</span>
-                        <h2 class="fw-bold text-success mb-0 mt-1" style="font-size: 1.75rem; color: #059669;">{{ counts.contacted|default:"0" }}</h2>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Contacted / Active</span>
+                        <h2 class="fw-bold text-success mb-0 mt-1">{{ counts.contacted|default:"0" }}</h2>
                     </div>
-                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.1); color: #059669;">
-                        <i class="bi bi-check-circle fs-4"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.12); color: #059669;">
+                        <i class="bi bi-check-circle-fill fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 h-100" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+        <div class="col-xl-3 col-sm-6">
+            <div class="glass-card stat-card-gradient-4 p-3.5 h-100">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Referral & GCC</span>
-                        <h2 class="fw-bold text-primary mb-0 mt-1" style="font-size: 1.75rem; color: #2563eb;">{{ counts.referral|default:"0" }}</h2>
+                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Referral & GCC</span>
+                        <h2 class="fw-bold text-primary mb-0 mt-1">{{ counts.referral|default:"0" }}</h2>
                     </div>
-                    <div class="d-flex align-items-center justify-content-center rounded-3" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.1); color: #2563eb;">
-                        <i class="bi bi-globe-americas fs-4"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.12); color: #2563eb;">
+                        <i class="bi bi-globe2 fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Card -->
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4">
+    <!-- Table Container Card -->
+    <div class="glass-card p-4">
+        <!-- Filter Tabs & Toolbar Row -->
+        <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4 border-bottom pb-3">
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs nav-tabs-glass" id="statusFilterTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-filter="all">All Proposals</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-filter="PENDING">Pending</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-filter="REVIEWED">Reviewed</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-filter="CONTACTED">Contacted</button>
+                </li>
+            </ul>
 
-            <!-- Filters & Toolbar Row -->
-            <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
-                <!-- Search -->
-                <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" id="partnershipSearch" class="form-control border-start-0" placeholder="Search by name, email, location, or subject...">
-                    </div>
+            <!-- Search Bar & Actions -->
+            <div class="d-flex flex-wrap align-items-center gap-2.5">
+                <div class="position-relative" style="width: 280px;">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" id="partnershipSearch" class="form-control rounded-pill ps-5 border-1" placeholder="Search proposal, name, city..." style="font-size: 0.85rem; background: #f8fafc;">
                 </div>
-
-                <!-- Export & Bulk Actions -->
-                <div class="d-flex gap-3 align-items-center">
-                    <button class="btn text-white px-3 d-flex align-items-center gap-2 rounded-3"
-                        style="background-color: #10b981; font-size: 14px; font-weight: 500;">
-                        <i class="bi bi-file-earmark-excel-fill"></i> Export to Excel
-                    </button>
-                </div>
+                
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 d-none align-items-center gap-1.5" id="btnBulkDelete" onclick="handleBulkDelete();">
+                    <i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+                </button>
             </div>
+        </div>
 
-            <!-- Table -->
-            <div class="table-responsive">
-                <table class="table align-middle mb-0" style="font-size: 0.875rem;">
-                    <thead>
-                        <tr class="text-secondary border-bottom" style="background-color: #f8fafc; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                            <th class="ps-3 py-3" style="width: 40px;">
-                                <input class="form-check-input" type="checkbox" id="selectAll">
-                            </th>
-                            <th class="py-3 fw-bold">Applicant Details</th>
-                            <th class="py-3 fw-bold">Location</th>
-                            <th class="py-3 fw-bold">Interest Type</th>
-                            <th class="py-3 fw-bold" style="width: 32%;">Subject & Proposal</th>
-                            <th class="py-3 fw-bold">Date & Time</th>
-                            <th class="py-3 fw-bold">Status</th>
-                            <th class="py-3 fw-bold text-center" style="width: 120px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="partnershipTableBody">
-                        {% for item in enquiries %}
-                        <tr class="border-bottom hover-row" style="transition: background-color 0.15s ease;">
-                            <td class="ps-3 py-3">
-                                <input class="form-check-input" type="checkbox" value="{{ item.id }}">
-                            </td>
-                            <td class="py-3">
-                                <div class="d-flex align-items-center gap-2.5">
-                                    <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
-                                         style="width: 38px; height: 38px; font-size: 0.9rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                                        {{ item.name|slice:":1"|upper }}
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold text-dark">{{ item.name }}</div>
-                                        <div class="text-muted" style="font-size: 0.8rem;">
-                                            <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted">{{ item.email }}</a>
-                                        </div>
-                                    </div>
+        <!-- Proposals Table -->
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr class="text-muted border-bottom" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.6px; background: #f8fafc;">
+                        <th class="ps-3 py-3" style="width: 40px;">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                        </th>
+                        <th class="py-3 fw-bold">Applicant Details</th>
+                        <th class="py-3 fw-bold">Location</th>
+                        <th class="py-3 fw-bold">Interest Type</th>
+                        <th class="py-3 fw-bold" style="width: 32%;">Subject & Proposal</th>
+                        <th class="py-3 fw-bold">Date & Time</th>
+                        <th class="py-3 fw-bold">Status</th>
+                        <th class="py-3 fw-bold text-center" style="width: 130px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="partnershipTableBody">
+                    {% for item in enquiries %}
+                    <tr class="hover-row" data-status="{{ item.status }}" data-id="{{ item.id }}">
+                        <td class="ps-3 py-3">
+                            <input class="form-check-input row-checkbox" type="checkbox" value="{{ item.id }}" onchange="updateBulkDeleteState();">
+                        </td>
+                        <td class="py-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
+                                     style="width: 42px; height: 42px; font-size: 0.95rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                    {{ item.name|slice:":1"|upper }}
                                 </div>
-                            </td>
-                            <td class="py-3">
-                                <span class="badge rounded-pill bg-light text-dark border px-2.5 py-1.5 fw-normal d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-geo-alt-fill text-danger" style="font-size: 0.75rem;"></i>
-                                    {{ item.location|default:"Dubai, UAE" }}
-                                </span>
-                            </td>
-                            <td class="py-3">
-                                <span class="badge rounded-pill px-3 py-1.5 fw-medium" 
-                                      style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">
-                                    <i class="bi bi-pie-chart-fill me-1" style="font-size: 0.7rem;"></i>
-                                    {{ item.interest|default:"General Partnership" }}
-                                </span>
-                            </td>
-                            <td class="py-3">
-                                <div class="fw-semibold text-dark text-truncate mb-1" style="max-width: 280px;" title="{{ item.subject }}">
-                                    {{ item.subject|default:"Strategic Proposal" }}
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.92rem;">{{ item.name }}</div>
+                                    <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted small hover-primary d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-envelope text-muted"></i> {{ item.email }}
+                                    </a>
                                 </div>
-                                <div class="text-muted text-truncate" style="max-width: 280px; font-size: 0.8rem;">
-                                    {{ item.collaboration_details }}
-                                </div>
-                                <button type="button" class="btn btn-link p-0 border-0 text-primary text-decoration-none fw-semibold mt-1" 
-                                        style="font-size: 0.78rem;" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#proposalModal{{ item.id }}">
-                                    Read Full Proposal <i class="bi bi-arrow-right-short"></i>
+                            </div>
+                        </td>
+                        <td class="py-3">
+                            <span class="badge-glass-location">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                {{ item.location|default:"Doha, Qatar" }}
+                            </span>
+                        </td>
+                        <td class="py-3">
+                            <span class="badge-glass-interest">
+                                <i class="bi bi-pie-chart-fill"></i>
+                                {{ item.interest|default:"Referral" }}
+                            </span>
+                        </td>
+                        <td class="py-3">
+                            <div class="fw-semibold text-dark text-truncate mb-0.5" style="max-width: 300px;" title="{{ item.subject }}">
+                                {{ item.subject|default:"Proposal for Referral Partnership" }}
+                            </div>
+                            <div class="text-muted text-truncate small mb-1" style="max-width: 300px;">
+                                {{ item.collaboration_details }}
+                            </div>
+                            <button type="button" class="btn btn-link p-0 border-0 text-primary text-decoration-none fw-semibold small d-inline-flex align-items-center gap-1"
+                                    data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}">
+                                Read Full Proposal <i class="bi bi-arrow-right-short"></i>
+                            </button>
+                        </td>
+                        <td class="py-3">
+                            <div class="text-dark fw-medium" style="font-size: 0.88rem;">{{ item.date }}</div>
+                            <div class="text-muted small"><i class="bi bi-clock me-1"></i>{{ item.time }}</div>
+                        </td>
+                        <td class="py-3">
+                            <!-- Dropdown Interactive Status Selector -->
+                            <div class="dropdown">
+                                <button class="status-select-btn dropdown-toggle {% if item.status == 'CONTACTED' %}status-contacted{% elif item.status == 'REVIEWED' %}status-reviewed{% else %}status-pending{% endif %}"
+                                        type="button" id="statusDropdown{{ item.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="status-text">
+                                        {% if item.status == 'CONTACTED' %}Contacted{% elif item.status == 'REVIEWED' %}Reviewed{% else %}Pending{% endif %}
+                                    </span>
                                 </button>
-                            </td>
-                            <td class="py-3">
-                                <div class="text-dark fw-medium">{{ item.date }}</div>
-                                <div class="text-muted" style="font-size: 0.78rem;">{{ item.time }}</div>
-                            </td>
-                            <td class="py-3">
-                                {% if item.status == 'CONTACTED' %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill">Contacted</span>
-                                {% elif item.status == 'REVIEWED' %}
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill">Reviewed</span>
-                                {% else %}
-                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1 rounded-pill">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td class="py-3 text-center">
-                                <div class="d-flex justify-content-center gap-1.5">
-                                    <button class="btn btn-sm btn-light border text-dark px-2.5 rounded-3" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#proposalModal{{ item.id }}" 
-                                            title="View Details">
-                                        <i class="bi bi-eye-fill text-primary"></i>
-                                    </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2" aria-labelledby="statusDropdown{{ item.id }}">
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-warning d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'PENDING');"><i class="bi bi-clock-history"></i> Pending</button></li>
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-primary d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'REVIEWED');"><i class="bi bi-eye"></i> Reviewed</button></li>
+                                    <li><button class="dropdown-item rounded-3 py-2 px-3 fw-medium text-success d-flex align-items-center gap-2" onclick="changeStatus({{ item.id }}, 'CONTACTED');"><i class="bi bi-check-circle"></i> Contacted</button></li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td class="py-3 text-center">
+                            <div class="d-flex justify-content-center gap-1.5">
+                                <button class="action-icon-btn btn-view" data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}" title="View Full Details">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <a href="mailto:{{ item.email }}?subject=Re:%20{{ item.subject|urlencode }}" class="action-icon-btn btn-mail" title="Email Applicant">
+                                    <i class="bi bi-envelope"></i>
+                                </a>
+                                <button class="action-icon-btn btn-delete" onclick="deleteSingle({{ item.id }});" title="Delete Proposal">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Proposal Detail Modal -->
+                    <div class="modal fade" id="proposalModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                <!-- Modal Header -->
+                                <div class="modal-header border-0 p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow" 
+                                             style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                            {{ item.name|slice:":1"|upper }}
+                                        </div>
+                                        <div>
+                                            <h5 class="modal-title fw-bold text-white mb-0">{{ item.name }}</h5>
+                                            <span class="text-light opacity-75 small"><i class="bi bi-envelope me-1"></i>{{ item.email }}</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                            </td>
-                        </tr>
-
-                        <!-- Proposal Detail Modal -->
-                        <div class="modal fade" id="proposalModal{{ item.id }}" tabindex="-1" aria-labelledby="proposalModalLabel{{ item.id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                    <!-- Modal Header -->
-                                    <div class="modal-header border-bottom p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow" 
-                                                 style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                                                {{ item.name|slice:":1"|upper }}
+                                
+                                <!-- Modal Body -->
+                                <div class="modal-body p-4" style="background-color: #f8fafc;">
+                                    <!-- Info Summary Card -->
+                                    <div class="card border-0 shadow-sm rounded-4 p-3.5 mb-4 bg-white">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Location</div>
+                                                <span class="badge-glass-location">
+                                                    <i class="bi bi-geo-alt-fill"></i> {{ item.location }}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <h5 class="modal-title fw-bold text-white mb-0" id="proposalModalLabel{{ item.id }}">{{ item.name }}</h5>
-                                                <span class="text-slate-300 opacity-75" style="font-size: 0.85rem;">Partnership Enquiry #{{ item.id }}</span>
+                                            <div class="col-md-6">
+                                                <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Interest Category</div>
+                                                <span class="badge-glass-interest">
+                                                    <i class="bi bi-pie-chart-fill"></i> {{ item.interest }}
+                                                </span>
                                             </div>
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    
-                                    <!-- Modal Body -->
-                                    <div class="modal-body p-4" style="background-color: #f8fafc;">
-                                        <!-- Info Grid Card -->
-                                        <div class="card border-0 shadow-sm rounded-3 p-3 mb-4 bg-white">
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Applicant Email</div>
-                                                    <a href="mailto:{{ item.email }}" class="text-decoration-none fw-semibold text-primary" style="font-size: 0.9rem;">
-                                                        <i class="bi bi-envelope me-1"></i> {{ item.email }}
-                                                    </a>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Business Location</div>
-                                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                                        <i class="bi bi-geo-alt me-1 text-danger"></i> {{ item.location|default:"Dubai, UAE" }}
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Interest Category</div>
-                                                    <span class="badge rounded-pill px-3 py-1.5 fw-medium" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5; border: 1px solid rgba(79, 70, 229, 0.2);">
-                                                        {{ item.interest|default:"General Partnership" }}
-                                                    </span>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Submitted On</div>
-                                                    <div class="fw-semibold text-dark" style="font-size: 0.9rem;">
-                                                        <i class="bi bi-calendar3 me-1 text-muted"></i> {{ item.date }} at {{ item.time }}
-                                                    </div>
+                                            <div class="col-md-6">
+                                                <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Submitted On</div>
+                                                <div class="fw-semibold text-dark small">
+                                                    <i class="bi bi-calendar3 me-1 text-primary"></i> {{ item.date }} at {{ item.time }}
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <!-- Proposal Content Box -->
-                                        <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
-                                            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
-                                                <h6 class="fw-bold text-dark mb-0">
-                                                    <i class="bi bi-file-text text-primary me-2"></i>Subject: {{ item.subject }}
-                                                </h6>
+                                            <div class="col-md-6">
+                                                <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Current Status</div>
+                                                <span class="badge {% if item.status == 'CONTACTED' %}bg-success-subtle text-success{% elif item.status == 'REVIEWED' %}bg-primary-subtle text-primary{% else %}bg-warning-subtle text-warning{% endif %} rounded-pill px-3 py-1 fw-semibold">
+                                                    {{ item.status }}
+                                                </span>
                                             </div>
-                                            <div class="text-secondary p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.92rem; white-space: pre-line; line-height: 1.6;">{{ item.collaboration_details }}</div>
-
                                         </div>
                                     </div>
 
-                                    <!-- Modal Footer -->
-                                    <div class="modal-footer border-top p-3 bg-white justify-content-between">
-                                        <span class="text-muted small">Status: <strong>{{ item.status }}</strong></span>
-                                        <button type="button" class="btn btn-secondary px-4 rounded-3" data-bs-dismiss="modal">Close</button>
+                                    <!-- Proposal Detail Text Box -->
+                                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                                            <h6 class="fw-bold text-dark mb-0">
+                                                <i class="bi bi-file-earmark-text text-primary me-2"></i>Subject: {{ item.subject }}
+                                            </h6>
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" onclick="navigator.clipboard.writeText('{{ item.collaboration_details|escapejs }}'); showToast('Proposal details copied!');">
+                                                <i class="bi bi-copy"></i> Copy
+                                            </button>
+                                        </div>
+                                        <div class="text-secondary p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.92rem; white-space: pre-line; line-height: 1.7;">
+                                            {{ item.collaboration_details }}
+                                        </div>
                                     </div>
+                                </div>
+
+                                <!-- Modal Footer -->
+                                <div class="modal-footer border-top p-3 bg-white justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small text-muted fw-medium">Update Status:</span>
+                                        <button class="btn btn-sm btn-outline-warning rounded-pill" onclick="changeStatus({{ item.id }}, 'PENDING');">Pending</button>
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="changeStatus({{ item.id }}, 'REVIEWED');">Reviewed</button>
+                                        <button class="btn btn-sm btn-outline-success rounded-pill" onclick="changeStatus({{ item.id }}, 'CONTACTED');">Contacted</button>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
                                 </div>
                             </div>
                         </div>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                <i class="bi bi-handshake fs-1 d-block mb-3 opacity-50 text-indigo"></i>
-                                <h6 class="fw-semibold">No partnership enquiries found</h6>
-                                <p class="small text-muted mb-0">Submitted proposals will appear here automatically.</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-handshake fs-1 d-block mb-3 opacity-40 text-primary"></i>
+                            <h6 class="fw-semibold text-dark">No partnership enquiries found</h6>
+                            <p class="small text-muted mb-0">Submitted proposals from partners will appear here automatically.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
+<!-- Floating Toast Container -->
+<div id="statusToast" class="toast align-items-center text-white bg-dark border-0 rounded-4 shadow-lg p-2" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex align-items-center">
+        <div class="toast-body d-flex align-items-center gap-2 fw-medium" id="toastMessage">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i> Action completed successfully.
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+</div>
+
 <script>
-    // Live Search Filter for Partnership Enquiries Table
+    // Helper Toast Display
+    function showToast(msg) {
+        const toastEl = document.getElementById('statusToast');
+        document.getElementById('toastMessage').innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i> ${msg}`;
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toastEl.style.display = 'block';
+        toast.show();
+    }
+
+    // Status Change AJAX
+    function changeStatus(id, newStatus) {
+        const formData = new FormData();
+        formData.append('action', 'update_status');
+        formData.append('enquiry_id', id);
+        formData.append('status', newStatus);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showToast(data.message);
+                setTimeout(() => window.location.reload(), 600);
+            }
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Single Delete
+    function deleteSingle(id) {
+        if(!confirm('Are you sure you want to delete this proposal?')) return;
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('enquiry_id', id);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showToast('Proposal deleted successfully.');
+                setTimeout(() => window.location.reload(), 500);
+            }
+        });
+    }
+
+    // Select All Checkbox & Bulk Actions
+    document.getElementById('selectAll')?.addEventListener('change', function(e) {
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+        updateBulkDeleteState();
+    });
+
+    function updateBulkDeleteState() {
+        const selected = document.querySelectorAll('.row-checkbox:checked');
+        const bulkBtn = document.getElementById('btnBulkDelete');
+        const countSpan = document.getElementById('selectedCount');
+        if(selected.length > 0) {
+            bulkBtn.classList.remove('d-none');
+            bulkBtn.classList.add('d-inline-flex');
+            countSpan.innerText = selected.length;
+        } else {
+            bulkBtn.classList.add('d-none');
+            bulkBtn.classList.remove('d-inline-flex');
+        }
+    }
+
+    function handleBulkDelete() {
+        const selected = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+        if(selected.length === 0) return;
+        if(!confirm(`Delete ${selected.length} selected proposals?`)) return;
+
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        selected.forEach(id => formData.append('selected_ids', id));
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showToast(`${selected.length} proposals deleted.`);
+                setTimeout(() => window.location.reload(), 500);
+            }
+        });
+    }
+
+    // Live Search Filter
     document.getElementById('partnershipSearch')?.addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase().trim();
         const rows = document.querySelectorAll('#partnershipTableBody tr.hover-row');
@@ -289,6 +571,26 @@
         rows.forEach(row => {
             const text = row.innerText.toLowerCase();
             row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    // Nav Filter Tabs (All / Pending / Reviewed / Contacted)
+    document.querySelectorAll('#statusFilterTabs .nav-link').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#statusFilterTabs .nav-link').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.getAttribute('data-filter');
+            const rows = document.querySelectorAll('#partnershipTableBody tr.hover-row');
+
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                if(filter === 'all' || status === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         });
     });
 </script>

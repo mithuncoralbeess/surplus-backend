@@ -98,16 +98,37 @@ class ContactUsEnquirySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PartnershipEnquirySerializer(serializers.ModelSerializer):
+    location = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    interest = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    message = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
     class Meta:
         model = PartnershipEnquiry
         fields = [
+            'id',
             'name', 
             'email', 
             'business_location', 
             'partnership_interest', 
             'subject', 
-            'collaboration_details'
+            'collaboration_details',
+            'location',
+            'interest',
+            'message',
+            'status',
+            'created_at'
         ]
+        read_only_fields = ['id', 'status', 'created_at']
+
+    def to_internal_value(self, data):
+        data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'location' in data_copy and 'business_location' not in data_copy:
+            data_copy['business_location'] = data_copy.get('location', '')
+        if 'interest' in data_copy and 'partnership_interest' not in data_copy:
+            data_copy['partnership_interest'] = data_copy.get('interest', '')
+        if 'message' in data_copy and 'collaboration_details' not in data_copy:
+            data_copy['collaboration_details'] = data_copy.get('message', '')
+        return super().to_internal_value(data_copy)
 
 
 class ProductSerializer(serializers.ModelSerializer):

@@ -58,23 +58,35 @@ class AdminDetails(models.Model):
     @staticmethod
     def hash_password(raw_password: str) -> str:
         """
-        Hashes password using salted SHA-256: <hash>:<salt>
+        Hashes password using Django's standard password hasher (PBKDF2/Argon2).
         """
-        salt = uuid.uuid4().hex
-        enc_pass = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest() + ":" + salt
-        return enc_pass
+        from django.contrib.auth.hashers import make_password
+        return make_password(raw_password)
 
     def check_password(self, raw_password: str) -> bool:
         """
-        Verifies salted SHA-256 password hash using constant-time comparison.
-        Prevents timing side-channel attacks.
+        Verifies password against stored hash using constant-time comparison.
+        Supports standard PBKDF2 and legacy salted SHA-256 (<hash>:<salt>).
+        Auto-upgrades legacy salted SHA-256 hashes to PBKDF2 upon successful check.
         """
-        try:
-            stored_hash, salt = self.pass_word.split(":")
-            computed_hash = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest()
-            return hmac.compare_digest(computed_hash, stored_hash)
-        except (ValueError, AttributeError):
+        from django.contrib.auth.hashers import check_password as django_check_password, make_password
+        if not self.pass_word:
             return False
+
+        # If it's a legacy salted SHA-256 hash (<hash>:<salt>)
+        if ":" in self.pass_word and not self.pass_word.startswith(("pbkdf2_", "argon2", "bcrypt")):
+            try:
+                stored_hash, salt = self.pass_word.split(":", 1)
+                computed_hash = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest()
+                if hmac.compare_digest(computed_hash, stored_hash):
+                    # Auto-upgrade to PBKDF2
+                    self.pass_word = make_password(raw_password)
+                    self.save(update_fields=["pass_word"])
+                    return True
+            except (ValueError, AttributeError):
+                pass
+
+        return django_check_password(raw_password, self.pass_word)
 
     def set_password(self, raw_password: str):
         self.pass_word = self.hash_password(raw_password)
@@ -152,24 +164,31 @@ class VendorDetails(models.Model):
     @staticmethod
     def hash_password(raw_password: str) -> str:
         """
-        Hashes password using salted SHA-256: <hash>:<salt>
+        Hashes password using Django's standard password hasher (PBKDF2/Argon2).
         """
-        salt = uuid.uuid4().hex
-        enc_pass = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest() + ":" + salt
-        return enc_pass
+        from django.contrib.auth.hashers import make_password
+        return make_password(raw_password)
 
     def check_password(self, raw_password: str) -> bool:
         """
-        Verifies raw_password against stored hash
+        Verifies raw_password against stored hash (PBKDF2 with legacy SHA-256 fallback).
         """
+        from django.contrib.auth.hashers import check_password as django_check_password, make_password
         if not self.pass_word:
             return False
-        try:
-            stored_hash, salt = self.pass_word.split(":")
-            check_hash = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest()
-            return check_hash == stored_hash
-        except ValueError:
-            return False
+
+        if ":" in self.pass_word and not self.pass_word.startswith(("pbkdf2_", "argon2", "bcrypt")):
+            try:
+                stored_hash, salt = self.pass_word.split(":", 1)
+                computed_hash = hashlib.sha256(salt.encode() + raw_password.encode()).hexdigest()
+                if hmac.compare_digest(computed_hash, stored_hash):
+                    self.pass_word = make_password(raw_password)
+                    self.save(update_fields=["pass_word"])
+                    return True
+            except (ValueError, AttributeError):
+                pass
+
+        return django_check_password(raw_password, self.pass_word)
 
     def get_salt(self) -> str:
         if not self.pass_word:
@@ -375,9 +394,8 @@ class SellerProductEnquiry(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.product_id:
-            last_item = SellerProductEnquiry.objects.order_by("-id").first()
-            next_num = (last_item.id + 1) if last_item else 1
-            self.product_id = f"PRO-{next_num:05d}"
+            max_id = SellerProductEnquiry.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            self.product_id = f"PRO-{(max_id + 1):05d}"
             
         super().save(*args, **kwargs)
 
@@ -427,9 +445,8 @@ class LotBatchEnquiry(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
-            last_item = LotBatchEnquiry.objects.order_by("-id").first()
-            next_num = (last_item.id + 1) if last_item else 1
-            self.batch_id = f"BAT-{next_num:05d}"
+            max_id = LotBatchEnquiry.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            self.batch_id = f"BAT-{(max_id + 1):05d}"
             
         if self.enquiry_status == 'approved':
             self.active_status = 'active'
@@ -539,9 +556,8 @@ class Lot(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.lot_number:
-            last_item = Lot.objects.order_by("-id").first()
-            next_num = (last_item.id + 1) if last_item else 1
-            self.lot_number = f"LOT-{next_num:05d}"
+            max_id = Lot.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            self.lot_number = f"LOT-{(max_id + 1):05d}"
             
         if self.active_status == 'active':
             self.is_active = True
@@ -581,9 +597,8 @@ class LotProduct(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.product_id:
-            last_item = LotProduct.objects.order_by("-id").first()
-            next_num = (last_item.id + 1) if last_item else 1
-            self.product_id = f"BLK-{next_num:05d}"
+            max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            self.product_id = f"BLK-{(max_id + 1):05d}"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -665,17 +680,33 @@ class Product(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
 
+    brand_ref = models.ForeignKey(
+        "Brand",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="products",
+        help_text="Linked Brand model reference"
+    )
+
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
         db_table = "products"
         ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(liquidating_price__gte=0), name="check_product_liquidating_price_gte_0"),
+            models.CheckConstraint(condition=models.Q(current_price__gte=0), name="check_product_current_price_gte_0"),
+            models.CheckConstraint(condition=models.Q(stock_quantity__gte=0), name="check_product_stock_quantity_gte_0"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.product_id:
-            last_item = Product.objects.order_by("-id").first()
-            next_num = (last_item.id + 1) if last_item else 1
-            self.product_id = f"PRO-{next_num:05d}"
+            max_id = Product.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            self.product_id = f"PRO-{(max_id + 1):05d}"
+
+        if self.brand_ref and not self.brand:
+            self.brand = self.brand_ref.name
             
         # Calculate current_price = Liquidating Price * 1.10
         if self.liquidating_price:

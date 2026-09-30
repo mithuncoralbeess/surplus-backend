@@ -2321,8 +2321,8 @@ def contact_enquiries_view(request):
             "full_name": item.full_name,
             "phone": item.phone,
             "email": item.email,
-            "date": item.created_at.strftime("%b. %d, %Y") if item.created_at else "",
-            "time": item.created_at.strftime("%I:%M %p").lower() if item.created_at else "",
+            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
             "type": item.enquiry_type or "General Inquiry",
             "enquiry_type": item.enquiry_type or "General Inquiry",
             "message": item.message,
@@ -2459,11 +2459,30 @@ def whatsapp_enquiries_view(request):
 
 def partnership_enquiries_view(request):
     """
-    View for the Partnership Enquiries page.
+    View for the Partnership Enquiries page with AJAX status updates & bulk actions.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
+
+    # Handle POST Actions (Status Update / Delete / Bulk)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        enquiry_id = request.POST.get("enquiry_id")
+        new_status = request.POST.get("status")
+        selected_ids = request.POST.getlist("selected_ids") or ( [enquiry_id] if enquiry_id else [] )
+
+        if action == "update_status" and enquiry_id and new_status:
+            PartnershipEnquiry.objects.filter(id=enquiry_id).update(status=new_status.upper())
+            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": f"Status updated to {new_status.upper()}"})
+            return redirect("partnership_enquiries")
+
+        elif action == "delete" and selected_ids:
+            PartnershipEnquiry.objects.filter(id__in=selected_ids).delete()
+            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": "Selected enquiry deleted successfully"})
+            return redirect("partnership_enquiries")
 
     db_enquiries = PartnershipEnquiry.objects.all().order_by("-created_at")
     
@@ -2487,8 +2506,8 @@ def partnership_enquiries_view(request):
             "subject": item.subject or "Strategic Proposal",
             "collaboration_details": item.collaboration_details.strip() if item.collaboration_details else "",
 
-            "date": item.created_at.strftime("%b. %d, %Y"),
-            "time": item.created_at.strftime("%I:%M %p").lower(),
+            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
             "status": item.status,
         })
 
