@@ -23,6 +23,7 @@ from .models import (
     SellerProductEnquiry,
     LotBatchEnquiry,
     PartnershipEnquiry,
+    ContactUsEnquiry,
     MainCategory,
     SubCategory,
     Lot,
@@ -2275,63 +2276,94 @@ def delete_user_api(request, user_id):
 
 def contact_enquiries_view(request):
     """
-    View for the Contact Us (General Enquiries) page.
-    Currently uses mock data matching the UI design.
+    View for the Contact Us (General Enquiries) page in Admin Portal.
+    Fetches real submissions from ContactUsEnquiry database table.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    dummy_contacts = [
-        {
-            "id": 1,
-            "name": "David Coryell",
-            "phone": "8608430742",
-            "email": "david.coryell@redhatinc.com",
-            "date": "Sept. 11, 2026",
-            "time": "10:04 p.m.",
-            "type": "Selling Surplus",
-            "message": "Hello, We are currently conducting an overhaul stock of our computing IT equipment. We have a range..."
-        },
-        {
-            "id": 2,
-            "name": "Emad",
-            "phone": "0560008329",
-            "email": "emad.khardali@hotmail.com",
-            "date": "Aug. 30, 2026",
-            "time": "3:17 p.m.",
-            "type": "Selling Surplus",
-            "message": "Hello, We have approximately 6,000 commercial sofa beds currently located in Makkah, Saudi Arabia...."
-        },
-        {
-            "id": 3,
-            "name": "Ahmed",
-            "phone": "0545763609",
-            "email": "sabukdr@gmail.com",
-            "date": "Aug. 27, 2026",
-            "time": "2:30 p.m.",
-            "type": "Selling Surplus",
-            "message": "test surplus"
-        },
-        {
-            "id": 4,
-            "name": "Noah Thornton",
-            "phone": "9709778393",
-            "email": "noaht@randhmechanical.com",
-            "date": "Aug. 13, 2026",
-            "time": "10:32 p.m.",
-            "type": "Query",
-            "message": "I am from R&H Mechanical; we are looking for a company to buy some of our overstock. We look forwa..."
-        }
-    ]
+    # Handle POST Actions (Delete / Block / Bulk)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        selected_ids = request.POST.getlist("selected_ids") or request.POST.getlist("contact_id")
+        
+        if action == "delete" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).delete()
+        elif action == "block" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=True, status="BLOCKED")
+        elif action == "unblock" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=False, status="PENDING")
+
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    
+    db_contacts = ContactUsEnquiry.objects.all().order_by("-created_at")
+    
+    if search_query:
+        db_contacts = db_contacts.filter(
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(enquiry_type__icontains=search_query) |
+            Q(message__icontains=search_query)
+        )
+
+    contacts_list = []
+    for item in db_contacts:
+        contacts_list.append({
+            "id": item.id,
+            "name": item.full_name,
+            "full_name": item.full_name,
+            "phone": item.phone,
+            "email": item.email,
+            "date": item.created_at.strftime("%b. %d, %Y") if item.created_at else "",
+            "time": item.created_at.strftime("%I:%M %p").lower() if item.created_at else "",
+            "type": item.enquiry_type or "General Inquiry",
+            "enquiry_type": item.enquiry_type or "General Inquiry",
+            "message": item.message,
+            "status": item.status,
+            "is_blocked": item.is_blocked,
+            "created_at": item.created_at,
+        })
+
+    # If database is completely empty and no search was performed, show initial dummy items as demo data
+    if not contacts_list and not search_query and not ContactUsEnquiry.objects.exists():
+        contacts_list = [
+            {
+                "id": 1,
+                "name": "David Coryell",
+                "full_name": "David Coryell",
+                "phone": "8608430742",
+                "email": "david.coryell@redhatinc.com",
+                "date": "Sept. 11, 2026",
+                "time": "10:04 p.m.",
+                "type": "Selling Surplus",
+                "enquiry_type": "Selling Surplus",
+                "message": "Hello, We are currently conducting an overhaul stock of our computing IT equipment. We have a range..."
+            },
+            {
+                "id": 2,
+                "name": "Emad",
+                "full_name": "Emad",
+                "phone": "0560008329",
+                "email": "emad.khardali@hotmail.com",
+                "date": "Aug. 30, 2026",
+                "time": "3:17 p.m.",
+                "type": "Selling Surplus",
+                "enquiry_type": "Selling Surplus",
+                "message": "Hello, We have approximately 6,000 commercial sofa beds currently located in Makkah, Saudi Arabia...."
+            }
+        ]
 
     context = {
         "admin": admin_user,
-        "contacts": dummy_contacts,
+        "contacts": contacts_list,
+        "search_query": search_query,
         "page_title": "Contact Us",
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
+
 
 
 def whatsapp_enquiries_view(request):

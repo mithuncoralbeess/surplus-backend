@@ -708,7 +708,7 @@ def verify_login_otp(request):
     })
 
 
-from .serializers import PartnershipEnquirySerializer
+from .serializers import PartnershipEnquirySerializer, ContactUsEnquirySerializer
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def submit_partnership_enquiry(request):
@@ -735,6 +735,55 @@ def submit_partnership_enquiry(request):
         "success": False,
         "errors": serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def submit_contact_us_enquiry(request):
+    """
+    Public API endpoint to submit a Contact Us / General Enquiry from the frontend.
+    Accepts: fullName/full_name, email, phone/contactNo, enquiryType/enquiry_type, message
+    """
+    payload = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+
+    # Normalize incoming field names to model field names
+    if "fullName" in payload and "full_name" not in payload:
+        payload["full_name"] = payload.get("fullName")
+    elif "name" in payload and "full_name" not in payload:
+        payload["full_name"] = payload.get("name")
+
+    if "enquiryType" in payload and "enquiry_type" not in payload:
+        payload["enquiry_type"] = payload.get("enquiryType")
+    elif "type" in payload and "enquiry_type" not in payload:
+        payload["enquiry_type"] = payload.get("type")
+
+    if "contactNo" in payload and "phone" not in payload:
+        payload["phone"] = payload.get("contactNo")
+    elif "mobile" in payload and "phone" not in payload:
+        payload["phone"] = payload.get("mobile")
+
+    serializer = ContactUsEnquirySerializer(data=payload)
+    if serializer.is_valid():
+        enquiry = serializer.save()
+        return Response({
+            "success": True,
+            "message": "Contact enquiry submitted successfully. Thank you for reaching out!",
+            "data": {
+                "id": enquiry.id,
+                "fullName": enquiry.full_name,
+                "email": enquiry.email,
+                "phone": enquiry.phone,
+                "enquiryType": enquiry.enquiry_type,
+                "message": enquiry.message,
+                "createdAt": enquiry.created_at.isoformat() if enquiry.created_at else None
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        "success": False,
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -918,3 +967,120 @@ def submit_lot_request(request):
         "success": False,
         "errors": serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+from datetime import timedelta
+from django.db.models import F, Q
+from AdminApp.models import PageViewLog, BlogPost, Product, Lot
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def track_view_api(request):
+    """
+    Public API endpoint to record page/entity view pings from Next.js frontend.
+    Deduplicates requests within 1 hour per IP/entity to prevent spamming view counts.
+    Increments views_count on Lot, Product, or BlogPost models using atomic F() expressions.
+    """
+    data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+
+    entity_type = str(data.get("entity_type", "page")).lower().strip()
+    entity_id = data.get("entity_id")
+    entity_slug = str(data.get("entity_slug", "")).strip()
+    path = str(data.get("path", "")).strip()
+    referrer = str(data.get("referrer", "")).strip() or request.META.get("HTTP_REFERER", "")
+    user_agent = str(data.get("user_agent", "")).strip() or request.META.get("HTTP_USER_AGENT", "")
+
+    # Extract client IP address
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip_address = x_forwarded_for.split(",")[0].strip()
+    else:
+        ip_address = request.META.get("REMOTE_ADDR")
+
+    # Clean up entity_id if non-numeric
+    try:
+        if entity_id is not None:
+            entity_id = int(entity_id)
+    except (ValueError, TypeError):
+        entity_id = None
+
+    # Deduplication check: check if the same IP has logged a view for this entity_type + (entity_id or entity_slug or path) within last 1 hour
+    one_hour_ago = timezone.now() - timedelta(hours=1)
+    
+    dedup_query = Q(entity_type=entity_type)
+    if ip_address:
+        dedup_query &= Q(ip_address=ip_address)
+
+    entity_match = Q()
+    if entity_id:
+        entity_match |= Q(entity_id=entity_id)
+    if entity_slug:
+        entity_match |= Q(entity_slug=entity_slug)
+    if path:
+        entity_match |= Q(path=path)
+
+    dedup_query &= entity_match
+
+    is_duplicate = PageViewLog.objects.filter(dedup_query, created_at__gte=one_hour_ago).exists()
+
+    # Log the page view entry
+    page_view_log = PageViewLog.objects.create(
+        entity_type=entity_type,
+        entity_id=entity_id,
+        entity_slug=entity_slug,
+        path=path,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        referrer=referrer,
+    )
+
+    incremented = False
+    if not is_duplicate:
+        # Atomic F() counter increment based on entity_type
+        if entity_type == "blog":
+            blog_q = Q()
+            if entity_id:
+                blog_q |= Q(id=entity_id)
+            if entity_slug:
+                blog_q |= Q(slug=entity_slug)
+            if blog_q:
+                updated = BlogPost.objects.filter(blog_q).update(
+                    views_count=F("views_count") + 1,
+                    total_reads=F("total_reads") + 1
+                )
+                incremented = bool(updated)
+
+        elif entity_type == "product":
+            prod_q = Q()
+            if entity_id:
+                prod_q |= Q(id=entity_id)
+            if entity_slug:
+                prod_q |= Q(product_id=entity_slug) | Q(model_no=entity_slug)
+            if prod_q:
+                updated = Product.objects.filter(prod_q).update(views_count=F("views_count") + 1)
+                incremented = bool(updated)
+
+        elif entity_type == "lot":
+            lot_q = Q()
+            if entity_id:
+                lot_q |= Q(id=entity_id)
+            if entity_slug:
+                lot_q |= Q(lot_number=entity_slug)
+            if lot_q:
+                updated = Lot.objects.filter(lot_q).update(views_count=F("views_count") + 1)
+                incremented = bool(updated)
+
+    return Response({
+        "success": True,
+        "message": "View tracked successfully",
+        "data": {
+            "id": page_view_log.id,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "entity_slug": entity_slug,
+            "is_duplicate": is_duplicate,
+            "incremented": incremented,
+            "created_at": page_view_log.created_at.isoformat()
+        }
+    }, status=status.HTTP_201_CREATED)
+
