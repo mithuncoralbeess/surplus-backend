@@ -496,11 +496,11 @@ def send_registration_otp(request):
                 html_message=html_message,
                 from_email=from_email,
                 recipient_list=[email],
-                fail_silently=True,
+                fail_silently=False,
             )
             print(f"--- REGISTRATION OTP SENT/CREATED FOR {email}: {otp_code} ---")
         except Exception as e:
-            print(f"FAILED TO DISPATCH REGISTRATION OTP EMAIL TO {email}: {e}")
+            return Response({"success": False, "message": f"Email sending failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
         return Response({"success": True, "status": "otp_sent", "message": "OTP sent successfully."})
     except Exception as exc:
