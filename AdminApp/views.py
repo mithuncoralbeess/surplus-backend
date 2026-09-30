@@ -453,11 +453,9 @@ def adminDashBoard(request):
             "categories": SubCategory.objects.count(),
             "spin_wheel": 0,
             "registered_users": VendorDetails.objects.count(),
-            "total_page_views": PageViewLog.objects.count(),
-            "today_page_views": PageViewLog.objects.filter(created_at__date=timezone.now().date()).count(),
         },
-        "recent_views": PageViewLog.objects.all().order_by("-created_at")[:10],
     }
+
 
     if request.headers.get("Accept", "").find("application/json") != -1:
         return Response({
@@ -466,19 +464,10 @@ def adminDashBoard(request):
             "is_super_admin": is_super,
             "stats": context["stats"],
             "staff_list": AdminDetailsSerializer(staff_list, many=True).data if is_super else [],
-            "recent_views": [
-                {
-                    "id": v.id,
-                    "entity_type": v.entity_type,
-                    "entity_slug": v.entity_slug,
-                    "path": v.path,
-                    "ip_address": v.ip_address,
-                    "created_at": v.created_at.isoformat() if v.created_at else None
-                } for v in context["recent_views"]
-            ]
         })
 
     return render(request, "dashboard.html", context)
+
 
 
 
