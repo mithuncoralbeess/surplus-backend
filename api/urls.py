@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     api_root,
     health_check,
+    get_maintenance_status,
     ItemViewSet,
     get_public_pages_list,
     get_public_page_detail,
@@ -29,6 +30,7 @@ router.register(r"items", ItemViewSet, basename="item")
 urlpatterns = [
     path("", api_root, name="api-root"),
     path("health/", health_check, name="health-check"),
+    path("maintenance-status/", get_maintenance_status, name="public_maintenance_status"),
     
     # Analytics View Tracking
     path("analytics/track-view/", track_view_api, name="track_view_api"),

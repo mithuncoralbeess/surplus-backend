@@ -13,7 +13,7 @@ class MaintenanceModeMiddleware:
     def __call__(self, request):
         path = request.path
 
-        # Bypass admin routes, static/media files, and authentication
+        # Bypass admin routes, static/media files, authentication, and maintenance status check
         if (
             path.startswith('/admin/') or 
             path.startswith('/static/') or 
@@ -23,7 +23,9 @@ class MaintenanceModeMiddleware:
             path.startswith('/send-') or 
             path.startswith('/verify-') or 
             path.startswith('/complete-') or
-            path.startswith('/api/auth/')
+            path.startswith('/api/auth/') or
+            path == '/api/maintenance-status/' or
+            path == '/api/health/'
         ):
             return self.get_response(request)
 

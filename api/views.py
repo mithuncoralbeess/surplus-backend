@@ -63,6 +63,22 @@ def health_check(request):
     )
 
 
+@api_view(["GET"])
+def get_maintenance_status(request):
+    """
+    Public REST API to get global website maintenance status.
+    Endpoint: GET /api/maintenance-status/
+    """
+    from AdminApp.models import SystemSettings
+    sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
+    return Response({
+        "is_maintenance_mode": sys_settings.is_maintenance_mode,
+        "maintenance_message": sys_settings.maintenance_message or "Website is currently under maintenance. Please check back later.",
+        "status_text": "Maintenance" if sys_settings.is_maintenance_mode else "Live"
+    })
+
+
+
 class ItemViewSet(viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing Item instances.
