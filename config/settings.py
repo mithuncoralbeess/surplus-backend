@@ -153,25 +153,9 @@ REST_FRAMEWORK = {
 }
 
 
-# CORS & CSRF Settings
+# CORS & CSRF Settings (Allow All Origins Unconditionally)
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("true", "1", "t")
-
-DEFAULT_CORS_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-    "https://surplus-frontend-staging.vercel.app",
-]
-
-cors_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS", "")
-if cors_origins_raw:
-    env_origins = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()]
-    CORS_ALLOWED_ORIGINS = list(set(DEFAULT_CORS_ORIGINS + env_origins))
-else:
-    CORS_ALLOWED_ORIGINS = DEFAULT_CORS_ORIGINS
-
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -184,12 +168,14 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-csrf_origins_raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
-if csrf_origins_raw:
-    env_csrf = [origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()]
-    CSRF_TRUSTED_ORIGINS = list(set(DEFAULT_CORS_ORIGINS + env_csrf))
-else:
-    CSRF_TRUSTED_ORIGINS = DEFAULT_CORS_ORIGINS
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://surplus-frontend-staging.vercel.app",
+    "https://surplus-backend-uhg0.onrender.com",
+]
 
 
 
