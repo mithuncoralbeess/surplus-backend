@@ -77,43 +77,18 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database & Connection Pooling
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# Database & Connection Pooling (Neon DB / PostgreSQL Cloud)
 _NEON_DB_DEFAULT = "postgresql://neondb_owner:npg_kONtdCLz1I8Y@ep-gentle-surf-b4efeymw-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
 DATABASE_URL = os.getenv("DATABASE_URL") or _NEON_DB_DEFAULT
 
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "0")),
-            ssl_require=True,
-        )
-    }
-    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-else:
-    DB_ENGINE = os.getenv("DB_ENGINE")
-    if DB_ENGINE:
-        DATABASES = {
-            "default": {
-                "ENGINE": DB_ENGINE,
-                "NAME": os.getenv("DB_NAME", "surplus_db"),
-                "USER": os.getenv("DB_USER", "postgres"),
-                "PASSWORD": os.getenv("DB_PASSWORD", "postgres"),
-                "HOST": os.getenv("DB_HOST", "localhost"),
-                "PORT": os.getenv("DB_PORT", "5432"),
-                "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "0")),
-                "CONN_HEALTH_CHECKS": True,
-            }
-        }
-    else:
-        # Safe fallback for CI / local testing when no DB server environment is specified
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.sqlite3",
-                "NAME": BASE_DIR / "db.sqlite3",
-            }
-        }
+DATABASES = {
+    "default": dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "0")),
+        ssl_require=True,
+    )
+}
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 
 # High-Performance Caching Layer
