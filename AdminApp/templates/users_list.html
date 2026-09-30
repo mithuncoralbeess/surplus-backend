@@ -252,6 +252,30 @@
 
                                                         <div class="d-flex align-items-start gap-2">
                                                             <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-geo-alt"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Business Location</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.country and user.country != '-' %}{{ user.country }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-tags"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">Category Interested</span>
+                                                                <span class="fw-semibold text-dark">
+                                                                    {% if user.category_interested and user.category_interested != '-' %}{{ user.category_interested }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
                                                                 <i class="bi bi-shield-check"></i>
                                                             </div>
                                                             <div>
@@ -325,30 +349,6 @@
                                                                 <span class="text-muted small d-block">Company Name</span>
                                                                 <span class="fw-semibold text-dark">
                                                                     {% if user.company and user.company != '-' %}{{ user.company }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="d-flex align-items-start gap-2">
-                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
-                                                                <i class="bi bi-geo-alt"></i>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-muted small d-block">Location / Country</span>
-                                                                <span class="fw-semibold text-dark">
-                                                                    {% if user.country and user.country != '-' %}{{ user.country }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="d-flex align-items-start gap-2">
-                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
-                                                                <i class="bi bi-tags"></i>
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-muted small d-block">Category Interested</span>
-                                                                <span class="fw-semibold text-dark">
-                                                                    {% if user.category_interested and user.category_interested != '-' %}{{ user.category_interested }}{% else %}<span class="text-muted fw-normal fst-italic">Not specified</span>{% endif %}
                                                                 </span>
                                                             </div>
                                                         </div>
