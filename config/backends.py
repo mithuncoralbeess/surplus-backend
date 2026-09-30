@@ -21,6 +21,7 @@ class BrevoHTTPEmailBackend(BaseEmailBackend):
             "accept": "application/json"
         }
 
+        import email.utils
         sent = 0
         for msg in email_messages:
             html_content = None
@@ -30,9 +31,22 @@ class BrevoHTTPEmailBackend(BaseEmailBackend):
                         html_content = alt[0]
                         break
             
+            from_name, from_addr = email.utils.parseaddr(msg.from_email)
+            sender = {"email": from_addr}
+            if from_name:
+                sender["name"] = from_name
+
+            to_list = []
+            for addr in msg.to:
+                t_name, t_addr = email.utils.parseaddr(addr)
+                to_obj = {"email": t_addr}
+                if t_name:
+                    to_obj["name"] = t_name
+                to_list.append(to_obj)
+
             payload = {
-                "sender": {"email": msg.from_email},
-                "to": [{"email": addr} for addr in msg.to],
+                "sender": sender,
+                "to": to_list,
                 "subject": msg.subject,
                 "textContent": msg.body,
             }
