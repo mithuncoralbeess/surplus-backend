@@ -100,7 +100,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-right: 0.4rem;
         text-transform: uppercase;
     }
 
@@ -261,10 +260,9 @@
                 <table class="table blog-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th scope="col" style="min-width: 250px;">Blog Article & Info</th>
+                            <th scope="col" style="min-width: 260px;">Blog Article & Info</th>
                             <th scope="col" style="min-width: 110px;">Category</th>
-                            <th scope="col" style="min-width: 110px;">Author</th>
-                            <th scope="col" style="min-width: 120px;">Metrics</th>
+                            <th scope="col" style="min-width: 80px;">Author</th>
                             <th scope="col" style="min-width: 100px;">Status</th>
                             <th scope="col" style="min-width: 105px;">Date</th>
                             <th scope="col" class="text-end" style="min-width: 90px;">Actions</th>
@@ -310,14 +308,7 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center" title="{{ blog.author|default:'Admin' }}">
-                                    <span class="author-avatar">{{ blog.author|default:'A'|slice:":1" }}</span>
-                                    <span class="text-dark small fw-medium text-truncate" style="max-width: 140px;">{{ blog.author|default:"Admin"|truncatechars:18 }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex flex-column gap-1">
-                                    <span class="small text-dark fw-semibold"><i class="bi bi-clock me-1 text-muted"></i>{{ blog.read_time }} min read</span>
-                                    <span class="small text-muted"><i class="bi bi-eye me-1 text-info"></i>{{ blog.total_reads }} reads</span>
+                                    <span class="author-avatar" title="{{ blog.author|default:'Admin' }}">{{ blog.author|default:'A'|slice:":1" }}</span>
                                 </div>
                             </td>
                             <td>
@@ -347,7 +338,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <div class="py-4">
                                     <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-4 mb-3">
                                         <i class="bi bi-journal-x fs-1 text-muted"></i>
