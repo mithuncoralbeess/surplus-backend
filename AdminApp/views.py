@@ -2,6 +2,7 @@ import uuid
 import hashlib
 import random
 import secrets
+from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -3720,6 +3721,246 @@ def popup_view(request):
         "popup": popup_setting,
     }
     return render(request, "popup_settings.html", context)
+
+
+# ==============================================================================
+# AUCTION MANAGEMENT ADMIN VIEWS (MODEL-AGNOSTIC ENGINE)
+# ==============================================================================
+
+def admin_auctions_view(request):
+    """
+    Renders Admin Auctions Management dashboard with live KPI counters, filters, and list.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction, AuctionBid, MainCategory
+    from django.core.paginator import Paginator
+
+    status_filter = request.GET.get("status", "all").lower()
+    search_query = request.GET.get("q", "").strip()
+
+    qs = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images").all()
+
+    if status_filter != "all":
+        qs = qs.filter(status=status_filter)
+
+    if search_query:
+        qs = qs.filter(
+            Q(title__icontains=search_query) |
+            Q(auction_id__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(item_reference_id__icontains=search_query)
+        )
+
+    # Sync temporal statuses for list display
+    for auc in qs[:50]:
+        auc.sync_status()
+
+    # KPI Statistics
+    now = timezone.now()
+    stats = {
+        "total_auctions": Auction.objects.count(),
+        "live_auctions": Auction.objects.filter(status="live").count(),
+        "scheduled_auctions": Auction.objects.filter(status="scheduled").count(),
+        "sold_auctions": Auction.objects.filter(status="sold").count(),
+        "total_bids": AuctionBid.objects.count(),
+    }
+
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "page_obj": page_obj,
+        "auctions": page_obj.object_list,
+        "stats": stats,
+        "status_filter": status_filter,
+        "search_query": search_query,
+    }
+    return render(request, "auctions_list.html", context)
+
+
+def admin_auction_create_view(request):
+    """
+    Renders creation form and handles new Auction listing setup.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction, AuctionImage, MainCategory
+    from django.contrib import messages
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
+        item_type = request.POST.get("item_type", "custom")
+        item_reference_id = request.POST.get("item_reference_id", "").strip()
+        category_id = request.POST.get("category_id")
+
+        starting_bid = Decimal(request.POST.get("starting_bid", "0.00") or "0.00")
+        reserve_price = Decimal(request.POST.get("reserve_price", "0.00") or "0.00")
+        bid_increment = Decimal(request.POST.get("bid_increment", "25.00") or "25.00")
+        buy_now_raw = request.POST.get("buy_now_price", "").strip()
+        buy_now_price = Decimal(buy_now_raw) if buy_now_raw else None
+
+        start_time_str = request.POST.get("start_time")
+        end_time_str = request.POST.get("end_time")
+        auto_extend_minutes = int(request.POST.get("auto_extend_minutes", 3) or 3)
+
+        if not title or not start_time_str or not end_time_str:
+            messages.error(request, "Title, Start Time, and End Time are required fields.")
+            return redirect("admin_auction_create")
+
+        start_time = timezone.datetime.fromisoformat(start_time_str)
+        end_time = timezone.datetime.fromisoformat(end_time_str)
+        if timezone.is_naive(start_time):
+            start_time = timezone.make_aware(start_time)
+        if timezone.is_naive(end_time):
+            end_time = timezone.make_aware(end_time)
+
+        now = timezone.now()
+        initial_status = "live" if start_time <= now <= end_time else ("scheduled" if start_time > now else "ended")
+
+        category = MainCategory.objects.filter(id=category_id).first() if category_id else None
+
+        # Build snapshot metadata
+        item_metadata = {
+            "origin": "Admin Portal Creation",
+            "created_by": admin_user.username,
+            "reference_code": item_reference_id or None,
+            "notes": request.POST.get("manifest_notes", "").strip(),
+        }
+
+        auction = Auction.objects.create(
+            title=title,
+            description=description,
+            item_type=item_type,
+            item_reference_id=item_reference_id,
+            item_metadata=item_metadata,
+            category=category,
+            starting_bid=starting_bid,
+            current_bid=starting_bid,
+            reserve_price=reserve_price,
+            bid_increment=bid_increment,
+            buy_now_price=buy_now_price,
+            start_time=start_time,
+            end_time=end_time,
+            auto_extend_minutes=auto_extend_minutes,
+            status=initial_status,
+        )
+
+        # Handle uploaded images
+        images = request.FILES.getlist("images")
+        for idx, img in enumerate(images):
+            AuctionImage.objects.create(
+                auction=auction,
+                image=img,
+                is_primary=(idx == 0),
+                display_order=idx,
+            )
+
+        messages.success(request, f"Auction '{auction.title}' (#{auction.auction_id}) created successfully!")
+        return redirect("admin_auctions_view")
+
+    categories = MainCategory.objects.all().order_by("name")
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "categories": categories,
+    }
+    return render(request, "auction_create.html", context)
+
+
+def admin_auction_detail_view(request, auction_id):
+    """
+    Renders live auction monitoring dashboard, real-time bid history, and admin emergency controls.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction
+
+    try:
+        if str(auction_id).isdigit():
+            auction = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images", "bids").get(id=int(auction_id))
+        else:
+            auction = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images", "bids").get(auction_id=auction_id)
+    except Auction.DoesNotExist:
+        from django.http import Http404
+        raise Http404("Auction listing not found")
+
+    auction.sync_status()
+    bids = auction.bids.select_related("bidder").order_by("-created_at")
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "auction": auction,
+        "bids": bids,
+    }
+    return render(request, "auction_detail.html", context)
+
+
+def admin_auction_action_api(request, auction_id):
+    """
+    API for admin actions on an auction: extend time, close & evaluate, cancel, or activate live.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Admin authorization required."}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Method not allowed."}, status=405)
+
+    from .models import Auction
+    from .auction_engine import AuctionEngine
+    from datetime import timedelta
+
+    try:
+        auction = Auction.objects.get(auction_id=auction_id) if not str(auction_id).isdigit() else Auction.objects.get(id=int(auction_id))
+    except Auction.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Auction not found."}, status=404)
+
+    action = request.POST.get("action", "").lower()
+
+    if action == "extend":
+        mins = int(request.POST.get("minutes", 5))
+        auction.end_time += timedelta(minutes=mins)
+        auction.save(update_fields=["end_time", "updated_at"])
+        return JsonResponse({
+            "success": True,
+            "message": f"Auction extended by {mins} minutes. New end time: {auction.end_time.strftime('%Y-%m-%d %H:%M:%S UTC')}.",
+            "new_end_time": auction.end_time.isoformat(),
+        })
+
+    elif action == "close":
+        evaluated = AuctionEngine.evaluate_and_close(auction.id)
+        return JsonResponse({
+            "success": True,
+            "message": f"Auction closed. Final status: '{evaluated.status}'.",
+            "status": evaluated.status,
+            "winner": evaluated.winner.username if evaluated.winner else None,
+            "winning_amount": str(evaluated.winning_bid_amount) if evaluated.winning_bid_amount else None,
+        })
+
+    elif action == "cancel":
+        auction.status = "cancelled"
+        auction.save(update_fields=["status", "updated_at"])
+        return JsonResponse({"success": True, "message": "Auction cancelled.", "status": "cancelled"})
+
+    elif action == "go_live":
+        auction.status = "live"
+        auction.save(update_fields=["status", "updated_at"])
+        return JsonResponse({"success": True, "message": "Auction is now LIVE.", "status": "live"})
+
+    return JsonResponse({"success": False, "message": f"Unknown action '{action}'."}, status=400)
+
 
 
 

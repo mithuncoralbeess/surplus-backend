@@ -217,6 +217,23 @@
             </li>
         </ul>
 
+        <!-- SECTION: AUCTIONS -->
+        <div class="nav-section-title">AUCTIONS</div>
+        <ul class="sidebar-nav" id="auctionsNavList">
+            <li class="nav-item">
+                <a href="/admin/auctions/" class="nav-link {% if request.path == '/admin/auctions/' %}active{% endif %}">
+                    <i class="bi bi-hammer"></i>
+                    <span>All Auctions</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/auctions/create/" class="nav-link {% if request.path == '/admin/auctions/create/' %}active{% endif %}">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Create Auction</span>
+                </a>
+            </li>
+        </ul>
+
         <!-- SECTION: CONTENT MANAGER -->
         <div class="nav-section-title">CONTENT MANAGER</div>
         <ul class="sidebar-nav" id="contentNavList">

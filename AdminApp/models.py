@@ -1019,4 +1019,211 @@ class PopupSetting(models.Model):
         return f"{self.title} ({status}, Delay: {self.delay_minutes}m)"
 
 
+class Auction(models.Model):
+    """
+    Independent, model-agnostic Auction model for competitive bidding.
+    Can auction any inventory (custom liquidation batches, products, or lot manifests)
+    via snapshot item_metadata and generic references without tight schema coupling.
+    """
+    STATUS_CHOICES = (
+        ("draft", "Draft"),
+        ("scheduled", "Scheduled"),
+        ("live", "Live"),
+        ("ended", "Ended"),
+        ("sold", "Sold"),
+        ("reserve_not_met", "Reserve Not Met"),
+        ("cancelled", "Cancelled"),
+    )
+
+    ITEM_TYPE_CHOICES = (
+        ("custom", "Custom Surplus Batch"),
+        ("lot", "Lot Manifest"),
+        ("product", "Product"),
+    )
+
+    auction_id = models.CharField(max_length=30, unique=True, db_index=True)
+    title = models.CharField(max_length=255, db_index=True)
+    description = models.TextField(blank=True, default="")
+
+    item_type = models.CharField(max_length=30, choices=ITEM_TYPE_CHOICES, default="custom", db_index=True)
+    item_reference_id = models.CharField(max_length=100, blank=True, default="", db_index=True, help_text="Optional reference ID like lot_number or product_id")
+    item_metadata = models.JSONField(default=dict, blank=True, help_text="Point-in-time snapshot of item specifications, manifests, condition, and origin")
+
+    category = models.ForeignKey(MainCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="auctions")
+    vendor = models.ForeignKey(VendorDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="auctions", help_text="Seller / Consignor")
+
+    currency = models.CharField(max_length=10, default="USD")
+    starting_bid = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    current_bid = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True)
+    reserve_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, help_text="Confidential minimum price. If not met, auction ends as reserve_not_met")
+    bid_increment = models.DecimalField(max_digits=10, decimal_places=2, default=25.00)
+    buy_now_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Instant buyout price if enabled")
+
+    start_time = models.DateTimeField(db_index=True)
+    end_time = models.DateTimeField(db_index=True)
+    original_end_time = models.DateTimeField(null=True, blank=True)
+
+    # Anti-sniping soft close settings
+    auto_extend_minutes = models.PositiveIntegerField(default=3, help_text="Minutes to extend if a bid is placed in the final window")
+    auto_extend_threshold_seconds = models.PositiveIntegerField(default=120, help_text="Window before end_time (in seconds) that triggers auto-extension")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft", db_index=True)
+    total_bids = models.PositiveIntegerField(default=0, db_index=True)
+    views_count = models.PositiveIntegerField(default=0)
+
+    winner = models.ForeignKey(VendorDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="won_auctions")
+    winning_bid_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Auction"
+        verbose_name_plural = "Auctions"
+        db_table = "auctions"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "start_time", "end_time"], name="idx_auction_status_times"),
+            models.Index(fields=["item_type", "item_reference_id"], name="idx_auction_item_ref"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.auction_id:
+            self.auction_id = f"AUC-{uuid.uuid4().hex[:8].upper()}"
+        if not self.original_end_time and self.end_time:
+            self.original_end_time = self.end_time
+        if self.current_bid == Decimal("0.00") and self.starting_bid > Decimal("0.00"):
+            self.current_bid = self.starting_bid
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.auction_id} - {self.title} ({self.status})"
+
+    @property
+    def is_live(self):
+        now = timezone.now()
+        return self.status == "live" or (self.status == "scheduled" and self.start_time <= now <= self.end_time)
+
+    @property
+    def time_remaining_seconds(self):
+        now = timezone.now()
+        if now >= self.end_time:
+            return 0
+        return int((self.end_time - now).total_seconds())
+
+    @property
+    def minimum_next_bid(self):
+        if self.total_bids == 0:
+            return self.starting_bid
+        return self.current_bid + self.bid_increment
+
+    @property
+    def is_reserve_met(self):
+        if not self.reserve_price or self.reserve_price <= Decimal("0.00"):
+            return True
+        return self.current_bid >= self.reserve_price
+
+    def sync_status(self):
+        """
+        Dynamically transitions auction status based on current timestamp.
+        """
+        now = timezone.now()
+        changed = False
+
+        if self.status == "scheduled" and now >= self.start_time:
+            if now < self.end_time:
+                self.status = "live"
+                changed = True
+            else:
+                self.status = "ended"
+                changed = True
+
+        if self.status == "live" and now >= self.end_time:
+            self.status = "ended"
+            changed = True
+
+        if changed:
+            self.save(update_fields=["status", "updated_at"])
+        return self.status
+
+
+class AuctionBid(models.Model):
+    """
+    Immutable ledger of placed bids.
+    """
+    BID_TYPE_CHOICES = (
+        ("manual", "Manual Bid"),
+        ("proxy", "Proxy / Auto Bid"),
+        ("buy_now", "Buy Now"),
+    )
+
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name="bids")
+    bidder = models.ForeignKey(VendorDetails, on_delete=models.CASCADE, related_name="auction_bids")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, db_index=True)
+    max_proxy_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    bid_type = models.CharField(max_length=20, choices=BID_TYPE_CHOICES, default="manual")
+    is_winning = models.BooleanField(default=False, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Auction Bid"
+        verbose_name_plural = "Auction Bids"
+        db_table = "auction_bids"
+        ordering = ["-amount", "-created_at"]
+        indexes = [
+            models.Index(fields=["auction", "amount"], name="idx_bid_auction_amount"),
+            models.Index(fields=["bidder", "created_at"], name="idx_bid_bidder_date"),
+        ]
+
+    def __str__(self):
+        return f"{self.bidder.username} - {self.amount} ({self.auction.auction_id})"
+
+
+class AuctionImage(models.Model):
+    """
+    Image gallery for an auction listing.
+    """
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="auctions/%Y/%m/", null=True, blank=True)
+    image_url = models.CharField(max_length=500, blank=True, default="")
+    is_primary = models.BooleanField(default=False)
+    display_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Auction Image"
+        verbose_name_plural = "Auction Images"
+        db_table = "auction_images"
+        ordering = ["display_order", "-is_primary", "id"]
+
+    def __str__(self):
+        return f"Image for {self.auction.auction_id}"
+
+    @property
+    def url(self):
+        if self.image:
+            return self.image.url
+        return self.image_url
+
+
+class AuctionWatchlist(models.Model):
+    """
+    Buyer watchlist tracking for notifications and quick access.
+    """
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name="watchlists")
+    user = models.ForeignKey(VendorDetails, on_delete=models.CASCADE, related_name="auction_watchlists")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Auction Watchlist"
+        verbose_name_plural = "Auction Watchlists"
+        db_table = "auction_watchlists"
+        unique_together = ("auction", "user")
+
+    def __str__(self):
+        return f"{self.user.username} watching {self.auction.auction_id}"
+
+
+
 

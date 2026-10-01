@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views_auction
 from .views import (
     api_root,
     health_check,
@@ -71,6 +72,15 @@ urlpatterns = [
     # Submissions
     path("submit-product-request/", submit_product_request, name="submit_product_request"),
     path("submit-lot-request/", submit_lot_request, name="submit_lot_request"),
+
+    # Public Auction REST API (Model-Agnostic Engine)
+    path("auctions/", views_auction.list_auctions, name="public_auctions_list"),
+    path("auctions/my-bids/", views_auction.my_bids, name="public_auctions_my_bids"),
+    path("auctions/<str:auction_id>/", views_auction.auction_detail, name="public_auction_detail"),
+    path("auctions/<str:auction_id>/bid/", views_auction.place_bid, name="public_auction_place_bid"),
+    path("auctions/<str:auction_id>/live-feed/", views_auction.live_auction_feed, name="public_auction_live_feed"),
+    path("auctions/<str:auction_id>/buy-now/", views_auction.buy_now, name="public_auction_buy_now"),
+    path("auctions/<str:auction_id>/watchlist/", views_auction.toggle_watchlist, name="public_auction_toggle_watchlist"),
 
     # Additional user endpoints (Wishlist, RFQ) will be added here
     path("", include(router.urls)),

@@ -55,6 +55,10 @@ from .views import (
     price_control_rollback_api,
     toggle_maintenance_mode_api,
     popup_view,
+    admin_auctions_view,
+    admin_auction_create_view,
+    admin_auction_detail_view,
+    admin_auction_action_api,
 )
 
 urlpatterns = [
@@ -153,4 +157,10 @@ urlpatterns = [
 
     # Maintenance Mode Toggle API
     path("api/maintenance/toggle/", toggle_maintenance_mode_api, name="toggle_maintenance_mode_api"),
+
+    # Auctions Management (Model-Agnostic Engine)
+    path("auctions/", admin_auctions_view, name="admin_auctions_view"),
+    path("auctions/create/", admin_auction_create_view, name="admin_auction_create"),
+    path("auctions/<str:auction_id>/", admin_auction_detail_view, name="admin_auction_detail"),
+    path("api/auctions/<str:auction_id>/action/", admin_auction_action_api, name="admin_auction_action_api"),
 ]
