@@ -14,6 +14,8 @@ CATEGORIES_DATA = {
         "Cables, chargers, and accessories",
         "Electronic components",
         "Software and licenses",
+        "Other",
+        "Mixed Lot",
     ],
     "Electrical & Lighting": [
         "Electrical equipment",
@@ -24,6 +26,8 @@ CATEGORIES_DATA = {
         "Batteries and power supplies",
         "Solar and renewable-energy equipment",
         "Generators and backup-power equipment",
+        "Other",
+        "Mixed Lot",
     ],
     "Industrial Machinery & Equipment": [
         "Manufacturing machinery",
@@ -35,13 +39,20 @@ CATEGORIES_DATA = {
         "Packaging machinery",
         "Agricultural and construction equipment",
         "Tools and workshop equipment",
+        "Other",
+        "Mixed Lot",
     ],
-    "Automotive": [
-        "Auto parts",
-        "Vehicle accessories",
-        "Tyres and batteries",
-        "Workshop equipment",
-        "Lubricants, Oils, Greases & Fluids",
+    "Oil & Gas Equipment & MRO": [
+        "Pumps, compressors, turbines",
+        "Valves, flanges, pipes, fittings",
+        "Lubricants and grease",
+        "PPE and safety equipment",
+        "Control panels and sensors",
+        "Generators and electrical equipment",
+        "Structural steel and project materials",
+        "Drilling equipment",
+        "Other",
+        "Mixed Lot",
     ],
     "Construction, Hardware & MRO": [
         "Building materials",
@@ -50,9 +61,11 @@ CATEGORIES_DATA = {
         "Fasteners and fittings",
         "Hand tools",
         "Power tools",
-        "Maintenance, repair, and operations supplies",
-        "Lubricants, Oils, Greases & Fluids",
+        "Chemicals",
+        "Adhesives and sealants",
         "Safety Equipment & PPE",
+        "Other",
+        "Mixed Lot",
     ],
     "Furniture & Interiors": [
         "Office furniture",
@@ -62,6 +75,8 @@ CATEGORIES_DATA = {
         "Fixtures and fittings",
         "Interior décor",
         "Outdoor furniture",
+        "Other",
+        "Mixed Lot",
     ],
     "Apparel, Footwear & Accessories": [
         "Clothing",
@@ -70,24 +85,27 @@ CATEGORIES_DATA = {
         "Bags and luggage",
         "Fashion accessories",
         "Textiles and fabrics",
-        "Personal protective clothing",
+        "Other",
+        "Mixed Lot",
     ],
-    "Books, Stationery & Office Supplies": [
-        "Books",
-        "Stationery",
-        "Office supplies",
-        "Printing materials",
-        "School supplies",
-        "Promotional products",
+    "Automotive": [
+        "Auto parts",
+        "Vehicle accessories",
+        "Tyres and batteries",
+        "Workshop equipment",
+        "Lubricants, Oils, Greases & Fluids",
+        "Other",
+        "Mixed Lot",
     ],
-    "Toys, Hobbies & Sports": [
+    "Toys & Sports": [
         "Toys",
         "Games and puzzles",
         "Educational toys",
-        "Hobby products",
         "Sports equipment",
         "Fitness equipment",
         "Outdoor and recreational products",
+        "Other",
+        "Mixed Lot",
     ],
     "Hospitality, Catering & Commercial Supplies": [
         "Restaurant equipment",
@@ -96,6 +114,8 @@ CATEGORIES_DATA = {
         "Hotel supplies",
         "Commercial refrigeration",
         "Cleaning equipment",
+        "Other",
+        "Mixed Lot",
     ],
     "Medical, Laboratory & Scientific Equipment": [
         "Medical equipment",
@@ -104,6 +124,8 @@ CATEGORIES_DATA = {
         "Dental equipment",
         "Healthcare furniture",
         "Non-pharmaceutical medical supplies",
+        "Other",
+        "Mixed Lot",
     ],
     "Packaging & Industrial Consumables": [
         "Packaging materials",
@@ -111,7 +133,8 @@ CATEGORIES_DATA = {
         "Plastic packaging",
         "Labels and printing materials",
         "Industrial consumables",
-        "Adhesives and sealants",
+        "Other",
+        "Mixed Lot",
     ],
     "Renewable Energy & Environmental Equipment": [
         "Solar panels",
@@ -121,27 +144,38 @@ CATEGORIES_DATA = {
         "Water-treatment equipment",
         "Waste-management equipment",
         "Energy-efficiency equipment",
+        "Other",
+        "Mixed Lot",
     ],
     "Household & Cleaning Items": [
-        "Household pest control products",
+        "Pest control products",
         "Kitchen rolls and paper towels",
         "Toilet paper and tissues",
         "Cleaning chemicals",
         "Disposable household items",
+        "Other",
+        "Mixed Lot",
     ],
-    "Other Non-FMCG Products": [
-        "Products that do not fit the listed categories",
-        "Mixed lots",
-        "Unclassified inventory",
-        "General merchandise",
+    "Books, Stationery & Office Supplies": [
+        "Books",
+        "Stationery",
+        "Office supplies",
+        "Printing materials",
+        "School supplies",
+        "Other",
+        "Mixed Lot",
+    ],
+    "General Mix Lots": [
+        "Mixed categories",
     ],
 }
 
+
 class Command(BaseCommand):
-    help = "Remove existing categories and seed new Main Categories and Subcategories into the database"
+    help = "Seed the 16 Main Categories and their Subcategories into the database"
 
     def handle(self, *args, **options):
-        # Clear existing subcategories and main categories
+        # Clear existing subcategories and main categories to ensure clean state
         deleted_subs, _ = SubCategory.objects.all().delete()
         deleted_mains, _ = MainCategory.objects.all().delete()
         self.stdout.write(f"Cleared {deleted_subs} SubCategories and {deleted_mains} MainCategories.")
@@ -172,6 +206,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully seeded {total_mains} Main Categories and {total_subs} SubCategories!"
+                f"Successfully seeded {total_mains} Main Categories and {total_subs} SubCategories into database!"
             )
         )

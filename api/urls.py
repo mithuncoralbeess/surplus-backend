@@ -22,6 +22,7 @@ from .views import (
     submit_product_request,
     submit_lot_request,
     track_view_api,
+    get_public_categories,
 )
 
 router = DefaultRouter()
@@ -32,6 +33,9 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("maintenance-status/", get_maintenance_status, name="public_maintenance_status"),
     
+    # Public Category & Subcategory REST API
+    path("categories/", get_public_categories, name="public_categories_list"),
+
     # Analytics View Tracking
     path("analytics/track-view/", track_view_api, name="track_view_api"),
     path("track-view/", track_view_api, name="track_view_api_alt"),

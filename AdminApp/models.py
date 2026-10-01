@@ -391,6 +391,10 @@ class SellerProductEnquiry(models.Model):
         verbose_name_plural = "Seller Product Enquiries"
         db_table = "seller_product_enquiries"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["enquiry_status", "created_at"], name="idx_seller_enq_status"),
+            models.Index(fields=["vendor", "created_at"], name="idx_seller_vendor_created"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.product_id:
@@ -442,6 +446,10 @@ class LotBatchEnquiry(models.Model):
         verbose_name_plural = "Lot Batch Enquiries"
         db_table = "lot_batch_enquiries"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["enquiry_status", "created_at"], name="idx_batch_enq_status"),
+            models.Index(fields=["uploaded_by", "created_at"], name="idx_batch_user_created"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
@@ -553,6 +561,11 @@ class Lot(models.Model):
         verbose_name_plural = "Lots"
         db_table = "lots"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_active", "enquiry_status"], name="idx_lot_active_status"),
+            models.Index(fields=["category", "is_active"], name="idx_lot_cat_active"),
+            models.Index(fields=["vendor", "created_at"], name="idx_lot_vendor_created"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.lot_number:
@@ -594,6 +607,10 @@ class LotProduct(models.Model):
         verbose_name_plural = "Lot Products"
         db_table = "lot_products"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["lot", "created_at"], name="idx_lotprod_lot_created"),
+            models.Index(fields=["enquiry", "created_at"], name="idx_lotprod_enq_created"),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.product_id:
@@ -698,6 +715,12 @@ class Product(models.Model):
             models.CheckConstraint(condition=models.Q(liquidating_price__gte=0), name="check_product_liquidating_price_gte_0"),
             models.CheckConstraint(condition=models.Q(current_price__gte=0), name="check_product_current_price_gte_0"),
             models.CheckConstraint(condition=models.Q(stock_quantity__gte=0), name="check_product_stock_quantity_gte_0"),
+        ]
+        indexes = [
+            models.Index(fields=["is_active", "enquiry_status"], name="idx_prod_active_status"),
+            models.Index(fields=["category", "is_active"], name="idx_prod_cat_active"),
+            models.Index(fields=["subcategory", "is_active"], name="idx_prod_subcat_active"),
+            models.Index(fields=["vendor", "created_at"], name="idx_prod_vendor_created"),
         ]
 
     def save(self, *args, **kwargs):

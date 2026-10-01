@@ -1,7 +1,8 @@
 import threading
 from django.utils import timezone
 from django.db import connection, close_old_connections
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 import json
@@ -131,6 +132,44 @@ def get_public_pages_list(request):
         "success": True,
         "count": len(pages),
         "pages": pages,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_public_categories(request):
+    """
+    Public REST API to fetch all Main Categories and their nested Sub Categories.
+    Endpoint: GET /api/categories/
+    """
+    from AdminApp.models import MainCategory
+    main_categories = MainCategory.objects.filter(is_active=True).prefetch_related("subcategories").order_by("name")
+
+    categories_data = []
+    for main in main_categories:
+        subcats = []
+        for sub in main.subcategories.filter(is_active=True):
+            subcats.append({
+                "id": sub.id,
+                "name": sub.name,
+                "slug": sub.slug,
+                "description": sub.description,
+                "image": sub.image.url if sub.image else None,
+            })
+
+        categories_data.append({
+            "id": main.id,
+            "name": main.name,
+            "slug": main.slug,
+            "description": main.description,
+            "image": main.image.url if main.image else None,
+            "subcategories": subcats,
+        })
+
+    return Response({
+        "success": True,
+        "count": len(categories_data),
+        "categories": categories_data,
     }, status=status.HTTP_200_OK)
 
 

@@ -50,6 +50,7 @@ from .serializers import (
 def _get_authenticated_admin(request):
     """
     Helper to check session version validity against database & cache.
+    Optimized with short-term cache lookup to avoid redundant DB queries per request.
     """
     admin_id = request.session.get("adminid")
     session_version = request.session.get("session_version")
@@ -57,19 +58,26 @@ def _get_authenticated_admin(request):
     if not admin_id or session_version is None:
         return None
 
-    try:
-        admin_user = AdminDetails.objects.get(id=admin_id, status=True)
-        cached_version = cache.get(f"admin_version_{admin_user.id}")
-        current_version = (
-            cached_version
-            if cached_version is not None
-            else admin_user.session_version
-        )
-        if session_version != current_version:
+    cache_key = f"admin_obj_{admin_id}"
+    admin_user = cache.get(cache_key)
+
+    if not admin_user:
+        try:
+            admin_user = AdminDetails.objects.get(id=admin_id, status=True)
+            cache.set(cache_key, admin_user, 60)
+        except AdminDetails.DoesNotExist:
             return None
-        return admin_user
-    except AdminDetails.DoesNotExist:
+
+    cached_version = cache.get(f"admin_version_{admin_user.id}")
+    current_version = (
+        cached_version
+        if cached_version is not None
+        else admin_user.session_version
+    )
+    if session_version != current_version:
+        cache.delete(cache_key)
         return None
+    return admin_user
 
 
 def admin_login_page(request):
@@ -1127,7 +1135,7 @@ def seller_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Product.objects.all().order_by("-created_at")
+    qs = Product.objects.all().select_related("vendor", "category", "subcategory", "brand_ref").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1192,7 +1200,7 @@ def lot_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Lot.objects.all().order_by("-created_at")
+    qs = Lot.objects.all().select_related("vendor", "category").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1466,9 +1474,9 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=enquiry_id) | Q(product_id=str(enquiry_id))
-    enquiry = Product.objects.filter(lookup).first()
+    enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category", "brand_ref").filter(lookup).first()
     if not enquiry:
-        enquiry = Product.objects.first()
+        enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category", "brand_ref").first()
     if not enquiry:
         return redirect("seller_enquiries")
 
@@ -1966,8 +1974,9 @@ def sellers_buyers_view(request):
 
     from AdminApp.models import VendorDetails, SellerProductEnquiry, Lot
     
+    from django.db.models import Count
     seller_enquiries = SellerProductEnquiry.objects.all().order_by("-created_at")
-    lot_enquiries = Lot.objects.all().order_by("-created_at")
+    lot_enquiries = Lot.objects.annotate(products_count_annotated=Count("products")).order_by("-created_at")
     vendors = VendorDetails.objects.all().order_by("-created_at")
 
     search_query = request.GET.get("q", "").strip()
@@ -2015,7 +2024,7 @@ def sellers_buyers_view(request):
         email = str(info["email"]).lower().strip()
         if not email or email == "unknown": continue
         
-        products_in_batch = enq.products.count()
+        products_in_batch = getattr(enq, "products_count_annotated", 0)
 
         if email not in users_dict:
             users_dict[email] = info
