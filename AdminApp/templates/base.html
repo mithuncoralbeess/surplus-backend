@@ -281,6 +281,50 @@
                 }
             });
         })();
+
+        // Global Submit Button Spinner / Loading Indicator Handler
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form) return;
+
+            let submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (document.activeElement && document.activeElement.form === form && (document.activeElement.tagName === 'BUTTON' || document.activeElement.tagName === 'INPUT')) {
+                submitBtn = document.activeElement;
+            }
+
+            if (submitBtn && !submitBtn.dataset.noLoading) {
+                if (submitBtn.classList.contains('submitting-loading')) return;
+
+                const currentWidth = submitBtn.offsetWidth;
+                if (currentWidth > 0) {
+                    submitBtn.style.minWidth = currentWidth + 'px';
+                }
+
+                const rawText = (submitBtn.innerText || submitBtn.value || 'Save Changes').trim();
+                let loadingText = 'Saving...';
+                if (/save changes/i.test(rawText)) {
+                    loadingText = 'Saving Changes...';
+                } else if (/create/i.test(rawText)) {
+                    loadingText = 'Creating...';
+                } else if (/save/i.test(rawText)) {
+                    loadingText = 'Saving...';
+                } else if (/update/i.test(rawText)) {
+                    loadingText = 'Updating...';
+                } else if (/delete/i.test(rawText)) {
+                    loadingText = 'Deleting...';
+                } else {
+                    loadingText = rawText + '...';
+                }
+
+                submitBtn.classList.add('submitting-loading');
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2 align-middle" role="status" aria-hidden="true"></span><span>${loadingText}</span>`;
+                submitBtn.style.pointerEvents = 'none';
+
+                setTimeout(function () {
+                    submitBtn.disabled = true;
+                }, 10);
+            }
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

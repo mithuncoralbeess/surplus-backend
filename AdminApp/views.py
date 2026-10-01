@@ -892,27 +892,26 @@ def content_pages_api(request, page_id=None):
 
 def _seed_sample_blogs_if_empty():
     from .models import BlogPost
-    if BlogPost.objects.exists():
-        return
     import json
     from pathlib import Path
     from django.conf import settings
 
     sample_dir = settings.BASE_DIR / "sample-blog"
-    json_file = sample_dir / "all_blogs.json"
+    json_file = sample_dir / "blogs.json"
     if not json_file.exists():
-        json_file = sample_dir / "blogs.json"
+        json_file = sample_dir / "all_blogs.json"
 
     if json_file.exists():
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 blogs_data = json.load(f)
-                if isinstance(blogs_data, list):
+                if isinstance(blogs_data, list) and len(blogs_data) > BlogPost.objects.count():
                     objs = []
                     for item in blogs_data:
                         title = item.get("title", "Untitled Blog")
-                        slug = item.get("slug") or title.lower().replace(" ", "-")
-                        blog_code = item.get("blog_code") or f"BLOG-{item.get('id', 1):03d}"
+                        raw_slug = item.get("slug") or f"blog-{item.get('id', 1)}"
+                        slug = raw_slug.strip().lower()
+                        blog_code = item.get("blog_code") or f"BLOG-{item.get('id', 1):06d}"
                         content = item.get("content") or ""
                         excerpt = item.get("excerpt") or ""
                         author = item.get("author") or "Admin"
@@ -931,6 +930,7 @@ def _seed_sample_blogs_if_empty():
                         read_t = int(item.get("read_time") or 3)
                         total_r = int(item.get("total_reads") or 0)
                         is_pub = item.get("is_published", True)
+                        is_active = not item.get("is_del", False)
 
                         objs.append(BlogPost(
                             title=title,
@@ -941,11 +941,12 @@ def _seed_sample_blogs_if_empty():
                             excerpt=excerpt,
                             content=content,
                             featured_image_url=img,
-                            meta_title=meta_t,
+                            meta_title=meta_t[:255],
                             meta_description=meta_d,
                             read_time=read_t,
                             total_reads=total_r,
-                            status="published" if is_pub else "draft"
+                            status="published" if is_pub else "draft",
+                            is_active=is_active
                         ))
                     BlogPost.objects.bulk_create(objs, ignore_conflicts=True)
         except Exception as e:
