@@ -62,8 +62,8 @@
                     <li class="breadcrumb-item active" aria-current="page"><span>Category Management</span></li>
                 </ol>
             </nav>
-            <h2 class="fw-bold mb-0 fs-3 text-body">Category Management</h2>
-            <p class="text-secondary small mb-0">Organize and manage top-level catalog categories and their subcategories</p>
+            <h1 class="header-title">Category Management</h1>
+            <p class="header-subtitle">Organize and manage top-level catalog categories and their subcategories</p>
         </div>
         <div>
             <button type="button" class="btn btn-primary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-2 font-weight-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addMainCategoryModal">
@@ -222,11 +222,18 @@
                                     </span>
                                 </div>
 
-                                <!-- Add Subcategory Button -->
-                                <div onclick="event.stopPropagation();">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-2 fw-medium" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal{{ main_cat.id }}" title="Add Subcategory">
-                                        <i class="bi bi-plus-circle me-1" style="margin-right: 6px;"></i>
+                                <!-- Add Subcategory, Edit & Delete Buttons -->
+                                <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal{{ main_cat.id }}" title="Add Subcategory">
+                                        <i class="bi bi-plus-circle me-1"></i>
                                         <span>Add Sub</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#editMainCategoryModal{{ main_cat.id }}" title="Edit Main Category">
+                                        <i class="bi bi-pencil-fill"></i>
+                                        <span>Edit</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#deleteMainCategoryModal{{ main_cat.id }}" title="Delete Main Category">
+                                        <i class="bi bi-trash-fill"></i>
                                     </button>
                                 </div>
                             </div>
@@ -249,8 +256,7 @@
                                     <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
                                         <thead class="table-light">
                                             <tr class="text-secondary text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                                                <th class="ps-3 py-2.5 fw-semibold" style="width: 50px;">Icon</th>
-                                                <th class="py-2.5 fw-semibold">Subcategory Name</th>
+                                                <th class="ps-3 py-2.5 fw-semibold">Subcategory Name</th>
                                                 <th class="py-2.5 fw-semibold">Slug Identifier</th>
                                                 <th class="py-2.5 fw-semibold">Status</th>
                                                 <th class="pe-3 py-2.5 fw-semibold text-end" style="width: 140px;">Actions</th>
@@ -260,18 +266,9 @@
                                             {% for sub in main_cat.subcategories.all %}
                                             <tr class="subcat-row" data-subname="{{ sub.name|lower }}">
                                                 <td class="ps-3 py-2.5">
-                                                    {% if sub.image %}
-                                                    <img src="{{ sub.image.url }}" class="rounded-2 border" style="width: 32px; height: 32px; object-fit: cover;">
-                                                    {% else %}
-                                                    <div class="rounded-2 bg-body-secondary border d-flex align-items-center justify-content-center text-primary" style="width: 32px; height: 32px;">
-                                                        <i class="bi bi-folder2-open" style="font-size: 0.9rem;"></i>
-                                                    </div>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="py-2.5">
                                                     <span class="fw-bold text-body">{{ sub.name }}</span>
                                                     {% if sub.description %}
-                                                    <span class="d-block text-secondary small text-truncate" style="max-width: 280px; font-size: 0.78rem;">{{ sub.description }}</span>
+                                                    <span class="d-block text-secondary small text-truncate" style="max-width: 320px; font-size: 0.78rem;">{{ sub.description }}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="py-2.5">
@@ -286,18 +283,80 @@
                                                 </td>
                                                 <td class="pe-3 py-2.5 text-end">
                                                     <div class="d-flex align-items-center justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0.5 rounded" title="Edit Subcategory" style="font-size: 0.78rem;">
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0.5 rounded" data-bs-toggle="modal" data-bs-target="#editSubCategoryModal{{ sub.id }}" title="Edit Subcategory" style="font-size: 0.78rem;">
                                                             <i class="bi bi-pencil-fill"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0.5 rounded" title="Delete Subcategory" style="font-size: 0.78rem;">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0.5 rounded" data-bs-toggle="modal" data-bs-target="#deleteSubCategoryModal{{ sub.id }}" title="Delete Subcategory" style="font-size: 0.78rem;">
                                                             <i class="bi bi-trash-fill"></i>
                                                         </button>
                                                     </div>
+
+                                                    <!-- Edit Subcategory Modal -->
+                                                    <div class="modal fade text-start" id="editSubCategoryModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content border-0 shadow-lg rounded-4">
+                                                                <form method="POST">
+                                                                    {% csrf_token %}
+                                                                    <input type="hidden" name="action" value="edit_sub_category">
+                                                                    <input type="hidden" name="sub_category_id" value="{{ sub.id }}">
+                                                                    <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
+                                                                        <h5 class="modal-title fw-bold text-body mb-0 fs-6">Edit Subcategory</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body p-4">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold text-body small">Subcategory Name <span class="text-danger">*</span></label>
+                                                                            <input type="text" class="form-control form-control-md rounded-3" name="name" value="{{ sub.name }}" required>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
+                                                                            <input type="text" class="form-control form-control-md rounded-3 font-monospace" name="slug" value="{{ sub.slug }}" required style="font-size: 0.85rem;">
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label fw-semibold text-body small">Description</label>
+                                                                            <textarea class="form-control rounded-3" name="description" rows="2">{{ sub.description }}</textarea>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                                                                                <label class="form-check-label fw-medium text-body small mb-0" for="isActiveSubEdit{{ sub.id }}">Active Status</label>
+                                                                                <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveSubEdit{{ sub.id }}" {% if sub.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
+                                                                        <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Save Changes</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Delete Subcategory Modal -->
+                                                    <div class="modal fade text-start" id="deleteSubCategoryModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                            <div class="modal-content border-0 shadow-lg rounded-4 text-center p-3">
+                                                                <form method="POST">
+                                                                    {% csrf_token %}
+                                                                    <input type="hidden" name="action" value="delete_sub_category">
+                                                                    <input type="hidden" name="sub_category_id" value="{{ sub.id }}">
+                                                                    <div class="p-3 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i></div>
+                                                                    <h5 class="fw-bold mb-2 fs-6">Delete Subcategory?</h5>
+                                                                    <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ sub.name }}</strong>?</p>
+                                                                    <div class="d-flex gap-2 justify-content-center">
+                                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-danger btn-sm px-3 rounded-3">Delete</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                 </td>
                                             </tr>
                                             {% empty %}
                                             <tr>
-                                                <td colspan="5" class="text-center py-4 text-secondary small">
+                                                <td colspan="4" class="text-center py-4 text-secondary small">
                                                     <i class="bi bi-folder-x d-block fs-4 text-secondary opacity-50 mb-1"></i>
                                                     No subcategories found in this category. Click <strong>'Add Sub'</strong> above to create one.
                                                 </td>
@@ -316,7 +375,7 @@
                 <div class="modal fade" id="addSubCategoryModal{{ main_cat.id }}" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg rounded-4">
-                            <form method="POST" enctype="multipart/form-data">
+                            <form method="POST">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="add_sub_category">
                                 <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
@@ -342,10 +401,6 @@
                                         <label class="form-label fw-semibold text-body small">Description</label>
                                         <textarea class="form-control rounded-3" name="description" rows="2" placeholder="Brief description of products in this subcategory..."></textarea>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Icon / Thumbnail Image (Optional)</label>
-                                        <input type="file" class="form-control rounded-3" name="image" accept="image/*">
-                                    </div>
                                     <div class="mb-2">
                                         <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
                                             <label class="form-check-label fw-medium text-body small mb-0" for="isActiveSub{{ main_cat.id }}">Active Status</label>
@@ -356,6 +411,77 @@
                                 <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
                                     <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Create Subcategory</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal for Editing Main Category -->
+                <div class="modal fade" id="editMainCategoryModal{{ main_cat.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg rounded-4">
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="edit_main_category">
+                                <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
+                                <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
+                                    <h5 class="modal-title fw-bold text-body mb-0 fs-6">Edit Main Category</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-body small">Main Category Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-md rounded-3" name="name" value="{{ main_cat.name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-md rounded-3 font-monospace" name="slug" value="{{ main_cat.slug }}" required style="font-size: 0.85rem;">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-body small">Description</label>
+                                        <textarea class="form-control rounded-3" name="description" rows="2">{{ main_cat.description }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold text-body small">Category Icon Image</label>
+                                        {% if main_cat.image %}
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <img src="{{ main_cat.image.url }}" class="rounded-2 border" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <span class="small text-secondary">Current Image</span>
+                                        </div>
+                                        {% endif %}
+                                        <input type="file" class="form-control rounded-3" name="image" accept="image/*">
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                                            <label class="form-check-label fw-medium text-body small mb-0" for="isActiveMainEdit{{ main_cat.id }}">Active Status</label>
+                                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveMainEdit{{ main_cat.id }}" {% if main_cat.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
+                                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal for Deleting Main Category -->
+                <div class="modal fade" id="deleteMainCategoryModal{{ main_cat.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-sm">
+                        <div class="modal-content border-0 shadow-lg rounded-4 text-center p-3">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_main_category">
+                                <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
+                                <div class="p-3 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i></div>
+                                <h5 class="fw-bold mb-2 fs-6">Delete Category?</h5>
+                                <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ main_cat.name }}</strong> and all its subcategories?</p>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger btn-sm px-3 rounded-3">Delete</button>
                                 </div>
                             </form>
                         </div>

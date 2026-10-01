@@ -2535,7 +2535,7 @@ def partnership_enquiries_view(request):
 def main_categories_view(request):
     """
     Unified view for Categories Management.
-    Handles listing Main Categories (with their Sub Categories) and creating both via modals.
+    Handles listing, creating, editing, and deleting Main Categories and Subcategories.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -2549,10 +2549,27 @@ def main_categories_view(request):
             description = request.POST.get("description", "")
             is_active = request.POST.get("is_active") == "on"
             image = request.FILES.get("image")
-            # create
             MainCategory.objects.create(
                 name=name, slug=slug, description=description, is_active=is_active, image=image
             )
+            return redirect("main_categories")
+
+        elif action == "edit_main_category":
+            cat_id = request.POST.get("main_category_id")
+            cat = MainCategory.objects.filter(id=cat_id).first()
+            if cat:
+                cat.name = request.POST.get("name", cat.name)
+                cat.slug = request.POST.get("slug", cat.slug)
+                cat.description = request.POST.get("description", "")
+                cat.is_active = request.POST.get("is_active") == "on"
+                if request.FILES.get("image"):
+                    cat.image = request.FILES.get("image")
+                cat.save()
+            return redirect("main_categories")
+
+        elif action == "delete_main_category":
+            cat_id = request.POST.get("main_category_id")
+            MainCategory.objects.filter(id=cat_id).delete()
             return redirect("main_categories")
         
         elif action == "add_sub_category":
@@ -2561,12 +2578,26 @@ def main_categories_view(request):
             slug = request.POST.get("slug")
             description = request.POST.get("description", "")
             is_active = request.POST.get("is_active") == "on"
-            image = request.FILES.get("image")
-            # create
             parent = MainCategory.objects.get(id=parent_id)
             SubCategory.objects.create(
-                main_category=parent, name=name, slug=slug, description=description, is_active=is_active, image=image
+                main_category=parent, name=name, slug=slug, description=description, is_active=is_active
             )
+            return redirect("main_categories")
+
+        elif action == "edit_sub_category":
+            sub_id = request.POST.get("sub_category_id")
+            sub = SubCategory.objects.filter(id=sub_id).first()
+            if sub:
+                sub.name = request.POST.get("name", sub.name)
+                sub.slug = request.POST.get("slug", sub.slug)
+                sub.description = request.POST.get("description", "")
+                sub.is_active = request.POST.get("is_active") == "on"
+                sub.save()
+            return redirect("main_categories")
+
+        elif action == "delete_sub_category":
+            sub_id = request.POST.get("sub_category_id")
+            SubCategory.objects.filter(id=sub_id).delete()
             return redirect("main_categories")
 
     # Prefetch related subcategories to avoid N+1 queries in the template accordion
