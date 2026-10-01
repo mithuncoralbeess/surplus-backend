@@ -387,6 +387,8 @@ input[type="reset"] {
     display: flex;
     min-height: 100vh;
     background-color: $bg-body;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 // -------------------------------------------------------------
@@ -591,6 +593,9 @@ input[type="reset"] {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-width: 0;
+    width: calc(100% - #{$sidebar-width});
+    max-width: calc(100% - #{$sidebar-width});
 }
 
 .top-navbar {
@@ -701,6 +706,8 @@ input[type="reset"] {
 .dashboard-main-content {
     padding: 2rem 1.75rem;
     flex: 1;
+    min-width: 0;
+    max-width: 100%;
 }
 
 // -------------------------------------------------------------
@@ -872,6 +879,8 @@ input[type="reset"] {
 
     .main-layout {
         margin-left: 0;
+        width: 100%;
+        max-width: 100%;
     }
 
     .top-navbar .navbar-search-pill .pill-input {

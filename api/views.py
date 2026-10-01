@@ -149,20 +149,28 @@ def get_public_categories(request):
     for main in main_categories:
         subcats = []
         for sub in main.subcategories.filter(is_active=True):
+            sub_img = sub.image.url if sub.image else None
+            sub_abs_img = request.build_absolute_uri(sub_img) if sub_img else None
             subcats.append({
                 "id": sub.id,
                 "name": sub.name,
                 "slug": sub.slug,
                 "description": sub.description,
-                "image": sub.image.url if sub.image else None,
+                "image": sub_img,
+                "image_url": sub_abs_img,
+                "icon": sub_img,
             })
 
+        main_img = main.image.url if main.image else None
+        main_abs_img = request.build_absolute_uri(main_img) if main_img else None
         categories_data.append({
             "id": main.id,
             "name": main.name,
             "slug": main.slug,
             "description": main.description,
-            "image": main.image.url if main.image else None,
+            "image": main_img,
+            "image_url": main_abs_img,
+            "icon": main_img,
             "subcategories": subcats,
         })
 

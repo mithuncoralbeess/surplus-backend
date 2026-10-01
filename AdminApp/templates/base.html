@@ -22,6 +22,37 @@
         })();
     </script>
     <style>
+        /* Global Layout Viewport & Overflow Containment */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        .dashboard-wrapper {
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .main-layout {
+            min-width: 0 !important;
+            width: calc(100% - 260px) !important;
+            max-width: calc(100% - 260px) !important;
+        }
+
+        @media (max-width: 991.98px) {
+            .main-layout {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .dashboard-main-content {
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
         /* Global sizing per user request */
         .btn, .form-select {
             font-size: 14px !important;

@@ -294,6 +294,8 @@ input[type=reset]:focus-visible {
   display: flex;
   min-height: 100vh;
   background-color: var(--color-bg-body);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .dashboard-sidebar {
@@ -466,6 +468,9 @@ input[type=reset]:focus-visible {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
+  width: calc(100% - 260px);
+  max-width: calc(100% - 260px);
 }
 
 .top-navbar {
@@ -562,6 +567,8 @@ input[type=reset]:focus-visible {
 .dashboard-main-content {
   padding: 2rem 1.75rem;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dashboard-header-title h1, .dashboard-header-title .h4 {
@@ -704,6 +711,8 @@ input[type=reset]:focus-visible {
   }
   .main-layout {
     margin-left: 0;
+    width: 100%;
+    max-width: 100%;
   }
   .top-navbar .navbar-search-pill .pill-input {
     width: 170px;
