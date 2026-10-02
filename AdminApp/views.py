@@ -1483,10 +1483,10 @@ def seller_enquiry_detail_view(request, enquiry_id):
     industry_val = "N/A"
 
     if vendor:
-        full_name_val = vendor.full_name or vendor.username or "N/A"
+        full_name_val = vendor.full_name or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
-        company_val = vendor.company_name or vendor.username or "Individual Seller"
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         business_location_val = vendor.business_location or "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
@@ -1879,10 +1879,10 @@ def lot_enquiry_detail_view(request, enquiry_id):
         user_data["raw_vendor_id"] = vendor.id
         user_data["user_id"] = vendor.vendor_id
         user_data["raw_user_id"] = vendor.id
-        user_data["full_name"] = vendor.full_name or vendor.username or "N/A"
+        user_data["full_name"] = vendor.full_name or "N/A"
         user_data["phone_no"] = vendor.mobile_number or "N/A"
         user_data["email"] = vendor.email or "N/A"
-        user_data["company"] = vendor.company_name or vendor.username or "Individual Seller"
+        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         user_data["business_location"] = vendor.business_location or "N/A"
         if vendor.category_interested:
             user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
@@ -2058,7 +2058,7 @@ def manage_users_view(request):
         else:
             inactive_count += 1
 
-        name = vendor.username
+        name = vendor.full_name or vendor.email or "-"
         email = vendor.email or ""
         company = vendor.company_name or "-"
         phone = vendor.mobile_number or "-"
@@ -3244,10 +3244,10 @@ def product_detail_view(request, product_id):
     industry_val = "N/A"
 
     if vendor:
-        full_name_val = vendor.full_name or vendor.username or "N/A"
+        full_name_val = vendor.full_name or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
-        company_val = vendor.company_name or vendor.username or "Individual Seller"
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         business_location_val = vendor.business_location or "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
