@@ -982,11 +982,13 @@ class Product(models.Model):
         return self.msrp
 
     @property
-    def active_status(self):
-        return "active" if self.is_active else "inactive"
+    def image(self):
+        first_img = self.images.first()
+        return first_img.image if first_img else None
 
     @property
     def raw_data(self):
+        first_url = self.images.first().url if self.images.exists() else ""
         return {
             "product_name": self.product_name,
             "title": self.product_name,
@@ -1000,6 +1002,9 @@ class Product(models.Model):
             "third_party_certificate": self.third_party_certificate,
             "third_party_documents": self.third_party_documents,
             "certificate_document": self.third_party_documents,
+            "image": first_url,
+            "featured_image_url": first_url,
+            "product_image": first_url,
         }
 
     @property

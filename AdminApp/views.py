@@ -2724,7 +2724,12 @@ def add_product_view(request):
             is_active=is_active,
         )
 
-        gallery_urls = request.POST.getlist("gallery_image_urls") or request.POST.getlist("gallery_urls")
+        gallery_urls = (
+            request.POST.getlist("gallery_image_urls")
+            or request.POST.getlist("gallery_urls")
+            or request.POST.getlist("images")
+            or request.POST.getlist("image_urls")
+        )
         is_real = request.POST.get("is_real_photo", "false").lower() in ("true", "1", "t", "yes")
         for g_url in gallery_urls:
             if g_url.strip():
@@ -2734,13 +2739,18 @@ def add_product_view(request):
                     is_real_photo=is_real
                 )
 
-        gallery_files = request.FILES.getlist("gallery_images")
-        for g_file in gallery_files:
-            ProductImage.objects.create(
-                product=product,
-                image=g_file,
-                is_real_photo=is_real
-            )
+        file_keys = ["gallery_images", "images", "image", "photos", "product_images", "product_image"]
+        seen_files = set()
+        for fkey in file_keys:
+            if fkey in request.FILES:
+                for g_file in request.FILES.getlist(fkey):
+                    if g_file not in seen_files:
+                        seen_files.add(g_file)
+                        ProductImage.objects.create(
+                            product=product,
+                            image=g_file,
+                            is_real_photo=is_real
+                        )
 
         return redirect("all_products")
 

@@ -381,15 +381,17 @@
                         <h6 class="fw-bold text-uppercase text-muted mb-4 text-center" style="letter-spacing: 0.5px; font-size: 0.8rem;">
                             <i class="bi bi-image me-2 text-primary"></i>Product Media
                         </h6>
-                        <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
-                            {% if enquiry.image %}
-                            <img src="{{ enquiry.image.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                        <div class="text-center rounded-3 overflow-hidden bg-light p-3 border mb-3">
+                            {% if enquiry.images.first %}
+                            <img id="enquiry-main-image" src="{{ enquiry.images.first.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            {% elif enquiry.image %}
+                            <img id="enquiry-main-image" src="{{ enquiry.image.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
                             {% elif enquiry.raw_data.featured_image_url %}
-                            <img src="{{ enquiry.raw_data.featured_image_url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.featured_image_url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
                             {% elif enquiry.raw_data.image %}
-                            <img src="{{ enquiry.raw_data.image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
                             {% elif enquiry.raw_data.product_image %}
-                            <img src="{{ enquiry.raw_data.product_image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.product_image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
                             {% else %}
                             <div class="p-5 text-muted fst-italic">
                                 <i class="bi bi-image text-muted opacity-50 mb-3 d-block" style="font-size: 3rem;"></i>
@@ -397,6 +399,22 @@
                             </div>
                             {% endif %}
                         </div>
+
+                        <!-- Gallery Thumbnails -->
+                        {% if enquiry.images.all %}
+                        <div class="d-flex gap-2 flex-wrap justify-content-center pt-2 border-top">
+                            {% for img_obj in enquiry.images.all %}
+                            <div class="position-relative d-inline-block">
+                                <img src="{{ img_obj.url }}" 
+                                     onclick="document.getElementById('enquiry-main-image').src = this.src"
+                                     class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75 {% if img_obj.is_real_photo %}border-success{% endif %}" 
+                                     style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                                     alt="Gallery Thumbnail"
+                                     title="Click to view full image">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

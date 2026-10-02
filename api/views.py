@@ -1181,12 +1181,19 @@ def submit_product_request(request):
     )
 
     # 15. Create Product Images
-    raw_images = data.get('images') or data.get('image_urls') or data.get('gallery_urls') or []
+    raw_images = (
+        data.get('images') or data.get('image_urls') or data.get('gallery_urls') 
+        or data.get('gallery_image_urls') or data.get('gallery') or data.get('photos')
+        or data.get('image') or data.get('product_images') or data.get('product_image') 
+        or data.get('featured_image_url') or []
+    )
     if isinstance(raw_images, str):
         try:
             raw_images = json.loads(raw_images)
         except Exception:
             raw_images = [img.strip() for img in raw_images.split(',') if img.strip()]
+    elif not isinstance(raw_images, list):
+        raw_images = [raw_images] if raw_images else []
 
     if isinstance(raw_images, list):
         for item in raw_images:
@@ -1203,13 +1210,31 @@ def submit_product_request(request):
                     is_real_photo=is_real
                 )
 
-    if 'images' in request.FILES:
-        for img_file in request.FILES.getlist('images'):
-            ProductImage.objects.create(
-                product=product,
-                image=img_file,
-                is_real_photo=True
-            )
+    file_keys = [
+        'images', 'image', 'gallery', 'gallery_images', 'photos',
+        'product_images', 'product_image', 'files', 'featured_image'
+    ]
+    seen_files = set()
+    for fkey in file_keys:
+        if fkey in request.FILES:
+            for img_file in request.FILES.getlist(fkey):
+                if img_file not in seen_files:
+                    seen_files.add(img_file)
+                    ProductImage.objects.create(
+                        product=product,
+                        image=img_file,
+                        is_real_photo=True
+                    )
+    for key in request.FILES:
+        if key not in file_keys and any(sub in key.lower() for sub in ['image', 'photo', 'file', 'pic']):
+            for img_file in request.FILES.getlist(key):
+                if img_file not in seen_files:
+                    seen_files.add(img_file)
+                    ProductImage.objects.create(
+                        product=product,
+                        image=img_file,
+                        is_real_photo=True
+                    )
 
     response_obj = Response({
         "success": True,
