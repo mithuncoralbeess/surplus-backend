@@ -449,6 +449,7 @@ def adminDashBoard(request):
         "is_super_admin": is_super,
         "staff_list": staff_list,
         "stats": {
+            "currency": "USD",
             "total_admins": AdminDetails.objects.count(),
             "active_admins": AdminDetails.objects.filter(status=True).count(),
             "total_sales_due": f"{total_sales_due:.2f}",
@@ -456,11 +457,11 @@ def adminDashBoard(request):
             "active_products_qty": active_products_stock,
             "custom_landing_users": ContentPage.objects.filter(category="Custom").count(),
             "companies": companies_count,
-            "purchase_invoices": LotBatchEnquiry.objects.count(),
-            "sales_invoices": SellerProductEnquiry.objects.count(),
+            "purchase_invoices": Lot.objects.count(),
+            "sales_invoices": Product.objects.count(),
             "products": Product.objects.count(),
             "categories": SubCategory.objects.count(),
-            "spin_wheel": 0,
+            "total_page_views": PageViewLog.objects.count(),
             "registered_users": VendorDetails.objects.count(),
         },
     }
@@ -2309,35 +2310,6 @@ def contact_enquiries_view(request):
             "created_at": item.created_at,
         })
 
-    # If database is completely empty and no search was performed, show initial dummy items as demo data
-    if not contacts_list and not search_query and not ContactUsEnquiry.objects.exists():
-        contacts_list = [
-            {
-                "id": 1,
-                "name": "David Coryell",
-                "full_name": "David Coryell",
-                "phone": "8608430742",
-                "email": "david.coryell@redhatinc.com",
-                "date": "Sept. 11, 2026",
-                "time": "10:04 p.m.",
-                "type": "Selling Surplus",
-                "enquiry_type": "Selling Surplus",
-                "message": "Hello, We are currently conducting an overhaul stock of our computing IT equipment. We have a range..."
-            },
-            {
-                "id": 2,
-                "name": "Emad",
-                "full_name": "Emad",
-                "phone": "0560008329",
-                "email": "emad.khardali@hotmail.com",
-                "date": "Aug. 30, 2026",
-                "time": "3:17 p.m.",
-                "type": "Selling Surplus",
-                "enquiry_type": "Selling Surplus",
-                "message": "Hello, We have approximately 6,000 commercial sofa beds currently located in Makkah, Saudi Arabia...."
-            }
-        ]
-
     context = {
         "admin": admin_user,
         "contacts": contacts_list,
@@ -2492,28 +2464,51 @@ def page_views_analytics_view(request):
 
 def whatsapp_enquiries_view(request):
     """
-    View for the WhatsApp Enquiries page.
+    View for the WhatsApp Enquiries page using real database records.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    dummy_whatsapp = [
-        {
-            "id": 1,
-            "name": "Jane Doe",
-            "phone": "+19876543210",
-            "email": "jane@example.com",
-            "date": "Sept. 14, 2026",
-            "time": "11:30 a.m.",
-            "type": "WhatsApp",
-            "message": "Hi, I have a quick question about listing my products via WhatsApp..."
-        },
-    ]
+    from .models import ContactUsEnquiry
+    from django.db.models import Q
+
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+
+    qs = ContactUsEnquiry.objects.filter(
+        Q(enquiry_type__icontains="whatsapp") | Q(message__icontains="whatsapp")
+    ).order_by("-created_at")
+
+    if search_query:
+        qs = qs.filter(
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(message__icontains=search_query)
+        )
+
+    contacts = []
+    for item in qs:
+        contacts.append({
+            "id": item.id,
+            "name": item.full_name,
+            "full_name": item.full_name,
+            "phone": item.phone,
+            "email": item.email,
+            "date": item.created_at.strftime("%b. %d, %Y"),
+            "time": item.created_at.strftime("%I:%M %p").lower(),
+            "type": item.enquiry_type or "WhatsApp",
+            "enquiry_type": item.enquiry_type or "WhatsApp",
+            "message": item.message,
+            "status": item.status,
+            "is_blocked": item.is_blocked,
+            "created_at": item.created_at,
+        })
 
     context = {
         "admin": admin_user,
-        "contacts": dummy_whatsapp,
+        "contacts": contacts,
+        "search_query": search_query,
         "page_title": "WhatsApp Enquiries",
         "page_subtitle": "All WhatsApp Enquiries"
     }
@@ -3501,90 +3496,13 @@ def get_current_vendor(request):
     }, status=status.HTTP_200_OK)
 
 
-def _seed_sample_brands_if_empty():
-    from .models import Brand
-    if Brand.objects.exists():
-        return
-    
-    sample_brands = [
-        {
-            "name": "Uken",
-            "alt_text": "uken",
-            "redirect_link": "https://surplusmarket.com/buy/uken/",
-            "description": "High performance industrial power tools and surplus hardware.",
-            "image_url": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Bosch",
-            "alt_text": "bosch power tools",
-            "redirect_link": "https://surplusmarket.com/buy/bosch/",
-            "description": "German engineering and precision power equipment.",
-            "image_url": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Makita",
-            "alt_text": "makita cordless tools",
-            "redirect_link": "https://surplusmarket.com/buy/makita/",
-            "description": "Professional cordless and pneumatic power tools.",
-            "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "DeWalt",
-            "alt_text": "dewalt tough system",
-            "redirect_link": "https://surplusmarket.com/buy/dewalt/",
-            "description": "Heavy-duty construction and woodworking tools.",
-            "image_url": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Stanley",
-            "alt_text": "stanley hand tools",
-            "redirect_link": "https://surplusmarket.com/buy/stanley/",
-            "description": "Hand tools, storage solutions and measuring instruments.",
-            "image_url": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Milwaukee",
-            "alt_text": "milwaukee M18 fuel",
-            "redirect_link": "https://surplusmarket.com/buy/milwaukee/",
-            "description": "Heavy-duty electric power tools and accessories.",
-            "image_url": "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "3M",
-            "alt_text": "3M safety equipment",
-            "redirect_link": "https://surplusmarket.com/buy/3m/",
-            "description": "Industrial safety gear, abrasives and tapes.",
-            "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Black & Decker",
-            "alt_text": "black decker home appliances",
-            "redirect_link": "https://surplusmarket.com/buy/black-decker/",
-            "description": "Quality hardware and lawn equipment.",
-            "image_url": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=150&auto=format&fit=crop&q=80",
-        },
-    ]
-
-    for idx, item in enumerate(sample_brands, start=1):
-        Brand.objects.create(
-            name=item["name"],
-            alt_text=item["alt_text"],
-            redirect_link=item["redirect_link"],
-            description=item["description"],
-            image_url=item["image_url"],
-            order=idx
-        )
-
-
 def brands_management_view(request):
     """
-    Renders and processes Brand Management In Landing Page.
+    Renders and processes Brand Management In Landing Page using real database records.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
-
-    _seed_sample_brands_if_empty()
 
     from .models import Brand
     from django.db.models import Q

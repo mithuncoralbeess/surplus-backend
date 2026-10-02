@@ -19,7 +19,7 @@
             </div>
             <div class="kpi-info">
                 <div class="kpi-value-row">
-                    <span class="currency-unit">QAR</span>
+                    <span class="currency-unit">{{ stats.currency|default:"USD" }}</span>
                     <span class="kpi-num text-due">{{ stats.total_sales_due|default:"0.00" }}</span>
                 </div>
                 <div class="kpi-label">Total Sales Due</div>
@@ -35,7 +35,7 @@
             </div>
             <div class="kpi-info">
                 <div class="kpi-value-row">
-                    <span class="currency-unit">QAR</span>
+                    <span class="currency-unit">{{ stats.currency|default:"USD" }}</span>
                     <span class="kpi-num text-sales">{{ stats.total_sales_amount|default:"0.00" }}</span>
                 </div>
                 <div class="kpi-label">Total Sales Amount</div>
@@ -142,17 +142,19 @@
         </div>
     </div>
 
-    <!-- Spin Wheel -->
+    <!-- Page Views Analytics -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-orange">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.spin_wheel|default:"0" }}</div>
-                <div class="banner-title">Spin Wheel</div>
+        <a href="/admin/analytics/page-views/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-orange">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.total_page_views|default:"0" }}</div>
+                    <div class="banner-title">Page Views</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-eye"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-aperture"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Registered Users -->
