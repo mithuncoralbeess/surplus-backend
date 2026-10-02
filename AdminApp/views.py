@@ -1292,6 +1292,12 @@ def seller_enquiry_status_api(request, enquiry_id):
             enquiry.enquiry_status = new_status
             if not has_explicit_active:
                 enquiry.is_active = (new_status.lower() == "approved")
+            if "reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+            elif "rejection_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+            elif "note" in request.data or "notes" in request.data:
+                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
 

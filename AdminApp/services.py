@@ -216,10 +216,161 @@ class EmailService:
         return cls.send_email(admin_email, "New Seller Products Submitted for Review", html_content, "ProductReview")
 
     @classmethod
+    def send_product_approved_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the user when their product listing is approved.
+        """
+        if not to_email:
+            logger.warning("send_product_approved_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        # Resolve product attributes safely from model instance or dict
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_id = (
+            getattr(product, "product_id", None)
+            or getattr(product, "sku", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or ""
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", "")
+        elif hasattr(product, "category_name") and product.category_name:
+            category_name = product.category_name
+        elif isinstance(product, dict):
+            category_name = product.get("category") or product.get("category_name") or ""
+
+        brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
+        quantity = getattr(product, "quantity", None) or getattr(product, "stock_quantity", "") or (product.get("quantity") if isinstance(product, dict) else "")
+        price = getattr(product, "liquidating_price", None) or getattr(product, "current_price", None) or getattr(product, "price", "") or (product.get("liquidating_price") if isinstance(product, dict) else "")
+        currency = getattr(product, "currency", "USD") or "USD"
+        inventory_location = getattr(product, "inventory_location", "") or (product.get("inventory_location") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_id,
+            "category_name": category_name,
+            "brand": brand,
+            "model_no": model_no,
+            "quantity": quantity,
+            "price": price,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_approved.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for approved email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Your Listing Has Been Approved!</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved and is now live on Surplus Market.</p>"
+                f"<p><a href='{action_url or default_action_url}'>View your listing</a></p>"
+            )
+
+        subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductApproved", context=context)
+
+    @classmethod
+    def send_product_declined_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the user when their product listing is declined.
+        """
+        if not to_email:
+            logger.warning("send_product_declined_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_id = (
+            getattr(product, "product_id", None)
+            or getattr(product, "sku", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or ""
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", "")
+        elif hasattr(product, "category_name") and product.category_name:
+            category_name = product.category_name
+        elif isinstance(product, dict):
+            category_name = product.get("category") or product.get("category_name") or ""
+
+        brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_id,
+            "category_name": category_name,
+            "brand": brand,
+            "model_no": model_no,
+            "reason": reason or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_declined.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for declined email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Product Listing Review Notice</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your product listing <strong>{product_name}</strong> ({product_id}) could not be approved at this time.</p>"
+                f"<p>{reason or 'Please review your listing specifications and resubmit.'}</p>"
+                f"<p><a href='{action_url or default_action_url}'>Review your listing</a></p>"
+            )
+
+        subject = f"Listing Update: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductDeclined", context=context)
+
+    @classmethod
     def email_linsting_confirm(cls, seller_email: str, product_title: str) -> bool:
-        """Notifies seller when their product listing is approved."""
-        html_content = f"<p>Your listing <strong>{product_title}</strong> has been approved and is now live on Surplus Market.</p>"
-        return cls.send_email(seller_email, f"Listing Approved: {product_title}", html_content, "ListingConfirm")
+        """Legacy helper for listing confirmation."""
+        return cls.send_product_approved_email(
+            to_email=seller_email,
+            product={"product_name": product_title},
+            recipient_name="Valued Seller"
+        )
 
     @classmethod
     def send_contact_form_email(cls, user_data: dict, form_type="query") -> bool:

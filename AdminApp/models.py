@@ -417,11 +417,96 @@ class SellerProductEnquiry(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            orig = SellerProductEnquiry.objects.filter(pk=self.pk).values("enquiry_status").first()
+            if orig:
+                old_status = orig.get("enquiry_status")
+
         if not self.product_id:
             max_id = SellerProductEnquiry.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.product_id = f"PRO-{(max_id + 1):05d}"
             
         super().save(*args, **kwargs)
+
+        if not is_new and (str(old_status or '').upper() != str(self.enquiry_status).upper()):
+            curr_status = str(self.enquiry_status).upper()
+            target_vendor = self.vendor
+            if not target_vendor and self.vendor_id:
+                try:
+                    target_vendor = VendorDetails.objects.filter(id=self.vendor_id).first()
+                except Exception:
+                    target_vendor = None
+
+            recipient_email = None
+            recipient_name = "Valued Seller"
+            if target_vendor:
+                recipient_email = target_vendor.email
+                recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
+
+            if not recipient_email and isinstance(self.raw_data, dict):
+                recipient_email = self.raw_data.get("user_email") or self.raw_data.get("email")
+
+            if not recipient_email and hasattr(self, '_user_email') and self._user_email:
+                recipient_email = str(self._user_email).strip()
+
+            if curr_status == 'APPROVED':
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Approved",
+                            message=f"Your product '{self.title}' has been approved and published to the marketplace.",
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_approved_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name
+                        )
+                    except Exception:
+                        pass
+
+            elif curr_status == 'DECLINED':
+                decline_reason = getattr(self, '_decline_reason', '')
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        msg = f"Your product '{self.title}' was not approved."
+                        if decline_reason:
+                            msg += f" Reason: {decline_reason}"
+                        else:
+                            msg += " Please review your listing specifications."
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Declined",
+                            message=msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_declined_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name,
+                            reason=decline_reason
+                        )
+                    except Exception:
+                        pass
 
     def __str__(self):
         return f"{self.product_id} - {self.enquiry_status}"
@@ -772,33 +857,81 @@ class Product(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Trigger notification if status transitioned to APPROVED or DECLINED
-        if not is_new and self.vendor and old_status and str(old_status).upper() != str(self.enquiry_status).upper():
+        # Trigger notification and email if status transitioned to APPROVED or DECLINED
+        if not is_new and (str(old_status or '').upper() != str(self.enquiry_status).upper()):
             curr_status = str(self.enquiry_status).upper()
+            target_vendor = self.vendor
+            if not target_vendor and self.vendor_id:
+                try:
+                    target_vendor = VendorDetails.objects.filter(id=self.vendor_id).first()
+                except Exception:
+                    target_vendor = None
+
+            recipient_email = None
+            recipient_name = "Valued Seller"
+            if target_vendor:
+                recipient_email = target_vendor.email
+                recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
+
+            if not recipient_email and hasattr(self, '_user_email') and self._user_email:
+                recipient_email = str(self._user_email).strip()
+
             if curr_status == 'APPROVED':
-                try:
-                    from .services import create_vendor_notification
-                    create_vendor_notification(
-                        vendor=self.vendor,
-                        title="Listing Approved",
-                        message=f"Your product '{self.product_name}' has been approved and published to the marketplace.",
-                        notification_type="LISTING",
-                        action_url="/profile"
-                    )
-                except Exception:
-                    pass
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Approved",
+                            message=f"Your product '{self.product_name}' has been approved and published to the marketplace.",
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_approved_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name
+                        )
+                    except Exception:
+                        pass
+
             elif curr_status == 'DECLINED':
-                try:
-                    from .services import create_vendor_notification
-                    create_vendor_notification(
-                        vendor=self.vendor,
-                        title="Listing Declined",
-                        message=f"Your product '{self.product_name}' was not approved. Please review your listing specifications.",
-                        notification_type="LISTING",
-                        action_url="/profile"
-                    )
-                except Exception:
-                    pass
+                decline_reason = getattr(self, '_decline_reason', '')
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        msg = f"Your product '{self.product_name}' was not approved."
+                        if decline_reason:
+                            msg += f" Reason: {decline_reason}"
+                        else:
+                            msg += " Please review your listing specifications."
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Declined",
+                            message=msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_declined_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name,
+                            reason=decline_reason
+                        )
+                    except Exception:
+                        pass
 
 
     @property
