@@ -32,7 +32,6 @@ from .views import (
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
     save_lot_products_api,
-    sellers_buyers_view,
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
@@ -123,8 +122,8 @@ urlpatterns = [
     path("users/<int:user_id>/delete/", delete_user_api, name="delete_user"),
     path("api/users/<int:user_id>/delete/", delete_user_api, name="delete_user_api"),
 
-    # Sellers & Buyers Aggregation
-    path("sellers-buyers/", sellers_buyers_view, name="sellers_buyers"),
+    # Redirect legacy sellers-buyers to manage users
+    path("sellers-buyers/", lambda request: redirect("manage_users")),
 
     # Analytics & Traffic Tracking
     path("analytics/page-views/", page_views_analytics_view, name="page_views_analytics"),
