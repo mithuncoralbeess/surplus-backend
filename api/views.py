@@ -1572,8 +1572,11 @@ def get_vendor_notifications(request):
     vendor_param = (
         request.query_params.get("vendor_id")
         or request.query_params.get("user_id")
+        or request.query_params.get("email")
         or request.headers.get("X-Vendor-Id")
+        or request.headers.get("X-User-Id")
         or request.headers.get("Vendor-Id")
+        or request.headers.get("User-Id")
     )
     if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
         vendor_param = request.user.email
@@ -1641,8 +1644,11 @@ def get_vendor_unread_count(request):
     vendor_param = (
         request.query_params.get("vendor_id")
         or request.query_params.get("user_id")
+        or request.query_params.get("email")
         or request.headers.get("X-Vendor-Id")
+        or request.headers.get("X-User-Id")
         or request.headers.get("Vendor-Id")
+        or request.headers.get("User-Id")
     )
     if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
         vendor_param = request.user.email
