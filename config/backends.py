@@ -44,17 +44,25 @@ class BrevoHTTPEmailBackend(BaseEmailBackend):
                     to_obj["name"] = t_name
                 to_list.append(to_obj)
 
+            plain_text = (msg.body or "").strip()
+            if not plain_text and html_content:
+                import re
+                plain_text = re.sub(r'<[^>]+>', ' ', html_content)
+                plain_text = ' '.join(plain_text.split()).strip()
+            if not plain_text:
+                plain_text = msg.subject or "Notification from Surplus Market"
+
             payload = {
                 "sender": sender,
                 "to": to_list,
                 "subject": msg.subject,
-                "textContent": msg.body,
+                "textContent": plain_text,
             }
             
             if html_content:
                 payload["htmlContent"] = html_content
             else:
-                payload["htmlContent"] = f"<p>{msg.body}</p>"
+                payload["htmlContent"] = f"<p>{plain_text}</p>"
 
             try:
                 response = requests.post(url, json=payload, headers=headers, timeout=10)

@@ -20,7 +20,7 @@ class EmailService:
     API_KEY = os.getenv("ZEPTOMAIL_API_KEY", "")
     FROM_NAME = os.getenv("ZEPTOMAIL_FROM_NAME", "Surplus Market")
     FROM_ADDRESS = os.getenv("ZEPTOMAIL_FROM_EMAIL", "noreply@surplusmarket.com")
-    EMAIL_SEND_ENABLED = os.getenv("EMAIL_SEND_ENABLED", "False").lower() in ("true", "1", "t")
+    EMAIL_SEND_ENABLED = os.getenv("EMAIL_SEND_ENABLED", "True").lower() in ("true", "1", "t")
 
     @classmethod
     def get_headers(cls):
@@ -72,12 +72,16 @@ class EmailService:
             except Exception as e:
                 logger.error(f"ZeptoMail API request error: {e}")
 
-        # 2. Backup: Django standard SMTP
+        # 2. Backup: Django standard SMTP / Brevo HTTP Backend
         try:
+            import re
+            plain_body = re.sub(r'<[^>]+>', ' ', html_content or "")
+            plain_body = ' '.join(plain_body.split()).strip() or subject
+
             from_email_str = f"{cls.FROM_NAME} <{cls.FROM_ADDRESS}>"
             send_mail(
                 subject=subject,
-                message="",
+                message=plain_body,
                 html_message=html_content,
                 from_email=from_email_str,
                 recipient_list=[to_email],
