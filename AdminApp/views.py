@@ -1459,16 +1459,21 @@ def seller_enquiry_detail_view(request, enquiry_id):
     if not vendor and enquiry.vendor_id:
         from .models import VendorDetails
         vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
-    if not vendor:
-        from .models import VendorDetails, VendorOTP
-        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
-        if latest_otp:
-            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
-        if not vendor:
-            vendor = VendorDetails.objects.order_by("-id").first()
-        if vendor:
-            enquiry.vendor = vendor
-            enquiry.save(update_fields=["vendor"])
+    if not vendor and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_vid = enquiry.raw_data.get('vendor_id') or enquiry.raw_data.get('user_id')
+        if raw_vid:
+            v_clean = str(raw_vid).strip()
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor:
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+            if vendor:
+                enquiry.vendor = vendor
+                enquiry.save(update_fields=["vendor"])
 
     company_val = "N/A"
     full_name_val = "N/A"
@@ -1865,17 +1870,9 @@ def lot_enquiry_detail_view(request, enquiry_id):
                 vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
             if not vendor:
                 vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
-
-    if not vendor:
-        from .models import VendorOTP
-        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
-        if latest_otp:
-            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
-        if not vendor:
-            vendor = VendorDetails.objects.order_by("-id").first()
-        if vendor and hasattr(enquiry, 'vendor'):
-            enquiry.vendor = vendor
-            enquiry.save(update_fields=["vendor"])
+            if vendor and hasattr(enquiry, 'vendor'):
+                enquiry.vendor = vendor
+                enquiry.save(update_fields=["vendor"])
 
     if vendor:
         user_data["vendor_id"] = vendor.vendor_id
@@ -3223,16 +3220,21 @@ def product_detail_view(request, product_id):
     if not vendor and product.vendor_id:
         from .models import VendorDetails
         vendor = VendorDetails.objects.filter(id=product.vendor_id).first()
-    if not vendor:
-        from .models import VendorDetails, VendorOTP
-        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
-        if latest_otp:
-            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
-        if not vendor:
-            vendor = VendorDetails.objects.order_by("-id").first()
-        if vendor:
-            product.vendor = vendor
-            product.save(update_fields=["vendor"])
+    if not vendor and hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        raw_vid = product.raw_data.get("vendor_id") or product.raw_data.get("user_id")
+        if raw_vid:
+            v_clean = str(raw_vid).strip()
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor:
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+            if vendor:
+                product.vendor = vendor
+                product.save(update_fields=["vendor"])
 
     company_val = "N/A"
     full_name_val = "N/A"

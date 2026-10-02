@@ -908,7 +908,7 @@ def submit_product_request(request):
     )
 
     if not vendor_id:
-        for ukey in ('user_information', 'user_info', 'userInfo', 'user_data', 'userData'):
+        for ukey in ('user_information', 'user_info', 'userInfo', 'user_data', 'userData', 'raw_data'):
             if ukey in data:
                 uval = data[ukey]
                 if isinstance(uval, str):
@@ -918,10 +918,10 @@ def submit_product_request(request):
                         uval = {}
                 if isinstance(uval, dict):
                     vendor_id = (
-                        uval.get('user_id') or 
-                        uval.get('userId') or 
                         uval.get('vendor_id') or 
                         uval.get('vendorId') or 
+                        uval.get('user_id') or 
+                        uval.get('userId') or 
                         uval.get('id') or 
                         uval.get('email')
                     )
@@ -953,16 +953,6 @@ def submit_product_request(request):
         if clean_vid.isdigit():
             vendor = VendorDetails.objects.filter(id=int(clean_vid)).first()
 
-        # Look up by VendorOTP ID
-        if not vendor and clean_vid.isdigit():
-            try:
-                from AdminApp.models import VendorOTP
-                otp = VendorOTP.objects.filter(id=int(clean_vid)).first()
-                if otp:
-                    vendor = otp.vendor or VendorDetails.objects.filter(email__iexact=otp.email).first()
-            except Exception:
-                pass
-
         # Look up by email
         if not vendor:
             vendor = VendorDetails.objects.filter(email__iexact=vid_str).first()
@@ -971,14 +961,7 @@ def submit_product_request(request):
         if not vendor:
             vendor = VendorDetails.objects.filter(username__iexact=vid_str).first()
 
-    # Fallback to the latest active vendor if no vendor id was passed
-    if not vendor:
-        from AdminApp.models import VendorOTP
-        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
-        if latest_otp:
-            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
-    if not vendor:
-        vendor = VendorDetails.objects.order_by("-id").first()
+    # Never fall back to arbitrary vendors; if no vendor matched, vendor remains None
 
     # 2. Product Name
     product_name = (data.get('product_name') or data.get('title') or '').strip()
