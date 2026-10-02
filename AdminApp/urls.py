@@ -58,6 +58,9 @@ from .views import (
     admin_auction_create_view,
     admin_auction_detail_view,
     admin_auction_action_api,
+    product_collections_view,
+    update_product_collection_api,
+    search_products_api,
 )
 
 urlpatterns = [
@@ -140,6 +143,9 @@ urlpatterns = [
 
     # Product Management
     path("products/all/", all_products_view, name="all_products"),
+    path("products/collections/", product_collections_view, name="product_collections"),
+    path("api/products/collections/update/", update_product_collection_api, name="update_product_collection_api"),
+    path("api/products/search/", search_products_api, name="admin_search_products_api"),
     path("products/<int:product_id>/toggle-status/", toggle_product_status_view, name="toggle_product_status"),
     path("products/add/", add_product_view, name="add_product"),
     path("products/price-control/", price_control_view, name="price_control"),

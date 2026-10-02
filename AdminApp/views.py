@@ -3911,6 +3911,188 @@ def admin_auction_action_api(request, auction_id):
     return JsonResponse({"success": False, "message": f"Unknown action '{action}'."}, status=400)
 
 
+def product_collections_view(request):
+    """
+    Admin View for Managing Best Selling, New Arrivals, and Featured Deals showcase collections,
+    including setting custom display sequence order.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Product
+    from django.db.models import Case, When, Value, IntegerField, Q
+
+    featured_qs = Product.objects.filter(
+        is_featured=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(featured_order=0, then=Value(999999)),
+            default="featured_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    best_selling_qs = Product.objects.filter(
+        is_best_selling=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(best_selling_order=0, then=Value(999999)),
+            default="best_selling_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    new_arrivals_qs = Product.objects.filter(
+        is_new_arrival=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(new_arrival_order=0, then=Value(999999)),
+            default="new_arrival_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    all_catalog_qs = Product.objects.filter(
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").order_by("-created_at")[:100]
+
+    context = {
+        "admin": admin_user,
+        "page_title": "Product Collections & Badges",
+        "featured_products": featured_qs,
+        "best_selling_products": best_selling_qs,
+        "new_arrival_products": new_arrivals_qs,
+        "all_catalog_products": all_catalog_qs,
+        "featured_count": featured_qs.count(),
+        "best_selling_count": best_selling_qs.count(),
+        "new_arrivals_count": new_arrivals_qs.count(),
+        "total_approved_count": Product.objects.filter(enquiry_status__iexact="APPROVED").count(),
+    }
+    return render(request, "product_collections.html", context)
+
+
+@csrf_exempt
+@api_view(["POST"])
+def update_product_collection_api(request):
+    """
+    AJAX API for updating product collection badges and custom display sequence.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product
+    data = request.data
+
+    product_id = data.get("product_id")
+    if not product_id:
+        return Response({"success": False, "message": "product_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        product = Product.objects.get(id=int(product_id))
+    except (Product.DoesNotExist, ValueError):
+        return Response({"success": False, "message": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Toggle flags if present
+    if "is_featured" in data:
+        product.is_featured = bool(data["is_featured"])
+    if "is_best_selling" in data:
+        product.is_best_selling = bool(data["is_best_selling"])
+    if "is_new_arrival" in data:
+        product.is_new_arrival = bool(data["is_new_arrival"])
+
+    # Update sequence order if present
+    if "featured_order" in data:
+        try:
+            product.featured_order = max(0, int(data["featured_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "best_selling_order" in data:
+        try:
+            product.best_selling_order = max(0, int(data["best_selling_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "new_arrival_order" in data:
+        try:
+            product.new_arrival_order = max(0, int(data["new_arrival_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "display_order" in data:
+        try:
+            product.display_order = max(0, int(data["display_order"]))
+        except (ValueError, TypeError):
+            pass
+
+    product.save(update_fields=[
+        "is_featured", "is_best_selling", "is_new_arrival",
+        "featured_order", "best_selling_order", "new_arrival_order", "display_order"
+    ])
+
+    return Response({
+        "success": True,
+        "message": f"Updated collection settings for '{product.product_name}'.",
+        "product": {
+            "id": product.id,
+            "is_featured": product.is_featured,
+            "is_best_selling": product.is_best_selling,
+            "is_new_arrival": product.is_new_arrival,
+            "featured_order": product.featured_order,
+            "best_selling_order": product.best_selling_order,
+            "new_arrival_order": product.new_arrival_order,
+            "display_order": product.display_order,
+        }
+    })
+
+
+@api_view(["GET"])
+def search_products_api(request):
+    """
+    Search endpoint for modal product selector.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product
+    from django.db.models import Q
+
+    query = request.GET.get("q", "").strip()
+    qs = Product.objects.filter(enquiry_status__iexact="APPROVED")
+    if query:
+        qs = qs.filter(
+            Q(product_name__icontains=query) |
+            Q(product_id__icontains=query) |
+            Q(model_no__icontains=query) |
+            Q(brand_name__icontains=query)
+        )
+
+    results = []
+    for p in qs[:25]:
+        img_url = p.images.first().image.url if p.images.exists() else ""
+        results.append({
+            "id": p.id,
+            "product_id": p.product_id,
+            "product_name": p.product_name,
+            "brand": p.brand_name,
+            "category": p.category.name if p.category else "",
+            "liquidating_price": str(p.liquidating_price),
+            "currency": p.currency,
+            "is_featured": p.is_featured,
+            "is_best_selling": p.is_best_selling,
+            "is_new_arrival": p.is_new_arrival,
+            "featured_order": p.featured_order,
+            "best_selling_order": p.best_selling_order,
+            "new_arrival_order": p.new_arrival_order,
+            "image": img_url,
+        })
+
+    return Response({"success": True, "results": results})
+
+
 
 
 

@@ -809,6 +809,17 @@ class Product(models.Model):
     date_approved = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp when product enquiry status was set to APPROVED")
     views_count = models.PositiveIntegerField(default=0, db_index=True)
 
+    # Collection & Showcase Flags
+    is_featured = models.BooleanField(default=False, db_index=True, help_text="Featured Deal showcase")
+    is_best_selling = models.BooleanField(default=False, db_index=True, help_text="Best Selling showcase")
+    is_new_arrival = models.BooleanField(default=False, db_index=True, help_text="New Arrival showcase")
+
+    # Ordering / Sequences (lower number appears first, e.g. 1, 2, 3...)
+    display_order = models.PositiveIntegerField(default=0, db_index=True, help_text="General display order")
+    featured_order = models.PositiveIntegerField(default=0, db_index=True, help_text="Order in Featured Deals")
+    best_selling_order = models.PositiveIntegerField(default=0, db_index=True, help_text="Order in Best Selling")
+    new_arrival_order = models.PositiveIntegerField(default=0, db_index=True, help_text="Order in New Arrivals")
+
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -30,6 +30,8 @@ from .views import (
     mark_all_notifications_read,
     delete_vendor_notification,
     clear_all_vendor_notifications,
+    get_public_products_list,
+    get_homepage_collections,
 )
 
 router = DefaultRouter()
@@ -40,6 +42,10 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("maintenance-status/", get_maintenance_status, name="public_maintenance_status"),
     
+    # Public Products & Showcase Collections REST API
+    path("products/", get_public_products_list, name="public_products_list"),
+    path("products/collections/", get_homepage_collections, name="public_homepage_collections"),
+
     # Public Category & Subcategory REST API
     path("categories/", get_public_categories, name="public_categories_list"),
 

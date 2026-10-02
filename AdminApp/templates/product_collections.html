@@ -1,0 +1,692 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Showcase Collections & Badges | Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Breadcrumb & Header -->
+    <div class="page-header-container d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item"><a href="/admin/products/all/">Products</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>Showcase Collections</span></li>
+                </ol>
+            </nav>
+            <h1 class="header-title mb-1">Showcase Collections & Priority Ordering</h1>
+            <p class="header-subtitle mb-0 text-muted">Curate and sequence products for <strong>Featured Deals</strong>, <strong>Best Selling</strong>, and <strong>New Arrivals</strong>.</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Add Product to Collection</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100" style="border-left: 4px solid #ef4444 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Featured Deals</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1" id="statFeaturedCount">{{ featured_count }}</h3>
+                    </div>
+                    <div class="rounded-circle p-3 bg-danger-subtle text-danger fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-stars"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100" style="border-left: 4px solid #f59e0b !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Best Selling</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1" id="statBestCount">{{ best_selling_count }}</h3>
+                    </div>
+                    <div class="rounded-circle p-3 bg-warning-subtle text-warning fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100" style="border-left: 4px solid #06b6d4 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold d-block">New Arrivals</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1" id="statNewCount">{{ new_arrivals_count }}</h3>
+                    </div>
+                    <div class="rounded-circle p-3 bg-info-subtle text-info fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-rocket-takeoff-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100" style="border-left: 4px solid #10b981 !important;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold d-block">Total Catalog</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">{{ total_approved_count }}</h3>
+                    </div>
+                    <div class="rounded-circle p-3 bg-success-subtle text-success fs-4 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Tabs & Table Card -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-bottom p-0">
+            <ul class="nav nav-tabs nav-fill border-0 fw-semibold" id="collectionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-3 text-dark d-flex align-items-center justify-content-center gap-2" id="featured-tab" data-bs-toggle="tab" data-bs-target="#featured-pane" type="button" role="tab">
+                        <i class="bi bi-stars text-danger fs-5"></i>
+                        <span>Featured Deals</span>
+                        <span class="badge bg-danger-subtle text-danger rounded-pill px-2.5 ms-1" id="badgeFeatured">{{ featured_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-3 text-dark d-flex align-items-center justify-content-center gap-2" id="bestselling-tab" data-bs-toggle="tab" data-bs-target="#bestselling-pane" type="button" role="tab">
+                        <i class="bi bi-fire text-warning fs-5"></i>
+                        <span>Best Selling</span>
+                        <span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 ms-1" id="badgeBest">{{ best_selling_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-3 text-dark d-flex align-items-center justify-content-center gap-2" id="newarrivals-tab" data-bs-toggle="tab" data-bs-target="#newarrivals-pane" type="button" role="tab">
+                        <i class="bi bi-rocket-takeoff-fill text-info fs-5"></i>
+                        <span>New Arrivals</span>
+                        <span class="badge bg-info-subtle text-info rounded-pill px-2.5 ms-1" id="badgeNew">{{ new_arrivals_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-3 text-dark d-flex align-items-center justify-content-center gap-2" id="allcatalog-tab" data-bs-toggle="tab" data-bs-target="#allcatalog-pane" type="button" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary fs-5"></i>
+                        <span>All Products Catalog</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="tab-content" id="collectionTabContent">
+                
+                <!-- TAB 1: FEATURED DEALS -->
+                <div class="tab-pane fade show active" id="featured-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted small">
+                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Order Note:</strong> Set <code>1</code> for highest priority. Lower numbers appear first on the frontend.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_featured')">
+                            <i class="bi bi-plus"></i> Add to Featured
+                        </button>
+                    </div>
+
+                    {% if featured_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase text-muted small">
+                                <tr>
+                                    <th style="width: 110px;">Display Order</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Price & Offer</th>
+                                    <th class="text-center" style="width: 140px;">Featured Status</th>
+                                    <th class="text-end" style="width: 120px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in featured_products %}
+                                <tr id="row-featured-{{ p.id }}">
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 85px;">
+                                            <input type="number" min="0" class="form-control text-center fw-bold order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="featured_order" 
+                                                   value="{{ p.featured_order }}" title="Press Enter or tab out to save">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.image.url }}" alt="{{ p.product_name }}" class="rounded-3 border" style="width: 48px; height: 48px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="fw-semibold text-dark text-decoration-none d-block">{{ p.product_name }}</a>
+                                                <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ p.product_id|default:p.model_no }}</span>
+                                                {% if p.brand_name %}<span class="text-muted small ms-1">&bull; {{ p.brand_name }}</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-secondary small">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger font-monospace small"><i class="bi bi-percent"></i> {{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_featured" checked title="Toggle Featured Deal status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1" onclick="toggleCollection({{ p.id }}, 'is_featured', false, 'row-featured-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-stars fs-1 text-danger opacity-50 d-block mb-2"></i>
+                        <h6 class="fw-bold">No Featured Deals Selected Yet</h6>
+                        <p class="small mb-3">Add your best clearance or spotlight products to feature them on the homepage.</p>
+                        <button type="button" class="btn btn-sm btn-primary px-3 py-1.5" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_featured')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Product
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 2: BEST SELLING -->
+                <div class="tab-pane fade" id="bestselling-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted small">
+                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Order Note:</strong> Set <code>1</code> for highest priority. Lower numbers appear first on the frontend.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_best_selling')">
+                            <i class="bi bi-plus"></i> Add to Best Selling
+                        </button>
+                    </div>
+
+                    {% if best_selling_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase text-muted small">
+                                <tr>
+                                    <th style="width: 110px;">Display Order</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Price & Offer</th>
+                                    <th class="text-center" style="width: 140px;">Best Seller Status</th>
+                                    <th class="text-end" style="width: 120px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in best_selling_products %}
+                                <tr id="row-best-{{ p.id }}">
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 85px;">
+                                            <input type="number" min="0" class="form-control text-center fw-bold order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="best_selling_order" 
+                                                   value="{{ p.best_selling_order }}" title="Press Enter or tab out to save">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.image.url }}" alt="{{ p.product_name }}" class="rounded-3 border" style="width: 48px; height: 48px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="fw-semibold text-dark text-decoration-none d-block">{{ p.product_name }}</a>
+                                                <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ p.product_id|default:p.model_no }}</span>
+                                                {% if p.brand_name %}<span class="text-muted small ms-1">&bull; {{ p.brand_name }}</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-secondary small">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger font-monospace small"><i class="bi bi-percent"></i> {{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_best_selling" checked title="Toggle Best Selling status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1" onclick="toggleCollection({{ p.id }}, 'is_best_selling', false, 'row-best-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-fire fs-1 text-warning opacity-50 d-block mb-2"></i>
+                        <h6 class="fw-bold">No Best Selling Products Selected Yet</h6>
+                        <p class="small mb-3">Highlight top-performing or fast-moving surplus inventory.</p>
+                        <button type="button" class="btn btn-sm btn-warning text-dark px-3 py-1.5 fw-semibold" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_best_selling')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Product
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 3: NEW ARRIVALS -->
+                <div class="tab-pane fade" id="newarrivals-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="text-muted small">
+                            <i class="bi bi-info-circle me-1 text-primary"></i> <strong>Order Note:</strong> Set <code>1</code> for highest priority. Lower numbers appear first on the frontend.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info fw-semibold" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_new_arrival')">
+                            <i class="bi bi-plus"></i> Add to New Arrivals
+                        </button>
+                    </div>
+
+                    {% if new_arrival_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-uppercase text-muted small">
+                                <tr>
+                                    <th style="width: 110px;">Display Order</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Price & Offer</th>
+                                    <th class="text-center" style="width: 140px;">New Arrival Status</th>
+                                    <th class="text-end" style="width: 120px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in new_arrival_products %}
+                                <tr id="row-new-{{ p.id }}">
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 85px;">
+                                            <input type="number" min="0" class="form-control text-center fw-bold order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="new_arrival_order" 
+                                                   value="{{ p.new_arrival_order }}" title="Press Enter or tab out to save">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.image.url }}" alt="{{ p.product_name }}" class="rounded-3 border" style="width: 48px; height: 48px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="fw-semibold text-dark text-decoration-none d-block">{{ p.product_name }}</a>
+                                                <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ p.product_id|default:p.model_no }}</span>
+                                                {% if p.brand_name %}<span class="text-muted small ms-1">&bull; {{ p.brand_name }}</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-secondary small">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger font-monospace small"><i class="bi bi-percent"></i> {{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_new_arrival" checked title="Toggle New Arrival status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-2.5 py-1" onclick="toggleCollection({{ p.id }}, 'is_new_arrival', false, 'row-new-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-rocket-takeoff-fill fs-1 text-info opacity-50 d-block mb-2"></i>
+                        <h6 class="fw-bold">No New Arrivals Selected Yet</h6>
+                        <p class="small mb-3">Tag newly cataloged inventory to showcase in the New Arrivals reel.</p>
+                        <button type="button" class="btn btn-sm btn-info text-white px-3 py-1.5 fw-semibold" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_new_arrival')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Product
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 4: ALL PRODUCTS CATALOG (QUICK MANAGE) -->
+                <div class="tab-pane fade" id="allcatalog-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="text-muted small">
+                            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Toggle badges directly on any catalog product below. Changes save instantly.
+                        </div>
+                        <div class="input-group input-group-sm" style="max-width: 320px;">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="catalogSearchInput" class="form-control" placeholder="Filter table by name or SKU...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="catalogTable">
+                            <thead class="table-light text-uppercase text-muted small">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th class="text-center" style="width: 140px;">🌟 Featured</th>
+                                    <th class="text-center" style="width: 140px;">🔥 Best Selling</th>
+                                    <th class="text-center" style="width: 140px;">🚀 New Arrival</th>
+                                    <th class="text-center" style="width: 110px;">Gen. Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in all_catalog_products %}
+                                <tr class="catalog-row" data-search="{{ p.product_name|lower }} {{ p.product_id|lower }} {{ p.model_no|lower }} {{ p.brand_name|lower }}">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.image.url }}" alt="{{ p.product_name }}" class="rounded-3 border" style="width: 42px; height: 42px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 42px; height: 42px;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="fw-semibold text-dark text-decoration-none d-block">{{ p.product_name }}</a>
+                                                <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ p.product_id|default:p.model_no }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="badge bg-danger-subtle text-danger font-monospace small">{{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_featured" {% if p.is_featured %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_best_selling" {% if p.is_best_selling %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check form-switch d-inline-block">
+                                            <input class="form-check-input collection-toggle" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_new_arrival" {% if p.is_new_arrival %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" min="0" class="form-control form-control-sm text-center fw-bold order-input d-inline-block" 
+                                               style="width: 75px;" data-id="{{ p.id }}" data-order-field="display_order" 
+                                               value="{{ p.display_order }}" title="General Display Order">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product to Collection Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="addProductModalLabel">
+                    <i class="bi bi-stars text-primary"></i> Add Products to Showcase
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Search input -->
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold text-dark">Search Approved Catalog</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="modalSearchQuery" class="form-control" placeholder="Search by Product Name, Model, or SKU...">
+                        <button type="button" class="btn btn-outline-primary" id="modalSearchBtn" onclick="searchModalProducts()">Search</button>
+                    </div>
+                    <small class="text-muted">Type at least 2 characters to search approved items.</small>
+                </div>
+
+                <!-- Search Results Container -->
+                <div id="modalSearchResults" style="max-height: 420px; overflow-y: auto;">
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-search fs-2 opacity-50 d-block mb-1"></i>
+                        <span>Start typing or click Search to find products</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top p-3">
+                <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Feedback Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="saveToast" class="toast align-items-center text-white bg-dark border-0 rounded-3 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2" id="toastMessage">
+                <i class="bi bi-check-circle-fill text-success"></i> Changes saved.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentModalPreset = null;
+
+function presetModalCollection(flag) {
+    currentModalPreset = flag;
+    searchModalProducts();
+}
+
+function showToast(msg, isSuccess = true) {
+    const toastEl = document.getElementById('saveToast');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.innerHTML = isSuccess 
+        ? `<i class="bi bi-check-circle-fill text-success fs-6"></i> ${msg}`
+        : `<i class="bi bi-exclamation-triangle-fill text-danger fs-6"></i> ${msg}`;
+    const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+    toast.show();
+}
+
+// Inline toggle handler
+document.addEventListener('DOMContentLoaded', () => {
+    // Attach listener for all collection switches
+    document.querySelectorAll('.collection-toggle').forEach(sw => {
+        sw.addEventListener('change', function () {
+            const id = this.dataset.id;
+            const flag = this.dataset.flag;
+            const val = this.checked;
+            updateProductSetting(id, { [flag]: val });
+        });
+    });
+
+    // Attach listener for order inputs
+    document.querySelectorAll('.order-input').forEach(inp => {
+        inp.addEventListener('change', function () {
+            const id = this.dataset.id;
+            const field = this.dataset.orderField;
+            const val = parseInt(this.value, 10) || 0;
+            updateProductSetting(id, { [field]: val });
+        });
+
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+            }
+        });
+    });
+
+    // Realtime filter for catalog tab
+    const catalogSearch = document.getElementById('catalogSearchInput');
+    if (catalogSearch) {
+        catalogSearch.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll('.catalog-row').forEach(row => {
+                const text = row.dataset.search || '';
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    // Modal Search on input Enter
+    const modalSearchInput = document.getElementById('modalSearchQuery');
+    if (modalSearchInput) {
+        modalSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchModalProducts();
+            }
+        });
+    }
+});
+
+async function updateProductSetting(productId, payload) {
+    payload.product_id = productId;
+    try {
+        const res = await fetch('/admin/api/products/collections/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.message || 'Saved successfully');
+        } else {
+            showToast(data.message || 'Error updating product', false);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Connection error', false);
+    }
+}
+
+async function toggleCollection(productId, flag, state, rowIdToRemove = null) {
+    await updateProductSetting(productId, { [flag]: state });
+    if (rowIdToRemove && !state) {
+        const row = document.getElementById(rowIdToRemove);
+        if (row) {
+            row.style.transition = 'opacity 0.3s';
+            row.style.opacity = '0';
+            setTimeout(() => { row.remove(); }, 300);
+        }
+    }
+}
+
+async function searchModalProducts() {
+    const q = (document.getElementById('modalSearchQuery')?.value || '').trim();
+    const container = document.getElementById('modalSearchResults');
+    container.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm" role="status"></div> Loading catalog...</div>`;
+
+    try {
+        const res = await fetch(`/admin/api/products/search/?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) {
+            container.innerHTML = `<div class="text-center py-4 text-muted"><i class="bi bi-emoji-neutral fs-2 d-block mb-1"></i>No approved products found matching "${q}"</div>`;
+            return;
+        }
+
+        let html = '<div class="list-group list-group-flush">';
+        data.results.forEach(p => {
+            const imgHtml = p.image 
+                ? `<img src="${p.image}" class="rounded-3 border" style="width: 44px; height: 44px; object-fit: cover;">`
+                : `<div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 44px; height: 44px;"><i class="bi bi-box"></i></div>`;
+
+            html += `
+                <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between p-3 gap-2">
+                    <div class="d-flex align-items-center gap-3" style="max-width: 320px;">
+                        ${imgHtml}
+                        <div>
+                            <div class="fw-semibold text-dark">${p.product_name}</div>
+                            <span class="badge bg-secondary-subtle text-secondary font-monospace small">${p.product_id}</span>
+                            <span class="text-muted small ms-1">${p.currency} ${p.liquidating_price}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm ${p.is_featured ? 'btn-danger' : 'btn-outline-danger'} px-2.5 py-1" onclick="modalToggle(${p.id}, 'is_featured', this)">
+                            <i class="bi bi-stars"></i> Featured
+                        </button>
+                        <button type="button" class="btn btn-sm ${p.is_best_selling ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} px-2.5 py-1" onclick="modalToggle(${p.id}, 'is_best_selling', this)">
+                            <i class="bi bi-fire"></i> Best Seller
+                        </button>
+                        <button type="button" class="btn btn-sm ${p.is_new_arrival ? 'btn-info text-white' : 'btn-outline-info'} px-2.5 py-1" onclick="modalToggle(${p.id}, 'is_new_arrival', this)">
+                            <i class="bi bi-rocket-takeoff-fill"></i> New
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="text-center py-4 text-danger">Failed to load catalog.</div>`;
+    }
+}
+
+async function modalToggle(productId, flag, btn) {
+    const isCurrentlyActive = btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning') || btn.classList.contains('btn-info');
+    const newState = !isCurrentlyActive;
+    
+    // Optimistic UI toggle
+    if (flag === 'is_featured') {
+        btn.className = `btn btn-sm ${newState ? 'btn-danger' : 'btn-outline-danger'} px-2.5 py-1`;
+    } else if (flag === 'is_best_selling') {
+        btn.className = `btn btn-sm ${newState ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} px-2.5 py-1`;
+    } else if (flag === 'is_new_arrival') {
+        btn.className = `btn btn-sm ${newState ? 'btn-info text-white' : 'btn-outline-info'} px-2.5 py-1`;
+    }
+
+    await updateProductSetting(productId, { [flag]: newState });
+}
+</script>
+{% endblock %}

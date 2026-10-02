@@ -1798,4 +1798,137 @@ def clear_all_vendor_notifications(request):
     }, status=status.HTTP_200_OK)
 
 
+def _serialize_product_summary(p):
+    img_url = p.images.first().image.url if p.images.exists() else None
+    return {
+        "id": p.id,
+        "product_id": p.product_id,
+        "product_name": p.product_name,
+        "brand": p.brand_name,
+        "category": {
+            "id": p.category.id,
+            "name": p.category.name,
+            "slug": p.category.slug,
+        } if p.category else None,
+        "subcategory": {
+            "id": p.subcategory.id,
+            "name": p.subcategory.name,
+            "slug": p.subcategory.slug,
+        } if p.subcategory else None,
+        "liquidating_price": str(p.liquidating_price),
+        "current_price": str(p.current_price),
+        "previous_price": str(p.previous_price) if p.previous_price is not None else None,
+        "offer": str(p.offer),
+        "currency": p.currency,
+        "quantity": p.quantity,
+        "inventory_location": p.inventory_location,
+        "is_featured": p.is_featured,
+        "is_best_selling": p.is_best_selling,
+        "is_new_arrival": p.is_new_arrival,
+        "display_order": p.display_order,
+        "featured_order": p.featured_order,
+        "best_selling_order": p.best_selling_order,
+        "new_arrival_order": p.new_arrival_order,
+        "image": img_url,
+        "created_at": p.created_at.isoformat(),
+    }
+
+
+@api_view(["GET"])
+def get_public_products_list(request):
+    """
+    Public REST API to list products with collection filters and custom sequence ordering.
+    Endpoint: GET /api/products/
+    Query params:
+      ?collection=featured | best_selling | new_arrivals
+      ?category=slug
+      ?search=query
+      ?limit=12&page=1
+    """
+    from AdminApp.models import Product
+    from django.db.models import Case, When, Value, IntegerField, Q
+    from django.core.paginator import Paginator
+
+    qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
+
+    collection = (request.GET.get("collection") or request.GET.get("badge") or "").lower()
+    order_field = "display_order"
+
+    if collection in ("featured", "featured_deals", "featured-deals"):
+        qs = qs.filter(is_featured=True)
+        order_field = "featured_order"
+    elif collection in ("best_selling", "best-selling", "bestseller", "best_seller"):
+        qs = qs.filter(is_best_selling=True)
+        order_field = "best_selling_order"
+    elif collection in ("new_arrivals", "new-arrivals", "new_arrival", "new"):
+        qs = qs.filter(is_new_arrival=True)
+        order_field = "new_arrival_order"
+
+    cat = request.GET.get("category")
+    if cat:
+        qs = qs.filter(Q(category__slug=cat) | Q(category__name__iexact=cat))
+
+    search = request.GET.get("search", "").strip()
+    if search:
+        qs = qs.filter(Q(product_name__icontains=search) | Q(brand_name__icontains=search) | Q(model_no__icontains=search))
+
+    qs = qs.annotate(
+        priority=Case(
+            When(**{order_field: 0}, then=Value(999999)),
+            default=order_field,
+            output_field=IntegerField()
+        )
+    ).order_by("priority", "-created_at")
+
+    page_num = int(request.GET.get("page", 1))
+    limit = int(request.GET.get("limit", 20))
+    paginator = Paginator(qs, limit)
+
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    return Response({
+        "success": True,
+        "count": paginator.count,
+        "total_pages": paginator.num_pages,
+        "current_page": page_obj.number,
+        "collection": collection or "all",
+        "products": [_serialize_product_summary(p) for p in page_obj],
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_homepage_collections(request):
+    """
+    Combined Public REST API returning Featured Deals, Best Selling, and New Arrivals
+    in a single lightweight request, pre-sorted by their custom display sequences.
+    Endpoint: GET /api/products/collections/
+    """
+    from AdminApp.models import Product
+    from django.db.models import Case, When, Value, IntegerField
+
+    base_qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
+
+    feat_qs = base_qs.filter(is_featured=True).annotate(
+        p=Case(When(featured_order=0, then=Value(999999)), default="featured_order", output_field=IntegerField())
+    ).order_by("p", "-created_at")[:12]
+
+    best_qs = base_qs.filter(is_best_selling=True).annotate(
+        p=Case(When(best_selling_order=0, then=Value(999999)), default="best_selling_order", output_field=IntegerField())
+    ).order_by("p", "-created_at")[:12]
+
+    new_qs = base_qs.filter(is_new_arrival=True).annotate(
+        p=Case(When(new_arrival_order=0, then=Value(999999)), default="new_arrival_order", output_field=IntegerField())
+    ).order_by("p", "-created_at")[:12]
+
+    return Response({
+        "success": True,
+        "featured_deals": [_serialize_product_summary(p) for p in feat_qs],
+        "best_selling": [_serialize_product_summary(p) for p in best_qs],
+        "new_arrivals": [_serialize_product_summary(p) for p in new_qs],
+    }, status=status.HTTP_200_OK)
+
+
 
