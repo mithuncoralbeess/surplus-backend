@@ -773,6 +773,39 @@ class Product(models.Model):
     def active_status(self):
         return "active" if self.is_active else "inactive"
 
+    @property
+    def raw_data(self):
+        return {
+            "product_name": self.product_name,
+            "title": self.product_name,
+            "price": self.liquidating_price,
+            "quantity": self.quantity,
+            "description": self.description,
+            "reason_to_sell": self.reason_to_sell,
+            "warranty": self.warranty,
+            "warranty_attachment": self.warranty_attachment,
+            "warranty_document": self.warranty_attachment,
+            "third_party_certificate": self.third_party_certificate,
+            "third_party_documents": self.third_party_documents,
+            "certificate_document": self.third_party_documents,
+        }
+
+    @property
+    def condition(self):
+        return ""
+
+    @property
+    def is_available_for_offers(self):
+        return False
+
+    @property
+    def warranty_document(self):
+        return self.warranty_attachment
+
+    @property
+    def certificate_document(self):
+        return self.third_party_documents
+
     def __str__(self):
         return f"{self.product_name} ({self.product_id or self.model_no}) - {self.enquiry_status}"
 

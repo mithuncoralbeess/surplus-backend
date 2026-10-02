@@ -1533,7 +1533,9 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "description": enquiry.description,
         "reason_to_sell": enquiry.reason_to_sell,
         "warranty": enquiry.warranty,
-        "certificate": enquiry.third_party_certificate.url if enquiry.third_party_certificate else None,
+        "warranty_document": enquiry.warranty_attachment,
+        "certificate": enquiry.third_party_documents if enquiry.third_party_documents else ("Yes" if enquiry.third_party_certificate else None),
+        "offer": str(enquiry.offer) if enquiry.offer else None,
     }
 
     for k, v in model_fields_dict.items():
