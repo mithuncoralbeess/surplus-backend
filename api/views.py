@@ -634,7 +634,8 @@ def complete_profile(request):
         "success": True, 
         "status": "profile_completed", 
         "message": "Profile completed successfully.",
-        "vendor_id": vendor.id,
+        "vendor_id": vendor.vendor_id,
+        "raw_vendor_id": vendor.id,
         "email": vendor.email,
         "username": vendor.username,
         "full_name": vendor.full_name,
@@ -660,12 +661,20 @@ def send_login_otp(request):
         if not serializer.is_valid():
             return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-        email = serializer.validated_data["email"].strip().lower()
+        email_or_user = serializer.validated_data["email"].strip()
         
-        vendor = VendorDetails.objects.filter(email=email).first()
+        vendor = VendorDetails.objects.filter(email__iexact=email_or_user).first()
+        if not vendor and email_or_user.upper().startswith("USR-"):
+            clean_uid = email_or_user[4:].strip()
+            if clean_uid.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(clean_uid)).first()
         if not vendor:
-            return Response({"success": False, "message": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+            vendor = VendorDetails.objects.filter(username__iexact=email_or_user).first()
+
+        if not vendor:
+            return Response({"success": False, "message": "No account found with this identifier."}, status=status.HTTP_404_NOT_FOUND)
             
+        email = vendor.email
         otp_code = generate_otp()
         
         VendorOTP.objects.create(
@@ -726,7 +735,8 @@ def verify_login_otp(request):
         "success": True,
         "status": "verified", 
         "message": "Login successful.",
-        "vendor_id": vendor.id,
+        "vendor_id": vendor.vendor_id,
+        "raw_vendor_id": vendor.id,
         "email": vendor.email,
         "username": vendor.username,
         "full_name": vendor.full_name,
@@ -839,20 +849,21 @@ def submit_product_request(request):
 
     data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
 
-    # 1. Vendor resolution directly from vendor_id (no session/user table check required)
+    # 1. Vendor resolution directly from vendor_id (no session/user table check required, supports USR-xxxx)
     vendor = None
     vendor_id = data.get('vendor_id') or data.get('user_id') or data.get('vendor')
     if vendor_id is not None and str(vendor_id).strip() != "":
         vid_str = str(vendor_id).strip()
+        clean_vid = vid_str[4:].strip() if vid_str.upper().startswith("USR-") else vid_str
         try:
-            vendor = VendorDetails.objects.filter(id=int(vid_str)).first()
+            vendor = VendorDetails.objects.filter(id=int(clean_vid)).first()
         except (ValueError, TypeError):
             vendor = None
 
         if not vendor:
             try:
                 from AdminApp.models import VendorOTP
-                otp = VendorOTP.objects.filter(id=int(vid_str)).first()
+                otp = VendorOTP.objects.filter(id=int(clean_vid)).first()
                 if otp:
                     vendor = otp.vendor or VendorDetails.objects.filter(email__iexact=otp.email).first()
             except Exception:
@@ -1091,7 +1102,7 @@ def submit_product_request(request):
         "data": {
             "id": product.id,
             "product_id": product.product_id,
-            "vendor_id": product.vendor_id,
+            "vendor_id": product.formatted_vendor_id or (f"USR-{product.vendor_id:04d}" if product.vendor_id else None),
             "product_name": product.product_name,
             "category": product.category.name if product.category else None,
             "category_id": product.category_id,
@@ -1194,10 +1205,20 @@ def submit_lot_request(request):
         
         # Link to vendor if provided
         if vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
+            vid_clean = str(vendor_id).strip()
+            if vid_clean.upper().startswith("USR-"):
+                vid_clean = vid_clean[4:].strip()
+            vendor = None
+            if vid_clean.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(vid_clean)).first()
+            if not vendor:
+                vendor = VendorDetails.objects.filter(email__iexact=str(vendor_id).strip()).first()
             if vendor:
-                enquiry.uploaded_by = vendor
-                enquiry.save(update_fields=['uploaded_by'])
+                if hasattr(enquiry, 'vendor'):
+                    enquiry.vendor = vendor
+                if hasattr(enquiry, 'uploaded_by'):
+                    enquiry.uploaded_by = vendor
+                enquiry.save()
                 
         return Response({
             "success": True,

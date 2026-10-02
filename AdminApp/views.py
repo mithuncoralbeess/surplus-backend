@@ -209,6 +209,11 @@ def admin_login(request):
         email__iexact=identifier
     ) | AdminDetails.objects.filter(username__iexact=identifier)
 
+    if not admin_qs.exists() and identifier.upper().startswith("ADM-"):
+        adm_id_clean = identifier[4:].strip()
+        if adm_id_clean.isdigit():
+            admin_qs = AdminDetails.objects.filter(id=int(adm_id_clean))
+
     if admin_qs.exists():
         candidate = admin_qs.first()
         if not candidate.status:
@@ -1479,7 +1484,10 @@ def seller_enquiry_detail_view(request, enquiry_id):
             industry_val = vendor.user_type
 
     user_data = {
-        "user_id": vendor.id if vendor else None,
+        "vendor_id": vendor.vendor_id if vendor else "N/A",
+        "user_id": vendor.vendor_id if vendor else "N/A",
+        "raw_vendor_id": vendor.id if vendor else None,
+        "raw_user_id": vendor.id if vendor else None,
         "full_name": full_name_val,
         "phone_no": phone_val,
         "email": email_val,
@@ -1834,12 +1842,31 @@ def lot_enquiry_detail_view(request, enquiry_id):
             batch_data["media"] = v
             processed_raw_keys.add(k)
             
-    if enquiry.vendor:
-        user_data["full_name"] = user_data["full_name"] or enquiry.vendor.username
-        user_data["phone_no"] = user_data["phone_no"] or enquiry.vendor.mobile_number
-        user_data["email"] = user_data["email"] or enquiry.vendor.email
-        user_data["company"] = user_data["company"] or enquiry.vendor.company_name
-        user_data["business_location"] = user_data["business_location"] or enquiry.vendor.business_location
+    vendor = enquiry.vendor
+    if not vendor:
+        raw_vid = enquiry.raw_data.get("vendor_id") or enquiry.raw_data.get("user_id")
+        if raw_vid:
+            v_clean = str(raw_vid).strip()
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor:
+                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+
+    if vendor:
+        user_data["vendor_id"] = vendor.vendor_id
+        user_data["raw_vendor_id"] = vendor.id
+        user_data["user_id"] = vendor.vendor_id
+        user_data["raw_user_id"] = vendor.id
+        user_data["full_name"] = user_data["full_name"] or vendor.full_name or vendor.username
+        user_data["phone_no"] = user_data["phone_no"] or vendor.mobile_number
+        user_data["email"] = user_data["email"] or vendor.email
+        user_data["company"] = user_data["company"] or vendor.company_name
+        user_data["business_location"] = user_data["business_location"] or vendor.business_location
+    else:
+        user_data["vendor_id"] = "N/A"
+        user_data["user_id"] = "N/A"
 
     context["user_data"] = user_data
     context["batch_data"] = batch_data
@@ -2015,7 +2042,7 @@ def manage_users_view(request):
         # Filter logic
         if search_query:
             sq = search_query.lower()
-            if not (sq in name.lower() or sq in email.lower() or sq in company.lower() or sq in phone.lower()):
+            if not (sq in name.lower() or sq in email.lower() or sq in company.lower() or sq in phone.lower() or sq in vendor.user_id.lower()):
                 continue
 
         if type_filter and type_filter.lower() != "all":
@@ -2030,6 +2057,9 @@ def manage_users_view(request):
 
         users_list.append({
             "id": vendor.id,
+            "vendor_id": vendor.vendor_id,
+            "user_id": vendor.vendor_id,
+            "formatted_id": vendor.vendor_id,
             "username": vendor.username,
             "name": name,
             "email": email,
@@ -3189,7 +3219,10 @@ def product_detail_view(request, product_id):
             industry_val = vendor.user_type
 
     user_data = {
-        "user_id": vendor.id if vendor else None,
+        "vendor_id": vendor.vendor_id if vendor else "N/A",
+        "user_id": vendor.vendor_id if vendor else "N/A",
+        "raw_vendor_id": vendor.id if vendor else None,
+        "raw_user_id": vendor.id if vendor else None,
         "full_name": full_name_val,
         "phone_no": phone_val,
         "email": email_val,

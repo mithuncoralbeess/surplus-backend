@@ -27,7 +27,12 @@ def _get_vendor_from_request(request):
     # 2. From vendor_id in request body or headers
     vendor_id = request.data.get("vendor_id") or request.headers.get("X-Vendor-Id") or request.GET.get("vendor_id")
     if vendor_id:
-        return VendorDetails.objects.filter(id=vendor_id, status=True).first()
+        v_str = str(vendor_id).strip()
+        clean_id = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
+        try:
+            return VendorDetails.objects.filter(id=int(clean_id), status=True).first()
+        except (ValueError, TypeError):
+            return VendorDetails.objects.filter(email__iexact=v_str, status=True).first()
 
     return None
 

@@ -42,7 +42,12 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm border rounded-3 mt-2 py-2">
                 <li class="px-3 py-1 mb-1 border-bottom pb-2">
-                    <span class="fw-bold d-block small user-dropdown-header-name">{{ admin.username }}</span>
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <span class="fw-bold d-block small user-dropdown-header-name">{{ admin.username }}</span>
+                        {% if admin.admin_id %}
+                        <span class="badge bg-primary text-white font-monospace" style="font-size: 0.65rem;">{{ admin.admin_id }}</span>
+                        {% endif %}
+                    </div>
                     <span class="text-secondary small text-truncate d-block" style="max-width: 180px;">{{ admin.email }}</span>
                 </li>
                 <li>

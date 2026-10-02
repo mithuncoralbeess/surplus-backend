@@ -57,10 +57,15 @@ class AdminLoginSerializer(serializers.Serializer):
 
 
 class AdminDetailsSerializer(serializers.ModelSerializer):
+    admin_id = serializers.CharField(read_only=True)
+    formatted_id = serializers.CharField(read_only=True)
+
     class Meta:
         model = AdminDetails
         fields = [
             "id",
+            "admin_id",
+            "formatted_id",
             "username",
             "email",
             "account_type",
@@ -70,7 +75,7 @@ class AdminDetailsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "session_version", "created_at", "updated_at"]
+        read_only_fields = ["id", "admin_id", "formatted_id", "session_version", "created_at", "updated_at"]
 
 
 class VendorRegisterSerializer(serializers.Serializer):
@@ -102,18 +107,27 @@ class VendorRegisterSerializer(serializers.Serializer):
 
 
 class VendorDetailsSerializer(serializers.ModelSerializer):
+    vendor_id = serializers.CharField(read_only=True)
+    formatted_id = serializers.CharField(read_only=True)
+
     class Meta:
         model = VendorDetails
         fields = [
             "id",
+            "vendor_id",
+            "formatted_id",
             "username",
             "email",
+            "full_name",
+            "mobile_number",
+            "company_name",
+            "user_type",
             "status",
             "session_version",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "session_version", "created_at", "updated_at"]
+        read_only_fields = ["id", "vendor_id", "formatted_id", "session_version", "created_at", "updated_at"]
 
 
 

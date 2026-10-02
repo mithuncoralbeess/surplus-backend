@@ -94,6 +94,14 @@ class AdminDetails(models.Model):
     def get_salt(self) -> str:
         return self.pass_word.split(":")[1] if ":" in self.pass_word else ""
 
+    @property
+    def admin_id(self):
+        return f"ADM-{self.id:04d}" if self.id else ""
+
+    @property
+    def formatted_id(self):
+        return self.admin_id
+
 
 class VendorDetails(models.Model):
     USER_TYPE_CHOICES = (
@@ -131,6 +139,18 @@ class VendorDetails(models.Model):
         if isinstance(self.category_interested, str) and self.category_interested:
             return [c.strip() for c in self.category_interested.split(",") if c.strip()]
         return []
+
+    @property
+    def vendor_id(self):
+        return f"USR-{self.id:04d}" if self.id else ""
+
+    @property
+    def user_id(self):
+        return self.vendor_id
+
+    @property
+    def formatted_id(self):
+        return self.vendor_id
     
     pass_word = models.CharField(
         max_length=255,
@@ -583,6 +603,18 @@ class Lot(models.Model):
     def batch_id(self):
         return self.lot_number
 
+    @property
+    def formatted_vendor_id(self):
+        if self.vendor:
+            return self.vendor.user_id
+        if self.vendor_id:
+            return f"USR-{self.vendor_id:04d}"
+        return ""
+
+    @property
+    def vendor_user_id(self):
+        return self.formatted_vendor_id
+
     def __str__(self):
         return f"{self.title or self.lot_number} ({self.lot_number}) - {self.enquiry_status}"
 
@@ -805,6 +837,18 @@ class Product(models.Model):
     @property
     def certificate_document(self):
         return self.third_party_documents
+
+    @property
+    def formatted_vendor_id(self):
+        if self.vendor:
+            return self.vendor.user_id
+        if self.vendor_id:
+            return f"USR-{self.vendor_id:04d}"
+        return ""
+
+    @property
+    def vendor_user_id(self):
+        return self.formatted_vendor_id
 
     def __str__(self):
         return f"{self.product_name} ({self.product_id or self.model_no}) - {self.enquiry_status}"
