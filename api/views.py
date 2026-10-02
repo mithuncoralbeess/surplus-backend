@@ -394,42 +394,14 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import permission_classes
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def submit_seller_enquiry(request):
     """
-    Authenticated REST API for sellers to submit individual product enquiries.
+    Public/Seller REST API for sellers to submit individual product enquiries.
     Endpoint: POST /api/enquiries/seller/
-    Auto-generates PRO-XXXXX ID. Requires user authentication.
+    Delegates directly to submit_product_request for uniform processing.
     """
-    from AdminApp.models import Product, VendorDetails
-    from AdminApp.serializers import ProductSerializer
-
-    raw_data = {}
-    if isinstance(request.data, dict):
-        raw_data = dict(request.data)
-    
-    vendor = None
-    if hasattr(request.user, 'vendor'):
-        vendor = request.user.vendor
-    elif request.user.is_authenticated:
-        vendor = VendorDetails.objects.filter(email=request.user.email).first()
-
-    product_name = raw_data.get("product_name") or raw_data.get("title") or "Product Listing"
-
-    enquiry = Product.objects.create(
-        product_name=product_name,
-        vendor=vendor,
-        enquiry_status="PENDING",
-        is_active=False,
-    )
-
-    return Response({
-        "success": True,
-        "message": "Product enquiry submitted successfully.",
-        "enquiry": ProductSerializer(enquiry).data,
-        "product_id": enquiry.product_id or enquiry.sku,
-        "created_at": enquiry.created_at.strftime("%Y-%m-%d %H:%M"),
-    }, status=status.HTTP_201_CREATED)
+    return submit_product_request(request)
 
 
 @api_view(["POST"])
@@ -850,147 +822,284 @@ def submit_contact_us_enquiry(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def submit_product_request(request):
     """
-    Endpoint for authenticated vendors/users to submit a single product request.
-    Handles multipart/form-data for image and certificate uploads. Requires login.
+    Endpoint for frontend single product submissions.
+    Accepts direct vendor_id without requiring user session authentication.
+    Resolves category and sub_category strings to foreign keys, creates Product,
+    links gallery images, and sets enquiry_status='PENDING'.
     """
-    from AdminApp.serializers import ProductSerializer
-    from AdminApp.models import Product, VendorDetails
+    import json
+    from decimal import Decimal
+    from django.utils.dateparse import parse_date
+    from django.utils.text import slugify
+    from django.core.files.storage import default_storage
+    from AdminApp.models import Product, ProductImage, MainCategory, SubCategory, VendorDetails
 
-    data = request.data.copy()
-    vendor_id = data.get('vendor_id')
-    
-    # Map frontend keys to explicit model fields
-    key_mapping = {
-        'product_name': 'product_name',
-        'title': 'product_name',
-        'liquidatingPrice': 'liquidating_price',
-        'liquidating_price': 'liquidating_price',
-        'price': 'liquidating_price',
-        'msrp': 'msrp',
-        'MSRP': 'msrp',
-        'previousPrice': 'msrp',
-        'previous_price': 'msrp',
-        'originalPrice': 'msrp',
-        'original_price': 'msrp',
-        'currentPrice': 'current_price',
-        'current_price': 'current_price',
-        'quantity': 'quantity',
-        'stock_quantity': 'quantity',
-        'country': 'manufacturing_country',
-        'manufacturing_country': 'manufacturing_country',
-        'year': 'manufacturing_year',
-        'manufacturing_year': 'manufacturing_year',
-        'expiry': 'expiry_date',
-        'expiry_date': 'expiry_date',
-        'modelNo': 'model_no',
-        'model_no': 'model_no',
-        'modelPartNo': 'model_no',
-        'model_part_no': 'model_no',
-        'sku': 'model_no',
-        'brand': 'brand_name',
-        'brandName': 'brand_name',
-        'brand_name': 'brand_name',
-        'excludedCountries': 'excluded_countries',
-        'excluded_countries': 'excluded_countries',
-        'reasonToSell': 'reason_to_sell',
-        'reason_to_sell': 'reason_to_sell',
-        'warranty': 'warranty',
-        'warranty_attachment': 'warranty_attachment',
-        'warrantyAttachment': 'warranty_attachment',
-        'third_party_certificate': 'third_party_certificate',
-        'thirdPartyCertificate': 'third_party_certificate',
-        'location': 'inventory_location',
-        'inventory_location': 'inventory_location',
-        'third_party_documents': 'third_party_documents',
-        'thirdPartyDocuments': 'third_party_documents',
-    }
-    
-    for front_key, model_key in key_mapping.items():
-        if front_key in data and model_key not in data:
-            data[model_key] = data[front_key]
-            
-    # Handle files
-    if 'images' in request.FILES and 'image' not in data:
-        images = request.FILES.getlist('images')
-        if images:
-            data['image'] = images[0]
+    data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
 
-    if 'certificate' in request.FILES and 'third_party_certificate' not in data:
-        data['third_party_certificate'] = request.FILES['certificate']
-        
-    data['enquiry_status'] = 'PENDING'
-    data['is_active'] = False
-    
-    serializer = ProductSerializer(data=data)
-    if serializer.is_valid():
-        enquiry = serializer.save()
-        
-        # Link to vendor if authenticated user or vendor_id
-        vendor = None
-        if hasattr(request.user, 'vendor'):
-            vendor = request.user.vendor
-        elif vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
-        elif request.user.is_authenticated:
-            vendor = VendorDetails.objects.filter(email=request.user.email).first()
+    # 1. Vendor resolution directly from vendor_id (no session/user table check required)
+    vendor = None
+    vendor_id = data.get('vendor_id') or data.get('user_id') or data.get('vendor')
+    if vendor_id is not None and str(vendor_id).strip() != "":
+        try:
+            vendor = VendorDetails.objects.filter(id=int(str(vendor_id).strip())).first()
+        except (ValueError, TypeError):
+            vendor = None
 
-        if vendor:
-            enquiry.vendor = vendor
-            enquiry.save(update_fields=['vendor'])
-
-        # Store Cloudflare S3 direct image links & gallery files
-        from AdminApp.models import ProductImage
-        import json
-        gallery_urls = data.get('image_urls') or data.get('gallery_urls') or []
-        if isinstance(gallery_urls, str):
-            try:
-                gallery_urls = json.loads(gallery_urls)
-            except Exception:
-                gallery_urls = [u.strip() for u in gallery_urls.split(",") if u.strip()]
-
-        if isinstance(gallery_urls, list):
-            for item in gallery_urls:
-                if isinstance(item, dict):
-                    img_link = item.get("url") or item.get("image_url") or ""
-                    is_real = bool(item.get("is_real_photo", True))
-                else:
-                    img_link = str(item).strip()
-                    is_real = True
-                if img_link:
-                    ProductImage.objects.create(
-                        product=enquiry,
-                        image_url=img_link,
-                        is_real_photo=is_real
-                    )
-
-        if 'images' in request.FILES:
-            gallery_files = request.FILES.getlist('images')
-            if len(gallery_files) > 1:
-                for g_file in gallery_files[1:]:
-                    ProductImage.objects.create(
-                        product=enquiry,
-                        image=g_file,
-                        is_real_photo=True
-                    )
-
+    # 2. Product Name
+    product_name = (data.get('product_name') or data.get('title') or '').strip()
+    if not product_name:
         return Response({
-            "success": True,
-            "message": "Product request submitted successfully and is pending approval.",
-            "data": serializer.data
-        }, status=status.HTTP_201_CREATED)
-        
+            "success": False,
+            "errors": {"product_name": ["Product name is required."]}
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # 3. Category & Subcategory resolution
+    category_obj = None
+    category_val = data.get('category') or data.get('category_name') or data.get('main_category')
+    if category_val is not None:
+        if isinstance(category_val, int) or (isinstance(category_val, str) and category_val.strip().isdigit()):
+            category_obj = MainCategory.objects.filter(id=int(category_val)).first()
+        if not category_obj and isinstance(category_val, str) and category_val.strip():
+            cat_name = category_val.strip()
+            category_obj = MainCategory.objects.filter(name__iexact=cat_name).first()
+            if not category_obj:
+                slug = slugify(cat_name) or "category"
+                category_obj, _ = MainCategory.objects.get_or_create(
+                    name=cat_name,
+                    defaults={'slug': slug, 'is_active': True}
+                )
+
+    subcategory_obj = None
+    subcat_val = data.get('sub_category') or data.get('subcategory') or data.get('sub_category_name')
+    if subcat_val is not None:
+        if isinstance(subcat_val, int) or (isinstance(subcat_val, str) and subcat_val.strip().isdigit()):
+            subcategory_obj = SubCategory.objects.filter(id=int(subcat_val)).first()
+        if not subcategory_obj and isinstance(subcat_val, str) and subcat_val.strip():
+            sub_name = subcat_val.strip()
+            sub_query = SubCategory.objects.filter(name__iexact=sub_name)
+            if category_obj:
+                sub_query = sub_query.filter(main_category=category_obj)
+            subcategory_obj = sub_query.first()
+            if not subcategory_obj and category_obj:
+                sub_slug = slugify(f"{category_obj.slug}-{sub_name}") or "sub-category"
+                subcategory_obj, _ = SubCategory.objects.get_or_create(
+                    main_category=category_obj,
+                    name=sub_name,
+                    defaults={'slug': sub_slug, 'is_active': True}
+                )
+
+    if subcategory_obj and not category_obj:
+        category_obj = subcategory_obj.main_category
+
+    # 4. Brand & Model
+    brand_name = (data.get('brand_name') or data.get('brand') or data.get('brandName') or '').strip()
+    model_no = (
+        data.get('model_no') or 
+        data.get('modelNo') or 
+        data.get('model_part_no') or 
+        data.get('modelPartNo') or 
+        data.get('sku') or ''
+    ).strip()
+
+    # 5. Manufacturing Country & Inventory Location
+    manufacturing_country = (data.get('country') or data.get('manufacturing_country') or '').strip()
+    inventory_location = (data.get('inventory_location') or data.get('location') or '').strip()
+
+    # 6. Manufacturing Year
+    manufacturing_year = None
+    year_val = data.get('manufacturing_year') or data.get('year')
+    if year_val is not None and str(year_val).strip():
+        try:
+            manufacturing_year = int(str(year_val).strip())
+        except (ValueError, TypeError):
+            manufacturing_year = None
+
+    # 7. Dimensions
+    dimensions = str(data.get('dimensions') or '').strip()
+
+    # 8. Expiry Date
+    expiry_date = None
+    expiry_val = data.get('expiry') or data.get('expiry_date')
+    if expiry_val:
+        try:
+            expiry_date = parse_date(str(expiry_val).strip())
+        except Exception:
+            expiry_date = None
+
+    # 9. Excluded Countries
+    excluded_countries = data.get('excluded_countries') or data.get('excludedCountries') or []
+    if isinstance(excluded_countries, str):
+        try:
+            excluded_countries = json.loads(excluded_countries)
+        except Exception:
+            excluded_countries = [c.strip() for c in excluded_countries.split(',') if c.strip()]
+    if not isinstance(excluded_countries, list):
+        excluded_countries = []
+
+    # 10. Quantity, Currency & Pricing
+    qty_val = data.get('quantity') or data.get('stock_quantity') or 0
+    try:
+        quantity = max(0, int(str(qty_val).strip()))
+    except (ValueError, TypeError):
+        quantity = 0
+
+    currency = str(data.get('currency') or 'USD').strip().upper()
+
+    lp_val = data.get('liquidating_price') or data.get('liquidatingPrice') or data.get('price') or 0
+    try:
+        liquidating_price = Decimal(str(lp_val).strip())
+    except Exception:
+        liquidating_price = Decimal("0.00")
+
+    msrp = None
+    msrp_val = data.get('msrp') or data.get('MSRP') or data.get('previousPrice') or data.get('previous_price') or data.get('originalPrice')
+    if msrp_val is not None and str(msrp_val).strip() != "":
+        try:
+            msrp = Decimal(str(msrp_val).strip())
+        except Exception:
+            msrp = None
+
+    # 11. Description & Reason to Sell
+    description = str(data.get('description') or '').strip()
+    reason_to_sell = str(data.get('reason_to_sell') or data.get('reasonToSell') or '').strip()
+
+    # 12. Warranty & Documents
+    warranty = str(data.get('warranty') or '').strip()
+    warranty_attachment = str(data.get('warranty_document') or data.get('warranty_attachment') or data.get('warrantyAttachment') or '').strip()
+    if 'warranty_document' in request.FILES:
+        w_file = request.FILES['warranty_document']
+        saved_path = default_storage.save(f"products/documents/{w_file.name}", w_file)
+        warranty_attachment = default_storage.url(saved_path)
+    elif 'warranty_attachment' in request.FILES:
+        w_file = request.FILES['warranty_attachment']
+        saved_path = default_storage.save(f"products/documents/{w_file.name}", w_file)
+        warranty_attachment = default_storage.url(saved_path)
+
+    # 13. Certificate & Documents
+    cert_val = data.get('certificate') if 'certificate' in data else (
+        data.get('third_party_certificate') if 'third_party_certificate' in data else data.get('thirdPartyCertificate')
+    )
+    if isinstance(cert_val, bool):
+        third_party_certificate = cert_val
+    elif isinstance(cert_val, str):
+        third_party_certificate = cert_val.strip().lower() in ('true', '1', 'yes', 't')
+    else:
+        third_party_certificate = bool(cert_val)
+
+    third_party_documents = str(
+        data.get('certificate_document') or 
+        data.get('third_party_documents') or 
+        data.get('thirdPartyDocuments') or ''
+    ).strip()
+    if 'certificate_document' in request.FILES:
+        c_file = request.FILES['certificate_document']
+        saved_path = default_storage.save(f"products/documents/{c_file.name}", c_file)
+        third_party_documents = default_storage.url(saved_path)
+    elif 'third_party_documents' in request.FILES:
+        c_file = request.FILES['third_party_documents']
+        saved_path = default_storage.save(f"products/documents/{c_file.name}", c_file)
+        third_party_documents = default_storage.url(saved_path)
+
+    # 14. Create Product record
+    product = Product.objects.create(
+        vendor=vendor,
+        product_name=product_name,
+        category=category_obj,
+        subcategory=subcategory_obj,
+        brand_name=brand_name,
+        model_no=model_no,
+        manufacturing_country=manufacturing_country,
+        inventory_location=inventory_location,
+        manufacturing_year=manufacturing_year,
+        dimensions=dimensions,
+        expiry_date=expiry_date,
+        excluded_countries=excluded_countries,
+        quantity=quantity,
+        currency=currency,
+        liquidating_price=liquidating_price,
+        msrp=msrp,
+        description=description,
+        reason_to_sell=reason_to_sell,
+        warranty=warranty,
+        warranty_attachment=warranty_attachment,
+        third_party_certificate=third_party_certificate,
+        third_party_documents=third_party_documents,
+        enquiry_status='PENDING',
+        is_active=False
+    )
+
+    # 15. Create Product Images
+    raw_images = data.get('images') or data.get('image_urls') or data.get('gallery_urls') or []
+    if isinstance(raw_images, str):
+        try:
+            raw_images = json.loads(raw_images)
+        except Exception:
+            raw_images = [img.strip() for img in raw_images.split(',') if img.strip()]
+
+    if isinstance(raw_images, list):
+        for item in raw_images:
+            if isinstance(item, dict):
+                img_link = item.get("url") or item.get("image_url") or ""
+                is_real = bool(item.get("is_real_photo", True))
+            else:
+                img_link = str(item).strip()
+                is_real = True
+            if img_link:
+                ProductImage.objects.create(
+                    product=product,
+                    image_url=img_link,
+                    is_real_photo=is_real
+                )
+
+    if 'images' in request.FILES:
+        for img_file in request.FILES.getlist('images'):
+            ProductImage.objects.create(
+                product=product,
+                image=img_file,
+                is_real_photo=True
+            )
+
     return Response({
-        "success": False,
-        "errors": serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
-        
-    return Response({
-        "success": False,
-        "errors": serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+        "success": True,
+        "message": "Product request submitted successfully and is pending approval.",
+        "product_id": product.product_id,
+        "data": {
+            "id": product.id,
+            "product_id": product.product_id,
+            "vendor_id": product.vendor_id,
+            "product_name": product.product_name,
+            "category": product.category.name if product.category else None,
+            "category_id": product.category_id,
+            "sub_category": product.subcategory.name if product.subcategory else None,
+            "subcategory_id": product.subcategory_id,
+            "brand_name": product.brand_name,
+            "model_no": product.model_no,
+            "country": product.manufacturing_country,
+            "inventory_location": product.inventory_location,
+            "manufacturing_year": product.manufacturing_year,
+            "dimensions": product.dimensions,
+            "expiry": product.expiry_date.isoformat() if product.expiry_date else None,
+            "quantity": product.quantity,
+            "currency": product.currency,
+            "msrp": str(product.msrp) if product.msrp is not None else None,
+            "liquidating_price": str(product.liquidating_price),
+            "current_price": str(product.current_price),
+            "excluded_countries": product.excluded_countries,
+            "description": product.description,
+            "reason_to_sell": product.reason_to_sell,
+            "warranty": product.warranty,
+            "warranty_document": product.warranty_attachment,
+            "certificate": product.third_party_certificate,
+            "certificate_document": product.third_party_documents,
+            "enquiry_status": product.enquiry_status,
+            "is_active": product.is_active,
+            "created_at": product.created_at.isoformat(),
+            "images": [img.url for img in product.images.all()]
+        }
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
