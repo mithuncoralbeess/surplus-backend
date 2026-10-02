@@ -843,10 +843,23 @@ def submit_product_request(request):
     vendor = None
     vendor_id = data.get('vendor_id') or data.get('user_id') or data.get('vendor')
     if vendor_id is not None and str(vendor_id).strip() != "":
+        vid_str = str(vendor_id).strip()
         try:
-            vendor = VendorDetails.objects.filter(id=int(str(vendor_id).strip())).first()
+            vendor = VendorDetails.objects.filter(id=int(vid_str)).first()
         except (ValueError, TypeError):
             vendor = None
+
+        if not vendor:
+            try:
+                from AdminApp.models import VendorOTP
+                otp = VendorOTP.objects.filter(id=int(vid_str)).first()
+                if otp:
+                    vendor = otp.vendor or VendorDetails.objects.filter(email__iexact=otp.email).first()
+            except Exception:
+                pass
+
+        if not vendor:
+            vendor = VendorDetails.objects.filter(email__iexact=vid_str).first() or VendorDetails.objects.filter(username__iexact=vid_str).first()
 
     # 2. Product Name
     product_name = (data.get('product_name') or data.get('title') or '').strip()

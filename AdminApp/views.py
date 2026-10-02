@@ -1450,14 +1450,42 @@ def seller_enquiry_detail_view(request, enquiry_id):
     if not enquiry:
         return redirect("seller_enquiries")
 
+    vendor = enquiry.vendor
+    if not vendor and enquiry.vendor_id:
+        from .models import VendorDetails
+        vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
+
+    company_val = "N/A"
+    full_name_val = "N/A"
+    phone_val = "N/A"
+    email_val = "N/A"
+    location_val = enquiry.inventory_location or enquiry.manufacturing_country or "N/A"
+    industry_val = (enquiry.category.name if enquiry.category else "N/A")
+
+    if vendor:
+        full_name_val = vendor.full_name or vendor.username or "N/A"
+        phone_val = vendor.mobile_number or "N/A"
+        email_val = vendor.email or "N/A"
+        company_val = vendor.company_name or vendor.username or "Individual Seller"
+        location_val = vendor.business_location or enquiry.inventory_location or enquiry.manufacturing_country or "N/A"
+        if vendor.category_interested:
+            if isinstance(vendor.category_interested, list):
+                industry_val = ", ".join(vendor.category_interested)
+            else:
+                industry_val = str(vendor.category_interested)
+        elif vendor.business_type:
+            industry_val = vendor.business_type
+        elif vendor.user_type:
+            industry_val = vendor.user_type
+
     user_data = {
-        "user_id": enquiry.vendor.id if enquiry.vendor else None,
-        "full_name": enquiry.vendor.username if enquiry.vendor else None,
-        "phone_no": enquiry.vendor.mobile_number if enquiry.vendor else None,
-        "email": enquiry.vendor.email if enquiry.vendor else None,
-        "company": (enquiry.vendor.company_name or enquiry.vendor.username) if enquiry.vendor else None,
-        "business_location": (enquiry.vendor.business_location or enquiry.inventory_location) if enquiry.vendor else enquiry.inventory_location,
-        "industry": None,
+        "user_id": vendor.id if vendor else None,
+        "full_name": full_name_val,
+        "phone_no": phone_val,
+        "email": email_val,
+        "company": company_val,
+        "business_location": location_val,
+        "industry": industry_val,
     }
 
     product_data = {}
@@ -3316,14 +3344,42 @@ def product_detail_view(request, product_id):
     if not product:
         return redirect("all_products")
 
+    vendor = product.vendor
+    if not vendor and product.vendor_id:
+        from .models import VendorDetails
+        vendor = VendorDetails.objects.filter(id=product.vendor_id).first()
+
+    company_val = "N/A"
+    full_name_val = "N/A"
+    phone_val = "N/A"
+    email_val = "N/A"
+    location_val = product.inventory_location or product.manufacturing_country or "N/A"
+    industry_val = (product.category.name if product.category else "N/A")
+
+    if vendor:
+        full_name_val = vendor.full_name or vendor.username or "N/A"
+        phone_val = vendor.mobile_number or "N/A"
+        email_val = vendor.email or "N/A"
+        company_val = vendor.company_name or vendor.username or "Individual Seller"
+        location_val = vendor.business_location or product.inventory_location or product.manufacturing_country or "N/A"
+        if vendor.category_interested:
+            if isinstance(vendor.category_interested, list):
+                industry_val = ", ".join(vendor.category_interested)
+            else:
+                industry_val = str(vendor.category_interested)
+        elif vendor.business_type:
+            industry_val = vendor.business_type
+        elif vendor.user_type:
+            industry_val = vendor.user_type
+
     user_data = {
-        "user_id": product.vendor.id if product.vendor else None,
-        "full_name": product.vendor.username if product.vendor else (product.raw_data.get("full_name") or product.raw_data.get("name") or "N/A"),
-        "phone_no": product.vendor.mobile_number if product.vendor else (product.raw_data.get("phone_no") or product.raw_data.get("phone") or "N/A"),
-        "email": product.vendor.email if product.vendor else (product.raw_data.get("email") or "N/A"),
-        "company": (product.vendor.company_name or product.vendor.username) if product.vendor else (product.raw_data.get("company") or product.raw_data.get("company_name") or "N/A"),
-        "business_location": (product.vendor.business_location or product.inventory_location) if product.vendor else (product.inventory_location or product.raw_data.get("location") or "N/A"),
-        "industry": (", ".join(product.vendor.category_interested) if isinstance(product.vendor.category_interested, list) and product.vendor.category_interested else (product.vendor.category_interested or product.vendor.user_type)) if product.vendor else (product.raw_data.get("industry") or "N/A"),
+        "user_id": vendor.id if vendor else None,
+        "full_name": full_name_val,
+        "phone_no": phone_val,
+        "email": email_val,
+        "company": company_val,
+        "business_location": location_val,
+        "industry": industry_val,
     }
 
     from .models import MainCategory
