@@ -583,13 +583,57 @@ def verify_registration_otp(request):
     # otp_record.vendor = vendor
     # otp_record.save()
     
-    return Response({"success": True, "status": "verified", "message": "OTP verified successfully. Proceed to complete profile."})
+    return Response({
+        "success": True, 
+        "status": "verified", 
+        "message": "OTP verified successfully. Proceed to complete profile.",
+        "vendor_id": vendor.vendor_id,
+        "raw_vendor_id": vendor.id,
+        "email": vendor.email,
+        "username": vendor.username,
+        "full_name": vendor.full_name,
+        "account_entity_type": vendor.account_entity_type,
+        "company_name": vendor.company_name,
+        "user_type": vendor.user_type,
+        "mobile_number": vendor.mobile_number,
+        "business_location": vendor.business_location,
+    })
 
 
 @csrf_exempt
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def complete_profile(request):
+    if request.method == "GET":
+        email = (request.query_params.get("email") or request.query_params.get("user") or "").strip().lower()
+        if not email:
+            return Response({"success": False, "message": "Email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+        vendor = VendorDetails.objects.filter(email=email).first()
+        if not vendor and email.upper().startswith("USR-"):
+            clean_uid = email[4:].strip()
+            if clean_uid.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(clean_uid)).first()
+        if not vendor:
+            return Response({"success": False, "message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({
+            "success": True, 
+            "status": "profile_found", 
+            "message": "Profile fetched successfully.",
+            "vendor_id": vendor.vendor_id,
+            "raw_vendor_id": vendor.id,
+            "email": vendor.email,
+            "username": vendor.username,
+            "full_name": vendor.full_name,
+            "account_entity_type": vendor.account_entity_type,
+            "company_name": vendor.company_name,
+            "user_type": vendor.user_type,
+            "mobile_number": vendor.mobile_number,
+            "business_location": vendor.business_location,
+            "business_address": vendor.business_address,
+            "tax_registration_number": vendor.tax_registration_number,
+            "business_type": vendor.business_type,
+            "category_interested": vendor.category_interested
+        })
     serializer = CompleteProfileSerializer(data=request.data)
     if not serializer.is_valid():
         return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
