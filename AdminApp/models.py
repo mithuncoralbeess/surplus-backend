@@ -636,14 +636,6 @@ class Product(models.Model):
         related_name="products"
     )
     product_name = models.CharField(max_length=255, db_index=True)
-    model_no = models.CharField(max_length=255, blank=True, default="", db_index=True, help_text="Model No. / Part No.")
-    description = models.TextField(blank=True, default="")
-    
-    liquidating_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True)
-    previous_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    current_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Auto-calculated: Liquidating Price * 1.10")
-    stock_quantity = models.PositiveIntegerField(default=0)
-    brand = models.CharField(max_length=255, blank=True, default="")
     
     category = models.ForeignKey(
         MainCategory, 
@@ -659,21 +651,30 @@ class Product(models.Model):
         blank=True, 
         related_name="products"
     )
-    is_available_for_offers = models.BooleanField(default=True, db_index=True)
+    brand_name = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    model_no = models.CharField(max_length=255, blank=True, default="", db_index=True, help_text="Model No. / Part Number")
     
-    # Specific Fields
-    condition = models.CharField(max_length=255, blank=True, default="", db_index=True, help_text="Product condition e.g. Brand New, Refurbished, Used")
-    inventory_location = models.CharField(max_length=255, blank=True, default="")
     manufacturing_country = models.CharField(max_length=100, blank=True, default="")
+    inventory_location = models.CharField(max_length=255, blank=True, default="", help_text="Warehouse / stock location")
     manufacturing_year = models.PositiveIntegerField(null=True, blank=True)
     dimensions = models.CharField(max_length=100, blank=True, default="")
     expiry_date = models.DateField(null=True, blank=True)
-    currency = models.CharField(max_length=10, default="USD")
     excluded_countries = models.JSONField(default=list, blank=True, help_text="List of excluded country codes")
+    
+    quantity = models.PositiveIntegerField(default=0, db_index=True)
+    currency = models.CharField(max_length=10, default="USD")
+    liquidating_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Liquidating Price per unit")
+    msrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="MSRP / Original Retail Price")
+    current_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Auto-calculated buyer price")
+    
+    description = models.TextField(blank=True, default="")
     reason_to_sell = models.TextField(blank=True, default="")
     warranty = models.CharField(max_length=255, blank=True, default="")
-    third_party_certificate = models.FileField(upload_to="products/certificates/", null=True, blank=True)
-
+    warranty_attachment = models.CharField(max_length=1000, blank=True, default="", help_text="Cloudflare S3 PDF link")
+    
+    third_party_certificate = models.BooleanField(default=False, db_index=True, help_text="3rd Party Certificate as boolean value")
+    third_party_documents = models.CharField(max_length=1000, blank=True, default="", help_text="Cloudflare S3 documents link")
+    
     ENQUIRY_STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
@@ -686,25 +687,12 @@ class Product(models.Model):
         default='PENDING',
         db_index=True
     )
-
-    image = models.ImageField(upload_to="products/images/", null=True, blank=True)
     is_active = models.BooleanField(default=False, db_index=True)
     date_approved = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp when product enquiry status was set to APPROVED")
-    raw_data = models.JSONField(default=dict, blank=True, help_text="Flexible storage for extra product fields and seller contact details")
     views_count = models.PositiveIntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
     updated_at = models.DateTimeField(auto_now=True)
-
-    brand_ref = models.ForeignKey(
-        "Brand",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="products",
-        help_text="Linked Brand model reference"
-    )
 
     class Meta:
         verbose_name = "Product"
@@ -714,7 +702,7 @@ class Product(models.Model):
         constraints = [
             models.CheckConstraint(condition=models.Q(liquidating_price__gte=0), name="check_product_liquidating_price_gte_0"),
             models.CheckConstraint(condition=models.Q(current_price__gte=0), name="check_product_current_price_gte_0"),
-            models.CheckConstraint(condition=models.Q(stock_quantity__gte=0), name="check_product_stock_quantity_gte_0"),
+            models.CheckConstraint(condition=models.Q(quantity__gte=0), name="check_product_quantity_gte_0"),
         ]
         indexes = [
             models.Index(fields=["is_active", "enquiry_status"], name="idx_prod_active_status"),
@@ -727,9 +715,6 @@ class Product(models.Model):
         if not self.product_id:
             max_id = Product.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.product_id = f"PRO-{(max_id + 1):05d}"
-
-        if self.brand_ref and not self.brand:
-            self.brand = self.brand_ref.name
             
         # Calculate current_price = Liquidating Price * 1.10
         if self.liquidating_price:
@@ -752,12 +737,36 @@ class Product(models.Model):
         return self.model_no or self.product_id
 
     @property
+    def brand(self):
+        return self.brand_name
+
+    @brand.setter
+    def brand(self, val):
+        self.brand_name = val
+
+    @property
+    def stock_quantity(self):
+        return self.quantity
+
+    @stock_quantity.setter
+    def stock_quantity(self, val):
+        self.quantity = val
+
+    @property
+    def previous_price(self):
+        return self.msrp
+
+    @previous_price.setter
+    def previous_price(self, val):
+        self.msrp = val
+
+    @property
     def price(self):
         return self.current_price
 
     @property
     def discount_price(self):
-        return self.previous_price
+        return self.msrp
 
     @property
     def active_status(self):
@@ -765,6 +774,7 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.product_name} ({self.product_id or self.model_no}) - {self.enquiry_status}"
+
 
 
 class SystemSettings(models.Model):
@@ -789,11 +799,35 @@ class SystemSettings(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="products/images/gallery/")
+    image = models.ImageField(upload_to="products/images/gallery/", null=True, blank=True)
+    image_url = models.CharField(max_length=1000, blank=True, default="", help_text="Direct Cloudflare S3/R2 image link")
+    is_real_photo = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="True = actual product photo taken by seller. False = stock/catalog/placeholder."
+    )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = "Product Image"
+        verbose_name_plural = "Product Images"
+        ordering = ["-is_real_photo", "-uploaded_at"]
+
     def __str__(self):
-        return f"Image for {self.product.product_name}"
+        photo_type = "Real Photo" if self.is_real_photo else "Stock/Catalog"
+        return f"{photo_type} for {self.product.product_name}"
+
+    @property
+    def url(self):
+        if self.image_url:
+            return self.image_url
+        if self.image:
+            try:
+                return self.image.url
+            except Exception:
+                return ""
+        return ""
+
 
 
 class PartnershipEnquiry(models.Model):
@@ -897,6 +931,10 @@ class PageViewLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
     user_agent = models.TextField(blank=True, default="")
     referrer = models.CharField(max_length=500, blank=True, default="")
+    duration_seconds = models.PositiveIntegerField(default=0, db_index=True, help_text="Time spent on page in seconds")
+    session_id = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    visitor_id = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    is_stuck = models.BooleanField(default=False, db_index=True, help_text="Flagged if user stayed unusually long without converting")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:

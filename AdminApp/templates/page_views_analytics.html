@@ -14,7 +14,7 @@
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                     <li class="breadcrumb-item"><span>Analytics</span></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item active" aria-current="page"><span>Page Visits & Traffic</span></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>Page Visits & Dwell Time</span></li>
                 </ol>
             </nav>
             <h1 class="header-title">{{ page_title }}</h1>
@@ -32,7 +32,7 @@
                     <i class="bi bi-eye fs-3 opacity-75"></i>
                 </div>
                 <h2 class="fw-bold mb-0 display-6">{{ total_views }}</h2>
-                <span class="small text-white-50 mt-1 d-block">All-time traffic views</span>
+                <span class="small text-white-50 mt-1 d-block">All-time tracked page hits</span>
             </div>
         </div>
 
@@ -56,106 +56,138 @@
                     <i class="bi bi-people fs-3 opacity-75"></i>
                 </div>
                 <h2 class="fw-bold mb-0 display-6">{{ unique_visitors }}</h2>
-                <span class="small text-white-50 mt-1 d-block">Distinct IP addresses</span>
+                <span class="small text-white-50 mt-1 d-block">Distinct active IP addresses</span>
             </div>
         </div>
 
-        <!-- System Traffic Status -->
+        <!-- Average Dwell Time & Stuck Metric -->
         <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-white" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-white-50 fw-semibold text-uppercase small">Traffic Tracker</span>
-                    <i class="bi bi-activity fs-3 opacity-75"></i>
+                    <span class="text-white-50 fw-semibold text-uppercase small">Avg User Stay Duration</span>
+                    <i class="bi bi-stopwatch fs-3 opacity-75"></i>
                 </div>
-                <h2 class="fw-bold mb-0 display-6">Active</h2>
-                <span class="small text-white-50 mt-1 d-block">1-hr deduplication enabled</span>
+                <h2 class="fw-bold mb-0 display-6">{{ platform_avg_duration }}</h2>
+                <span class="small text-white-50 mt-1 d-block">
+                    {% if total_stuck_sessions > 0 %}
+                    <span class="badge bg-warning text-dark fw-bold">⚠️ {{ total_stuck_sessions }} Stuck Sessions</span>
+                    {% else %}
+                    Active continuous heartbeat tracking
+                    {% endif %}
+                </span>
             </div>
         </div>
     </section>
 
-    <!-- Top Performance Cards (Blogs, Products, Lots) -->
-    <section class="row g-3 mb-4">
-        <!-- Top Blogs -->
-        <div class="col-lg-4 col-md-6">
+    <!-- Visual Intelligence Row: Where Users Stay More & Stuck Analysis -->
+    <div class="row g-4 mb-4">
+        <!-- Where Users Stay More (Top Dwell Time Pages) -->
+        <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Top Viewed Blogs</h6>
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-clock-history text-primary me-2"></i> Where Users Stayed Most (Dwell Time)
+                        </h6>
+                        <p class="text-muted extra-small mb-0">Identifies pages where users spend the most time reading or interacting</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1.5 fw-semibold">Top Engagement</span>
                 </div>
                 <div class="card-body p-4">
+                    {% if most_stayed_pages %}
                     <div class="list-group list-group-flush">
-                        {% for blog in top_blogs %}
-                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ blog.title }}">
-                                <span class="fw-medium text-dark small d-block text-truncate">{{ blog.title }}</span>
-                                <span class="text-muted extra-small">slug: /{{ blog.slug }}</span>
+                        {% for page in most_stayed_pages %}
+                        <div class="list-group-item border-0 px-0 py-2.5">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <div class="text-truncate me-2" style="max-width: 320px;">
+                                    <span class="fw-bold text-dark small font-monospace">{{ page.path }}</span>
+                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5 ms-1" style="font-size: 0.65rem;">{{ page.view_count }} views</span>
+                                </div>
+                                <span class="badge bg-purple-subtle text-purple fw-bold px-2.5 py-1 rounded-pill" style="color: #6d28d9; background-color: #ede9fe;">
+                                    ⏱️ {{ page.avg_duration_fmt }} avg
+                                </span>
                             </div>
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2.5 py-1.5 fw-semibold">{{ blog.views_count }} views</span>
+                            <div class="progress" style="height: 6px; border-radius: 999px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {% widthratio page.avg_seconds 300 100 %}%;" aria-valuenow="{{ page.avg_seconds }}" aria-valuemin="0" aria-valuemax="300"></div>
+                            </div>
                         </div>
-                        {% empty %}
-                        <p class="text-muted small py-2 mb-0">No blog view metrics recorded yet.</p>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-hourglass-split fs-2 d-block mb-2 opacity-50"></i>
+                        Dwell time data is being gathered from live user visits.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Top Products -->
-        <div class="col-lg-4 col-md-6">
+        <!-- Stuck User Diagnostics (Pages with High Friction or Drop-offs) -->
+        <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam text-success me-2"></i> Top Viewed Products</h6>
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Stuck User Analysis (Friction Points)
+                        </h6>
+                        <p class="text-muted extra-small mb-0">Flags pages where users lingered &gt; 3 mins or left abruptly without converting</p>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1.5 fw-semibold">UX Diagnostics</span>
                 </div>
                 <div class="card-body p-4">
+                    {% if stuck_pages_analysis %}
                     <div class="list-group list-group-flush">
-                        {% for prod in top_products %}
-                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ prod.product_name }}">
-                                <span class="fw-medium text-dark small d-block text-truncate">{{ prod.product_name }}</span>
-                                <span class="text-muted extra-small">{{ prod.product_id }}</span>
+                        {% for item in stuck_pages_analysis %}
+                        <div class="list-group-item border-0 px-0 py-2.5 d-flex justify-content-between align-items-center">
+                            <div class="text-truncate me-3" style="max-width: 320px;">
+                                <span class="fw-bold text-dark small font-monospace d-block text-truncate">{{ item.path }}</span>
+                                <span class="text-muted extra-small">Max Stayed: {{ item.max_duration_fmt }} • {{ item.unique_count }} visitors</span>
                             </div>
-                            <span class="badge bg-success-subtle text-success rounded-pill px-2.5 py-1.5 fw-semibold">{{ prod.views_count }} views</span>
+                            <div class="text-end">
+                                <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-bold">
+                                    {{ item.stuck_count }} Stuck ({{ item.stuck_pct }}%)
+                                </span>
+                                <span class="d-block extra-small text-muted mt-0.5">High friction alert</span>
+                            </div>
                         </div>
-                        {% empty %}
-                        <p class="text-muted small py-2 mb-0">No product view metrics recorded yet.</p>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-shield-check text-success fs-2 d-block mb-2"></i>
+                        No stuck bottlenecks detected yet. Users are transitioning through pages smoothly!
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Top Lot Batches -->
-        <div class="col-lg-4 col-md-12">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                    <h6 class="fw-bold text-dark mb-0"><i class="bi bi-collection text-warning me-2"></i> Top Viewed Lot Batches</h6>
-                </div>
-                <div class="card-body p-4">
-                    <div class="list-group list-group-flush">
-                        {% for lot in top_lots %}
-                        <div class="list-group-item border-0 px-0 py-2 d-flex justify-content-between align-items-center">
-                            <div class="text-truncate me-2" style="max-width: 220px;" title="{{ lot.title }}">
-                                <span class="fw-medium text-dark small d-block text-truncate">{{ lot.title|default:lot.lot_number }}</span>
-                                <span class="text-muted extra-small">{{ lot.lot_number }}</span>
-                            </div>
-                            <span class="badge bg-warning-subtle text-warning rounded-pill px-2.5 py-1.5 fw-semibold">{{ lot.views_count }} views</span>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted small py-2 mb-0">No lot view metrics recorded yet.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+    <!-- Navigation Tabs for Analytics Views -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom px-4 pt-4 pb-0">
+            <ul class="nav nav-tabs card-header-tabs" id="analyticsTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'pages' or not active_tab %}active fw-bold{% endif %}" href="?tab=pages{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_entity_type %}&entity_type={{ selected_entity_type }}{% endif %}">
+                        <i class="bi bi-file-earmark-bar-graph me-1"></i> Page-by-Page View Counts ({{ page_stats_list|length }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'logs' %}active fw-bold{% endif %}" href="?tab=logs{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_entity_type %}&entity_type={{ selected_entity_type }}{% endif %}">
+                        <i class="bi bi-list-columns-reverse me-1"></i> Live Traffic Event Log
+                    </a>
+                </li>
+            </ul>
         </div>
-    </section>
 
-    <!-- Detailed View Logs Table -->
-    <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             <!-- Search & Filter Toolbar -->
             <form method="GET" action="" class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                <input type="hidden" name="tab" value="{{ active_tab|default:'pages' }}">
                 <!-- Search Box -->
                 <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
-                    <input type="text" name="search" class="form-control rounded-end-0" placeholder="Search path, slug, IP address, user agent..." value="{{ search_query }}">
+                    <input type="text" name="search" class="form-control rounded-end-0" placeholder="Filter by path e.g. /browse, /contact, /sell..." value="{{ search_query }}">
                     <button type="submit" class="btn btn-primary rounded-start-0 px-4">Search</button>
                 </div>
 
@@ -163,79 +195,184 @@
                 <div class="d-flex gap-2 align-items-center">
                     <select name="entity_type" class="form-select text-secondary" style="min-width: 180px;" onchange="this.form.submit()">
                         <option value="" {% if not selected_entity_type %}selected{% endif %}>All Entity Types</option>
-                        <option value="blog" {% if selected_entity_type == 'blog' %}selected{% endif %}>Blogs</option>
+                        <option value="page" {% if selected_entity_type == 'page' %}selected{% endif %}>Pages</option>
                         <option value="product" {% if selected_entity_type == 'product' %}selected{% endif %}>Products</option>
                         <option value="lot" {% if selected_entity_type == 'lot' %}selected{% endif %}>Lot Batches</option>
-                        <option value="page" {% if selected_entity_type == 'page' %}selected{% endif %}>Pages</option>
+                        <option value="blog" {% if selected_entity_type == 'blog' %}selected{% endif %}>Blogs</option>
                     </select>
                     {% if search_query or selected_entity_type %}
-                    <a href="/admin/analytics/page-views/" class="btn btn-outline-secondary px-3">Clear</a>
+                    <a href="?tab={{ active_tab|default:'pages' }}" class="btn btn-outline-secondary px-3">Clear</a>
                     {% endif %}
                 </div>
             </form>
 
-            <!-- Table -->
+            {% if active_tab == 'logs' %}
+            <!-- TAB 2: LIVE DETAILED VIEW LOGS TABLE -->
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
                     <thead>
                         <tr class="table-light text-dark fw-semibold">
                             <th class="ps-3 py-3">#</th>
-                            <th class="py-3">Entity Type</th>
-                            <th class="py-3">Path / Slug</th>
-                            <th class="py-3">Entity ID</th>
+                            <th class="py-3">Type</th>
+                            <th class="py-3">Path / Route</th>
+                            <th class="py-3">Dwell Time</th>
                             <th class="py-3">IP Address</th>
-                            <th class="py-3" style="max-width: 200px;">User Agent</th>
+                            <th class="py-3" style="max-width: 180px;">User Agent</th>
                             <th class="py-3">Referrer</th>
                             <th class="py-3 text-end pe-3">Date & Time</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for log in logs %}
-                        <tr class="border-bottom">
-                            <td class="ps-3 py-3 text-muted">{{ log.id }}</td>
+                        {% for row in formatted_logs %}
+                        <tr class="border-bottom {% if row.is_stuck %}table-warning-subtle{% endif %}">
+                            <td class="ps-3 py-3 text-muted">{{ row.log.id }}</td>
                             <td class="py-3">
-                                {% if log.entity_type == 'blog' %}
+                                {% if row.log.entity_type == 'blog' %}
                                     <span class="badge bg-primary-subtle text-primary text-uppercase px-2.5 py-1">Blog</span>
-                                {% elif log.entity_type == 'product' %}
+                                {% elif row.log.entity_type == 'product' %}
                                     <span class="badge bg-success-subtle text-success text-uppercase px-2.5 py-1">Product</span>
-                                {% elif log.entity_type == 'lot' %}
+                                {% elif row.log.entity_type == 'lot' %}
                                     <span class="badge bg-warning-subtle text-warning text-uppercase px-2.5 py-1">Lot</span>
                                 {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase px-2.5 py-1">{{ log.entity_type }}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase px-2.5 py-1">{{ row.log.entity_type }}</span>
                                 {% endif %}
                             </td>
                             <td class="py-3">
-                                <span class="fw-medium text-dark">{{ log.path|default:log.entity_slug }}</span>
-                            </td>
-                            <td class="py-3 text-secondary">{{ log.entity_id|default:"-" }}</td>
-                            <td class="py-3">
-                                <span class="badge bg-light text-dark border px-2 py-1 font-monospace">{{ log.ip_address|default:"Anonymous" }}</span>
+                                <span class="fw-medium text-dark font-monospace">{{ row.log.path|default:row.log.entity_slug }}</span>
                             </td>
                             <td class="py-3">
-                                <span class="text-secondary d-inline-block text-truncate" style="max-width: 200px;" title="{{ log.user_agent }}">
-                                    {{ log.user_agent|default:"-" }}
+                                {% if row.is_stuck %}
+                                <span class="badge bg-danger text-white px-2 py-1 rounded-pill">
+                                    ⚠️ Stuck ({{ row.duration_fmt }})
+                                </span>
+                                {% elif row.log.duration_seconds > 0 %}
+                                <span class="badge bg-info-subtle text-info-emphasis px-2 py-1 rounded-pill">
+                                    ⏱️ {{ row.duration_fmt }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted extra-small">&lt; 5s / Navigated</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-light text-dark border px-2 py-1 font-monospace">{{ row.log.ip_address|default:"Anonymous" }}</span>
+                            </td>
+                            <td class="py-3">
+                                <span class="text-secondary d-inline-block text-truncate" style="max-width: 180px;" title="{{ row.log.user_agent }}">
+                                    {{ row.log.user_agent|default:"-" }}
                                 </span>
                             </td>
                             <td class="py-3 text-secondary">
-                                <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ log.referrer }}">
-                                    {{ log.referrer|default:"Direct" }}
+                                <span class="d-inline-block text-truncate" style="max-width: 140px;" title="{{ row.log.referrer }}">
+                                    {{ row.log.referrer|default:"Direct" }}
                                 </span>
                             </td>
                             <td class="py-3 text-end pe-3 text-secondary">
-                                {{ log.created_at|date:"M. d, Y, g:i a" }}
+                                {{ row.log.created_at|date:"M. d, Y, g:i a" }}
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
                             <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
-                                No page view logs found for the selected filters.
+                                No page view logs recorded for the selected filters.
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {% else %}
+            <!-- TAB 1: PER-PAGE VIEWS & DWELL TIME BREAKDOWN TABLE -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                    <thead>
+                        <tr class="table-light text-dark fw-semibold">
+                            <th class="ps-3 py-3">Page Path / Route</th>
+                            <th class="py-3">Entity Type</th>
+                            <th class="py-3 text-center">Total Views</th>
+                            <th class="py-3 text-center">Unique Visitors</th>
+                            <th class="py-3 text-center">Avg Time Stayed</th>
+                            <th class="py-3 text-center">Longest Session</th>
+                            <th class="py-3 text-center">Stuck Incidents</th>
+                            <th class="py-3 text-end pe-3">User Flow Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for page in page_stats_list %}
+                        <tr class="border-bottom">
+                            <td class="ps-3 py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-link-45deg text-primary me-2 fs-5"></i>
+                                    <div>
+                                        <a href="{{ page.path }}" target="_blank" class="fw-bold text-dark text-decoration-none hover-primary font-monospace">
+                                            {{ page.path }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-0.5 text-uppercase" style="font-size: 0.72rem;">
+                                    {{ page.entity_type }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-center">
+                                <span class="badge bg-primary-subtle text-primary px-3 py-1.5 rounded-pill fw-bold fs-6">
+                                    {{ page.view_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-center">
+                                <span class="fw-semibold text-secondary">
+                                    {{ page.unique_count }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-center">
+                                {% if page.avg_seconds >= 120 %}
+                                <span class="badge bg-purple-subtle text-purple px-2.5 py-1 rounded-pill fw-bold" style="color: #6d28d9; background: #f3e8ff;">
+                                    ⏱️ {{ page.avg_duration_fmt }}
+                                </span>
+                                {% else %}
+                                <span class="text-secondary fw-medium">
+                                    {{ page.avg_duration_fmt }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center text-secondary">
+                                {{ page.max_duration_fmt }}
+                            </td>
+                            <td class="py-3 text-center">
+                                {% if page.stuck_count > 0 %}
+                                <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-bold">
+                                    ⚠️ {{ page.stuck_count }} ({{ page.stuck_pct }}%)
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success-subtle text-success px-2 py-0.5 rounded-pill" style="font-size: 0.72rem;">
+                                    Smooth
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-end pe-3">
+                                {% if page.stuck_count > 0 %}
+                                <span class="badge bg-warning text-dark px-2 py-1">Review Friction</span>
+                                {% elif page.avg_seconds >= 120 %}
+                                <span class="badge bg-info-subtle text-info-emphasis px-2 py-1">High Interest</span>
+                                {% else %}
+                                <span class="badge bg-light text-secondary border px-2 py-1">Normal Flow</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-file-earmark-x fs-1 d-block mb-3 opacity-50"></i>
+                                No page view records match your filter criteria.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
 
         </div>
     </div>

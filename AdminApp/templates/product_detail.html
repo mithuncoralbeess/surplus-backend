@@ -419,11 +419,19 @@
                          alt="Main Thumbnail">
                     {% endif %}
                     {% for img_obj in product.images.all %}
-                    <img src="{{ img_obj.image.url }}" 
-                         onclick="document.getElementById('main-showcase-image').src = this.src"
-                         class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75" 
-                         style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
-                         alt="Gallery Thumbnail">
+                    <div class="position-relative d-inline-block">
+                        <img src="{{ img_obj.url }}" 
+                             onclick="document.getElementById('main-showcase-image').src = this.src"
+                             class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75 {% if img_obj.is_real_photo %}border-success{% endif %}" 
+                             style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                             alt="Gallery Thumbnail"
+                             title="{% if img_obj.is_real_photo %}Verified Real Photo{% else %}Catalog/Stock Image{% endif %}">
+                        {% if img_obj.is_real_photo %}
+                        <span class="position-absolute bottom-0 end-0 badge bg-success rounded-circle p-1" style="font-size: 0.5rem;" title="Real Photo">
+                            <i class="bi bi-camera-fill"></i>
+                        </span>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
                 {% endif %}

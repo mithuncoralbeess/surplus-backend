@@ -114,26 +114,37 @@ Individual items listed for sale on the marketplace.
 
 | Field Name | Simple Data Type | Plain English Description |
 | :--- | :--- | :--- |
+| `id` | Internal Number | PostgreSQL Auto-increment ID |
 | `product_id` | Unique ID | Auto-generated product code (e.g., `PRO-00042`) |
-| `product_name` | Text | Item title |
-| `model_no` | Text | Model number, Part number, or SKU |
-| `brand` | Text | Manufacturer or brand name |
-| `description` | Text | Full item specifications & description |
-| `liquidating_price` | Currency Amount | Base seller listing price |
-| `current_price` | Currency Amount | Final selling price (Auto-calculated: `Base Price + 10% Markup`) |
-| `previous_price` | Currency Amount | Original retail price or previous discounted price |
-| `stock_quantity` | Whole Number | Available units in stock |
-| `condition` | Text | Item state (e.g., *Brand New*, *Refurbished*, *Used*) |
+| `vendor` | Vendor Link | Seller who submitted the product |
+| `product_name` | Text | Item title / name |
+| `category` | Category Link | Main Category |
+| `subcategory` | Subcategory Link | Sub Category |
+| `brand_name` | Text | Manufacturer / Brand name |
+| `model_no` | Text | Model number or Part number |
+| `manufacturing_country`| Country Name | Country of manufacture |
 | `inventory_location` | Text | Warehouse or storage location |
-| `manufacturing_country`| Country Name | Country where the product was made |
 | `manufacturing_year` | Year Number | Year of production |
-| `dimensions` | Text | Size and physical dimensions |
+| `dimensions` | Text | Size and physical measurements |
+| `expiry_date` | Date | Expiration date if applicable |
+| `excluded_countries` | Country Code List | Geographical sales restrictions |
+| `quantity` | Whole Number | Total available units |
 | `currency` | Currency Code | Currency (Default: `USD`) |
-| `warranty` | Text | Warranty coverage details |
-| `third_party_certificate`| Document File | Uploaded quality certificate or inspection report |
-| `image` | Picture File | Main product featured image |
-| `enquiry_status` | Choice | Review state (`Pending`, `Approved`, or `Declined`) |
-| `is_active` | Yes / No | Visible for sale on website (`Yes` or `No`) |
+| `liquidating_price` | Currency Amount | Seller payout price per unit |
+| `msrp` | Currency Amount | MSRP / Original retail price |
+| `current_price` | Currency Amount | Buyer price (Auto-calculated: `Liquidating Price × 1.10`) |
+| `description` | Text | Full item specifications & description |
+| `reason_to_sell` | Text | Reason for surplus listing |
+| `warranty` | Text | Warranty coverage text |
+| `warranty_attachment` | Cloudflare S3 Link | Direct S3 link to warranty PDF document |
+| `third_party_certificate`| Boolean | True/False flag indicating 3rd party certification |
+| `third_party_documents` | Cloudflare S3 Link | Direct S3 link to 3rd party certification documents |
+| `enquiry_status` | Choice | Review state (`PENDING`, `APPROVED`, or `DECLINED`) |
+| `is_active` | Yes / No | Live visibility on marketplace |
+| `date_approved` | Date & Time | Timestamp when approved by admin |
+| `views_count` | Number | Page view impressions |
+| `created_at` | Date & Time | Creation timestamp |
+| `updated_at` | Date & Time | Last updated timestamp |
 
 ---
 

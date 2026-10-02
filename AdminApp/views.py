@@ -436,7 +436,7 @@ def adminDashBoard(request):
     appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("total_price"))["s"] or 0
     total_sales_amount = float(appr_prod_sales + appr_lot_sales)
 
-    active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("stock_quantity"))["s"] or 0
+    active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("quantity"))["s"] or 0
     if not active_products_stock:
         active_products_stock = Product.objects.filter(is_active=True).count()
 
@@ -1137,7 +1137,7 @@ def seller_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Product.objects.all().select_related("vendor", "category", "subcategory", "brand_ref").order_by("-created_at")
+    qs = Product.objects.all().select_related("vendor", "category", "subcategory").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1415,46 +1415,13 @@ def seller_enquiry_edit_api(request, enquiry_id):
             product.is_active = False
     elif "is_active" in data:
         product.is_active = bool(data["is_active"])
-
-    if not isinstance(product.raw_data, dict):
-        product.raw_data = {}
-
-    if "model_no" in data and data["model_no"]:
-        product.model_no = str(data["model_no"]).strip()
-    elif "model_part_no" in data and data["model_part_no"]:
-        product.model_no = str(data["model_part_no"]).strip()
-    elif "sku" in data and data["sku"]:
-        product.model_no = str(data["sku"]).strip()
-
-    if title:
-        product.raw_data["product_name"] = product.product_name
-        product.raw_data["title"] = product.product_name
-    product.raw_data["liquidating_price"] = float(product.liquidating_price)
-    product.raw_data["current_price"] = float(product.current_price)
-    product.raw_data["price"] = float(product.current_price)
-    if product.previous_price is not None:
-        product.raw_data["previous_price"] = float(product.previous_price)
-        product.raw_data["original_price"] = float(product.previous_price)
-    if "brand" in data:
-        product.raw_data["brand_name"] = product.brand
-    if product.subcategory:
-        product.raw_data["product_category"] = product.subcategory.name
-    if "stock_quantity" in data:
-        product.raw_data["quantity"] = product.stock_quantity
-    if "manufacturing_country" in data:
-        product.raw_data["manufacturing_country"] = product.manufacturing_country
-    if "manufacturing_year" in data:
-        product.raw_data["manufacturing_year"] = product.manufacturing_year
-    if "dimensions" in data:
-        product.raw_data["dimensions"] = product.dimensions
-    if "warranty" in data:
-        product.raw_data["warranty"] = product.warranty
-    if "reason_to_sell" in data:
-        product.raw_data["reason_to_sell"] = product.reason_to_sell
-    if "description" in data:
-        product.raw_data["description"] = product.description
-    if "model_no" in data:
-        product.raw_data["model_no"] = str(data["model_no"]).strip()
+    if "warranty_attachment" in data:
+        product.warranty_attachment = str(data["warranty_attachment"]).strip()
+    if "third_party_certificate" in data:
+        cert_val = data["third_party_certificate"]
+        product.third_party_certificate = cert_val in (True, "true", "1", 1, "yes")
+    if "third_party_documents" in data:
+        product.third_party_documents = str(data["third_party_documents"]).strip()
 
     product.save()
 
@@ -1476,9 +1443,9 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=enquiry_id) | Q(product_id=str(enquiry_id))
-    enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category", "brand_ref").filter(lookup).first()
+    enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category").filter(lookup).first()
     if not enquiry:
-        enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category", "brand_ref").first()
+        enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category").first()
     if not enquiry:
         return redirect("seller_enquiries")
 
@@ -2383,17 +2350,19 @@ def contact_enquiries_view(request):
 
 def page_views_analytics_view(request):
     """
-    Dedicated view for Page Visits & Traffic Analytics in the Admin Portal.
-    Displays search, filtering by entity type (blog, product, lot, page),
-    KPI cards (Total Views, Today Views, Unique Visitors, System Status),
-    and top viewed content lists alongside detailed view logs.
+    Dedicated view for Page Visits, Traffic Analytics, and Dwell-Time / Stuck User Intelligence in the Admin Portal.
+    Displays page-by-page view counts, average dwell time, where users spend the most time,
+    stuck-user analysis, KPI cards, and detailed view logs.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
+    from django.db.models import Avg, Count, Max, Sum, Q
+
     entity_type_filter = request.GET.get("entity_type", "").strip().lower()
     search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    active_tab = request.GET.get("tab", "pages").strip().lower()
 
     logs = PageViewLog.objects.all().order_by("-created_at")
 
@@ -2409,32 +2378,115 @@ def page_views_analytics_view(request):
             Q(referrer__icontains=search_query)
         )
 
-    # Computations
+    # Core Counts
     total_views = PageViewLog.objects.count()
     today_views = PageViewLog.objects.filter(created_at__date=timezone.now().date()).count()
     unique_visitors = PageViewLog.objects.exclude(ip_address__isnull=True).values("ip_address").distinct().count()
+    total_stuck_sessions = PageViewLog.objects.filter(is_stuck=True).count()
+
+    # Average Platform Dwell Time
+    avg_dwell_res = PageViewLog.objects.filter(duration_seconds__gt=0).aggregate(avg_sec=Avg("duration_seconds"))
+    platform_avg_seconds = round(avg_dwell_res.get("avg_sec") or 0)
+
+    # 1. Page-by-Page Aggregation (Number of views for each page + dwell time)
+    page_stats_qs = (
+        PageViewLog.objects.exclude(path="")
+        .values("path", "entity_type")
+        .annotate(
+            view_count=Count("id"),
+            unique_count=Count("ip_address", distinct=True),
+            avg_duration=Avg("duration_seconds"),
+            max_duration=Max("duration_seconds"),
+            stuck_count=Count("id", filter=Q(is_stuck=True))
+        )
+    )
+
+    if search_query:
+        page_stats_qs = page_stats_qs.filter(path__icontains=search_query)
+    if entity_type_filter:
+        page_stats_qs = page_stats_qs.filter(entity_type=entity_type_filter)
+
+    def _fmt(sec):
+        if not sec or sec <= 0:
+            return "< 5s"
+        if sec < 60:
+            return f"{sec}s"
+        m = sec // 60
+        s = sec % 60
+        return f"{m}m {s}s" if s > 0 else f"{m}m"
+
+    page_stats_list = []
+    for item in page_stats_qs.order_by("-view_count")[:150]:
+        avg_sec = round(item.get("avg_duration") or 0)
+        max_sec = item.get("max_duration") or 0
+        v_count = item.get("view_count") or 1
+        s_count = item.get("stuck_count") or 0
+        stuck_pct = round((s_count / v_count) * 100, 1)
+
+        page_stats_list.append({
+            "path": item["path"],
+            "entity_type": item["entity_type"],
+            "view_count": v_count,
+            "unique_count": item.get("unique_count") or 0,
+            "avg_seconds": avg_sec,
+            "avg_duration_fmt": _fmt(avg_sec),
+            "max_duration_fmt": _fmt(max_sec),
+            "stuck_count": s_count,
+            "stuck_pct": stuck_pct,
+            "is_high_dwell": avg_sec >= 120,
+        })
+
+    # 2. "Where Users Stayed More" Leaderboard (Ranked by highest dwell time)
+    most_stayed_pages = sorted(
+        [p for p in page_stats_list if p["avg_seconds"] > 0],
+        key=lambda x: x["avg_seconds"],
+        reverse=True
+    )[:8]
+
+    # 3. Stuck Pages Analysis (Pages with highest stuck rate / friction)
+    stuck_pages_analysis = sorted(
+        [p for p in page_stats_list if p["stuck_count"] > 0],
+        key=lambda x: (x["stuck_count"], x["stuck_pct"]),
+        reverse=True
+    )[:8]
 
     # Top entity breakdown
     top_blogs = BlogPost.objects.all().order_by("-views_count")[:5]
     top_products = Product.objects.all().order_by("-views_count")[:5]
     top_lots = Lot.objects.all().order_by("-views_count")[:5]
 
+    # Format logs for live table with human readable duration
+    formatted_logs = []
+    for log in logs[:100]:
+        sec = log.duration_seconds or 0
+        formatted_logs.append({
+            "log": log,
+            "duration_fmt": _fmt(sec),
+            "is_stuck": log.is_stuck or (sec >= 180)
+        })
+
     context = {
         "admin": admin_user,
-        "logs": logs[:100],  # Show latest 100 entries
+        "logs": logs[:100],
+        "formatted_logs": formatted_logs,
         "total_views": total_views,
         "today_views": today_views,
         "unique_visitors": unique_visitors,
+        "total_stuck_sessions": total_stuck_sessions,
+        "platform_avg_duration": _fmt(platform_avg_seconds),
+        "page_stats_list": page_stats_list,
+        "most_stayed_pages": most_stayed_pages,
+        "stuck_pages_analysis": stuck_pages_analysis,
         "top_blogs": top_blogs,
         "top_products": top_products,
         "top_lots": top_lots,
         "search_query": search_query,
         "selected_entity_type": entity_type_filter,
-        "page_title": "Page Visits & Traffic Analytics",
-        "page_subtitle": "Real-time Traffic Tracking, Unique Visitor Counts, and Content Performance"
+        "active_tab": active_tab,
+        "page_title": "Page Visits & User Dwell-Time Analytics",
+        "page_subtitle": "Real-time Traffic Tracking, Per-Page Views, Dwell Time & Stuck User Friction Analysis"
     }
     return render(request, "page_views_analytics.html", context)
-
 
 
 
@@ -2735,32 +2787,48 @@ def add_product_view(request):
             vendor = VendorDetails.objects.filter(id=vendor_id).first()
 
         product = Product.objects.create(
-            title=title,
-            sku=sku,
+            product_name=title or request.POST.get("product_name", ""),
+            model_no=sku or request.POST.get("model_no", ""),
             description=description,
-            price=price,
-            discount_price=discount_price,
-            stock_quantity=stock_quantity,
-            brand=brand,
-            category=category,
+            liquidating_price=request.POST.get("liquidating_price") or price or 0,
+            msrp=request.POST.get("msrp") or discount_price,
+            quantity=stock_quantity,
+            brand_name=brand or request.POST.get("brand_name", ""),
+            category=category.main_category if (category and hasattr(category, 'main_category')) else None,
+            subcategory=category,
             vendor=vendor,
-            inventory_location=inventory_location,
             manufacturing_country=manufacturing_country,
+            inventory_location=request.POST.get("inventory_location", ""),
             manufacturing_year=manufacturing_year if manufacturing_year else None,
             dimensions=dimensions,
             expiry_date=expiry_date if expiry_date else None,
             currency=currency,
             reason_to_sell=reason_to_sell,
             warranty=warranty,
-            third_party_certificate=third_party_certificate,
-            image=image,
+            warranty_attachment=request.POST.get("warranty_attachment", ""),
+            third_party_certificate=request.POST.get("third_party_certificate") in ("true", "1", "on", True),
+            third_party_documents=request.POST.get("third_party_documents", ""),
             enquiry_status=enquiry_status,
             is_active=is_active,
         )
 
+        gallery_urls = request.POST.getlist("gallery_image_urls") or request.POST.getlist("gallery_urls")
+        is_real = request.POST.get("is_real_photo", "false").lower() in ("true", "1", "t", "yes")
+        for g_url in gallery_urls:
+            if g_url.strip():
+                ProductImage.objects.create(
+                    product=product,
+                    image_url=g_url.strip(),
+                    is_real_photo=is_real
+                )
+
         gallery_files = request.FILES.getlist("gallery_images")
         for g_file in gallery_files:
-            ProductImage.objects.create(product=product, image=g_file)
+            ProductImage.objects.create(
+                product=product,
+                image=g_file,
+                is_real_photo=is_real
+            )
 
         return redirect("all_products")
 
@@ -2987,7 +3055,7 @@ def price_control_view(request):
     categories = SubCategory.objects.all()
     
     # Get distinct brands from Brand model and Product table
-    product_brands = list(Product.objects.exclude(brand="").values_list("brand", flat=True).distinct())
+    product_brands = list(Product.objects.exclude(brand_name="").values_list("brand_name", flat=True).distinct())
     brand_model_names = list(Brand.objects.values_list("name", flat=True).distinct())
     all_brands = sorted(list(set(product_brands + brand_model_names)))
 

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from .models import AdminDetails, AdminPasswordResetOTP
+from .models import AdminDetails, AdminPasswordResetOTP, VendorDetails, ProductImage
 
 
 class AdminDetailsForm(forms.ModelForm):
@@ -62,5 +62,12 @@ class AdminPasswordResetOTPAdmin(admin.ModelAdmin):
     list_filter = ("is_used", "created_at")
     search_fields = ("email", "otp", "admin__username")
 
-from .models import VendorDetails
+
 admin.site.register(VendorDetails)
+
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "product", "is_real_photo", "image_url", "uploaded_at")
+    list_filter = ("is_real_photo", "uploaded_at")
+    search_fields = ("product__product_name", "product__product_id", "image_url")

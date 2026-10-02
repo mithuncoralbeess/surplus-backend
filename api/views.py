@@ -421,7 +421,6 @@ def submit_seller_enquiry(request):
         vendor=vendor,
         enquiry_status="PENDING",
         is_active=False,
-        raw_data=raw_data
     )
 
     return Response({
@@ -870,29 +869,43 @@ def submit_product_request(request):
         'liquidatingPrice': 'liquidating_price',
         'liquidating_price': 'liquidating_price',
         'price': 'liquidating_price',
-        'previousPrice': 'previous_price',
-        'previous_price': 'previous_price',
-        'originalPrice': 'previous_price',
-        'original_price': 'previous_price',
+        'msrp': 'msrp',
+        'MSRP': 'msrp',
+        'previousPrice': 'msrp',
+        'previous_price': 'msrp',
+        'originalPrice': 'msrp',
+        'original_price': 'msrp',
         'currentPrice': 'current_price',
         'current_price': 'current_price',
-        'quantity': 'stock_quantity',
-        'category': 'category_name',
+        'quantity': 'quantity',
+        'stock_quantity': 'quantity',
         'country': 'manufacturing_country',
+        'manufacturing_country': 'manufacturing_country',
         'year': 'manufacturing_year',
+        'manufacturing_year': 'manufacturing_year',
         'expiry': 'expiry_date',
+        'expiry_date': 'expiry_date',
         'modelNo': 'model_no',
         'model_no': 'model_no',
         'modelPartNo': 'model_no',
         'model_part_no': 'model_no',
         'sku': 'model_no',
-        'brandName': 'brand',
+        'brand': 'brand_name',
+        'brandName': 'brand_name',
+        'brand_name': 'brand_name',
         'excludedCountries': 'excluded_countries',
+        'excluded_countries': 'excluded_countries',
         'reasonToSell': 'reason_to_sell',
+        'reason_to_sell': 'reason_to_sell',
+        'warranty': 'warranty',
+        'warranty_attachment': 'warranty_attachment',
+        'warrantyAttachment': 'warranty_attachment',
+        'third_party_certificate': 'third_party_certificate',
+        'thirdPartyCertificate': 'third_party_certificate',
         'location': 'inventory_location',
-        'condition': 'condition',
-        'product_condition': 'condition',
-        'stock_condition': 'condition',
+        'inventory_location': 'inventory_location',
+        'third_party_documents': 'third_party_documents',
+        'thirdPartyDocuments': 'third_party_documents',
     }
     
     for front_key, model_key in key_mapping.items():
@@ -910,7 +923,6 @@ def submit_product_request(request):
         
     data['enquiry_status'] = 'PENDING'
     data['is_active'] = False
-    data['raw_data'] = {}
     
     serializer = ProductSerializer(data=data)
     if serializer.is_valid():
@@ -928,7 +940,42 @@ def submit_product_request(request):
         if vendor:
             enquiry.vendor = vendor
             enquiry.save(update_fields=['vendor'])
-                
+
+        # Store Cloudflare S3 direct image links & gallery files
+        from AdminApp.models import ProductImage
+        import json
+        gallery_urls = data.get('image_urls') or data.get('gallery_urls') or []
+        if isinstance(gallery_urls, str):
+            try:
+                gallery_urls = json.loads(gallery_urls)
+            except Exception:
+                gallery_urls = [u.strip() for u in gallery_urls.split(",") if u.strip()]
+
+        if isinstance(gallery_urls, list):
+            for item in gallery_urls:
+                if isinstance(item, dict):
+                    img_link = item.get("url") or item.get("image_url") or ""
+                    is_real = bool(item.get("is_real_photo", True))
+                else:
+                    img_link = str(item).strip()
+                    is_real = True
+                if img_link:
+                    ProductImage.objects.create(
+                        product=enquiry,
+                        image_url=img_link,
+                        is_real_photo=is_real
+                    )
+
+        if 'images' in request.FILES:
+            gallery_files = request.FILES.getlist('images')
+            if len(gallery_files) > 1:
+                for g_file in gallery_files[1:]:
+                    ProductImage.objects.create(
+                        product=enquiry,
+                        image=g_file,
+                        is_real_photo=True
+                    )
+
         return Response({
             "success": True,
             "message": "Product request submitted successfully and is pending approval.",
@@ -1040,11 +1087,45 @@ from AdminApp.models import PageViewLog, BlogPost, Product, Lot
 @permission_classes([AllowAny])
 def track_view_api(request):
     """
-    Public API endpoint to record page/entity view pings from Next.js frontend.
-    Deduplicates requests within 1 hour per IP/entity to prevent spamming view counts.
-    Increments views_count on Lot, Product, or BlogPost models using atomic F() expressions.
+    Public API endpoint to record page/entity view pings and dwell-time analytics from Next.js frontend.
+    Supports initial pageview logging, continuous heartbeats, duration updates, and stuck-user detection.
     """
     data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+
+    log_id = data.get("log_id") or data.get("id")
+    duration_seconds = data.get("duration_seconds")
+    session_id = str(data.get("session_id", "")).strip()
+    visitor_id = str(data.get("visitor_id", "")).strip()
+    is_stuck = bool(data.get("is_stuck", False))
+
+    # Duration update / Heartbeat / Exit Beacon for existing page view log
+    if log_id:
+        try:
+            log_entry = PageViewLog.objects.filter(id=int(log_id)).first()
+            if log_entry:
+                if duration_seconds is not None:
+                    try:
+                        dur = max(0, int(float(duration_seconds)))
+                        log_entry.duration_seconds = max(log_entry.duration_seconds, dur)
+                        if dur >= 180 or is_stuck:
+                            log_entry.is_stuck = True
+                    except (ValueError, TypeError):
+                        pass
+                if is_stuck:
+                    log_entry.is_stuck = True
+                log_entry.save(update_fields=["duration_seconds", "is_stuck"])
+                return Response({
+                    "success": True,
+                    "message": "Dwell time updated successfully",
+                    "data": {
+                        "id": log_entry.id,
+                        "log_id": log_entry.id,
+                        "duration_seconds": log_entry.duration_seconds,
+                        "is_stuck": log_entry.is_stuck
+                    }
+                }, status=status.HTTP_200_OK)
+        except Exception as e:
+            pass
 
     entity_type = str(data.get("entity_type", "page")).lower().strip()
     entity_id = data.get("entity_id")
@@ -1086,7 +1167,17 @@ def track_view_api(request):
 
     is_duplicate = PageViewLog.objects.filter(dedup_query, created_at__gte=one_hour_ago).exists()
 
-    # Log the page view entry
+    # Clean duration and stuck state
+    dur = 0
+    if duration_seconds is not None:
+        try:
+            dur = max(0, int(float(duration_seconds)))
+        except (ValueError, TypeError):
+            dur = 0
+    if dur >= 180:
+        is_stuck = True
+
+    # Log the page view entry with dwell time & visitor session tracking
     page_view_log = PageViewLog.objects.create(
         entity_type=entity_type,
         entity_id=entity_id,
@@ -1095,6 +1186,10 @@ def track_view_api(request):
         ip_address=ip_address,
         user_agent=user_agent,
         referrer=referrer,
+        duration_seconds=dur,
+        session_id=session_id,
+        visitor_id=visitor_id,
+        is_stuck=is_stuck,
     )
 
     incremented = False
@@ -1138,9 +1233,12 @@ def track_view_api(request):
         "message": "View tracked successfully",
         "data": {
             "id": page_view_log.id,
+            "log_id": page_view_log.id,
             "entity_type": entity_type,
             "entity_id": entity_id,
             "entity_slug": entity_slug,
+            "duration_seconds": page_view_log.duration_seconds,
+            "is_stuck": page_view_log.is_stuck,
             "is_duplicate": is_duplicate,
             "incremented": incremented,
             "created_at": page_view_log.created_at.isoformat()
