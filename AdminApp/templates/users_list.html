@@ -137,7 +137,7 @@
                         <tr class="border-bottom">
                             <td class="ps-3 py-3">
                                 <div class="fw-bold text-dark">{{ user.name }}</div>
-                                <small class="text-muted">@{{ user.username }}</small>
+                                <small class="text-muted"><span class="badge bg-light text-secondary border px-1.5 py-0.5 me-1" style="font-size: 0.72rem;">#{{ user.id }}</span>@{{ user.username }}</small>
                             </td>
                             <td class="py-3">
                                 <span class="text-secondary">{{ user.email }}</span>
@@ -195,6 +195,7 @@
                                             <div>
                                                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                                     <h5 class="fw-bold text-white mb-0" id="userModalLabel{{ user.id }}">{{ user.name }}</h5>
+                                                    <span class="badge bg-white text-dark rounded-pill px-2.5 py-1 small fw-bold shadow-sm">ID: #{{ user.id }}</span>
                                                     {% if user.type == 'Seller' %}
                                                     <span class="badge text-white rounded-pill px-2.5 py-1 small" style="background-color: #06b6d4;">Seller</span>
                                                     {% elif user.type == 'Buyer' %}
@@ -213,7 +214,7 @@
                                                     </span>
                                                     {% endif %}
                                                 </div>
-                                                <small style="color: #94a3b8;">@{{ user.username }} &bull; Registered Member</small>
+                                                <small style="color: #94a3b8;">User ID: <strong class="text-white">#{{ user.id }}</strong> &bull; @{{ user.username }} &bull; Registered Member</small>
                                             </div>
                                         </div>
                                     </div>
@@ -230,6 +231,16 @@
                                                     </h6>
                                                     
                                                     <div class="d-flex flex-column gap-3">
+                                                        <div class="d-flex align-items-start gap-2">
+                                                            <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
+                                                                <i class="bi bi-person-badge"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-muted small d-block">User ID / Vendor ID</span>
+                                                                <span class="fw-bold text-primary">#{{ user.id }}</span>
+                                                            </div>
+                                                        </div>
+
                                                         <div class="d-flex align-items-start gap-2">
                                                             <div class="bg-primary-subtle text-primary rounded-2 d-flex align-items-center justify-content-center p-2" style="width: 32px; height: 32px;">
                                                                 <i class="bi bi-envelope"></i>
