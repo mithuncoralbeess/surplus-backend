@@ -214,6 +214,23 @@
                                     <span class="fs-5 fw-medium text-dark">{{ product_data.previous_price|default:"N/A" }}</span>
                                 </div>
                             </div>
+                            <div class="inline-card border-left-danger py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-percent text-danger me-1"></i> Offer / Discount</span>
+                                <div class="d-flex align-items-center">
+                                    {% if enquiry.offer and enquiry.offer > 0 %}
+                                    <span class="badge bg-danger-subtle text-danger me-2"><i class="bi bi-tag-fill me-1"></i>Offer</span>
+                                    <span class="fs-5 fw-medium text-danger">{{ enquiry.offer|floatformat:2 }}%</span>
+                                    {% elif product_data.offer and product_data.offer != '0' and product_data.offer != '0.00' %}
+                                    <span class="badge bg-danger-subtle text-danger me-2"><i class="bi bi-tag-fill me-1"></i>Offer</span>
+                                    <span class="fs-5 fw-medium text-danger">{{ product_data.offer }}%</span>
+                                    {% elif enquiry.offer %}
+                                    <span class="fs-5 fw-medium text-dark">{{ enquiry.offer|floatformat:2 }}%</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary me-2">None</span>
+                                    <span class="fs-5 fw-medium text-muted">0%</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                             <div class="inline-card border-left-info py-2 px-3 bg-white shadow-sm rounded">
                                 <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-hand-thumbs-up-fill text-info me-1"></i> Available for Offers</span>
                                 <div class="d-flex align-items-center">
@@ -570,15 +587,19 @@
                             <label class="form-label small fw-semibold text-dark">Brand Name</label>
                             <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Liquidating Price ({{ product_data.currency|default:'AED' }})</label>
                             <input type="number" step="0.01" class="form-control" name="price" value="{{ enquiry.price|default:product_data.liquidating_price|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Original / Previous Price</label>
                             <input type="number" step="0.01" class="form-control" name="original_price" value="{{ product_data.previous_price|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-dark">Offer / Discount (%)</label>
+                            <input type="number" step="0.01" class="form-control" name="offer" value="{{ enquiry.offer|default:product_data.offer|default:'0' }}">
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Quantity</label>
                             <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
                         </div>

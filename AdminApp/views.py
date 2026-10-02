@@ -1359,6 +1359,15 @@ def seller_enquiry_edit_api(request, enquiry_id):
         except (ValueError, TypeError):
             pass
 
+    if "offer" in data:
+        if data["offer"] not in (None, ""):
+            try:
+                product.offer = Decimal(str(data["offer"]).strip())
+            except Exception:
+                pass
+        else:
+            product.offer = Decimal("0.00")
+
     if "stock_quantity" in data and data["stock_quantity"] not in (None, ""):
         try:
             product.stock_quantity = int(data["stock_quantity"])
@@ -1594,7 +1603,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "warranty": enquiry.warranty,
         "warranty_document": enquiry.warranty_attachment,
         "certificate": enquiry.third_party_documents if enquiry.third_party_documents else ("Yes" if enquiry.third_party_certificate else None),
-        "offer": str(enquiry.offer) if enquiry.offer else None,
+        "offer": str(enquiry.offer) if enquiry.offer is not None else None,
     }
 
     for k, v in model_fields_dict.items():

@@ -1096,7 +1096,14 @@ def submit_product_request(request):
             msrp = None
 
     offer = Decimal("0.00")
-    offer_val = data.get('offer')
+    offer_val = (
+        data.get('offer') or 
+        data.get('offer_percentage') or 
+        data.get('offerPercentage') or 
+        data.get('discount') or 
+        data.get('discount_percentage') or 
+        data.get('discountPercentage')
+    )
     if offer_val is not None and str(offer_val).strip() != "":
         try:
             offer = Decimal(str(offer_val).strip())

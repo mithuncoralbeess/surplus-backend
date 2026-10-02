@@ -143,6 +143,12 @@
 .detail-page-wrapper .inline-card.border-left-warning {
   border-left: 3px solid #f59e0b;
 }
+.detail-page-wrapper .inline-card.border-left-danger {
+  border-left: 3px solid #ef4444;
+}
+.detail-page-wrapper .inline-card.border-left-info {
+  border-left: 3px solid #06b6d4;
+}
 .detail-page-wrapper .metric-card {
   background: #ffffff;
   -webkit-transition: -webkit-transform 0.2s ease, -webkit-box-shadow 0.2s ease;
