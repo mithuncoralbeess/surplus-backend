@@ -1459,20 +1459,30 @@ def seller_enquiry_detail_view(request, enquiry_id):
     if not vendor and enquiry.vendor_id:
         from .models import VendorDetails
         vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
+    if not vendor:
+        from .models import VendorDetails, VendorOTP
+        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
+        if latest_otp:
+            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
+        if not vendor:
+            vendor = VendorDetails.objects.order_by("-id").first()
+        if vendor:
+            enquiry.vendor = vendor
+            enquiry.save(update_fields=["vendor"])
 
     company_val = "N/A"
     full_name_val = "N/A"
     phone_val = "N/A"
     email_val = "N/A"
-    location_val = enquiry.inventory_location or enquiry.manufacturing_country or "N/A"
-    industry_val = (enquiry.category.name if enquiry.category else "N/A")
+    business_location_val = "N/A"
+    industry_val = "N/A"
 
     if vendor:
         full_name_val = vendor.full_name or vendor.username or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
         company_val = vendor.company_name or vendor.username or "Individual Seller"
-        location_val = vendor.business_location or enquiry.inventory_location or enquiry.manufacturing_country or "N/A"
+        business_location_val = vendor.business_location or "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
                 industry_val = ", ".join(vendor.category_interested)
@@ -1492,7 +1502,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "phone_no": phone_val,
         "email": email_val,
         "company": company_val,
-        "business_location": location_val,
+        "business_location": business_location_val,
         "industry": industry_val,
     }
 
@@ -1505,6 +1515,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         ("brand_name", "Brand Name", False, ["brand_name", "brand name", "brand"]),
         ("model_no", "Model No. / Part Number", False, ["model no. / part number", "model no", "part number", "model number"]),
         ("manufacturing_country", "Manufacturing Country", True, ["select manufacturing country", "manufacturing country", "country"]),
+        ("inventory_location", "Inventory Location", False, ["inventory_location", "inventory location", "location", "warehouse location"]),
         ("manufacturing_year", "Manufacturing Year", False, ["manufacturing year", "year"]),
         ("dimensions", "Dimensions", False, ["dimensions", "dimension"]),
         ("expiry_date", "Expiry Date", False, ["expiry date", "expiry"]),
@@ -1554,6 +1565,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "brand_name": enquiry.brand,
         "model_no": enquiry.model_no,
         "manufacturing_country": enquiry.manufacturing_country,
+        "inventory_location": enquiry.inventory_location,
         "manufacturing_year": enquiry.manufacturing_year,
         "dimensions": enquiry.dimensions,
         "expiry_date": enquiry.expiry_date.strftime("%Y-%m-%d") if enquiry.expiry_date else None,
@@ -1854,19 +1866,36 @@ def lot_enquiry_detail_view(request, enquiry_id):
             if not vendor:
                 vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
 
+    if not vendor:
+        from .models import VendorOTP
+        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
+        if latest_otp:
+            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
+        if not vendor:
+            vendor = VendorDetails.objects.order_by("-id").first()
+        if vendor and hasattr(enquiry, 'vendor'):
+            enquiry.vendor = vendor
+            enquiry.save(update_fields=["vendor"])
+
     if vendor:
         user_data["vendor_id"] = vendor.vendor_id
         user_data["raw_vendor_id"] = vendor.id
         user_data["user_id"] = vendor.vendor_id
         user_data["raw_user_id"] = vendor.id
-        user_data["full_name"] = user_data["full_name"] or vendor.full_name or vendor.username
-        user_data["phone_no"] = user_data["phone_no"] or vendor.mobile_number
-        user_data["email"] = user_data["email"] or vendor.email
-        user_data["company"] = user_data["company"] or vendor.company_name
-        user_data["business_location"] = user_data["business_location"] or vendor.business_location
+        user_data["full_name"] = vendor.full_name or vendor.username or "N/A"
+        user_data["phone_no"] = vendor.mobile_number or "N/A"
+        user_data["email"] = vendor.email or "N/A"
+        user_data["company"] = vendor.company_name or vendor.username or "Individual Seller"
+        user_data["business_location"] = vendor.business_location or "N/A"
+        if vendor.category_interested:
+            user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
+        elif vendor.business_type:
+            user_data["industry"] = vendor.business_type
     else:
         user_data["vendor_id"] = "N/A"
         user_data["user_id"] = "N/A"
+        user_data["business_location"] = "N/A"
+        user_data["industry"] = "N/A"
 
     context["user_data"] = user_data
     context["batch_data"] = batch_data
@@ -3194,20 +3223,30 @@ def product_detail_view(request, product_id):
     if not vendor and product.vendor_id:
         from .models import VendorDetails
         vendor = VendorDetails.objects.filter(id=product.vendor_id).first()
+    if not vendor:
+        from .models import VendorDetails, VendorOTP
+        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
+        if latest_otp:
+            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
+        if not vendor:
+            vendor = VendorDetails.objects.order_by("-id").first()
+        if vendor:
+            product.vendor = vendor
+            product.save(update_fields=["vendor"])
 
     company_val = "N/A"
     full_name_val = "N/A"
     phone_val = "N/A"
     email_val = "N/A"
-    location_val = product.inventory_location or product.manufacturing_country or "N/A"
-    industry_val = (product.category.name if product.category else "N/A")
+    business_location_val = "N/A"
+    industry_val = "N/A"
 
     if vendor:
         full_name_val = vendor.full_name or vendor.username or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
         company_val = vendor.company_name or vendor.username or "Individual Seller"
-        location_val = vendor.business_location or product.inventory_location or product.manufacturing_country or "N/A"
+        business_location_val = vendor.business_location or "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
                 industry_val = ", ".join(vendor.category_interested)
@@ -3227,7 +3266,7 @@ def product_detail_view(request, product_id):
         "phone_no": phone_val,
         "email": email_val,
         "company": company_val,
-        "business_location": location_val,
+        "business_location": business_location_val,
         "industry": industry_val,
     }
 

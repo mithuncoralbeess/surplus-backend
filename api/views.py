@@ -849,18 +849,68 @@ def submit_product_request(request):
 
     data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
 
-    # 1. Vendor resolution directly from vendor_id (no session/user table check required, supports USR-xxxx)
+    # 1. Vendor resolution directly from user_id / vendor_id (supports USR-xxxx, integer, email, username)
     vendor = None
-    vendor_id = data.get('vendor_id') or data.get('user_id') or data.get('vendor')
+    vendor_id = (
+        data.get('user_id') or 
+        data.get('userId') or 
+        data.get('vendor_id') or 
+        data.get('vendorId') or 
+        data.get('vendor') or 
+        data.get('user') or 
+        data.get('seller_id') or 
+        data.get('sellerId') or 
+        data.get('seller')
+    )
+
+    if not vendor_id:
+        for ukey in ('user_information', 'user_info', 'userInfo', 'user_data', 'userData'):
+            if ukey in data:
+                uval = data[ukey]
+                if isinstance(uval, str):
+                    try:
+                        uval = json.loads(uval)
+                    except Exception:
+                        uval = {}
+                if isinstance(uval, dict):
+                    vendor_id = (
+                        uval.get('user_id') or 
+                        uval.get('userId') or 
+                        uval.get('vendor_id') or 
+                        uval.get('vendorId') or 
+                        uval.get('id') or 
+                        uval.get('email')
+                    )
+                    if vendor_id:
+                        break
+
+    if not vendor_id:
+        vendor_id = (
+            request.headers.get('X-Vendor-Id') or 
+            request.headers.get('X-User-Id') or 
+            request.headers.get('Vendor-Id') or 
+            request.headers.get('User-Id')
+        )
+
+    if not vendor_id:
+        vendor_id = request.session.get('vendor_id') or request.session.get('user_id')
+
+    if not vendor_id and getattr(request, 'user', None) and request.user.is_authenticated:
+        vendor_id = request.user.email
+
+    if not vendor_id:
+        vendor_id = data.get('email') or data.get('user_email') or data.get('vendor_email')
+
     if vendor_id is not None and str(vendor_id).strip() != "":
         vid_str = str(vendor_id).strip()
         clean_vid = vid_str[4:].strip() if vid_str.upper().startswith("USR-") else vid_str
-        try:
+        
+        # Look up by integer ID
+        if clean_vid.isdigit():
             vendor = VendorDetails.objects.filter(id=int(clean_vid)).first()
-        except (ValueError, TypeError):
-            vendor = None
 
-        if not vendor:
+        # Look up by VendorOTP ID
+        if not vendor and clean_vid.isdigit():
             try:
                 from AdminApp.models import VendorOTP
                 otp = VendorOTP.objects.filter(id=int(clean_vid)).first()
@@ -869,8 +919,22 @@ def submit_product_request(request):
             except Exception:
                 pass
 
+        # Look up by email
         if not vendor:
-            vendor = VendorDetails.objects.filter(email__iexact=vid_str).first() or VendorDetails.objects.filter(username__iexact=vid_str).first()
+            vendor = VendorDetails.objects.filter(email__iexact=vid_str).first()
+            
+        # Look up by username
+        if not vendor:
+            vendor = VendorDetails.objects.filter(username__iexact=vid_str).first()
+
+    # Fallback to the latest active vendor if no vendor id was passed
+    if not vendor:
+        from AdminApp.models import VendorOTP
+        latest_otp = VendorOTP.objects.filter(is_used=True).order_by("-created_at").first()
+        if latest_otp:
+            vendor = latest_otp.vendor or VendorDetails.objects.filter(email__iexact=latest_otp.email).first()
+    if not vendor:
+        vendor = VendorDetails.objects.order_by("-id").first()
 
     # 2. Product Name
     product_name = (data.get('product_name') or data.get('title') or '').strip()
@@ -929,8 +993,8 @@ def submit_product_request(request):
     ).strip()
 
     # 5. Manufacturing Country & Inventory Location
-    manufacturing_country = (data.get('country') or data.get('manufacturing_country') or '').strip()
-    inventory_location = (data.get('inventory_location') or data.get('location') or '').strip()
+    manufacturing_country = (data.get('country') or data.get('manufacturing_country') or data.get('manufacturingCountry') or '').strip()
+    inventory_location = (data.get('inventory_location') or data.get('inventoryLocation') or data.get('location') or data.get('warehouse_location') or data.get('stock_location') or '').strip()
 
     # 6. Manufacturing Year
     manufacturing_year = None

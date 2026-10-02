@@ -121,7 +121,7 @@
                         
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
-                                <span class="data-label">Inventory Location</span>
+                                <span class="data-label">Business Location</span>
                                 <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
                             </div>
                         </div>
@@ -261,6 +261,12 @@
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
                                     <span class="text-dark fw-medium">{{ product_data.manufacturing_country|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
+                                    <span class="text-dark fw-medium"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ enquiry.inventory_location|default:product_data.inventory_location|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
