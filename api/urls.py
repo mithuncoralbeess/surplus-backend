@@ -24,6 +24,11 @@ from .views import (
     submit_lot_request,
     track_view_api,
     get_public_categories,
+    get_vendor_notifications,
+    get_vendor_unread_count,
+    mark_notification_read,
+    mark_all_notifications_read,
+    delete_vendor_notification,
 )
 
 router = DefaultRouter()
@@ -81,6 +86,14 @@ urlpatterns = [
     path("auctions/<str:auction_id>/live-feed/", views_auction.live_auction_feed, name="public_auction_live_feed"),
     path("auctions/<str:auction_id>/buy-now/", views_auction.buy_now, name="public_auction_buy_now"),
     path("auctions/<str:auction_id>/watchlist/", views_auction.toggle_watchlist, name="public_auction_toggle_watchlist"),
+
+    # Vendor In-App Notifications REST API
+    path("notifications/", get_vendor_notifications, name="vendor_notifications_list"),
+    path("notifications/unread-count/", get_vendor_unread_count, name="vendor_notifications_unread_count"),
+    path("notifications/<int:pk>/mark-read/", mark_notification_read, name="vendor_notification_mark_read"),
+    path("notifications/mark-all-read/", mark_all_notifications_read, name="vendor_notifications_mark_all_read"),
+    path("notifications/<int:pk>/", delete_vendor_notification, name="vendor_notification_delete_direct"),
+    path("notifications/<int:pk>/delete/", delete_vendor_notification, name="vendor_notification_delete"),
 
     # Additional user endpoints (Wishlist, RFQ) will be added here
     path("", include(router.urls)),

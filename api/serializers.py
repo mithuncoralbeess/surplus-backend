@@ -149,3 +149,44 @@ class LotSerializer(serializers.ModelSerializer):
 class LotBatchEnquirySerializer(LotSerializer):
     pass
 
+
+from AdminApp.models import VendorNotification
+from django.utils.timesince import timesince
+
+class VendorNotificationSerializer(serializers.ModelSerializer):
+    vendor_id = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VendorNotification
+        fields = [
+            "id",
+            "vendor_id",
+            "title",
+            "message",
+            "notification_type",
+            "action_url",
+            "is_read",
+            "created_at",
+            "created_at_formatted",
+            "time_ago",
+        ]
+        read_only_fields = ["id", "vendor_id", "created_at", "created_at_formatted", "time_ago"]
+
+    def get_vendor_id(self, obj):
+        if obj.vendor:
+            return obj.vendor.vendor_id or f"USR-{obj.vendor.id:04d}"
+        return ""
+
+    def get_created_at_formatted(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%b %d, %Y %I:%M %p")
+        return ""
+
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return f"{timesince(obj.created_at)} ago"
+        return ""
+
+

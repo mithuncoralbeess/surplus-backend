@@ -454,6 +454,24 @@ def submit_lot_enquiry(request):
         raw_data=raw_data
     )
 
+    vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id")
+    if vendor_param:
+        vendor_obj = _resolve_vendor_from_param(vendor_param)
+        if vendor_obj:
+            lot.vendor = vendor_obj
+            lot.save(update_fields=["vendor"])
+            try:
+                from AdminApp.services import create_vendor_notification
+                create_vendor_notification(
+                    vendor=vendor_obj,
+                    title="Lot Manifest Uploaded",
+                    message=f"Batch '{lot.lot_number}' is processing.",
+                    notification_type="LISTING",
+                    action_url="/profile"
+                )
+            except Exception as e:
+                print(f"Error creating lot notification: {e}")
+
     return Response({
         "success": True,
         "message": "Lot enquiry submitted successfully.",
@@ -1186,7 +1204,7 @@ def submit_product_request(request):
                 is_real_photo=True
             )
 
-    return Response({
+    response_obj = Response({
         "success": True,
         "message": "Product request submitted successfully and is pending approval.",
         "product_id": product.product_id,
@@ -1225,6 +1243,21 @@ def submit_product_request(request):
             "images": [img.url for img in product.images.all()]
         }
     }, status=status.HTTP_201_CREATED)
+
+    if product.vendor:
+        try:
+            from AdminApp.services import create_vendor_notification
+            create_vendor_notification(
+                vendor=product.vendor,
+                title="Product Under Review",
+                message=f"Your listing for '{product.product_name}' was received.",
+                notification_type="LISTING",
+                action_url="/profile"
+            )
+        except Exception as e:
+            print(f"Error creating product submit notification: {e}")
+
+    return response_obj
 
 
 @api_view(["POST"])
@@ -1310,6 +1343,19 @@ def submit_lot_request(request):
                 if hasattr(enquiry, 'uploaded_by'):
                     enquiry.uploaded_by = vendor
                 enquiry.save()
+
+                try:
+                    from AdminApp.services import create_vendor_notification
+                    batch_id = getattr(enquiry, "lot_number", f"BAT-{enquiry.id}")
+                    create_vendor_notification(
+                        vendor=vendor,
+                        title="Lot Manifest Uploaded",
+                        message=f"Batch '{batch_id}' is processing.",
+                        notification_type="LISTING",
+                        action_url="/profile"
+                    )
+                except Exception as e:
+                    print(f"Error creating lot notification: {e}")
                 
         return Response({
             "success": True,
@@ -1488,4 +1534,214 @@ def track_view_api(request):
             "created_at": page_view_log.created_at.isoformat()
         }
     }, status=status.HTTP_201_CREATED)
+
+
+# ==============================================================================
+# Vendor In-App Notification REST APIs
+# ==============================================================================
+
+def _resolve_vendor_from_param(vendor_param):
+    """Helper to resolve a VendorDetails record from USR-xxxx, int ID, username, or email."""
+    if not vendor_param:
+        return None
+    from AdminApp.models import VendorDetails
+    v_str = str(vendor_param).strip()
+    v_clean = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
+    vendor = None
+    if v_clean.isdigit():
+        vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+    if not vendor:
+        vendor = VendorDetails.objects.filter(email__iexact=v_str).first()
+    if not vendor:
+        vendor = VendorDetails.objects.filter(username__iexact=v_str).first()
+    return vendor
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_vendor_notifications(request):
+    """
+    GET /api/notifications/
+    Returns paginated notifications for the given vendor.
+    Query params: vendor_id, unread (true/false), type (LISTING, RFQ, etc.), page, limit
+    """
+    from AdminApp.models import VendorNotification
+    from .serializers import VendorNotificationSerializer
+    from django.core.paginator import Paginator
+
+    vendor_param = (
+        request.query_params.get("vendor_id")
+        or request.query_params.get("user_id")
+        or request.headers.get("X-Vendor-Id")
+        or request.headers.get("Vendor-Id")
+    )
+    if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
+        vendor_param = request.user.email
+
+    vendor = _resolve_vendor_from_param(vendor_param)
+    if not vendor:
+        return Response({
+            "success": False,
+            "message": "Valid vendor_id parameter is required.",
+            "results": [],
+            "count": 0,
+            "unread_count": 0
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    qs = VendorNotification.objects.filter(vendor=vendor).order_by("-created_at")
+
+    unread_filter = request.query_params.get("unread")
+    if unread_filter is not None:
+        if str(unread_filter).lower() in ("true", "1", "t", "yes"):
+            qs = qs.filter(is_read=False)
+        elif str(unread_filter).lower() in ("false", "0", "f", "no"):
+            qs = qs.filter(is_read=True)
+
+    type_filter = request.query_params.get("type")
+    if type_filter and type_filter.upper() != "ALL":
+        qs = qs.filter(notification_type=type_filter.upper())
+
+    total_count = qs.count()
+    unread_count = VendorNotification.objects.filter(vendor=vendor, is_read=False).count()
+
+    page_num = request.query_params.get("page", 1)
+    limit = request.query_params.get("limit") or request.query_params.get("page_size", 20)
+    try:
+        limit = max(1, min(100, int(limit)))
+    except (ValueError, TypeError):
+        limit = 20
+
+    paginator = Paginator(qs, limit)
+    try:
+        page_obj = paginator.page(page_num)
+    except Exception:
+        page_obj = paginator.page(1)
+
+    serializer = VendorNotificationSerializer(page_obj, many=True)
+    return Response({
+        "success": True,
+        "count": total_count,
+        "unread_count": unread_count,
+        "page": page_obj.number,
+        "num_pages": paginator.num_pages,
+        "results": serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_vendor_unread_count(request):
+    """
+    GET /api/notifications/unread-count/
+    Returns the total unread notification count for the vendor.
+    Query param: vendor_id
+    """
+    from AdminApp.models import VendorNotification
+
+    vendor_param = (
+        request.query_params.get("vendor_id")
+        or request.query_params.get("user_id")
+        or request.headers.get("X-Vendor-Id")
+        or request.headers.get("Vendor-Id")
+    )
+    if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
+        vendor_param = request.user.email
+
+    vendor = _resolve_vendor_from_param(vendor_param)
+    if not vendor:
+        return Response({
+            "success": False,
+            "message": "Valid vendor_id parameter is required.",
+            "unread_count": 0
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    unread_count = VendorNotification.objects.filter(vendor=vendor, is_read=False).count()
+    return Response({
+        "success": True,
+        "unread_count": unread_count
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST", "PATCH"])
+@permission_classes([AllowAny])
+def mark_notification_read(request, pk):
+    """
+    POST /api/notifications/<int:pk>/mark-read/
+    Marks a specific notification as read.
+    """
+    from AdminApp.models import VendorNotification
+
+    notif = VendorNotification.objects.filter(id=pk).first()
+    if not notif:
+        return Response({
+            "success": False,
+            "message": "Notification not found."
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    notif.is_read = True
+    notif.save(update_fields=["is_read"])
+    return Response({
+        "success": True,
+        "message": "Notification marked as read"
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def mark_all_notifications_read(request):
+    """
+    POST /api/notifications/mark-all-read/
+    Marks all notifications for a vendor as read.
+    """
+    from AdminApp.models import VendorNotification
+
+    data = request.data if isinstance(request.data, dict) else {}
+    vendor_param = (
+        data.get("vendor_id")
+        or data.get("user_id")
+        or request.query_params.get("vendor_id")
+        or request.query_params.get("user_id")
+        or request.headers.get("X-Vendor-Id")
+        or request.headers.get("Vendor-Id")
+    )
+    if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
+        vendor_param = request.user.email
+
+    vendor = _resolve_vendor_from_param(vendor_param)
+    if not vendor:
+        return Response({
+            "success": False,
+            "message": "Valid vendor_id is required."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    updated_count = VendorNotification.objects.filter(vendor=vendor, is_read=False).update(is_read=True)
+    return Response({
+        "success": True,
+        "message": "All notifications marked as read",
+        "updated_count": updated_count
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["DELETE", "POST"])
+@permission_classes([AllowAny])
+def delete_vendor_notification(request, pk):
+    """
+    DELETE /api/notifications/<int:pk>/ or POST /api/notifications/<int:pk>/delete/
+    Deletes/dismisses a notification.
+    """
+    from AdminApp.models import VendorNotification
+
+    notif = VendorNotification.objects.filter(id=pk).first()
+    if not notif:
+        return Response({
+            "success": False,
+            "message": "Notification not found."
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    notif.delete()
+    return Response({
+        "success": True,
+        "message": "Notification deleted"
+    }, status=status.HTTP_200_OK)
+
 

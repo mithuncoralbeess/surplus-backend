@@ -241,3 +241,47 @@ class EmailService:
         return cls.send_email_with_attachments(
             to_email, f"Surplus Reward: You won {prize_name}!", html_content, file_paths=file_paths
         )
+
+
+def create_vendor_notification(vendor, title, message, notification_type="SYSTEM", action_url=""):
+    """
+    Creates a VendorNotification record for the vendor and logs the event.
+    Supports vendor instance, vendor_id ('USR-xxxx' or int), or email string.
+    """
+    from .models import VendorDetails, VendorNotification
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    target_vendor = None
+    if isinstance(vendor, VendorDetails):
+        target_vendor = vendor
+    elif vendor:
+        v_str = str(vendor).strip()
+        v_clean = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
+        if v_clean.isdigit():
+            target_vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+        if not target_vendor:
+            target_vendor = VendorDetails.objects.filter(email__iexact=v_str).first()
+        if not target_vendor:
+            target_vendor = VendorDetails.objects.filter(username__iexact=v_str).first()
+
+    if not target_vendor:
+        _logger.warning(f"create_vendor_notification skipped: could not resolve vendor for {vendor}")
+        return None
+
+    valid_types = ("LISTING", "RFQ", "AUCTION", "SYSTEM", "ORDER")
+    n_type = str(notification_type).upper()
+    if n_type not in valid_types:
+        n_type = "SYSTEM"
+
+    notification = VendorNotification.objects.create(
+        vendor=target_vendor,
+        title=title,
+        message=message,
+        notification_type=n_type,
+        action_url=action_url or "",
+        is_read=False
+    )
+    _logger.info(f"[VendorNotification] Created ID {notification.id} for {target_vendor.vendor_id}: {title}")
+    return notification
+

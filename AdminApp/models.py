@@ -745,6 +745,13 @@ class Product(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            orig = Product.objects.filter(pk=self.pk).values("enquiry_status").first()
+            if orig:
+                old_status = orig.get("enquiry_status")
+
         if not self.product_id:
             max_id = Product.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.product_id = f"PRO-{(max_id + 1):05d}"
@@ -764,6 +771,35 @@ class Product(models.Model):
             self.date_approved = None
 
         super().save(*args, **kwargs)
+
+        # Trigger notification if status transitioned to APPROVED or DECLINED
+        if not is_new and self.vendor and old_status and str(old_status).upper() != str(self.enquiry_status).upper():
+            curr_status = str(self.enquiry_status).upper()
+            if curr_status == 'APPROVED':
+                try:
+                    from .services import create_vendor_notification
+                    create_vendor_notification(
+                        vendor=self.vendor,
+                        title="Listing Approved",
+                        message=f"Your product '{self.product_name}' has been approved and published to the marketplace.",
+                        notification_type="LISTING",
+                        action_url="/profile"
+                    )
+                except Exception:
+                    pass
+            elif curr_status == 'DECLINED':
+                try:
+                    from .services import create_vendor_notification
+                    create_vendor_notification(
+                        vendor=self.vendor,
+                        title="Listing Declined",
+                        message=f"Your product '{self.product_name}' was not approved. Please review your listing specifications.",
+                        notification_type="LISTING",
+                        action_url="/profile"
+                    )
+                except Exception:
+                    pass
+
 
     @property
     def sku(self):
@@ -1341,5 +1377,52 @@ class AuctionWatchlist(models.Model):
         return f"{self.user.username} watching {self.auction.auction_id}"
 
 
+class VendorNotification(models.Model):
+    """
+    In-app notification system for vendors / registered users.
+    Tracks status updates, listings, RFQs, auctions, orders, and system alerts.
+    """
+    NOTIFICATION_TYPE_CHOICES = (
+        ("LISTING", "Listing"),
+        ("RFQ", "RFQ"),
+        ("AUCTION", "Auction"),
+        ("SYSTEM", "System"),
+        ("ORDER", "Order"),
+    )
 
+    vendor = models.ForeignKey(
+        VendorDetails,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        db_index=True
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPE_CHOICES,
+        default="SYSTEM",
+        db_index=True
+    )
+    action_url = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Frontend redirection route, e.g. /profile or /browse"
+    )
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
+    class Meta:
+        verbose_name = "Vendor Notification"
+        verbose_name_plural = "Vendor Notifications"
+        db_table = "vendor_notifications"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["vendor", "is_read"], name="idx_vnotif_v_read"),
+            models.Index(fields=["vendor", "-created_at"], name="idx_vnotif_v_created"),
+        ]
+
+    def __str__(self):
+        v_label = getattr(self.vendor, "vendor_id", str(self.vendor_id))
+        return f"[{v_label}] {self.title} ({'Read' if self.is_read else 'Unread'})"

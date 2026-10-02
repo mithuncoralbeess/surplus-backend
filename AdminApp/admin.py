@@ -71,3 +71,27 @@ class ProductImageAdmin(admin.ModelAdmin):
     list_display = ("id", "product", "is_real_photo", "image_url", "uploaded_at")
     list_filter = ("is_real_photo", "uploaded_at")
     search_fields = ("product__product_name", "product__product_id", "image_url")
+
+
+from .models import VendorNotification
+
+@admin.register(VendorNotification)
+class VendorNotificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "vendor", "notification_type", "title", "is_read", "created_at")
+    list_filter = ("notification_type", "is_read", "created_at")
+    search_fields = (
+        "title",
+        "message",
+        "vendor__vendor_id",
+        "vendor__username",
+        "vendor__email",
+        "vendor__full_name",
+    )
+    readonly_fields = ("created_at",)
+    actions = ["mark_as_read"]
+
+    @admin.action(description="Mark selected notifications as read")
+    def mark_as_read(self, request, queryset):
+        updated = queryset.update(is_read=True)
+        self.message_user(request, f"{updated} notification(s) marked as read.")
+
