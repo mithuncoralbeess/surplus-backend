@@ -962,6 +962,14 @@ def submit_product_request(request):
         except Exception:
             msrp = None
 
+    offer = Decimal("0.00")
+    offer_val = data.get('offer')
+    if offer_val is not None and str(offer_val).strip() != "":
+        try:
+            offer = Decimal(str(offer_val).strip())
+        except Exception:
+            offer = Decimal("0.00")
+
     # 11. Description & Reason to Sell
     description = str(data.get('description') or '').strip()
     reason_to_sell = str(data.get('reason_to_sell') or data.get('reasonToSell') or '').strip()
@@ -1021,6 +1029,7 @@ def submit_product_request(request):
         currency=currency,
         liquidating_price=liquidating_price,
         msrp=msrp,
+        offer=offer,
         description=description,
         reason_to_sell=reason_to_sell,
         warranty=warranty,
@@ -1087,6 +1096,7 @@ def submit_product_request(request):
             "msrp": str(product.msrp) if product.msrp is not None else None,
             "liquidating_price": str(product.liquidating_price),
             "current_price": str(product.current_price),
+            "offer": str(product.offer),
             "excluded_countries": product.excluded_countries,
             "description": product.description,
             "reason_to_sell": product.reason_to_sell,

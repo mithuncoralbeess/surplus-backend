@@ -666,6 +666,7 @@ class Product(models.Model):
     liquidating_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Liquidating Price per unit")
     msrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="MSRP / Original Retail Price")
     current_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Auto-calculated buyer price")
+    offer = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Offer / discount percentage")
     
     description = models.TextField(blank=True, default="")
     reason_to_sell = models.TextField(blank=True, default="")
