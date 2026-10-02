@@ -1751,3 +1751,44 @@ def delete_vendor_notification(request, pk):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(["POST", "DELETE"])
+@permission_classes([AllowAny])
+def clear_all_vendor_notifications(request):
+    """
+    POST/DELETE /api/notifications/clear-all/
+    Permanently deletes all notifications for the specified vendor.
+    """
+    from AdminApp.models import VendorNotification
+
+    data = request.data if isinstance(request.data, dict) else {}
+    vendor_param = (
+        data.get("vendor_id")
+        or data.get("user_id")
+        or data.get("email")
+        or request.query_params.get("vendor_id")
+        or request.query_params.get("user_id")
+        or request.query_params.get("email")
+        or request.headers.get("X-Vendor-Id")
+        or request.headers.get("X-User-Id")
+        or request.headers.get("Vendor-Id")
+        or request.headers.get("User-Id")
+    )
+    if not vendor_param and getattr(request, "user", None) and request.user.is_authenticated:
+        vendor_param = request.user.email
+
+    vendor = _resolve_vendor_from_param(vendor_param)
+    if not vendor:
+        return Response({
+            "success": False,
+            "message": "Valid vendor_id is required."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    deleted_count, _ = VendorNotification.objects.filter(vendor=vendor).delete()
+    return Response({
+        "success": True,
+        "message": "All notifications cleared",
+        "deleted_count": deleted_count
+    }, status=status.HTTP_200_OK)
+
+
+

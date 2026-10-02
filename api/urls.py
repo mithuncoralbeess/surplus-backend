@@ -29,6 +29,7 @@ from .views import (
     mark_notification_read,
     mark_all_notifications_read,
     delete_vendor_notification,
+    clear_all_vendor_notifications,
 )
 
 router = DefaultRouter()
@@ -92,6 +93,8 @@ urlpatterns = [
     path("notifications/unread-count/", get_vendor_unread_count, name="vendor_notifications_unread_count"),
     path("notifications/<int:pk>/mark-read/", mark_notification_read, name="vendor_notification_mark_read"),
     path("notifications/mark-all-read/", mark_all_notifications_read, name="vendor_notifications_mark_all_read"),
+    path("notifications/clear-all/", clear_all_vendor_notifications, name="vendor_notifications_clear_all"),
+    path("notifications/delete-all/", clear_all_vendor_notifications, name="vendor_notifications_delete_all"),
     path("notifications/<int:pk>/", delete_vendor_notification, name="vendor_notification_delete_direct"),
     path("notifications/<int:pk>/delete/", delete_vendor_notification, name="vendor_notification_delete"),
 
