@@ -1997,4 +1997,56 @@ def get_homepage_collections(request):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(["GET", "POST"])
+@permission_classes([AllowAny])
+def semantic_search_products(request):
+    """
+    Semantic Natural Language Search API using pgvector in Neon DB.
+    Allows conversational buyer queries, e.g.:
+    - "Show me 2U rackmount servers under $500 available in Maharashtra"
+    - "Industrial pumps with warranty"
+    - "Used Dell servers under 40000 INR"
+
+    Parses conversational intent, extracts structured constraints (price, location, warranty, brand),
+    and executes cosine similarity ranking over 768-dimensional vector embeddings in PostgreSQL.
+    """
+    if request.method == "POST":
+        query = (request.data.get("query") or request.data.get("q") or "").strip()
+        try:
+            limit = int(request.data.get("limit", 12))
+        except (ValueError, TypeError):
+            limit = 12
+    else:
+        query = (request.query_params.get("query") or request.query_params.get("q") or "").strip()
+        try:
+            limit = int(request.query_params.get("limit", 12))
+        except (ValueError, TypeError):
+            limit = 12
+
+    if not query:
+        return Response({
+            "success": False,
+            "message": "Query parameter ('q' or 'query') is required.",
+            "results": [],
+            "total_results": 0
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    limit = max(1, min(limit, 50))
+
+    from AdminApp.semantic_search import semantic_product_search
+    try:
+        search_result = semantic_product_search(query_text=query, limit=limit)
+        return Response(search_result, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(f"Semantic search error: {e}")
+        return Response({
+            "success": False,
+            "message": f"Semantic search failed: {str(e)}",
+            "query": query,
+            "results": [],
+            "total_results": 0
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 

@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
+from pgvector.django import VectorField, HnswIndex
 
 
 class AdminDetails(models.Model):
@@ -1042,6 +1043,13 @@ class Product(models.Model):
                     except Exception:
                         pass
 
+        # Auto-sync pgvector embedding for semantic natural language search
+        try:
+            from .semantic_search import sync_product_embedding
+            sync_product_embedding(self)
+        except Exception:
+            pass
+
 
     @property
     def sku(self):
@@ -1673,3 +1681,39 @@ class VendorNotification(models.Model):
     def __str__(self):
         v_label = getattr(self.vendor, "vendor_id", str(self.vendor_id))
         return f"[{v_label}] {self.title} ({'Read' if self.is_read else 'Unread'})"
+
+
+class ProductEmbedding(models.Model):
+    """
+    Vector embeddings for Semantic Natural Language Search using pgvector in Neon DB.
+    Enables conversational queries (e.g. 'Show me 2U rackmount servers under $500 in Maharashtra').
+    """
+    product = models.OneToOneField(
+        'Product',
+        on_delete=models.CASCADE,
+        related_name="vector_embedding",
+        db_index=True
+    )
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    embedded_text = models.TextField(blank=True, default="")
+    model_name = models.CharField(max_length=100, default="surplus-semantic-v1")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Product Vector Embedding"
+        verbose_name_plural = "Product Vector Embeddings"
+        db_table = "product_embeddings"
+        indexes = [
+            HnswIndex(
+                name="idx_prod_embed_hnsw",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            )
+        ]
+
+    def __str__(self):
+        return f"Embedding for Product #{self.product_id}"

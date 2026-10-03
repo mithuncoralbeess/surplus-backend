@@ -32,6 +32,7 @@ from .views import (
     clear_all_vendor_notifications,
     get_public_products_list,
     get_homepage_collections,
+    semantic_search_products,
 )
 
 router = DefaultRouter()
@@ -45,6 +46,8 @@ urlpatterns = [
     # Public Products & Showcase Collections REST API
     path("products/", get_public_products_list, name="public_products_list"),
     path("products/collections/", get_homepage_collections, name="public_homepage_collections"),
+    path("products/semantic-search/", semantic_search_products, name="public_products_semantic_search"),
+    path("products/search/semantic/", semantic_search_products, name="public_products_semantic_search_alias"),
 
     # Public Category & Subcategory REST API
     path("categories/", get_public_categories, name="public_categories_list"),
