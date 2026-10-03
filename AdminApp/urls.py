@@ -1,4 +1,5 @@
 from django.urls import path
+from django.shortcuts import redirect
 from .views import (
     vendor_login_page,
     vendor_register,
