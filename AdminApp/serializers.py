@@ -109,6 +109,13 @@ class VendorRegisterSerializer(serializers.Serializer):
 class VendorDetailsSerializer(serializers.ModelSerializer):
     vendor_id = serializers.CharField(read_only=True)
     formatted_id = serializers.CharField(read_only=True)
+    profile_completion_percentage = serializers.IntegerField(read_only=True)
+    is_profile_complete = serializers.BooleanField(read_only=True)
+    missing_fields_labels = serializers.SerializerMethodField()
+
+    def get_missing_fields_labels(self, obj):
+        details = obj.get_profile_completion_details()
+        return details.get("missing_fields_labels", [])
 
     class Meta:
         model = VendorDetails
@@ -121,13 +128,26 @@ class VendorDetailsSerializer(serializers.ModelSerializer):
             "full_name",
             "mobile_number",
             "company_name",
+            "account_entity_type",
+            "business_location",
+            "business_address",
+            "tax_registration_number",
+            "business_type",
+            "category_interested",
             "user_type",
             "status",
             "session_version",
+            "profile_completion_percentage",
+            "is_profile_complete",
+            "missing_fields_labels",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "vendor_id", "formatted_id", "session_version", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "vendor_id", "formatted_id", "session_version",
+            "profile_completion_percentage", "is_profile_complete",
+            "missing_fields_labels", "created_at", "updated_at"
+        ]
 
 
 

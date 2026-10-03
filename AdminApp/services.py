@@ -225,10 +225,15 @@ class EmailService:
         to_email: str,
         product,
         recipient_name: str = "Valued Seller",
-        action_url: str = ""
+        action_url: str = "",
+        is_profile_complete: bool = True,
+        profile_completion_percentage: int = 100,
+        missing_fields_labels: list = None,
+        profile_url: str = "",
     ) -> bool:
         """
         Sends an email notification to the user when their product listing is approved.
+        Includes profile completion percentage alert if vendor profile is incomplete.
         """
         if not to_email:
             logger.warning("send_product_approved_email skipped: recipient email is missing.")
@@ -236,6 +241,7 @@ class EmailService:
 
         frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
         default_action_url = f"{frontend_base}/profile"
+        profile_link = profile_url or f"{frontend_base}/profile"
 
         # Resolve product attributes safely from model instance or dict
         product_name = (
@@ -277,6 +283,10 @@ class EmailService:
             "currency": currency,
             "inventory_location": inventory_location,
             "action_url": action_url or default_action_url,
+            "profile_url": profile_link,
+            "is_profile_complete": is_profile_complete,
+            "profile_completion_percentage": profile_completion_percentage,
+            "missing_fields_labels": missing_fields_labels or [],
         }
 
         try:
@@ -286,14 +296,31 @@ class EmailService:
             )
         except Exception as e:
             logger.warning(f"Template rendering failed for approved email, using fallback HTML: {e}")
-            html_content = (
-                f"<h2>Your Listing Has Been Approved!</h2>"
-                f"<p>Hello {recipient_name},</p>"
-                f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved and is now live on Surplus Market.</p>"
-                f"<p><a href='{action_url or default_action_url}'>View your listing</a></p>"
-            )
+            if not is_profile_complete:
+                missing_str = f"<p><strong>Missing details:</strong> {', '.join(missing_fields_labels or [])}</p>" if missing_fields_labels else ""
+                html_content = (
+                    f"<h2>Your Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved by admin review.</p>"
+                    f"<div style='background-color:#fffbeb;border:1px solid #fde68a;padding:12px;border-radius:6px;'>"
+                    f"<p style='color:#92400e;margin:0;'><strong>Action Required: Profile Incomplete ({profile_completion_percentage}%)</strong></p>"
+                    f"<p style='color:#b45309;'>To list your product for public visibility, you must complete all your user profile details.</p>"
+                    f"{missing_str}"
+                    f"<p><a href='{profile_link}' style='color:#d97706;font-weight:bold;'>Complete your profile to publish</a></p>"
+                    f"</div>"
+                )
+            else:
+                html_content = (
+                    f"<h2>Your Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved and is now live on Surplus Market.</p>"
+                    f"<p><a href='{action_url or default_action_url}'>View your listing</a></p>"
+                )
 
-        subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        if not is_profile_complete:
+            subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Complete Profile to Publish"
+        else:
+            subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "ProductApproved", context=context)
 
     @classmethod

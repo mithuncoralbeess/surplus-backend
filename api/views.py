@@ -633,6 +633,7 @@ def complete_profile(request):
                 vendor = VendorDetails.objects.filter(id=int(clean_uid)).first()
         if not vendor:
             return Response({"success": False, "message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
+        prof_info = vendor.get_profile_completion_details()
         return Response({
             "success": True, 
             "status": "profile_found", 
@@ -650,7 +651,10 @@ def complete_profile(request):
             "business_address": vendor.business_address,
             "tax_registration_number": vendor.tax_registration_number,
             "business_type": vendor.business_type,
-            "category_interested": vendor.category_interested
+            "category_interested": vendor.category_interested,
+            "profile_completion_percentage": prof_info["percentage"],
+            "is_profile_complete": prof_info["is_complete"],
+            "profile_completion": prof_info
         })
     serializer = CompleteProfileSerializer(data=request.data)
     if not serializer.is_valid():
@@ -663,6 +667,16 @@ def complete_profile(request):
     if not vendor:
         return Response({"success": False, "message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         
+    if "full_name" in data and data["full_name"]:
+        vendor.full_name = data["full_name"].strip()
+    elif "full_name" in request.data and str(request.data["full_name"]).strip():
+        vendor.full_name = str(request.data["full_name"]).strip()
+
+    if "mobile_number" in data and data["mobile_number"]:
+        vendor.mobile_number = data["mobile_number"].strip()
+    elif "mobile_number" in request.data and str(request.data["mobile_number"]).strip():
+        vendor.mobile_number = str(request.data["mobile_number"]).strip()
+
     if "account_entity_type" in data:
         vendor.account_entity_type = data["account_entity_type"]
         if vendor.account_entity_type == "COMPANY":
@@ -691,6 +705,29 @@ def complete_profile(request):
     vendor.category_interested = cat_inst
     
     vendor.save()
+
+    prof_info = vendor.get_profile_completion_details()
+    activated_products_count = 0
+    if prof_info["is_complete"]:
+        from AdminApp.models import Product
+        activated_products_count = Product.objects.filter(
+            vendor=vendor,
+            enquiry_status__iexact="APPROVED",
+            is_active=False
+        ).update(is_active=True)
+
+        if activated_products_count > 0:
+            try:
+                from AdminApp.services import create_vendor_notification
+                create_vendor_notification(
+                    vendor=vendor,
+                    title="Profile Completed - Products Published!",
+                    message=f"Congratulations! Your profile is 100% complete and {activated_products_count} approved product listing(s) have now been published live to the marketplace.",
+                    notification_type="LISTING",
+                    action_url="/profile"
+                )
+            except Exception:
+                pass
     
     return Response({
         "success": True, 
@@ -709,7 +746,11 @@ def complete_profile(request):
         "business_address": vendor.business_address,
         "tax_registration_number": vendor.tax_registration_number,
         "business_type": vendor.business_type,
-        "category_interested": vendor.category_interested
+        "category_interested": vendor.category_interested,
+        "profile_completion_percentage": prof_info["percentage"],
+        "is_profile_complete": prof_info["is_complete"],
+        "profile_completion": prof_info,
+        "activated_products_count": activated_products_count
     })
 
 

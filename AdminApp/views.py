@@ -1286,12 +1286,41 @@ def seller_enquiry_status_api(request, enquiry_id):
     if "is_active" in request.data:
         enquiry.is_active = bool(request.data.get("is_active"))
 
+    vendor_profile_info = None
     if "status" in request.data:
         new_status = request.data.get("status", "").upper()
         if new_status.lower() in ("pending", "approved", "declined"):
             enquiry.enquiry_status = new_status
-            if not has_explicit_active:
-                enquiry.is_active = (new_status.lower() == "approved")
+
+            # Resolve vendor to check profile completion if approving
+            target_vendor = enquiry.vendor
+            if not target_vendor and enquiry.vendor_id:
+                from .models import VendorDetails
+                target_vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
+            if not target_vendor and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+                raw_vid = enquiry.raw_data.get('vendor_id') or enquiry.raw_data.get('user_id')
+                if raw_vid:
+                    v_clean = str(raw_vid).strip()
+                    if v_clean.upper().startswith("USR-"):
+                        v_clean = v_clean[4:].strip()
+                    from .models import VendorDetails
+                    if v_clean.isdigit():
+                        target_vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+                    if not target_vendor:
+                        target_vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+
+            if target_vendor:
+                vendor_profile_info = target_vendor.get_profile_completion_details()
+
+            if new_status.lower() == "approved":
+                if vendor_profile_info and not vendor_profile_info["is_complete"]:
+                    enquiry.is_active = False
+                elif not has_explicit_active:
+                    enquiry.is_active = True
+            elif new_status.lower() == "declined":
+                if not has_explicit_active:
+                    enquiry.is_active = False
+
             if "reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("reason", "")).strip()
             elif "rejection_reason" in request.data:
@@ -1301,13 +1330,26 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     enquiry.save()
 
+    msg = "Product status updated."
+    if enquiry.enquiry_status == "APPROVED":
+        if vendor_profile_info and not vendor_profile_info["is_complete"]:
+            msg = (
+                f"Product approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
+                f"To list product publicly, vendor must complete all profile details."
+            )
+        else:
+            msg = "Product approved and published to marketplace."
+    elif enquiry.enquiry_status == "DECLINED":
+        msg = "Product listing declined."
+
     return Response({
         "success": True,
-        "message": f"Product status updated.",
+        "message": msg,
         "product_id": enquiry.product_id or enquiry.sku,
         "status": enquiry.enquiry_status,
         "is_active": enquiry.is_active,
-        "active_status": enquiry.active_status
+        "active_status": enquiry.active_status,
+        "vendor_profile": vendor_profile_info,
     })
 
 
@@ -1625,11 +1667,14 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from .models import MainCategory
     categories = MainCategory.objects.prefetch_related("subcategories").all()
 
+    vendor_profile = vendor.get_profile_completion_details() if vendor else None
+
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "enquiry": enquiry,
         "user_data": user_data,
+        "vendor_profile": vendor_profile,
         "product_data": product_data,
         "required_product_keys": required_product_keys,
         "categories": categories,

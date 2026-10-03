@@ -151,6 +151,57 @@ class VendorDetails(models.Model):
     @property
     def formatted_id(self):
         return self.vendor_id
+
+    def get_profile_completion_details(self) -> dict:
+        """
+        Calculates vendor profile completion percentage, completed fields, and missing fields.
+        All required profile fields must be filled for 100% completion.
+        """
+        required_fields = [
+            ("full_name", "Full Name", bool(self.full_name and self.full_name.strip())),
+            ("email", "Email Address", bool(self.email and self.email.strip())),
+            ("mobile_number", "Mobile Number", bool(self.mobile_number and self.mobile_number.strip())),
+            ("account_entity_type", "Account Entity Type", bool(self.account_entity_type and self.account_entity_type.strip())),
+            ("business_location", "Business Location", bool(self.business_location and self.business_location.strip())),
+            ("business_address", "Business Address", bool(self.business_address and self.business_address.strip())),
+            ("tax_registration_number", "Tax / GST Registration Number", bool(self.tax_registration_number and self.tax_registration_number.strip())),
+            ("business_type", "Business Type", bool(self.business_type and self.business_type.strip())),
+            ("category_interested", "Interested Categories", bool(self.category_interested_list and len(self.category_interested_list) > 0)),
+            ("user_type", "User Type", bool(self.user_type and self.user_type.strip())),
+        ]
+
+        # For COMPANY accounts, company_name is mandatory
+        is_company = str(self.account_entity_type).upper() == "COMPANY"
+        if is_company:
+            required_fields.append(
+                ("company_name", "Company Name", bool(self.company_name and self.company_name.strip()))
+            )
+
+        total_fields = len(required_fields)
+        completed = [item for item in required_fields if item[2]]
+        missing = [item for item in required_fields if not item[2]]
+
+        percentage = round((len(completed) / total_fields) * 100) if total_fields else 100
+        is_complete = len(missing) == 0
+
+        return {
+            "percentage": percentage,
+            "is_complete": is_complete,
+            "total_fields": total_fields,
+            "completed_count": len(completed),
+            "missing_count": len(missing),
+            "completed_fields": [item[0] for item in completed],
+            "missing_fields": [item[0] for item in missing],
+            "missing_fields_labels": [item[1] for item in missing],
+        }
+
+    @property
+    def profile_completion_percentage(self) -> int:
+        return self.get_profile_completion_details()["percentage"]
+
+    @property
+    def is_profile_complete(self) -> bool:
+        return self.get_profile_completion_details()["is_complete"]
     
     pass_word = models.CharField(
         max_length=255,
@@ -452,13 +503,28 @@ class SellerProductEnquiry(models.Model):
                 recipient_email = str(self._user_email).strip()
 
             if curr_status == 'APPROVED':
+                profile_info = target_vendor.get_profile_completion_details() if target_vendor else None
+                is_prof_complete = profile_info["is_complete"] if profile_info else True
+                pct = profile_info["percentage"] if profile_info else 100
+                missing_labels = profile_info["missing_fields_labels"] if profile_info else []
+
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
+                        if not is_prof_complete:
+                            notif_title = "Listing Approved - Profile Incomplete"
+                            notif_msg = (
+                                f"Your lot '{self.title}' has been approved! However, your profile is only {pct}% complete. "
+                                f"To list your product for public visibility, you must complete all your user details."
+                            )
+                        else:
+                            notif_title = "Listing Approved"
+                            notif_msg = f"Your lot '{self.title}' has been approved and published to the marketplace."
+
                         create_vendor_notification(
                             vendor=target_vendor,
-                            title="Listing Approved",
-                            message=f"Your product '{self.title}' has been approved and published to the marketplace.",
+                            title=notif_title,
+                            message=notif_msg,
                             notification_type="LISTING",
                             action_url="/profile"
                         )
@@ -471,7 +537,10 @@ class SellerProductEnquiry(models.Model):
                         EmailService.send_product_approved_email(
                             to_email=recipient_email,
                             product=self,
-                            recipient_name=recipient_name
+                            recipient_name=recipient_name,
+                            is_profile_complete=is_prof_complete,
+                            profile_completion_percentage=pct,
+                            missing_fields_labels=missing_labels
                         )
                     except Exception:
                         pass
@@ -878,6 +947,17 @@ class Product(models.Model):
                 except Exception:
                     target_vendor = None
 
+            if not target_vendor and hasattr(self, 'raw_data') and isinstance(self.raw_data, dict):
+                raw_vid = self.raw_data.get('vendor_id') or self.raw_data.get('user_id')
+                if raw_vid:
+                    v_clean = str(raw_vid).strip()
+                    if v_clean.upper().startswith("USR-"):
+                        v_clean = v_clean[4:].strip()
+                    if v_clean.isdigit():
+                        target_vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+                    if not target_vendor:
+                        target_vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+
             recipient_email = None
             recipient_name = "Valued Seller"
             if target_vendor:
@@ -888,13 +968,28 @@ class Product(models.Model):
                 recipient_email = str(self._user_email).strip()
 
             if curr_status == 'APPROVED':
+                profile_info = target_vendor.get_profile_completion_details() if target_vendor else None
+                is_prof_complete = profile_info["is_complete"] if profile_info else True
+                pct = profile_info["percentage"] if profile_info else 100
+                missing_labels = profile_info["missing_fields_labels"] if profile_info else []
+
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
+                        if not is_prof_complete:
+                            notif_title = "Listing Approved - Profile Incomplete"
+                            notif_msg = (
+                                f"Your product '{self.product_name}' has been approved! However, your profile is only {pct}% complete. "
+                                f"To list your product for public visibility, you must complete all your user details."
+                            )
+                        else:
+                            notif_title = "Listing Approved"
+                            notif_msg = f"Your product '{self.product_name}' has been approved and published to the marketplace."
+
                         create_vendor_notification(
                             vendor=target_vendor,
-                            title="Listing Approved",
-                            message=f"Your product '{self.product_name}' has been approved and published to the marketplace.",
+                            title=notif_title,
+                            message=notif_msg,
                             notification_type="LISTING",
                             action_url="/profile"
                         )
@@ -907,7 +1002,10 @@ class Product(models.Model):
                         EmailService.send_product_approved_email(
                             to_email=recipient_email,
                             product=self,
-                            recipient_name=recipient_name
+                            recipient_name=recipient_name,
+                            is_profile_complete=is_prof_complete,
+                            profile_completion_percentage=pct,
+                            missing_fields_labels=missing_labels
                         )
                     except Exception:
                         pass

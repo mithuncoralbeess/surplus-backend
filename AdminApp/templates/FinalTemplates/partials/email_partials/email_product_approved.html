@@ -104,14 +104,47 @@
 <body>
     <div class="container">
         <div class="header">
+            {% if not is_profile_complete %}
+            <span class="badge" style="background: rgba(254, 240, 138, 0.35); color: #fef08a;">Approved &bull; Profile Incomplete</span>
+            <h1 style="margin-top: 10px;">Listing Approved!</h1>
+            {% else %}
             <span class="badge">Approved & Published</span>
             <h1 style="margin-top: 10px;">Your Listing is Live!</h1>
+            {% endif %}
         </div>
         <div class="content">
             <p class="greeting">Hello <strong>{{ user_name|default:"Valued Seller" }}</strong>,</p>
+
+            {% if not is_profile_complete %}
+            <!-- Profile Completion Alert -->
+            <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);">
+                <div style="color: #92400e; font-weight: 700; font-size: 15px; margin-bottom: 8px;">
+                    ⚠️ Action Required: Profile Completion ({{ profile_completion_percentage }}%)
+                </div>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #b45309; line-height: 1.55;">
+                    Your product listing has been approved! However, your vendor profile is not yet fully completed.
+                    <strong>To list your product for public visibility, you must complete all your user profile details.</strong>
+                </p>
+                {% if missing_fields_labels %}
+                <div style="background: #ffffff; border-radius: 6px; padding: 10px 14px; border: 1px dashed #fde68a; font-size: 13px; color: #78350f; margin-bottom: 12px;">
+                    <strong>Pending fields to complete:</strong> {{ missing_fields_labels|join:", " }}
+                </div>
+                {% endif %}
+                <div>
+                    <a href="{% if profile_url %}{{ profile_url }}{% elif action_url %}{{ action_url }}{% else %}#{% endif %}" style="display: inline-block; background-color: #d97706; color: #ffffff !important; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+                        Complete My Profile &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <p class="message">
+                Your product listing has passed admin verification and is approved! Once your profile is 100% complete, this product will immediately be published for all public buyers to discover and purchase.
+            </p>
+            {% else %}
             <p class="message">
                 Great news! Your product listing has passed our verification review and is now officially active and published on the <strong>Surplus Market</strong> platform. Buyers can now discover, request quotes, and purchase this product.
             </p>
+            {% endif %}
 
             <div class="product-card">
                 <div class="product-title">{{ product_name }}</div>
