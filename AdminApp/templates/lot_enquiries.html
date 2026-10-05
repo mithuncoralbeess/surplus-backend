@@ -124,19 +124,19 @@
         <table class="table content-data-table align-middle mb-0" id="lotTable">
             <thead>
                 <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                    <th style="width: 240px; font-weight: 600;">Batch ID</th>
-                    <th style="width: 250px; font-weight: 600;">Attached Spreadsheet</th>
-                    <th style="width: 250px; font-weight: 600;">Date &amp; Time</th>
-                    <th style="width: 180px; font-weight: 600;">Status</th>
-                    <th class="text-end pe-4" style="width: 220px; font-weight: 600;">Actions</th>
+                    <th style="width: 220px; font-weight: 600; white-space: nowrap;">Batch ID</th>
+                    <th style="width: 220px; font-weight: 600; white-space: nowrap;">Attached Spreadsheet</th>
+                    <th style="width: 200px; font-weight: 600; white-space: nowrap;">Date &amp; Time</th>
+                    <th style="width: 140px; font-weight: 600; white-space: nowrap;">Status</th>
+                    <th class="text-end pe-4" style="width: 220px; font-weight: 600; white-space: nowrap;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in enquiries %}
                 <tr id="lot-row-{{ item.id }}">
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                    <td style="white-space: nowrap;">
+                        <div class="d-flex align-items-center gap-2 text-nowrap">
+                            <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
                                 <i class="bi bi-boxes fs-6"></i>
                             </div>
                             <div>
@@ -147,19 +147,19 @@
                             </div>
                         </div>
                     </td>
-                    <td>
+                    <td style="white-space: nowrap;">
                         {% if item.file %}
-                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-2 px-3 py-1 fw-medium" style="font-size: 0.78rem;">
+                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 fw-medium text-nowrap" style="font-size: 0.78rem; white-space: nowrap;">
                             <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
                             <span>Download File</span>
                             <i class="bi bi-download small"></i>
                         </a>
                         {% else %}
-                        <span class="badge bg-light text-muted fw-normal" style="font-size: 0.75rem;">No file attached</span>
+                        <span class="badge bg-light text-muted fw-normal text-nowrap" style="font-size: 0.75rem; white-space: nowrap;">No file attached</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 0.85rem;">
+                    <td style="white-space: nowrap;">
+                        <div class="d-flex align-items-center gap-1.5 text-secondary text-nowrap" style="font-size: 0.82rem; white-space: nowrap;">
                             <i class="bi bi-calendar3 text-muted"></i>
                             <span>{{ item.created_at|date:"M d, Y" }}</span>
                             <span class="text-muted">•</span>
@@ -167,36 +167,36 @@
                             <span>{{ item.created_at|date:"H:i" }}</span>
                         </div>
                     </td>
-                    <td>
+                    <td style="white-space: nowrap;">
                         {% if item.enquiry_status|lower == 'approved' %}
-                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
                             <i class="bi bi-check-circle-fill me-1"></i>Approved
                         </span>
                         {% elif item.enquiry_status|lower == 'declined' %}
-                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
                             <i class="bi bi-x-circle-fill me-1"></i>Declined
                         </span>
                         {% else %}
-                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
                             <i class="bi bi-hourglass-split me-1"></i>Pending
                         </span>
                         {% endif %}
                     </td>
-                    <td class="text-end pe-4">
-                        <div class="d-flex align-items-center justify-content-end gap-2">
+                    <td class="text-end pe-4" style="white-space: nowrap;">
+                        <div class="d-flex align-items-center justify-content-end gap-1.5 text-nowrap" style="white-space: nowrap;">
                             {% if item.enquiry_status|lower == 'approved' %}
-                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 13px !important; white-space: nowrap;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% elif item.enquiry_status|lower == 'declined' %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 13px !important; white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
                             {% else %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap" data-id="{{ item.id }}" data-status="approved" title="Approve Lot" style="font-size: 13px !important; white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap" data-id="{{ item.id }}" data-status="declined" title="Decline Lot" style="font-size: 13px !important; white-space: nowrap;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% endif %}

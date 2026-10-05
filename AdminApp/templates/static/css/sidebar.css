@@ -1338,6 +1338,7 @@ input[type="reset"]:focus-visible {
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-main);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 @media (min-width: 1200px) {

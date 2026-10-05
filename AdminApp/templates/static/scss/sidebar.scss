@@ -1351,6 +1351,7 @@ input[type="reset"] {
                 border-bottom: 1px solid $border-color;
                 color: $text-main;
                 font-size: 12px;
+                white-space: nowrap;
 
                 @media (min-width: 1200px) {
                     font-size: 12.5px;
