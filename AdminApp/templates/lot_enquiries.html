@@ -154,8 +154,7 @@
                                 <i class="bi bi-boxes fs-6"></i>
                             </div>
                             <div>
-                                <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{
-                                    item.lot_number }}</span>
+                                <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{ item.lot_number }}</span>
                                 <span class="d-block text-muted small text-truncate"
                                     style="font-size: 0.80rem; max-width: 200px;"
                                     title="{{ item.title|default:'Lot Inventory Package' }}">
@@ -170,7 +169,7 @@
                             class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 fw-medium text-nowrap"
                             style="font-size: 0.78rem; white-space: nowrap; margin-left: 2px; margin-right: 2px;">
                             <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
-                            <span class="mx-1 d-inline-block text-[12px]">Download</span>
+                            <span class="mx-1 d-inline-block" style="font-size: 12px;">Download</span>
                             <i class="bi bi-download small"></i>
                         </a>
                         {% else %}
