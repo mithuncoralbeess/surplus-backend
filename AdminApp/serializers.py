@@ -337,7 +337,36 @@ class LotSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         import json
+        import re
         data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+
+        def _parse_num(val):
+            if val is None or val == "":
+                return "0.00"
+            if isinstance(val, (int, float)):
+                return f"{val:.2f}"
+            if isinstance(val, str):
+                cleaned = re.sub(r'[^\d.-]', '', val.strip())
+                if cleaned and cleaned != '.':
+                    try:
+                        return f"{float(cleaned):.2f}"
+                    except Exception:
+                        pass
+            return "0.00"
+
+        def _parse_int(val):
+            if isinstance(val, int):
+                return val
+            if isinstance(val, float):
+                return int(val)
+            if isinstance(val, str):
+                cleaned = re.sub(r'[^\d-]', '', val.strip())
+                if cleaned:
+                    try:
+                        return int(cleaned)
+                    except Exception:
+                        pass
+            return 0
 
         # Sanitize null/None values to safe default primitive types
         str_fields = [
@@ -379,62 +408,14 @@ class LotSerializer(serializers.ModelSerializer):
                 data_copy[field] = 0.0
 
         # Map listing_title / aliases to title
-        for t_alias in ['listing_title', 'lot_title', 'name']:
+        for t_alias in ['listing_title', 'lot_title', 'name', 'title']:
             if t_alias in data_copy and data_copy[t_alias] and ('title' not in data_copy or not data_copy.get('title')):
-                data_copy['title'] = data_copy[t_alias]
+                data_copy['title'] = str(data_copy[t_alias])
 
         # Map lot_description_and_notes / aliases to description
         for d_alias in ['lot_description_and_notes', 'notes', 'lot_notes']:
             if d_alias in data_copy and data_copy[d_alias] and ('description' not in data_copy or not data_copy.get('description')):
-                data_copy['description'] = data_copy[d_alias]
-
-        # Map ask_price_surplus_payout / price aliases
-        for p_alias in ['ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']:
-            if p_alias in data_copy and data_copy[p_alias] is not None and data_copy[p_alias] != "":
-                if 'total_price' not in data_copy or not data_copy.get('total_price'):
-                    try:
-                        data_copy['total_price'] = float(data_copy[p_alias])
-                    except Exception:
-                        pass
-                if 'ask_price_surplus_payout' not in data_copy or not data_copy.get('ask_price_surplus_payout'):
-                    try:
-                        data_copy['ask_price_surplus_payout'] = float(data_copy[p_alias])
-                    except Exception:
-                        pass
-
-        # Map MSRP / retail value aliases
-        for r_alias in ['total_retail_value', 'retail_value', 'msrp']:
-            if r_alias in data_copy and data_copy[r_alias] is not None and data_copy[r_alias] != "":
-                if 'total_est_retail_value_msrp' not in data_copy or not data_copy.get('total_est_retail_value_msrp'):
-                    try:
-                        data_copy['total_est_retail_value_msrp'] = float(data_copy[r_alias])
-                    except Exception:
-                        pass
-
-        # Map quantity / SKUs / pallets aliases
-        for q_alias in ['total_units', 'total_quantity', 'quantity']:
-            if q_alias in data_copy and data_copy[q_alias] is not None and data_copy[q_alias] != "":
-                if 'total_units_quantity' not in data_copy or not data_copy.get('total_units_quantity'):
-                    try:
-                        data_copy['total_units_quantity'] = int(data_copy[q_alias])
-                    except Exception:
-                        pass
-
-        for sku_alias in ['distinct_skus', 'skus_count']:
-            if sku_alias in data_copy and data_copy[sku_alias] is not None and data_copy[sku_alias] != "":
-                if 'number_of_distinct_skus' not in data_copy or not data_copy.get('number_of_distinct_skus'):
-                    try:
-                        data_copy['number_of_distinct_skus'] = int(data_copy[sku_alias])
-                    except Exception:
-                        pass
-
-        for pal_alias in ['pallets', 'no_of_pallets']:
-            if pal_alias in data_copy and data_copy[pal_alias] is not None and data_copy[pal_alias] != "":
-                if 'pallet_count' not in data_copy or not data_copy.get('pallet_count'):
-                    try:
-                        data_copy['pallet_count'] = int(data_copy[pal_alias])
-                    except Exception:
-                        pass
+                data_copy['description'] = str(data_copy[d_alias])
 
         # Handle manifest_file / manifest aliases (could be dict, stringified JSON, or uploaded file object)
         for mf_key in ['manifest_file', 'manifest', 'manifest_file_info']:
@@ -453,6 +434,53 @@ class LotSerializer(serializers.ModelSerializer):
                 elif isinstance(mf, dict) and ('manifest_file_info' not in data_copy or not data_copy.get('manifest_file_info')):
                     data_copy['manifest_file_info'] = mf
 
+        # Fallback default title if still empty
+        if 'title' not in data_copy or not str(data_copy.get('title', '')).strip():
+            manifest_info = data_copy.get('manifest_file_info', {})
+            fname = manifest_info.get('file_name', '') if isinstance(manifest_info, dict) else ''
+            if fname:
+                data_copy['title'] = f"Surplus Lot ({fname})"
+            else:
+                data_copy['title'] = "Surplus Lot Inventory Package"
+
+        # Clean and parse decimal fields with alias support
+        price_aliases = ['ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
+        parsed_payout = None
+        for alias in price_aliases:
+            if alias in data_copy and data_copy[alias] not in (None, ""):
+                parsed_payout = _parse_num(data_copy[alias])
+                break
+        data_copy['ask_price_surplus_payout'] = parsed_payout if parsed_payout is not None else "0.00"
+
+        msrp_aliases = ['total_est_retail_value_msrp', 'total_retail_value', 'retail_value', 'msrp']
+        parsed_msrp = None
+        for alias in msrp_aliases:
+            if alias in data_copy and data_copy[alias] not in (None, ""):
+                parsed_msrp = _parse_num(data_copy[alias])
+                break
+        data_copy['total_est_retail_value_msrp'] = parsed_msrp if parsed_msrp is not None else "0.00"
+
+        total_price_aliases = ['total_price', 'ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
+        parsed_tot_price = None
+        for alias in total_price_aliases:
+            if alias in data_copy and data_copy[alias] not in (None, ""):
+                parsed_tot_price = _parse_num(data_copy[alias])
+                break
+        data_copy['total_price'] = parsed_tot_price if parsed_tot_price is not None else "0.00"
+
+        # Map quantity / SKUs / pallets aliases using robust integer cleaner
+        for q_alias in ['total_units_quantity', 'total_units', 'total_quantity', 'quantity']:
+            if q_alias in data_copy and data_copy[q_alias] is not None and data_copy[q_alias] != "":
+                data_copy['total_units_quantity'] = _parse_int(data_copy[q_alias])
+
+        for sku_alias in ['number_of_distinct_skus', 'distinct_skus', 'skus_count']:
+            if sku_alias in data_copy and data_copy[sku_alias] is not None and data_copy[sku_alias] != "":
+                data_copy['number_of_distinct_skus'] = _parse_int(data_copy[sku_alias])
+
+        for pal_alias in ['pallet_count', 'pallets', 'no_of_pallets']:
+            if pal_alias in data_copy and data_copy[pal_alias] is not None and data_copy[pal_alias] != "":
+                data_copy['pallet_count'] = _parse_int(data_copy[pal_alias])
+
         # Parse stringified JSON fields if passed from FormData
         for field in json_list_fields + ['manifest_file_info']:
             if field in data_copy and isinstance(data_copy[field], str):
@@ -469,31 +497,6 @@ class LotSerializer(serializers.ModelSerializer):
                 val = data_copy[field]
                 if isinstance(val, str):
                     data_copy[field] = val.lower() in ('true', '1', 'yes')
-
-        # Parse integer fields if passed as string
-        for field in ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']:
-            if field in data_copy and data_copy[field] is not None:
-                val = data_copy[field]
-                if isinstance(val, str):
-                    val_str = val.strip()
-                    if val_str.isdigit():
-                        data_copy[field] = int(val_str)
-                    elif not val_str:
-                        data_copy[field] = 0
-
-        # Parse decimal fields if passed as string
-        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']:
-            if field in data_copy and data_copy[field] is not None:
-                val = data_copy[field]
-                if isinstance(val, str):
-                    val_str = val.strip()
-                    if val_str:
-                        try:
-                            data_copy[field] = float(val_str)
-                        except Exception:
-                            pass
-                    else:
-                        data_copy[field] = 0.0
 
         return super().to_internal_value(data_copy)
 
