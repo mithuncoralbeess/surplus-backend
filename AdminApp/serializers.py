@@ -417,6 +417,37 @@ class LotSerializer(serializers.ModelSerializer):
             if d_alias in data_copy and data_copy[d_alias] and ('description' not in data_copy or not data_copy.get('description')):
                 data_copy['description'] = str(data_copy[d_alias])
 
+        # Clean file field: DRF FileField requires an actual UploadedFile object with .read()
+        if 'file' in data_copy:
+            f_val = data_copy['file']
+            if not hasattr(f_val, 'read'):
+                data_copy.pop('file', None)
+
+        # Clean vendor field: view handles vendor resolution via USR-001 string
+        if 'vendor' in data_copy:
+            v_val = data_copy['vendor']
+            if not isinstance(v_val, int) and not (isinstance(v_val, str) and v_val.isdigit()):
+                data_copy.pop('vendor', None)
+
+        # Clean category field: resolve SubCategory object if int/id, else set category_name
+        if 'category' in data_copy:
+            cat_val = data_copy['category']
+            if isinstance(cat_val, str):
+                if cat_val.isdigit():
+                    data_copy['category'] = int(cat_val)
+                else:
+                    if not data_copy.get('category_name'):
+                        data_copy['category_name'] = cat_val
+                    data_copy.pop('category', None)
+            elif isinstance(cat_val, dict):
+                cat_id = cat_val.get('id')
+                if cat_id and str(cat_id).isdigit():
+                    data_copy['category'] = int(cat_id)
+                else:
+                    if cat_val.get('name') and not data_copy.get('category_name'):
+                        data_copy['category_name'] = cat_val['name']
+                    data_copy.pop('category', None)
+
         # Handle manifest_file / manifest aliases (could be dict, stringified JSON, or uploaded file object)
         for mf_key in ['manifest_file', 'manifest', 'manifest_file_info']:
             if mf_key in data_copy:

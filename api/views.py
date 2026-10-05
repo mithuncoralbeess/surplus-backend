@@ -1517,10 +1517,12 @@ def submit_lot_request(request):
                 "data": LotSerializer(lot).data
             }, status=status.HTTP_201_CREATED)
 
+        err_msg = ", ".join([f"{k}: {v[0] if isinstance(v, list) else v}" for k, v in serializer.errors.items()])
         return Response({
             "success": False,
-            "message": "Validation failed for lot submission.",
-            "errors": serializer.errors
+            "message": f"Validation failed for lot submission: {err_msg}",
+            "errors": serializer.errors,
+            "error_details": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as exc:
