@@ -607,8 +607,34 @@ class LotBatchEnquiry(models.Model):
     category_name = models.CharField(max_length=255, blank=True, default="")
     inventory_location = models.CharField(max_length=255, blank=True, default="")
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    currency = models.CharField(max_length=10, default="USD")
+    currency = models.CharField(max_length=50, default="USD")
     reason_to_sell = models.TextField(blank=True, default="")
+
+    # Extended structured fields matching frontend lot payload
+    key_brands_included = models.TextField(blank=True, default="")
+    product_and_warehouse_images_or_videos = models.JSONField(default=list, blank=True)
+    category_allocations = models.JSONField(default=list, blank=True)
+    condition = models.CharField(max_length=255, blank=True, default="")
+    source_type = models.CharField(max_length=255, blank=True, default="")
+    inventory_stock_age = models.CharField(max_length=255, blank=True, default="")
+    third_party_certificate_available = models.BooleanField(default=False)
+    third_party_documents = models.JSONField(default=list, blank=True)
+    number_of_distinct_skus = models.PositiveIntegerField(default=0, null=True, blank=True)
+    total_units_quantity = models.PositiveIntegerField(default=0, null=True, blank=True)
+    primary_unit_type = models.CharField(max_length=100, blank=True, default="")
+    total_weight = models.CharField(max_length=100, blank=True, default="")
+    load_type = models.CharField(max_length=100, blank=True, default="")
+    shipping_size = models.CharField(max_length=100, blank=True, default="")
+    lot_size = models.CharField(max_length=100, blank=True, default="")
+    pallet_count = models.PositiveIntegerField(default=0, null=True, blank=True)
+    shipping_terms = models.CharField(max_length=255, blank=True, default="")
+    total_est_retail_value_msrp = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    ask_price_surplus_payout = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    offer = models.CharField(max_length=100, blank=True, default="")
+    allow_counter_offers = models.BooleanField(default=True)
+    excluded_export_countries = models.JSONField(default=list, blank=True)
+    sale_method = models.CharField(max_length=50, blank=True, default="offer")
+    manifest_file_info = models.JSONField(default=dict, blank=True)
     
     enquiry_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
     active_status = models.CharField(max_length=20, choices=ACTIVE_STATUS_CHOICES, default="inactive", db_index=True)
@@ -641,6 +667,22 @@ class LotBatchEnquiry(models.Model):
     @property
     def lot_number(self):
         return self.batch_id
+
+    @property
+    def listing_title(self):
+        return self.title
+
+    @listing_title.setter
+    def listing_title(self, value):
+        self.title = value or ""
+
+    @property
+    def lot_description_and_notes(self):
+        return self.description
+
+    @lot_description_and_notes.setter
+    def lot_description_and_notes(self, value):
+        self.description = value or ""
 
     def __str__(self):
         return f"{self.batch_id} - {self.enquiry_status}"
@@ -717,9 +759,35 @@ class Lot(models.Model):
     category_name = models.CharField(max_length=255, blank=True, default="")
     inventory_location = models.CharField(max_length=255, blank=True, default="")
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    currency = models.CharField(max_length=10, default="USD")
+    currency = models.CharField(max_length=50, default="USD")
     reason_to_sell = models.TextField(blank=True, default="")
     
+    # Extended structured fields matching frontend lot payload
+    key_brands_included = models.TextField(blank=True, default="")
+    product_and_warehouse_images_or_videos = models.JSONField(default=list, blank=True)
+    category_allocations = models.JSONField(default=list, blank=True)
+    condition = models.CharField(max_length=255, blank=True, default="")
+    source_type = models.CharField(max_length=255, blank=True, default="")
+    inventory_stock_age = models.CharField(max_length=255, blank=True, default="")
+    third_party_certificate_available = models.BooleanField(default=False)
+    third_party_documents = models.JSONField(default=list, blank=True)
+    number_of_distinct_skus = models.PositiveIntegerField(default=0, null=True, blank=True)
+    total_units_quantity = models.PositiveIntegerField(default=0, null=True, blank=True)
+    primary_unit_type = models.CharField(max_length=100, blank=True, default="")
+    total_weight = models.CharField(max_length=100, blank=True, default="")
+    load_type = models.CharField(max_length=100, blank=True, default="")
+    shipping_size = models.CharField(max_length=100, blank=True, default="")
+    lot_size = models.CharField(max_length=100, blank=True, default="")
+    pallet_count = models.PositiveIntegerField(default=0, null=True, blank=True)
+    shipping_terms = models.CharField(max_length=255, blank=True, default="")
+    total_est_retail_value_msrp = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    ask_price_surplus_payout = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
+    offer = models.CharField(max_length=100, blank=True, default="")
+    allow_counter_offers = models.BooleanField(default=True)
+    excluded_export_countries = models.JSONField(default=list, blank=True)
+    sale_method = models.CharField(max_length=50, blank=True, default="offer")
+    manifest_file_info = models.JSONField(default=dict, blank=True)
+
     file = models.FileField(upload_to="lot_enquiries/%Y/%m/", null=True, blank=True)
     enquiry_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
     active_status = models.CharField(max_length=20, choices=ACTIVE_STATUS_CHOICES, default="inactive", db_index=True)
@@ -728,7 +796,6 @@ class Lot(models.Model):
     views_count = models.PositiveIntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

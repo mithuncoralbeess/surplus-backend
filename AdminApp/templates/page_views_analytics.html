@@ -108,7 +108,8 @@
                                 </span>
                             </div>
                             <div class="progress" style="height: 6px; border-radius: 999px;">
-                                <div class="progress-bar bg-primary" role="progressbar" style="width: {% widthratio page.avg_seconds 300 100 %}%;" aria-valuenow="{{ page.avg_seconds }}" aria-valuemin="0" aria-valuemax="300"></div>
+                                {% widthratio page.avg_seconds 300 100 as dwell_width %}
+                                <div class="progress-bar bg-primary" role="progressbar" style="--dwell-width: {{ dwell_width }}%; width: var(--dwell-width);" aria-valuenow="{{ page.avg_seconds }}" aria-valuemin="0" aria-valuemax="300"></div>
                             </div>
                         </div>
                         {% endfor %}

@@ -84,7 +84,9 @@ urlpatterns = [
     path("auth/login/send-otp/", send_login_otp, name="send_login_otp"),
     path("auth/login/verify-otp/", verify_login_otp, name="verify_login_otp"),
 
-    # Submissions
+    # Submissions & Lot Management
+    path("lots/", submit_lot_request, name="public_lots_api"),
+    path("lots/create/", submit_lot_request, name="create_lot_api"),
     path("submit-product-request/", submit_product_request, name="submit_product_request"),
     path("submit-lot-request/", submit_lot_request, name="submit_lot_request"),
 

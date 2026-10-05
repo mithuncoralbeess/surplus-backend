@@ -1333,113 +1333,204 @@ def submit_product_request(request):
     return response_obj
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def submit_lot_request(request):
     """
-    Endpoint for vendors to submit a lot batch request (via file upload).
-    Handles multipart/form-data for the .xlsx/.csv file upload.
+    Unified API for creating and querying lot listings.
+    Supports both JSON payload from frontend lot creation forms and multipart file uploads.
+    GET /api/lots/ - List lots (with filters for vendor_id, category, search, page)
+    POST /api/lots/ or /api/submit-lot-request/ - Create a new lot listing
     """
-    import json
-    data = request.data.copy()
-    vendor_id = data.get('vendor_id')
-    
-    # Parse nested JSON strings if present (lot_details, user_information, manifest_items)
-    lot_details = {}
+    from AdminApp.models import Lot, VendorDetails
+    from AdminApp.serializers import LotSerializer
+    from django.db.models import Q
+
+    if request.method == "GET":
+        qs = Lot.objects.all().order_by("-created_at")
+        vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
+        if vendor_param:
+            vendor_obj = _resolve_vendor_from_param(vendor_param)
+            if vendor_obj:
+                qs = qs.filter(vendor=vendor_obj)
+
+        category = request.GET.get("category")
+        if category:
+            qs = qs.filter(Q(category_name__icontains=category) | Q(category__name__icontains=category))
+
+        status_param = request.GET.get("status")
+        if status_param:
+            qs = qs.filter(enquiry_status__iexact=status_param)
+        elif not vendor_param:
+            qs = qs.filter(is_active=True, enquiry_status="approved")
+
+        search = request.GET.get("search", "").strip()
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search) | Q(key_brands_included__icontains=search))
+
+        page_num = request.GET.get("page", 1)
+        limit = request.GET.get("limit", 12)
+        try:
+            limit = int(limit)
+        except (ValueError, TypeError):
+            limit = 12
+
+        from django.core.paginator import Paginator
+        paginator = Paginator(qs, limit)
+        try:
+            page_obj = paginator.page(page_num)
+        except Exception:
+            page_obj = paginator.page(1)
+
+        serializer = LotSerializer(page_obj.object_list, many=True)
+        return Response({
+            "success": True,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "current_page": page_obj.number,
+            "lots": serializer.data,
+        }, status=status.HTTP_200_OK)
+
+    # POST request processing
     try:
+        import json
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        vendor_param = data.get("vendor_id") or data.get("user_id") or request.headers.get("X-Vendor-Id")
+
+        # Handle legacy nested fields if present (lot_details, user_information, manifest_items)
+        lot_details = {}
         if 'lot_details' in data:
             val = data['lot_details']
             lot_details = json.loads(val) if isinstance(val, str) else val
-    except Exception:
-        pass
+            if isinstance(lot_details, dict):
+                if 'title' not in data and 'listing_title' not in data:
+                    data['title'] = lot_details.get('title', '')
+                if 'description' not in data and 'lot_description_and_notes' not in data:
+                    data['description'] = lot_details.get('description', '')
+                if 'total_price' not in data and 'ask_price_surplus_payout' not in data:
+                    data['total_price'] = lot_details.get('total_retail_value', 0.0)
 
-    user_info = {}
-    try:
+        user_info = {}
         if 'user_information' in data:
             val = data['user_information']
             user_info = json.loads(val) if isinstance(val, str) else val
-    except Exception:
-        pass
-        
-    manifest = []
-    try:
-        if 'manifest_items' in data:
-            val = data['manifest_items']
-            manifest = json.loads(val) if isinstance(val, str) else val
-    except Exception:
-        pass
+            if isinstance(user_info, dict):
+                if 'inventory_location' not in data:
+                    data['inventory_location'] = user_info.get('location', '')
+                if not vendor_param and 'vendor_id' in user_info:
+                    vendor_param = user_info['vendor_id']
 
-    # Map parsed data to explicit model fields
-    if lot_details:
-        data['title'] = lot_details.get('title', '')
-        data['description'] = lot_details.get('description', '')
-        data['total_price'] = lot_details.get('total_retail_value', 0.0)
-        
-        cats = lot_details.get('categories', [])
-        if cats and isinstance(cats, list):
-            data['category_name'] = cats[0].get('name', '')
-            
-    if user_info:
-        data['inventory_location'] = user_info.get('location', '')
-        if not vendor_id and 'vendor_id' in user_info:
-            vendor_id = user_info['vendor_id']
+        # Normalize title and description from frontend payload format
+        title_val = data.get("listing_title") or data.get("title") or ""
+        desc_val = data.get("lot_description_and_notes") or data.get("description") or ""
+        data["title"] = title_val
+        data["description"] = desc_val
 
-    # Map manifest_file to the model's 'file' field
-    if 'manifest_file' in request.FILES and 'file' not in data:
-        data['file'] = request.FILES['manifest_file']
+        # Auto-extract primary category_name from category_allocations if not explicitly set
+        if not data.get("category_name") and "category_allocations" in data:
+            cats = data.get("category_allocations")
+            if isinstance(cats, str):
+                try:
+                    cats = json.loads(cats)
+                except Exception:
+                    cats = []
+            if isinstance(cats, list) and len(cats) > 0 and isinstance(cats[0], dict):
+                data["category_name"] = cats[0].get("category", "")
 
-    # Keep the rest in raw_data (properly serialized as JSON string to avoid DRF errors)
-    raw_dict = {
-        'lot_details': lot_details,
-        'user_information': user_info,
-        'manifest_items': manifest
-    }
-    data['raw_data'] = json.dumps(raw_dict)
-    
-    serializer = LotBatchEnquirySerializer(data=data)
-    if serializer.is_valid():
-        enquiry = serializer.save()
-        
-        # Link to vendor if provided
-        if vendor_id:
-            vid_clean = str(vendor_id).strip()
-            if vid_clean.upper().startswith("USR-"):
-                vid_clean = vid_clean[4:].strip()
-            vendor = None
-            if vid_clean.isdigit():
-                vendor = VendorDetails.objects.filter(id=int(vid_clean)).first()
-            if not vendor:
-                vendor = VendorDetails.objects.filter(email__iexact=str(vendor_id).strip()).first()
-            if vendor:
-                if hasattr(enquiry, 'vendor'):
-                    enquiry.vendor = vendor
-                if hasattr(enquiry, 'uploaded_by'):
-                    enquiry.uploaded_by = vendor
-                enquiry.save()
+        # Set total_price from ask_price_surplus_payout if available
+        ask_price = data.get("ask_price_surplus_payout")
+        if ask_price and ("total_price" not in data or not data.get("total_price")):
+            try:
+                data["total_price"] = float(ask_price)
+            except Exception:
+                pass
 
+        # Map file fields from request.FILES
+        if "manifest_file" in request.FILES:
+            data["file"] = request.FILES["manifest_file"]
+        elif "file" in request.FILES:
+            data["file"] = request.FILES["file"]
+
+        # Manifest file info (if JSON object)
+        manifest_info = data.get("manifest_file")
+        if isinstance(manifest_info, str):
+            try:
+                manifest_info = json.loads(manifest_info)
+            except Exception:
+                pass
+        if isinstance(manifest_info, dict):
+            data["manifest_file_info"] = manifest_info
+
+        # Helper to convert arbitrary data structures into clean JSON-serializable primitives
+        def _clean_json_val(val):
+            if isinstance(val, (str, int, float, bool)) or val is None:
+                return val
+            if isinstance(val, dict):
+                return {str(k): _clean_json_val(v) for k, v in val.items() if not hasattr(v, 'read')}
+            if isinstance(val, (list, tuple)):
+                return [_clean_json_val(v) for v in val if not hasattr(v, 'read')]
+            if hasattr(val, 'name'):
+                return str(val.name)
+            return str(val)
+
+        # Build clean raw_payload copy for audit storage
+        raw_payload = _clean_json_val(dict(data))
+
+        serializer = LotSerializer(data=data)
+        if serializer.is_valid():
+            lot = serializer.save()
+
+            # Resolve and link vendor record if provided
+            vendor_obj = None
+            if vendor_param:
+                vendor_obj = _resolve_vendor_from_param(vendor_param)
+                if vendor_obj:
+                    lot.vendor = vendor_obj
+                    lot.save(update_fields=["vendor"])
+
+            # Store complete raw payload safely
+            if isinstance(raw_payload, dict):
+                raw_payload["is_saved_to_db"] = True
+            lot.raw_data = raw_payload
+            lot.save(update_fields=["raw_data"])
+
+            # Send vendor notification if vendor is resolved
+            if vendor_obj:
                 try:
                     from AdminApp.services import create_vendor_notification
-                    batch_id = getattr(enquiry, "lot_number", f"BAT-{enquiry.id}")
                     create_vendor_notification(
-                        vendor=vendor,
-                        title="Lot Manifest Uploaded",
-                        message=f"Batch '{batch_id}' is processing.",
+                        vendor=vendor_obj,
+                        title="Lot Listing Received",
+                        message=f"Your lot listing '{lot.title or lot.lot_number}' ({lot.lot_number}) has been submitted and is currently pending review.",
                         notification_type="LISTING",
                         action_url="/profile"
                     )
                 except Exception as e:
-                    print(f"Error creating lot notification: {e}")
-                
+                    print(f"Error creating vendor notification for lot: {e}")
+
+            return Response({
+                "success": True,
+                "message": "Lot listing submitted successfully and is pending review.",
+                "lot_id": lot.lot_number,
+                "raw_id": lot.id,
+                "enquiry": LotSerializer(lot).data,
+                "data": LotSerializer(lot).data
+            }, status=status.HTTP_201_CREATED)
+
         return Response({
-            "success": True,
-            "message": "Lot request submitted successfully and is pending approval.",
-            "data": serializer.data
-        }, status=status.HTTP_201_CREATED)
-        
-    return Response({
-        "success": False,
-        "errors": serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+            "success": False,
+            "message": "Validation failed for lot submission.",
+            "errors": serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        return Response({
+            "success": False,
+            "message": f"Error processing lot request: {str(exc)}",
+            "error": str(exc)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 from datetime import timedelta

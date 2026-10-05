@@ -256,19 +256,51 @@ class LotSerializer(serializers.ModelSerializer):
     created_at_formatted = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
+    vendor_id = serializers.SerializerMethodField()
+    listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
+    lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
+    manifest_file = serializers.JSONField(source="manifest_file_info", required=False)
 
     class Meta:
         from .models import Lot
         model = Lot
         fields = [
             "id",
+            "vendor_id",
             "lot_number",
             "title",
+            "listing_title",
             "description",
-            "category_name",
+            "lot_description_and_notes",
+            "key_brands_included",
+            "product_and_warehouse_images_or_videos",
+            "category_allocations",
+            "condition",
+            "source_type",
+            "inventory_stock_age",
+            "third_party_certificate_available",
+            "third_party_documents",
             "inventory_location",
+            "number_of_distinct_skus",
+            "total_units_quantity",
+            "primary_unit_type",
+            "total_weight",
+            "load_type",
+            "shipping_size",
+            "lot_size",
+            "pallet_count",
+            "shipping_terms",
+            "category_name",
             "total_price",
             "currency",
+            "total_est_retail_value_msrp",
+            "ask_price_surplus_payout",
+            "offer",
+            "allow_counter_offers",
+            "excluded_export_countries",
+            "sale_method",
+            "manifest_file",
+            "manifest_file_info",
             "reason_to_sell",
             "file",
             "file_url",
@@ -283,6 +315,13 @@ class LotSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "lot_number", "file_url", "created_at", "created_at_formatted", "updated_at"]
 
+    def get_vendor_id(self, obj):
+        if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
+            return obj.formatted_vendor_id
+        if hasattr(obj, 'vendor') and obj.vendor:
+            return obj.vendor.user_id
+        return ""
+
     def get_products(self, obj):
         if isinstance(obj.raw_data, dict):
             return obj.raw_data.get("products", []) or obj.raw_data.get("manifest_items", [])
@@ -292,9 +331,100 @@ class LotSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime("%b %d, %Y %H:%M") if obj.created_at else ""
 
     def get_file_url(self, obj):
-        if obj.file:
+        if hasattr(obj, 'file') and obj.file:
             return obj.file.url
         return None
+
+    def to_internal_value(self, data):
+        import json
+        data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+
+        # Map listing_title to title
+        if 'listing_title' in data_copy and ('title' not in data_copy or not data_copy.get('title')):
+            data_copy['title'] = data_copy.get('listing_title', '')
+
+        # Map lot_description_and_notes to description
+        if 'lot_description_and_notes' in data_copy and ('description' not in data_copy or not data_copy.get('description')):
+            data_copy['description'] = data_copy.get('lot_description_and_notes', '')
+
+        # Map ask_price_surplus_payout to total_price
+        if 'ask_price_surplus_payout' in data_copy and ('total_price' not in data_copy or not data_copy.get('total_price')):
+            val = data_copy.get('ask_price_surplus_payout')
+            if val is not None and val != "":
+                try:
+                    data_copy['total_price'] = float(val)
+                except Exception:
+                    pass
+
+        # Handle manifest_file (could be dict, stringified JSON, or uploaded file object)
+        if 'manifest_file' in data_copy:
+            mf = data_copy['manifest_file']
+            if hasattr(mf, 'read'):
+                if 'file' not in data_copy or not data_copy.get('file'):
+                    data_copy['file'] = mf
+            elif isinstance(mf, str):
+                try:
+                    parsed = json.loads(mf)
+                    if isinstance(parsed, dict):
+                        data_copy['manifest_file_info'] = parsed
+                except Exception:
+                    pass
+            elif isinstance(mf, dict):
+                data_copy['manifest_file_info'] = mf
+
+        # Parse stringified JSON fields if passed from FormData
+        json_fields = [
+            'category_allocations',
+            'product_and_warehouse_images_or_videos',
+            'third_party_documents',
+            'excluded_export_countries',
+            'manifest_file_info',
+        ]
+        for field in json_fields:
+            if field in data_copy and isinstance(data_copy[field], str):
+                val_str = data_copy[field].strip()
+                if val_str:
+                    try:
+                        data_copy[field] = json.loads(val_str)
+                    except Exception:
+                        pass
+
+        # Parse boolean fields if passed as string "true"/"false"
+        bool_fields = ['third_party_certificate_available', 'allow_counter_offers']
+        for field in bool_fields:
+            if field in data_copy:
+                val = data_copy[field]
+                if isinstance(val, str):
+                    data_copy[field] = val.lower() in ('true', '1', 'yes')
+
+        # Parse integer fields if passed as string
+        int_fields = ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']
+        for field in int_fields:
+            if field in data_copy and data_copy[field] is not None:
+                val = data_copy[field]
+                if isinstance(val, str):
+                    val_str = val.strip()
+                    if val_str.isdigit():
+                        data_copy[field] = int(val_str)
+                    elif not val_str:
+                        data_copy[field] = 0
+
+        # Parse decimal fields if passed as string
+        dec_fields = ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']
+        for field in dec_fields:
+            if field in data_copy and data_copy[field] is not None:
+                val = data_copy[field]
+                if isinstance(val, str):
+                    val_str = val.strip()
+                    if val_str:
+                        try:
+                            data_copy[field] = float(val_str)
+                        except Exception:
+                            pass
+                    else:
+                        data_copy[field] = 0.0
+
+        return super().to_internal_value(data_copy)
 
 
 class LotBatchEnquirySerializer(LotSerializer):
@@ -302,4 +432,5 @@ class LotBatchEnquirySerializer(LotSerializer):
     Alias serializer for backward compatibility.
     """
     pass
+
 
