@@ -996,17 +996,41 @@ input[type="reset"] {
 
     .header-title {
         font-family: 'Outfit', sans-serif;
-        font-size: 1.6rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: $text-main;
         margin: 0;
         letter-spacing: -0.01em;
+
+        @media (min-width: 1200px) {
+            font-size: 1.35rem;
+        }
+
+        @media (min-width: 1440px) {
+            font-size: 1.48rem;
+        }
+
+        @media (min-width: 1600px) {
+            font-size: 1.6rem;
+        }
     }
 
     .header-subtitle {
-        font-size: 0.92rem;
+        font-size: 0.8rem;
         color: $text-secondary;
         margin: 0.2rem 0 0 0;
+
+        @media (min-width: 1200px) {
+            font-size: 0.84rem;
+        }
+
+        @media (min-width: 1440px) {
+            font-size: 0.88rem;
+        }
+
+        @media (min-width: 1600px) {
+            font-size: 0.92rem;
+        }
     }
 }
 
@@ -1051,20 +1075,44 @@ input[type="reset"] {
 
     .stat-meta {
         .stat-label {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: $text-secondary;
+
+            @media (min-width: 1200px) {
+                font-size: 12px;
+            }
+
+            @media (min-width: 1440px) {
+                font-size: 13px;
+            }
+
+            @media (min-width: 1600px) {
+                font-size: 14px;
+            }
         }
 
         .stat-number {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.85rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: $text-main;
             margin: 0.35rem 0 0 0;
             line-height: 1.1;
+
+            @media (min-width: 1200px) {
+                font-size: 1.55rem;
+            }
+
+            @media (min-width: 1440px) {
+                font-size: 1.7rem;
+            }
+
+            @media (min-width: 1600px) {
+                font-size: 1.85rem;
+            }
         }
     }
 
@@ -1199,7 +1247,7 @@ input[type="reset"] {
 
         th {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -1207,6 +1255,18 @@ input[type="reset"] {
             padding: 0.85rem 1.25rem;
             border-bottom: 1px solid $border-color;
             white-space: nowrap;
+
+            @media (min-width: 1200px) {
+                font-size: 0.68rem;
+            }
+
+            @media (min-width: 1440px) {
+                font-size: 0.72rem;
+            }
+
+            @media (min-width: 1600px) {
+                font-size: 0.75rem;
+            }
         }
     }
 
@@ -1224,7 +1284,19 @@ input[type="reset"] {
                 vertical-align: middle;
                 border-bottom: 1px solid $border-color;
                 color: $text-main;
-                font-size: 14px;
+                font-size: 12px;
+
+                @media (min-width: 1200px) {
+                    font-size: 12.5px;
+                }
+
+                @media (min-width: 1440px) {
+                    font-size: 13.5px;
+                }
+
+                @media (min-width: 1600px) {
+                    font-size: 14px;
+                }
             }
 
             &:last-child td {
