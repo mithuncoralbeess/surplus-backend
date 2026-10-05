@@ -2065,7 +2065,12 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
         "liquidation_price": _clean_val(liq_val),
         "open_to_offer": bool(enquiry.allow_counter_offers),
-        "media": media_url
+        "media": media_url,
+        "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
+        "load_type": _clean_val(enquiry.load_type or combined_raw.get("load_type")),
+        "total_weight": _clean_val(enquiry.total_weight or combined_raw.get("total_weight")),
+        "pallet_count": _clean_val(enquiry.pallet_count or combined_raw.get("pallet_count")),
+        "source_type": _clean_val(enquiry.source_type or combined_raw.get("source_type")),
     }
 
     context["batch_data"] = batch_data

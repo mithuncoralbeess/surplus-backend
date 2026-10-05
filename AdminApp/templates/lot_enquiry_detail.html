@@ -314,10 +314,28 @@
                             <i class="bi bi-truck me-2 text-warning"></i>Logistics Details
                         </h6>
                         <div class="row g-3 mb-4">
-                            <div class="col-md-6 col-lg-4">
+                            <div class="col-md-6 col-lg-3">
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Shipping Size</span>
                                     <span class="text-dark fw-medium">{{ batch_data.shipping_size|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Shipping Terms</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.shipping_terms|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Load / Pallet Type</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.load_type|default:batch_data.pallet_count|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Total Weight</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.total_weight|default:"N/A" }}</span>
                                 </div>
                             </div>
                         </div>
