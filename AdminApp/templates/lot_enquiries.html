@@ -105,10 +105,10 @@
         <div class="d-flex align-items-center gap-2">
             <select class="form-select form-select-sm filter-select" id="dateFilter"
                 style="width: 140px; font-size: 14px !important; height: 38px;">
-                <option value="all" {% if date_filter=='all' %}selected{% endif %}>All Time</option>
-                <option value="today" {% if date_filter=='today' %}selected{% endif %}>Today</option>
-                <option value="7days" {% if date_filter=='7days' %}selected{% endif %}>Last 7 Days</option>
-                <option value="30days" {% if date_filter=='30days' %}selected{% endif %}>Last 30 Days</option>
+                <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
             </select>
             <div class="btn-group" role="group" aria-label="Status filter">
                 <a href="/admin/enquiries/lots/"
@@ -336,8 +336,9 @@
                 {% endif %}
 
                 {% for p in page_obj.paginator.page_range %}
-                {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %} {% if p==page_obj.number %} <li
-                    class="page-item active">
+                {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                    {% if p == page_obj.number %}
+                    <li class="page-item active">
                     <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
                     </li>
                     {% else %}
