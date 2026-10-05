@@ -139,28 +139,46 @@
         <div class="col-12">
             <div class="premium-card mb-4">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase text-muted mb-4"
-                        style="letter-spacing: 0.5px; font-size: 0.8rem;"><i
-                            class="bi bi-info-circle me-2 text-primary"></i>Batch Info</h6>
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-info-circle me-2 text-primary"></i>Batch Info
+                        </h6>
+                        <div>
+                            {% if enquiry.file %}
+                            <a href="{{ enquiry.file.url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-semibold shadow-sm" title="Download original uploaded Excel manifest file">
+                                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest (.xlsx)
+                            </a>
+                            {% elif enquiry.raw_data.file_url %}
+                            <a href="{{ enquiry.raw_data.file_url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-semibold shadow-sm" title="Download original uploaded Excel manifest file">
+                                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest
+                            </a>
+                            {% else %}
+                            <span class="badge bg-light text-muted border px-3 py-1.5 rounded-pill fw-normal" style="font-size: 0.78rem;">
+                                <i class="bi bi-file-earmark-excel text-muted me-1"></i> No Manifest Attached
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     <div class="row g-3">
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Batch ID</span>
-                                <span class="data-value font-monospace text-primary">{{ enquiry.lot_number }}</span>
+                                <span class="data-value font-monospace text-primary fw-bold fs-6">{{ enquiry.lot_number }}</span>
                             </div>
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Enquiry Status</span>
                                 {% if enquiry.enquiry_status|lower == 'approved' %}
-                                <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i
                                         class="bi bi-check-circle-fill me-1"></i>Approved</span>
                                 {% elif enquiry.enquiry_status|lower == 'declined' %}
-                                <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i class="bi bi-x-circle-fill me-1"></i>Declined</span>
                                 {% else %}
-                                <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
                                 {% endif %}
                             </div>
@@ -169,10 +187,10 @@
                             <div class="data-box">
                                 <span class="data-label">Active Status</span>
                                 {% if enquiry.active_status == 'active' %}
-                                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-medium"><i
+                                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-semibold"><i
                                         class="bi bi-play-circle-fill me-1"></i>Active</span>
                                 {% else %}
-                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-medium"><i
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-semibold"><i
                                         class="bi bi-pause-circle-fill me-1"></i>Inactive</span>
                                 {% endif %}
                             </div>
@@ -180,31 +198,9 @@
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Submitted On</span>
-                                <span class="data-value">
-                                    {{ enquiry.created_at|date:"M d, Y" }} at {{ enquiry.created_at|date:"H:i" }}
+                                <span class="data-value fw-medium">
+                                    {{ enquiry.created_at|date:"M d, Y" }} <small class="text-muted ms-1">({{ enquiry.created_at|date:"H:i" }})</small>
                                 </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Uploaded Excel Manifest File Section -->
-                    <div class="row g-3 mt-1 pt-3 border-top">
-                        <div class="col-12">
-                            <div class="data-box">
-                                <span class="data-label d-block mb-1 text-uppercase small text-muted font-weight-bold">Original Uploaded Excel Manifest File</span>
-                                <div class="mt-1">
-                                    {% if enquiry.file %}
-                                    <a href="{{ enquiry.file.url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 shadow-sm">
-                                        <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Stored Manifest File (.xlsx / .csv)
-                                    </a>
-                                    {% elif enquiry.raw_data.file_url %}
-                                    <a href="{{ enquiry.raw_data.file_url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 shadow-sm">
-                                        <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Stored Manifest File
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted small fst-italic"><i class="bi bi-exclamation-circle me-1"></i>No original Excel file was attached to this lot enquiry submission.</span>
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
                     </div>
