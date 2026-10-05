@@ -339,6 +339,45 @@ class LotSerializer(serializers.ModelSerializer):
         import json
         data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
 
+        # Sanitize null/None values to safe default primitive types
+        str_fields = [
+            'title', 'description', 'listing_title', 'lot_description_and_notes',
+            'key_brands_included', 'condition', 'source_type', 'inventory_stock_age',
+            'primary_unit_type', 'total_weight', 'load_type', 'shipping_size',
+            'lot_size', 'shipping_terms', 'currency', 'offer', 'sale_method',
+            'reason_to_sell', 'category_name', 'inventory_location'
+        ]
+        for field in str_fields:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = ""
+
+        json_list_fields = [
+            'category_allocations',
+            'product_and_warehouse_images_or_videos',
+            'third_party_documents',
+            'excluded_export_countries',
+        ]
+        for field in json_list_fields:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = []
+
+        json_dict_fields = ['manifest_file_info', 'manifest_file']
+        for field in json_dict_fields:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = {}
+
+        for field in ['third_party_certificate_available', 'allow_counter_offers']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = False
+
+        for field in ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = 0
+
+        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = 0.0
+
         # Map listing_title to title
         if 'listing_title' in data_copy and ('title' not in data_copy or not data_copy.get('title')):
             data_copy['title'] = data_copy.get('listing_title', '')
@@ -373,14 +412,7 @@ class LotSerializer(serializers.ModelSerializer):
                 data_copy['manifest_file_info'] = mf
 
         # Parse stringified JSON fields if passed from FormData
-        json_fields = [
-            'category_allocations',
-            'product_and_warehouse_images_or_videos',
-            'third_party_documents',
-            'excluded_export_countries',
-            'manifest_file_info',
-        ]
-        for field in json_fields:
+        for field in json_list_fields + ['manifest_file_info']:
             if field in data_copy and isinstance(data_copy[field], str):
                 val_str = data_copy[field].strip()
                 if val_str:
@@ -390,16 +422,14 @@ class LotSerializer(serializers.ModelSerializer):
                         pass
 
         # Parse boolean fields if passed as string "true"/"false"
-        bool_fields = ['third_party_certificate_available', 'allow_counter_offers']
-        for field in bool_fields:
+        for field in ['third_party_certificate_available', 'allow_counter_offers']:
             if field in data_copy:
                 val = data_copy[field]
                 if isinstance(val, str):
                     data_copy[field] = val.lower() in ('true', '1', 'yes')
 
         # Parse integer fields if passed as string
-        int_fields = ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']
-        for field in int_fields:
+        for field in ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']:
             if field in data_copy and data_copy[field] is not None:
                 val = data_copy[field]
                 if isinstance(val, str):
@@ -410,8 +440,7 @@ class LotSerializer(serializers.ModelSerializer):
                         data_copy[field] = 0
 
         # Parse decimal fields if passed as string
-        dec_fields = ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']
-        for field in dec_fields:
+        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']:
             if field in data_copy and data_copy[field] is not None:
                 val = data_copy[field]
                 if isinstance(val, str):
