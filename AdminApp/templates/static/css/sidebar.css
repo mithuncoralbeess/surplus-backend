@@ -1416,6 +1416,33 @@ input[type="reset"]:focus-visible {
   }
 }
 
+.content-data-table .btn-lot-action-btn {
+  font-size: 12px;
+  padding: 0.25rem 0.55rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+  .content-data-table .btn-lot-action-btn {
+    font-size: 14px;
+    padding: 0.3rem 0.65rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-data-table .btn-lot-action-btn {
+    font-size: 14px;
+    padding: 0.32rem 0.7rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-data-table .btn-lot-action-btn {
+    font-size: 16px;
+    padding: 0.38rem 0.8rem;
+  }
+}
+
 .content-data-table .page-title-text {
   font-weight: 600;
   font-size: 0.96rem;

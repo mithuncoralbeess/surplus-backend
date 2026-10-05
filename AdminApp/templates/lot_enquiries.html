@@ -215,29 +215,29 @@
                             style="white-space: nowrap;">
                             {% if item.enquiry_status|lower == 'approved' %}
                             <button type="button"
-                                class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap"
+                                class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="declined" title="Decline Lot"
-                                style="font-size: 13px !important; white-space: nowrap;">
+                                style="white-space: nowrap;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% elif item.enquiry_status|lower == 'declined' %}
                             <button type="button"
-                                class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap"
+                                class="btn btn-outline-success btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="approved" title="Approve Lot"
-                                style="font-size: 13px !important; white-space: nowrap;">
+                                style="white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
                             {% else %}
                             <button type="button"
-                                class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap"
+                                class="btn btn-outline-success btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="approved" title="Approve Lot"
-                                style="font-size: 13px !important; white-space: nowrap;">
+                                style="white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
                             <button type="button"
-                                class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status text-nowrap"
+                                class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="declined" title="Decline Lot"
-                                style="font-size: 13px !important; white-space: nowrap;">
+                                style="white-space: nowrap;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% endif %}
