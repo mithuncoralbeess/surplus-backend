@@ -960,13 +960,34 @@ input[type="reset"]:focus-visible {
 .content-stat-card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 1.25rem 1.4rem;
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
   box-shadow: var(--color-shadow-card);
   position: relative;
   overflow: hidden;
   transition: all 0.25s ease;
   height: 100%;
+}
+
+@media (min-width: 1200px) {
+  .content-stat-card {
+    border-radius: 10px;
+    padding: 1rem 1.15rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-stat-card {
+    border-radius: 11px;
+    padding: 1.15rem 1.3rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-stat-card {
+    border-radius: 12px;
+    padding: 1.25rem 1.4rem;
+  }
 }
 
 .content-stat-card::before {
@@ -1061,13 +1082,40 @@ input[type="reset"]:focus-visible {
 }
 
 .content-stat-card .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
+}
+
+@media (min-width: 1200px) {
+  .content-stat-card .stat-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    font-size: 1.18rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-stat-card .stat-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-stat-card .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    font-size: 1.35rem;
+  }
 }
 
 .content-stat-card .stat-icon-wrapper.icon-indigo {
@@ -1093,20 +1141,59 @@ input[type="reset"]:focus-visible {
 .content-table-card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow: var(--color-shadow-card);
   overflow: hidden;
 }
 
+@media (min-width: 1200px) {
+  .content-table-card {
+    border-radius: 11px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-table-card {
+    border-radius: 12px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-table-card {
+    border-radius: 14px;
+  }
+}
+
 .content-table-card .table-toolbar {
-  padding: 0.9rem 1.25rem;
+  padding: 0.65rem 0.85rem;
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-bg-surface);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.85rem;
+  gap: 0.65rem;
+}
+
+@media (min-width: 1200px) {
+  .content-table-card .table-toolbar {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-table-card .table-toolbar {
+    padding: 0.85rem 1.15rem;
+    gap: 0.8rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-table-card .table-toolbar {
+    padding: 0.9rem 1.25rem;
+    gap: 0.85rem;
+  }
 }
 
 .content-table-card .table-toolbar .search-input-wrap {
@@ -1210,7 +1297,7 @@ input[type="reset"]:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-secondary);
-  padding: 0.85rem 1.25rem;
+  padding: 0.6rem 0.85rem;
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
 }
@@ -1218,18 +1305,21 @@ input[type="reset"]:focus-visible {
 @media (min-width: 1200px) {
   .content-data-table thead th {
     font-size: 0.68rem;
+    padding: 0.7rem 1rem;
   }
 }
 
 @media (min-width: 1440px) {
   .content-data-table thead th {
     font-size: 0.72rem;
+    padding: 0.78rem 1.15rem;
   }
 }
 
 @media (min-width: 1600px) {
   .content-data-table thead th {
     font-size: 0.75rem;
+    padding: 0.85rem 1.25rem;
   }
 }
 
@@ -1243,7 +1333,7 @@ input[type="reset"]:focus-visible {
 }
 
 .content-data-table tbody tr td {
-  padding: 0.85rem 1.25rem;
+  padding: 0.6rem 0.85rem;
   vertical-align: middle;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-main);
@@ -1253,18 +1343,21 @@ input[type="reset"]:focus-visible {
 @media (min-width: 1200px) {
   .content-data-table tbody tr td {
     font-size: 12.5px;
+    padding: 0.7rem 1rem;
   }
 }
 
 @media (min-width: 1440px) {
   .content-data-table tbody tr td {
     font-size: 13.5px;
+    padding: 0.78rem 1.15rem;
   }
 }
 
 @media (min-width: 1600px) {
   .content-data-table tbody tr td {
     font-size: 14px;
+    padding: 0.85rem 1.25rem;
   }
 }
 
