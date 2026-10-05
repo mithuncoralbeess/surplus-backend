@@ -1816,148 +1816,115 @@ def lot_enquiry_detail_view(request, enquiry_id):
     """
     Admin HTML view to show the details of a single Lot, including its extracted products.
     """
-    from django.shortcuts import get_object_or_404
+    import json
+    from django.shortcuts import get_object_or_404, redirect
+    from .models import Lot, MainCategory, LotProduct, VendorDetails
+
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    from .models import Lot
     enquiry = get_object_or_404(Lot, id=enquiry_id)
+
+    # Helper function to sanitize raw values (lists, stringified JSON, tuples, strings)
+    def _clean_val(v):
+        if v is None:
+            return None
+        if isinstance(v, (list, tuple)):
+            if not v:
+                return None
+            if len(v) == 1:
+                return _clean_val(v[0])
+            cleaned_list = []
+            for item in v:
+                item_clean = _clean_val(item)
+                if item_clean is not None and not isinstance(item_clean, (dict, list)):
+                    cleaned_list.append(str(item_clean))
+            return ", ".join(cleaned_list) if cleaned_list else None
+        if isinstance(v, dict):
+            return None
+        if isinstance(v, str):
+            v_str = v.strip()
+            if not v_str or v_str.upper() in ("N/A", "NONE", "NULL", "[]", "{}"):
+                return None
+            if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                try:
+                    parsed = json.loads(v_str)
+                    return _clean_val(parsed)
+                except Exception:
+                    pass
+            return v_str
+        return str(v)
+
+    def _extract_media_url(v):
+        if not v:
+            return None
+        if isinstance(v, list):
+            for item in v:
+                url = _extract_media_url(item)
+                if url:
+                    return url
+            return None
+        if isinstance(v, dict):
+            return v.get("url") or v.get("src") or v.get("image") or v.get("file_url")
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("http://") or v_str.startswith("https://") or v_str.startswith("/media/"):
+                return v_str
+            if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                try:
+                    parsed = json.loads(v_str)
+                    return _extract_media_url(parsed)
+                except Exception:
+                    pass
+        return None
+
+    # Merge raw_data and nested lot_details dicts
+    combined_raw = {}
+    if isinstance(enquiry.raw_data, dict):
+        for k, v in enquiry.raw_data.items():
+            combined_raw[k] = v
+
+    lot_details_raw = combined_raw.get("lot_details") or combined_raw.get("details")
+    if lot_details_raw:
+        if isinstance(lot_details_raw, list) and len(lot_details_raw) > 0:
+            lot_details_raw = lot_details_raw[0]
+        if isinstance(lot_details_raw, str):
+            try:
+                lot_details_dict = json.loads(lot_details_raw)
+                if isinstance(lot_details_dict, dict):
+                    for k, v in lot_details_dict.items():
+                        if k not in combined_raw or not combined_raw[k]:
+                            combined_raw[k] = v
+            except Exception:
+                pass
+        elif isinstance(lot_details_raw, dict):
+            for k, v in lot_details_raw.items():
+                if k not in combined_raw or not combined_raw[k]:
+                    combined_raw[k] = v
+
+    # Populate basic attributes if empty on model
+    if not enquiry.title:
+        clean_t = _clean_val(combined_raw.get("title") or combined_raw.get("lot_title") or combined_raw.get("name"))
+        if clean_t:
+            enquiry.title = clean_t
+    if not enquiry.description:
+        clean_d = _clean_val(combined_raw.get("description") or combined_raw.get("notes"))
+        if clean_d:
+            enquiry.description = clean_d
+    if not enquiry.inventory_location:
+        clean_l = _clean_val(combined_raw.get("inventory_location") or combined_raw.get("location") or combined_raw.get("business_location"))
+        if clean_l:
+            enquiry.inventory_location = clean_l
 
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "enquiry": enquiry,
-    }
-    
-    user_data = {
-        "full_name": None,
-        "phone_no": None,
-        "email": None,
-        "company": None,
-        "business_location": None,
-        "industry": None
-    }
-    batch_data = {
-        "category_breakdown": None,
-        "shipping_size": None,
-        "stock_condition": None,
-        "inventory_age": None,
-        "distinct_skus": None,
-        "total_units": None,
-        "key_brands": None,
-        "notes": None,
-        "msrp": None,
-        "currency": "AED",
-        "liquidation_price": None,
-        "open_to_offer": None,
-        "media": None
+        "categories": MainCategory.objects.prefetch_related("subcategories").all(),
     }
 
-    processed_raw_keys = set()
-    for k, v in enquiry.raw_data.items():
-        k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
-        
-        # User Data
-        if k_norm in ("full_name", "name", "contact_person"):
-            user_data["full_name"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("phone_no", "phone", "phone_number", "contact_number"):
-            user_data["phone_no"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("email", "e_mail", "email_address"):
-            user_data["email"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("company", "company_name"):
-            user_data["company"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("business_location", "location", "inventory_location"):
-            user_data["business_location"] = v
-            processed_raw_keys.add(k)
-        elif k_norm == "industry":
-            user_data["industry"] = v
-            processed_raw_keys.add(k)
-            
-        # Batch Data
-        elif "category" in k_norm or "breakdown" in k_norm:
-            batch_data["category_breakdown"] = v
-            processed_raw_keys.add(k)
-        elif "shipping" in k_norm or "size" in k_norm:
-            batch_data["shipping_size"] = v
-            processed_raw_keys.add(k)
-        elif "condition" in k_norm:
-            batch_data["stock_condition"] = v
-            processed_raw_keys.add(k)
-        elif "age" in k_norm:
-            batch_data["inventory_age"] = v
-            processed_raw_keys.add(k)
-        elif "sku" in k_norm or "distinct" in k_norm:
-            batch_data["distinct_skus"] = v
-            processed_raw_keys.add(k)
-        elif "unit" in k_norm or "quantity" in k_norm or "total" in k_norm:
-            batch_data["total_units"] = v
-            processed_raw_keys.add(k)
-        elif "brand" in k_norm:
-            batch_data["key_brands"] = v
-            processed_raw_keys.add(k)
-        elif "note" in k_norm or "packaging" in k_norm:
-            batch_data["notes"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("msrp", "retail_price"):
-            batch_data["msrp"] = v
-            processed_raw_keys.add(k)
-        elif k_norm == "currency":
-            batch_data["currency"] = v
-            processed_raw_keys.add(k)
-        elif "liquidation" in k_norm or "target_price" in k_norm:
-            batch_data["liquidation_price"] = v
-            processed_raw_keys.add(k)
-        elif "offer" in k_norm or "open_to" in k_norm:
-            batch_data["open_to_offer"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("media", "image", "images", "video", "videos", "product_image", "warehouse_image"):
-            batch_data["media"] = v
-            processed_raw_keys.add(k)
-            
-    vendor = enquiry.vendor
-    if not vendor:
-        raw_vid = enquiry.raw_data.get("vendor_id") or enquiry.raw_data.get("user_id")
-        if raw_vid:
-            v_clean = str(raw_vid).strip()
-            if v_clean.upper().startswith("USR-"):
-                v_clean = v_clean[4:].strip()
-            if v_clean.isdigit():
-                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
-            if not vendor:
-                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
-            if vendor and hasattr(enquiry, 'vendor'):
-                enquiry.vendor = vendor
-                enquiry.save(update_fields=["vendor"])
-
-    if vendor:
-        user_data["vendor_id"] = vendor.vendor_id
-        user_data["raw_vendor_id"] = vendor.id
-        user_data["user_id"] = vendor.vendor_id
-        user_data["raw_user_id"] = vendor.id
-        user_data["full_name"] = vendor.full_name or "N/A"
-        user_data["phone_no"] = vendor.mobile_number or "N/A"
-        user_data["email"] = vendor.email or "N/A"
-        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
-        user_data["business_location"] = vendor.business_location or "N/A"
-        if vendor.category_interested:
-            user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
-        elif vendor.business_type:
-            user_data["industry"] = vendor.business_type
-    else:
-        user_data["vendor_id"] = "N/A"
-        user_data["user_id"] = "N/A"
-        user_data["business_location"] = "N/A"
-        user_data["industry"] = "N/A"
-
-    context["user_data"] = user_data
-    context["batch_data"] = batch_data
-    
-    from .models import LotProduct
+    # Extract Products list
     db_products = list(LotProduct.objects.filter(lot=enquiry).order_by("id"))
     is_saved_to_db = len(db_products) > 0 or bool(enquiry.raw_data.get("is_saved_to_db"))
 
@@ -1988,7 +1955,146 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     context["products"] = products_list
     context["is_saved_to_db"] = is_saved_to_db
-    context["extra_data"] = {k: v for k, v in enquiry.raw_data.items() if k not in processed_raw_keys and k not in ("products", "manifest_items")}
+
+    # User / Vendor Data
+    vendor = enquiry.vendor
+    if not vendor:
+        raw_vid = combined_raw.get("vendor_id") or combined_raw.get("user_id") or enquiry.raw_data.get("vendor_id")
+        if raw_vid:
+            v_clean = _clean_val(raw_vid) or ""
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor and raw_vid:
+                vendor = VendorDetails.objects.filter(email__iexact=str(_clean_val(raw_vid)).strip()).first()
+            if vendor and hasattr(enquiry, 'vendor'):
+                enquiry.vendor = vendor
+                enquiry.save(update_fields=["vendor"])
+
+    user_data = {
+        "full_name": None,
+        "phone_no": None,
+        "email": None,
+        "company": None,
+        "business_location": _clean_val(enquiry.inventory_location) or _clean_val(combined_raw.get("business_location")) or _clean_val(combined_raw.get("inventory_location")),
+        "industry": None
+    }
+
+    if vendor:
+        user_data["vendor_id"] = vendor.user_id
+        user_data["raw_vendor_id"] = vendor.id
+        user_data["user_id"] = vendor.user_id
+        user_data["raw_user_id"] = vendor.id
+        user_data["full_name"] = vendor.full_name or _clean_val(combined_raw.get("full_name")) or _clean_val(combined_raw.get("contact_person")) or "N/A"
+        user_data["phone_no"] = vendor.mobile_number or _clean_val(combined_raw.get("phone_no")) or _clean_val(combined_raw.get("phone")) or "N/A"
+        user_data["email"] = vendor.email or _clean_val(combined_raw.get("email")) or "N/A"
+        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else _clean_val(combined_raw.get("company")) or "N/A")
+        user_data["business_location"] = vendor.business_location or user_data["business_location"] or "N/A"
+        if vendor.category_interested:
+            user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
+        elif vendor.business_type:
+            user_data["industry"] = vendor.business_type
+        else:
+            user_data["industry"] = _clean_val(combined_raw.get("industry")) or "N/A"
+    else:
+        user_data["vendor_id"] = _clean_val(combined_raw.get("vendor_id")) or _clean_val(combined_raw.get("user_id")) or "N/A"
+        user_data["user_id"] = user_data["vendor_id"]
+        user_data["full_name"] = _clean_val(combined_raw.get("full_name")) or _clean_val(combined_raw.get("contact_person")) or _clean_val(combined_raw.get("name")) or "N/A"
+        user_data["phone_no"] = _clean_val(combined_raw.get("phone_no")) or _clean_val(combined_raw.get("phone")) or _clean_val(combined_raw.get("contact_number")) or "N/A"
+        user_data["email"] = _clean_val(combined_raw.get("email")) or "N/A"
+        user_data["company"] = _clean_val(combined_raw.get("company")) or _clean_val(combined_raw.get("company_name")) or "N/A"
+        user_data["business_location"] = user_data["business_location"] or "N/A"
+        user_data["industry"] = _clean_val(combined_raw.get("industry")) or "N/A"
+
+    context["user_data"] = user_data
+
+    # Batch Data Construction
+    # Category Breakdown
+    cat_val = enquiry.category_name or (enquiry.category.name if enquiry.category else None)
+    if not cat_val and enquiry.category_allocations:
+        if isinstance(enquiry.category_allocations, list):
+            cats = []
+            for c in enquiry.category_allocations:
+                if isinstance(c, dict) and c.get("category"):
+                    pct = c.get("percentage")
+                    cats.append(f"{c['category']} ({pct}%)" if pct else c['category'])
+                elif isinstance(c, str):
+                    cats.append(c)
+            if cats:
+                cat_val = ", ".join(cats)
+    if not cat_val:
+        cat_val = combined_raw.get("category_breakdown") or combined_raw.get("primary_category") or combined_raw.get("category_allocations") or combined_raw.get("category") or combined_raw.get("subcategory")
+
+    # Distinct SKUs & Total Units
+    skus_val = enquiry.number_of_distinct_skus if enquiry.number_of_distinct_skus else (combined_raw.get("number_of_distinct_skus") or combined_raw.get("distinct_skus") or combined_raw.get("skus"))
+    units_val = enquiry.total_units_quantity if enquiry.total_units_quantity else (combined_raw.get("total_units_quantity") or combined_raw.get("total_units") or combined_raw.get("total_quantity") or combined_raw.get("quantity") or combined_raw.get("units"))
+
+    skus_clean = _clean_val(skus_val)
+    if (not skus_clean or skus_clean == "0") and products_list:
+        skus_clean = str(len(products_list))
+
+    units_clean = _clean_val(units_val)
+    if (not units_clean or units_clean == "0") and products_list:
+        tot_q = 0
+        for p in products_list:
+            try:
+                tot_q += int(p.get("quantity") or p.get("available_quantity") or 0)
+            except (ValueError, TypeError):
+                pass
+        if tot_q > 0:
+            units_clean = str(tot_q)
+
+    # MSRP & Liquidation Price
+    msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price") or enquiry.total_price)
+    liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price") or enquiry.total_price)
+
+    # Media URL
+    media_url = _extract_media_url(enquiry.product_and_warehouse_images_or_videos) or _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
+
+    batch_data = {
+        "category_breakdown": _clean_val(cat_val),
+        "shipping_size": _clean_val(enquiry.shipping_size or enquiry.lot_size or combined_raw.get("shipping_size") or combined_raw.get("lot_size") or combined_raw.get("load_type") or combined_raw.get("pallet_count")),
+        "stock_condition": _clean_val(enquiry.condition or combined_raw.get("stock_condition") or combined_raw.get("condition") or combined_raw.get("product_condition")),
+        "inventory_age": _clean_val(enquiry.inventory_stock_age or combined_raw.get("inventory_stock_age") or combined_raw.get("inventory_age") or combined_raw.get("stock_age") or combined_raw.get("age")),
+        "distinct_skus": skus_clean,
+        "total_units": units_clean,
+        "key_brands": _clean_val(enquiry.key_brands_included or combined_raw.get("key_brands_included") or combined_raw.get("key_brands") or combined_raw.get("brands") or combined_raw.get("brand")),
+        "notes": _clean_val(enquiry.reason_to_sell or enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
+        "msrp": _clean_val(msrp_val),
+        "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
+        "liquidation_price": _clean_val(liq_val),
+        "open_to_offer": bool(enquiry.allow_counter_offers),
+        "media": media_url
+    }
+
+    context["batch_data"] = batch_data
+
+    # Extra Data dynamic fields
+    ignore_keys = {
+        "products", "manifest_items", "manifest_file", "lot_details", "details",
+        "is_saved_to_db", "parse_summary", "is_valid", "row_errors", "missing_mandatory_columns",
+        "file_url", "file", "document", "excel_file", "media_files", "product_and_warehouse_images_or_videos",
+        "category_allocations", "excluded_export_countries", "third_party_documents",
+        "full_name", "name", "contact_person", "phone", "phone_no", "phone_number", "email", "e_mail",
+        "company", "company_name", "vendor_id", "user_id", "location", "inventory_location", "business_location", "industry",
+        "title", "lot_title", "description", "notes", "reason_to_sell", "category", "category_name", "primary_category",
+        "category_breakdown", "stock_condition", "condition", "inventory_age", "inventory_stock_age", "age",
+        "distinct_skus", "number_of_distinct_skus", "total_units", "total_units_quantity", "quantity", "units",
+        "key_brands", "key_brands_included", "brands", "brand", "shipping_size", "lot_size", "load_type", "pallet_count",
+        "msrp", "total_est_retail_value_msrp", "retail_price", "liquidation_price", "ask_price_surplus_payout", "target_price",
+        "asking_price", "open_to_offer", "allow_counter_offers", "currency", "media", "images", "image", "raw_vendor_id", "raw_user_id"
+    }
+
+    extra_data = {}
+    for k, v in combined_raw.items():
+        k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
+        if k_norm not in ignore_keys and str(k) not in ignore_keys:
+            v_cleaned = _clean_val(v)
+            if v_cleaned is not None and not isinstance(v_cleaned, (dict, list)):
+                extra_data[k] = v_cleaned
+
+    context["extra_data"] = extra_data
 
     return render(request, "lot_enquiry_detail.html", context)
 
