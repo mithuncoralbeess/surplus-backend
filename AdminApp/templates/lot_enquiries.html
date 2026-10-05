@@ -149,9 +149,8 @@
                     </td>
                     <td style="white-space: nowrap;">
                         {% if item.file %}
-                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 fw-medium text-nowrap" style="font-size: 0.78rem; white-space: nowrap; margin-left: 2px; margin-right: 2px;">
-                            <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
-                            <span>Download</span>
+                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1.5 rounded-2" title="Download Excel Manifest File" style="margin-left: 2px; margin-right: 2px;">
+                            <i class="bi bi-file-earmark-spreadsheet-fill text-success fs-6"></i>
                             <i class="bi bi-download small"></i>
                         </a>
                         {% else %}
