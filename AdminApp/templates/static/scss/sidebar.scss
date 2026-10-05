@@ -1375,6 +1375,44 @@ input[type="reset"] {
         }
     }
 
+    .lot-date-time {
+        font-size: 0.72rem;
+        white-space: nowrap;
+
+        @media (min-width: 1200px) {
+            font-size: 0.75rem;
+        }
+
+        @media (min-width: 1440px) {
+            font-size: 0.78rem;
+        }
+
+        @media (min-width: 1600px) {
+            font-size: 0.85rem;
+        }
+    }
+
+    .lot-status-badge {
+        font-size: 11px;
+        padding: 0.25rem 0.5rem;
+        white-space: nowrap;
+
+        @media (min-width: 1200px) {
+            font-size: 11.5px;
+            padding: 0.28rem 0.55rem;
+        }
+
+        @media (min-width: 1440px) {
+            font-size: 12px;
+            padding: 0.3rem 0.6rem;
+        }
+
+        @media (min-width: 1600px) {
+            font-size: 14px;
+            padding: 0.35rem 0.75rem;
+        }
+    }
+
     .page-title-text {
         font-weight: 600;
         font-size: 0.96rem;

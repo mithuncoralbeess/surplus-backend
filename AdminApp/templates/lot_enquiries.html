@@ -149,17 +149,17 @@
                     </td>
                     <td style="white-space: nowrap;">
                         {% if item.file %}
-                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 fw-medium text-nowrap" style="font-size: 0.78rem; white-space: nowrap;">
+                        <a href="{{ item.file.url }}" target="_blank" download class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1.5 px-2.5 py-1 fw-medium text-nowrap" style="font-size: 0.78rem; white-space: nowrap; margin-left: 2px; margin-right: 2px;">
                             <i class="bi bi-file-earmark-spreadsheet-fill text-success"></i>
-                            <span>Download File</span>
+                            <span>Download</span>
                             <i class="bi bi-download small"></i>
                         </a>
                         {% else %}
-                        <span class="badge bg-light text-muted fw-normal text-nowrap" style="font-size: 0.75rem; white-space: nowrap;">No file attached</span>
+                        <span class="badge bg-light text-muted fw-normal text-nowrap" style="font-size: 0.75rem; white-space: nowrap; margin-left: 2px; margin-right: 2px;">No file attached</span>
                         {% endif %}
                     </td>
                     <td style="white-space: nowrap;">
-                        <div class="d-flex align-items-center gap-1.5 text-secondary text-nowrap" style="font-size: 0.82rem; white-space: nowrap;">
+                        <div class="d-flex align-items-center gap-1.5 text-secondary text-nowrap lot-date-time" style="white-space: nowrap;">
                             <i class="bi bi-calendar3 text-muted"></i>
                             <span>{{ item.created_at|date:"M d, Y" }}</span>
                             <span class="text-muted">•</span>
@@ -169,15 +169,15 @@
                     </td>
                     <td style="white-space: nowrap;">
                         {% if item.enquiry_status|lower == 'approved' %}
-                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
+                        <span class="badge bg-success-subtle text-success rounded-pill fw-semibold text-nowrap lot-status-badge" id="status-badge-{{ item.id }}" style="white-space: nowrap;">
                             <i class="bi bi-check-circle-fill me-1"></i>Approved
                         </span>
                         {% elif item.enquiry_status|lower == 'declined' %}
-                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
+                        <span class="badge bg-danger-subtle text-danger rounded-pill fw-semibold text-nowrap lot-status-badge" id="status-badge-{{ item.id }}" style="white-space: nowrap;">
                             <i class="bi bi-x-circle-fill me-1"></i>Declined
                         </span>
                         {% else %}
-                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px; white-space: nowrap;">
+                        <span class="badge bg-warning-subtle text-warning rounded-pill fw-semibold text-nowrap lot-status-badge" id="status-badge-{{ item.id }}" style="white-space: nowrap;">
                             <i class="bi bi-hourglass-split me-1"></i>Pending
                         </span>
                         {% endif %}

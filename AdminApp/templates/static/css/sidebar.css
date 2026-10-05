@@ -1366,6 +1366,56 @@ input[type="reset"]:focus-visible {
   border-bottom: none;
 }
 
+.content-data-table .lot-date-time {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+  .content-data-table .lot-date-time {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-data-table .lot-date-time {
+    font-size: 0.78rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-data-table .lot-date-time {
+    font-size: 0.85rem;
+  }
+}
+
+.content-data-table .lot-status-badge {
+  font-size: 11px;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 1200px) {
+  .content-data-table .lot-status-badge {
+    font-size: 11.5px;
+    padding: 0.28rem 0.55rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content-data-table .lot-status-badge {
+    font-size: 12px;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .content-data-table .lot-status-badge {
+    font-size: 14px;
+    padding: 0.35rem 0.75rem;
+  }
+}
+
 .content-data-table .page-title-text {
   font-weight: 600;
   font-size: 0.96rem;
