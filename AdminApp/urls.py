@@ -119,6 +119,7 @@ urlpatterns = [
     path("enquiries/lots/<str:status_filter>/", lot_enquiries_view, name="lot_enquiries_filtered"),
     path("api/enquiries/lots/<int:enquiry_id>/status/", lot_enquiry_status_api, name="lot_enquiry_status_api"),
     path("api/enquiries/lots/<int:enquiry_id>/edit/", lot_enquiry_edit_api, name="lot_enquiry_edit_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/upload-manifest/", upload_lot_manifest_api, name="upload_lot_manifest_api"),
     path("api/enquiries/lots/<int:enquiry_id>/save-products/", save_lot_products_api, name="save_lot_products_api"),
     # User Management (Registered Users List without RFQs/Products)
     path("users/", manage_users_view, name="manage_users"),

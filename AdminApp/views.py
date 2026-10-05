@@ -1685,19 +1685,42 @@ def seller_enquiry_detail_view(request, enquiry_id):
 @api_view(["POST", "PUT"])
 def lot_enquiry_edit_api(request, enquiry_id):
     """
-    Admin API to update Lot batch details from detail view.
+    Admin API to update Lot batch details, vendor information, specifications, and optional manifest file upload.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    from .models import Lot, SubCategory
+    from .models import Lot, SubCategory, VendorDetails
     try:
         lot = Lot.objects.get(id=enquiry_id)
     except Lot.DoesNotExist:
         return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    data = request.data
+    data = request.data or request.POST
+
+    # File upload check in edit form
+    file_obj = request.FILES.get("file") or request.FILES.get("excel_file") or request.FILES.get("manifest")
+    if file_obj:
+        lot.file = file_obj
+        try:
+            from lots.importer import parse_spreadsheet
+            file_obj.seek(0)
+            parse_res = parse_spreadsheet(file_obj)
+            parsed_items = parse_res.get("all_items", [])
+            if parsed_items:
+                if not isinstance(lot.raw_data, dict):
+                    lot.raw_data = {}
+                lot.raw_data["products"] = parsed_items
+                lot.raw_data["is_saved_to_db"] = False
+                lot.number_of_distinct_skus = len(parsed_items)
+                tot_u = sum(int(p.get("quantity") or p.get("available_quantity") or 0) for p in parsed_items if str(p.get("quantity") or p.get("available_quantity") or "0").isdigit())
+                if tot_u > 0:
+                    lot.total_units_quantity = tot_u
+        except Exception as e:
+            print(f"Error re-parsing uploaded lot spreadsheet: {e}")
+
+    # Basic info
     if "title" in data and str(data["title"]).strip():
         lot.title = str(data["title"]).strip()
     if "total_price" in data and data["total_price"] not in (None, ""):
@@ -1705,10 +1728,55 @@ def lot_enquiry_edit_api(request, enquiry_id):
             lot.total_price = float(data["total_price"])
         except (ValueError, TypeError):
             pass
-    if "currency" in data:
+    if "msrp" in data and data["msrp"] not in (None, ""):
+        try:
+            lot.total_est_retail_value_msrp = float(data["msrp"])
+        except (ValueError, TypeError):
+            pass
+    if "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
+        try:
+            lot.ask_price_surplus_payout = float(data["liquidation_price"])
+        except (ValueError, TypeError):
+            pass
+    if "currency" in data and str(data["currency"]).strip():
         lot.currency = str(data["currency"]).strip()
     if "inventory_location" in data:
         lot.inventory_location = str(data["inventory_location"]).strip()
+
+    # Specifications & Logistics
+    if "condition" in data:
+        lot.condition = str(data["condition"]).strip()
+    if "inventory_stock_age" in data:
+        lot.inventory_stock_age = str(data["inventory_stock_age"]).strip()
+    if "key_brands" in data or "key_brands_included" in data:
+        lot.key_brands_included = str(data.get("key_brands") or data.get("key_brands_included")).strip()
+    if "distinct_skus" in data or "number_of_distinct_skus" in data:
+        try:
+            val = data.get("distinct_skus") or data.get("number_of_distinct_skus")
+            if val not in (None, ""):
+                lot.number_of_distinct_skus = int(val)
+        except (ValueError, TypeError):
+            pass
+    if "total_units" in data or "total_units_quantity" in data:
+        try:
+            val = data.get("total_units") or data.get("total_units_quantity")
+            if val not in (None, ""):
+                lot.total_units_quantity = int(val)
+        except (ValueError, TypeError):
+            pass
+    if "shipping_size" in data:
+        lot.shipping_size = str(data["shipping_size"]).strip()
+    if "shipping_terms" in data:
+        lot.shipping_terms = str(data["shipping_terms"]).strip()
+    if "total_weight" in data:
+        lot.total_weight = str(data["total_weight"]).strip()
+    if "load_type" in data:
+        lot.load_type = str(data["load_type"]).strip()
+    if "allow_counter_offers" in data or "open_to_offer" in data:
+        val = data.get("allow_counter_offers") or data.get("open_to_offer")
+        lot.allow_counter_offers = str(val).lower() in ("true", "1", "yes", "on")
+
+    # Category
     if "subcategory_id" in data and data["subcategory_id"]:
         try:
             sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
@@ -1719,6 +1787,7 @@ def lot_enquiry_edit_api(request, enquiry_id):
     elif "category_name" in data and str(data["category_name"]).strip():
         lot.category_name = str(data["category_name"]).strip()
 
+    # Notes & Description
     if "reason_to_sell" in data:
         lot.reason_to_sell = str(data["reason_to_sell"]).strip()
     if "description" in data:
@@ -1739,17 +1808,38 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.is_active = bool(data["is_active"])
         lot.active_status = "active" if lot.is_active else "inactive"
 
+    # Vendor Details
+    if lot.vendor:
+        v_updated = False
+        if "company" in data and str(data["company"]).strip():
+            lot.vendor.company_name = str(data["company"]).strip()
+            v_updated = True
+        if "full_name" in data or "contact_person" in data:
+            val = str(data.get("full_name") or data.get("contact_person")).strip()
+            if val:
+                lot.vendor.full_name = val
+                v_updated = True
+        if "phone_no" in data or "phone" in data:
+            val = str(data.get("phone_no") or data.get("phone")).strip()
+            if val:
+                lot.vendor.mobile_number = val
+                v_updated = True
+        if "email" in data and str(data["email"]).strip():
+            lot.vendor.email = str(data["email"]).strip()
+            v_updated = True
+        if "business_location" in data and str(data["business_location"]).strip():
+            lot.vendor.business_location = str(data["business_location"]).strip()
+            v_updated = True
+        if v_updated:
+            lot.vendor.save()
+
     if not isinstance(lot.raw_data, dict):
         lot.raw_data = {}
 
-    if "title" in data:
-        lot.raw_data["title"] = lot.title
-    if "total_price" in data:
-        lot.raw_data["liquidation_price"] = lot.total_price
-    if "reason_to_sell" in data:
-        lot.raw_data["notes"] = lot.reason_to_sell
-    if "description" in data:
-        lot.raw_data["description"] = lot.description
+    lot.raw_data["title"] = lot.title
+    lot.raw_data["liquidation_price"] = lot.total_price
+    lot.raw_data["notes"] = lot.reason_to_sell
+    lot.raw_data["description"] = lot.description
 
     lot.save()
 
@@ -1757,6 +1847,70 @@ def lot_enquiry_edit_api(request, enquiry_id):
         "success": True,
         "message": "Lot batch details updated successfully.",
         "batch_id": lot.lot_number
+    })
+
+
+@api_view(["POST"])
+def upload_lot_manifest_api(request, enquiry_id):
+    """
+    Admin API to upload or re-upload an Excel/CSV manifest file for a Lot enquiry batch.
+    Saves file to enquiry.file and auto-parses extracted products.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Lot, LotProduct
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    file_obj = (
+        request.FILES.get("file")
+        or request.FILES.get("excel_file")
+        or request.FILES.get("manifest")
+        or request.FILES.get("spreadsheet")
+    )
+    if not file_obj:
+        return Response({"success": False, "message": "No manifest file was selected."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Save file to lot model
+    lot.file = file_obj
+    lot.save(update_fields=["file"])
+
+    parsed_items = []
+    try:
+        from lots.importer import parse_spreadsheet
+        file_obj.seek(0)
+        parse_res = parse_spreadsheet(file_obj)
+        parsed_items = parse_res.get("all_items", [])
+    except Exception as e:
+        print(f"Error parsing uploaded excel manifest: {e}")
+
+    if not isinstance(lot.raw_data, dict):
+        lot.raw_data = {}
+
+    if parsed_items:
+        lot.raw_data["products"] = parsed_items
+        lot.raw_data["is_saved_to_db"] = False
+        lot.number_of_distinct_skus = len(parsed_items)
+
+        tot_units = 0
+        for p in parsed_items:
+            try:
+                tot_units += int(p.get("quantity") or p.get("available_quantity") or 0)
+            except (ValueError, TypeError):
+                pass
+        if tot_units > 0:
+            lot.total_units_quantity = tot_units
+
+        lot.save(update_fields=["raw_data", "number_of_distinct_skus", "total_units_quantity"])
+
+    return Response({
+        "success": True,
+        "message": f"Manifest uploaded successfully! Extracted {len(parsed_items)} product rows.",
+        "products_extracted": len(parsed_items)
     })
 
 
