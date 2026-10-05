@@ -32,6 +32,7 @@ from .views import (
     seller_enquiry_edit_api,
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
+    upload_lot_manifest_api,
     save_lot_products_api,
     manage_users_view,
     delete_user_api,
