@@ -438,7 +438,6 @@ class SellerProductEnquiry(models.Model):
     discount_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     stock_quantity = models.PositiveIntegerField(default=0)
     brand = models.CharField(max_length=255, blank=True, default="")
-    category_name = models.CharField(max_length=255, blank=True, default="")  # Using name since they might not pick an exact SubCategory ID in the form initially
     inventory_location = models.CharField(max_length=255, blank=True, default="")
     manufacturing_country = models.CharField(max_length=100, blank=True, default="")
     manufacturing_year = models.PositiveIntegerField(null=True, blank=True)
@@ -446,7 +445,6 @@ class SellerProductEnquiry(models.Model):
     expiry_date = models.DateField(null=True, blank=True)
     currency = models.CharField(max_length=10, default="USD")
     excluded_countries = models.JSONField(default=list, blank=True)
-    reason_to_sell = models.TextField(blank=True, default="")
     warranty = models.CharField(max_length=255, blank=True, default="")
     third_party_certificate = models.FileField(upload_to="enquiries/certificates/", null=True, blank=True)
     image = models.ImageField(upload_to="enquiries/images/", null=True, blank=True)
@@ -604,11 +602,9 @@ class LotBatchEnquiry(models.Model):
     # Explicit fields for the Lot itself
     title = models.CharField(max_length=255, blank=True, default="")
     description = models.TextField(blank=True, default="")
-    category_name = models.CharField(max_length=255, blank=True, default="")
     inventory_location = models.CharField(max_length=255, blank=True, default="")
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     currency = models.CharField(max_length=50, default="USD")
-    reason_to_sell = models.TextField(blank=True, default="")
 
     # Extended structured fields matching frontend lot payload
     key_brands_included = models.TextField(blank=True, default="")
@@ -634,7 +630,6 @@ class LotBatchEnquiry(models.Model):
     allow_counter_offers = models.BooleanField(default=True)
     excluded_export_countries = models.JSONField(default=list, blank=True)
     sale_method = models.CharField(max_length=50, blank=True, default="offer")
-    manifest_file_info = models.JSONField(default=dict, blank=True)
     
     enquiry_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
     active_status = models.CharField(max_length=20, choices=ACTIVE_STATUS_CHOICES, default="inactive", db_index=True)
@@ -756,11 +751,9 @@ class Lot(models.Model):
     description = models.TextField(blank=True, default="")
     
     category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="lots")
-    category_name = models.CharField(max_length=255, blank=True, default="")
     inventory_location = models.CharField(max_length=255, blank=True, default="")
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     currency = models.CharField(max_length=50, default="USD")
-    reason_to_sell = models.TextField(blank=True, default="")
     
     # Extended structured fields matching frontend lot payload
     key_brands_included = models.TextField(blank=True, default="")
@@ -786,7 +779,6 @@ class Lot(models.Model):
     allow_counter_offers = models.BooleanField(default=True)
     excluded_export_countries = models.JSONField(default=list, blank=True)
     sale_method = models.CharField(max_length=50, blank=True, default="offer")
-    manifest_file_info = models.JSONField(default=dict, blank=True)
 
     file = models.FileField(upload_to="lot_enquiries/%Y/%m/", null=True, blank=True)
     enquiry_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", db_index=True)
@@ -923,7 +915,6 @@ class Product(models.Model):
     offer = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Offer / discount percentage")
     
     description = models.TextField(blank=True, default="")
-    reason_to_sell = models.TextField(blank=True, default="")
     warranty = models.CharField(max_length=255, blank=True, default="")
     warranty_attachment = models.CharField(max_length=1000, blank=True, default="", help_text="Cloudflare S3 PDF link")
     

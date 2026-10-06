@@ -1426,16 +1426,6 @@ def submit_lot_request(request):
         data["title"] = title_val
         data["description"] = desc_val
 
-        # Auto-extract primary category_name from category_allocations if not explicitly set
-        if not data.get("category_name") and "category_allocations" in data:
-            cats = data.get("category_allocations")
-            if isinstance(cats, str):
-                try:
-                    cats = json.loads(cats)
-                except Exception:
-                    cats = []
-            if isinstance(cats, list) and len(cats) > 0 and isinstance(cats[0], dict):
-                data["category_name"] = cats[0].get("category", "")
 
         # Set total_price from ask_price_surplus_payout if available
         ask_price = data.get("ask_price_surplus_payout")
@@ -1451,15 +1441,6 @@ def submit_lot_request(request):
         elif "file" in request.FILES:
             data["file"] = request.FILES["file"]
 
-        # Manifest file info (if JSON object)
-        manifest_info = data.get("manifest_file")
-        if isinstance(manifest_info, str):
-            try:
-                manifest_info = json.loads(manifest_info)
-            except Exception:
-                pass
-        if isinstance(manifest_info, dict):
-            data["manifest_file_info"] = manifest_info
 
         # Helper to convert arbitrary data structures into clean JSON-serializable primitives
         def _clean_json_val(val):
@@ -1531,8 +1512,36 @@ def submit_lot_request(request):
         return Response({
             "success": False,
             "message": f"Error processing lot request: {str(exc)}",
-            "error": str(exc)
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def public_lot_detail_api(request, lot_id):
+    """
+    Public GET API to fetch a single Lot listing with all model fields.
+    Supports lookup by numeric ID (e.g. /api/lots/6/) or lot_number (e.g. /api/lots/LOT-00006/).
+    """
+    from AdminApp.models import Lot
+    from AdminApp.serializers import LotSerializer
+    from django.db.models import Q
+
+    try:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.get(Q(id=int(lot_id)) | Q(lot_number__iexact=str(lot_id)))
+        else:
+            lot = Lot.objects.get(lot_number__iexact=str(lot_id))
+    except Lot.DoesNotExist:
+        return Response(
+            {"success": False, "message": f"Lot '{lot_id}' not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = LotSerializer(lot)
+    return Response({
+        "success": True,
+        "lot": serializer.data,
+        "data": serializer.data
+    }, status=status.HTTP_200_OK)
 
 
 from datetime import timedelta

@@ -259,7 +259,6 @@ class LotSerializer(serializers.ModelSerializer):
     vendor_id = serializers.SerializerMethodField()
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
-    manifest_file = serializers.JSONField(source="manifest_file_info", required=False)
 
     class Meta:
         from .models import Lot
@@ -290,7 +289,6 @@ class LotSerializer(serializers.ModelSerializer):
             "lot_size",
             "pallet_count",
             "shipping_terms",
-            "category_name",
             "total_price",
             "currency",
             "total_est_retail_value_msrp",
@@ -299,15 +297,13 @@ class LotSerializer(serializers.ModelSerializer):
             "allow_counter_offers",
             "excluded_export_countries",
             "sale_method",
-            "manifest_file",
-            "manifest_file_info",
-            "reason_to_sell",
             "file",
             "file_url",
             "products",
             "enquiry_status",
             "active_status",
             "is_active",
+            "views_count",
             "raw_data",
             "created_at",
             "created_at_formatted",
@@ -323,6 +319,21 @@ class LotSerializer(serializers.ModelSerializer):
         return ""
 
     def get_products(self, obj):
+        if hasattr(obj, 'products'):
+            try:
+                db_prods = list(obj.products.all())
+                if db_prods:
+                    prod_list = []
+                    for p in db_prods:
+                        p_dict = dict(p.raw_data or {})
+                        p_dict["product_id"] = p.product_id
+                        p_dict["product_name"] = p.product_name or p_dict.get("product_name") or p_dict.get("title") or "-"
+                        p_dict["quantity"] = p.quantity or p_dict.get("available_quantity") or 0
+                        p_dict["condition"] = p.condition or p_dict.get("product_condition") or "Surplus"
+                        prod_list.append(p_dict)
+                    return prod_list
+            except Exception:
+                pass
         if isinstance(obj.raw_data, dict):
             return obj.raw_data.get("products", []) or obj.raw_data.get("manifest_items", [])
         return []
@@ -374,7 +385,7 @@ class LotSerializer(serializers.ModelSerializer):
             'key_brands_included', 'condition', 'source_type', 'inventory_stock_age',
             'primary_unit_type', 'total_weight', 'load_type', 'shipping_size',
             'lot_size', 'shipping_terms', 'currency', 'offer', 'sale_method',
-            'reason_to_sell', 'category_name', 'inventory_location'
+            'inventory_location'
         ]
         for field in str_fields:
             if field in data_copy and data_copy[field] is None:
@@ -389,11 +400,6 @@ class LotSerializer(serializers.ModelSerializer):
         for field in json_list_fields:
             if field in data_copy and data_copy[field] is None:
                 data_copy[field] = []
-
-        json_dict_fields = ['manifest_file_info', 'manifest_file']
-        for field in json_dict_fields:
-            if field in data_copy and data_copy[field] is None:
-                data_copy[field] = {}
 
         for field in ['third_party_certificate_available', 'allow_counter_offers']:
             if field in data_copy and data_copy[field] is None:
@@ -429,50 +435,24 @@ class LotSerializer(serializers.ModelSerializer):
             if not isinstance(v_val, int) and not (isinstance(v_val, str) and v_val.isdigit()):
                 data_copy.pop('vendor', None)
 
-        # Clean category field: resolve SubCategory object if int/id, else set category_name
+        # Clean category field: resolve SubCategory object if int/id
         if 'category' in data_copy:
             cat_val = data_copy['category']
             if isinstance(cat_val, str):
                 if cat_val.isdigit():
                     data_copy['category'] = int(cat_val)
                 else:
-                    if not data_copy.get('category_name'):
-                        data_copy['category_name'] = cat_val
                     data_copy.pop('category', None)
             elif isinstance(cat_val, dict):
                 cat_id = cat_val.get('id')
                 if cat_id and str(cat_id).isdigit():
                     data_copy['category'] = int(cat_id)
                 else:
-                    if cat_val.get('name') and not data_copy.get('category_name'):
-                        data_copy['category_name'] = cat_val['name']
                     data_copy.pop('category', None)
-
-        # Handle manifest_file / manifest aliases (could be dict, stringified JSON, or uploaded file object)
-        for mf_key in ['manifest_file', 'manifest', 'manifest_file_info']:
-            if mf_key in data_copy:
-                mf = data_copy[mf_key]
-                if hasattr(mf, 'read'):
-                    if 'file' not in data_copy or not data_copy.get('file'):
-                        data_copy['file'] = mf
-                elif isinstance(mf, str):
-                    try:
-                        parsed = json.loads(mf)
-                        if isinstance(parsed, dict) and ('manifest_file_info' not in data_copy or not data_copy.get('manifest_file_info')):
-                            data_copy['manifest_file_info'] = parsed
-                    except Exception:
-                        pass
-                elif isinstance(mf, dict) and ('manifest_file_info' not in data_copy or not data_copy.get('manifest_file_info')):
-                    data_copy['manifest_file_info'] = mf
 
         # Fallback default title if still empty
         if 'title' not in data_copy or not str(data_copy.get('title', '')).strip():
-            manifest_info = data_copy.get('manifest_file_info', {})
-            fname = manifest_info.get('file_name', '') if isinstance(manifest_info, dict) else ''
-            if fname:
-                data_copy['title'] = f"Surplus Lot ({fname})"
-            else:
-                data_copy['title'] = "Surplus Lot Inventory Package"
+            data_copy['title'] = "Surplus Lot Inventory Package"
 
         # Clean and parse decimal fields with alias support
         price_aliases = ['ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
@@ -513,7 +493,7 @@ class LotSerializer(serializers.ModelSerializer):
                 data_copy['pallet_count'] = _parse_int(data_copy[pal_alias])
 
         # Parse stringified JSON fields if passed from FormData
-        for field in json_list_fields + ['manifest_file_info']:
+        for field in json_list_fields:
             if field in data_copy and isinstance(data_copy[field], str):
                 val_str = data_copy[field].strip()
                 if val_str:
