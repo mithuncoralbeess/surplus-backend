@@ -2249,7 +2249,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
                 cleaned_products.append(item)
 
     context["products"] = cleaned_products
-    context["is_saved_to_db"] = is_saved_to_db
+    context["is_saved_to_db"] = len(cleaned_products) > 0 and is_saved_to_db
 
     # User / Vendor Data
     vendor = enquiry.vendor

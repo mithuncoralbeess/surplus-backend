@@ -392,15 +392,17 @@
                         </button>
                         {% endif %}
 
-                        {% if is_saved_to_db %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.82rem;">
-                            <i class="bi bi-database-check me-1"></i> Saved to Database
+                        <span id="db-status-container">
+                            {% if is_saved_to_db %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.82rem;">
+                                <i class="bi bi-database-check me-1"></i> Saved to Database
+                            </span>
+                            {% else %}
+                            <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
+                                <i class="bi bi-database-add fs-6"></i> Save Products to Database
+                            </button>
+                            {% endif %}
                         </span>
-                        {% else %}
-                        <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
-                            <i class="bi bi-database-add fs-6"></i> Save Products to Database
-                        </button>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -547,6 +549,15 @@
 
             const previewAlert = document.getElementById('preview-alert-container');
             if (previewAlert) previewAlert.classList.remove('d-none');
+
+            const dbStatusContainer = document.getElementById('db-status-container');
+            if (dbStatusContainer) {
+                dbStatusContainer.innerHTML = `
+                    <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
+                        <i class="bi bi-database-add fs-6"></i> Save Products to Database
+                    </button>
+                `;
+            }
 
             if (!container) return;
             if (!items || items.length === 0) {
@@ -754,47 +765,48 @@
             });
         }
 
-        // Save Products to DB Handler
-        document.querySelectorAll('.btn-save-products-db').forEach(btn => {
-            btn.addEventListener('click', async function (e) {
-                e.preventDefault();
-                const id = this.dataset.id || '{{ enquiry.id }}';
-                const originalHtml = this.innerHTML;
+        // Save Products to DB Handler (Delegated Event Listener)
+        document.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-save-products-db');
+            if (!btn) return;
+            e.preventDefault();
 
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving to DB...';
+            const id = btn.dataset.id || '{{ enquiry.id }}';
+            const originalHtml = btn.innerHTML;
 
-                try {
-                    const payload = {};
-                    if (window.currentParsedProducts && window.currentParsedProducts.length > 0) {
-                        payload.products = window.currentParsedProducts;
-                    }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving to DB...';
 
-                    const response = await fetch(`/admin/api/enquiries/lots/${id}/save-products/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const data = await response.json();
-                    if (response.ok && data.success) {
-                        alert(data.message || 'Products successfully saved to database!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + (data.message || 'Failed to save products to database.'));
-                        this.disabled = false;
-                        this.innerHTML = originalHtml;
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving products to database.');
-                    this.disabled = false;
-                    this.innerHTML = originalHtml;
+            try {
+                const payload = {};
+                if (window.currentParsedProducts && window.currentParsedProducts.length > 0) {
+                    payload.products = window.currentParsedProducts;
                 }
-            });
+
+                const response = await fetch(`/admin/api/enquiries/lots/${id}/save-products/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alert(data.message || 'Products successfully saved to database!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to save products to database.'));
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while saving products to database.');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         });
     });
 </script>
