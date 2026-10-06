@@ -2115,19 +2115,44 @@ def lot_enquiry_detail_view(request, enquiry_id):
         except Exception as e:
             print(f"Error parsing attached excel file: {e}")
 
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
+
     cleaned_products = []
     if isinstance(products_list, list):
-        for idx, item in enumerate(products_list, start=1):
+        row_counter = 1
+        for item in products_list:
             if isinstance(item, dict):
                 p_clean = dict(item)
-                p_clean["s_no"] = p_clean.get("s_no") or idx
+                p_name_check = str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "").lower()
+                p_cat_check = str(p_clean.get("product_category") or p_clean.get("category") or "").lower()
+
+                if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
+                    continue
+                if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
+                    continue
+
+                p_clean["s_no"] = row_counter
+                row_counter += 1
                 p_name = p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "-"
                 p_clean["product_name"] = p_name
                 p_clean["title"] = p_clean.get("title") or p_name
                 p_clean["name"] = p_clean.get("name") or p_name
-                p_clean["product_category"] = p_clean.get("product_category") or p_clean.get("category") or "-"
-                p_clean["category"] = p_clean.get("category") or p_clean.get("product_category") or "-"
-                p_clean["subcategory"] = p_clean.get("subcategory") or "-"
+
+                cat_val = str(p_clean.get("product_category") or p_clean.get("category") or "-").strip()
+                if any(kw in cat_val.lower() for kw in instruction_keywords):
+                    cat_val = "-"
+                p_clean["product_category"] = cat_val
+                p_clean["category"] = cat_val
+
+                subcat_val = str(p_clean.get("subcategory") or "-").strip()
+                if any(kw in subcat_val.lower() for kw in instruction_keywords):
+                    subcat_val = "-"
+                p_clean["subcategory"] = subcat_val
+
                 p_clean["brand"] = p_clean.get("brand") or "-"
                 p_clean["model_part_number"] = p_clean.get("model_part_number") or p_clean.get("sku") or "-"
                 p_clean["sku"] = p_clean.get("sku") or p_clean.get("model_part_number") or "-"

@@ -323,7 +323,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
     for index, row in df.iterrows():
         row_num = len(parsed_items) + 1  # 1-indexed count of parsed product items
 
-        # Check for explicit summary / footer rows (e.g., "Grand Total", "Summary")
+        # Check for explicit summary / footer / instruction rows (e.g., "Grand Total", "Summary", Taxonomy guidelines)
         first_val = str(row.iloc[0]).strip().lower() if len(row) > 0 and pd.notna(row.iloc[0]) else ""
         if first_val in ['grand total', 'summary', 'totals']:
             continue
@@ -331,6 +331,16 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
             second_val = str(row.iloc[1]).strip().lower() if len(row) > 1 and pd.notna(row.iloc[1]) else ""
             if not second_val or second_val in ['units', 'value', 'items', '']:
                 continue
+
+        # Filter out spreadsheet template instruction & header rows
+        row_str_full = " ".join([str(v).lower() for v in row.values if pd.notna(v)])
+        instruction_keywords = [
+            'reference directory', 'classification taxonomy', 'select a valid product category',
+            'total categories', 'ensure consistent reporting', 'master classification',
+            'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+        ]
+        if any(kw in row_str_full for kw in instruction_keywords):
+            continue
 
         item = {}
         missing_row_fields = []
