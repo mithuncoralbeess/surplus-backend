@@ -437,27 +437,27 @@
                                 <tr>
                                     <td class="ps-4 fw-bold font-monospace text-dark">{{ prod.s_no|default:forloop.counter }}</td>
                                     <td class="fw-bold text-dark">
-                                        <div>{{ prod.product_name|default:prod.title|default:prod.name|default:"-" }}</div>
+                                        <div>{{ prod.product_name|default:"-" }}</div>
                                         {% if prod.product_description %}
                                         <small class="text-muted d-block text-truncate" style="max-width: 260px;">{{ prod.product_description }}</small>
                                         {% endif %}
                                     </td>
-                                    <td><span class="badge bg-light text-dark border">{{ prod.product_category|default:prod.category|default:"-" }}</span></td>
+                                    <td><span class="badge bg-light text-dark border">{{ prod.product_category|default:"-" }}</span></td>
                                     <td><span class="badge bg-light text-dark border">{{ prod.subcategory|default:"-" }}</span></td>
                                     <td>
                                         <div class="fw-medium text-dark">{{ prod.brand|default:"-" }}</div>
-                                        <small class="text-muted font-monospace">{{ prod.model_part_number|default:prod.sku|default:"-" }}</small>
+                                        <small class="text-muted font-monospace">{{ prod.model_part_number|default:"-" }}</small>
                                     </td>
                                     <td>
                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                            {{ prod.product_condition|default:prod.condition|default:"Surplus" }}
+                                            {{ prod.product_condition|default:"Surplus" }}
                                         </span>
                                     </td>
-                                    <td class="fw-bold text-dark">{{ prod.available_quantity|default:prod.quantity|default:"1" }}</td>
+                                    <td class="fw-bold text-dark">{{ prod.available_quantity|default:"1" }}</td>
                                     <td class="fw-semibold text-secondary">{{ prod.moq|default:"1" }}</td>
                                     <td class="fw-bold text-success pe-4">
-                                        {% if prod.asking_price or prod.price or prod.msrp %}
-                                            ${{ prod.asking_price|default:prod.price|default:prod.msrp }}
+                                        {% if prod.asking_price and prod.asking_price != "NIL" %}
+                                            ${{ prod.asking_price }}
                                         {% else %}
                                             NIL
                                         {% endif %}

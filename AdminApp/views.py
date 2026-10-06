@@ -2115,10 +2115,35 @@ def lot_enquiry_detail_view(request, enquiry_id):
         except Exception as e:
             print(f"Error parsing attached excel file: {e}")
 
-    if not isinstance(products_list, list):
-        products_list = []
+    cleaned_products = []
+    if isinstance(products_list, list):
+        for idx, item in enumerate(products_list, start=1):
+            if isinstance(item, dict):
+                p_clean = dict(item)
+                p_clean["s_no"] = p_clean.get("s_no") or idx
+                p_name = p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "-"
+                p_clean["product_name"] = p_name
+                p_clean["title"] = p_clean.get("title") or p_name
+                p_clean["name"] = p_clean.get("name") or p_name
+                p_clean["product_category"] = p_clean.get("product_category") or p_clean.get("category") or "-"
+                p_clean["category"] = p_clean.get("category") or p_clean.get("product_category") or "-"
+                p_clean["subcategory"] = p_clean.get("subcategory") or "-"
+                p_clean["brand"] = p_clean.get("brand") or "-"
+                p_clean["model_part_number"] = p_clean.get("model_part_number") or p_clean.get("sku") or "-"
+                p_clean["sku"] = p_clean.get("sku") or p_clean.get("model_part_number") or "-"
+                p_clean["product_condition"] = p_clean.get("product_condition") or p_clean.get("condition") or "Surplus"
+                p_clean["condition"] = p_clean.get("condition") or p_clean.get("product_condition") or "Surplus"
+                p_clean["available_quantity"] = p_clean.get("available_quantity") if p_clean.get("available_quantity") is not None else (p_clean.get("quantity") or 1)
+                p_clean["quantity"] = p_clean.get("quantity") if p_clean.get("quantity") is not None else p_clean.get("available_quantity")
+                p_clean["moq"] = p_clean.get("moq") or 1
+                p_clean["asking_price"] = p_clean.get("asking_price") or p_clean.get("price") or p_clean.get("msrp")
+                p_clean["price"] = p_clean.get("price") or p_clean.get("asking_price")
+                p_clean["msrp"] = p_clean.get("msrp") or p_clean.get("asking_price")
+                cleaned_products.append(p_clean)
+            else:
+                cleaned_products.append(item)
 
-    context["products"] = products_list
+    context["products"] = cleaned_products
     context["is_saved_to_db"] = is_saved_to_db
 
     # User / Vendor Data
