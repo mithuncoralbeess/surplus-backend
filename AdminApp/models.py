@@ -960,6 +960,10 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def active_status(self) -> str:
+        return "active" if self.is_active else "inactive"
+
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"

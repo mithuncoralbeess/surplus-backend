@@ -1345,7 +1345,7 @@ def seller_enquiry_status_api(request, enquiry_id):
     return Response({
         "success": True,
         "message": msg,
-        "product_id": enquiry.product_id or enquiry.sku,
+        "product_id": enquiry.product_id or getattr(enquiry, "sku", f"PRO-{enquiry.id:05d}"),
         "status": enquiry.enquiry_status,
         "is_active": enquiry.is_active,
         "active_status": enquiry.active_status,
