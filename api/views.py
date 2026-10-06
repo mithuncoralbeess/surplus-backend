@@ -1958,12 +1958,15 @@ def clear_all_vendor_notifications(request):
 
 
 def _serialize_product_summary(p):
-    img_url = p.images.first().image.url if p.images.exists() else None
+    all_imgs = [img.url for img in p.images.all() if img.url]
+    main_img = all_imgs[0] if all_imgs else None
     return {
         "id": p.id,
         "product_id": p.product_id,
         "product_name": p.product_name,
         "brand": p.brand_name,
+        "brand_name": p.brand_name,
+        "model_no": p.model_no,
         "category": {
             "id": p.category.id,
             "name": p.category.name,
@@ -1974,13 +1977,29 @@ def _serialize_product_summary(p):
             "name": p.subcategory.name,
             "slug": p.subcategory.slug,
         } if p.subcategory else None,
-        "liquidating_price": str(p.liquidating_price),
-        "current_price": str(p.current_price),
-        "previous_price": str(p.previous_price) if p.previous_price is not None else None,
-        "offer": str(p.offer),
-        "currency": p.currency,
-        "quantity": p.quantity,
+        "country": p.manufacturing_country,
+        "manufacturing_country": p.manufacturing_country,
         "inventory_location": p.inventory_location,
+        "manufacturing_year": p.manufacturing_year,
+        "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
+        "expiry": p.expiry_date.isoformat() if p.expiry_date else None,
+        "excluded_countries": p.excluded_countries or [],
+        "quantity": p.quantity,
+        "currency": p.currency,
+        "liquidating_price": str(p.liquidating_price),
+        "msrp": str(p.msrp) if p.msrp is not None else None,
+        "current_price": str(p.current_price),
+        "previous_price": str(p.msrp) if p.msrp is not None else (str(p.previous_price) if hasattr(p, "previous_price") and p.previous_price is not None else None),
+        "offer": str(p.offer),
+        "reason_to_sell": p.reason_to_sell or "",
+        "warranty": p.warranty or "",
+        "warranty_attachment": p.warranty_attachment or "",
+        "warranty_document": p.warranty_attachment or "",
+        "third_party_certificate": p.third_party_certificate,
+        "certificate": p.third_party_certificate,
+        "third_party_documents": p.third_party_documents or "",
+        "certificate_document": p.third_party_documents or "",
+        "views_count": p.views_count,
         "is_featured": p.is_featured,
         "is_best_selling": p.is_best_selling,
         "is_new_arrival": p.is_new_arrival,
@@ -1988,9 +2007,12 @@ def _serialize_product_summary(p):
         "featured_order": p.featured_order,
         "best_selling_order": p.best_selling_order,
         "new_arrival_order": p.new_arrival_order,
-        "image": img_url,
-        "created_at": p.created_at.isoformat(),
+        "image": main_img,
+        "images": all_imgs,
+        "created_at": p.created_at.isoformat() if p.created_at else None,
+        "updated_at": p.updated_at.isoformat() if p.updated_at else None,
     }
+
 
 
 @api_view(["GET"])

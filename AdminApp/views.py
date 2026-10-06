@@ -1652,10 +1652,12 @@ def seller_enquiry_detail_view(request, enquiry_id):
         if v is not None and v != "":
             product_data[k] = v
 
-    # Append any remaining unknown keys (excluding image, certificate, documents, and user fields)
+    # Append any remaining unknown keys (excluding image, certificate, documents, warranty, and user fields)
     excluded_raw_keys = {
         "featured_image_url", "third_party_certificate", "documents",
         "image", "product_image", "certificate", "3rd_party_certificate",
+        "certificate_document", "third_party_documents", "warranty_attachment",
+        "warranty_document", "warrantyattachment", "warrantydocument",
         "seller_email", "email", "full_name", "name", "phone", "phone_no",
         "company", "company_name", "business_location", "location", "industry"
     }
