@@ -1161,7 +1161,7 @@ class Product(models.Model):
             "price": self.liquidating_price,
             "quantity": self.quantity,
             "description": self.description,
-            "reason_to_sell": self.reason_to_sell,
+
             "warranty": self.warranty,
             "warranty_attachment": self.warranty_attachment,
             "warranty_document": self.warranty_attachment,

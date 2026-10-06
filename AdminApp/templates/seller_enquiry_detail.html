@@ -363,7 +363,7 @@
                             
                             <!-- Extra Dynamic Fields -->
                             {% for key, val in product_data.items %}
-                                {% if key not in "product_name,product_category,brand_name,model_no,manufacturing_country,manufacturing_year,dimensions,expiry_date,excluded_countries,quantity,currency,liquidating_price,current_price,previous_price,description,reason_to_sell,warranty,warranty_document,warranty_attachment,certificate,certificate_document,third_party_documents,title,condition,target_price,is_available_for_offers,date_approved,featured_image_url,third_party_certificate,documents,seller_email" %}
+                                {% if key not in "product_name,product_category,brand_name,model_no,manufacturing_country,manufacturing_year,dimensions,expiry_date,excluded_countries,quantity,currency,liquidating_price,current_price,previous_price,description,warranty,warranty_document,warranty_attachment,certificate,certificate_document,third_party_documents,title,condition,target_price,is_available_for_offers,date_approved,featured_image_url,third_party_certificate,documents,seller_email" %}
                                 <div class="col-md-6 col-lg-4">
                                     <div class="spec-item">
                                         <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key|title }}</span>
@@ -385,14 +385,7 @@
                                 <p class="text-dark mb-0" style="line-height: 1.7; white-space: pre-wrap;">{{ product_data.description|default:"No description provided." }}</p>
                             </div>
                         </div>
-                        <div class="col-12">
-                            <div class="premium-card p-4 h-100">
-                                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                                    <i class="bi bi-info-circle me-2 text-warning"></i>Reason to Sell
-                                </h6>
-                                <p class="text-dark mb-0" style="line-height: 1.7; white-space: pre-wrap;">{{ product_data.reason_to_sell|default:"N/A" }}</p>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -666,10 +659,7 @@
                             <label class="form-label small fw-semibold text-dark">Inventory Location</label>
                             <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:user_data.business_location|default:'' }}">
                         </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
-                            <textarea class="form-control" name="reason_to_sell" rows="2">{{ enquiry.reason_to_sell|default:product_data.reason_to_sell|default:'' }}</textarea>
-                        </div>
+
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-dark">Description</label>
                             <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>

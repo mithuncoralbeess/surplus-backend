@@ -1464,8 +1464,7 @@ def seller_enquiry_edit_api(request, enquiry_id):
         product.dimensions = str(data["dimensions"]).strip()
     if "warranty" in data:
         product.warranty = str(data["warranty"]).strip()
-    if "reason_to_sell" in data:
-        product.reason_to_sell = str(data["reason_to_sell"]).strip()
+
     if "description" in data:
         product.description = str(data["description"]).strip()
     if "enquiry_status" in data:
@@ -1589,7 +1588,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         ("liquidating_price", "Liquidating Price", True, ["liquidating price", "price"]),
         ("previous_price", "Previous Price", True, ["previous price", "original price"]),
         ("description", "Description", False, ["description", "desc"]),
-        ("reason_to_sell", "Reason to Sell", True, ["reason to sell", "reason"]),
+
         ("warranty", "Warranty", False, ["warranty"]),
         ("certificate", "3rd Party Certificate", False, ["3rd party certificate", "certificate"]),
     ]
@@ -1643,7 +1642,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "is_available_for_offers": enquiry.is_available_for_offers,
         "date_approved": enquiry.date_approved.strftime("%Y-%m-%d %H:%M") if enquiry.date_approved else None,
         "description": enquiry.description,
-        "reason_to_sell": enquiry.reason_to_sell,
+
         "warranty": enquiry.warranty,
         "warranty_document": enquiry.warranty_attachment,
         "certificate": enquiry.third_party_documents if enquiry.third_party_documents else ("Yes" if enquiry.third_party_certificate else None),
@@ -1837,7 +1836,7 @@ def lot_enquiry_edit_api(request, enquiry_id):
 
     lot.raw_data["title"] = lot.title
     lot.raw_data["liquidation_price"] = lot.total_price
-    lot.raw_data["notes"] = lot.reason_to_sell
+
     lot.raw_data["description"] = lot.description
 
     lot.save()
@@ -2343,7 +2342,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "distinct_skus": skus_clean,
         "total_units": units_clean,
         "key_brands": _clean_val(enquiry.key_brands_included or combined_raw.get("key_brands_included") or combined_raw.get("key_brands") or combined_raw.get("brands") or combined_raw.get("brand")),
-        "notes": _clean_val(enquiry.reason_to_sell or enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
+        "notes": _clean_val(enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
         "msrp": _clean_val(msrp_val),
         "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
         "liquidation_price": _clean_val(liq_val),
@@ -3142,7 +3141,7 @@ def add_product_view(request):
         dimensions = request.POST.get("dimensions", "")
         expiry_date = request.POST.get("expiry_date") or None
         currency = request.POST.get("currency", "USD")
-        reason_to_sell = request.POST.get("reason_to_sell", "")
+
         warranty = request.POST.get("warranty", "")
         third_party_certificate = request.FILES.get("third_party_certificate")
         image = request.FILES.get("image")
@@ -3174,7 +3173,7 @@ def add_product_view(request):
             dimensions=dimensions,
             expiry_date=expiry_date if expiry_date else None,
             currency=currency,
-            reason_to_sell=reason_to_sell,
+
             warranty=warranty,
             warranty_attachment=request.POST.get("warranty_attachment", ""),
             third_party_certificate=request.POST.get("third_party_certificate") in ("true", "1", "on", True),
@@ -3262,7 +3261,7 @@ def add_lot_view(request):
         weight = request.POST.get("weight", "")
         shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight")
 
-        reason_to_sell = request.POST.get("reason_to_sell", "")
+
         is_active = request.POST.get("is_active") == "on"
 
         category = None

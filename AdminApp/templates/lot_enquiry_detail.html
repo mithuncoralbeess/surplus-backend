@@ -977,10 +977,7 @@
                             <i class="bi bi-journal-text me-1"></i> Notes & Excel Attachment
                         </h6>
                         <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold text-dark">Packaging & Warehouse Notes / Reason to Sell</label>
-                                <textarea class="form-control" name="reason_to_sell" rows="3">{{ enquiry.reason_to_sell|default:batch_data.notes|default:'' }}</textarea>
-                            </div>
+
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Description</label>
                                 <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:'' }}</textarea>
