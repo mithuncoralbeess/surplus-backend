@@ -1979,6 +1979,7 @@ def _serialize_product_summary(p):
         "manufacturing_country": p.manufacturing_country,
         "inventory_location": p.inventory_location,
         "manufacturing_year": p.manufacturing_year,
+        "dimensions": p.dimensions or "",
         "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
         "excluded_countries": p.excluded_countries or [],
         "quantity": p.quantity,
