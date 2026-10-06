@@ -1464,7 +1464,8 @@ def seller_enquiry_edit_api(request, enquiry_id):
         product.dimensions = str(data["dimensions"]).strip()
     if "warranty" in data:
         product.warranty = str(data["warranty"]).strip()
-
+    if "reason_to_sell" in data:
+        product.reason_to_sell = str(data["reason_to_sell"]).strip()
     if "description" in data:
         product.description = str(data["description"]).strip()
     if "enquiry_status" in data:
@@ -1588,7 +1589,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         ("liquidating_price", "Liquidating Price", True, ["liquidating price", "price"]),
         ("previous_price", "Previous Price", True, ["previous price", "original price"]),
         ("description", "Description", False, ["description", "desc"]),
-
+        ("reason_to_sell", "Reason to Sell", True, ["reason to sell", "reason"]),
         ("warranty", "Warranty", False, ["warranty"]),
         ("certificate", "3rd Party Certificate", False, ["3rd party certificate", "certificate"]),
     ]
@@ -3141,7 +3142,7 @@ def add_product_view(request):
         dimensions = request.POST.get("dimensions", "")
         expiry_date = request.POST.get("expiry_date") or None
         currency = request.POST.get("currency", "USD")
-
+        reason_to_sell = request.POST.get("reason_to_sell", "")
         warranty = request.POST.get("warranty", "")
         third_party_certificate = request.FILES.get("third_party_certificate")
         image = request.FILES.get("image")
@@ -3173,7 +3174,7 @@ def add_product_view(request):
             dimensions=dimensions,
             expiry_date=expiry_date if expiry_date else None,
             currency=currency,
-
+            reason_to_sell=reason_to_sell,
             warranty=warranty,
             warranty_attachment=request.POST.get("warranty_attachment", ""),
             third_party_certificate=request.POST.get("third_party_certificate") in ("true", "1", "on", True),
@@ -3261,7 +3262,7 @@ def add_lot_view(request):
         weight = request.POST.get("weight", "")
         shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight")
 
-
+        reason_to_sell = request.POST.get("reason_to_sell", "")
         is_active = request.POST.get("is_active") == "on"
 
         category = None

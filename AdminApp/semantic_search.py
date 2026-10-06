@@ -319,7 +319,8 @@ def generate_product_semantic_text(product: Product) -> str:
         parts.append("Inspection: 3rd Party Inspection Certificate Verified")
     if product.description:
         parts.append(f"Description: {product.description}")
-
+    if product.reason_to_sell:
+        parts.append(f"Reason for Sale / Surplus: {product.reason_to_sell}")
 
     return ". ".join(parts) + "."
 

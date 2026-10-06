@@ -1153,7 +1153,7 @@ def submit_product_request(request):
 
     # 11. Description & Reason to Sell
     description = str(data.get('description') or '').strip()
-
+    reason_to_sell = str(data.get('reason_to_sell') or data.get('reasonToSell') or '').strip()
 
     # 12. Warranty & Documents
     warranty = str(data.get('warranty') or '').strip()
@@ -1212,7 +1212,7 @@ def submit_product_request(request):
         msrp=msrp,
         offer=offer,
         description=description,
-
+        reason_to_sell=reason_to_sell,
         warranty=warranty,
         warranty_attachment=warranty_attachment,
         third_party_certificate=third_party_certificate,
@@ -1305,7 +1305,7 @@ def submit_product_request(request):
             "offer": str(product.offer),
             "excluded_countries": product.excluded_countries,
             "description": product.description,
-
+            "reason_to_sell": product.reason_to_sell,
             "warranty": product.warranty,
             "warranty_document": product.warranty_attachment,
             "certificate": product.third_party_certificate,
@@ -1999,7 +1999,7 @@ def _serialize_product_summary(p):
         "previous_price": str(p.msrp) if p.msrp is not None else (str(p.previous_price) if hasattr(p, "previous_price") and p.previous_price is not None else None),
         "offer": str(p.offer),
         "description": p.description or "",
-
+        "reason_to_sell": p.reason_to_sell or "",
         "warranty": p.warranty or "",
         "warranty_document": p.warranty_attachment or "",
         "third_party_certificate": p.third_party_certificate,
