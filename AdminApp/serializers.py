@@ -303,7 +303,6 @@ class LotSerializer(serializers.ModelSerializer):
             "active_status",
             "is_active",
             "views_count",
-            "raw_data",
             "created_at",
             "created_at_formatted",
             "updated_at",
