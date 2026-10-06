@@ -608,7 +608,6 @@ class LotBatchEnquiry(models.Model):
 
     # Extended structured fields matching frontend lot payload
     key_brands_included = models.TextField(blank=True, default="")
-    product_and_warehouse_images_or_videos = models.JSONField(default=list, blank=True)
     category_allocations = models.JSONField(default=list, blank=True)
     condition = models.CharField(max_length=255, blank=True, default="")
     source_type = models.CharField(max_length=255, blank=True, default="")
@@ -757,7 +756,6 @@ class Lot(models.Model):
     
     # Extended structured fields matching frontend lot payload
     key_brands_included = models.TextField(blank=True, default="")
-    product_and_warehouse_images_or_videos = models.JSONField(default=list, blank=True)
     category_allocations = models.JSONField(default=list, blank=True)
     condition = models.CharField(max_length=255, blank=True, default="")
     source_type = models.CharField(max_length=255, blank=True, default="")

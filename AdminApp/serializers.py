@@ -272,7 +272,6 @@ class LotSerializer(serializers.ModelSerializer):
             "description",
             "lot_description_and_notes",
             "key_brands_included",
-            "product_and_warehouse_images_or_videos",
             "category_allocations",
             "condition",
             "source_type",
@@ -393,7 +392,6 @@ class LotSerializer(serializers.ModelSerializer):
 
         json_list_fields = [
             'category_allocations',
-            'product_and_warehouse_images_or_videos',
             'third_party_documents',
             'excluded_export_countries',
         ]
