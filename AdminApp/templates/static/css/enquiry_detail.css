@@ -2,24 +2,24 @@
 .detail-page-wrapper {
   font-family: 'Inter', sans-serif;
   min-height: calc(100vh - 60px);
-  padding: 0.75rem 1rem;
+  padding: 0 !important;
 }
 
 @media (min-width: 1200px) {
   .detail-page-wrapper {
-    padding: 1rem 1.5rem;
+    padding: 0 !important;
   }
 }
 
 @media (min-width: 1440px) {
   .detail-page-wrapper {
-    padding: 1.25rem 2rem;
+    padding: 0 !important;
   }
 }
 
 @media (min-width: 1600px) {
   .detail-page-wrapper {
-    padding: 1.5rem 2.5rem;
+    padding: 0 !important;
   }
 }
 
