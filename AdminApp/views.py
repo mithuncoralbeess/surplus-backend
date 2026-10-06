@@ -2179,7 +2179,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "categories": MainCategory.objects.prefetch_related("subcategories").all(),
     }
 
-    # Extract Products list
+    # Extract Products list (Only load saved products from DB; un-saved file data requires clicking "Parse Spreadsheet Data")
     db_products = list(LotProduct.objects.filter(lot=enquiry).order_by("id"))
     is_saved_to_db = len(db_products) > 0 or bool(enquiry.raw_data.get("is_saved_to_db"))
 
@@ -2194,16 +2194,6 @@ def lot_enquiry_detail_view(request, enquiry_id):
             products_list.append(p_dict)
     elif enquiry.raw_data.get("is_saved_to_db") and enquiry.raw_data.get("products"):
         products_list = enquiry.raw_data.get("products", [])
-    elif enquiry.file:
-        try:
-            from lots.importer import parse_spreadsheet
-            enquiry.file.open('rb')
-            parse_res = parse_spreadsheet(enquiry.file)
-            parsed_items = parse_res.get("all_items", [])
-            if parsed_items:
-                products_list = parsed_items
-        except Exception as e:
-            print(f"Error parsing attached excel file: {e}")
 
     instruction_keywords = [
         'reference directory', 'classification taxonomy', 'select a valid product category',
@@ -2457,16 +2447,35 @@ def save_lot_products_api(request, enquiry_id):
     # Save to database
     LotProduct.objects.filter(lot=enquiry).delete()
     saved_count = 0
+    clean_saved_products = []
+
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
 
     for item in products_data:
-        p_name = item.get("product_name") or item.get("title") or item.get("name") or f"Product #{saved_count + 1}"
+        p_name = item.get("product_name") or item.get("title") or item.get("name") or ""
+        p_desc = item.get("product_description") or ""
+        p_brand = item.get("brand") or ""
+        p_cat = item.get("product_category") or item.get("category") or ""
+        
+        p_name_str = str(p_name).strip()
+        if not p_name_str or p_name_str.lower() in ["-", "nil", "none", "null", "nan", "n/a", "product category", "total categories", "s.no", "product name"]:
+            if not p_desc or str(p_desc).strip().lower() in ["-", "nil", "none", "null", "nan", "n/a"]:
+                continue
+        
+        if any(kw in p_name_str.lower() or kw in str(p_cat).lower() for kw in instruction_keywords):
+            continue
+
         p_qty = item.get("available_quantity") or item.get("quantity") or 1
         try:
             p_qty = int(p_qty)
         except (ValueError, TypeError):
             p_qty = 1
 
-        p_cond = item.get("product_condition") or item.get("condition") or "New / Surplus"
+        p_cond = item.get("product_condition") or item.get("condition") or "Surplus"
 
         LotProduct.objects.create(
             lot=enquiry,
@@ -2475,12 +2484,13 @@ def save_lot_products_api(request, enquiry_id):
             condition=str(p_cond)[:255],
             raw_data=item,
         )
+        clean_saved_products.append(item)
         saved_count += 1
 
     if not isinstance(enquiry.raw_data, dict):
         enquiry.raw_data = {}
 
-    enquiry.raw_data["products"] = products_data
+    enquiry.raw_data["products"] = clean_saved_products
     enquiry.raw_data["is_saved_to_db"] = True
     enquiry.save()
 

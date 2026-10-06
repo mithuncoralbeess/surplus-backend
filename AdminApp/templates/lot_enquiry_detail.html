@@ -404,24 +404,22 @@
                     </div>
                 </div>
 
-                {% if products and not is_saved_to_db %}
-                <div class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div id="preview-alert-container" class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 {% if not products or is_saved_to_db %}d-none{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="p-2.5 bg-warning bg-opacity-25 text-warning-emphasis rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                             <i class="bi bi-eye-fill fs-5"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold text-dark mb-0.5">Previewing Extracted Spreadsheet Data (Not Saved to DB Yet)</h6>
-                            <small class="text-secondary">{{ products|length }} product item{% if products|length != 1 %}s{% endif %} extracted from attached Excel file. Click "Save Products to Database" to commit these records.</small>
+                            <small class="text-secondary" id="preview-alert-text">Products parsed from Inventory tab. Click "Save Products to Database" to commit these records.</small>
                         </div>
                     </div>
                     <button type="button" class="btn btn-success px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
                         <i class="bi bi-database-add"></i> Save Products to Database
                     </button>
                 </div>
-                {% endif %}
 
-                <div class="card-body p-0">
+                <div class="card-body p-0" id="extracted-products-container">
                     {% if products %}
                     <div class="table-responsive border rounded-3">
                         <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
@@ -474,11 +472,15 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-box-seam text-muted mb-3 d-block" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold text-dark mb-1">No Products Found</h5>
-                        <p class="text-muted small">We couldn't extract any product rows from the attached spreadsheet or form.
-                        </p>
+                    <div class="text-center py-5 px-4" id="products-empty-state">
+                        <i class="bi bi-file-earmark-spreadsheet text-primary opacity-75 mb-3 d-block" style="font-size: 3.2rem;"></i>
+                        <h5 class="fw-bold text-dark mb-1">Spreadsheet Manifest Attached</h5>
+                        <p class="text-muted small mb-3" style="max-width: 480px; margin: 0 auto;">Click the <strong>"Parse Spreadsheet Data"</strong> button to extract and preview products from the <code>Inventory</code> tab before saving to the database.</p>
+                        {% if enquiry.file %}
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-3 fw-bold shadow-sm" onclick="document.getElementById('btn-parse-spreadsheet-data').click()">
+                            <i class="bi bi-file-earmark-spreadsheet-fill me-2"></i> Parse Spreadsheet Data
+                        </button>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -491,6 +493,136 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+        window.currentParsedProducts = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Parse Spreadsheet Data Button Handler
+        const parseBtn = document.getElementById('btn-parse-spreadsheet-data');
+        if (parseBtn) {
+            parseBtn.addEventListener('click', async function () {
+                const id = this.dataset.id || '{{ enquiry.id }}';
+                const originalHtml = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Parsing Inventory Tab...';
+
+                try {
+                    const res = await fetch(`/admin/api/enquiries/lots/${id}/parse/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        renderParsedProductsTable(data.products || []);
+                    } else {
+                        alert('Parsing Error: ' + (data.message || 'Failed to parse spreadsheet.'));
+                    }
+                } catch (err) {
+                    console.error('Parse error:', err);
+                    alert('An error occurred while parsing the spreadsheet.');
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        function renderParsedProductsTable(items) {
+            window.currentParsedProducts = items;
+
+            const container = document.getElementById('extracted-products-container');
+            const badgeCounts = document.querySelectorAll('.extracted-products-badge');
+            badgeCounts.forEach(b => b.textContent = items.length);
+
+            const previewAlert = document.getElementById('preview-alert-container');
+            if (previewAlert) previewAlert.classList.remove('d-none');
+
+            if (!container) return;
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5 px-4">
+                        <i class="bi bi-exclamation-circle text-warning opacity-75 mb-3 d-block" style="font-size: 3rem;"></i>
+                        <h5 class="fw-bold text-dark mb-1">No Valid Product Items Found</h5>
+                        <p class="text-muted small mb-0">No valid inventory product items were found in the <code>Inventory</code> tab.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let rowsHtml = '';
+            items.forEach((prod, idx) => {
+                const sNo = prod.s_no || (idx + 1);
+                const name = prod.product_name || prod.title || prod.name || '-';
+                const desc = prod.product_description ? `<small class="text-muted d-block text-truncate" style="max-width: 260px;">${escapeHtml(prod.product_description)}</small>` : '';
+                const cat = prod.product_category || prod.category || '-';
+                const subcat = prod.subcategory || '-';
+                const brand = prod.brand || '-';
+                const model = prod.model_part_number || prod.sku || '-';
+                const condition = prod.product_condition || prod.condition || 'Surplus';
+                const qty = prod.available_quantity || prod.quantity || 1;
+                const moq = prod.moq || 1;
+                const price = (prod.asking_price && prod.asking_price !== 'NIL' && prod.asking_price !== '0') ? `$${prod.asking_price}` : 'NIL';
+
+                rowsHtml += `
+                    <tr>
+                        <td class="ps-4 fw-bold font-monospace text-dark">${sNo}</td>
+                        <td class="fw-bold text-dark">
+                            <div>${escapeHtml(name)}</div>
+                            ${desc}
+                        </td>
+                        <td><span class="badge bg-light text-dark border">${escapeHtml(cat)}</span></td>
+                        <td><span class="badge bg-light text-dark border">${escapeHtml(subcat)}</span></td>
+                        <td>
+                            <div class="fw-medium text-dark">${escapeHtml(brand)}</div>
+                            <small class="text-muted font-monospace">${escapeHtml(model)}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
+                                ${escapeHtml(condition)}
+                            </span>
+                        </td>
+                        <td class="fw-bold text-dark">${qty}</td>
+                        <td class="fw-semibold text-secondary">${moq}</td>
+                        <td class="fw-bold text-success pe-4">${price}</td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="table-responsive border rounded-3">
+                    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                <th class="ps-4 py-3 fw-semibold" style="width: 65px;">S.No</th>
+                                <th class="py-3 fw-semibold" style="min-width: 280px;">Product Name</th>
+                                <th class="py-3 fw-semibold" style="min-width: 140px;">Category</th>
+                                <th class="py-3 fw-semibold" style="min-width: 140px;">Subcategory</th>
+                                <th class="py-3 fw-semibold" style="min-width: 140px;">Brand / Model</th>
+                                <th class="py-3 fw-semibold" style="min-width: 110px;">Condition</th>
+                                <th class="py-3 fw-semibold" style="min-width: 80px;">Qty</th>
+                                <th class="py-3 fw-semibold" style="min-width: 80px;">MOQ</th>
+                                <th class="py-3 fw-semibold pe-4" style="min-width: 110px;">Asking Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         // Status update handler
         document.querySelectorAll('.btn-lot-status').forEach(btn => {
             btn.addEventListener('click', function (e) {
@@ -633,12 +765,18 @@
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving to DB...';
 
                 try {
+                    const payload = {};
+                    if (window.currentParsedProducts && window.currentParsedProducts.length > 0) {
+                        payload.products = window.currentParsedProducts;
+                    }
+
                     const response = await fetch(`/admin/api/enquiries/lots/${id}/save-products/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}'
-                        }
+                        },
+                        body: JSON.stringify(payload)
                     });
 
                     const data = await response.json();
@@ -892,99 +1030,8 @@
                         <i class="bi bi-cloud-arrow-up-fill"></i> Upload Manifest File
                     </button>
                 </div>
-                </div>
             </form>
         </div>
     </div>
 </div>
-
-{% block extra_js %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const parseBtn = document.getElementById('btn-parse-spreadsheet-data');
-        if (parseBtn) {
-            parseBtn.addEventListener('click', async function () {
-                const id = this.dataset.id;
-                const originalHtml = this.innerHTML;
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Parsing Inventory Tab...';
-
-                try {
-                    const res = await fetch(`/admin/api/enquiries/lots/${id}/parse/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        }
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        renderParsedProductsTable(data.products || []);
-                        alert(data.message || "Spreadsheet parsed from Inventory tab successfully! Products listed below (Preview Mode - not saved to DB).");
-                    } else {
-                        alert('Parsing Error: ' + (data.message || 'Failed to parse spreadsheet.'));
-                    }
-                } catch (err) {
-                    console.error('Parse error:', err);
-                    alert('An error occurred while parsing the spreadsheet.');
-                } finally {
-                    this.disabled = false;
-                    this.innerHTML = originalHtml;
-                }
-            });
-        }
-
-        function renderParsedProductsTable(items) {
-            const tbody = document.querySelector('.premium-card tbody');
-            const badgeCount = document.querySelector('.premium-card .badge.bg-primary');
-            if (badgeCount) badgeCount.textContent = items.length;
-
-            if (!tbody) return;
-            if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No product items found in Inventory tab.</td></tr>';
-                return;
-            }
-
-            let rowsHtml = '';
-            items.forEach((prod, idx) => {
-                const sNo = prod.s_no || (idx + 1);
-                const name = prod.product_name || prod.title || prod.name || '-';
-                const desc = prod.product_description ? `<small class="text-muted d-block text-truncate" style="max-width: 260px;">${prod.product_description}</small>` : '';
-                const cat = prod.product_category || prod.category || '-';
-                const subcat = prod.subcategory || '-';
-                const brand = prod.brand || '-';
-                const model = prod.model_part_number || prod.sku || '-';
-                const condition = prod.product_condition || prod.condition || 'Surplus';
-                const qty = prod.available_quantity || prod.quantity || 1;
-                const moq = prod.moq || 1;
-                const price = (prod.asking_price && prod.asking_price !== 'NIL') ? `$${prod.asking_price}` : 'NIL';
-
-                rowsHtml += `
-                    <tr>
-                        <td class="ps-4 fw-bold font-monospace text-dark">${sNo}</td>
-                        <td class="fw-bold text-dark">
-                            <div>${name}</div>
-                            ${desc}
-                        </td>
-                        <td><span class="badge bg-light text-dark border">${cat}</span></td>
-                        <td><span class="badge bg-light text-dark border">${subcat}</span></td>
-                        <td>
-                            <div class="fw-medium text-dark">${brand}</div>
-                            <small class="text-muted font-monospace">${model}</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                ${condition}
-                            </span>
-                        </td>
-                        <td class="fw-bold text-dark">${qty}</td>
-                        <td class="fw-semibold text-secondary">${moq}</td>
-                        <td class="fw-bold text-success pe-4">${price}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = rowsHtml;
-        }
-    });
-</script>
 {% endblock %}

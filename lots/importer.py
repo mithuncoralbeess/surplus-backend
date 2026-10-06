@@ -435,6 +435,15 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 except (ValueError, TypeError):
                     pass
 
+        # Skip completely blank or placeholder product rows
+        p_name_val = str(item.get('product_name') or '').strip().lower()
+        p_desc_val = str(item.get('product_description') or '').strip().lower()
+        p_brand_val = str(item.get('brand') or '').strip().lower()
+        p_model_val = str(item.get('model_part_number') or '').strip().lower()
+        empty_placeholders = {'', '-', 'nil', 'none', 'null', 'nan', 'n/a'}
+        if (p_name_val in empty_placeholders) and (p_desc_val in empty_placeholders) and (p_brand_val in empty_placeholders) and (p_model_val in empty_placeholders):
+            continue
+
         if missing_row_fields:
             row_errors.append({
                 'row': row_num,
