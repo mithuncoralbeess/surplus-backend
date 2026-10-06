@@ -1356,7 +1356,7 @@ def submit_lot_request(request):
 
         category = request.GET.get("category")
         if category:
-            qs = qs.filter(Q(category_name__icontains=category) | Q(category__name__icontains=category))
+            qs = qs.filter(category__name__icontains=category)
 
         status_param = request.GET.get("status")
         if status_param:

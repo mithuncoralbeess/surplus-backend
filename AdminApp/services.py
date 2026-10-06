@@ -259,10 +259,8 @@ class EmailService:
         category_name = ""
         if hasattr(product, "category") and product.category:
             category_name = getattr(product.category, "name", "")
-        elif hasattr(product, "category_name") and product.category_name:
-            category_name = product.category_name
         elif isinstance(product, dict):
-            category_name = product.get("category") or product.get("category_name") or ""
+            category_name = product.get("category") or ""
 
         brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
         model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
@@ -357,10 +355,8 @@ class EmailService:
         category_name = ""
         if hasattr(product, "category") and product.category:
             category_name = getattr(product.category, "name", "")
-        elif hasattr(product, "category_name") and product.category_name:
-            category_name = product.category_name
         elif isinstance(product, dict):
-            category_name = product.get("category") or product.get("category_name") or ""
+            category_name = product.get("category") or ""
 
         brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
         model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")

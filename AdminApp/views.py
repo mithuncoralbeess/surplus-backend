@@ -1443,13 +1443,6 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 product.category = sub_cat.main_category
         except (SubCategory.DoesNotExist, ValueError):
             pass
-    elif "category_name" in data and str(data["category_name"]).strip():
-        cat_str = str(data["category_name"]).strip()
-        sub_cat = SubCategory.objects.filter(name__iexact=cat_str).first()
-        if sub_cat:
-            product.subcategory = sub_cat
-            if sub_cat.main_category and not product.category:
-                product.category = sub_cat.main_category
 
     if "is_available_for_offers" in data:
         product.is_available_for_offers = bool(data["is_available_for_offers"])
@@ -1792,15 +1785,10 @@ def lot_enquiry_edit_api(request, enquiry_id):
         try:
             sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
             lot.category = sub_cat
-            lot.category_name = sub_cat.name
         except (SubCategory.DoesNotExist, ValueError):
             pass
-    elif "category_name" in data and str(data["category_name"]).strip():
-        lot.category_name = str(data["category_name"]).strip()
 
     # Notes & Description
-    if "reason_to_sell" in data:
-        lot.reason_to_sell = str(data["reason_to_sell"]).strip()
     if "description" in data:
         lot.description = str(data["description"]).strip()
     if "enquiry_status" in data:
@@ -2306,7 +2294,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     # Batch Data Construction
     # Category Breakdown
-    cat_val = enquiry.category_name or (enquiry.category.name if enquiry.category else None)
+    cat_val = enquiry.category.name if enquiry.category else None
     if not cat_val and enquiry.category_allocations:
         if isinstance(enquiry.category_allocations, list):
             cats = []
@@ -2378,7 +2366,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "category_allocations", "excluded_export_countries", "third_party_documents",
         "full_name", "name", "contact_person", "phone", "phone_no", "phone_number", "email", "e_mail",
         "company", "company_name", "vendor_id", "user_id", "location", "inventory_location", "business_location", "industry",
-        "title", "lot_title", "description", "notes", "reason_to_sell", "category", "category_name", "primary_category",
+        "title", "lot_title", "description", "notes", "category", "primary_category",
         "category_breakdown", "stock_condition", "condition", "inventory_age", "inventory_stock_age", "age",
         "distinct_skus", "number_of_distinct_skus", "total_units", "total_units_quantity", "quantity", "units",
         "key_brands", "key_brands_included", "brands", "brand", "shipping_size", "lot_size", "load_type", "pallet_count",
@@ -3410,12 +3398,10 @@ def add_lot_view(request):
             title=title,
             description=description,
             category=category,
-            category_name=category.name if category else "",
             vendor=vendor,
             inventory_location=inventory_location,
             total_price=total_price,
             currency=currency,
-            reason_to_sell=reason_to_sell,
             file=excel_file,
             enquiry_status="pending",
             active_status="active" if is_active else "inactive",
