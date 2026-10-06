@@ -2333,7 +2333,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
     liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price") or enquiry.total_price)
 
     # Media URL
-    media_url = _extract_media_url(enquiry.product_and_warehouse_images_or_videos) or _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
+    media_url = _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
 
     batch_data = {
         "category_breakdown": _clean_val(cat_val),
