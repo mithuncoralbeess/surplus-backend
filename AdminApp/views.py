@@ -1925,6 +1925,96 @@ def upload_lot_manifest_api(request, enquiry_id):
     })
 
 
+@api_view(["POST", "GET"])
+@permission_classes([AllowAny])
+def parse_lot_spreadsheet_api(request, enquiry_id):
+    """
+    On-Demand API to parse spreadsheet data from the Inventory tab of an attached lot file,
+    listing products for preview WITHOUT saving them to the database.
+    """
+    from .models import Lot
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    file_obj = request.FILES.get("file") or request.FILES.get("excel_file") or request.FILES.get("manifest")
+    if not file_obj and lot.file:
+        file_obj = lot.file
+
+    if not file_obj:
+        return Response({"success": False, "message": "No spreadsheet file available to parse."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from lots.importer import parse_spreadsheet
+        if hasattr(file_obj, "seek"):
+            file_obj.seek(0)
+        parse_res = parse_spreadsheet(file_obj)
+        parsed_items = parse_res.get("all_items", [])
+    except Exception as e:
+        return Response({"success": False, "message": f"Failed to parse spreadsheet: {str(e)}"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
+
+    cleaned_products = []
+    if isinstance(parsed_items, list):
+        row_counter = 1
+        for item in parsed_items:
+            if isinstance(item, dict):
+                p_clean = dict(item)
+                p_name_check = str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "").lower()
+                p_cat_check = str(p_clean.get("product_category") or p_clean.get("category") or "").lower()
+
+                if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
+                    continue
+                if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
+                    continue
+
+                p_clean["s_no"] = row_counter
+                row_counter += 1
+                p_name = p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "-"
+                p_clean["product_name"] = p_name
+                p_clean["title"] = p_clean.get("title") or p_name
+                p_clean["name"] = p_clean.get("name") or p_name
+
+                cat_val = str(p_clean.get("product_category") or p_clean.get("category") or "-").strip()
+                if any(kw in cat_val.lower() for kw in instruction_keywords):
+                    cat_val = "-"
+                p_clean["product_category"] = cat_val
+                p_clean["category"] = cat_val
+
+                subcat_val = str(p_clean.get("subcategory") or "-").strip()
+                if any(kw in subcat_val.lower() for kw in instruction_keywords):
+                    subcat_val = "-"
+                p_clean["subcategory"] = subcat_val
+
+                p_clean["brand"] = p_clean.get("brand") or "-"
+                p_clean["model_part_number"] = p_clean.get("model_part_number") or p_clean.get("sku") or "-"
+                p_clean["sku"] = p_clean.get("sku") or p_clean.get("model_part_number") or "-"
+                p_clean["product_condition"] = p_clean.get("product_condition") or p_clean.get("condition") or "Surplus"
+                p_clean["condition"] = p_clean.get("condition") or p_clean.get("product_condition") or "Surplus"
+                p_clean["available_quantity"] = p_clean.get("available_quantity") if p_clean.get("available_quantity") is not None else (p_clean.get("quantity") or 1)
+                p_clean["quantity"] = p_clean.get("quantity") if p_clean.get("quantity") is not None else p_clean.get("available_quantity")
+                p_clean["moq"] = p_clean.get("moq") or 1
+                p_clean["asking_price"] = p_clean.get("asking_price") or p_clean.get("price") or p_clean.get("msrp")
+                p_clean["price"] = p_clean.get("price") or p_clean.get("asking_price")
+                p_clean["msrp"] = p_clean.get("msrp") or p_clean.get("asking_price")
+                cleaned_products.append(p_clean)
+
+    return Response({
+        "success": True,
+        "message": f"Successfully parsed {len(cleaned_products)} products from Inventory tab.",
+        "is_saved_to_db": False,
+        "count": len(cleaned_products),
+        "products": cleaned_products,
+        "summary": parse_res.get("summary", {})
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(["POST", "PUT", "DELETE"])
 def lot_enquiry_status_api(request, enquiry_id):
     """

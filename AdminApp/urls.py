@@ -33,6 +33,7 @@ from .views import (
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
     upload_lot_manifest_api,
+    parse_lot_spreadsheet_api,
     save_lot_products_api,
     manage_users_view,
     delete_user_api,
@@ -121,6 +122,8 @@ urlpatterns = [
     path("api/enquiries/lots/<int:enquiry_id>/status/", lot_enquiry_status_api, name="lot_enquiry_status_api"),
     path("api/enquiries/lots/<int:enquiry_id>/edit/", lot_enquiry_edit_api, name="lot_enquiry_edit_api"),
     path("api/enquiries/lots/<int:enquiry_id>/upload-manifest/", upload_lot_manifest_api, name="upload_lot_manifest_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/parse/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/parse-spreadsheet/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api_alt"),
     path("api/enquiries/lots/<int:enquiry_id>/save-products/", save_lot_products_api, name="save_lot_products_api"),
     # User Management (Registered Users List without RFQs/Products)
     path("users/", manage_users_view, name="manage_users"),

@@ -251,10 +251,37 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
             file_obj.seek(0)
             df = pd.read_csv(file_obj, header=header_row_idx)
         elif filename.endswith('.xlsx') or filename.endswith('.xls'):
-            df_raw = pd.read_excel(file_obj, header=None, nrows=25)
+            file_obj.seek(0)
+            target_sheet_name = None
+            try:
+                xl = pd.ExcelFile(file_obj)
+                sheet_names = xl.sheet_names
+
+                # Target sheet selection algorithm: prefer 'Inventory' sheet
+                for sname in sheet_names:
+                    s_lower = str(sname).strip().lower()
+                    if s_lower in ['inventory', 'inventory items', 'products', 'product list', 'stock', 'manifest', 'data']:
+                        target_sheet_name = sname
+                        break
+                    elif 'inventory' in s_lower or 'product' in s_lower or 'stock' in s_lower:
+                        target_sheet_name = sname
+                        break
+
+                if target_sheet_name is None and len(sheet_names) > 1:
+                    first_s_lower = str(sheet_names[0]).strip().lower()
+                    if any(kw in first_s_lower for kw in ['directory', 'reference', 'instruction', 'taxonomy', 'guide', 'readme', 'help']):
+                        target_sheet_name = sheet_names[1]
+
+                if target_sheet_name is None:
+                    target_sheet_name = 0
+            except Exception:
+                target_sheet_name = 0
+
+            file_obj.seek(0)
+            df_raw = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=None, nrows=25)
             header_row_idx = _find_header_row(df_raw)
             file_obj.seek(0)
-            df = pd.read_excel(file_obj, header=header_row_idx)
+            df = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=header_row_idx)
         else:
             raise ValueError("Unsupported file format. Please upload .csv or .xlsx")
     except Exception as e:
