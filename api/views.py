@@ -1,4 +1,5 @@
 import threading
+import logging
 from django.utils import timezone
 from django.db import connection, close_old_connections
 from rest_framework.decorators import api_view, permission_classes
@@ -8,6 +9,8 @@ from rest_framework import status, viewsets
 import json
 from .models import Item
 from .serializers import ItemSerializer
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
@@ -429,7 +432,7 @@ def submit_lot_enquiry(request):
 
     raw_data = {}
     if isinstance(request.data, dict):
-        raw_data = {k: v for k, v in request.data.items() if k not in ("file", "lot_file", "excel_file", "manifest", "spreadsheet", "excel")}
+        raw_data = {k: v for k, v in request.data.items() if k not in ("file", "lot_file", "excel_file", "manifest", "spreadsheet", "excel", "manifest_items", "preview_items", "parsed_items", "lot_details", "products_list", "products")}
 
     products_list = []
     parse_result = None
@@ -1456,6 +1459,8 @@ def submit_lot_request(request):
 
         # Build clean raw_payload copy for audit storage
         raw_payload = _clean_json_val(dict(data))
+        for key in ['manifest_items', 'preview_items', 'parsed_items', 'lot_details', 'products_list', 'products']:
+            raw_payload.pop(key, None)
 
         serializer = LotSerializer(data=data)
         if serializer.is_valid():
