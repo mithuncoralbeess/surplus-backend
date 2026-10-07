@@ -1383,7 +1383,7 @@ def submit_lot_request(request):
         except Exception:
             page_obj = paginator.page(1)
 
-        serializer = LotSerializer(page_obj.object_list, many=True)
+        serializer = LotSerializer(page_obj.object_list, many=True, context={"request": request})
         return Response({
             "success": True,
             "count": paginator.count,
@@ -1435,6 +1435,16 @@ def submit_lot_request(request):
         elif "file" in request.FILES:
             data["file"] = request.FILES["file"]
 
+        # Collect raw image files passed for warehouse_images / media
+        wh_file_keys = ["warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos", "row_image", "raw_image"]
+        raw_files_found = []
+        for fkey in wh_file_keys:
+            if fkey in request.FILES:
+                for img_file in request.FILES.getlist(fkey):
+                    if hasattr(img_file, "name"):
+                        raw_files_found.append(img_file)
+        if raw_files_found:
+            data["warehouse_images"] = raw_files_found
 
         # Helper to convert arbitrary data structures into clean JSON-serializable primitives
         def _clean_json_val(val):
@@ -1468,6 +1478,8 @@ def submit_lot_request(request):
             # Store complete raw payload safely
             if isinstance(raw_payload, dict):
                 raw_payload["is_saved_to_db"] = True
+                if lot.warehouse_images:
+                    raw_payload["warehouse_images"] = lot.warehouse_images
             lot.raw_data = raw_payload
             lot.save(update_fields=["raw_data"])
 
@@ -1485,13 +1497,14 @@ def submit_lot_request(request):
                 except Exception as e:
                     print(f"Error creating vendor notification for lot: {e}")
 
+            serialized_lot_data = LotSerializer(lot, context={"request": request}).data
             return Response({
                 "success": True,
                 "message": "Lot listing submitted successfully and is pending review.",
                 "lot_id": lot.lot_number,
                 "raw_id": lot.id,
-                "enquiry": LotSerializer(lot).data,
-                "data": LotSerializer(lot).data
+                "enquiry": serialized_lot_data,
+                "data": serialized_lot_data
             }, status=status.HTTP_201_CREATED)
 
         err_msg = ", ".join([f"{k}: {v[0] if isinstance(v, list) else v}" for k, v in serializer.errors.items()])
@@ -1532,7 +1545,7 @@ def public_lot_detail_api(request, lot_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    serializer = LotSerializer(lot)
+    serializer = LotSerializer(lot, context={"request": request})
     return Response({
         "success": True,
         "lot": serializer.data,

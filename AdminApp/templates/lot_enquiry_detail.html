@@ -385,22 +385,52 @@
         <!-- Right Column (Media) -->
         <div class="col-lg-4">
             <div class="premium-card p-4">
-                <h6 class="fw-bold text-uppercase text-muted mb-4 text-center" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                    <i class="bi bi-image me-2 text-primary"></i>Product Media
-                </h6>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <i class="bi bi-image me-2 text-primary"></i>Product Media
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal" style="font-size: 11px;">
+                        <i class="bi bi-upload me-1"></i>Upload / Change
+                    </button>
+                </div>
                 <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
-                    {% if enquiry.warehouse_images and enquiry.warehouse_images|length > 0 %}
+                    {% if warehouse_images and warehouse_images|length > 0 %}
                         <div class="d-flex flex-column gap-3">
-                            {% for img in enquiry.warehouse_images %}
-                                <img src="{{ img }}" alt="Warehouse Image" class="img-fluid rounded shadow-sm border" style="max-height: 400px; object-fit: contain; width: 100%; background: #fff;">
+                            {% for img in warehouse_images %}
+                                <div class="position-relative media-image-container">
+                                    <img src="{{ img.url }}" alt="{{ img.name|default:'Warehouse Image' }}"
+                                         class="img-fluid rounded shadow-sm border"
+                                         style="max-height: 400px; object-fit: contain; width: 100%; background: #fff;"
+                                         onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
+                                    <div class="d-none p-4 text-center text-muted bg-white border rounded">
+                                        <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
+                                        <p class="small fw-semibold mb-1 text-dark">{{ img.name|default:'Image unavailable' }}</p>
+                                        <p class="text-muted" style="font-size: 11px;">Image file was not found on server storage.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                            <i class="bi bi-upload me-1"></i>Upload / Replace Image
+                                        </button>
+                                    </div>
+                                </div>
                             {% endfor %}
                         </div>
                     {% elif batch_data.media %}
-                    <img src="{{ batch_data.media }}" alt="Batch Media" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;">
+                        <div class="position-relative media-image-container">
+                            <img src="{{ batch_data.media }}" alt="Batch Media" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;"
+                                 onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
+                            <div class="d-none p-4 text-center text-muted bg-white border rounded">
+                                <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
+                                <p class="small fw-semibold mb-0 text-dark">Media preview not available</p>
+                            </div>
+                        </div>
                     {% else %}
                     <div class="p-5 text-muted fst-italic">
                         <i class="bi bi-image text-muted opacity-50 mb-3 d-block" style="font-size: 3rem;"></i>
                         No images or videos available
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                <i class="bi bi-plus-lg me-1"></i>Add Warehouse Images
+                            </button>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -1236,6 +1266,11 @@
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Description</label>
                                 <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:'' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Upload / Replace Warehouse Images</label>
+                                <input type="file" class="form-control" name="warehouse_images" multiple accept="image/*">
+                                <small class="text-muted">Select warehouse or product photos (.png, .jpg, .webp). Uploaded images will be shown in the Product Media card.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Upload / Replace Excel Manifest File (.xlsx / .csv)</label>

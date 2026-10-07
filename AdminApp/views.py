@@ -1724,6 +1724,22 @@ def lot_enquiry_edit_api(request, enquiry_id):
         except Exception as e:
             print(f"Error re-parsing uploaded lot spreadsheet: {e}")
 
+    # Warehouse images upload check in edit form
+    from django.core.files.storage import default_storage
+    new_wh_images = []
+    for img_key in ("warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos"):
+        if img_key in request.FILES:
+            for img_file in request.FILES.getlist(img_key):
+                if hasattr(img_file, "name"):
+                    saved_path = default_storage.save(f"lots/images/{img_file.name}", img_file)
+                    new_wh_images.append(default_storage.url(saved_path))
+    if new_wh_images:
+        existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
+        lot.warehouse_images = existing_wh + new_wh_images
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        lot.raw_data["warehouse_images"] = lot.warehouse_images
+
     # Basic info
     if "title" in data and str(data["title"]).strip():
         lot.title = str(data["title"]).strip()
@@ -2280,6 +2296,54 @@ def lot_enquiry_detail_view(request, enquiry_id):
     }
 
     context["batch_data"] = batch_data
+
+    # Normalize and resolve warehouse images URLs
+    from django.conf import settings
+    raw_wh_imgs = enquiry.warehouse_images
+    if isinstance(raw_wh_imgs, str):
+        try:
+            raw_wh_imgs = json.loads(raw_wh_imgs)
+        except Exception:
+            raw_wh_imgs = [raw_wh_imgs] if raw_wh_imgs.strip() else []
+    if not isinstance(raw_wh_imgs, list):
+        raw_wh_imgs = []
+
+    expanded_imgs = []
+    for item in raw_wh_imgs:
+        if isinstance(item, str) and item.strip().startswith("[") and item.strip().endswith("]"):
+            try:
+                parsed = json.loads(item)
+                if isinstance(parsed, list):
+                    expanded_imgs.extend(parsed)
+                else:
+                    expanded_imgs.append(parsed)
+            except Exception:
+                expanded_imgs.append(item)
+        elif item:
+            expanded_imgs.append(item)
+
+    normalized_warehouse_images = []
+    for img in expanded_imgs:
+        if not img:
+            continue
+        img_str = str(img).strip()
+        if not img_str:
+            continue
+        if img_str.startswith("http://") or img_str.startswith("https://") or img_str.startswith("//"):
+            full_url = img_str
+        elif img_str.startswith("/"):
+            full_url = img_str
+        else:
+            full_url = f"{settings.MEDIA_URL}{img_str.lstrip('/')}"
+        
+        filename = img_str.replace("\\", "/").split("/")[-1]
+        normalized_warehouse_images.append({
+            "url": full_url,
+            "name": filename,
+            "raw": img_str
+        })
+
+    context["warehouse_images"] = normalized_warehouse_images
 
     # Every field on the Lot model, rendered generically for the detail page
     all_lot_fields = []

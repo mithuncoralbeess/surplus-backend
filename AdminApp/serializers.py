@@ -258,6 +258,8 @@ class LotSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     vendor_id = serializers.SerializerMethodField()
     manifest_data = serializers.SerializerMethodField()
+    warehouse_images = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
 
@@ -298,6 +300,7 @@ class LotSerializer(serializers.ModelSerializer):
             "file",
             "file_url",
             "warehouse_images",
+            "image",
             "products",
             "manifest_data",
             "enquiry_status",
@@ -308,7 +311,7 @@ class LotSerializer(serializers.ModelSerializer):
             "created_at_formatted",
             "updated_at",
         ]
-        read_only_fields = ["id", "lot_number", "file_url", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
+        read_only_fields = ["id", "lot_number", "file_url", "warehouse_images", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
 
     def get_vendor_id(self, obj):
         if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
@@ -359,6 +362,44 @@ class LotSerializer(serializers.ModelSerializer):
                         clean_list.append(cleaned)
                 return clean_list
         return []
+
+    def get_warehouse_images(self, obj):
+        import json
+        raw_imgs = obj.warehouse_images
+        if isinstance(raw_imgs, str):
+            try:
+                raw_imgs = json.loads(raw_imgs)
+            except Exception:
+                raw_imgs = [raw_imgs]
+        if not isinstance(raw_imgs, list):
+            raw_imgs = [raw_imgs] if raw_imgs else []
+        
+        request = self.context.get('request')
+        result = []
+        for img in raw_imgs:
+            if not img or not isinstance(img, str):
+                continue
+            s = img.strip()
+            if not s:
+                continue
+            if s.startswith('http://') or s.startswith('https://') or s.startswith('//'):
+                result.append(s)
+            elif s.startswith('/'):
+                if request:
+                    result.append(request.build_absolute_uri(s))
+                else:
+                    result.append(s)
+            else:
+                path = f"/media/{s.lstrip('/')}"
+                if request:
+                    result.append(request.build_absolute_uri(path))
+                else:
+                    result.append(path)
+        return result
+
+    def get_image(self, obj):
+        imgs = self.get_warehouse_images(obj)
+        return imgs[0] if imgs else ""
 
     def get_created_at_formatted(self, obj):
         return obj.created_at.strftime("%b %d, %Y %H:%M") if obj.created_at else ""
@@ -508,7 +549,60 @@ class LotSerializer(serializers.ModelSerializer):
                     try:
                         data_copy[field] = json.loads(val_str)
                     except Exception:
+                        if field == 'warehouse_images':
+                            data_copy[field] = [val_str]
                         pass
+
+        # Handle raw UploadedFile objects, base64 images, or file lists for warehouse_images
+        if 'warehouse_images' in data_copy:
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            import uuid
+            import base64
+
+            raw_wh = data_copy['warehouse_images']
+            wh_items = []
+            if isinstance(raw_wh, (list, tuple)):
+                wh_items = list(raw_wh)
+            elif raw_wh is not None:
+                wh_items = [raw_wh]
+
+            processed_wh_urls = []
+            seen_names = set()
+
+            for item in wh_items:
+                if hasattr(item, 'read') and hasattr(item, 'name'):
+                    fname = getattr(item, 'name', 'image.png')
+                    if fname not in seen_names:
+                        seen_names.add(fname)
+                        safe_name = f"{uuid.uuid4().hex[:8]}_{fname}"
+                        saved_path = default_storage.save(f"lots/images/{safe_name}", item)
+                        processed_wh_urls.append(default_storage.url(saved_path))
+                elif isinstance(item, str):
+                    s = item.strip()
+                    if s.startswith("data:image/") and ";base64," in s:
+                        try:
+                            header, encoded = s.split(";base64,", 1)
+                            ext = header.split("/")[-1].split("+")[0] or "png"
+                            b_data = base64.b64decode(encoded)
+                            safe_name = f"{uuid.uuid4().hex[:12]}.{ext}"
+                            c_file = ContentFile(b_data, name=safe_name)
+                            saved_path = default_storage.save(f"lots/images/{safe_name}", c_file)
+                            processed_wh_urls.append(default_storage.url(saved_path))
+                        except Exception:
+                            pass
+                    elif s.startswith("http://") or s.startswith("https://") or s.startswith("//"):
+                        if s not in processed_wh_urls:
+                            processed_wh_urls.append(s)
+                    elif s.startswith("/media/") or s.startswith("/static/") or s.startswith("/"):
+                        if s not in processed_wh_urls:
+                            processed_wh_urls.append(s)
+                    elif s:
+                        url_cand = f"/media/{s.lstrip('/')}"
+                        if url_cand not in processed_wh_urls:
+                            processed_wh_urls.append(url_cand)
+
+            data_copy['warehouse_images'] = processed_wh_urls
 
         # Parse boolean fields if passed as string "true"/"false"
         for field in ['third_party_certificate_available']:
