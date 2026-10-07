@@ -396,7 +396,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 if val is not None:
                     val = _clean_numeric(val)
 
-            # Check mandatory vs optional field validation (Mandatory fields only)
+            # Check mandatory vs optional field validation
             if spec['mandatory']:
                 is_empty = (val is None or val == "") or (internal_col in ['available_quantity', 'moq'] and val == 0)
                 if is_empty:
@@ -405,9 +405,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 else:
                     item[internal_col] = val
             else:
-                if val is None or val == "":
-                    item[internal_col] = "NIL"
-                else:
+                if val is not None and val != "":
                     item[internal_col] = val
 
         # Calculate total asking value for row safely
