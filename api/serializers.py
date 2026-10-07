@@ -143,13 +143,77 @@ class SellerProductEnquirySerializer(ProductSerializer):
     pass
 
 class LotSerializer(serializers.ModelSerializer):
+    manifest_data = serializers.SerializerMethodField()
+    vendor_id = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Lot
-        exclude = ['active_status', 'enquiry_status']
-        read_only_fields = ['lot_number', 'created_at', 'updated_at']
+        fields = [
+            "id",
+            "vendor_id",
+            "lot_number",
+            "title",
+            "description",
+            "key_brands_included",
+            "warehouse_images",
+            "category_allocations",
+            "condition",
+            "source_type",
+            "inventory_stock_age",
+            "third_party_certificate_available",
+            "third_party_documents",
+            "inventory_location",
+            "number_of_distinct_skus",
+            "total_units_quantity",
+            "primary_unit_type",
+            "total_weight",
+            "load_type",
+            "shipping_size",
+            "lot_size",
+            "pallet_count",
+            "shipping_terms",
+            "currency",
+            "total_est_retail_value_msrp",
+            "ask_price_surplus_payout",
+            "offer",
+            "excluded_export_countries",
+            "sale_method",
+            "file",
+            "file_url",
+            "manifest_data",
+            "enquiry_status",
+            "active_status",
+            "is_active",
+            "views_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["lot_number", "manifest_data", "file_url", "vendor_id", "created_at", "updated_at"]
 
-class LotBatchEnquirySerializer(LotSerializer):
-    pass
+    def get_vendor_id(self, obj):
+        if hasattr(obj, 'vendor') and obj.vendor:
+            return getattr(obj.vendor, 'user_id', None) or f"USR-{obj.vendor.id:04d}"
+        return ""
+
+    def get_file_url(self, obj):
+        if obj.file:
+            return obj.file.url
+        return None
+
+    def get_manifest_data(self, obj):
+        """Return parsed Excel manifest rows stored in raw_data."""
+        if not isinstance(obj.raw_data, dict):
+            return []
+        for key in ("manifest_items", "parsed_items", "preview_items", "products_list", "products"):
+            rows = obj.raw_data.get(key)
+            if rows and isinstance(rows, list):
+                return rows
+        return []
+
+
+# Alias kept for backward-compatibility with views that import LotBatchEnquirySerializer
+LotBatchEnquirySerializer = LotSerializer
 
 
 from AdminApp.models import VendorNotification

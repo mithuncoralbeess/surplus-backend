@@ -257,6 +257,7 @@ class LotSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
     vendor_id = serializers.SerializerMethodField()
+    manifest_data = serializers.SerializerMethodField()
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
 
@@ -298,6 +299,7 @@ class LotSerializer(serializers.ModelSerializer):
             "file_url",
             "warehouse_images",
             "products",
+            "manifest_data",
             "enquiry_status",
             "active_status",
             "is_active",
@@ -306,7 +308,7 @@ class LotSerializer(serializers.ModelSerializer):
             "created_at_formatted",
             "updated_at",
         ]
-        read_only_fields = ["id", "lot_number", "file_url", "created_at", "created_at_formatted", "updated_at"]
+        read_only_fields = ["id", "lot_number", "file_url", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
 
     def get_vendor_id(self, obj):
         if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
@@ -333,6 +335,17 @@ class LotSerializer(serializers.ModelSerializer):
                 pass
         if isinstance(obj.raw_data, dict):
             return obj.raw_data.get("products", []) or obj.raw_data.get("manifest_items", [])
+        return []
+
+    def get_manifest_data(self, obj):
+        """Return the parsed Excel manifest rows stored in raw_data."""
+        if not isinstance(obj.raw_data, dict):
+            return []
+        # Try all known keys where manifest rows may be stored
+        for key in ("manifest_items", "parsed_items", "preview_items", "products_list", "products"):
+            rows = obj.raw_data.get(key)
+            if rows and isinstance(rows, list):
+                return rows
         return []
 
     def get_created_at_formatted(self, obj):
