@@ -1771,6 +1771,8 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.total_weight = str(data["total_weight"]).strip()
     if "load_type" in data:
         lot.load_type = str(data["load_type"]).strip()
+    if "offer" in data:
+        lot.offer = str(data["offer"]).strip()
     if "open_to_offer" in data or "allow_counter_offers" in data:
         val = data.get("open_to_offer") or data.get("allow_counter_offers")
         if str(val).lower() in ("true", "1", "yes", "on"):
@@ -2323,6 +2325,18 @@ def lot_enquiry_detail_view(request, enquiry_id):
     msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price"))
     liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price"))
 
+    # Offer directly from frontend lot submission / database record (no dynamic calculation)
+    offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
+
+    # Open to offers detection: only true if explicitly flagged to accept counter/open offers
+    is_open_to_offer = False
+    if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "accepting offer", "make an offer")):
+        is_open_to_offer = True
+    elif str(combined_raw.get("open_to_offer", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+    elif str(combined_raw.get("allow_counter_offers", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+
     # Media URL
     media_url = _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
 
@@ -2338,7 +2352,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "msrp": _clean_val(msrp_val),
         "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
         "liquidation_price": _clean_val(liq_val),
-        "open_to_offer": bool(enquiry.offer and "offer" in enquiry.offer.lower()),
+        "offer": offer_val,
+        "open_to_offer": is_open_to_offer,
         "media": media_url,
         "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
         "load_type": _clean_val(enquiry.load_type or combined_raw.get("load_type")),
