@@ -2299,9 +2299,12 @@ def lot_enquiry_detail_view(request, enquiry_id):
         if isinstance(enquiry.category_allocations, list):
             cats = []
             for c in enquiry.category_allocations:
-                if isinstance(c, dict) and c.get("category"):
-                    pct = c.get("percentage")
-                    cats.append(f"{c['category']} ({pct}%)" if pct else c['category'])
+                if isinstance(c, dict) and (c.get("category") or c.get("category_name")):
+                    # Prefer 'category' key, fallback to 'category_name'
+                    name = c.get("category") or c.get("category_name")
+                    # Allocation can be under 'percentage', 'allocation', or misspelled 'alocation'
+                    pct = c.get("percentage") or c.get("allocation") or c.get("alocation")
+                    cats.append(f"{name} ({pct}%)" if pct else name)
                 elif isinstance(c, str):
                     cats.append(c)
             if cats:
@@ -2329,8 +2332,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
             units_clean = str(tot_q)
 
     # MSRP & Liquidation Price
-    msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price") or enquiry.total_price)
-    liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price") or enquiry.total_price)
+    msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price"))
+    liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price"))
 
     # Media URL
     media_url = _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
@@ -2347,13 +2350,19 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "msrp": _clean_val(msrp_val),
         "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
         "liquidation_price": _clean_val(liq_val),
-        "open_to_offer": bool(enquiry.allow_counter_offers),
+        "open_to_offer": bool(enquiry.offer and "offer" in enquiry.offer.lower()),
         "media": media_url,
         "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
         "load_type": _clean_val(enquiry.load_type or combined_raw.get("load_type")),
         "total_weight": _clean_val(enquiry.total_weight or combined_raw.get("total_weight")),
         "pallet_count": _clean_val(enquiry.pallet_count or combined_raw.get("pallet_count")),
         "source_type": _clean_val(enquiry.source_type or combined_raw.get("source_type")),
+        "primary_unit_type": _clean_val(enquiry.primary_unit_type),
+        "inventory_location": _clean_val(enquiry.inventory_location),
+        "sale_method": _clean_val(enquiry.sale_method),
+        "third_party_cert": bool(enquiry.third_party_certificate_available),
+        "third_party_docs": enquiry.third_party_documents if isinstance(enquiry.third_party_documents, list) else [],
+        "excluded_countries": enquiry.excluded_export_countries if isinstance(enquiry.excluded_export_countries, list) else [],
     }
 
     context["batch_data"] = batch_data

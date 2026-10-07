@@ -752,9 +752,7 @@ class Lot(models.Model):
     title = models.CharField(max_length=255, db_index=True, blank=True, default="")
     description = models.TextField(blank=True, default="")
     
-    category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="lots")
     inventory_location = models.CharField(max_length=255, blank=True, default="")
-    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     currency = models.CharField(max_length=50, default="USD")
     
     # Extended structured fields matching frontend lot payload
@@ -764,7 +762,6 @@ class Lot(models.Model):
     source_type = models.CharField(max_length=255, blank=True, default="")
     inventory_stock_age = models.CharField(max_length=255, blank=True, default="")
     warehouse_images = models.JSONField(default=list, blank=True, help_text="List of Warehouse image URLs")
-    videos = models.JSONField(default=list, blank=True, help_text="List of Video URLs")
     third_party_certificate_available = models.BooleanField(default=False)
     third_party_documents = models.JSONField(default=list, blank=True)
     number_of_distinct_skus = models.PositiveIntegerField(default=0, null=True, blank=True)
@@ -779,7 +776,6 @@ class Lot(models.Model):
     total_est_retail_value_msrp = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     ask_price_surplus_payout = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, null=True, blank=True)
     offer = models.CharField(max_length=100, blank=True, default="")
-    allow_counter_offers = models.BooleanField(default=True)
     excluded_export_countries = models.JSONField(default=list, blank=True)
     sale_method = models.CharField(max_length=50, blank=True, default="offer")
 
@@ -800,7 +796,6 @@ class Lot(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["is_active", "enquiry_status"], name="idx_lot_active_status"),
-            models.Index(fields=["category", "is_active"], name="idx_lot_cat_active"),
             models.Index(fields=["vendor", "created_at"], name="idx_lot_vendor_created"),
         ]
 

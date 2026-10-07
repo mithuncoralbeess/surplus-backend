@@ -244,6 +244,40 @@
                             <span class="text-dark fw-medium">{{ batch_data.key_brands|default:"N/A" }}</span>
                         </div>
                     </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Source Type</span>
+                            <span class="text-dark fw-medium">{{ batch_data.source_type|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Primary Unit Type</span>
+                            <span class="text-dark fw-medium">{{ batch_data.primary_unit_type|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Sale Method</span>
+                            <span class="text-dark fw-medium">{{ batch_data.sale_method|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
+                            <span class="text-dark fw-medium">{{ batch_data.inventory_location|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">3rd Party Certificate</span>
+                            {% if batch_data.third_party_cert %}
+                                <span class="badge bg-success px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i> Available</span>
+                            {% else %}
+                                <span class="badge bg-secondary px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i> Not Available</span>
+                            {% endif %}
+                        </div>
+                    </div>
                     
                     <!-- Extra Dynamic Fields (if any) -->
                     {% for key, val in extra_data.items %}
@@ -346,7 +380,13 @@
                     <i class="bi bi-image me-2 text-primary"></i>Product Media
                 </h6>
                 <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
-                    {% if batch_data.media %}
+                    {% if enquiry.warehouse_images and enquiry.warehouse_images|length > 0 %}
+                        <div class="d-flex flex-column gap-3">
+                            {% for img in enquiry.warehouse_images %}
+                                <img src="{{ img }}" alt="Warehouse Image" class="img-fluid rounded shadow-sm border" style="max-height: 400px; object-fit: contain; width: 100%; background: #fff;">
+                            {% endfor %}
+                        </div>
+                    {% elif batch_data.media %}
                     <img src="{{ batch_data.media }}" alt="Batch Media" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;">
                     {% else %}
                     <div class="p-5 text-muted fst-italic">

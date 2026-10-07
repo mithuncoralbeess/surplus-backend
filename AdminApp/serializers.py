@@ -288,16 +288,15 @@ class LotSerializer(serializers.ModelSerializer):
             "lot_size",
             "pallet_count",
             "shipping_terms",
-            "total_price",
             "currency",
             "total_est_retail_value_msrp",
             "ask_price_surplus_payout",
             "offer",
-            "allow_counter_offers",
             "excluded_export_countries",
             "sale_method",
             "file",
             "file_url",
+            "warehouse_images",
             "products",
             "enquiry_status",
             "active_status",
@@ -393,12 +392,13 @@ class LotSerializer(serializers.ModelSerializer):
             'category_allocations',
             'third_party_documents',
             'excluded_export_countries',
+            'warehouse_images',
         ]
         for field in json_list_fields:
             if field in data_copy and data_copy[field] is None:
                 data_copy[field] = []
 
-        for field in ['third_party_certificate_available', 'allow_counter_offers']:
+        for field in ['third_party_certificate_available']:
             if field in data_copy and data_copy[field] is None:
                 data_copy[field] = False
 
@@ -406,7 +406,7 @@ class LotSerializer(serializers.ModelSerializer):
             if field in data_copy and data_copy[field] is None:
                 data_copy[field] = 0
 
-        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout', 'total_price']:
+        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout']:
             if field in data_copy and data_copy[field] is None:
                 data_copy[field] = 0.0
 
@@ -432,20 +432,7 @@ class LotSerializer(serializers.ModelSerializer):
             if not isinstance(v_val, int) and not (isinstance(v_val, str) and v_val.isdigit()):
                 data_copy.pop('vendor', None)
 
-        # Clean category field: resolve SubCategory object if int/id
-        if 'category' in data_copy:
-            cat_val = data_copy['category']
-            if isinstance(cat_val, str):
-                if cat_val.isdigit():
-                    data_copy['category'] = int(cat_val)
-                else:
-                    data_copy.pop('category', None)
-            elif isinstance(cat_val, dict):
-                cat_id = cat_val.get('id')
-                if cat_id and str(cat_id).isdigit():
-                    data_copy['category'] = int(cat_id)
-                else:
-                    data_copy.pop('category', None)
+
 
         # Fallback default title if still empty
         if 'title' not in data_copy or not str(data_copy.get('title', '')).strip():
@@ -468,13 +455,7 @@ class LotSerializer(serializers.ModelSerializer):
                 break
         data_copy['total_est_retail_value_msrp'] = parsed_msrp if parsed_msrp is not None else "0.00"
 
-        total_price_aliases = ['total_price', 'ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
-        parsed_tot_price = None
-        for alias in total_price_aliases:
-            if alias in data_copy and data_copy[alias] not in (None, ""):
-                parsed_tot_price = _parse_num(data_copy[alias])
-                break
-        data_copy['total_price'] = parsed_tot_price if parsed_tot_price is not None else "0.00"
+
 
         # Map quantity / SKUs / pallets aliases using robust integer cleaner
         for q_alias in ['total_units_quantity', 'total_units', 'total_quantity', 'quantity']:
@@ -500,7 +481,7 @@ class LotSerializer(serializers.ModelSerializer):
                         pass
 
         # Parse boolean fields if passed as string "true"/"false"
-        for field in ['third_party_certificate_available', 'allow_counter_offers']:
+        for field in ['third_party_certificate_available']:
             if field in data_copy:
                 val = data_copy[field]
                 if isinstance(val, str):

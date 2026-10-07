@@ -1357,9 +1357,7 @@ def submit_lot_request(request):
             if vendor_obj:
                 qs = qs.filter(vendor=vendor_obj)
 
-        category = request.GET.get("category")
-        if category:
-            qs = qs.filter(category__name__icontains=category)
+
 
         status_param = request.GET.get("status")
         if status_param:
@@ -1410,8 +1408,7 @@ def submit_lot_request(request):
                     data['title'] = lot_details.get('title', '')
                 if 'description' not in data and 'lot_description_and_notes' not in data:
                     data['description'] = lot_details.get('description', '')
-                if 'total_price' not in data and 'ask_price_surplus_payout' not in data:
-                    data['total_price'] = lot_details.get('total_retail_value', 0.0)
+
 
         user_info = {}
         if 'user_information' in data:
@@ -1430,13 +1427,7 @@ def submit_lot_request(request):
         data["description"] = desc_val
 
 
-        # Set total_price from ask_price_surplus_payout if available
-        ask_price = data.get("ask_price_surplus_payout")
-        if ask_price and ("total_price" not in data or not data.get("total_price")):
-            try:
-                data["total_price"] = float(ask_price)
-            except Exception:
-                pass
+
 
         # Map file fields from request.FILES
         if "manifest_file" in request.FILES:
