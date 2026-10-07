@@ -318,34 +318,46 @@ class LotSerializer(serializers.ModelSerializer):
         return ""
 
     def get_products(self, obj):
+        from lots.importer import clean_lot_product_item
         if hasattr(obj, 'products'):
             try:
                 db_prods = list(obj.products.all())
                 if db_prods:
                     prod_list = []
-                    for p in db_prods:
-                        p_dict = dict(p.raw_data or {})
-                        p_dict["product_id"] = p.product_id
-                        p_dict["product_name"] = p.product_name or p_dict.get("product_name") or p_dict.get("title") or "-"
-                        p_dict["quantity"] = p.quantity or p_dict.get("available_quantity") or 0
-                        p_dict["condition"] = p.condition or p_dict.get("product_condition") or "Surplus"
-                        prod_list.append(p_dict)
+                    for idx, p in enumerate(db_prods, 1):
+                        cleaned = clean_lot_product_item(p.raw_data or {}, row_counter=idx)
+                        if cleaned:
+                            prod_list.append(cleaned)
                     return prod_list
             except Exception:
                 pass
         if isinstance(obj.raw_data, dict):
-            return obj.raw_data.get("products", []) or obj.raw_data.get("manifest_items", [])
+            for key in ("products", "manifest_items", "preview_items", "parsed_items", "products_list"):
+                raw_prods = obj.raw_data.get(key)
+                if isinstance(raw_prods, list) and raw_prods:
+                    clean_list = []
+                    for idx, itm in enumerate(raw_prods, 1):
+                        cleaned = clean_lot_product_item(itm, row_counter=idx)
+                        if cleaned:
+                            clean_list.append(cleaned)
+                    return clean_list
         return []
 
     def get_manifest_data(self, obj):
         """Return the parsed Excel manifest rows stored in raw_data."""
+        from lots.importer import clean_lot_product_item
         if not isinstance(obj.raw_data, dict):
             return []
         # Try all known keys where manifest rows may be stored
         for key in ("manifest_items", "parsed_items", "preview_items", "products_list", "products"):
             rows = obj.raw_data.get(key)
             if rows and isinstance(rows, list):
-                return rows
+                clean_list = []
+                for idx, r in enumerate(rows, 1):
+                    cleaned = clean_lot_product_item(r, row_counter=idx)
+                    if cleaned:
+                        clean_list.append(cleaned)
+                return clean_list
         return []
 
     def get_created_at_formatted(self, obj):

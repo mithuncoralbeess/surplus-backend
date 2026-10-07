@@ -235,6 +235,204 @@ FIELD_SPECIFICATIONS = {
     }
 }
 
+def clean_lot_product_item(item, row_counter=1):
+    """
+    Cleans and standardizes a single product item extracted from spreadsheet or LotProduct record,
+    strictly returning ONLY the 32 standard inventory fields requested by the user, with no extra or duplicate keys.
+    """
+    if not isinstance(item, dict):
+        return None
+
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
+
+    p_name_check = str(item.get("product_name") or item.get("title") or item.get("name") or "").lower()
+    p_cat_check = str(item.get("product_category") or item.get("category") or "").lower()
+
+    if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
+        return None
+    if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
+        return None
+
+    def _val_str(v, default="-"):
+        if v is None:
+            return default
+        s = str(v).strip()
+        if not s or s.lower() in ["none", "null", "nan", "nil"]:
+            return default
+        return s
+
+    # 1. S.No*
+    s_val = item.get("s_no")
+    if s_val in [None, "", 0, "0", "None", "nan", "NIL"]:
+        s_val = row_counter
+    else:
+        try:
+            f_val = float(s_val)
+            if f_val.is_integer():
+                s_val = int(f_val)
+        except Exception:
+            pass
+
+    # 2. Product Name*
+    p_name = _val_str(item.get("product_name") or item.get("title") or item.get("name"))
+
+    # 3. Product Description*
+    p_desc = _val_str(item.get("product_description") or item.get("description"))
+
+    # 4. Product Category*
+    cat_val = _val_str(item.get("product_category") or item.get("category"))
+    if any(kw in cat_val.lower() for kw in instruction_keywords):
+        cat_val = "-"
+
+    # 5. Subcategory*
+    subcat_val = _val_str(item.get("subcategory") or item.get("sub_category"))
+    if any(kw in subcat_val.lower() for kw in instruction_keywords):
+        subcat_val = "-"
+
+    # 6. Brand / Manufacturer
+    brand_val = _val_str(item.get("brand") or item.get("manufacturer") or item.get("brand_manufacturer"))
+
+    # 7. Model / Part Number
+    model_val = _val_str(item.get("model_part_number") or item.get("model") or item.get("part_number") or item.get("sku"))
+
+    # 8. Available Quantity*
+    avail_qty = item.get("available_quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = item.get("quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = 1
+    else:
+        try:
+            f_qty = float(avail_qty)
+            if f_qty.is_integer():
+                avail_qty = int(f_qty)
+        except Exception:
+            pass
+
+    # 9. Original Price
+    orig_price = item.get("original_price")
+    if orig_price in [None, "", "None", "nan"]:
+        orig_price = item.get("msrp") or item.get("retail_price") or "-"
+    orig_price = _val_str(orig_price)
+
+    # 10. Asking Price
+    ask_price = item.get("asking_price")
+    if ask_price in [None, "", "None", "nan"]:
+        ask_price = item.get("price") or "-"
+    ask_price = _val_str(ask_price)
+
+    # 11. Country of Origin
+    origin_val = _val_str(item.get("country_of_origin") or item.get("origin") or item.get("country"))
+
+    # 12. Year of Manufacture
+    yom = item.get("year_of_manufacture") or item.get("year") or item.get("mfg_year")
+    try:
+        if isinstance(yom, float) and yom.is_integer():
+            yom = int(yom)
+    except Exception:
+        pass
+    yom = _val_str(yom)
+
+    # 13. Datasheet / Certificate Link
+    doc_link = _val_str(item.get("datasheet_certificate_link") or item.get("datasheet") or item.get("link") or item.get("certificate_link"))
+
+    # 14. Gross Weight per Unit
+    gross_wt = _val_str(item.get("gross_weight_per_unit") or item.get("gross_weight"))
+
+    # 15. Length
+    len_val = _val_str(item.get("length"))
+
+    # 16. Width
+    width_val = _val_str(item.get("width"))
+
+    # 17. Height
+    height_val = _val_str(item.get("height"))
+
+    # 18. Measurement Unit
+    uom_val = _val_str(item.get("measurement_unit") or item.get("uom") or item.get("dimension_unit"))
+
+    # 19. Stock Age
+    stock_age_val = _val_str(item.get("stock_age") or item.get("inventory_age"))
+
+    # 20. Tested and verified
+    tested_val = _val_str(item.get("tested_and_verified") or item.get("tested"))
+
+    # 21. Functional Status
+    func_status = _val_str(item.get("functional_status") or item.get("status"))
+
+    # 22. Visible Damage?
+    vis_damage = _val_str(item.get("visible_damage") or item.get("damage"))
+
+    # 23. Missing Parts?
+    missing_parts = _val_str(item.get("missing_parts"))
+
+    # 24. Warranty Available?
+    warranty_val = _val_str(item.get("warranty_available") or item.get("warranty"))
+
+    # 25. Safety Certificate Available?
+    safety_cert = _val_str(item.get("safety_certificate_available") or item.get("safety_certificate"))
+
+    # 26. Certificate Type
+    cert_type = _val_str(item.get("certificate_type"))
+
+    # 27. Regulatory Approval
+    reg_approval = _val_str(item.get("regulatory_approval") or item.get("approvals"))
+
+    # 28. Hazardous Material?
+    hazmat_val = _val_str(item.get("hazardous_material") or item.get("hazmat"))
+
+    # 29. Recyclable?
+    recyclable_val = _val_str(item.get("recyclable"))
+
+    # 30. Estimated Product Life Remaining
+    life_remaining = _val_str(item.get("estimated_product_life_remaining") or item.get("remaining_life"))
+
+    # 31. Seller Custom Field 1
+    custom_1 = _val_str(item.get("seller_custom_field_1") or item.get("custom_field_1"))
+
+    # 32. Seller Custom Field 2
+    custom_2 = _val_str(item.get("seller_custom_field_2") or item.get("custom_field_2"))
+
+    # Strictly return ONLY the 32 requested fields, with no unwanted keys like sku, title, moq, etc.
+    return {
+        "s_no": s_val,
+        "product_name": p_name,
+        "product_description": p_desc,
+        "product_category": cat_val,
+        "subcategory": subcat_val,
+        "brand": brand_val,
+        "model_part_number": model_val,
+        "available_quantity": avail_qty,
+        "original_price": orig_price,
+        "asking_price": ask_price,
+        "country_of_origin": origin_val,
+        "year_of_manufacture": yom,
+        "datasheet_certificate_link": doc_link,
+        "gross_weight_per_unit": gross_wt,
+        "length": len_val,
+        "width": width_val,
+        "height": height_val,
+        "measurement_unit": uom_val,
+        "stock_age": stock_age_val,
+        "tested_and_verified": tested_val,
+        "functional_status": func_status,
+        "visible_damage": vis_damage,
+        "missing_parts": missing_parts,
+        "warranty_available": warranty_val,
+        "safety_certificate_available": safety_cert,
+        "certificate_type": cert_type,
+        "regulatory_approval": reg_approval,
+        "hazardous_material": hazmat_val,
+        "recyclable": recyclable_val,
+        "estimated_product_life_remaining": life_remaining,
+        "seller_custom_field_1": custom_1,
+        "seller_custom_field_2": custom_2,
+    }
+
 
 def parse_spreadsheet(file_obj, manual_mapping=None):
     """
@@ -467,6 +665,12 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
 
     is_valid = len(missing_mandatory_headers) == 0 and len(row_errors) == 0
 
+    clean_items = []
+    for idx, itm in enumerate(parsed_items, 1):
+        c = clean_lot_product_item(itm, row_counter=idx)
+        if c:
+            clean_items.append(c)
+
     return {
         'is_valid': is_valid,
         'header_errors': header_errors,
@@ -475,8 +679,8 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
         'detected_columns': raw_columns,
         'mapping': mapping,
         'summary': summary,
-        'preview_items': parsed_items,
-        'all_items': parsed_items
+        'preview_items': clean_items,
+        'all_items': clean_items
     }
 
 

@@ -751,37 +751,37 @@
             let rowsHtml = '';
             items.forEach((prod, idx) => {
                 const sNo = prod.s_no || (idx + 1);
-                const name = prod.product_name || prod.title || prod.name || '-';
-                const desc = prod.product_description || prod.description || '-';
-                const cat = prod.product_category || prod.category || '-';
-                const subcat = prod.subcategory || prod.sub_category || '-';
-                const brand = prod.brand || prod.manufacturer || '-';
-                const model = prod.model_part_number || prod.sku || prod.model || '-';
-                const qty = prod.available_quantity ?? prod.quantity ?? 1;
-                const origPrice = formatPriceVal(prod.original_price || prod.msrp || prod.retail_price, false);
-                const askPrice = formatPriceVal(prod.asking_price || prod.price, true);
-                const origin = prod.country_of_origin || prod.origin || '-';
-                const yom = prod.year_of_manufacture || prod.year || '-';
-                const link = formatLinkVal(prod.datasheet_certificate_link || prod.datasheet || prod.link);
-                const grossWeight = prod.gross_weight_per_unit || prod.gross_weight || '-';
+                const name = prod.product_name || '-';
+                const desc = prod.product_description || '-';
+                const cat = prod.product_category || '-';
+                const subcat = prod.subcategory || '-';
+                const brand = prod.brand || '-';
+                const model = prod.model_part_number || '-';
+                const qty = prod.available_quantity ?? 1;
+                const origPrice = formatPriceVal(prod.original_price, false);
+                const askPrice = formatPriceVal(prod.asking_price, true);
+                const origin = prod.country_of_origin || '-';
+                const yom = prod.year_of_manufacture || '-';
+                const link = formatLinkVal(prod.datasheet_certificate_link);
+                const grossWeight = prod.gross_weight_per_unit || '-';
                 const length = (prod.length !== undefined && prod.length !== null && prod.length !== '') ? prod.length : '-';
                 const width = (prod.width !== undefined && prod.width !== null && prod.width !== '') ? prod.width : '-';
                 const height = (prod.height !== undefined && prod.height !== null && prod.height !== '') ? prod.height : '-';
-                const uom = prod.measurement_unit || prod.uom || '-';
-                const stockAge = prod.stock_age || prod.inventory_age || '-';
+                const uom = prod.measurement_unit || '-';
+                const stockAge = prod.stock_age || '-';
                 const tested = formatYesNoBadge(prod.tested_and_verified, false);
-                const funcStatus = prod.functional_status || prod.status || '-';
+                const funcStatus = prod.functional_status || '-';
                 const damage = formatYesNoBadge(prod.visible_damage, true);
                 const missingParts = formatYesNoBadge(prod.missing_parts, true);
                 const warranty = formatYesNoBadge(prod.warranty_available, false);
                 const safetyCert = formatYesNoBadge(prod.safety_certificate_available, false);
                 const certType = prod.certificate_type || '-';
-                const regApproval = prod.regulatory_approval || prod.approvals || '-';
+                const regApproval = prod.regulatory_approval || '-';
                 const hazmat = formatYesNoBadge(prod.hazardous_material, true);
                 const recyclable = formatYesNoBadge(prod.recyclable, false);
-                const lifeRemaining = prod.estimated_product_life_remaining || prod.remaining_life || '-';
-                const custom1 = prod.seller_custom_field_1 || prod.custom_field_1 || '-';
-                const custom2 = prod.seller_custom_field_2 || prod.custom_field_2 || '-';
+                const lifeRemaining = prod.estimated_product_life_remaining || '-';
+                const custom1 = prod.seller_custom_field_1 || '-';
+                const custom2 = prod.seller_custom_field_2 || '-';
 
                 rowsHtml += `
                     <tr>
