@@ -440,11 +440,11 @@ def adminDashBoard(request):
 
     # Real DB computations
     pending_prod_sales = Product.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("current_price"))["s"] or 0
-    pending_lot_sales = Lot.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("total_price"))["s"] or 0
+    pending_lot_sales = Lot.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
     total_sales_due = float(pending_prod_sales + pending_lot_sales)
 
     appr_prod_sales = Product.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("current_price"))["s"] or 0
-    appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("total_price"))["s"] or 0
+    appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
     total_sales_amount = float(appr_prod_sales + appr_lot_sales)
 
     active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("quantity"))["s"] or 0
@@ -1727,11 +1727,6 @@ def lot_enquiry_edit_api(request, enquiry_id):
     # Basic info
     if "title" in data and str(data["title"]).strip():
         lot.title = str(data["title"]).strip()
-    if "total_price" in data and data["total_price"] not in (None, ""):
-        try:
-            lot.total_price = float(data["total_price"])
-        except (ValueError, TypeError):
-            pass
     if "msrp" in data and data["msrp"] not in (None, ""):
         try:
             lot.total_est_retail_value_msrp = float(data["msrp"])
@@ -1776,17 +1771,10 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.total_weight = str(data["total_weight"]).strip()
     if "load_type" in data:
         lot.load_type = str(data["load_type"]).strip()
-    if "allow_counter_offers" in data or "open_to_offer" in data:
-        val = data.get("allow_counter_offers") or data.get("open_to_offer")
-        lot.allow_counter_offers = str(val).lower() in ("true", "1", "yes", "on")
-
-    # Category
-    if "subcategory_id" in data and data["subcategory_id"]:
-        try:
-            sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
-            lot.category = sub_cat
-        except (SubCategory.DoesNotExist, ValueError):
-            pass
+    if "open_to_offer" in data or "allow_counter_offers" in data:
+        val = data.get("open_to_offer") or data.get("allow_counter_offers")
+        if str(val).lower() in ("true", "1", "yes", "on"):
+            lot.offer = "Open to Offer"
 
     # Notes & Description
     if "description" in data:
@@ -1836,7 +1824,7 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.raw_data = {}
 
     lot.raw_data["title"] = lot.title
-    lot.raw_data["liquidation_price"] = lot.total_price
+    lot.raw_data["liquidation_price"] = lot.ask_price_surplus_payout
 
     lot.raw_data["description"] = lot.description
 
@@ -2294,8 +2282,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     # Batch Data Construction
     # Category Breakdown
-    cat_val = enquiry.category.name if enquiry.category else None
-    if not cat_val and enquiry.category_allocations:
+    cat_val = None
+    if enquiry.category_allocations:
         if isinstance(enquiry.category_allocations, list):
             cats = []
             for c in enquiry.category_allocations:
@@ -3406,10 +3394,15 @@ def add_lot_view(request):
         lot = Lot.objects.create(
             title=title,
             description=description,
-            category=category,
+            category_allocations=(
+                [{"category_name": category.name, "alocation": f"{allocation}%"}] if category else []
+            ),
             vendor=vendor,
             inventory_location=inventory_location,
-            total_price=total_price,
+            ask_price_surplus_payout=total_price or 0,
+            total_est_retail_value_msrp=total_retail_value or 0,
+            offer="Open to Offer" if allow_counter_offers else "",
+            sale_method=sale_method,
             currency=currency,
             file=excel_file,
             enquiry_status="pending",

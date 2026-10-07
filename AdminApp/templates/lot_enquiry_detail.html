@@ -970,7 +970,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Total Price / Liquidation Value</label>
-                                <input type="number" step="0.01" class="form-control" name="total_price" value="{{ enquiry.total_price|default:batch_data.liquidation_price|default:'' }}">
+                                <input type="number" step="0.01" class="form-control" name="liquidation_price" value="{{ batch_data.liquidation_price|default:'' }}">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold text-dark">Open to Offers</label>
