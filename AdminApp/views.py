@@ -1902,6 +1902,189 @@ def upload_lot_manifest_api(request, enquiry_id):
         "products_extracted": len(parsed_items)
     })
 
+def _clean_lot_product_item(item, row_counter=1):
+    """
+    Cleans and standardizes a single product item extracted from spreadsheet or LotProduct record,
+    ensuring all 32 standard inventory fields are statically mapped and populated.
+    """
+    if not isinstance(item, dict):
+        return None
+
+    p_clean = dict(item)
+
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
+
+    p_name_check = str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "").lower()
+    p_cat_check = str(p_clean.get("product_category") or p_clean.get("category") or "").lower()
+
+    if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
+        return None
+    if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
+        return None
+
+    def _val_str(v, default="-"):
+        if v is None:
+            return default
+        s = str(v).strip()
+        if not s or s.lower() in ["none", "null", "nan", "nil"]:
+            return default
+        return s
+
+    # 1. S.No*
+    s_val = p_clean.get("s_no")
+    if s_val in [None, "", 0, "0", "None", "nan", "NIL"]:
+        s_val = row_counter
+    else:
+        try:
+            f_val = float(s_val)
+            if f_val.is_integer():
+                s_val = int(f_val)
+        except Exception:
+            pass
+    p_clean["s_no"] = s_val
+
+    # 2. Product Name*
+    p_name = _val_str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name"))
+    p_clean["product_name"] = p_name
+    p_clean["title"] = p_name
+    p_clean["name"] = p_name
+
+    # 3. Product Description*
+    p_clean["product_description"] = _val_str(p_clean.get("product_description") or p_clean.get("description"))
+
+    # 4. Product Category*
+    cat_val = _val_str(p_clean.get("product_category") or p_clean.get("category"))
+    if any(kw in cat_val.lower() for kw in instruction_keywords):
+        cat_val = "-"
+    p_clean["product_category"] = cat_val
+    p_clean["category"] = cat_val
+
+    # 5. Subcategory*
+    subcat_val = _val_str(p_clean.get("subcategory") or p_clean.get("sub_category"))
+    if any(kw in subcat_val.lower() for kw in instruction_keywords):
+        subcat_val = "-"
+    p_clean["subcategory"] = subcat_val
+
+    # 6. Brand / Manufacturer
+    p_clean["brand"] = _val_str(p_clean.get("brand") or p_clean.get("manufacturer"))
+
+    # 7. Model / Part Number
+    model_val = _val_str(p_clean.get("model_part_number") or p_clean.get("sku") or p_clean.get("model") or p_clean.get("part_number"))
+    p_clean["model_part_number"] = model_val
+    p_clean["sku"] = model_val
+
+    # 8. Available Quantity*
+    avail_qty = p_clean.get("available_quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = p_clean.get("quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = 1
+    else:
+        try:
+            f_qty = float(avail_qty)
+            if f_qty.is_integer():
+                avail_qty = int(f_qty)
+        except Exception:
+            pass
+    p_clean["available_quantity"] = avail_qty
+    p_clean["quantity"] = avail_qty
+
+    # 9. Original Price
+    orig_price = p_clean.get("original_price")
+    if orig_price in [None, "", "None", "nan"]:
+        orig_price = p_clean.get("msrp") or p_clean.get("retail_price") or "-"
+    p_clean["original_price"] = _val_str(orig_price)
+
+    # 10. Asking Price
+    ask_price = p_clean.get("asking_price")
+    if ask_price in [None, "", "None", "nan"]:
+        ask_price = p_clean.get("price") or "-"
+    p_clean["asking_price"] = _val_str(ask_price)
+    p_clean["price"] = p_clean["asking_price"]
+
+    # 11. Country of Origin
+    p_clean["country_of_origin"] = _val_str(p_clean.get("country_of_origin") or p_clean.get("origin") or p_clean.get("country"))
+
+    # 12. Year of Manufacture
+    yom = p_clean.get("year_of_manufacture") or p_clean.get("year") or p_clean.get("mfg_year")
+    try:
+        if isinstance(yom, float) and yom.is_integer():
+            yom = int(yom)
+    except Exception:
+        pass
+    p_clean["year_of_manufacture"] = _val_str(yom)
+
+    # 13. Datasheet / Certificate Link
+    p_clean["datasheet_certificate_link"] = _val_str(p_clean.get("datasheet_certificate_link") or p_clean.get("datasheet") or p_clean.get("link") or p_clean.get("certificate_link"))
+
+    # 14. Gross Weight per Unit
+    p_clean["gross_weight_per_unit"] = _val_str(p_clean.get("gross_weight_per_unit") or p_clean.get("gross_weight"))
+
+    # 15. Length
+    p_clean["length"] = _val_str(p_clean.get("length"))
+
+    # 16. Width
+    p_clean["width"] = _val_str(p_clean.get("width"))
+
+    # 17. Height
+    p_clean["height"] = _val_str(p_clean.get("height"))
+
+    # 18. Measurement Unit
+    p_clean["measurement_unit"] = _val_str(p_clean.get("measurement_unit") or p_clean.get("uom") or p_clean.get("dimension_unit"))
+
+    # 19. Stock Age
+    p_clean["stock_age"] = _val_str(p_clean.get("stock_age") or p_clean.get("inventory_age"))
+
+    # 20. Tested and verified
+    p_clean["tested_and_verified"] = _val_str(p_clean.get("tested_and_verified") or p_clean.get("tested"))
+
+    # 21. Functional Status
+    p_clean["functional_status"] = _val_str(p_clean.get("functional_status") or p_clean.get("status"))
+
+    # 22. Visible Damage?
+    p_clean["visible_damage"] = _val_str(p_clean.get("visible_damage") or p_clean.get("damage"))
+
+    # 23. Missing Parts?
+    p_clean["missing_parts"] = _val_str(p_clean.get("missing_parts"))
+
+    # 24. Warranty Available?
+    p_clean["warranty_available"] = _val_str(p_clean.get("warranty_available") or p_clean.get("warranty"))
+
+    # 25. Safety Certificate Available?
+    p_clean["safety_certificate_available"] = _val_str(p_clean.get("safety_certificate_available") or p_clean.get("safety_certificate"))
+
+    # 26. Certificate Type
+    p_clean["certificate_type"] = _val_str(p_clean.get("certificate_type"))
+
+    # 27. Regulatory Approval
+    p_clean["regulatory_approval"] = _val_str(p_clean.get("regulatory_approval") or p_clean.get("approvals"))
+
+    # 28. Hazardous Material?
+    p_clean["hazardous_material"] = _val_str(p_clean.get("hazardous_material") or p_clean.get("hazmat"))
+
+    # 29. Recyclable?
+    p_clean["recyclable"] = _val_str(p_clean.get("recyclable"))
+
+    # 30. Estimated Product Life Remaining
+    p_clean["estimated_product_life_remaining"] = _val_str(p_clean.get("estimated_product_life_remaining") or p_clean.get("remaining_life"))
+
+    # 31. Seller Custom Field 1
+    p_clean["seller_custom_field_1"] = _val_str(p_clean.get("seller_custom_field_1") or p_clean.get("custom_field_1"))
+
+    # 32. Seller Custom Field 2
+    p_clean["seller_custom_field_2"] = _val_str(p_clean.get("seller_custom_field_2") or p_clean.get("custom_field_2"))
+
+    # Standard fallbacks for condition & MOQ
+    p_clean["product_condition"] = _val_str(p_clean.get("product_condition") or p_clean.get("condition"), "Surplus")
+    p_clean["condition"] = p_clean["product_condition"]
+    p_clean["moq"] = p_clean.get("moq") or 1
+
+    return p_clean
+
 
 @api_view(["POST", "GET"])
 @permission_classes([AllowAny])
@@ -1932,56 +2115,14 @@ def parse_lot_spreadsheet_api(request, enquiry_id):
     except Exception as e:
         return Response({"success": False, "message": f"Failed to parse spreadsheet: {str(e)}"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    instruction_keywords = [
-        'reference directory', 'classification taxonomy', 'select a valid product category',
-        'total categories', 'ensure consistent reporting', 'master classification',
-        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
-    ]
-
     cleaned_products = []
     if isinstance(parsed_items, list):
         row_counter = 1
         for item in parsed_items:
-            if isinstance(item, dict):
-                p_clean = dict(item)
-                p_name_check = str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "").lower()
-                p_cat_check = str(p_clean.get("product_category") or p_clean.get("category") or "").lower()
-
-                if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
-                    continue
-                if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
-                    continue
-
-                p_clean["s_no"] = row_counter
-                row_counter += 1
-                p_name = p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "-"
-                p_clean["product_name"] = p_name
-                p_clean["title"] = p_clean.get("title") or p_name
-                p_clean["name"] = p_clean.get("name") or p_name
-
-                cat_val = str(p_clean.get("product_category") or p_clean.get("category") or "-").strip()
-                if any(kw in cat_val.lower() for kw in instruction_keywords):
-                    cat_val = "-"
-                p_clean["product_category"] = cat_val
-                p_clean["category"] = cat_val
-
-                subcat_val = str(p_clean.get("subcategory") or "-").strip()
-                if any(kw in subcat_val.lower() for kw in instruction_keywords):
-                    subcat_val = "-"
-                p_clean["subcategory"] = subcat_val
-
-                p_clean["brand"] = p_clean.get("brand") or "-"
-                p_clean["model_part_number"] = p_clean.get("model_part_number") or p_clean.get("sku") or "-"
-                p_clean["sku"] = p_clean.get("sku") or p_clean.get("model_part_number") or "-"
-                p_clean["product_condition"] = p_clean.get("product_condition") or p_clean.get("condition") or "Surplus"
-                p_clean["condition"] = p_clean.get("condition") or p_clean.get("product_condition") or "Surplus"
-                p_clean["available_quantity"] = p_clean.get("available_quantity") if p_clean.get("available_quantity") is not None else (p_clean.get("quantity") or 1)
-                p_clean["quantity"] = p_clean.get("quantity") if p_clean.get("quantity") is not None else p_clean.get("available_quantity")
-                p_clean["moq"] = p_clean.get("moq") or 1
-                p_clean["asking_price"] = p_clean.get("asking_price") or p_clean.get("price") or p_clean.get("msrp")
-                p_clean["price"] = p_clean.get("price") or p_clean.get("asking_price")
-                p_clean["msrp"] = p_clean.get("msrp") or p_clean.get("asking_price")
+            p_clean = _clean_lot_product_item(item, row_counter)
+            if p_clean is not None:
                 cleaned_products.append(p_clean)
+                row_counter += 1
 
     return Response({
         "success": True,
@@ -2146,7 +2287,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         if clean_d:
             enquiry.description = clean_d
     if not enquiry.inventory_location:
-        clean_l = _clean_val(combined_raw.get("inventory_location") or combined_raw.get("location") or combined_raw.get("business_location"))
+        clean_l = _clean_val(combined_raw.get("inventory_location") or combined_raw.get("location"))
         if clean_l:
             enquiry.inventory_location = clean_l
 
@@ -2173,58 +2314,14 @@ def lot_enquiry_detail_view(request, enquiry_id):
     elif enquiry.raw_data.get("is_saved_to_db") and enquiry.raw_data.get("products"):
         products_list = enquiry.raw_data.get("products", [])
 
-    instruction_keywords = [
-        'reference directory', 'classification taxonomy', 'select a valid product category',
-        'total categories', 'ensure consistent reporting', 'master classification',
-        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
-    ]
-
     cleaned_products = []
     if isinstance(products_list, list):
         row_counter = 1
         for item in products_list:
-            if isinstance(item, dict):
-                p_clean = dict(item)
-                p_name_check = str(p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "").lower()
-                p_cat_check = str(p_clean.get("product_category") or p_clean.get("category") or "").lower()
-
-                if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
-                    continue
-                if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
-                    continue
-
-                p_clean["s_no"] = row_counter
-                row_counter += 1
-                p_name = p_clean.get("product_name") or p_clean.get("title") or p_clean.get("name") or "-"
-                p_clean["product_name"] = p_name
-                p_clean["title"] = p_clean.get("title") or p_name
-                p_clean["name"] = p_clean.get("name") or p_name
-
-                cat_val = str(p_clean.get("product_category") or p_clean.get("category") or "-").strip()
-                if any(kw in cat_val.lower() for kw in instruction_keywords):
-                    cat_val = "-"
-                p_clean["product_category"] = cat_val
-                p_clean["category"] = cat_val
-
-                subcat_val = str(p_clean.get("subcategory") or "-").strip()
-                if any(kw in subcat_val.lower() for kw in instruction_keywords):
-                    subcat_val = "-"
-                p_clean["subcategory"] = subcat_val
-
-                p_clean["brand"] = p_clean.get("brand") or "-"
-                p_clean["model_part_number"] = p_clean.get("model_part_number") or p_clean.get("sku") or "-"
-                p_clean["sku"] = p_clean.get("sku") or p_clean.get("model_part_number") or "-"
-                p_clean["product_condition"] = p_clean.get("product_condition") or p_clean.get("condition") or "Surplus"
-                p_clean["condition"] = p_clean.get("condition") or p_clean.get("product_condition") or "Surplus"
-                p_clean["available_quantity"] = p_clean.get("available_quantity") if p_clean.get("available_quantity") is not None else (p_clean.get("quantity") or 1)
-                p_clean["quantity"] = p_clean.get("quantity") if p_clean.get("quantity") is not None else p_clean.get("available_quantity")
-                p_clean["moq"] = p_clean.get("moq") or 1
-                p_clean["asking_price"] = p_clean.get("asking_price") or p_clean.get("price") or p_clean.get("msrp")
-                p_clean["price"] = p_clean.get("price") or p_clean.get("asking_price")
-                p_clean["msrp"] = p_clean.get("msrp") or p_clean.get("asking_price")
+            p_clean = _clean_lot_product_item(item, row_counter)
+            if p_clean is not None:
                 cleaned_products.append(p_clean)
-            else:
-                cleaned_products.append(item)
+                row_counter += 1
 
     context["products"] = cleaned_products
     context["is_saved_to_db"] = len(cleaned_products) > 0 and is_saved_to_db
@@ -2246,12 +2343,16 @@ def lot_enquiry_detail_view(request, enquiry_id):
                 enquiry.save(update_fields=["vendor"])
 
     user_data = {
-        "full_name": None,
-        "phone_no": None,
-        "email": None,
-        "company": None,
-        "business_location": _clean_val(enquiry.inventory_location) or _clean_val(combined_raw.get("business_location")) or _clean_val(combined_raw.get("inventory_location")),
-        "industry": None
+        "vendor_id": "N/A",
+        "raw_vendor_id": None,
+        "user_id": "N/A",
+        "raw_user_id": None,
+        "full_name": "N/A",
+        "phone_no": "N/A",
+        "email": "N/A",
+        "company": "N/A",
+        "business_location": "N/A",
+        "industry": "N/A"
     }
 
     if vendor:
@@ -2259,26 +2360,22 @@ def lot_enquiry_detail_view(request, enquiry_id):
         user_data["raw_vendor_id"] = vendor.id
         user_data["user_id"] = vendor.user_id
         user_data["raw_user_id"] = vendor.id
-        user_data["full_name"] = vendor.full_name or _clean_val(combined_raw.get("full_name")) or _clean_val(combined_raw.get("contact_person")) or "N/A"
-        user_data["phone_no"] = vendor.mobile_number or _clean_val(combined_raw.get("phone_no")) or _clean_val(combined_raw.get("phone")) or "N/A"
-        user_data["email"] = vendor.email or _clean_val(combined_raw.get("email")) or "N/A"
-        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else _clean_val(combined_raw.get("company")) or "N/A")
-        user_data["business_location"] = vendor.business_location or user_data["business_location"] or "N/A"
+        user_data["full_name"] = vendor.full_name or "N/A"
+        user_data["phone_no"] = vendor.mobile_number or "N/A"
+        user_data["email"] = vendor.email or "N/A"
+        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
+        user_data["business_location"] = vendor.business_location or vendor.business_address or "N/A"
         if vendor.category_interested:
             user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
         elif vendor.business_type:
             user_data["industry"] = vendor.business_type
         else:
-            user_data["industry"] = _clean_val(combined_raw.get("industry")) or "N/A"
+            user_data["industry"] = "N/A"
     else:
-        user_data["vendor_id"] = _clean_val(combined_raw.get("vendor_id")) or _clean_val(combined_raw.get("user_id")) or "N/A"
-        user_data["user_id"] = user_data["vendor_id"]
-        user_data["full_name"] = _clean_val(combined_raw.get("full_name")) or _clean_val(combined_raw.get("contact_person")) or _clean_val(combined_raw.get("name")) or "N/A"
-        user_data["phone_no"] = _clean_val(combined_raw.get("phone_no")) or _clean_val(combined_raw.get("phone")) or _clean_val(combined_raw.get("contact_number")) or "N/A"
-        user_data["email"] = _clean_val(combined_raw.get("email")) or "N/A"
-        user_data["company"] = _clean_val(combined_raw.get("company")) or _clean_val(combined_raw.get("company_name")) or "N/A"
-        user_data["business_location"] = user_data["business_location"] or "N/A"
-        user_data["industry"] = _clean_val(combined_raw.get("industry")) or "N/A"
+        raw_vid = combined_raw.get("vendor_id") or combined_raw.get("user_id") or enquiry.raw_data.get("vendor_id")
+        if raw_vid:
+            user_data["vendor_id"] = _clean_val(raw_vid) or "N/A"
+            user_data["user_id"] = user_data["vendor_id"]
 
     context["user_data"] = user_data
 
@@ -2495,42 +2592,26 @@ def save_lot_products_api(request, enquiry_id):
     saved_count = 0
     clean_saved_products = []
 
-    instruction_keywords = [
-        'reference directory', 'classification taxonomy', 'select a valid product category',
-        'total categories', 'ensure consistent reporting', 'master classification',
-        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
-    ]
-
     for item in products_data:
-        p_name = item.get("product_name") or item.get("title") or item.get("name") or ""
-        p_desc = item.get("product_description") or ""
-        p_brand = item.get("brand") or ""
-        p_cat = item.get("product_category") or item.get("category") or ""
-        
-        p_name_str = str(p_name).strip()
-        if not p_name_str or p_name_str.lower() in ["-", "nil", "none", "null", "nan", "n/a", "product category", "total categories", "s.no", "product name"]:
-            if not p_desc or str(p_desc).strip().lower() in ["-", "nil", "none", "null", "nan", "n/a"]:
-                continue
-        
-        if any(kw in p_name_str.lower() or kw in str(p_cat).lower() for kw in instruction_keywords):
+        p_clean = _clean_lot_product_item(item, saved_count + 1)
+        if not p_clean:
             continue
-
-        p_qty = item.get("available_quantity") or item.get("quantity") or 1
+        p_name = p_clean.get("product_name") or "-"
+        p_qty = p_clean.get("available_quantity") or 1
         try:
             p_qty = int(p_qty)
         except (ValueError, TypeError):
             p_qty = 1
-
-        p_cond = item.get("product_condition") or item.get("condition") or "Surplus"
+        p_cond = p_clean.get("product_condition") or "Surplus"
 
         LotProduct.objects.create(
             lot=enquiry,
             product_name=str(p_name)[:255],
             quantity=p_qty,
             condition=str(p_cond)[:255],
-            raw_data=item,
+            raw_data=p_clean,
         )
-        clean_saved_products.append(item)
+        clean_saved_products.append(p_clean)
         saved_count += 1
 
     if not isinstance(enquiry.raw_data, dict):

@@ -462,47 +462,157 @@
                         <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
                             <thead class="table-light">
                                 <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
-                                    <th class="ps-4 py-3 fw-semibold" style="width: 65px;">S.No</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 280px;">Product Name</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 140px;">Category</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 140px;">Subcategory</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 140px;">Brand / Model</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 110px;">Condition</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 80px;">Qty</th>
-                                    <th class="py-3 fw-semibold" style="min-width: 80px;">MOQ</th>
-                                    <th class="py-3 fw-semibold pe-4" style="min-width: 110px;">Asking Price</th>
+                                    <th class="ps-4 py-3 fw-semibold text-nowrap" style="min-width: 65px;">S.No*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 220px;">Product Name*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 240px;">Product Description*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Product Category*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Subcategory*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Brand / Manufacturer</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Model / Part Number</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Available Quantity*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Original Price</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Asking Price</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Country of Origin</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Year of Manufacture</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Datasheet / Certificate Link</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Gross Weight per Unit</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Length</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Width</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Height</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Measurement Unit</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Stock Age</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Tested and verified</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Functional Status</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Visible Damage?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Missing Parts?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Warranty Available?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Safety Certificate Available?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Certificate Type</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Regulatory Approval</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Hazardous Material?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Recyclable?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Estimated Product Life Remaining</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Seller Custom Field 1</th>
+                                    <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 160px;">Seller Custom Field 2</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for prod in products %}
                                 <tr>
-                                    <td class="ps-4 fw-bold font-monospace text-dark">{{ prod.s_no|default:forloop.counter }}</td>
-                                    <td class="fw-bold text-dark">
-                                        <div>{{ prod.product_name|default:"-" }}</div>
-                                        {% if prod.product_description %}
-                                        <small class="text-muted d-block text-truncate" style="max-width: 260px;">{{ prod.product_description }}</small>
+                                    <td class="ps-4 fw-bold font-monospace text-dark text-nowrap">{{ prod.s_no|default:forloop.counter }}</td>
+                                    <td class="fw-bold text-dark text-nowrap">{{ prod.product_name|default:"-" }}</td>
+                                    <td>
+                                        <div class="text-secondary text-truncate" style="max-width: 240px;" title="{{ prod.product_description }}">{{ prod.product_description|default:"-" }}</div>
+                                    </td>
+                                    <td class="text-nowrap"><span class="badge bg-light text-dark border">{{ prod.product_category|default:"-" }}</span></td>
+                                    <td class="text-nowrap"><span class="badge bg-light text-dark border">{{ prod.subcategory|default:"-" }}</span></td>
+                                    <td class="fw-medium text-dark text-nowrap">{{ prod.brand|default:"-" }}</td>
+                                    <td class="font-monospace text-secondary text-nowrap">{{ prod.model_part_number|default:"-" }}</td>
+                                    <td class="fw-bold text-dark text-nowrap">{{ prod.available_quantity|default:"1" }}</td>
+                                    <td class="text-secondary text-nowrap">
+                                        {% if prod.original_price and prod.original_price != "NIL" and prod.original_price != "-" and prod.original_price != "None" %}
+                                            ${{ prod.original_price }}
+                                        {% else %}
+                                            -
                                         {% endif %}
                                     </td>
-                                    <td><span class="badge bg-light text-dark border">{{ prod.product_category|default:"-" }}</span></td>
-                                    <td><span class="badge bg-light text-dark border">{{ prod.subcategory|default:"-" }}</span></td>
-                                    <td>
-                                        <div class="fw-medium text-dark">{{ prod.brand|default:"-" }}</div>
-                                        <small class="text-muted font-monospace">{{ prod.model_part_number|default:"-" }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                            {{ prod.product_condition|default:"Surplus" }}
-                                        </span>
-                                    </td>
-                                    <td class="fw-bold text-dark">{{ prod.available_quantity|default:"1" }}</td>
-                                    <td class="fw-semibold text-secondary">{{ prod.moq|default:"1" }}</td>
-                                    <td class="fw-bold text-success pe-4">
-                                        {% if prod.asking_price and prod.asking_price != "NIL" %}
+                                    <td class="fw-bold text-success text-nowrap">
+                                        {% if prod.asking_price and prod.asking_price != "NIL" and prod.asking_price != "-" and prod.asking_price != "None" %}
                                             ${{ prod.asking_price }}
                                         {% else %}
-                                            NIL
+                                            -
                                         {% endif %}
                                     </td>
+                                    <td class="text-nowrap">{{ prod.country_of_origin|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.year_of_manufacture|default:"-" }}</td>
+                                    <td class="text-nowrap">
+                                        {% if prod.datasheet_certificate_link and prod.datasheet_certificate_link != "-" and prod.datasheet_certificate_link != "None" %}
+                                            {% if prod.datasheet_certificate_link|slice:":4" == "http" %}
+                                                <a href="{{ prod.datasheet_certificate_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" style="font-size: 11px;">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>View Link
+                                                </a>
+                                            {% else %}
+                                                <span class="text-secondary">{{ prod.datasheet_certificate_link }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">{{ prod.gross_weight_per_unit|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.length|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.width|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.height|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.measurement_unit|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.stock_age|default:"-" }}</td>
+                                    <td class="text-nowrap">
+                                        {% if prod.tested_and_verified == "Yes" or prod.tested_and_verified == True or prod.tested_and_verified == "true" or prod.tested_and_verified == "1" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.tested_and_verified == "No" or prod.tested_and_verified == False or prod.tested_and_verified == "false" or prod.tested_and_verified == "0" %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.tested_and_verified|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">{{ prod.functional_status|default:"-" }}</td>
+                                    <td class="text-nowrap">
+                                        {% if prod.visible_damage == "Yes" or prod.visible_damage == True or prod.visible_damage == "true" or prod.visible_damage == "1" %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.visible_damage == "No" or prod.visible_damage == False or prod.visible_damage == "false" or prod.visible_damage == "0" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.visible_damage|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">
+                                        {% if prod.missing_parts == "Yes" or prod.missing_parts == True or prod.missing_parts == "true" or prod.missing_parts == "1" %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.missing_parts == "No" or prod.missing_parts == False or prod.missing_parts == "false" or prod.missing_parts == "0" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.missing_parts|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">
+                                        {% if prod.warranty_available == "Yes" or prod.warranty_available == True or prod.warranty_available == "true" or prod.warranty_available == "1" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.warranty_available == "No" or prod.warranty_available == False or prod.warranty_available == "false" or prod.warranty_available == "0" %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.warranty_available|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">
+                                        {% if prod.safety_certificate_available == "Yes" or prod.safety_certificate_available == True or prod.safety_certificate_available == "true" or prod.safety_certificate_available == "1" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.safety_certificate_available == "No" or prod.safety_certificate_available == False or prod.safety_certificate_available == "false" or prod.safety_certificate_available == "0" %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.safety_certificate_available|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">{{ prod.certificate_type|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.regulatory_approval|default:"-" }}</td>
+                                    <td class="text-nowrap">
+                                        {% if prod.hazardous_material == "Yes" or prod.hazardous_material == True or prod.hazardous_material == "true" or prod.hazardous_material == "1" %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.hazardous_material == "No" or prod.hazardous_material == False or prod.hazardous_material == "false" or prod.hazardous_material == "0" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.hazardous_material|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">
+                                        {% if prod.recyclable == "Yes" or prod.recyclable == True or prod.recyclable == "true" or prod.recyclable == "1" %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
+                                        {% elif prod.recyclable == "No" or prod.recyclable == False or prod.recyclable == "false" or prod.recyclable == "0" %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
+                                        {% else %}
+                                            {{ prod.recyclable|default:"-" }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-nowrap">{{ prod.estimated_product_life_remaining|default:"-" }}</td>
+                                    <td class="text-nowrap">{{ prod.seller_custom_field_1|default:"-" }}</td>
+                                    <td class="pe-4 text-nowrap">{{ prod.seller_custom_field_2|default:"-" }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -606,41 +716,109 @@
                 return;
             }
 
+            function formatYesNoBadge(val, isDanger) {
+                if (val === null || val === undefined || val === '' || val === '-' || val === 'None') return '-';
+                const s = String(val).trim().toLowerCase();
+                if (s === 'yes' || s === 'true' || s === '1') {
+                    const badgeClass = isDanger ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle';
+                    return `<span class="badge ${badgeClass} rounded-pill px-2">Yes</span>`;
+                }
+                if (s === 'no' || s === 'false' || s === '0') {
+                    const badgeClass = isDanger ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle';
+                    return `<span class="badge ${badgeClass} rounded-pill px-2">No</span>`;
+                }
+                return escapeHtml(val);
+            }
+
+            function formatPriceVal(val, isSuccess) {
+                if (val === null || val === undefined || val === '' || val === '-' || val === 'NIL' || val === '0' || val === 'None') return '-';
+                const s = String(val).trim().replace(/^\$/, '');
+                if (isSuccess) {
+                    return `<span class="fw-bold text-success">$${escapeHtml(s)}</span>`;
+                }
+                return `$${escapeHtml(s)}`;
+            }
+
+            function formatLinkVal(val) {
+                if (!val || val === '-' || val === 'None') return '-';
+                const s = String(val).trim();
+                if (s.startsWith('http://') || s.startsWith('https://')) {
+                    return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" style="font-size: 11px;"><i class="bi bi-box-arrow-up-right me-1"></i>View Link</a>`;
+                }
+                return escapeHtml(s);
+            }
+
             let rowsHtml = '';
             items.forEach((prod, idx) => {
                 const sNo = prod.s_no || (idx + 1);
                 const name = prod.product_name || prod.title || prod.name || '-';
-                const desc = prod.product_description ? `<small class="text-muted d-block text-truncate" style="max-width: 260px;">${escapeHtml(prod.product_description)}</small>` : '';
+                const desc = prod.product_description || prod.description || '-';
                 const cat = prod.product_category || prod.category || '-';
-                const subcat = prod.subcategory || '-';
-                const brand = prod.brand || '-';
-                const model = prod.model_part_number || prod.sku || '-';
-                const condition = prod.product_condition || prod.condition || 'Surplus';
-                const qty = prod.available_quantity || prod.quantity || 1;
-                const moq = prod.moq || 1;
-                const price = (prod.asking_price && prod.asking_price !== 'NIL' && prod.asking_price !== '0') ? `$${prod.asking_price}` : 'NIL';
+                const subcat = prod.subcategory || prod.sub_category || '-';
+                const brand = prod.brand || prod.manufacturer || '-';
+                const model = prod.model_part_number || prod.sku || prod.model || '-';
+                const qty = prod.available_quantity ?? prod.quantity ?? 1;
+                const origPrice = formatPriceVal(prod.original_price || prod.msrp || prod.retail_price, false);
+                const askPrice = formatPriceVal(prod.asking_price || prod.price, true);
+                const origin = prod.country_of_origin || prod.origin || '-';
+                const yom = prod.year_of_manufacture || prod.year || '-';
+                const link = formatLinkVal(prod.datasheet_certificate_link || prod.datasheet || prod.link);
+                const grossWeight = prod.gross_weight_per_unit || prod.gross_weight || '-';
+                const length = (prod.length !== undefined && prod.length !== null && prod.length !== '') ? prod.length : '-';
+                const width = (prod.width !== undefined && prod.width !== null && prod.width !== '') ? prod.width : '-';
+                const height = (prod.height !== undefined && prod.height !== null && prod.height !== '') ? prod.height : '-';
+                const uom = prod.measurement_unit || prod.uom || '-';
+                const stockAge = prod.stock_age || prod.inventory_age || '-';
+                const tested = formatYesNoBadge(prod.tested_and_verified, false);
+                const funcStatus = prod.functional_status || prod.status || '-';
+                const damage = formatYesNoBadge(prod.visible_damage, true);
+                const missingParts = formatYesNoBadge(prod.missing_parts, true);
+                const warranty = formatYesNoBadge(prod.warranty_available, false);
+                const safetyCert = formatYesNoBadge(prod.safety_certificate_available, false);
+                const certType = prod.certificate_type || '-';
+                const regApproval = prod.regulatory_approval || prod.approvals || '-';
+                const hazmat = formatYesNoBadge(prod.hazardous_material, true);
+                const recyclable = formatYesNoBadge(prod.recyclable, false);
+                const lifeRemaining = prod.estimated_product_life_remaining || prod.remaining_life || '-';
+                const custom1 = prod.seller_custom_field_1 || prod.custom_field_1 || '-';
+                const custom2 = prod.seller_custom_field_2 || prod.custom_field_2 || '-';
 
                 rowsHtml += `
                     <tr>
-                        <td class="ps-4 fw-bold font-monospace text-dark">${sNo}</td>
-                        <td class="fw-bold text-dark">
-                            <div>${escapeHtml(name)}</div>
-                            ${desc}
-                        </td>
-                        <td><span class="badge bg-light text-dark border">${escapeHtml(cat)}</span></td>
-                        <td><span class="badge bg-light text-dark border">${escapeHtml(subcat)}</span></td>
+                        <td class="ps-4 fw-bold font-monospace text-dark text-nowrap">${sNo}</td>
+                        <td class="fw-bold text-dark text-nowrap">${escapeHtml(name)}</td>
                         <td>
-                            <div class="fw-medium text-dark">${escapeHtml(brand)}</div>
-                            <small class="text-muted font-monospace">${escapeHtml(model)}</small>
+                            <div class="text-secondary text-truncate" style="max-width: 240px;" title="${escapeHtml(desc)}">${escapeHtml(desc)}</div>
                         </td>
-                        <td>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                ${escapeHtml(condition)}
-                            </span>
-                        </td>
-                        <td class="fw-bold text-dark">${qty}</td>
-                        <td class="fw-semibold text-secondary">${moq}</td>
-                        <td class="fw-bold text-success pe-4">${price}</td>
+                        <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(cat)}</span></td>
+                        <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(subcat)}</span></td>
+                        <td class="fw-medium text-dark text-nowrap">${escapeHtml(brand)}</td>
+                        <td class="font-monospace text-secondary text-nowrap">${escapeHtml(model)}</td>
+                        <td class="fw-bold text-dark text-nowrap">${qty}</td>
+                        <td class="text-secondary text-nowrap">${origPrice}</td>
+                        <td class="text-nowrap">${askPrice}</td>
+                        <td class="text-nowrap">${escapeHtml(origin)}</td>
+                        <td class="text-nowrap">${escapeHtml(yom)}</td>
+                        <td class="text-nowrap">${link}</td>
+                        <td class="text-nowrap">${escapeHtml(grossWeight)}</td>
+                        <td class="text-nowrap">${escapeHtml(length)}</td>
+                        <td class="text-nowrap">${escapeHtml(width)}</td>
+                        <td class="text-nowrap">${escapeHtml(height)}</td>
+                        <td class="text-nowrap">${escapeHtml(uom)}</td>
+                        <td class="text-nowrap">${escapeHtml(stockAge)}</td>
+                        <td class="text-nowrap">${tested}</td>
+                        <td class="text-nowrap">${escapeHtml(funcStatus)}</td>
+                        <td class="text-nowrap">${damage}</td>
+                        <td class="text-nowrap">${missingParts}</td>
+                        <td class="text-nowrap">${warranty}</td>
+                        <td class="text-nowrap">${safetyCert}</td>
+                        <td class="text-nowrap">${escapeHtml(certType)}</td>
+                        <td class="text-nowrap">${escapeHtml(regApproval)}</td>
+                        <td class="text-nowrap">${hazmat}</td>
+                        <td class="text-nowrap">${recyclable}</td>
+                        <td class="text-nowrap">${escapeHtml(lifeRemaining)}</td>
+                        <td class="text-nowrap">${escapeHtml(custom1)}</td>
+                        <td class="pe-4 text-nowrap">${escapeHtml(custom2)}</td>
                     </tr>
                 `;
             });
@@ -650,15 +828,38 @@
                     <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
                         <thead class="table-light">
                             <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
-                                <th class="ps-4 py-3 fw-semibold" style="width: 65px;">S.No</th>
-                                <th class="py-3 fw-semibold" style="min-width: 280px;">Product Name</th>
-                                <th class="py-3 fw-semibold" style="min-width: 140px;">Category</th>
-                                <th class="py-3 fw-semibold" style="min-width: 140px;">Subcategory</th>
-                                <th class="py-3 fw-semibold" style="min-width: 140px;">Brand / Model</th>
-                                <th class="py-3 fw-semibold" style="min-width: 110px;">Condition</th>
-                                <th class="py-3 fw-semibold" style="min-width: 80px;">Qty</th>
-                                <th class="py-3 fw-semibold" style="min-width: 80px;">MOQ</th>
-                                <th class="py-3 fw-semibold pe-4" style="min-width: 110px;">Asking Price</th>
+                                <th class="ps-4 py-3 fw-semibold text-nowrap" style="min-width: 65px;">S.No*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 220px;">Product Name*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 240px;">Product Description*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Product Category*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Subcategory*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Brand / Manufacturer</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Model / Part Number</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Available Quantity*</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Original Price</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Asking Price</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Country of Origin</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Year of Manufacture</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Datasheet / Certificate Link</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Gross Weight per Unit</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Length</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Width</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Height</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Measurement Unit</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Stock Age</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Tested and verified</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Functional Status</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Visible Damage?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Missing Parts?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Warranty Available?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Safety Certificate Available?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Certificate Type</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Regulatory Approval</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Hazardous Material?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Recyclable?</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Estimated Product Life Remaining</th>
+                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Seller Custom Field 1</th>
+                                <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 160px;">Seller Custom Field 2</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1020,7 +1221,7 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Inventory Location</label>
-                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:user_data.business_location|default:'' }}">
+                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
                             </div>
                         </div>
                     </div>
