@@ -1214,7 +1214,7 @@ def lot_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Lot.objects.all().select_related("vendor", "category").order_by("-created_at")
+    qs = Lot.objects.all().select_related("vendor").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
