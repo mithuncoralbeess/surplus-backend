@@ -434,6 +434,7 @@ class SellerProductEnquiry(models.Model):
     title = models.CharField(max_length=255, db_index=True)
     sku = models.CharField(max_length=100, blank=True, default="")
     description = models.TextField(blank=True, default="")
+    reason_to_sell = models.TextField(blank=True, default="")
     price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     discount_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     stock_quantity = models.PositiveIntegerField(default=0)
@@ -913,6 +914,7 @@ class Product(models.Model):
     offer = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Offer / discount percentage")
     
     description = models.TextField(blank=True, default="")
+    reason_to_sell = models.TextField(blank=True, default="")
     warranty = models.CharField(max_length=255, blank=True, default="")
     warranty_attachment = models.CharField(max_length=1000, blank=True, default="", help_text="Cloudflare S3 PDF link")
     
