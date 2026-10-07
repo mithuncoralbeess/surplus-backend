@@ -346,7 +346,12 @@ class LotSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         import json
         import re
-        data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+        # Multipart payloads arrive as a QueryDict; DRF's JSONField treats QueryDict input as HTML form
+        # input and str()'s already-parsed lists into invalid JSON. Flatten to a plain dict first.
+        if hasattr(data, 'dict'):
+            data_copy = data.dict()
+        else:
+            data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
 
         def _parse_num(val):
             if val is None or val == "":
