@@ -399,6 +399,43 @@
         </div>
     </div>
 
+    <!-- All Lot Model Fields -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="premium-card p-4">
+                <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                    <i class="bi bi-database me-2 text-primary"></i>All Lot Fields
+                </h6>
+                <div class="row g-4">
+                    {% for f in all_lot_fields %}
+                    <div class="{% if f.kind == 'json' or f.kind == 'links' %}col-12{% else %}col-md-6 col-lg-4{% endif %}">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ f.label }}</span>
+                            {% if f.kind == "bool" %}
+                                {% if f.value %}<span class="badge bg-success rounded-pill">Yes</span>{% else %}<span class="badge bg-secondary rounded-pill">No</span>{% endif %}
+                            {% elif f.kind == "list" %}
+                                {% if f.value %}
+                                    <div class="d-flex flex-wrap gap-1">{% for item in f.value %}<span class="badge bg-primary-subtle text-primary border rounded-pill px-2 py-1">{{ item }}</span>{% endfor %}</div>
+                                {% else %}<span class="text-muted fst-italic">N/A</span>{% endif %}
+                            {% elif f.kind == "links" %}
+                                {% if f.value %}
+                                    <div class="d-flex flex-wrap gap-2">{% for item in f.value %}<a href="{{ item }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-box-arrow-up-right me-1"></i>{{ forloop.counter }}</a>{% endfor %}</div>
+                                {% else %}<span class="text-muted fst-italic">N/A</span>{% endif %}
+                            {% elif f.kind == "link" %}
+                                {% if f.value %}<a href="{{ f.value }}" target="_blank" class="text-break">{{ f.value }}</a>{% else %}<span class="text-muted fst-italic">N/A</span>{% endif %}
+                            {% elif f.kind == "json" %}
+                                {% if f.value %}<pre class="bg-light border rounded-3 p-3 mb-0" style="max-height: 260px; overflow: auto; font-size: 0.75rem;">{{ f.value }}</pre>{% else %}<span class="text-muted fst-italic">N/A</span>{% endif %}
+                            {% else %}
+                                <span class="text-dark fw-medium text-break">{{ f.value|default:"N/A" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-4">
         <!-- Main Products Table -->
         <div class="col-12">

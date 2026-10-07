@@ -2355,6 +2355,52 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     context["batch_data"] = batch_data
 
+    # Every field on the Lot model, rendered generically for the detail page
+    all_lot_fields = []
+    for f in enquiry._meta.fields:
+        raw_val = getattr(enquiry, f.name, None)
+        if f.name == "vendor":
+            display = (raw_val.company_name or raw_val.full_name or raw_val.email) if raw_val else None
+            kind = "text"
+        elif f.choices:
+            display = enquiry._get_FIELD_display(f)
+            kind = "text"
+        elif isinstance(raw_val, bool):
+            display = raw_val
+            kind = "bool"
+        elif isinstance(raw_val, (list, dict)):
+            if f.name == "raw_data":
+                display = json.dumps(raw_val, indent=2, default=str)
+                kind = "json"
+            elif f.name in ("warehouse_images", "third_party_documents"):
+                display = raw_val
+                kind = "links"
+            elif f.name == "category_allocations":
+                display = [
+                    f"{(c.get('category_name') or c.get('category') or '')} - {(c.get('alocation') or c.get('allocation') or c.get('percentage') or '')}"
+                    for c in raw_val if isinstance(c, dict)
+                ] or [str(c) for c in raw_val]
+                kind = "list"
+            else:
+                display = [str(x) for x in raw_val] if isinstance(raw_val, list) else json.dumps(raw_val, default=str)
+                kind = "list" if isinstance(raw_val, list) else "json"
+        elif f.name == "file":
+            display = raw_val.url if raw_val else None
+            kind = "link"
+        elif raw_val in (None, ""):
+            display = None
+            kind = "text"
+        else:
+            display = str(raw_val)
+            kind = "text"
+        all_lot_fields.append({
+            "name": f.name,
+            "label": str(f.verbose_name).replace("_", " ").title(),
+            "value": display,
+            "kind": kind,
+        })
+    context["all_lot_fields"] = all_lot_fields
+
     # Extra Data dynamic fields
     ignore_keys = {
         "products", "manifest_items", "manifest_file", "lot_details", "details",
