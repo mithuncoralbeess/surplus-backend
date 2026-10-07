@@ -325,6 +325,14 @@
                         </div>
                     </div>
                     {% endif %}
+                    {% if batch_data.offer %}
+                    <div class="inline-card border-left-warning py-2 px-3 bg-white shadow-sm rounded">
+                        <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-megaphone-fill text-warning me-1"></i> Offer</span>
+                        <div class="d-flex align-items-center">
+                            <span class="fs-5 fw-medium text-warning">{{ batch_data.offer }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
