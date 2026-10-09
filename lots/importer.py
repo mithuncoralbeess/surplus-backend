@@ -37,13 +37,13 @@ FIELD_SPECIFICATIONS = {
         'synonyms': ['available quantity*', 'available quantity', 'available qty', 'quantity', 'qty', 'units', 'count', 'total quantity', 'stock qty']
     },
     'moq': {
-        'label': 'MOQ*',
-        'mandatory': True,
+        'label': 'MOQ',
+        'mandatory': False,
         'synonyms': ['moq*', 'moq', 'minimum order quantity', 'min order qty', 'min order quantity', 'minimum quantity']
     },
     'product_condition': {
-        'label': 'Product Condition*',
-        'mandatory': True,
+        'label': 'Product Condition',
+        'mandatory': False,
         'synonyms': ['product condition*', 'product condition', 'condition', 'state', 'grade', 'item condition']
     },
 
@@ -444,7 +444,11 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
 
     try:
         if filename.endswith('.csv'):
+            file_obj.seek(0)
             df_raw = pd.read_csv(file_obj, header=None, nrows=25)
+            df_raw_valid = df_raw.dropna(how='all')
+            if len(df_raw_valid) < 2:
+                raise ValueError("The sheet must contain a header row and at least 1 item data row.")
             header_row_idx = _find_header_row(df_raw)
             file_obj.seek(0)
             df = pd.read_csv(file_obj, header=header_row_idx)
@@ -455,33 +459,35 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 xl = pd.ExcelFile(file_obj)
                 sheet_names = xl.sheet_names
 
-                # Target sheet selection algorithm: prefer 'Inventory' sheet
+                # 1. Target specifically the 'Inventory' tab (case-insensitive check matching surplus-frontend)
                 for sname in sheet_names:
-                    s_lower = str(sname).strip().lower()
-                    if s_lower in ['inventory', 'inventory items', 'products', 'product list', 'stock', 'manifest', 'data']:
+                    if str(sname).strip().lower() == 'inventory':
                         target_sheet_name = sname
                         break
-                    elif 'inventory' in s_lower or 'product' in s_lower or 'stock' in s_lower:
-                        target_sheet_name = sname
-                        break
-
-                if target_sheet_name is None and len(sheet_names) > 1:
-                    first_s_lower = str(sheet_names[0]).strip().lower()
-                    if any(kw in first_s_lower for kw in ['directory', 'reference', 'instruction', 'taxonomy', 'guide', 'readme', 'help']):
-                        target_sheet_name = sheet_names[1]
 
                 if target_sheet_name is None:
-                    target_sheet_name = 0
-            except Exception:
-                target_sheet_name = 0
+                    raise ValueError(
+                        f"Sheet Validation Failed: The uploaded Excel file must contain an 'Inventory' tab. "
+                        f"Found tabs: [{', '.join(sheet_names)}]. Please use the standard template."
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                raise ValueError(f"Could not read Excel file sheets: {str(e)}")
 
             file_obj.seek(0)
             df_raw = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=None, nrows=25)
+            df_raw_valid = df_raw.dropna(how='all')
+            if len(df_raw_valid) < 2:
+                raise ValueError("The 'Inventory' sheet must contain a header row and at least 1 item data row.")
+
             header_row_idx = _find_header_row(df_raw)
             file_obj.seek(0)
             df = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=header_row_idx)
         else:
             raise ValueError("Unsupported file format. Please upload .csv or .xlsx")
+    except ValueError:
+        raise
     except Exception as e:
         raise ValueError(f"Error reading file: {str(e)}")
 
@@ -537,7 +543,21 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 'key': internal_col,
                 'label': spec['label']
             })
-            header_errors.append(f"Header Error: Mandatory column '{spec['label']}' is missing from the Excel sheet.")
+
+    if missing_mandatory_headers:
+        missing_labels_str = ", ".join([d['label'] for d in missing_mandatory_headers])
+        header_errors.append(
+            f"Header Validation Error: Missing mandatory column header(s) with * in manifest: [{missing_labels_str}]. "
+            f"Required mandatory headers: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*."
+        )
+
+    # Structure check: Check if other format sheet was added
+    matched_mandatory_count = len([k for k in ['s_no', 'product_name', 'product_description', 'product_category', 'subcategory', 'available_quantity'] if k in mapping])
+    if matched_mandatory_count == 0 or len(mapping) < 2:
+        header_errors.append(
+            "Invalid Sheet Structure: The uploaded spreadsheet does not match our Surplus Manifest template. "
+            "Please download and use the official Surplus Market XLSX Format template."
+        )
 
     # Filter out completely blank rows
     df = df.dropna(how='all')
@@ -644,7 +664,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
             row_errors.append({
                 'row': row_num,
                 'missing_fields': missing_row_fields,
-                'message': f"Row {row_num}: Mandatory data missing for field(s): {', '.join(missing_row_fields)}"
+                'message': f"Row {row_num}: Missing [{', '.join(missing_row_fields)}]"
             })
 
         parsed_items.append(item)
@@ -663,13 +683,29 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
         'invalid_items_count': len(row_errors),
     }
 
-    is_valid = len(missing_mandatory_headers) == 0 and len(row_errors) == 0
+    if row_errors:
+        summary_text = (
+            f"{'; '.join(e['message'] for e in row_errors[:5])} ...and {len(row_errors) - 5} more row(s) with invalid data."
+            if len(row_errors) > 5 else "; ".join(e['message'] for e in row_errors)
+        )
+        header_errors.append(
+            f"Data Validation Failed in 'Inventory' sheet: {summary_text} All mandatory fields with * "
+            "(S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*) "
+            "must be filled in with valid data for every row."
+        )
 
     clean_items = []
     for idx, itm in enumerate(parsed_items, 1):
         c = clean_lot_product_item(itm, row_counter=idx)
         if c:
             clean_items.append(c)
+
+    if len(clean_items) == 0:
+        header_errors.append(
+            "No valid inventory items found in 'Inventory' sheet. Please ensure your sheet contains at least 1 valid product row below the header."
+        )
+
+    is_valid = len(missing_mandatory_headers) == 0 and len(header_errors) == 0 and len(row_errors) == 0 and len(clean_items) > 0
 
     return {
         'is_valid': is_valid,

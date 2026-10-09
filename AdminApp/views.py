@@ -1963,9 +1963,12 @@ def upload_lot_manifest_api(request, enquiry_id):
         from lots.importer import parse_spreadsheet
         file_obj.seek(0)
         parse_res = parse_spreadsheet(file_obj)
+        if not parse_res.get("is_valid", False):
+            err_msg = "; ".join(parse_res.get("header_errors", [])) or "Manifest format validation failed. Must follow Surplus structure."
+            return Response({"success": False, "message": err_msg, "header_errors": parse_res.get("header_errors", [])}, status=status.HTTP_400_BAD_REQUEST)
         parsed_items = parse_res.get("all_items", [])
     except Exception as e:
-        print(f"Error parsing uploaded excel manifest: {e}")
+        return Response({"success": False, "message": f"Error parsing uploaded excel manifest: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
     if not isinstance(lot.raw_data, dict):
         lot.raw_data = {}
@@ -2020,6 +2023,9 @@ def parse_lot_spreadsheet_api(request, enquiry_id):
         if hasattr(file_obj, "seek"):
             file_obj.seek(0)
         parse_res = parse_spreadsheet(file_obj)
+        if not parse_res.get("is_valid", False):
+            err_msg = "; ".join(parse_res.get("header_errors", [])) or "Manifest format validation failed. Must follow Surplus structure."
+            return Response({"success": False, "message": err_msg, "header_errors": parse_res.get("header_errors", [])}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
         parsed_items = parse_res.get("all_items", [])
     except Exception as e:
         return Response({"success": False, "message": f"Failed to parse spreadsheet: {str(e)}"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
@@ -3632,6 +3638,23 @@ def add_lot_view(request):
         "Other"
     ]
 
+    context = {
+        "admin": admin_user,
+        "admin_uid": admin_uid,
+        "condition_options": condition_options,
+        "source_type_options": source_type_options,
+        "stock_age_options": stock_age_options,
+        "unit_type_options": unit_type_options,
+        "load_type_options": load_type_options,
+        "shipping_size_options": shipping_size_options,
+        "shipping_terms_options": shipping_terms_options,
+        "sale_method_options": sale_method_options,
+        "currency_options": currency_options,
+        "excluded_countries_options": excluded_countries_options,
+        "standard_categories": standard_categories,
+        "page_title": "Add Lot Request (Assisted Offline Intake)",
+    }
+
     if request.method == "POST":
         from django.core.files.storage import default_storage
         from django.contrib import messages
@@ -3813,6 +3836,18 @@ def add_lot_view(request):
                 from lots.importer import parse_spreadsheet
                 manifest_file.seek(0)
                 parse_res = parse_spreadsheet(manifest_file)
+                if not parse_res.get("is_valid", False):
+                    err_msgs = parse_res.get("header_errors", [])
+                    if not err_msgs and parse_res.get("row_errors"):
+                        err_msgs = [e.get("message") for e in parse_res["row_errors"][:3]]
+                    error_text = " ; ".join(err_msgs) if err_msgs else "Manifest file format is invalid. It must follow our Surplus Manifest structure."
+                    messages.error(request, f"Manifest Spreadsheet Error: {error_text}")
+                    return render(request, "add_lot.html", {
+                        **context,
+                        "form_data": request.POST,
+                        "manifest_error": error_text,
+                    })
+
                 parsed_items = parse_res.get("all_items", [])
                 parse_summary = parse_res.get("summary", {})
 
@@ -3837,7 +3872,13 @@ def add_lot_view(request):
                     if tot_m > 0:
                         total_est_retail_value_msrp = tot_m
             except Exception as e:
-                print(f"Error parsing manifest spreadsheet: {e}")
+                error_text = str(e)
+                messages.error(request, f"Manifest Spreadsheet Error: {error_text}")
+                return render(request, "add_lot.html", {
+                    **context,
+                    "form_data": request.POST,
+                    "manifest_error": error_text,
+                })
 
         # Check dynamic manual rows if submitted
         manual_skus = request.POST.getlist("item_sku[]")
@@ -3960,23 +4001,36 @@ def add_lot_view(request):
         )
         return redirect("/admin/enquiries/lots/pending/")
 
-    context = {
-        "admin": admin_user,
-        "admin_uid": admin_uid,
-        "condition_options": condition_options,
-        "source_type_options": source_type_options,
-        "stock_age_options": stock_age_options,
-        "unit_type_options": unit_type_options,
-        "load_type_options": load_type_options,
-        "shipping_size_options": shipping_size_options,
-        "shipping_terms_options": shipping_terms_options,
-        "sale_method_options": sale_method_options,
-        "currency_options": currency_options,
-        "excluded_countries_options": excluded_countries_options,
-        "standard_categories": standard_categories,
-        "page_title": "Add Lot Request (Assisted Offline Intake)",
-    }
     return render(request, "add_lot.html", context)
+
+
+def download_lot_manifest_template_view(request):
+    """
+    Serves official Surplus Market manifest templates (XLSX and CSV) for download.
+    """
+    from django.http import FileResponse, Http404
+    from django.conf import settings
+    import os
+
+    fmt = request.GET.get("format", "xlsx").lower()
+    if fmt == "csv":
+        filename = "Sample_Lot_Manifest.csv"
+        content_type = "text/csv"
+    else:
+        filename = "Surplus Market XLSX Format.xlsx"
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    file_path = settings.BASE_DIR / "AdminApp" / "templates" / "static" / "templates" / filename
+    if not os.path.exists(file_path):
+        alt_path = settings.BASE_DIR.parent / "surplus-frontend" / "public" / filename
+        if os.path.exists(alt_path):
+            file_path = alt_path
+        else:
+            raise Http404("Template file not found.")
+
+    response = FileResponse(open(file_path, "rb"), content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 def price_control_view(request):

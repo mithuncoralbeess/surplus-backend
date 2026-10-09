@@ -172,7 +172,7 @@
                 </div>
 
                 <!-- 1. Manifest Spreadsheet Upload -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card border-0 shadow-sm rounded-4 mb-4" id="manifestUploadCard">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
                             <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
@@ -180,51 +180,98 @@
                             </div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">1. Manifest Spreadsheet File</h6>
-                                <div class="text-muted small">Upload inventory spreadsheet (.xlsx / .csv) for automatic metric calculation</div>
+                                <div class="text-muted small">Upload inventory spreadsheet (.xlsx / .csv) adhering to the standard Surplus Manifest format</div>
                             </div>
                         </div>
-                        <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill fw-semibold">
-                            Mandatory Headers: S.No*, Product Name*, Available Quantity*
-                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="/admin/lots/template/download/?format=xlsx" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" title="Download Official XLSX Format with Reference Directory & Inventory sheets">
+                                <i class="bi bi-file-earmark-excel-fill text-success"></i> Download XLSX Template
+                            </a>
+                            <a href="/admin/lots/template/download/?format=csv" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" title="Download Sample Lot CSV with standard headers">
+                                <i class="bi bi-filetype-csv text-primary"></i> Sample CSV
+                            </a>
+                        </div>
                     </div>
                     <div class="card-body p-4">
 
-                        <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-3" id="manifestDropzone">
+                        <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-3 transition-all" id="manifestDropzone">
                             <input type="file" name="manifest_file" id="manifestFileInput" accept=".xlsx,.xls,.csv" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
                             <div class="py-2">
                                 <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 52px; height: 52px;">
                                     <i class="bi bi-cloud-arrow-up-fill fs-3"></i>
                                 </div>
                                 <h6 class="fw-bold text-dark mb-1" id="manifestFileName">Drag &amp; drop Excel manifest file or <span class="text-primary text-decoration-underline cursor-pointer">browse</span></h6>
-                                <p class="text-muted small mb-0">Supports <strong>.XLSX</strong> and <strong>.CSV</strong> format (up to 25MB)</p>
+                                <p class="text-muted small mb-0">Supports <strong>.XLSX</strong> (must contain <code>Inventory</code> tab) and <strong>.CSV</strong> format (up to 25MB)</p>
                             </div>
                         </div>
 
-                        <!-- Manifest Parser Result Card (Hidden until file selected) -->
-                        <div id="manifestParsedSummary" class="d-none alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 rounded-3 p-3 mb-3">
+                        <!-- Manifest Validation Error Alert (Hidden by default, shown on invalid sheet format) -->
+                        <div id="manifestErrorAlert" class="{% if not manifest_error %}d-none{% endif %} alert alert-danger bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-4 p-3 mb-3 shadow-sm">
+                            <div class="d-flex align-items-start gap-2.5">
+                                <i class="bi bi-exclamation-triangle-fill text-danger fs-4 mt-0.5 flex-shrink-0"></i>
+                                <div class="w-100">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <h6 class="fw-bold text-danger mb-0" id="manifestErrorTitle">Manifest Format Error</h6>
+                                        <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" id="dismissManifestErrorBtn">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                    <p class="small text-danger mb-2" id="manifestErrorMessage" style="line-height: 1.5;">{{ manifest_error }}</p>
+                                    <div class="p-2.5 rounded-3 bg-white border border-danger border-opacity-25 small">
+                                        <div class="fw-bold text-dark mb-1 d-flex align-items-center gap-1">
+                                            <i class="bi bi-info-circle text-primary"></i> Required Manifest Structure:
+                                        </div>
+                                        <div class="text-secondary mb-1">
+                                            1. Excel files (<strong>.XLSX</strong>) must contain an <strong><code>Inventory</code></strong> tab.
+                                        </div>
+                                        <div class="text-secondary mb-2">
+                                            2. All 6 mandatory headers marked with <strong>*</strong> must be present and filled:
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-1.5 font-monospace" style="font-size: 0.78rem;">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">S.No*</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Product Name*</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Product Description*</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Product Category*</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Subcategory*</span>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Available Quantity*</span>
+                                        </div>
+                                        <div class="mt-2 text-muted" style="font-size: 0.75rem;">
+                                            Need the standard template? <a href="/admin/lots/template/download/?format=xlsx" class="fw-bold text-primary">Download Surplus Market XLSX Format.xlsx</a> to get started.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manifest Parser Result Card (Hidden until file selected and validated) -->
+                        <div id="manifestParsedSummary" class="d-none alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 rounded-3 p-3 mb-3 shadow-sm">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                                 <div class="fw-bold text-success d-flex align-items-center gap-2">
-                                    <i class="bi bi-check-circle-fill"></i> Manifest Spreadsheet Processed
+                                    <i class="bi bi-check-circle-fill"></i> Manifest Spreadsheet Processed &amp; Validated
                                 </div>
-                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold" id="autoPopulateMetricsBtn">
+                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold shadow-sm" id="autoPopulateMetricsBtn">
                                     <i class="bi bi-magic me-1"></i> Auto-Apply Metrics to Form
                                 </button>
                             </div>
                             <div class="row g-2 text-dark small">
-                                <div class="col-md-4">
-                                    <strong>Detected SKUs:</strong> <span id="parsedSkuCount" class="badge bg-white text-dark border ms-1">0</span>
+                                <div class="col-md-3">
+                                    <strong>Detected SKUs:</strong> <span id="parsedSkuCount" class="badge bg-white text-dark border ms-1 font-monospace">0</span>
                                 </div>
-                                <div class="col-md-4">
-                                    <strong>Total Units:</strong> <span id="parsedTotalUnits" class="badge bg-white text-dark border ms-1">0</span>
+                                <div class="col-md-3">
+                                    <strong>Total Units:</strong> <span id="parsedTotalUnits" class="badge bg-white text-dark border ms-1 font-monospace">0</span>
                                 </div>
-                                <div class="col-md-4">
-                                    <strong>Total MSRP:</strong> <span id="parsedTotalMsrp" class="badge bg-white text-dark border ms-1">0.00</span>
+                                <div class="col-md-3">
+                                    <strong>Total MSRP:</strong> <span id="parsedTotalMsrp" class="badge bg-white text-dark border ms-1 font-monospace">0.00</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Surplus Ask:</strong> <span id="parsedTotalAsk" class="badge bg-white text-success border ms-1 font-monospace">0.00</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex align-items-center justify-content-between text-muted small">
-                            <span><i class="bi bi-info-circle me-1"></i>Mandatory columns: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*, MOQ*, Product Condition*</span>
+                            <span><i class="bi bi-info-circle me-1"></i>Mandatory columns with *: <code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code></span>
+                            <span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill">32 Standard Columns Format</span>
                         </div>
 
                     </div>
@@ -990,29 +1037,112 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- 7. SheetJS Client-Side Manifest Parsing ---
+    // --- 7. Strict Manifest Validation & SheetJS Client-Side Parsing ---
     const manifestFileInput = document.getElementById('manifestFileInput');
     const manifestFileName = document.getElementById('manifestFileName');
     const manifestParsedSummary = document.getElementById('manifestParsedSummary');
+    const manifestErrorAlert = document.getElementById('manifestErrorAlert');
+    const manifestErrorTitle = document.getElementById('manifestErrorTitle');
+    const manifestErrorMessage = document.getElementById('manifestErrorMessage');
+    const dismissManifestErrorBtn = document.getElementById('dismissManifestErrorBtn');
     const parsedSkuCount = document.getElementById('parsedSkuCount');
     const parsedTotalUnits = document.getElementById('parsedTotalUnits');
     const parsedTotalMsrp = document.getElementById('parsedTotalMsrp');
+    const parsedTotalAsk = document.getElementById('parsedTotalAsk');
     const autoPopulateMetricsBtn = document.getElementById('autoPopulateMetricsBtn');
 
     let clientManifestData = {
+        isValid: false,
         skus: 0,
         units: 0,
-        msrp: 0.0
+        msrp: 0.0,
+        askPrice: 0.0,
+        items: []
     };
+
+    // Standard 32 surplus manifest column definitions with synonyms (strictly synchronized with surplus-frontend)
+    const TEMPLATE_HEADER_DEFINITIONS = [
+        { key: 'sno', label: 'S.No*', mandatory: true, matches: ['s.no', 'sno', 'serial no', 's.no.', 'item no', 'item no.', '#', 'sl no', 'sl.no', 'line_no', 'row'] },
+        { key: 'productName', label: 'Product Name*', mandatory: true, matches: ['product name', 'title', 'item name', 'name', 'product title'] },
+        { key: 'productDescription', label: 'Product Description*', mandatory: true, matches: ['product description', 'description', 'notes', 'item description', 'details', 'product details'] },
+        { key: 'productCategory', label: 'Product Category*', mandatory: true, matches: ['product category', 'category', 'main category', 'dept', 'department'] },
+        { key: 'subcategory', label: 'Subcategory*', mandatory: true, matches: ['subcategory', 'sub category', 'sub-category', 'subcat'] },
+        { key: 'brand', label: 'Brand / Manufacturer', mandatory: false, matches: ['brand / manufacturer', 'brand', 'manufacturer', 'mfg', 'make', 'brand name'] },
+        { key: 'model', label: 'Model / Part Number', mandatory: false, matches: ['model / part number', 'model', 'part number', 'model no', 'part no', 'sku', 'mpn'] },
+        { key: 'quantity', label: 'Available Quantity*', mandatory: true, matches: ['available quantity', 'quantity', 'qty', 'available qty', 'units', 'count', 'total quantity'] },
+        { key: 'msrp', label: 'Original Price', mandatory: false, matches: ['original price', 'original msrp', 'msrp', 'retail price', 'original / retail msrp price', 'unit price'] },
+        { key: 'askPrice', label: 'Asking Price', mandatory: false, matches: ['asking price', 'surplus price', 'ask price', 'target price', 'unit price', 'price'] },
+        { key: 'country', label: 'Country of Origin', mandatory: false, matches: ['country of origin', 'country', 'origin', 'manufacturing country', 'made in', 'coo'] },
+        { key: 'year', label: 'Year of Manufacture', mandatory: false, matches: ['year of manufacture', 'year', 'mfg year', 'manufacturing year', 'yom'] },
+        { key: 'datasheet', label: 'Datasheet / Certificate Link', mandatory: false, matches: ['datasheet / certificate link', 'datasheet', 'certificate link', 'link', 'doc link', 'datasheet link'] },
+        { key: 'weight', label: 'Gross Weight per Unit', mandatory: false, matches: ['gross weight per unit', 'gross weight', 'weight', 'unit weight', 'gross wt'] },
+        { key: 'length', label: 'Length', mandatory: false, matches: ['length', 'len'] },
+        { key: 'width', label: 'Width', mandatory: false, matches: ['width', 'w'] },
+        { key: 'height', label: 'Height', mandatory: false, matches: ['height', 'h'] },
+        { key: 'measurementUnit', label: 'Measurement Unit', mandatory: false, matches: ['measurement unit', 'dimension unit', 'unit of measure', 'unit', 'uom'] },
+        { key: 'stockAge', label: 'Stock Age', mandatory: false, matches: ['stock age', 'age', 'inventory stock age', 'shelf age'] },
+        { key: 'tested', label: 'Tested and verified', mandatory: false, matches: ['tested and verified', 'tested & verified', 'tested', 'verified'] },
+        { key: 'functionalStatus', label: 'Functional Status', mandatory: false, matches: ['functional status', 'functional', 'working status'] },
+        { key: 'visibleDamage', label: 'Visible Damage?', mandatory: false, matches: ['visible damage?', 'visible damage', 'damage'] },
+        { key: 'missingParts', label: 'Missing Parts?', mandatory: false, matches: ['missing parts?', 'missing parts'] },
+        { key: 'warranty', label: 'Warranty Available?', mandatory: false, matches: ['warranty available?', 'warranty available', 'warranty'] },
+        { key: 'safetyCert', label: 'Safety Certificate Available?', mandatory: false, matches: ['safety certificate available?', 'safety certificate available', 'safety certificate'] },
+        { key: 'certificateType', label: 'Certificate Type', mandatory: false, matches: ['certificate type', 'cert type'] },
+        { key: 'regulatoryApproval', label: 'Regulatory Approval', mandatory: false, matches: ['regulatory approval', 'regulatory approvals', 'regulatory'] },
+        { key: 'hazardousMaterial', label: 'Hazardous Material?', mandatory: false, matches: ['hazardous material?', 'hazardous material', 'hazardous', 'hazmat'] },
+        { key: 'recyclable', label: 'Recyclable?', mandatory: false, matches: ['recyclable?', 'recyclable'] },
+        { key: 'lifeRemaining', label: 'Estimated Product Life Remaining', mandatory: false, matches: ['estimated product life remaining', 'product life remaining', 'life remaining', 'estimated product life'] },
+        { key: 'sellerCustom1', label: 'Seller Custom Field 1', mandatory: false, matches: ['seller custom field 1', 'custom field 1', 'warehouse bay / shelf', 'bay / shelf', 'bay', 'shelf'] },
+        { key: 'sellerCustom2', label: 'Seller Custom Field 2', mandatory: false, matches: ['seller custom field 2', 'custom field 2'] },
+    ];
+
+    function showManifestError(title, message) {
+        if (manifestErrorTitle) manifestErrorTitle.textContent = title;
+        if (manifestErrorMessage) manifestErrorMessage.innerHTML = message;
+        if (manifestErrorAlert) manifestErrorAlert.classList.remove('d-none');
+        if (manifestParsedSummary) manifestParsedSummary.classList.add('d-none');
+        if (manifestFileInput) manifestFileInput.value = '';
+        if (manifestFileName) {
+            manifestFileName.innerHTML = 'Drag & drop Excel manifest file or <span class="text-primary text-decoration-underline cursor-pointer">browse</span>';
+        }
+        clientManifestData.isValid = false;
+        clientManifestData.skus = 0;
+        clientManifestData.units = 0;
+        clientManifestData.msrp = 0.0;
+        clientManifestData.askPrice = 0.0;
+        clientManifestData.items = [];
+    }
+
+    function clearManifestError() {
+        if (manifestErrorAlert) manifestErrorAlert.classList.add('d-none');
+    }
+
+    if (dismissManifestErrorBtn) {
+        dismissManifestErrorBtn.addEventListener('click', clearManifestError);
+    }
 
     if (manifestFileInput) {
         manifestFileInput.addEventListener('change', function (e) {
+            clearManifestError();
             const file = e.target.files[0];
             if (!file) return;
+
+            const lowerName = file.name.toLowerCase();
+            const isCsv = lowerName.endsWith('.csv');
+            const isXlsx = lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls');
+
+            if (!isCsv && !isXlsx) {
+                showManifestError(
+                    'Invalid File Format',
+                    `The file "<strong>${file.name}</strong>" is not a supported spreadsheet format. Please upload an Excel (<strong>.XLSX</strong>) or <strong>.CSV</strong> file.`
+                );
+                return;
+            }
 
             manifestFileName.innerHTML = `<i class="bi bi-file-earmark-spreadsheet-fill text-success me-1"></i> ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
 
             if (typeof XLSX === 'undefined') {
+                console.warn('SheetJS XLSX library is not loaded');
                 return;
             }
 
@@ -1021,54 +1151,209 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-                    if (!rows || rows.length < 2) return;
+                    // 1. Target specifically the 'Inventory' tab (case-insensitive check) or the sole sheet for CSV files
+                    const inventorySheetName = workbook.SheetNames.find(
+                        name => name.trim().toLowerCase() === 'inventory'
+                    ) || (isCsv && workbook.SheetNames.length === 1 ? workbook.SheetNames[0] : null);
 
-                    const headers = rows[0].map(h => String(h || '').trim().toLowerCase());
+                    if (!inventorySheetName) {
+                        showManifestError(
+                            'Sheet Validation Failed',
+                            `The uploaded Excel file must contain an <strong><code>Inventory</code></strong> tab. Found tabs: <code>[${workbook.SheetNames.join(', ')}]</code>. Please use our standard Surplus template.`
+                        );
+                        return;
+                    }
 
-                    // Find quantity column index
-                    let qtyIdx = headers.findIndex(h => h.includes('quantity') || h.includes('qty') || h.includes('units') || h.includes('count'));
-                    // Find MSRP / retail price column index
-                    let msrpIdx = headers.findIndex(h => h.includes('msrp') || h.includes('retail') || h.includes('original price') || h.includes('unit price'));
+                    const worksheet = workbook.Sheets[inventorySheetName];
+                    const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
-                    let totalUnits = 0;
-                    let totalMsrp = 0.0;
-                    let distinctCount = 0;
+                    // Filter out completely blank rows
+                    const validRows = rawRows.filter(row => Array.isArray(row) && row.some(cell => String(cell || '').trim() !== ''));
 
-                    for (let i = 1; i < rows.length; i++) {
-                        const row = rows[i];
-                        if (!row || row.length === 0 || !row[0]) continue;
-                        distinctCount++;
+                    if (validRows.length < 2) {
+                        showManifestError(
+                            'Empty Sheet Error',
+                            `The '<strong>Inventory</strong>' sheet must contain a header row and at least 1 item data row.`
+                        );
+                        return;
+                    }
 
-                        let qty = 1;
-                        if (qtyIdx !== -1 && row[qtyIdx]) {
-                            const qVal = parseInt(String(row[qtyIdx]).replace(/[^0-9]/g, ''));
-                            if (!isNaN(qVal) && qVal > 0) qty = qVal;
-                        }
-                        totalUnits += qty;
+                    // 2. Locate Header Row among the top rows
+                    let headerRowIdx = 0;
+                    let bestScore = -1;
 
-                        if (msrpIdx !== -1 && row[msrpIdx]) {
-                            const mVal = parseFloat(String(row[msrpIdx]).replace(/[^0-9.]/g, ''));
-                            if (!isNaN(mVal) && mVal > 0) {
-                                totalMsrp += (mVal * qty);
-                            }
+                    for (let r = 0; r < Math.min(validRows.length, 10); r++) {
+                        const rowCells = validRows[r].map(c => String(c || '').replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase());
+                        let matchCount = 0;
+                        rowCells.forEach(cell => {
+                            if (!cell) return;
+                            const matched = TEMPLATE_HEADER_DEFINITIONS.some(def =>
+                                def.matches.some(m => {
+                                    const normM = m.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
+                                    return normM === cell || cell === def.key.toLowerCase();
+                                })
+                            );
+                            if (matched) matchCount++;
+                        });
+                        if (matchCount > bestScore) {
+                            bestScore = matchCount;
+                            headerRowIdx = r;
                         }
                     }
 
-                    clientManifestData.skus = distinctCount;
-                    clientManifestData.units = totalUnits;
-                    clientManifestData.msrp = totalMsrp;
+                    const rawHeaderRow = validRows[headerRowIdx].map(cell => String(cell || '').trim());
+                    const colIndexMap = {};
 
-                    parsedSkuCount.textContent = distinctCount.toLocaleString();
-                    parsedTotalUnits.textContent = totalUnits.toLocaleString();
-                    parsedTotalMsrp.textContent = totalMsrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    for (let i = 0; i < rawHeaderRow.length; i++) {
+                        const rawH = rawHeaderRow[i];
+                        if (!rawH) continue;
+                        const normalizedH = rawH.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
 
+                        const matchedDef = TEMPLATE_HEADER_DEFINITIONS.find(def =>
+                            def.matches.some(m => {
+                                const normM = m.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
+                                return normM === normalizedH || normalizedH === def.key.toLowerCase();
+                            })
+                        );
+
+                        if (matchedDef && colIndexMap[matchedDef.key] === undefined) {
+                            colIndexMap[matchedDef.key] = i;
+                        }
+                    }
+
+                    // Check ONLY the mandatory fields marked with *
+                    const missingMandatoryHeaders = TEMPLATE_HEADER_DEFINITIONS
+                        .filter(d => d.mandatory && colIndexMap[d.key] === undefined)
+                        .map(d => d.label);
+
+                    if (missingMandatoryHeaders.length > 0) {
+                        showManifestError(
+                            'Header Validation Error',
+                            `Missing mandatory column header(s) with <strong>*</strong> in manifest: <strong class="text-dark">[${missingMandatoryHeaders.join(', ')}]</strong>.<br>Required mandatory headers: <code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code>. If you uploaded another format sheet, please download our official Surplus Market template.`
+                        );
+                        return;
+                    }
+
+                    // Structure validation: check if another format sheet was added
+                    const recognizedCount = Object.keys(colIndexMap).length;
+                    if (recognizedCount < 3) {
+                        showManifestError(
+                            'Invalid Sheet Structure',
+                            `The uploaded spreadsheet does not match our Surplus Manifest template. Please ensure your sheet follows the surplus structure and download the official template.`
+                        );
+                        return;
+                    }
+
+                    // 3. Row-level Mandatory Data Validation Check
+                    const rowErrorMessages = [];
+                    const parsedItems = [];
+                    let totalUnitsSum = 0;
+                    let totalMsrpSum = 0.0;
+                    let totalAskSum = 0.0;
+
+                    for (let r = headerRowIdx + 1; r < validRows.length; r++) {
+                        const row = validRows[r];
+                        const rowNum = r + 1;
+
+                        const snoVal = String(row[colIndexMap['sno']] || '').trim();
+                        const nameVal = String(row[colIndexMap['productName']] || '').trim();
+                        const descVal = String(row[colIndexMap['productDescription']] || '').trim();
+                        const catVal = String(row[colIndexMap['productCategory']] || '').trim();
+                        const subcatVal = String(row[colIndexMap['subcategory']] || '').trim();
+                        const qtyRaw = String(row[colIndexMap['quantity']] || '').trim();
+                        const qtyVal = Number(qtyRaw.replace(/[^0-9.]/g, ''));
+
+                        // Filter out template instruction / reference rows
+                        const rowStrFull = row.map(c => String(c || '').toLowerCase()).join(' ');
+                        if (rowStrFull.includes('reference directory') || rowStrFull.includes('classification taxonomy') || rowStrFull.includes('ensure consistent reporting') || rowStrFull.includes('total categories')) {
+                            continue;
+                        }
+
+                        // Filter out summary / total rows
+                        const firstCell = String(row[0] || '').trim().toLowerCase();
+                        if (firstCell === 'total' || firstCell === 'grand total' || firstCell === 'summary') {
+                            continue;
+                        }
+
+                        const missingInThisRow = [];
+                        if (!snoVal) missingInThisRow.push('S.No*');
+                        if (!nameVal) missingInThisRow.push('Product Name*');
+                        if (!descVal) missingInThisRow.push('Product Description*');
+                        if (!catVal) missingInThisRow.push('Product Category*');
+                        if (!subcatVal) missingInThisRow.push('Subcategory*');
+                        if (!qtyRaw || isNaN(qtyVal) || qtyVal <= 0) missingInThisRow.push('Available Quantity* (must be > 0)');
+
+                        if (missingInThisRow.length > 0) {
+                            rowErrorMessages.push(`Row ${rowNum}: Missing [${missingInThisRow.join(', ')}]`);
+                        } else {
+                            totalUnitsSum += qtyVal;
+
+                            const rawMsrpVal = colIndexMap['msrp'] !== undefined ? Number(String(row[colIndexMap['msrp']]).replace(/[^0-9.]/g, '')) : 0;
+                            const msrpVal = (!isNaN(rawMsrpVal) && rawMsrpVal > 0) ? rawMsrpVal : 0;
+
+                            const rawAskVal = colIndexMap['askPrice'] !== undefined ? Number(String(row[colIndexMap['askPrice']]).replace(/[^0-9.]/g, '')) : 0;
+                            const askVal = (!isNaN(rawAskVal) && rawAskVal > 0) ? rawAskVal : 0;
+
+                            totalMsrpSum += (qtyVal * msrpVal);
+                            totalAskSum += (qtyVal * askVal);
+
+                            parsedItems.push({
+                                s_no: snoVal,
+                                product_name: nameVal,
+                                product_description: descVal,
+                                product_category: catVal,
+                                subcategory: subcatVal,
+                                available_quantity: qtyVal,
+                                original_price: msrpVal,
+                                asking_price: askVal
+                            });
+                        }
+                    }
+
+                    if (rowErrorMessages.length > 0) {
+                        const summaryText = rowErrorMessages.length > 5
+                            ? `${rowErrorMessages.slice(0, 5).join('; ')} ...and ${rowErrorMessages.length - 5} more row(s) with invalid data.`
+                            : rowErrorMessages.join('; ');
+                        showManifestError(
+                            'Data Validation Failed',
+                            `Data Validation Failed in 'Inventory' sheet: <strong>${summaryText}</strong><br>All mandatory fields with * (<code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code>) must be filled in with valid data for every row.`
+                        );
+                        return;
+                    }
+
+                    if (parsedItems.length === 0) {
+                        showManifestError(
+                            'No Products Found',
+                            `No valid inventory items found in 'Inventory' sheet. Please ensure your sheet contains at least 1 valid product row below the header.`
+                        );
+                        return;
+                    }
+
+                    // --- Validation Passed Cleanly! ---
+                    clientManifestData.isValid = true;
+                    clientManifestData.skus = parsedItems.length;
+                    clientManifestData.units = totalUnitsSum;
+                    clientManifestData.msrp = totalMsrpSum;
+                    clientManifestData.askPrice = totalAskSum;
+                    clientManifestData.items = parsedItems;
+
+                    parsedSkuCount.textContent = parsedItems.length.toLocaleString();
+                    parsedTotalUnits.textContent = totalUnitsSum.toLocaleString();
+                    parsedTotalMsrp.textContent = totalMsrpSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (parsedTotalAsk) {
+                        parsedTotalAsk.textContent = totalAskSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+
+                    clearManifestError();
                     manifestParsedSummary.classList.remove('d-none');
+
                 } catch (err) {
                     console.error('Error reading manifest in browser:', err);
+                    showManifestError(
+                        'Spreadsheet Read Error',
+                        `Unable to read spreadsheet: ${err.message || 'Unknown error'}. Please ensure the file is not corrupted and uses standard Excel (.XLSX) or .CSV format.`
+                    );
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -1089,6 +1374,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 msrpInput.value = clientManifestData.msrp.toFixed(2);
                 msrpInput.dispatchEvent(new Event('input'));
             }
+            if (clientManifestData.askPrice > 0 && askPriceInput && !askPriceInput.value) {
+                askPriceInput.value = clientManifestData.askPrice.toFixed(2);
+                askPriceInput.dispatchEvent(new Event('input'));
+            }
         });
     }
 
@@ -1098,6 +1387,15 @@ document.addEventListener('DOMContentLoaded', function () {
         addLotForm.addEventListener('submit', function (e) {
             let isValid = true;
             let firstInvalidEl = null;
+
+            // 0. Strict Manifest File Check: if file is attached, it MUST be valid
+            if (manifestFileInput && manifestFileInput.files && manifestFileInput.files.length > 0 && !clientManifestData.isValid) {
+                alert('Manifest Validation Error: The uploaded manifest file does not follow our surplus manifest structure or has validation errors. Please check the error message in the Manifest section, or download the official template.');
+                const card = document.getElementById('manifestUploadCard');
+                if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                e.preventDefault();
+                return;
+            }
 
             // 1. Mandatory Text Inputs
             const requiredFields = [

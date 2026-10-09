@@ -179,23 +179,22 @@ class AdminAppAuthTests(TestCase):
         import pandas as pd
         from lots.importer import parse_spreadsheet
 
-        # Case 1: Missing Mandatory Header (e.g. missing 'Product Condition*')
+        # Case 1: Missing Mandatory Header (e.g. missing 'Subcategory*')
         invalid_header_df = pd.DataFrame([{
             'S.No*': 1,
             'Product Name*': 'Test Widget',
             'Product Description*': 'Widget Description',
             'Product Category*': 'Electronics',
-            'Subcategory*': 'Gadgets',
             'Available Quantity*': 100,
-            'MOQ*': 10,
         }])
         buf_inv_h = io.BytesIO()
-        invalid_header_df.to_excel(buf_inv_h, index=False)
+        invalid_header_df.to_excel(buf_inv_h, sheet_name='Inventory', index=False)
+        buf_inv_h.name = 'test.xlsx'
         buf_inv_h.seek(0)
         res_inv_h = parse_spreadsheet(buf_inv_h)
         self.assertFalse(res_inv_h['is_valid'])
         self.assertTrue(len(res_inv_h['missing_mandatory_columns']) > 0)
-        self.assertTrue(any(c['key'] == 'product_condition' for c in res_inv_h['missing_mandatory_columns']))
+        self.assertTrue(any(c['key'] == 'subcategory' for c in res_inv_h['missing_mandatory_columns']))
 
         # Case 2: Missing Mandatory Data in Row (e.g. empty Product Description*)
         invalid_row_df = pd.DataFrame([{
@@ -205,11 +204,10 @@ class AdminAppAuthTests(TestCase):
             'Product Category*': 'Electronics',
             'Subcategory*': 'Gadgets',
             'Available Quantity*': 100,
-            'MOQ*': 10,
-            'Product Condition*': 'New',
         }])
         buf_inv_r = io.BytesIO()
-        invalid_row_df.to_excel(buf_inv_r, index=False)
+        invalid_row_df.to_excel(buf_inv_r, sheet_name='Inventory', index=False)
+        buf_inv_r.name = 'test.xlsx'
         buf_inv_r.seek(0)
         res_inv_r = parse_spreadsheet(buf_inv_r)
         self.assertFalse(res_inv_r['is_valid'])
@@ -224,16 +222,39 @@ class AdminAppAuthTests(TestCase):
             'Product Category*': 'Industrial',
             'Subcategory*': 'Tools',
             'Available Quantity*': 50,
-            'MOQ*': 5,
-            'Product Condition*': 'Brand New',
         }])
         buf_valid = io.BytesIO()
-        valid_df.to_excel(buf_valid, index=False)
+        valid_df.to_excel(buf_valid, sheet_name='Inventory', index=False)
+        buf_valid.name = 'test.xlsx'
         buf_valid.seek(0)
         res_valid = parse_spreadsheet(buf_valid)
         self.assertTrue(res_valid['is_valid'])
         self.assertEqual(len(res_valid['missing_mandatory_columns']), 0)
         self.assertEqual(len(res_valid['row_errors']), 0)
+
+        # Case 4: Missing 'Inventory' tab in Excel file
+        missing_tab_df = pd.DataFrame([{'Product Name*': 'Widget'}])
+        buf_missing_tab = io.BytesIO()
+        missing_tab_df.to_excel(buf_missing_tab, sheet_name='Sheet1', index=False)
+        buf_missing_tab.name = 'test.xlsx'
+        buf_missing_tab.seek(0)
+        with self.assertRaises(ValueError) as ctx:
+            parse_spreadsheet(buf_missing_tab)
+        self.assertIn("must contain an 'Inventory' tab", str(ctx.exception))
+
+        # Case 5: Unrelated other format sheet
+        other_format_df = pd.DataFrame([{
+            'EmpID': 101,
+            'Department': 'HR',
+            'Salary': 60000
+        }])
+        buf_other = io.BytesIO()
+        other_format_df.to_excel(buf_other, sheet_name='Inventory', index=False)
+        buf_other.name = 'test.xlsx'
+        buf_other.seek(0)
+        res_other = parse_spreadsheet(buf_other)
+        self.assertFalse(res_other['is_valid'])
+        self.assertTrue(any('Invalid Sheet Structure' in err for err in res_other['header_errors']))
 
     def test_save_lot_products_api(self):
         """

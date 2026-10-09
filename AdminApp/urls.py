@@ -28,6 +28,7 @@ from .views import (
     lot_enquiries_view,
     lot_enquiry_detail_view,
     add_lot_view,
+    download_lot_manifest_template_view,
     seller_enquiry_status_api,
     seller_enquiry_edit_api,
     lot_enquiry_status_api,
@@ -116,6 +117,7 @@ urlpatterns = [
 
     # Enquiries: Lot Batch Enquiries (BLK-XXXXX)
     path("lots/add/", add_lot_view, name="add_lot"),
+    path("lots/template/download/", download_lot_manifest_template_view, name="download_lot_template"),
     path("enquiries/lots/add/", add_lot_view, name="add_lot_alias"),
     path("enquiries/lots/", lot_enquiries_view, name="lot_enquiries_list"),
     path("enquiries/lots/<int:enquiry_id>/detail/", lot_enquiry_detail_view, name="lot_enquiry_detail"),
