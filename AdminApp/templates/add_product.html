@@ -217,9 +217,7 @@
                                     <option value="" disabled {% if not form_data.category_id %}selected{% endif %}>--
                                         Select Category --</option>
                                     {% for cat in categories %}
-                                    <option value="{{ cat.id }}" {% if
-                                        form_data.category_id|stringformat:"s"==cat.id|stringformat:"s" %}selected{%
-                                        endif %}>
+                                    <option value="{{ cat.id }}" {% if form_data.category_id|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
                                         {{ cat.name }}
                                     </option>
                                     {% endfor %}
@@ -291,11 +289,9 @@
                                     Manufacturing Country <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" name="manufacturing_country" required>
-                                    <option value="" disabled {% if not form_data.manufacturing_country %}selected{%
-                                        endif %}>-- Select Country --</option>
+                                    <option value="" disabled {% if not form_data.manufacturing_country %}selected{% endif %}>-- Select Country --</option>
                                     {% for c in countries %}
-                                    <option value="{{ c }}" {% if form_data.manufacturing_country==c %}selected{% endif
-                                        %}>{{ c }}</option>
+                                    <option value="{{ c }}" {% if form_data.manufacturing_country == c %}selected{% endif %}>{{ c }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -368,8 +364,7 @@
                                 <select class="form-select form-select-lg fs-6 font-monospace fw-semibold"
                                     name="currency" id="currencySelect" required>
                                     {% for curr in currencies %}
-                                    <option value="{{ curr }}" {% if form_data.currency|default:'USD'==curr %}selected{%
-                                        endif %}>{{ curr }}</option>
+                                    <option value="{{ curr }}" {% if form_data.currency|default:'USD' == curr %}selected{% endif %}>{{ curr }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -499,8 +494,7 @@
                             </label>
                             <select class="form-select" name="reason_to_sell" required>
                                 {% for r_opt in reason_to_sell_options %}
-                                <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus
-                                    Inventory'==r_opt %}selected{% endif %}>
+                                <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus Inventory' == r_opt %}selected{% endif %}>
                                     {{ r_opt }}
                                 </option>
                                 {% endfor %}
@@ -526,8 +520,7 @@
                                 </div>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                        id="warrantyToggle" name="warranty_included" {% if form_data.warranty_included
-                                        %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                        id="warrantyToggle" name="warranty_included" {% if form_data.warranty_included %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
                                 </div>
                             </div>
 
@@ -580,8 +573,7 @@
                                 </div>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                        id="certificateToggle" name="third_party_certificate" {% if
-                                        form_data.third_party_certificate %}checked{% endif %}
+                                        id="certificateToggle" name="third_party_certificate" {% if form_data.third_party_certificate %}checked{% endif %}
                                         style="width: 2.5em; height: 1.3em;">
                                 </div>
                             </div>
