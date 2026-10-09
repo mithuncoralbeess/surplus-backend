@@ -18,12 +18,12 @@
                     <li class="breadcrumb-item active" aria-current="page"><span>Add Product</span></li>
                 </ol>
             </nav>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
                 <h1 class="header-title mb-0">Add New Product Listing</h1>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold small">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
                     <i class="bi bi-box-seam me-1"></i>Single Item Listing
                 </span>
-                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold small">
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small">
                     <i class="bi bi-shield-check me-1"></i>Assisted Admin Intake
                 </span>
             </div>
@@ -31,7 +31,7 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="/admin/enquiries/seller/"
-                class="btn btn-outline-secondary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-1.5 fw-medium">
+                class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
                 <i class="bi bi-arrow-left"></i> Cancel
             </a>
             <button type="submit" form="addProductForm" id="btnSubmitTop"
@@ -45,7 +45,7 @@
     {% if messages %}
     <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3"
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3 p-3"
             role="alert">
             {% if message.tags == 'error' %}
             <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
@@ -60,7 +60,7 @@
     {% endif %}
 
     <!-- Admin Submitter Status Strip -->
-    <div class="admin-verification-banner mb-4 p-3.5 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
+    <div class="admin-verification-banner mb-4 p-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
         <div class="d-flex align-items-center gap-3">
             <div class="admin-avatar-pill d-flex align-items-center justify-content-center text-white flex-shrink-0">
                 <i class="bi bi-shield-fill-check fs-4"></i>
@@ -68,16 +68,16 @@
             <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Intake by Verified Admin:</span>
-                    <span class="badge bg-primary text-white font-monospace px-2.5 py-1">{{ admin_uid }}</span>
+                    <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
                     <span class="text-secondary small fw-medium">({{ admin.username }})</span>
                 </div>
-                <div class="text-secondary small mt-0.5">
+                <div class="text-secondary small mt-1">
                     This inventory listing will be submitted to <strong>Seller Enquiries</strong> under <strong>Pending Review</strong> with full verified admin audit attribution.
                 </div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
                 <i class="bi bi-hourglass-split me-1"></i>Initial Status: PENDING
             </span>
         </div>
@@ -95,7 +95,7 @@
                 <!-- 0. Seller / Vendor Information (Assisted Intake via WhatsApp / Email) -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2.5">
+                        <div class="d-flex align-items-center gap-3">
                             <div class="section-icon-badge bg-success bg-opacity-10 text-success">
                                 <i class="bi bi-person-lines-fill"></i>
                             </div>
@@ -104,25 +104,25 @@
                                 <div class="text-muted small">Record which vendor sent these product details (WhatsApp, Email, Offline Intake)</div>
                             </div>
                         </div>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold small">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small">
                             <i class="bi bi-person-check-fill me-1"></i>Assisted Offline Intake
                         </span>
                     </div>
                     <div class="card-body p-4">
 
                         <!-- Intake Channel Quick-Select Cards -->
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label class="form-label-custom">
                                 <span>Intake Submission Channel <span class="text-danger">*</span></span>
                                 <span class="text-muted fw-normal">How the vendor submitted this listing</span>
                             </label>
-                            <div class="row g-2 intake-channel-grid">
+                            <div class="row g-3 intake-channel-grid mt-1">
                                 <div class="col-6 col-sm-3">
                                     <label class="channel-radio-card d-block cursor-pointer">
                                         <input type="radio" name="intake_channel" value="WhatsApp" class="d-none intake-radio"
                                             {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}checked{% endif %}>
-                                        <div class="channel-box text-center p-2.5 rounded-3 border">
-                                            <i class="bi bi-whatsapp fs-5 text-success d-block mb-1"></i>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-whatsapp fs-4 text-success d-block mb-1"></i>
                                             <span class="fw-semibold small d-block">WhatsApp</span>
                                         </div>
                                     </label>
@@ -131,8 +131,8 @@
                                     <label class="channel-radio-card d-block cursor-pointer">
                                         <input type="radio" name="intake_channel" value="Email" class="d-none intake-radio"
                                             {% if form_data.intake_channel == 'Email' %}checked{% endif %}>
-                                        <div class="channel-box text-center p-2.5 rounded-3 border">
-                                            <i class="bi bi-envelope-fill fs-5 text-primary d-block mb-1"></i>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-envelope-fill fs-4 text-primary d-block mb-1"></i>
                                             <span class="fw-semibold small d-block">Email</span>
                                         </div>
                                     </label>
@@ -141,8 +141,8 @@
                                     <label class="channel-radio-card d-block cursor-pointer">
                                         <input type="radio" name="intake_channel" value="Phone Call" class="d-none intake-radio"
                                             {% if form_data.intake_channel == 'Phone Call' %}checked{% endif %}>
-                                        <div class="channel-box text-center p-2.5 rounded-3 border">
-                                            <i class="bi bi-telephone-fill fs-5 text-info d-block mb-1"></i>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-telephone-fill fs-4 text-info d-block mb-1"></i>
                                             <span class="fw-semibold small d-block">Phone Call</span>
                                         </div>
                                     </label>
@@ -151,8 +151,8 @@
                                     <label class="channel-radio-card d-block cursor-pointer">
                                         <input type="radio" name="intake_channel" value="Direct / Walk-In" class="d-none intake-radio"
                                             {% if form_data.intake_channel == 'Direct / Walk-In' %}checked{% endif %}>
-                                        <div class="channel-box text-center p-2.5 rounded-3 border">
-                                            <i class="bi bi-person-walking fs-5 text-secondary d-block mb-1"></i>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-person-walking fs-4 text-secondary d-block mb-1"></i>
                                             <span class="fw-semibold small d-block">Direct / Walk-In</span>
                                         </div>
                                     </label>
@@ -161,7 +161,7 @@
                         </div>
 
                         <!-- Seller Contact Details -->
-                        <div class="row g-3 mb-3">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Seller Contact Name <span class="text-danger">*</span></span>
@@ -172,7 +172,7 @@
                                         value="{{ form_data.seller_name|default:'' }}"
                                         placeholder="e.g. Rahul Sharma / John Doe" required>
                                 </div>
-                                <div class="form-text small">Individual or company representative who provided details.</div>
+                                <div class="form-text small mt-1">Individual or contact representative who provided details.</div>
                             </div>
 
                             <div class="col-md-6">
@@ -185,11 +185,11 @@
                                         value="{{ form_data.seller_phone|default:'' }}"
                                         placeholder="e.g. +91 98765 43210" required>
                                 </div>
-                                <div class="form-text small">Used to automatically match or create the seller profile.</div>
+                                <div class="form-text small mt-1">Used to automatically match or register the seller profile.</div>
                             </div>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-4">
                             <div class="col-md-4">
                                 <label class="form-label-custom">
                                     <span>Seller Email <span class="text-muted fw-normal">(Optional)</span></span>
@@ -200,7 +200,7 @@
                                         value="{{ form_data.seller_email|default:'' }}"
                                         placeholder="e.g. vendor@company.com">
                                 </div>
-                                <div class="form-text small">Auto-generated fallback if blank.</div>
+                                <div class="form-text small mt-1">Auto-generated fallback if blank.</div>
                             </div>
 
                             <div class="col-md-4">
@@ -213,7 +213,7 @@
                                         value="{{ form_data.seller_company|default:'' }}"
                                         placeholder="e.g. Apex Industrial Solutions">
                                 </div>
-                                <div class="form-text small">Registered trade or business entity.</div>
+                                <div class="form-text small mt-1">Registered trade or business entity.</div>
                             </div>
 
                             <div class="col-md-4">
@@ -226,7 +226,7 @@
                                         value="{{ form_data.seller_location|default:'' }}"
                                         placeholder="e.g. Mumbai, India or Dubai, UAE">
                                 </div>
-                                <div class="form-text small">Warehouse or inventory city.</div>
+                                <div class="form-text small mt-1">Warehouse or inventory city.</div>
                             </div>
                         </div>
 
@@ -235,12 +235,12 @@
 
                 <!-- 1. Product Details -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2.5">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
                         <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
                             <i class="bi bi-box-seam-fill"></i>
                         </div>
                         <div>
-                            <h6 class="fw-bold mb-0 text-dark">1. Product Identification & Categorization</h6>
+                            <h6 class="fw-bold mb-0 text-dark">1. Product Identification &amp; Categorization</h6>
                             <div class="text-muted small">Standard product title, brand taxonomy, and category hierarchy</div>
                         </div>
                     </div>
@@ -250,16 +250,16 @@
                         <div class="mb-4">
                             <label class="form-label-custom">
                                 <span>Product Title / Name <span class="text-danger">*</span></span>
-                                <span class="text-muted fw-normal" id="titleCharCount">0 characters</span>
+                                <span class="text-muted fw-normal font-monospace" id="titleCharCount">0 characters</span>
                             </label>
                             <input type="text" class="form-control form-control-hero" name="product_name"
                                 id="productNameInput" value="{{ form_data.product_name|default:'' }}"
                                 placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU 1214C DC/DC/DC Module" required>
-                            <div class="form-text small">Include brand, primary model, and specification for high buyer searchability.</div>
+                            <div class="form-text small mt-1">Include brand, primary model, and specification for high buyer searchability.</div>
                         </div>
 
                         <!-- Category & Subcategory Cascading Dropdowns -->
-                        <div class="row g-3 mb-4">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Main Category <span class="text-danger">*</span></span>
@@ -285,7 +285,7 @@
                         </div>
 
                         <!-- Brand & Model No. / Part Number -->
-                        <div class="row g-3">
+                        <div class="row g-4">
                             <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Brand / Manufacturer</span>
@@ -315,7 +315,7 @@
 
                 <!-- 2. Origin & Specifications -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2.5">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
                         <div class="section-icon-badge" style="background-color: #ede9fe; color: #7c3aed;">
                             <i class="bi bi-geo-alt-fill"></i>
                         </div>
@@ -326,7 +326,7 @@
                     </div>
                     <div class="card-body p-4">
 
-                        <div class="row g-3 mb-3">
+                        <div class="row g-4 mb-4">
                             <!-- Manufacturing Country * -->
                             <div class="col-md-6">
                                 <label class="form-label-custom">
@@ -354,7 +354,7 @@
                             </div>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-4">
                             <!-- Dimensions (Optional) -->
                             <div class="col-md-6">
                                 <label class="form-label-custom">
@@ -386,7 +386,7 @@
                 <!-- 3. Pricing & Quantity (Interactive Liquidation Engine) -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2.5">
+                        <div class="d-flex align-items-center gap-3">
                             <div class="section-icon-badge bg-warning bg-opacity-10 text-warning">
                                 <i class="bi bi-currency-dollar fs-5"></i>
                             </div>
@@ -395,13 +395,13 @@
                                 <div class="text-muted small">Lot inventory count, currency, MSRP retail price, and minimum 60% liquidation rule</div>
                             </div>
                         </div>
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold small">
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold small">
                             <i class="bi bi-graph-down-arrow me-1"></i>60% Surplus Policy
                         </span>
                     </div>
                     <div class="card-body p-4">
 
-                        <div class="row g-3 mb-4">
+                        <div class="row g-4 mb-4">
                             <!-- Available Quantity * -->
                             <div class="col-md-6">
                                 <label class="form-label-custom">
@@ -414,6 +414,7 @@
                                         placeholder="e.g. 50" required>
                                     <span class="input-group-text bg-light text-muted">Units</span>
                                 </div>
+                                <div class="form-text small mt-1">Total physical units ready in warehouse stock.</div>
                             </div>
 
                             <!-- Currency * -->
@@ -427,22 +428,23 @@
                                     <option value="{{ curr }}" {% if form_data.currency|default:'USD' == curr %}selected{% endif %}>{{ curr }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text small mt-1">Transaction and listing payout denomination.</div>
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
+                        <div class="row g-4 mb-4">
                             <!-- Original / Retail MSRP Price (Per Unit) * -->
                             <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Original / Retail MSRP Price (Per Unit) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol bg-light fw-bold">$</span>
+                                    <span class="input-group-text currency-symbol bg-light fw-bold text-secondary">$</span>
                                     <input type="number" step="0.01" min="0.01"
                                         class="form-control form-control-custom border-start-0 font-monospace fs-6" name="msrp" id="msrpInput"
                                         value="{{ form_data.msrp|default:'' }}" placeholder="e.g. 350.00" required>
                                 </div>
-                                <div class="form-text small">Manufacturer standard catalog unit price.</div>
+                                <div class="form-text small mt-1">Manufacturer standard catalog unit price.</div>
                             </div>
 
                             <!-- Liquidating / Surplus Price (Per Unit) * -->
@@ -452,7 +454,7 @@
                                         <span>Liquidating / Surplus Price (Per Unit) <span class="text-danger">*</span></span>
                                     </label>
                                     <button type="button" id="btnApplyMaxPrice"
-                                        class="btn btn-sm btn-outline-success py-0 px-2 fw-semibold d-none"
+                                        class="btn btn-sm btn-outline-success py-1 px-2.5 fw-semibold d-none rounded-pill"
                                         style="font-size: 0.75rem;"
                                         title="Apply suggested maximum price (60% discount)">
                                         <i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60%
@@ -466,80 +468,114 @@
                                         value="{{ form_data.liquidating_price|default:'' }}" placeholder="e.g. 140.00"
                                         required>
                                 </div>
-                                <div id="priceDiscountHint" class="form-text small text-muted">
+                                <div id="priceDiscountHint" class="form-text small text-muted mt-1">
                                     Liquidating price must be below MSRP (minimum 60% discount recommended).
                                 </div>
                             </div>
                         </div>
 
                         <!-- Real-time Interactive Financial Terminal Card -->
-                        <div class="pricing-terminal p-3.5 rounded-4 mb-4" id="pricingCalcCard">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="small fw-bold text-uppercase text-secondary d-flex align-items-center gap-1.5">
-                                    <i class="bi bi-calculator-fill text-primary"></i> Real-Time Deal Economics
+                        <div class="pricing-terminal p-4 rounded-4 mb-4" id="pricingCalcCard">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                        <i class="bi bi-graph-up-arrow fs-6"></i>
+                                    </div>
+                                    <span class="fw-bold text-dark fs-6">Real-Time Deal Economics</span>
+                                </div>
+                                <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 rounded-pill small" id="discountStatusText">
+                                    Waiting for pricing input...
                                 </span>
-                                <span class="small text-muted" id="discountStatusText">Waiting for pricing input...</span>
                             </div>
 
-                            <div class="row g-3 text-center text-sm-start">
+                            <div class="row g-3 mb-3 text-center text-sm-start">
                                 <div class="col-sm-4">
                                     <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
-                                        <div class="text-muted small fw-medium mb-1">Calculated Discount</div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-secondary fs-6 fw-bold px-2.5 py-1" id="discountBadge">0% OFF</span>
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Calculated Discount</div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill" id="discountBadge">0% OFF</span>
                                         </div>
-                                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Target: &ge; 60% Liquidation</div>
+                                        <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Target Policy: &ge; 60% Liquidation
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="col-sm-4">
                                     <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
-                                        <div class="text-muted small fw-medium mb-1">Buyer Price (+10%)</div>
-                                        <div class="fw-bold font-monospace fs-5 text-dark" id="buyerPricePreview">$0.00</div>
-                                        <div class="small text-muted mt-0.5" style="font-size: 0.72rem;">Includes Marketplace Mark-up</div>
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Buyer Price (+10%)</div>
+                                        <div class="fw-bold font-monospace fs-4 text-dark mb-1" id="buyerPricePreview">$0.00</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">
+                                            <i class="bi bi-shield-check me-1"></i>Platform markup included
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="col-sm-4">
                                     <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
-                                        <div class="text-muted small fw-medium mb-1">Total Seller Payout</div>
-                                        <div class="fw-bold font-monospace fs-5 text-success" id="totalLotPayout">$0.00</div>
-                                        <div class="small text-muted mt-0.5" style="font-size: 0.72rem;">Unit Price &times; Available Qty</div>
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Total Seller Payout</div>
+                                        <div class="fw-bold font-monospace fs-4 text-success mb-1" id="totalLotPayout">$0.00</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">
+                                            <i class="bi bi-cash-stack me-1"></i>Unit Price &times; Available Qty
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Discount Bar Indicator -->
-                            <div class="mt-3 pt-3 border-top">
-                                <div class="d-flex justify-content-between small text-muted mb-1">
-                                    <span>Discount Rate Progress</span>
-                                    <span id="discountBarLabel" class="fw-semibold">0% (Policy: 60%+)</span>
+                            <div class="pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
+                                    <span class="fw-semibold text-secondary"><i class="bi bi-speedometer2 me-1 text-primary"></i>Discount Rate Progress</span>
+                                    <span id="discountBarLabel" class="fw-bold text-dark font-monospace">0% (Policy: 60%+)</span>
                                 </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-success progress-bar-striped" id="discountProgressBar" role="progressbar" style="width: 0%;"></div>
+                                <div class="progress" style="height: 10px; background-color: #e2e8f0; border-radius: 999px;">
+                                    <div class="progress-bar bg-success" id="discountProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Excluded Export Countries (Modern Quick-Pills & Multi-Select) -->
-                        <div>
-                            <label class="form-label-custom">
+                        <!-- Excluded Export Countries (Modern Tag / Pill Selector) -->
+                        <div class="mt-4 pt-2">
+                            <label class="form-label-custom mb-2">
                                 <span>Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span></span>
                                 <span class="text-muted fw-normal">Select destinations where export is prohibited</span>
                             </label>
 
                             <!-- Quick Sanctions / Embargo Clickable Badges -->
-                            <div class="d-flex flex-wrap gap-1.5 mb-2.5">
-                                <span class="small text-muted me-1 align-self-center">Quick Presets:</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-0.5 px-2 rounded-pill small" data-country="Russia">Russia</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-0.5 px-2 rounded-pill small" data-country="Iran">Iran</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-0.5 px-2 rounded-pill small" data-country="North Korea">North Korea</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-0.5 px-2 rounded-pill small" data-country="Syria">Syria</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-0.5 px-2 rounded-pill small" data-country="Cuba">Cuba</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger py-0.5 px-2 rounded-pill small" id="btnClearExcluded">Clear All</button>
+                            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                <span class="small text-muted me-1 fw-semibold">Quick Embargo Presets:</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Russia">Russia</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Iran">Iran</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="North Korea">North Korea</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Syria">Syria</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Cuba">Cuba</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill small" id="btnClearExcluded">Clear All</button>
                             </div>
 
-                            <select class="form-select form-select-custom" name="excluded_countries" id="excludedCountriesSelect" multiple size="4" style="height: auto;">
+                            <!-- Modern Dropdown to add extra countries -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-7">
+                                    <select class="form-select form-select-custom" id="addExcludedCountrySelect">
+                                        <option value="" selected>+ Add another destination to embargo list...</option>
+                                        {% for c in countries %}
+                                        <option value="{{ c }}">{{ c }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Selected Country Tag Pills Display Box -->
+                            <div class="p-3 rounded-3 border bg-light">
+                                <div class="small fw-semibold text-secondary mb-2">Active Export Restrictions:</div>
+                                <div id="selectedCountriesBadges" class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                                        <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden Select synced with selections for standard Django POST -->
+                            <select name="excluded_countries" id="excludedCountriesSelect" multiple class="d-none">
                                 <option value="None (Worldwide)">None (Worldwide)</option>
                                 <option value="Russia">Russia</option>
                                 <option value="Iran">Iran</option>
@@ -550,7 +586,7 @@
                                 <option value="{{ c }}">{{ c }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text small">Hold Ctrl (or Cmd on Mac) to select multiple embargoed countries.</div>
+                            <div class="form-text small mt-2">Products will not be offered to buyers located in the selected restricted jurisdictions.</div>
                         </div>
 
                     </div>
@@ -558,7 +594,7 @@
 
                 <!-- 4. Description & Commercial Terms -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2.5">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
                         <div class="section-icon-badge" style="background-color: #ccfbf1; color: #0d9488;">
                             <i class="bi bi-file-earmark-text-fill"></i>
                         </div>
@@ -577,7 +613,7 @@
                             <textarea class="form-control form-control-custom" name="description" id="descriptionInput" rows="4"
                                 placeholder="Describe the physical condition, original packaging (sealed box, OEM bag, bulk pallet), testing history, and operational parameters..."
                                 required>{{ form_data.description|default:'' }}</textarea>
-                            <div class="form-text small">Clear condition transparency accelerates buyer enquiry approval.</div>
+                            <div class="form-text small mt-1">Clear condition transparency accelerates buyer enquiry approval.</div>
                         </div>
 
                         <!-- Reason to Sell * -->
@@ -592,14 +628,14 @@
                                 </option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text small">Select the liquidation context for buyer transparency.</div>
+                            <div class="form-text small mt-1">Select the liquidation context for buyer transparency.</div>
                         </div>
 
                         <!-- Product Warranty Included Switch & Details -->
-                        <div class="option-toggle-box p-3.5 rounded-3 border mb-3 transition-all" id="warrantyToggleBox">
+                        <div class="option-toggle-box p-4 rounded-3 border mb-4 transition-all" id="warrantyToggleBox">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="p-2 rounded-2 bg-white text-success border shadow-2xs">
+                                    <div class="p-2.5 rounded-2 bg-white text-success border shadow-2xs">
                                         <i class="bi bi-shield-check fs-5"></i>
                                     </div>
                                     <div>
@@ -616,7 +652,7 @@
                                 </div>
                             </div>
 
-                            <div id="warrantyFields" class="mt-3 pt-3 border-top" style="display: none;">
+                            <div id="warrantyFields" class="mt-4 pt-3 border-top" style="display: none;">
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold text-secondary">Warranty Period / Guarantee *</label>
                                     <input type="text" class="form-control form-control-custom" id="warrantyInput" name="warranty"
@@ -624,13 +660,13 @@
                                         placeholder="e.g. 30 Days, 90 Days, 1 Year">
                                 </div>
                                 <!-- Preset Buttons -->
-                                <div class="d-flex flex-wrap gap-1.5 mb-3">
-                                    <span class="small text-muted me-1 align-self-center">Duration Presets:</span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="30 Days">30 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="60 Days">60 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="90 Days">90 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="6 Months">6 Months</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="1 Year">1 Year</button>
+                                <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                    <span class="small text-muted me-1 fw-semibold">Duration Presets:</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="30 Days">30 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="60 Days">60 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="90 Days">90 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="6 Months">6 Months</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="1 Year">1 Year</button>
                                 </div>
                                 <div>
                                     <label class="form-label small fw-semibold text-secondary">Upload Warranty Document <span class="text-muted fw-normal">(Optional, PDF/JPG/PNG max 10MB)</span></label>
@@ -641,10 +677,10 @@
                         </div>
 
                         <!-- 3rd Party Certificate Available Switch & Details -->
-                        <div class="option-toggle-box p-3.5 rounded-3 border transition-all" id="certificateToggleBox">
+                        <div class="option-toggle-box p-4 rounded-3 border transition-all" id="certificateToggleBox">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="p-2 rounded-2 bg-white text-primary border shadow-2xs">
+                                    <div class="p-2.5 rounded-2 bg-white text-primary border shadow-2xs">
                                         <i class="bi bi-patch-check-fill fs-5"></i>
                                     </div>
                                     <div>
@@ -662,11 +698,11 @@
                                 </div>
                             </div>
 
-                            <div id="certificateFields" class="mt-3 pt-3 border-top" style="display: none;">
+                            <div id="certificateFields" class="mt-4 pt-3 border-top" style="display: none;">
                                 <label class="form-label small fw-semibold text-secondary">Upload Certificate / Test Report Document * <span class="text-muted fw-normal">(PDF, JPG, PNG Max 10MB)</span></label>
                                 <input type="file" class="form-control form-control-custom" name="certificate_document"
                                     accept=".pdf,image/png,image/jpeg,image/webp">
-                                <div class="form-text small">Calibration certificate, material test report, or compliance documentation.</div>
+                                <div class="form-text small mt-1">Calibration certificate, material test report, or compliance documentation.</div>
                             </div>
                         </div>
 
@@ -680,44 +716,44 @@
 
                 <!-- 1. Live Marketplace Preview Card -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
-                    <div class="card-header bg-white py-2.5 px-3 border-bottom d-flex align-items-center justify-content-between">
-                        <span class="small fw-bold text-uppercase tracking-wider text-muted d-flex align-items-center gap-1.5">
+                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                        <span class="small fw-bold text-uppercase tracking-wider text-muted d-flex align-items-center gap-2">
                             <i class="bi bi-eye-fill text-primary"></i> Live Marketplace Preview
                         </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5" style="font-size: 0.7rem;">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
                             Live Sync
                         </span>
                     </div>
 
                     <!-- Cover Photo Preview Box -->
-                    <div class="position-relative bg-light text-center" style="height: 185px; overflow: hidden;" id="previewImageWrapper">
+                    <div class="position-relative bg-light text-center" style="height: 190px; overflow: hidden;" id="previewImageWrapper">
                         <img id="previewCoverImg" src="" alt="Cover" class="w-100 h-100 d-none" style="object-fit: cover;">
-                        <div id="previewCoverPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                        <div id="previewCoverPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted p-3">
                             <i class="bi bi-image fs-1 opacity-50 mb-1"></i>
                             <span class="small fw-medium">Upload cover photo to preview</span>
                         </div>
-                        <span id="previewDiscountPill" class="position-absolute top-0 start-0 m-2.5 badge bg-success fw-bold px-2.5 py-1.5 shadow-sm d-none">
+                        <span id="previewDiscountPill" class="position-absolute top-0 start-0 m-3 badge bg-success fw-bold px-3 py-1.5 shadow-sm d-none">
                             0% OFF
                         </span>
-                        <span class="position-absolute bottom-0 end-0 m-2.5 badge bg-dark bg-opacity-75 text-white font-monospace small px-2 py-1">
+                        <span class="position-absolute bottom-0 end-0 m-3 badge bg-dark bg-opacity-75 text-white font-monospace small px-2.5 py-1">
                             <i class="bi bi-images me-1"></i><span id="previewPhotoCount">0</span> Photos
                         </span>
                     </div>
 
-                    <div class="p-3">
-                        <div class="d-flex align-items-center gap-1.5 mb-2 flex-wrap">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 small" id="previewCategoryBadge">Category</span>
-                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-0.5 small d-none" id="previewSubcatBadge">Subcategory</span>
-                            <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 small ms-auto" id="previewOriginBadge">Worldwide</span>
+                    <div class="p-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small" id="previewCategoryBadge">Category</span>
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small d-none" id="previewSubcatBadge">Subcategory</span>
+                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small ms-auto" id="previewOriginBadge">Worldwide</span>
                         </div>
-                        <h6 class="fw-bold mb-1.5 text-truncate-2" id="previewTitle" style="min-height: 2.5rem; line-height: 1.3;">
+                        <h6 class="fw-bold mb-2 text-truncate-2" id="previewTitle" style="min-height: 2.6rem; line-height: 1.3;">
                             Product Title Preview
                         </h6>
-                        <div class="d-flex align-items-baseline gap-2 mb-2">
+                        <div class="d-flex align-items-baseline gap-2 mb-3">
                             <span class="fs-4 fw-bold text-success font-monospace" id="previewPrice">$0.00</span>
                             <span class="text-decoration-line-through text-muted small font-monospace" id="previewMsrp">$0.00</span>
                         </div>
-                        <div class="p-2.5 rounded-3 bg-light border small text-muted d-flex align-items-center justify-content-between">
+                        <div class="p-3 rounded-3 bg-light border small text-muted d-flex align-items-center justify-content-between">
                             <span><i class="bi bi-box-seam me-1 text-primary"></i>Stock: <strong id="previewQty" class="text-dark">1</strong></span>
                             <span>Est. Payout: <strong id="previewPayout" class="text-success font-monospace">$0.00</strong></span>
                         </div>
@@ -731,7 +767,7 @@
                             <i class="bi bi-images text-primary"></i>
                             <span>Product Images <span class="text-danger">*</span></span>
                         </h6>
-                        <span class="badge bg-primary-subtle text-primary px-2 py-1 rounded-pill small" id="imageCountBadge">0 selected</span>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill small" id="imageCountBadge">0 selected</span>
                     </div>
                     <div class="card-body p-4">
 
@@ -745,13 +781,13 @@
                                 <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
                             </div>
                             <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
-                            <div class="text-muted small mb-2">PNG, JPG, WEBP (max 10MB each). First uploaded file is set as cover.</div>
-                            <button type="button" class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                            <div class="text-muted small mb-3">PNG, JPG, WEBP (max 10MB each). First uploaded file is set as cover.</div>
+                            <button type="button" class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill">
                                 <i class="bi bi-folder2-open me-1"></i> Choose Files
                             </button>
                         </div>
 
-                        <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-2.5 small d-none rounded-3">
+                        <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-3 small d-none rounded-3">
                             <i class="bi bi-exclamation-circle-fill me-1"></i> At least 1 product image is required.
                         </div>
 
@@ -762,17 +798,17 @@
                 </div>
 
                 <!-- 3. Listing Readiness Checklist -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm p-3.5">
+                <div class="card admin-form-card mb-4 border-0 shadow-sm p-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-1.5">
+                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-2">
                             <i class="bi bi-check2-circle text-primary fs-6"></i> Listing Readiness
                         </h6>
                         <span class="fw-bold font-monospace text-primary small" id="checklistProgressPct">0%</span>
                     </div>
-                    <div class="progress mb-3" style="height: 6px;">
-                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%;"></div>
+                    <div class="progress mb-3" style="height: 6px; border-radius: 999px;">
+                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
                     </div>
-                    <div class="checklist-items d-flex flex-column gap-2 small text-secondary">
+                    <div class="checklist-items d-flex flex-column gap-2.5 small text-secondary">
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkSeller">
                             <i class="bi bi-circle text-muted"></i> <span>Seller Contact &amp; Intake Details</span>
                         </div>
@@ -796,17 +832,17 @@
 
                 <!-- 4. Sticky Submission Actions Card -->
                 <div class="card admin-form-card border-0 shadow-sm p-4 sticky-action-box">
-                    <div class="d-grid gap-2.5">
+                    <div class="d-grid gap-3">
                         <button type="submit" form="addProductForm" id="btnSubmitBottom"
-                            class="btn btn-primary btn-lg py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
+                            class="btn btn-primary btn-lg py-3 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
                             <i class="bi bi-check-circle-fill"></i> Submit to Seller Enquiries
                         </button>
                         <a href="/admin/enquiries/seller/"
-                            class="btn btn-outline-secondary py-2 rounded-3 text-decoration-none text-center fw-medium">
+                            class="btn btn-outline-secondary py-2.5 rounded-3 text-decoration-none text-center fw-medium">
                             <i class="bi bi-arrow-left me-1"></i> Cancel &amp; Return
                         </a>
                     </div>
-                    <div class="text-center text-muted small mt-3 pt-2 border-top">
+                    <div class="text-center text-muted small mt-3 pt-3 border-top">
                         <i class="bi bi-shield-check text-success me-1"></i>
                         Saved with verified Admin ID <strong>{{ admin_uid }}</strong>
                     </div>
@@ -820,7 +856,7 @@
 
 <style>
     /* -------------------------------------------------------------
-       Enhanced Professional Admin Portal Aesthetics
+       Enhanced Professional Admin Portal Aesthetics & Spacing
        ------------------------------------------------------------- */
     .admin-verification-banner {
         background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
@@ -833,140 +869,157 @@
     }
 
     .admin-avatar-pill {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
         border-radius: 12px;
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
 
     /* Cards & Container Shells */
     .admin-form-card {
         border-radius: 1rem !important;
-        border: 1px solid var(--bs-border-color, #e2e8f0);
-        background: var(--bs-card-bg, #ffffff);
-        box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        background: var(--bs-card-bg, #ffffff) !important;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+        margin-bottom: 2rem !important;
+        overflow: hidden;
     }
 
-    .admin-form-card:hover {
-        box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.07), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    .admin-form-card .card-header {
+        padding: 1.25rem 1.75rem !important;
+        background-color: var(--bs-card-bg, #ffffff) !important;
+        border-bottom: 1px solid var(--bs-border-color, #e2e8f0) !important;
+    }
+
+    .admin-form-card .card-body {
+        padding: 2rem !important;
     }
 
     .section-icon-badge {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
         border-radius: 10px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         flex-shrink: 0;
     }
 
     /* Typography & Custom Labels */
     .form-label-custom {
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--bs-secondary-color, #64748b);
-        margin-bottom: 0.45rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--bs-secondary-color, #64748b) !important;
+        margin-bottom: 0.55rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
     }
 
     .form-control-custom,
     .form-select-custom {
-        border: 1px solid var(--bs-border-color, #cbd5e1);
-        border-radius: 0.65rem;
-        padding: 0.6rem 0.85rem;
-        font-size: 0.925rem;
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        border-radius: 0.65rem !important;
+        padding: 0.65rem 0.95rem !important;
+        font-size: 0.925rem !important;
         transition: all 0.15s ease-in-out;
-        background-color: var(--bs-body-bg, #ffffff);
-        color: var(--bs-body-color, #0f172a);
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
     }
 
     .form-control-custom:focus,
     .form-select-custom:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
         outline: none;
     }
 
     .form-control-hero {
-        font-size: 1.05rem;
-        font-weight: 600;
-        padding: 0.75rem 1rem;
-        border-radius: 0.75rem;
-        border: 1px solid var(--bs-border-color, #cbd5e1);
-        background-color: var(--bs-body-bg, #ffffff);
-        color: var(--bs-body-color, #0f172a);
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        padding: 0.85rem 1.1rem !important;
+        border-radius: 0.75rem !important;
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
     }
 
     .form-control-hero:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
     }
 
     /* Channel Selection Cards */
     .channel-box {
-        background: var(--bs-body-bg, #ffffff);
+        background: var(--bs-body-bg, #ffffff) !important;
         border-color: var(--bs-border-color, #e2e8f0) !important;
+        padding: 1.1rem 0.75rem !important;
         transition: all 0.2s ease;
         cursor: pointer;
     }
 
     .channel-radio-card input:checked + .channel-box {
-        background-color: rgba(37, 99, 235, 0.08);
+        background-color: rgba(37, 99, 235, 0.08) !important;
         border-color: #2563eb !important;
         box-shadow: 0 0 0 2px #2563eb;
     }
 
     .channel-radio-card:hover .channel-box {
         border-color: #94a3b8 !important;
-        transform: translateY(-1px);
+        transform: translateY(-2px);
     }
 
     /* Pricing Financial Terminal Box */
     .pricing-terminal {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.7) 100%);
-        border: 1px solid var(--bs-border-color, #e2e8f0);
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 1rem !important;
+        padding: 1.5rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 2rem !important;
     }
 
     [data-bs-theme="dark"] .pricing-terminal {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%);
-        border-color: #334155;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+        border-color: #334155 !important;
     }
 
     .metric-kpi-tile {
-        background: var(--bs-body-bg, #ffffff);
-        border-color: var(--bs-border-color, #e2e8f0) !important;
+        background: var(--bs-body-bg, #ffffff) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.75rem !important;
+        padding: 1.25rem !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .metric-kpi-tile:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
     }
 
     /* Option Toggle Boxes */
     .option-toggle-box {
-        background-color: var(--bs-tertiary-bg, #f8fafc);
-        border-color: var(--bs-border-color, #e2e8f0);
+        background-color: var(--bs-tertiary-bg, #f8fafc) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.85rem !important;
+        padding: 1.25rem 1.5rem !important;
+        margin-bottom: 1.5rem !important;
         transition: border-color 0.2s ease, background-color 0.2s ease;
     }
 
     .option-toggle-box.active-box {
         border-color: #10b981 !important;
-        background-color: rgba(16, 185, 129, 0.04);
+        background-color: rgba(16, 185, 129, 0.04) !important;
     }
 
     /* Warranty Presets */
     .btn-preset-warranty {
-        font-size: 0.78rem !important;
-        padding: 0.25rem 0.65rem !important;
+        font-size: 0.8rem !important;
+        padding: 0.35rem 0.85rem !important;
         border-radius: 20px !important;
         transition: all 0.15s ease;
     }
@@ -982,7 +1035,7 @@
         border: 2px dashed #93c5fd;
         background: rgba(239, 246, 255, 0.45);
         border-radius: 1rem;
-        padding: 2.25rem 1.5rem;
+        padding: 2.5rem 1.5rem;
         text-align: center;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -992,7 +1045,7 @@
     .dropzone-enhanced.dragover {
         border-color: #2563eb;
         background: rgba(219, 234, 254, 0.65);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
         box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
     }
 
@@ -1024,15 +1077,15 @@
 
     .image-preview-card img {
         width: 100%;
-        height: 90px;
+        height: 95px;
         object-fit: cover;
         display: block;
     }
 
     .image-preview-card .badge-cover {
         position: absolute;
-        top: 5px;
-        left: 5px;
+        top: 6px;
+        left: 6px;
         font-size: 0.65rem;
         padding: 2px 6px;
         border-radius: 4px;
@@ -1044,8 +1097,8 @@
 
     .image-preview-card .btn-remove {
         position: absolute;
-        top: 5px;
-        right: 5px;
+        top: 6px;
+        right: 6px;
         width: 22px;
         height: 22px;
         border-radius: 50%;
@@ -1066,6 +1119,10 @@
     }
 
     /* Checklist Progress */
+    .checklist-item {
+        transition: color 0.15s ease;
+    }
+
     .checklist-item.done i {
         color: #10b981 !important;
     }
@@ -1078,7 +1135,7 @@
     .sticky-preview-card,
     .sticky-action-box {
         position: sticky;
-        top: 1rem;
+        top: 1.5rem;
         z-index: 5;
     }
 
@@ -1250,27 +1307,27 @@
 
                 if (lp >= msrp) {
                     discountBadge.textContent = "Over MSRP";
-                    discountBadge.className = "badge bg-danger fs-6 fw-bold px-2.5 py-1";
+                    discountBadge.className = "badge bg-danger fs-5 fw-bold px-3 py-1.5 rounded-pill";
                     priceDiscountHint.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Liquidating price must be below MSRP.</span>';
                     discountStatusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Over Retail Catalog MSRP</span>';
                     discountProgressBar.className = "progress-bar bg-danger";
                 } else if (discount < 59.99) {
                     discountBadge.textContent = `${discount}% OFF`;
-                    discountBadge.className = "badge bg-warning text-dark fs-6 fw-bold px-2.5 py-1";
+                    discountBadge.className = "badge bg-warning text-dark fs-5 fw-bold px-3 py-1.5 rounded-pill";
                     const maxAllowed = (msrp * 0.40).toFixed(2);
                     priceDiscountHint.innerHTML = `<span class="text-warning-emphasis"><i class="bi bi-info-circle-fill me-1"></i>Min. 60% discount recommended (Max: ${sym}${maxAllowed}).</span>`;
                     discountStatusText.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Target Policy</span>';
                     discountProgressBar.className = "progress-bar bg-warning";
                 } else {
                     discountBadge.textContent = `${discount}% OFF`;
-                    discountBadge.className = "badge bg-success fs-6 fw-bold px-2.5 py-1";
+                    discountBadge.className = "badge bg-success fs-5 fw-bold px-3 py-1.5 rounded-pill";
                     priceDiscountHint.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Valid surplus liquidation discount (60%+ off).</span>';
                     discountStatusText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Verified Surplus Discount Rate</span>';
                     discountProgressBar.className = "progress-bar bg-success progress-bar-striped";
                 }
             } else {
                 discountBadge.textContent = "0% OFF";
-                discountBadge.className = "badge bg-secondary fs-6 fw-bold px-2.5 py-1";
+                discountBadge.className = "badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill";
                 priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount recommended).";
                 discountStatusText.textContent = "Waiting for pricing input...";
                 discountProgressBar.style.width = "0%";
@@ -1302,38 +1359,95 @@
         updateCalculations();
 
         // -------------------------------------------------------------
-        // 5. Excluded Countries Quick-Embargo Presets
+        // 5. Excluded Countries Modern Tag Selector & Multi-Sync
         // -------------------------------------------------------------
         const excludedSelect = document.getElementById("excludedCountriesSelect");
+        const addCountrySelect = document.getElementById("addExcludedCountrySelect");
+        const badgesContainer = document.getElementById("selectedCountriesBadges");
         const quickEmbargoBtns = document.querySelectorAll(".btn-quick-embargo");
         const btnClearExcluded = document.getElementById("btnClearExcluded");
 
+        let selectedCountriesSet = new Set();
+
+        // Initialize from pre-selected values
+        if (excludedSelect) {
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                if (excludedSelect.options[i].selected && excludedSelect.options[i].value && excludedSelect.options[i].value !== "None (Worldwide)") {
+                    selectedCountriesSet.add(excludedSelect.options[i].value);
+                }
+            }
+        }
+
+        function syncExcludedCountries() {
+            if (!excludedSelect || !badgesContainer) return;
+
+            // Sync hidden select options
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                const opt = excludedSelect.options[i];
+                if (opt.value === "None (Worldwide)") {
+                    opt.selected = (selectedCountriesSet.size === 0);
+                } else {
+                    opt.selected = selectedCountriesSet.has(opt.value);
+                }
+            }
+
+            // Render pill badges
+            badgesContainer.innerHTML = "";
+            if (selectedCountriesSet.size === 0) {
+                badgesContainer.innerHTML = '<span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="bi bi-globe me-1 text-primary"></i>None (Worldwide - No export restrictions)</span>';
+            } else {
+                selectedCountriesSet.forEach(country => {
+                    const badge = document.createElement("span");
+                    badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 small fw-semibold";
+                    badge.innerHTML = `<i class="bi bi-slash-circle"></i><span>${country}</span><button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;" aria-label="Remove"></button>`;
+                    badge.querySelector(".btn-close").addEventListener("click", () => {
+                        selectedCountriesSet.delete(country);
+                        syncExcludedCountries();
+                    });
+                    badgesContainer.appendChild(badge);
+                });
+            }
+
+            // Sync preset buttons visual toggle
+            quickEmbargoBtns.forEach(btn => {
+                const c = btn.dataset.country;
+                const isSelected = selectedCountriesSet.has(c);
+                btn.classList.toggle("btn-danger", isSelected);
+                btn.classList.toggle("text-white", isSelected);
+                btn.classList.toggle("btn-outline-secondary", !isSelected);
+            });
+        }
+
         quickEmbargoBtns.forEach(btn => {
             btn.addEventListener("click", function () {
-                const country = this.dataset.country;
-                for (let i = 0; i < excludedSelect.options.length; i++) {
-                    const opt = excludedSelect.options[i];
-                    if (opt.value.toLowerCase() === country.toLowerCase()) {
-                        opt.selected = !opt.selected;
-                        this.classList.toggle("btn-danger", opt.selected);
-                        this.classList.toggle("btn-outline-secondary", !opt.selected);
-                        break;
-                    }
+                const c = this.dataset.country;
+                if (selectedCountriesSet.has(c)) {
+                    selectedCountriesSet.delete(c);
+                } else {
+                    selectedCountriesSet.add(c);
                 }
+                syncExcludedCountries();
             });
         });
 
         if (btnClearExcluded) {
             btnClearExcluded.addEventListener("click", function () {
-                for (let i = 0; i < excludedSelect.options.length; i++) {
-                    excludedSelect.options[i].selected = false;
-                }
-                quickEmbargoBtns.forEach(b => {
-                    b.classList.remove("btn-danger");
-                    b.classList.add("btn-outline-secondary");
-                });
+                selectedCountriesSet.clear();
+                syncExcludedCountries();
             });
         }
+
+        if (addCountrySelect) {
+            addCountrySelect.addEventListener("change", function () {
+                if (this.value) {
+                    selectedCountriesSet.add(this.value);
+                    this.value = "";
+                    syncExcludedCountries();
+                }
+            });
+        }
+
+        syncExcludedCountries();
 
         // -------------------------------------------------------------
         // 6. Product Image Dropzone & Multi-File Previews
