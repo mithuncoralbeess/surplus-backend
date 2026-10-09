@@ -3,32 +3,70 @@ from .models import AdminDetails, VendorDetails
 
 
 class AdminRegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    fullname = serializers.CharField(max_length=255, required=False, allow_blank=True)
     email = serializers.EmailField()
     firstname = serializers.CharField(max_length=150, required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     lastname = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    confirm_password = serializers.CharField(write_only=True, required=False)
-    confirm_pass = serializers.CharField(write_only=True, required=False)
-    password = serializers.CharField(write_only=True, required=False)
+    confirm_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    confirm_pass = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate(self, attrs):
-        username = attrs.get("username")
-        email = attrs.get("email")
+        import re
+        email = attrs.get("email", "").strip().lower()
+        if not email:
+            raise serializers.ValidationError({"email": "Email is required."})
 
         # Resolve password
-        password = attrs.get("confirm_password") or attrs.get("confirm_pass") or attrs.get("password")
+        raw_password = attrs.get("password")
+        confirm_pass = attrs.get("confirm_password") or attrs.get("confirm_pass")
+        password = confirm_pass or raw_password
         if not password:
             raise serializers.ValidationError({"password": "Password is required."})
+
+        if raw_password and confirm_pass and raw_password != confirm_pass:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+
+        if len(password) < 6:
+            raise serializers.ValidationError({"password": "Password must be at least 6 characters."})
+
         attrs["resolved_password"] = password
 
-        # Resolve names
-        attrs["resolved_first_name"] = attrs.get("firstname") or attrs.get("first_name", "")
-        attrs["resolved_last_name"] = attrs.get("lastname") or attrs.get("last_name", "")
+        # Resolve full name
+        full_name = (
+            attrs.get("full_name") or
+            attrs.get("fullname") or
+            f"{attrs.get('firstname', '')} {attrs.get('lastname', '')}".strip() or
+            f"{attrs.get('first_name', '')} {attrs.get('last_name', '')}".strip()
+        )
+        attrs["resolved_full_name"] = full_name
 
-        if AdminDetails.objects.filter(username=username).exists():
+        # Resolve username
+        username = attrs.get("username", "").strip()
+        if not username:
+            base = ""
+            if full_name:
+                base = re.sub(r"[^a-zA-Z0-9_]", "", full_name.lower().replace(" ", "_"))
+            if not base and email:
+                base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0].lower())
+            if not base:
+                base = "admin"
+            base = base[:20]
+            candidate_uname = base
+            counter = 1
+            while AdminDetails.objects.filter(username=candidate_uname).exists():
+                candidate_uname = f"{base[:15]}_{counter}"
+                counter += 1
+            username = candidate_uname
+        elif AdminDetails.objects.filter(username=username).exists():
             raise serializers.ValidationError({"username": "Username is already taken."})
+
+        attrs["resolved_username"] = username
+
         if AdminDetails.objects.filter(email=email).exists():
             raise serializers.ValidationError({"email": "Email is already registered."})
 
@@ -67,6 +105,7 @@ class AdminDetailsSerializer(serializers.ModelSerializer):
             "admin_id",
             "formatted_id",
             "username",
+            "full_name",
             "email",
             "account_type",
             "status",

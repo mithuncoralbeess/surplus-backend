@@ -36,6 +36,15 @@
                 <p class="text-secondary small mb-0">Enter your staff credentials to access the console</p>
             </header>
 
+            {% if request.GET.pending or request.GET.registered %}
+            <div class="alert alert-info d-flex align-items-start gap-2 py-2 px-3 small rounded-3 mb-3" role="alert">
+                <i class="bi bi-info-circle-fill text-info mt-0.5 flex-shrink-0"></i>
+                <div>
+                    <strong>Registration Received:</strong> Your admin account is pending SuperAdmin approval. You can sign in once approved.
+                </div>
+            </div>
+            {% endif %}
+
             <div id="alertBanner" class="alert alert-danger d-none align-items-center gap-2 py-2 px-3 small rounded-3" role="alert">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <span id="alertText"></span>
@@ -91,6 +100,13 @@
                     <span class="spinner-border spinner-border-sm d-none me-2" id="btnSpinner" role="status" aria-hidden="true"></span>
                     <span id="btnText">Sign In to Dashboard</span>
                 </button>
+
+                <div class="text-center mt-3 pt-3 border-top">
+                    <span class="text-secondary small">Need an admin account? </span>
+                    <a href="/admin/signup/" class="text-primary-custom text-decoration-none small fw-semibold">
+                        <i class="bi bi-person-plus-fill me-1"></i>Admin Sign Up
+                    </a>
+                </div>
             </form>
         </div>
     </main>

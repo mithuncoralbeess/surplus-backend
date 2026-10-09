@@ -109,30 +109,117 @@ def admin_login_page(request):
     return render(request, "login.html")
 
 
+def admin_signup_view(request):
+    """
+    Renders Admin Sign Up screen or processes sign up form submission.
+    Admin accounts require SuperAdmin approval before login access is granted.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if admin_user:
+        return redirect("adminDashBoard")
+
+    if request.method == "POST":
+        req_data = {}
+        if request.content_type == "application/json" and request.body:
+            try:
+                req_data = json.loads(request.body.decode("utf-8"))
+            except Exception:
+                req_data = {}
+        elif request.POST:
+            req_data = request.POST.dict() if hasattr(request.POST, "dict") else dict(request.POST)
+        elif hasattr(request, "data"):
+            req_data = dict(request.data or {})
+
+        serializer = AdminRegisterSerializer(data=req_data)
+        if not serializer.is_valid():
+            if request.content_type == "application/json" or request.headers.get("x-requested-with") == "XMLHttpRequest":
+                first_err = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid data provided."
+                return JsonResponse({"success": False, "message": str(first_err), "errors": serializer.errors}, status=400)
+            return render(request, "signup.html", {
+                "errors": serializer.errors,
+                "form_data": req_data
+            })
+
+        data = serializer.validated_data
+        username = data["resolved_username"]
+        full_name = data.get("resolved_full_name", "").strip()
+        email = data["email"].strip().lower()
+        confirm_pass = data["resolved_password"]
+
+        # Salted SHA-256 Password Hashing: <hash>:<salt>
+        salt = uuid.uuid4().hex
+        enc_pass = (
+            hashlib.sha256(salt.encode() + confirm_pass.encode()).hexdigest()
+            + ":"
+            + salt
+        )
+
+        is_super = (email == "super@gmail.com")
+        account_type = "SuperAdmin" if is_super else "Admin"
+        status_bool = True if is_super else False
+
+        admin_obj = AdminDetails.objects.create(
+            username=username,
+            full_name=full_name,
+            email=email,
+            pass_word=enc_pass,
+            account_type=account_type,
+            status=status_bool,
+            session_version=1,
+            web_is_active="live",
+        )
+
+        msg = (
+            "Admin registration successful. Please proceed to login."
+            if status_bool
+            else "Admin registration successful! Your account is pending SuperAdmin approval. You will be able to log in once approved by SuperAdmin."
+        )
+
+        if request.content_type == "application/json" or request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "success": True,
+                "message": msg,
+                "pending_approval": not status_bool,
+                "redirect_url": "/admin/login/?pending=1" if not status_bool else "/admin/login/",
+                "data": AdminDetailsSerializer(admin_obj).data,
+            }, status=201)
+
+        return render(request, "signup.html", {
+            "success": True,
+            "message": msg,
+            "pending_approval": not status_bool
+        })
+
+    return render(request, "signup.html")
+
+
 @api_view(["POST", "GET"])
 @permission_classes([AllowAny])
 def admin_register(request):
     """
     Admin Registration Flow (API & form handler):
-    - Checks for existing username and email
+    - Supports full_name, email, password, confirm_password (and optional username)
     - Salted SHA-256 password hashing
     - Role assignment (SuperAdmin for super@gmail.com, XLSXAdmin for xlsxsurplusadmin@gmail.com, Admin otherwise)
+    - Standard admin accounts require SuperAdmin approval (status=False initially)
     """
     if request.method == "GET":
         return Response(
-            {"message": "Submit POST with username, email, firstname, lastname, confirm_password to register."},
+            {"message": "Submit POST with full_name, email, password, confirm_password to register."},
             status=status.HTTP_200_OK,
         )
 
     serializer = AdminRegisterSerializer(data=request.data)
     if not serializer.is_valid():
+        first_err = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid registration details."
         return Response(
-            {"success": False, "errors": serializer.errors},
+            {"success": False, "message": str(first_err), "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     data = serializer.validated_data
-    username = data["username"]
+    username = data["resolved_username"]
+    full_name = data.get("resolved_full_name", "").strip()
     email = data["email"].strip().lower()
     confirm_pass = data["resolved_password"]
 
@@ -144,32 +231,43 @@ def admin_register(request):
         + salt
     )
 
-    # Role Assignment:
+    # Role Assignment & Approval Status:
     if email == "super@gmail.com":
         account_type = "SuperAdmin"
+        status_bool = True
         web_is_active = "live"
     elif email == "xlsxsurplusadmin@gmail.com":
         account_type = "XLSXAdmin"
+        status_bool = True
         web_is_active = "live"
     else:
         account_type = "Admin"
+        status_bool = False  # SuperAdmin needs to approve so admin can log in
         web_is_active = "live"
 
     admin_user = AdminDetails.objects.create(
         username=username,
+        full_name=full_name,
         email=email,
         pass_word=enc_pass,
         account_type=account_type,
-        status=True,
+        status=status_bool,
         session_version=1,
         web_is_active=web_is_active,
+    )
+
+    msg = (
+        "Admin registration successful. Please proceed to login."
+        if status_bool
+        else "Admin account registered successfully! Your account is currently pending SuperAdmin approval. You will be able to log in once approved by SuperAdmin."
     )
 
     return Response(
         {
             "success": True,
-            "message": "Admin registration successful. Please proceed to login.",
-            "redirect_url": "/admin/login/",
+            "message": msg,
+            "pending_approval": not status_bool,
+            "redirect_url": "/admin/login/?pending=1" if not status_bool else "/admin/login/",
             "data": AdminDetailsSerializer(admin_user).data,
         },
         status=status.HTTP_201_CREATED,
@@ -226,20 +324,30 @@ def admin_login(request):
 
     if admin_qs.exists():
         candidate = admin_qs.first()
-        if not candidate.status:
-            return Response(
-                {"success": False, "message": "Account is inactive. Contact SuperAdmin."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        is_pass_valid = False
         try:
-            stored_hash, salt = candidate.pass_word.split(":")
-            computed_hash = hashlib.sha256(
-                salt.encode() + user_pass.encode()
-            ).hexdigest()
-            if computed_hash == stored_hash:
-                admin_user = candidate
+            if ":" in candidate.pass_word:
+                stored_hash, salt = candidate.pass_word.split(":", 1)
+                computed_hash = hashlib.sha256(
+                    salt.encode() + user_pass.encode()
+                ).hexdigest()
+                if computed_hash == stored_hash:
+                    is_pass_valid = True
+            else:
+                is_pass_valid = candidate.check_password(user_pass)
         except (ValueError, AttributeError):
             pass
+
+        if is_pass_valid:
+            if not candidate.status:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Your account is pending SuperAdmin approval. Please wait for SuperAdmin to approve your account before logging in.",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            admin_user = candidate
 
     # Fallback Auth: Standard Django authenticate for superusers
     if not admin_user:
@@ -459,14 +567,18 @@ def adminDashBoard(request):
     if companies_count == 0:
         companies_count = VendorDetails.objects.exclude(company_name="").count()
 
+    pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
+
     context = {
         "admin": admin_user,
         "is_super_admin": is_super,
         "staff_list": staff_list,
+        "pending_admins_count": pending_admins,
         "stats": {
             "currency": "USD",
             "total_admins": AdminDetails.objects.count(),
             "active_admins": AdminDetails.objects.filter(status=True).count(),
+            "pending_admins": pending_admins,
             "total_sales_due": f"{total_sales_due:.2f}",
             "total_sales_amount": f"{total_sales_amount:.2f}",
             "active_products_qty": active_products_stock,
@@ -2790,6 +2902,121 @@ def delete_user_api(request, user_id):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         return redirect("manage_users")
+
+
+def manage_admins_view(request):
+    """
+    SuperAdmin interface to review, approve, activate, or deactivate admin accounts.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        messages.error(request, "Access restricted to SuperAdmin accounts only.")
+        return redirect("adminDashBoard")
+
+    admin_qs = AdminDetails.objects.all().order_by("-created_at")
+    q = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip().lower()
+
+    if q:
+        admin_qs = admin_qs.filter(
+            Q(username__icontains=q) |
+            Q(email__icontains=q) |
+            Q(full_name__icontains=q)
+        )
+
+    if status_filter == "pending":
+        admin_qs = admin_qs.filter(status=False)
+    elif status_filter == "active":
+        admin_qs = admin_qs.filter(status=True)
+    elif status_filter == "inactive":
+        admin_qs = admin_qs.filter(status=False)
+
+    total_admins = AdminDetails.objects.count()
+    pending_admins = AdminDetails.objects.filter(status=False).count()
+    active_admins = AdminDetails.objects.filter(status=True).count()
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": True,
+        "admins": admin_qs,
+        "search_query": q,
+        "status_filter": status_filter,
+        "pending_admins_count": pending_admins,
+        "stats": {
+            "total_admins": total_admins,
+            "pending_admins": pending_admins,
+            "active_admins": active_admins,
+        }
+    }
+    return render(request, "manage_admins.html", context)
+
+
+@api_view(["POST"])
+def toggle_admin_status_api(request, admin_id):
+    """
+    Allows SuperAdmin to approve / activate or deactivate an admin account.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        return Response({"success": False, "message": "SuperAdmin authorization required."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        target_admin = AdminDetails.objects.get(id=admin_id)
+        if target_admin.id == getattr(admin_user, "id", None):
+            return Response({"success": False, "message": "You cannot change your own SuperAdmin status."}, status=status.HTTP_400_BAD_REQUEST)
+
+        action = request.data.get("action", "").lower()
+        if action in ("approve", "activate"):
+            target_admin.status = True
+        elif action in ("deactivate", "reject"):
+            target_admin.status = False
+        else:
+            target_admin.status = not target_admin.status
+
+        target_admin.session_version = (target_admin.session_version or 1) + 1
+        target_admin.save(update_fields=["status", "session_version", "updated_at"])
+
+        status_text = "Approved & Active" if target_admin.status else "Pending Approval / Inactive"
+        return Response({
+            "success": True,
+            "message": f"Admin '{target_admin.full_name or target_admin.username}' is now {status_text}.",
+            "new_status": target_admin.status
+        }, status=status.HTTP_200_OK)
+    except AdminDetails.DoesNotExist:
+        return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST", "DELETE"])
+def delete_admin_api(request, admin_id):
+    """
+    Allows SuperAdmin to delete an admin account.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        return Response({"success": False, "message": "SuperAdmin authorization required."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        target_admin = AdminDetails.objects.get(id=admin_id)
+        if target_admin.id == getattr(admin_user, "id", None) or target_admin.email == "super@gmail.com":
+            return Response({"success": False, "message": "Cannot delete primary SuperAdmin account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        name = target_admin.full_name or target_admin.username
+        target_admin.delete()
+        return Response({"success": True, "message": f"Admin account '{name}' has been deleted."}, status=status.HTTP_200_OK)
+    except AdminDetails.DoesNotExist:
+        return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 def contact_enquiries_view(request):

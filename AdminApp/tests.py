@@ -32,21 +32,96 @@ class AdminAppAuthTests(TestCase):
 
     def test_standard_admin_registration(self):
         """
-        Standard user registration assigns Admin role.
+        Standard user registration assigns Admin role, full_name, and sets status=False (requires SuperAdmin approval).
         """
         payload = {
-            "username": "adminuser",
+            "full_name": "Standard Admin",
             "email": "admin@gmail.com",
-            "firstname": "Standard",
-            "lastname": "Admin",
             "confirm_password": "password123",
         }
         response = self.client.post("/admin/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data["pending_approval"])
 
         admin = AdminDetails.objects.get(email="admin@gmail.com")
         self.assertEqual(admin.account_type, "Admin")
-        self.assertTrue(admin.status)
+        self.assertEqual(admin.full_name, "Standard Admin")
+        self.assertFalse(admin.status)  # Pending SuperAdmin approval
+
+    def test_admin_signup_and_superadmin_approval_flow(self):
+        """
+        Tests the complete self-signup -> pending block -> SuperAdmin approval -> successful login workflow.
+        """
+        # 1. Access signup page (HTML)
+        signup_page_res = self.client.get("/admin/signup/")
+        self.assertEqual(signup_page_res.status_code, status.HTTP_200_OK)
+
+        # 2. Self-signup with full_name, email, password, confirm_password
+        signup_payload = {
+            "full_name": "Alex Mercer",
+            "email": "alex.mercer@surplus.com",
+            "password": "SecurePassword999",
+            "confirm_password": "SecurePassword999",
+        }
+        signup_res = self.client.post("/admin/signup/", signup_payload, format="json")
+        self.assertEqual(signup_res.status_code, status.HTTP_201_CREATED)
+        res_data = getattr(signup_res, "data", None) or signup_res.json()
+        self.assertTrue(res_data["pending_approval"])
+
+        new_admin = AdminDetails.objects.get(email="alex.mercer@surplus.com")
+        self.assertFalse(new_admin.status)
+        self.assertEqual(new_admin.full_name, "Alex Mercer")
+
+        # 3. Attempting to log in while pending approval MUST be blocked with 403 Forbidden
+        login_res_blocked = self.client.post(
+            "/admin/login/",
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            format="json",
+        )
+        self.assertEqual(login_res_blocked.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("pending SuperAdmin approval", login_res_blocked.data["message"])
+
+        # 4. SuperAdmin logs in and approves new_admin
+        superadmin = AdminDetails.objects.create(
+            username="super_master",
+            email="super@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = superadmin.id
+        session["session_version"] = 1
+        session.save()
+
+        # Check manage admins page
+        manage_page_res = self.client.get("/admin/admins/")
+        self.assertEqual(manage_page_res.status_code, status.HTTP_200_OK)
+
+        # SuperAdmin calls approval API
+        approval_res = self.client.post(
+            f"/admin/api/admins/{new_admin.id}/status/",
+            {"action": "approve"},
+            format="json",
+        )
+        self.assertEqual(approval_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(approval_res.data["new_status"])
+
+        new_admin.refresh_from_db()
+        self.assertTrue(new_admin.status)
+
+        # Clear SuperAdmin session to test new_admin login
+        session = self.client.session
+        session.flush()
+
+        # 5. Now approved admin can log in successfully!
+        login_res_success = self.client.post(
+            "/admin/login/",
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            format="json",
+        )
+        self.assertEqual(login_res_success.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res_success.data["success"])
 
     def test_duplicate_registration_validation(self):
         """

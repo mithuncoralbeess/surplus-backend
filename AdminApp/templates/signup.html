@@ -1,0 +1,351 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sign Up - Surplus Portal</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/admin_login.css' %}">
+    <script>
+        (function() {
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+        })();
+    </script>
+</head>
+<body class="min-vh-100 d-flex align-items-center justify-content-center p-3 position-relative">
+    <div class="ambient-background">
+        <div class="glow-orb-1"></div>
+        <div class="glow-orb-2"></div>
+    </div>
+
+    <main class="container position-relative" style="max-width: 460px; z-index: 10;">
+        <div class="card light-login-card border rounded-4 p-4 p-md-5">
+            <header class="text-center mb-4">
+                <span class="badge rounded-pill badge-primary-custom px-3 py-2 mb-3 fw-semibold">
+                    <i class="bi bi-shield-lock-fill me-1"></i> ADMIN SIGN UP
+                </span>
+                <h1 class="h3 fw-bold text-dark mb-1 brand-title">Create Admin Account</h1>
+                <p class="text-secondary small mb-0">Submit staff registration for administrative console access</p>
+            </header>
+
+            <!-- SuperAdmin Approval Notice -->
+            <div class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3 py-2.5 px-3 small mb-3 d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle-fill text-primary mt-0.5 flex-shrink-0"></i>
+                <div class="text-secondary">
+                    <strong>Approval Policy:</strong> All new admin accounts require <strong>SuperAdmin approval</strong> before login access is activated.
+                </div>
+            </div>
+
+            <!-- Dynamic Alert Banner -->
+            <div id="alertBanner" class="alert alert-danger d-none align-items-center gap-2 py-2 px-3 small rounded-3 mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0" id="alertIcon"></i>
+                <span id="alertText"></span>
+            </div>
+
+            <!-- Registration Success Card (shown upon successful submission) -->
+            <div id="successCard" class="d-none text-center py-3">
+                <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                    <i class="bi bi-check-circle-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Request Submitted!</h5>
+                <p class="text-secondary small mb-4" id="successMessage" style="line-height: 1.55;">
+                    Your admin account has been created successfully. A SuperAdmin must review and approve your account before you can log in.
+                </p>
+                <div class="p-3 bg-light rounded-3 border text-start small mb-4">
+                    <div class="d-flex justify-content-between mb-1.5">
+                        <span class="text-muted">Registered Email:</span>
+                        <strong class="text-dark font-monospace" id="registeredEmailText">-</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Account Status:</span>
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill fw-semibold">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending SuperAdmin Approval
+                        </span>
+                    </div>
+                </div>
+                <a href="/admin/login/?pending=1" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Proceed to Admin Login
+                </a>
+            </div>
+
+            <!-- Sign Up Form -->
+            <form id="adminSignUpForm" method="POST" action="/admin/signup/">
+                {% csrf_token %}
+
+                <!-- Full Name -->
+                <div class="mb-3">
+                    <label class="form-label text-dark small fw-semibold" for="full_name">Full Name <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-person"></i>
+                        </span>
+                        <input
+                            type="text"
+                            id="full_name"
+                            name="full_name"
+                            class="form-control bg-light border-start-0 ps-0"
+                            placeholder="John Doe"
+                            required
+                            autocomplete="name"
+                        >
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label class="form-label text-dark small fw-semibold" for="email">Work Email <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="form-control bg-light border-start-0 ps-0"
+                            placeholder="admin@surplus.com"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3">
+                    <label for="password" class="form-label text-dark small fw-semibold">Password <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control bg-light border-start-0 border-end-0 ps-0"
+                            placeholder="Min. 8 characters"
+                            required
+                            minlength="6"
+                            autocomplete="new-password"
+                        >
+                        <span class="input-group-text bg-light text-secondary border-start-0" id="togglePassBtn" style="cursor: pointer;" title="Toggle password visibility">
+                            <i class="bi bi-eye" id="togglePassIcon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-4">
+                    <label for="confirm_password" class="form-label text-dark small fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary border-end-0">
+                            <i class="bi bi-lock-fill"></i>
+                        </span>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            class="form-control bg-light border-start-0 border-end-0 ps-0"
+                            placeholder="Re-enter password"
+                            required
+                            minlength="6"
+                            autocomplete="new-password"
+                        >
+                        <span class="input-group-text bg-light text-secondary border-start-0" id="toggleConfirmPassBtn" style="cursor: pointer;" title="Toggle password visibility">
+                            <i class="bi bi-eye" id="toggleConfirmPassIcon"></i>
+                        </span>
+                    </div>
+                    <div id="passwordMismatchError" class="text-danger small mt-1 d-none">
+                        <i class="bi bi-exclamation-circle me-1"></i>Passwords do not match.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary w-100 py-2.5 fw-semibold shadow-sm" id="submitBtn">
+                    <span class="spinner-border spinner-border-sm d-none me-2" id="btnSpinner" role="status" aria-hidden="true"></span>
+                    <span id="btnText">Request Admin Account</span>
+                </button>
+
+                <!-- Back to Login -->
+                <div class="text-center mt-3 pt-3 border-top">
+                    <span class="text-secondary small">Already have an admin account? </span>
+                    <a href="/admin/login/" class="text-primary-custom text-decoration-none small fw-semibold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("adminSignUpForm");
+        const fullNameInput = document.getElementById("full_name");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput = document.getElementById("confirm_password");
+        const submitBtn = document.getElementById("submitBtn");
+        const btnText = document.getElementById("btnText");
+        const spinner = document.getElementById("btnSpinner");
+        const alertBanner = document.getElementById("alertBanner");
+        const alertText = document.getElementById("alertText");
+        const alertIcon = document.getElementById("alertIcon");
+        const passwordMismatchError = document.getElementById("passwordMismatchError");
+        const successCard = document.getElementById("successCard");
+        const registeredEmailText = document.getElementById("registeredEmailText");
+        const successMessage = document.getElementById("successMessage");
+
+        // Helper function for password visibility toggle
+        function setupPasswordToggle(buttonId, iconId, inputId) {
+            const btn = document.getElementById(buttonId);
+            const icon = document.getElementById(iconId);
+            const input = document.getElementById(inputId);
+
+            if (btn && icon && input) {
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isPassword = input.type === "password";
+                    input.type = isPassword ? "text" : "password";
+
+                    if (isPassword) {
+                        icon.classList.remove("bi-eye");
+                        icon.classList.add("bi-eye-slash");
+                    } else {
+                        icon.classList.remove("bi-eye-slash");
+                        icon.classList.add("bi-eye");
+                    }
+                    input.focus();
+                });
+            }
+        }
+
+        setupPasswordToggle("togglePassBtn", "togglePassIcon", "password");
+        setupPasswordToggle("toggleConfirmPassBtn", "toggleConfirmPassIcon", "confirm_password");
+
+        function showAlert(message, type = "danger") {
+            alertBanner.className = `alert alert-${type} d-flex align-items-center gap-2 py-2 px-3 small rounded-3 mb-3`;
+            alertText.textContent = message;
+            if (alertIcon) {
+                alertIcon.className = (type === "success") ? "bi bi-check-circle-fill flex-shrink-0" : "bi bi-exclamation-triangle-fill flex-shrink-0";
+            }
+            alertBanner.classList.remove("d-none");
+        }
+
+        function hideAlert() {
+            alertBanner.classList.add("d-none");
+        }
+
+        function setLoading(isLoading) {
+            submitBtn.disabled = isLoading;
+            if (isLoading) {
+                spinner.classList.remove("d-none");
+                btnText.textContent = "Creating Account...";
+            } else {
+                spinner.classList.add("d-none");
+                btnText.textContent = "Request Admin Account";
+            }
+        }
+
+        // Live check password matching
+        function checkPasswordsMatch() {
+            if (passwordInput.value && confirmPasswordInput.value) {
+                if (passwordInput.value !== confirmPasswordInput.value) {
+                    passwordMismatchError.classList.remove("d-none");
+                    return false;
+                } else {
+                    passwordMismatchError.classList.add("d-none");
+                    return true;
+                }
+            }
+            passwordMismatchError.classList.add("d-none");
+            return true;
+        }
+
+        passwordInput.addEventListener("input", checkPasswordsMatch);
+        confirmPasswordInput.addEventListener("input", checkPasswordsMatch);
+
+        if (form) {
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                hideAlert();
+
+                const fullName = fullNameInput.value.trim();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                if (!fullName) {
+                    showAlert("Please enter your full name.");
+                    fullNameInput.focus();
+                    return;
+                }
+
+                if (!email) {
+                    showAlert("Please enter a valid email address.");
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!password || password.length < 6) {
+                    showAlert("Password must be at least 6 characters long.");
+                    passwordInput.focus();
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showAlert("Passwords do not match. Please verify.");
+                    confirmPasswordInput.focus();
+                    return;
+                }
+
+                setLoading(true);
+
+                try {
+                    const response = await fetch("/admin/signup/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]')?.value || ""
+                        },
+                        body: JSON.stringify({
+                            full_name: fullName,
+                            email: email,
+                            password: password,
+                            confirm_password: confirmPassword
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        form.classList.add("d-none");
+                        hideAlert();
+                        if (registeredEmailText) registeredEmailText.textContent = email;
+                        if (successMessage && data.message) successMessage.textContent = data.message;
+                        successCard.classList.remove("d-none");
+                    } else {
+                        showAlert(data.message || "Failed to create admin account.", "danger");
+                        setLoading(false);
+                    }
+                } catch (err) {
+                    console.error("Sign up error:", err);
+                    showAlert("Network error occurred. Please try again.", "danger");
+                    setLoading(false);
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

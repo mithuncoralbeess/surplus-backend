@@ -7,10 +7,14 @@ from .views import (
     vendor_logout_view,
     get_current_vendor,
     admin_login_page,
+    admin_signup_view,
     admin_register,
     admin_login,
     admin_logout_view,
     get_current_admin,
+    manage_admins_view,
+    toggle_admin_status_api,
+    delete_admin_api,
     super_admin_password_reset,
     super_admin_verify_otp,
     adminDashBoard,
@@ -76,6 +80,7 @@ urlpatterns = [
 
     # Admin Login Screen (HTML Page & POST handler)
     path("login/", admin_login, name="admin_login_page"),
+    path("signup/", admin_signup_view, name="admin_signup"),
     path("register/", admin_register, name="admin_register"),
     path("logout/", admin_logout_view, name="admin_logout"),
     path("me/", get_current_admin, name="admin_me"),
@@ -133,6 +138,12 @@ urlpatterns = [
     path("manage-users/", manage_users_view, name="manage_users_alias"),
     path("users/<int:user_id>/delete/", delete_user_api, name="delete_user"),
     path("api/users/<int:user_id>/delete/", delete_user_api, name="delete_user_api"),
+
+    # Admin Staff Management & Approvals (SuperAdmin Only)
+    path("admins/", manage_admins_view, name="manage_admins"),
+    path("staff/", manage_admins_view, name="manage_admins_staff_alias"),
+    path("api/admins/<int:admin_id>/status/", toggle_admin_status_api, name="toggle_admin_status_api"),
+    path("api/admins/<int:admin_id>/delete/", delete_admin_api, name="delete_admin_api"),
 
     # Redirect legacy sellers-buyers to manage users
     path("sellers-buyers/", lambda request: redirect("manage_users")),
