@@ -2,9 +2,13 @@ import uuid
 import hashlib
 import random
 import secrets
-from decimal import Decimal
+import json
+from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.contrib import messages
+from django.core.files.storage import default_storage
+from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from django.contrib.auth import authenticate
@@ -1557,9 +1561,12 @@ def seller_enquiry_detail_view(request, enquiry_id):
         elif vendor.user_type:
             industry_val = vendor.user_type
 
+    admin_match = AdminDetails.objects.filter(email__iexact=email_val).first() if email_val != "N/A" else None
+    vendor_display_id = f"ADM-{admin_match.id:04d}" if admin_match else (vendor.vendor_id if vendor else "N/A")
+
     user_data = {
-        "vendor_id": vendor.vendor_id if vendor else "N/A",
-        "user_id": vendor.vendor_id if vendor else "N/A",
+        "vendor_id": vendor_display_id,
+        "user_id": vendor_display_id,
         "raw_vendor_id": vendor.id if vendor else None,
         "raw_user_id": vendor.id if vendor else None,
         "full_name": full_name_val,
@@ -1672,6 +1679,10 @@ def seller_enquiry_detail_view(request, enquiry_id):
     categories = MainCategory.objects.prefetch_related("subcategories").all()
 
     vendor_profile = vendor.get_profile_completion_details() if vendor else None
+    if admin_match and vendor_profile:
+        vendor_profile["is_complete"] = True
+        vendor_profile["percentage"] = 100
+        vendor_profile["missing_fields_labels"] = []
 
     context = {
         "admin": admin_user,
@@ -3167,108 +3178,276 @@ def toggle_product_status_view(request, product_id):
 
 
 
+STANDARD_COUNTRIES = [
+    "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia",
+    "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium",
+    "Brazil", "Bulgaria", "Canada", "Chile", "China", "Colombia", "Croatia",
+    "Cyprus", "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland",
+    "France", "Georgia", "Germany", "Greece", "Hong Kong", "Hungary",
+    "Iceland", "India", "Indonesia", "Ireland", "Israel", "Italy", "Japan",
+    "Jordan", "Kazakhstan", "Kuwait", "Latvia", "Lebanon", "Lithuania",
+    "Luxembourg", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand",
+    "Norway", "Oman", "Pakistan", "Philippines", "Poland", "Portugal",
+    "Qatar", "Romania", "Saudi Arabia", "Singapore", "Slovakia", "Slovenia",
+    "South Africa", "South Korea", "Spain", "Sweden", "Switzerland", "Taiwan",
+    "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
+    "United States", "Vietnam"
+]
+
+STANDARD_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "INR", "CAD", "AUD", "SGD", "QAR", "KWD", "OMR", "BHD", "JPY", "CNY"]
+
+
 def add_product_view(request):
     """
-    Form view for adding a new product listing.
+    Form view for adding a new product listing by Admin.
+    Associates the product with the logged-in admin user (ADM-XXXX),
+    auto-populates Admin Name & Email, allows updating Contact Number, Industry,
+    and Business Location, and submits it to Seller Enquiries with status PENDING.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    categories = SubCategory.objects.select_related("main_category").all()
-    vendors = VendorDetails.objects.all()
+    admin_uid = f"ADM-{admin_user.id:04d}"
+
+    # Retrieve existing vendor details for admin if already saved
+    admin_vendor = VendorDetails.objects.filter(email__iexact=admin_user.email).first()
+    default_contact_number = admin_vendor.mobile_number if admin_vendor else ""
+    default_industry = admin_vendor.business_type if admin_vendor else ""
+    default_business_location = admin_vendor.business_location if admin_vendor else ""
+    default_company = admin_vendor.company_name if admin_vendor else "Surplus Admin"
+
+    main_categories = MainCategory.objects.filter(is_active=True).order_by("name")
+    subcategories_qs = SubCategory.objects.filter(is_active=True).select_related("main_category").order_by("name")
+
+    # Group subcategories by main_category_id for fast client-side cascading dropdown
+    subcategories_map = {}
+    for sub in subcategories_qs:
+        if sub.main_category_id:
+            if sub.main_category_id not in subcategories_map:
+                subcategories_map[sub.main_category_id] = []
+            subcategories_map[sub.main_category_id].append({
+                "id": sub.id,
+                "name": sub.name,
+            })
+    subcategories_json = json.dumps(subcategories_map)
 
     if request.method == "POST":
-        title = request.POST.get("title")
-        sku = request.POST.get("sku")
-        description = request.POST.get("description", "")
-        price = request.POST.get("price", "0.00")
-        discount_price = request.POST.get("discount_price") or None
-        stock_quantity = request.POST.get("stock_quantity", 0)
-        brand = request.POST.get("brand", "")
-        category_id = request.POST.get("category")
-        vendor_id = request.POST.get("vendor")
-        inventory_location = request.POST.get("inventory_location", "")
-        manufacturing_country = request.POST.get("manufacturing_country", "")
-        manufacturing_year = request.POST.get("manufacturing_year") or None
-        dimensions = request.POST.get("dimensions", "")
-        expiry_date = request.POST.get("expiry_date") or None
-        currency = request.POST.get("currency", "USD")
-        reason_to_sell = request.POST.get("reason_to_sell", "")
-        warranty = request.POST.get("warranty", "")
-        third_party_certificate = request.FILES.get("third_party_certificate")
-        image = request.FILES.get("image")
-        is_active = request.POST.get("is_active") == "on"
-        enquiry_status = request.POST.get("enquiry_status", "APPROVED")
+        # 1. User / Submitter Fields (Admin Session + Editable Contact Details)
+        contact_number = request.POST.get("contact_number", "").strip()
+        industry = request.POST.get("industry", "").strip()
+        business_location = request.POST.get("business_location", "").strip()
+        company = request.POST.get("company", "").strip() or default_company
 
-        category = None
-        if category_id:
-            category = SubCategory.objects.filter(id=category_id).first()
+        # 2. Product Specifications
+        product_name = (request.POST.get("product_name") or request.POST.get("title") or "").strip()
+        category_id = request.POST.get("category_id") or request.POST.get("category")
+        subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
+        brand_name = (request.POST.get("brand_name") or request.POST.get("brand") or "").strip()
+        model_no = (request.POST.get("model_no") or request.POST.get("sku") or "").strip()
+        manufacturing_country = request.POST.get("manufacturing_country", "").strip()
 
-        vendor = None
-        if vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
+        manufacturing_year_str = request.POST.get("manufacturing_year", "").strip()
+        manufacturing_year = int(manufacturing_year_str) if (manufacturing_year_str and manufacturing_year_str.isdigit()) else None
 
+        dimensions = request.POST.get("dimensions", "").strip()
+
+        expiry_date_str = request.POST.get("expiry_date", "").strip()
+        expiry_date = parse_date(expiry_date_str) if expiry_date_str else None
+
+        quantity_str = request.POST.get("quantity", "1").strip()
+        try:
+            quantity = max(1, int(quantity_str))
+        except (ValueError, TypeError):
+            quantity = 1
+
+        currency = (request.POST.get("currency") or "USD").strip().upper()
+
+        msrp_str = request.POST.get("msrp", "0").strip()
+        try:
+            msrp = Decimal(msrp_str)
+        except Exception:
+            msrp = Decimal("0.00")
+
+        lp_str = request.POST.get("liquidating_price", "0").strip()
+        try:
+            liquidating_price = Decimal(lp_str)
+        except Exception:
+            liquidating_price = Decimal("0.00")
+
+        # Excluded export countries
+        excluded_countries_raw = request.POST.getlist("excluded_countries")
+        if not excluded_countries_raw:
+            raw_text = request.POST.get("excluded_countries_text", "")
+            excluded_countries = [c.strip() for c in raw_text.split(",") if c.strip()]
+        else:
+            excluded_countries = [str(c).strip() for c in excluded_countries_raw if str(c).strip()]
+
+        description = request.POST.get("description", "").strip()
+        reason_to_sell = request.POST.get("reason_to_sell", "").strip()
+
+        # Warranty terms & document
+        warranty_included = request.POST.get("warranty_included") in ("on", "true", "1", True)
+        warranty = request.POST.get("warranty", "").strip() if warranty_included else ""
+        warranty_attachment = ""
+        if warranty_included and "warranty_document" in request.FILES:
+            w_file = request.FILES["warranty_document"]
+            saved_path = default_storage.save(f"products/documents/{w_file.name}", w_file)
+            warranty_attachment = default_storage.url(saved_path)
+
+        # 3rd Party Certificate & document
+        third_party_cert = request.POST.get("third_party_certificate") in ("on", "true", "1", True)
+        third_party_documents = ""
+        if third_party_cert and "certificate_document" in request.FILES:
+            c_file = request.FILES["certificate_document"]
+            saved_path = default_storage.save(f"products/documents/{c_file.name}", c_file)
+            third_party_documents = default_storage.url(saved_path)
+
+        # Product Images Multi-Upload
+        image_files = []
+        seen_names = set()
+        for fkey in ["images", "image", "gallery_images", "product_images", "photos", "files"]:
+            if fkey in request.FILES:
+                for f in request.FILES.getlist(fkey):
+                    if f.name not in seen_names:
+                        seen_names.add(f.name)
+                        image_files.append(f)
+
+        # Validation of Mandatory Fields
+        errors = []
+        if not product_name:
+            errors.append("Product Title / Name is required.")
+        if not category_id:
+            errors.append("Product Category is required.")
+        if not subcategory_id:
+            errors.append("Subcategory is required.")
+        if not manufacturing_country:
+            errors.append("Manufacturing Country is required.")
+        if quantity < 1:
+            errors.append("Available Quantity must be at least 1.")
+        if msrp <= Decimal("0.00"):
+            errors.append("Original / Retail MSRP Price (Per Unit) must be greater than 0.")
+        if liquidating_price <= Decimal("0.00"):
+            errors.append("Liquidating / Surplus Price (Per Unit) must be greater than 0.")
+        if not description:
+            errors.append("Description & Technical Condition is required.")
+        if not reason_to_sell:
+            errors.append("Reason to Sell is required.")
+        if not image_files:
+            errors.append("At least one Product Image is required.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            context = {
+                "admin": admin_user,
+                "admin_uid": admin_uid,
+                "categories": main_categories,
+                "subcategories_json": subcategories_json,
+                "countries": STANDARD_COUNTRIES,
+                "currencies": STANDARD_CURRENCIES,
+                "default_contact_number": contact_number or default_contact_number,
+                "default_industry": industry or default_industry,
+                "default_business_location": business_location or default_business_location,
+                "default_company": company or default_company,
+                "form_data": request.POST,
+                "page_title": "Add New Product",
+            }
+            return render(request, "add_product.html", context)
+
+        # 3. Create or update the VendorDetails profile for Admin
+        vendor, _ = VendorDetails.objects.get_or_create(
+            email=admin_user.email,
+            defaults={
+                "username": f"admin_{admin_user.id}",
+                "full_name": admin_user.username,
+                "mobile_number": contact_number,
+                "business_location": business_location,
+                "company_name": company,
+                "business_type": industry,
+                "category_interested": [industry] if industry else [],
+                "user_type": "SELLER",
+                "account_entity_type": "COMPANY",
+            }
+        )
+        vendor.full_name = admin_user.username
+        if contact_number:
+            vendor.mobile_number = contact_number
+        if business_location:
+            vendor.business_location = business_location
+        if industry:
+            vendor.business_type = industry
+            vendor.category_interested = [industry]
+        if company:
+            vendor.company_name = company
+        vendor.save()
+
+        # 4. Resolve Categories
+        category_obj = MainCategory.objects.filter(id=int(category_id)).first()
+        subcategory_obj = SubCategory.objects.filter(id=int(subcategory_id)).first()
+        if subcategory_obj and not category_obj:
+            category_obj = subcategory_obj.main_category
+
+        # 5. Calculate Discount / Offer Percentage
+        if msrp and msrp > 0 and liquidating_price and msrp > liquidating_price:
+            offer = (((msrp - liquidating_price) / msrp) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            offer = Decimal("0.00")
+
+        # 6. Save Product Record with PENDING Enquiry Status
         product = Product.objects.create(
-            product_name=title or request.POST.get("product_name", ""),
-            model_no=sku or request.POST.get("model_no", ""),
-            description=description,
-            liquidating_price=request.POST.get("liquidating_price") or price or 0,
-            msrp=request.POST.get("msrp") or discount_price,
-            quantity=stock_quantity,
-            brand_name=brand or request.POST.get("brand_name", ""),
-            category=category.main_category if (category and hasattr(category, 'main_category')) else None,
-            subcategory=category,
             vendor=vendor,
+            product_name=product_name,
+            category=category_obj,
+            subcategory=subcategory_obj,
+            brand_name=brand_name,
+            model_no=model_no,
             manufacturing_country=manufacturing_country,
-            inventory_location=request.POST.get("inventory_location", ""),
-            manufacturing_year=manufacturing_year if manufacturing_year else None,
+            inventory_location=business_location,
+            manufacturing_year=manufacturing_year,
             dimensions=dimensions,
-            expiry_date=expiry_date if expiry_date else None,
+            expiry_date=expiry_date,
+            excluded_countries=excluded_countries,
+            quantity=quantity,
             currency=currency,
+            liquidating_price=liquidating_price,
+            msrp=msrp,
+            offer=offer,
+            description=description,
             reason_to_sell=reason_to_sell,
             warranty=warranty,
-            warranty_attachment=request.POST.get("warranty_attachment", ""),
-            third_party_certificate=request.POST.get("third_party_certificate") in ("true", "1", "on", True),
-            third_party_documents=request.POST.get("third_party_documents", ""),
-            enquiry_status=enquiry_status,
-            is_active=is_active,
+            warranty_attachment=warranty_attachment,
+            third_party_certificate=third_party_cert,
+            third_party_documents=third_party_documents,
+            enquiry_status="PENDING",
+            is_active=False,
         )
 
-        gallery_urls = (
-            request.POST.getlist("gallery_image_urls")
-            or request.POST.getlist("gallery_urls")
-            or request.POST.getlist("images")
-            or request.POST.getlist("image_urls")
+        # 7. Save Product Images
+        for img_file in image_files:
+            ProductImage.objects.create(
+                product=product,
+                image=img_file,
+                is_real_photo=True
+            )
+
+        messages.success(
+            request,
+            f"Product '{product.product_name}' ({product.product_id}) added successfully with Admin ID {admin_uid} and submitted to Seller Enquiries."
         )
-        is_real = request.POST.get("is_real_photo", "false").lower() in ("true", "1", "t", "yes")
-        for g_url in gallery_urls:
-            if g_url.strip():
-                ProductImage.objects.create(
-                    product=product,
-                    image_url=g_url.strip(),
-                    is_real_photo=is_real
-                )
-
-        file_keys = ["gallery_images", "images", "image", "photos", "product_images", "product_image"]
-        seen_files = set()
-        for fkey in file_keys:
-            if fkey in request.FILES:
-                for g_file in request.FILES.getlist(fkey):
-                    if g_file not in seen_files:
-                        seen_files.add(g_file)
-                        ProductImage.objects.create(
-                            product=product,
-                            image=g_file,
-                            is_real_photo=is_real
-                        )
-
-        return redirect("all_products")
+        return redirect("seller_enquiries")
 
     context = {
         "admin": admin_user,
-        "categories": categories,
-        "vendors": vendors,
+        "admin_uid": admin_uid,
+        "categories": main_categories,
+        "subcategories_json": subcategories_json,
+        "countries": STANDARD_COUNTRIES,
+        "currencies": STANDARD_CURRENCIES,
+        "default_contact_number": default_contact_number,
+        "default_industry": default_industry,
+        "default_business_location": default_business_location,
+        "default_company": default_company,
         "page_title": "Add New Product",
     }
     return render(request, "add_product.html", context)

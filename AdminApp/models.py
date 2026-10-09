@@ -1357,6 +1357,10 @@ class Product(models.Model):
     @property
     def formatted_vendor_id(self):
         if self.vendor:
+            from .models import AdminDetails
+            admin_match = AdminDetails.objects.filter(email__iexact=self.vendor.email).first()
+            if admin_match:
+                return f"ADM-{admin_match.id:04d}"
             return self.vendor.user_id
         if self.vendor_id:
             return f"USR-{self.vendor_id:04d}"

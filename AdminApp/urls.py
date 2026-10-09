@@ -108,6 +108,7 @@ urlpatterns = [
 
     # Enquiries: Seller Product Enquiries (PRO-XXXXX)
     path("enquiries/seller/", seller_enquiries_view, name="seller_enquiries_list"),
+    path("enquiries/seller/", seller_enquiries_view, name="seller_enquiries"),
     path("enquiries/seller/<int:enquiry_id>/detail/", seller_enquiry_detail_view, name="seller_enquiry_detail"),
     path("enquiries/seller/<str:status_filter>/", seller_enquiries_view, name="seller_enquiries_filtered"),
     path("api/enquiries/seller/<int:enquiry_id>/status/", seller_enquiry_status_api, name="seller_enquiry_status_api"),
