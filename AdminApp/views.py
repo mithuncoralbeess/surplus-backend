@@ -3232,14 +3232,22 @@ def add_product_view(request):
             })
     subcategories_json = json.dumps(subcategories_map)
 
-    if request.method == "POST":
-        # 1. User / Submitter Fields (Admin Session + Editable Contact Details)
-        contact_number = request.POST.get("contact_number", "").strip()
-        industry = request.POST.get("industry", "").strip()
-        business_location = request.POST.get("business_location", "").strip()
-        company = request.POST.get("company", "").strip() or default_company
+    REASON_TO_SELL_OPTIONS = [
+        "Surplus Inventory",
+        "Overstock Clearance",
+        "Business Closure",
+        "Asset Liquidation",
+        "Canceled Project",
+    ]
 
-        # 2. Product Specifications
+    if request.method == "POST":
+        # 1. Submitter Defaults from Admin Session
+        contact_number = (request.POST.get("contact_number") or default_contact_number).strip()
+        industry = (request.POST.get("industry") or default_industry).strip()
+        business_location = (request.POST.get("business_location") or default_business_location).strip()
+        company = (request.POST.get("company") or default_company).strip()
+
+        # 2. Product Specifications (Strictly matching SimpleListingModal)
         product_name = (request.POST.get("product_name") or request.POST.get("title") or "").strip()
         category_id = request.POST.get("category_id") or request.POST.get("category")
         subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
@@ -3262,6 +3270,8 @@ def add_product_view(request):
             quantity = 1
 
         currency = (request.POST.get("currency") or "USD").strip().upper()
+        if len(currency) > 3 and "-" in currency:
+            currency = currency.split("-")[0].strip()
 
         msrp_str = request.POST.get("msrp", "0").strip()
         try:
@@ -3284,7 +3294,7 @@ def add_product_view(request):
             excluded_countries = [str(c).strip() for c in excluded_countries_raw if str(c).strip()]
 
         description = request.POST.get("description", "").strip()
-        reason_to_sell = request.POST.get("reason_to_sell", "").strip()
+        reason_to_sell = (request.POST.get("reason_to_sell") or "Surplus Inventory").strip()
 
         # Warranty terms & document
         warranty_included = request.POST.get("warranty_included") in ("on", "true", "1", True)
@@ -3313,7 +3323,7 @@ def add_product_view(request):
                         seen_names.add(f.name)
                         image_files.append(f)
 
-        # Validation of Mandatory Fields
+        # Validation of Mandatory Fields matching SimpleListingModal
         errors = []
         if not product_name:
             errors.append("Product Title / Name is required.")
@@ -3346,10 +3356,7 @@ def add_product_view(request):
                 "subcategories_json": subcategories_json,
                 "countries": STANDARD_COUNTRIES,
                 "currencies": STANDARD_CURRENCIES,
-                "default_contact_number": contact_number or default_contact_number,
-                "default_industry": industry or default_industry,
-                "default_business_location": business_location or default_business_location,
-                "default_company": company or default_company,
+                "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
                 "form_data": request.POST,
                 "page_title": "Add New Product",
             }
@@ -3403,7 +3410,7 @@ def add_product_view(request):
             brand_name=brand_name,
             model_no=model_no,
             manufacturing_country=manufacturing_country,
-            inventory_location=business_location,
+            inventory_location=business_location or (vendor.business_location if vendor else "") or manufacturing_country,
             manufacturing_year=manufacturing_year,
             dimensions=dimensions,
             expiry_date=expiry_date,
@@ -3444,10 +3451,7 @@ def add_product_view(request):
         "subcategories_json": subcategories_json,
         "countries": STANDARD_COUNTRIES,
         "currencies": STANDARD_CURRENCIES,
-        "default_contact_number": default_contact_number,
-        "default_industry": default_industry,
-        "default_business_location": default_business_location,
-        "default_company": default_company,
+        "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
         "page_title": "Add New Product",
     }
     return render(request, "add_product.html", context)
