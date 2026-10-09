@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Add Lot Request (Assisted Intake) | Admin Panel{% endblock %}
+{% block title %}Add Lot Request (Assisted Offline Intake) | Admin Panel{% endblock %}
 
 {% block content %}
 <div class="container-fluid pb-5">
@@ -18,14 +18,22 @@
                     <li class="breadcrumb-item active" aria-current="page"><span>Add Lot Request</span></li>
                 </ol>
             </nav>
-            <h1 class="header-title">Add Lot Request</h1>
-            <p class="header-subtitle mb-0">Create a bulk lot inventory package on behalf of a seller with Assisted Offline Intake and verified admin attribution</p>
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                <h1 class="header-title mb-0">Add Lot Request</h1>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-boxes me-1"></i>Bulk Lot Inventory Package
+                </span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-shield-check me-1"></i>Assisted Offline Intake
+                </span>
+            </div>
+            <p class="header-subtitle mt-1 mb-0">Create a bulk lot liquidation package on behalf of a vendor with verified admin attribution and strict manifest validation</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/enquiries/lots/" class="btn btn-outline-secondary px-3.5 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5">
+            <a href="/admin/enquiries/lots/" class="btn btn-outline-secondary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
                 <i class="bi bi-arrow-left"></i> Cancel
             </a>
-            <button type="submit" form="addLotForm" id="submitLotTopBtn" class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold">
+            <button type="submit" form="addLotForm" id="submitLotTopBtn" class="btn btn-primary px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm">
                 <i class="bi bi-plus-lg fs-6"></i> Create Lot Listing
             </button>
         </div>
@@ -35,33 +43,38 @@
     {% if messages %}
     <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2" role="alert">
-            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% else %}bi-info-circle-fill text-info{% endif %} fs-5"></i>
-            <div>{{ message }}</div>
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3 p-3" role="alert">
+            {% if message.tags == 'error' %}
+            <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+            {% else %}
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            {% endif %}
+            <div class="fw-medium">{{ message }}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Admin Submitter Status Banner -->
-    <div class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <!-- Admin Submitter Status Verification Banner -->
+    <div class="admin-verification-banner mb-4 p-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
         <div class="d-flex align-items-center gap-3">
-            <div class="p-2.5 rounded-3 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
-                <i class="bi bi-shield-check fs-4"></i>
+            <div class="admin-avatar-pill d-flex align-items-center justify-content-center text-white flex-shrink-0">
+                <i class="bi bi-shield-fill-check fs-4"></i>
             </div>
             <div>
-                <div class="fw-bold text-dark" style="font-size: 0.95rem;">
-                    Submitting as Verified Admin: <span class="badge bg-primary text-white font-monospace ms-1">{{ admin_uid }}</span> 
-                    <span class="text-secondary fw-normal">({{ admin.username }})</span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Intake by Verified Admin:</span>
+                    <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
+                    <span class="text-secondary small fw-medium">({{ admin.username }})</span>
                 </div>
-                <div class="text-secondary small mt-0.5">
-                    Assisted Offline Intake &bull; Auto-links or creates verified seller profile &bull; Routed to <strong>Lot Enquiries (Pending Review)</strong>
+                <div class="text-secondary small mt-1">
+                    Auto-links or registers verified seller profile &bull; Routed to <strong>Lot Enquiries (Pending Review)</strong> with full audit attribution.
                 </div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
                 <i class="bi bi-hourglass-split me-1"></i>Initial Status: PENDING
             </span>
         </div>
@@ -77,128 +90,181 @@
             <div class="col-lg-8">
 
                 <!-- 0. Seller / Vendor Information (Assisted Offline Intake) -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4" style="border-left: 4px solid #10b981 !important;">
+                <div class="card admin-form-card mb-4 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                <i class="bi bi-person-lines-fill fs-6"></i>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-person-lines-fill"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Information</h6>
+                                <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Contact Information</h6>
                                 <div class="text-muted small">Record which vendor sent these lot details (WhatsApp, Email, Offline Intake)</div>
                             </div>
                         </div>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">
-                            <i class="bi bi-person-check-fill me-1"></i>Offline Seller Intake
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-person-check-fill me-1"></i>Assisted Offline Intake
                         </span>
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Intake Channel & Seller Contact Name -->
+                        <!-- Intake Channel Quick-Select Cards -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Intake Submission Channel <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal">How the vendor provided this lot</span>
+                            </label>
+                            <div class="row g-3 intake-channel-grid mt-1">
+                                <div class="col-6 col-sm-4 col-md">
+                                    <label class="channel-radio-card w-100 mb-0">
+                                        <input type="radio" name="intake_channel" value="WhatsApp" class="d-none" checked>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
+                                            <i class="bi bi-whatsapp fs-3 text-success d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">WhatsApp</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md">
+                                    <label class="channel-radio-card w-100 mb-0">
+                                        <input type="radio" name="intake_channel" value="Email" class="d-none">
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
+                                            <i class="bi bi-envelope-fill fs-3 text-primary d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Email</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md">
+                                    <label class="channel-radio-card w-100 mb-0">
+                                        <input type="radio" name="intake_channel" value="Phone Call" class="d-none">
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
+                                            <i class="bi bi-telephone-fill fs-3 text-info d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Phone Call</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md">
+                                    <label class="channel-radio-card w-100 mb-0">
+                                        <input type="radio" name="intake_channel" value="Direct / Walk-In" class="d-none">
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
+                                            <i class="bi bi-building fs-3 text-secondary d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Direct / Walk-In</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-4 col-md">
+                                    <label class="channel-radio-card w-100 mb-0">
+                                        <input type="radio" name="intake_channel" value="Other" class="d-none">
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
+                                            <i class="bi bi-grid-fill fs-3 text-dark d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Other</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seller Contact Details -->
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Intake Channel <span class="text-danger">*</span>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Seller Contact Name <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Person or contact</span>
                                 </label>
-                                <select class="form-select" name="intake_channel" id="intakeChannelSelect" required>
-                                    <option value="WhatsApp" selected>WhatsApp</option>
-                                    <option value="Email">Email</option>
-                                    <option value="Phone Call">Phone Call</option>
-                                    <option value="Direct / Walk-In">Direct / Walk-In</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <div class="form-text small">How seller contacted admin.</div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="seller_name" id="sellerNameInput"
+                                        placeholder="e.g. Rahul Sharma / John Doe" value="{{ form_data.seller_name|default:'' }}" required>
+                                </div>
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Seller Contact Name <span class="text-danger">*</span>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>WhatsApp / Mobile Number <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Account matching</span>
                                 </label>
-                                <input type="text" class="form-control" name="seller_name" id="sellerNameInput"
-                                    placeholder="e.g. Rahul Sharma / John Doe" required>
-                                <div class="form-text small">Individual or contact person name.</div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    WhatsApp / Mobile <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" name="seller_phone" id="sellerPhoneInput"
-                                    placeholder="e.g. +971 50 123 4567" required>
-                                <div class="form-text small">Auto-matches or registers seller.</div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="seller_phone" id="sellerPhoneInput"
+                                        placeholder="e.g. +971 50 123 4567" value="{{ form_data.seller_phone|default:'' }}" required>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Email, Company & Location -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Seller Email <span class="text-muted fw-normal">(Optional)</span>
+                                <label class="form-label-custom">
+                                    <span>Seller Email</span>
+                                    <span class="text-muted fw-normal">Optional</span>
                                 </label>
-                                <input type="email" class="form-control" name="seller_email" id="sellerEmailInput"
-                                    placeholder="e.g. vendor@company.com">
+                                <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
+                                    placeholder="vendor@company.com" value="{{ form_data.seller_email|default:'' }}">
                                 <div class="form-text small">Auto-generated if left blank.</div>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Company / Store Name <span class="text-muted fw-normal">(Optional)</span>
+                                <label class="form-label-custom">
+                                    <span>Company / Store Name</span>
+                                    <span class="text-muted fw-normal">Optional</span>
                                 </label>
-                                <input type="text" class="form-control" name="seller_company" id="sellerCompanyInput"
-                                    placeholder="e.g. Apex Industrial Supplies">
-                                <div class="form-text small">Leave blank if individual.</div>
+                                <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
+                                    placeholder="Apex Industrial Supplies" value="{{ form_data.seller_company|default:'' }}">
+                                <div class="form-text small">Leave blank if individual seller.</div>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Seller Location <span class="text-muted fw-normal">(Optional)</span>
+                                <label class="form-label-custom">
+                                    <span>Seller Location</span>
+                                    <span class="text-muted fw-normal">Optional</span>
                                 </label>
-                                <input type="text" class="form-control" name="seller_location" id="sellerLocationInput"
-                                    placeholder="e.g. Dubai, UAE / Houston, TX">
-                                <div class="form-text small">Seller city or country.</div>
+                                <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
+                                    placeholder="Dubai, UAE / Houston, TX" value="{{ form_data.seller_location|default:'' }}">
+                                <div class="form-text small">City, Freezone, or Country.</div>
                             </div>
                         </div>
 
                         <!-- Internal Admin Notes -->
                         <div>
-                            <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                Internal Admin Intake Notes <span class="text-muted fw-normal">(Optional)</span>
+                            <label class="form-label-custom">
+                                <span>Internal Admin Intake Notes</span>
+                                <span class="text-muted fw-normal">Visible only to admins</span>
                             </label>
-                            <input type="text" class="form-control" name="intake_notes" id="intakeNotesInput"
-                                placeholder="e.g. Received manifest via WhatsApp chat, verified stock location in JAFZA warehouse">
+                            <input type="text" class="form-control form-control-custom" name="intake_notes" id="intakeNotesInput"
+                                placeholder="e.g. Received full inventory manifest via WhatsApp, verified stock location in JAFZA warehouse"
+                                value="{{ form_data.intake_notes|default:'' }}">
                         </div>
 
                     </div>
                 </div>
 
                 <!-- 1. Manifest Spreadsheet Upload -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4" id="manifestUploadCard">
+                <div class="card admin-form-card mb-4 border-0 shadow-sm" id="manifestUploadCard">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                <i class="bi bi-file-earmark-spreadsheet-fill fs-6"></i>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-file-earmark-spreadsheet-fill"></i>
                             </div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">1. Manifest Spreadsheet File</h6>
-                                <div class="text-muted small">Upload inventory spreadsheet (.xlsx / .csv) adhering to the standard Surplus Manifest format</div>
+                                <div class="text-muted small">Upload inventory spreadsheet (.xlsx / .csv) strictly adhering to our Surplus Manifest structure</div>
                             </div>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <a href="/admin/lots/template/download/?format=xlsx" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" title="Download Official XLSX Format with Reference Directory & Inventory sheets">
+                            <a href="/admin/lots/template/download/?format=xlsx" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" title="Download Official Surplus Market XLSX Template with Inventory sheet">
                                 <i class="bi bi-file-earmark-excel-fill text-success"></i> Download XLSX Template
                             </a>
-                            <a href="/admin/lots/template/download/?format=csv" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" title="Download Sample Lot CSV with standard headers">
+                            <a href="/admin/lots/template/download/?format=csv" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-xs" title="Download Sample CSV Manifest">
                                 <i class="bi bi-filetype-csv text-primary"></i> Sample CSV
                             </a>
                         </div>
                     </div>
                     <div class="card-body p-4">
 
-                        <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-3 transition-all" id="manifestDropzone">
+                        <!-- Enhanced Dropzone for Manifest -->
+                        <div class="dropzone-enhanced position-relative mb-3" id="manifestDropzone">
                             <input type="file" name="manifest_file" id="manifestFileInput" accept=".xlsx,.xls,.csv" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
                             <div class="py-2">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 52px; height: 52px;">
-                                    <i class="bi bi-cloud-arrow-up-fill fs-3"></i>
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 56px; height: 56px;">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-2"></i>
                                 </div>
                                 <h6 class="fw-bold text-dark mb-1" id="manifestFileName">Drag &amp; drop Excel manifest file or <span class="text-primary text-decoration-underline cursor-pointer">browse</span></h6>
                                 <p class="text-muted small mb-0">Supports <strong>.XLSX</strong> (must contain <code>Inventory</code> tab) and <strong>.CSV</strong> format (up to 25MB)</p>
@@ -207,8 +273,8 @@
 
                         <!-- Manifest Validation Error Alert (Hidden by default, shown on invalid sheet format) -->
                         <div id="manifestErrorAlert" class="{% if not manifest_error %}d-none{% endif %} alert alert-danger bg-danger bg-opacity-10 border border-danger border-opacity-25 rounded-4 p-3 mb-3 shadow-sm">
-                            <div class="d-flex align-items-start gap-2.5">
-                                <i class="bi bi-exclamation-triangle-fill text-danger fs-4 mt-0.5 flex-shrink-0"></i>
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="bi bi-exclamation-triangle-fill text-danger fs-3 mt-1 flex-shrink-0"></i>
                                 <div class="w-100">
                                     <div class="d-flex align-items-center justify-content-between mb-1">
                                         <h6 class="fw-bold text-danger mb-0" id="manifestErrorTitle">Manifest Format Error</h6>
@@ -217,8 +283,8 @@
                                         </button>
                                     </div>
                                     <p class="small text-danger mb-2" id="manifestErrorMessage" style="line-height: 1.5;">{{ manifest_error }}</p>
-                                    <div class="p-2.5 rounded-3 bg-white border border-danger border-opacity-25 small">
-                                        <div class="fw-bold text-dark mb-1 d-flex align-items-center gap-1">
+                                    <div class="p-3 rounded-3 bg-white border border-danger border-opacity-25 small">
+                                        <div class="fw-bold text-dark mb-1 d-flex align-items-center gap-1.5">
                                             <i class="bi bi-info-circle text-primary"></i> Required Manifest Structure:
                                         </div>
                                         <div class="text-secondary mb-1">
@@ -244,122 +310,137 @@
                         </div>
 
                         <!-- Manifest Parser Result Card (Hidden until file selected and validated) -->
-                        <div id="manifestParsedSummary" class="d-none alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 rounded-3 p-3 mb-3 shadow-sm">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                        <div id="manifestParsedSummary" class="d-none alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 rounded-4 p-3 mb-3 shadow-sm">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                 <div class="fw-bold text-success d-flex align-items-center gap-2">
-                                    <i class="bi bi-check-circle-fill"></i> Manifest Spreadsheet Processed &amp; Validated
+                                    <i class="bi bi-check-circle-fill fs-5"></i>
+                                    <span>Manifest Processed &amp; Validated Successfully</span>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold shadow-sm" id="autoPopulateMetricsBtn">
+                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1.5 fw-semibold shadow-xs" id="autoPopulateMetricsBtn">
                                     <i class="bi bi-magic me-1"></i> Auto-Apply Metrics to Form
                                 </button>
                             </div>
-                            <div class="row g-2 text-dark small">
-                                <div class="col-md-3">
-                                    <strong>Detected SKUs:</strong> <span id="parsedSkuCount" class="badge bg-white text-dark border ms-1 font-monospace">0</span>
+                            <div class="row g-2">
+                                <div class="col-6 col-md-3">
+                                    <div class="p-2.5 rounded-3 bg-white border text-center">
+                                        <div class="text-muted small">Distinct SKUs</div>
+                                        <div class="fw-bold text-dark fs-5 font-monospace mt-0.5" id="parsedSkuCount">0</div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <strong>Total Units:</strong> <span id="parsedTotalUnits" class="badge bg-white text-dark border ms-1 font-monospace">0</span>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-2.5 rounded-3 bg-white border text-center">
+                                        <div class="text-muted small">Total Units</div>
+                                        <div class="fw-bold text-dark fs-5 font-monospace mt-0.5" id="parsedTotalUnits">0</div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <strong>Total MSRP:</strong> <span id="parsedTotalMsrp" class="badge bg-white text-dark border ms-1 font-monospace">0.00</span>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-2.5 rounded-3 bg-white border text-center">
+                                        <div class="text-muted small">Aggregate MSRP</div>
+                                        <div class="fw-bold text-dark fs-5 font-monospace mt-0.5" id="parsedTotalMsrp">0.00</div>
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <strong>Surplus Ask:</strong> <span id="parsedTotalAsk" class="badge bg-white text-success border ms-1 font-monospace">0.00</span>
+                                <div class="col-6 col-md-3">
+                                    <div class="p-2.5 rounded-3 bg-white border text-center">
+                                        <div class="text-muted small">Target Ask Price</div>
+                                        <div class="fw-bold text-success fs-5 font-monospace mt-0.5" id="parsedTotalAsk">0.00</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center justify-content-between text-muted small">
-                            <span><i class="bi bi-info-circle me-1"></i>Mandatory columns with *: <code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code></span>
-                            <span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill">32 Standard Columns Format</span>
+                        <div class="d-flex align-items-center justify-content-between text-muted small mt-2">
+                            <span><i class="bi bi-info-circle me-1"></i>Mandatory headers with *: <code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code></span>
+                            <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill">32 Columns Structure</span>
                         </div>
 
                     </div>
                 </div>
 
                 <!-- 2. Basic Lot Details -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                            <i class="bi bi-card-heading fs-6"></i>
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-card-heading"></i>
                         </div>
                         <div>
-                            <h6 class="fw-bold mb-0 text-dark">2. Basic Lot Details</h6>
-                            <div class="text-muted small">Listing title, description, key brands, and warehouse media</div>
+                            <h6 class="fw-bold mb-0 text-dark">2. Basic Lot Details &amp; Media</h6>
+                            <div class="text-muted small">Listing title, key brands included, description, and warehouse photos / videos</div>
                         </div>
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Listing Title -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
-                                    Listing Title <span class="text-danger">*</span>
-                                </label>
-                                <span class="text-muted small" id="titleCharCount">0 / 200</span>
-                            </div>
-                            <input type="text" class="form-control" name="title" id="lotTitleInput" maxlength="200"
-                                placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances" required>
-                            <div class="form-text small">Descriptive title highlighting brands and bundle size.</div>
+                        <!-- Listing Title (Hero Input) -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Listing Title <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal" id="titleCharCount">0 / 200</span>
+                            </label>
+                            <input type="text" class="form-control form-control-hero" name="title" id="lotTitleInput" maxlength="200"
+                                placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances"
+                                value="{{ form_data.title|default:'' }}" required>
+                            <div class="form-text small mt-1">Descriptive title highlighting brands, bundle size, and inventory categories.</div>
                         </div>
 
                         <!-- Key Brands Included -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
-                                    Key Brands Included <span class="text-danger">*</span>
-                                </label>
-                                <span class="text-muted small" id="brandsCharCount">0 / 300</span>
-                            </div>
-                            <input type="text" class="form-control" name="key_brands_included" id="keyBrandsInput" maxlength="300"
-                                placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt" required>
-                            <div class="form-text small">Comma-separated list of major brands contained in the lot.</div>
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Key Brands Included <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal" id="brandsCharCount">0 / 300</span>
+                            </label>
+                            <input type="text" class="form-control form-control-custom" name="key_brands_included" id="keyBrandsInput" maxlength="300"
+                                placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt"
+                                value="{{ form_data.key_brands_included|default:'' }}" required>
+                            <div class="form-text small mt-1">Comma-separated list of major manufacturer brands contained in this package.</div>
                         </div>
 
                         <!-- Description & Notes -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
-                                    Lot Description &amp; Notes <span class="text-danger">*</span>
-                                </label>
-                                <span class="text-muted small" id="descCharCount">0 / 3000</span>
-                            </div>
-                            <textarea class="form-control" name="description" id="lotDescInput" rows="4" maxlength="3000"
-                                placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..." required></textarea>
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Lot Description &amp; Manifest Notes <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal" id="descCharCount">0 / 3000</span>
+                            </label>
+                            <textarea class="form-control form-control-custom" name="description" id="lotDescInput" rows="4" maxlength="3000"
+                                placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..."
+                                required>{{ form_data.description|default:'' }}</textarea>
                         </div>
 
                         <!-- Warehouse & Product Photos / Videos -->
                         <div>
-                            <label class="form-label fw-semibold small text-uppercase text-secondary mb-1">
-                                Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span>
-                            </label>
-                            <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-2" id="mediaDropzone">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label-custom mb-0">
+                                    <span>Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">At least 1 photo/video required</span>
+                                </label>
+                                <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill" id="mediaCountBadge">0 files</span>
+                            </div>
+
+                            <div class="dropzone-enhanced position-relative mb-2" id="mediaDropzone">
                                 <input type="file" name="warehouse_images" id="mediaFileInput" accept="image/*,video/*" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
                                 <div class="py-2">
                                     <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
                                         <i class="bi bi-images fs-4"></i>
                                     </div>
                                     <h6 class="fw-bold text-dark mb-1">Click to upload photos/videos or drag &amp; drop</h6>
-                                    <p class="text-muted small mb-0">Upload real photos or videos of pallets and warehouse storage (up to 20 files, max 50MB each)</p>
+                                    <p class="text-muted small mb-0">Upload real warehouse photos of pallets, product labels, and packing (up to 20 files, max 50MB each)</p>
                                 </div>
                             </div>
-                            <div id="mediaPreviewGallery" class="d-flex flex-wrap gap-2 pt-2"></div>
-                            <div class="form-text small">At least 1 photo or video is required.</div>
+
+                            <div id="mediaPreviewGallery" class="row g-2 pt-2"></div>
                         </div>
 
                     </div>
                 </div>
 
                 <!-- 3. Category Breakdown -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                                <i class="bi bi-pie-chart-fill fs-6"></i>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-pie-chart-fill"></i>
                             </div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">3. Category Breakdown</h6>
-                                <div class="text-muted small">Specify inventory percentage allocation across categories (must total 100%)</div>
+                                <div class="text-muted small">Specify inventory percentage allocation across categories (must total exactly 100%)</div>
                             </div>
                         </div>
                         <span id="allocationTotalBadge" class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold">
@@ -368,15 +449,26 @@
                     </div>
                     <div class="card-body p-4">
 
+                        <!-- Visual Progress Bar for Allocation -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Allocation Completeness</span>
+                                <span id="allocationProgressLabel" class="fw-bold text-dark">0% / 100%</span>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 999px; background-color: #e2e8f0;">
+                                <div id="allocationProgressBar" class="progress-bar bg-warning" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
+                            </div>
+                        </div>
+
                         <div id="categoryAllocationsContainer">
                             <!-- Dynamic Allocation Rows rendered here -->
                         </div>
 
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-2 border-top">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-3 border-top">
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" id="addCategoryRowBtn">
                                 <i class="bi bi-plus-lg"></i> Add Category Row
                             </button>
-                            <span class="text-muted small" id="allocationWarningText">
+                            <span class="small fw-medium" id="allocationWarningText">
                                 Allocation percentages across all rows must sum exactly to 100%.
                             </span>
                         </div>
@@ -385,10 +477,10 @@
                 </div>
 
                 <!-- 4. Condition & Logistics Specifications -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                            <i class="bi bi-box-seam-fill fs-6"></i>
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-box-seam-fill"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">4. Condition &amp; Logistics Specifications</h6>
@@ -400,10 +492,11 @@
                         <!-- Row 1: Condition, Source Type, Stock Age -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Overall Lot Condition <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Overall Condition <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Quality</span>
                                 </label>
-                                <select class="form-select" name="condition" required>
+                                <select class="form-select form-select-custom" name="condition" id="conditionSelect" required>
                                     {% for cond in condition_options %}
                                     <option value="{{ cond }}" {% if cond == 'New' %}selected{% endif %}>{{ cond }}</option>
                                     {% endfor %}
@@ -411,10 +504,11 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Source Type <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Source Type <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Origin</span>
                                 </label>
-                                <select class="form-select" name="source_type" required>
+                                <select class="form-select form-select-custom" name="source_type" required>
                                     {% for src in source_type_options %}
                                     <option value="{{ src }}" {% if src == 'Overstock' %}selected{% endif %}>{{ src }}</option>
                                     {% endfor %}
@@ -422,10 +516,11 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Inventory Stock Age
+                                <label class="form-label-custom">
+                                    <span>Stock Age</span>
+                                    <span class="text-muted fw-normal">Shelf time</span>
                                 </label>
-                                <select class="form-select" name="inventory_stock_age">
+                                <select class="form-select form-select-custom" name="inventory_stock_age">
                                     {% for age in stock_age_options %}
                                     <option value="{{ age }}" {% if forloop.first %}selected{% endif %}>{{ age }}</option>
                                     {% endfor %}
@@ -436,37 +531,49 @@
                         <!-- Row 2: Location, Distinct SKUs, Total Units -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Inventory Location <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Inventory Location <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Physical stock</span>
                                 </label>
-                                <input type="text" class="form-control" name="inventory_location" id="inventoryLocationInput"
-                                    placeholder="e.g. Warehouse 4B, JAFZA, Dubai" required>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
+                                        placeholder="Warehouse 4B, JAFZA, Dubai" value="{{ form_data.inventory_location|default:'' }}" required>
+                                </div>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Number of Distinct SKUs <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Distinct SKUs <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Unique items</span>
                                 </label>
-                                <input type="number" min="1" class="form-control" name="number_of_distinct_skus" id="distinctSkusInput"
-                                    placeholder="e.g. 24" required>
+                                <div class="input-group">
+                                    <input type="number" min="1" class="form-control form-control-custom" name="number_of_distinct_skus" id="distinctSkusInput"
+                                        placeholder="24" value="{{ form_data.number_of_distinct_skus|default:'' }}" required>
+                                    <span class="input-group-text bg-light text-muted small">SKUs</span>
+                                </div>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Total Units / Quantity <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Total Units / Quantity <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Total count</span>
                                 </label>
-                                <input type="number" min="1" class="form-control" name="total_units_quantity" id="totalUnitsInput"
-                                    placeholder="e.g. 1500" required>
+                                <div class="input-group">
+                                    <input type="number" min="1" class="form-control form-control-custom" name="total_units_quantity" id="totalUnitsInput"
+                                        placeholder="1500" value="{{ form_data.total_units_quantity|default:'' }}" required>
+                                    <span class="input-group-text bg-light text-muted small">Units</span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Row 3: Unit Type, Total Weight, Load Type -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Primary Unit Type <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Primary Unit Type <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select" name="primary_unit_type" required>
+                                <select class="form-select form-select-custom" name="primary_unit_type" required>
                                     {% for ut in unit_type_options %}
                                     <option value="{{ ut }}" {% if ut == 'Pieces / Units' %}selected{% endif %}>{{ ut }}</option>
                                     {% endfor %}
@@ -474,18 +581,19 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Total Weight <span class="text-muted fw-normal">(Optional)</span>
+                                <label class="form-label-custom">
+                                    <span>Total Weight</span>
+                                    <span class="text-muted fw-normal">Optional</span>
                                 </label>
-                                <input type="text" class="form-control" name="total_weight"
-                                    placeholder="e.g. 1,500 kg / 3,300 lbs">
+                                <input type="text" class="form-control form-control-custom" name="total_weight"
+                                    placeholder="1,500 kg / 3,300 lbs" value="{{ form_data.total_weight|default:'' }}">
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Load Type <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Load Type <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select" name="load_type" required>
+                                <select class="form-select form-select-custom" name="load_type" required>
                                     {% for lt in load_type_options %}
                                     <option value="{{ lt }}" {% if lt == 'Pallet' %}selected{% endif %}>{{ lt }}</option>
                                     {% endfor %}
@@ -496,10 +604,10 @@
                         <!-- Row 4: Shipping Size, Lot Size, Pallet Count, Shipping Terms -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Shipping Size <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Shipping Size <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select" name="shipping_size" required>
+                                <select class="form-select form-select-custom" name="shipping_size" required>
                                     {% for sz in shipping_size_options %}
                                     <option value="{{ sz }}" {% if sz == 'Single Pallet' %}selected{% endif %}>{{ sz }}</option>
                                     {% endfor %}
@@ -507,25 +615,25 @@
                             </div>
 
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Lot Size / Volume
+                                <label class="form-label-custom">
+                                    <span>Lot Size / Volume</span>
                                 </label>
-                                <input type="text" class="form-control" name="lot_size"
-                                    placeholder="e.g. 4 Pallets / Half Truck">
+                                <input type="text" class="form-control form-control-custom" name="lot_size"
+                                    placeholder="4 Pallets / Half Truck" value="{{ form_data.lot_size|default:'' }}">
                             </div>
 
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Pallet Count <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Pallet Count <span class="text-danger">*</span></span>
                                 </label>
-                                <input type="number" min="1" class="form-control" name="pallet_count" value="1" required>
+                                <input type="number" min="1" class="form-control form-control-custom" name="pallet_count" value="{{ form_data.pallet_count|default:'1' }}" required>
                             </div>
 
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Shipping Terms
+                                <label class="form-label-custom">
+                                    <span>Shipping Terms</span>
                                 </label>
-                                <select class="form-select" name="shipping_terms">
+                                <select class="form-select form-select-custom" name="shipping_terms">
                                     {% for st in shipping_terms_options %}
                                     <option value="{{ st }}" {% if st == 'Buyer Arranges Freight' %}selected{% endif %}>{{ st }}</option>
                                     {% endfor %}
@@ -533,29 +641,31 @@
                             </div>
                         </div>
 
-                        <!-- Certificate & Inspection Documents Toggle -->
-                        <div class="p-3 rounded-3 bg-light border">
-                            <div class="form-check form-switch mb-2">
+                        <!-- Certificate & Inspection Documents Toggle Box -->
+                        <div class="option-toggle-box mt-3" id="certToggleBox">
+                            <div class="form-check form-switch mb-0">
                                 <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                    id="certSwitch" name="third_party_certificate_available">
-                                <label class="form-check-label fw-semibold cursor-pointer ms-2" for="certSwitch">
+                                    id="certSwitch" name="third_party_certificate_available" {% if form_data.third_party_certificate_available %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold cursor-pointer ms-2 text-dark" for="certSwitch">
                                     Third-Party Certificate or Inspection Report Available
                                 </label>
                             </div>
-                            <div id="certUploadBlock" class="d-none mt-2 pt-2 border-top">
-                                <label class="form-label small fw-semibold text-secondary">Upload Certificate / Inspection Document (.PDF, .PNG, .JPG)</label>
-                                <input type="file" class="form-control form-control-sm" name="certificate_document" accept=".pdf,image/*">
+                            <div id="certUploadBlock" class="d-none mt-3 pt-3 border-top">
+                                <label class="form-label-custom mb-1">
+                                    <span>Upload Certificate / Inspection Document (.PDF, .PNG, .JPG)</span>
+                                </label>
+                                <input type="file" class="form-control form-control-custom" name="certificate_document" accept=".pdf,image/*">
                             </div>
                         </div>
 
                     </div>
                 </div>
 
-                <!-- 5. Commercial Terms & Pricing -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                            <i class="bi bi-cash-stack fs-6"></i>
+                <!-- 5. Commercial Terms & Liquidation Pricing -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-cash-stack"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">5. Commercial Terms &amp; Liquidation Pricing</h6>
@@ -567,10 +677,10 @@
                         <!-- Currency, MSRP, Ask Price -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Currency <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Currency <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select font-monospace" name="currency" id="currencySelect" required>
+                                <select class="form-select form-select-custom font-monospace" name="currency" id="currencySelect" required>
                                     {% for cur in currency_options %}
                                     <option value="{{ cur }}" {% if cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
                                     {% endfor %}
@@ -578,67 +688,80 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Total Est. Retail Value (MSRP) <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Total Est. Retail (MSRP) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol font-monospace">USD</span>
-                                    <input type="number" step="0.01" min="1" class="form-control" name="total_est_retail_value_msrp" id="msrpInput"
-                                        placeholder="0.00" required>
+                                    <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
+                                    <input type="number" step="0.01" min="1" class="form-control form-control-custom" name="total_est_retail_value_msrp" id="msrpInput"
+                                        placeholder="0.00" value="{{ form_data.total_est_retail_value_msrp|default:'' }}" required>
                                 </div>
                                 <div class="form-text small">Original aggregate retail value.</div>
                             </div>
 
                             <div class="col-md-5">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Ask Price (Surplus Payout) <span class="text-danger">*</span>
+                                <label class="form-label-custom">
+                                    <span>Ask Price (Surplus Payout) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol font-monospace">USD</span>
-                                    <input type="number" step="0.01" min="1" class="form-control" name="ask_price_surplus_payout" id="askPriceInput"
-                                        placeholder="0.00" required>
+                                    <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
+                                    <input type="number" step="0.01" min="1" class="form-control form-control-custom" name="ask_price_surplus_payout" id="askPriceInput"
+                                        placeholder="0.00" value="{{ form_data.ask_price_surplus_payout|default:'' }}" required>
                                 </div>
                                 <div class="form-text small">Target payout seller seeks for this lot.</div>
                             </div>
                         </div>
 
-                        <!-- Real-time Liquidation Validator & Calculations -->
-                        <div class="p-3 rounded-4 bg-light border mb-3" id="pricingAnalysisBox">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                                <span class="fw-bold small text-dark d-flex align-items-center gap-1.5">
-                                    <i class="bi bi-graph-down-arrow text-primary"></i> Liquidation Pricing Analysis
+                        <!-- Real-time Financial Terminal & Liquidation KPI Analysis -->
+                        <div class="pricing-terminal mb-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <span class="fw-bold small text-dark d-flex align-items-center gap-2">
+                                    <i class="bi bi-graph-down-arrow text-primary fs-6"></i> Liquidation Pricing Analysis
                                 </span>
-                                <span id="discountBadge" class="badge bg-secondary px-2.5 py-1 rounded-pill fw-bold">0% Off MSRP</span>
+                                <span id="discountBadge" class="badge bg-secondary px-3 py-1.5 rounded-pill fw-bold">0% Off MSRP</span>
                             </div>
 
-                            <div class="row g-2 small">
-                                <div class="col-md-6">
-                                    <div class="p-2 rounded-3 bg-white border">
-                                        <div class="text-muted" style="font-size: 0.78rem;">Public Listing Price (+10% Platform Markup):</div>
-                                        <div class="fw-bold text-dark fs-6 font-monospace" id="publicListingPriceText">-</div>
-                                    </div>
+                            <!-- Discount Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Liquidation Discount Depth</span>
+                                    <span id="discountProgressBarText" class="fw-bold text-dark">0% (Policy Target: &ge; 60%)</span>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="p-2 rounded-3 bg-white border">
-                                        <div class="text-muted" style="font-size: 0.78rem;">Max Allowed Payout (Min 60% Discount):</div>
-                                        <div class="fw-bold text-dark fs-6 font-monospace" id="maxPayoutText">-</div>
-                                    </div>
+                                <div class="progress" style="height: 10px; border-radius: 999px; background-color: #e2e8f0;">
+                                    <div id="discountProgressBar" class="progress-bar bg-secondary" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
                                 </div>
                             </div>
 
-                            <div id="liquidationWarningBanner" class="d-none alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 rounded-3 py-2 px-3 mt-2 mb-0 small">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="metric-kpi-tile">
+                                        <div class="text-muted small">Public Listing Price (+10% Platform Fee):</div>
+                                        <div class="fw-bold text-dark fs-5 font-monospace mt-1" id="publicListingPriceText">-</div>
+                                        <div class="text-secondary small mt-0.5">Amount displayed to buyers on marketplace</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="metric-kpi-tile">
+                                        <div class="text-muted small">Max Allowed Payout (Min 60% Discount):</div>
+                                        <div class="fw-bold text-dark fs-5 font-monospace mt-1" id="maxPayoutText">-</div>
+                                        <div class="text-secondary small mt-0.5">Ceiling payout to meet surplus standards</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="liquidationWarningBanner" class="d-none alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 rounded-3 py-2 px-3 mt-3 mb-0 small">
                                 <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                <strong>Liquidation Policy:</strong> Ask Price must provide at least a 60% discount off the Total Est. Retail Value (MSRP).
+                                <strong>Liquidation Policy Warning:</strong> Ask Price must provide at least a 60% discount off the Total Est. Retail Value (MSRP).
                             </div>
                         </div>
 
                         <!-- Sale Method & Counter Offers -->
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase text-secondary">
-                                    Sale Method
+                                <label class="form-label-custom">
+                                    <span>Sale Method</span>
                                 </label>
-                                <select class="form-select" name="sale_method">
+                                <select class="form-select form-select-custom" name="sale_method">
                                     {% for sm in sale_method_options %}
                                     <option value="{{ sm.value }}" {% if sm.value == 'offer' %}selected{% endif %}>{{ sm.label }}</option>
                                     {% endfor %}
@@ -646,11 +769,11 @@
                             </div>
 
                             <div class="col-md-6 d-flex align-items-end">
-                                <div class="p-3 rounded-3 bg-light border w-100">
+                                <div class="option-toggle-box w-100 mb-0 py-2.5 px-3">
                                     <div class="form-check form-switch mb-0">
                                         <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
                                             id="counterOfferSwitch" name="allow_counter_offers" checked>
-                                        <label class="form-check-label fw-semibold cursor-pointer ms-2" for="counterOfferSwitch">
+                                        <label class="form-check-label fw-semibold cursor-pointer ms-2 text-dark" for="counterOfferSwitch">
                                             Allow Counter Offers from Buyers
                                         </label>
                                     </div>
@@ -658,22 +781,41 @@
                             </div>
                         </div>
 
-                        <!-- Excluded Export Countries -->
+                        <!-- Excluded Export Countries (Modern Tag / Pill Selector) -->
                         <div>
-                            <label class="form-label fw-semibold small text-uppercase text-secondary mb-1">
-                                Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span>
+                            <label class="form-label-custom mb-2">
+                                <span>Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span></span>
+                                <span class="text-muted fw-normal">Select destinations where export is prohibited</span>
                             </label>
-                            <div class="d-flex flex-wrap gap-3 p-3 rounded-3 bg-light border">
-                                {% for country in excluded_countries_options %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="excluded_export_countries" value="{{ country }}" id="country_{{ forloop.counter }}">
-                                    <label class="form-check-label small" for="country_{{ forloop.counter }}">
-                                        {{ country }}
-                                    </label>
-                                </div>
-                                {% endfor %}
+
+                            <!-- Quick Embargo Presets & Clear All Button -->
+                            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                <span class="small text-muted me-1 fw-semibold">Quick Embargo Presets:</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Russia">Russia</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Iran">Iran</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="North Korea">North Korea</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Syria">Syria</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Cuba">Cuba</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill small" id="btnClearExcluded">Clear All</button>
                             </div>
-                            <div class="form-text small">Select destinations where export or distribution is prohibited.</div>
+
+                            <!-- Selected Country Badges Display -->
+                            <div class="p-3 rounded-3 border bg-light">
+                                <div class="small fw-semibold text-secondary mb-2">Active Export Restrictions:</div>
+                                <div id="selectedCountriesBadges" class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                                        <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden multi-select for standard Django POST -->
+                            <select name="excluded_export_countries" id="excludedCountriesSelect" multiple class="d-none">
+                                {% for country in excluded_countries_options %}
+                                <option value="{{ country }}">{{ country }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small mt-2">Lots will not be offered to buyers located in the selected restricted jurisdictions.</div>
                         </div>
 
                     </div>
@@ -681,88 +823,136 @@
 
             </div>
 
-            <!-- Right Sidebar Column -->
+            <!-- Right Sidebar Column (Sticky Preview & Actions) -->
             <div class="col-lg-4">
 
-                <!-- Publishing & Visibility -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-eye-fill me-2 text-primary"></i> Visibility &amp; Status</h6>
+                <!-- 1. Sticky Live Package Preview Card -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-eye-fill text-primary"></i> Live Marketplace Preview
+                        </h6>
+                        <span class="badge bg-primary text-white font-monospace" id="previewChannelBadge">WhatsApp</span>
                     </div>
-                    <div class="card-body p-4">
 
+                    <!-- Cover Media Preview -->
+                    <div class="position-relative bg-light text-center" style="height: 180px; overflow: hidden;" id="previewMediaContainer">
+                        <div id="previewMediaPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                            <i class="bi bi-boxes fs-1 mb-1"></i>
+                            <span class="small">Upload warehouse photos to preview</span>
+                        </div>
+                        <img id="previewCoverImg" src="" alt="Cover Media" class="w-100 h-100 object-fit-cover d-none">
+                        <span class="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white" id="previewPhotoCountBadge">
+                            <i class="bi bi-images me-1"></i>0 media
+                        </span>
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white d-none" id="previewDiscountPill">
+                            0% OFF
+                        </span>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-1 text-truncate-2" id="previewTitle">
+                            Package Listing Title Preview
+                        </h6>
+                        <div class="text-muted small mb-3" id="previewBrands">Key Brands: -</div>
+
+                        <!-- Price & Value Metrics -->
                         <div class="p-3 rounded-3 bg-light border mb-3">
-                            <div class="form-check form-switch mb-1">
-                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                    id="isLotActiveSwitch" name="is_active" checked>
-                                <label class="form-check-label fw-semibold cursor-pointer ms-2" for="isLotActiveSwitch">
-                                    Active on Marketplace
-                                </label>
+                            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                <span class="small text-muted">Surplus Ask Payout:</span>
+                                <span class="fs-5 fw-bold text-success font-monospace" id="previewPrice">$0.00</span>
                             </div>
-                            <div class="text-muted small ms-4">
-                                Once approved, lot will be immediately visible for buyer discovery.
+                            <div class="d-flex justify-content-between align-items-baseline mb-1 small">
+                                <span class="text-muted">Catalog Retail (MSRP):</span>
+                                <span class="text-muted text-decoration-line-through font-monospace" id="previewMsrp">$0.00</span>
                             </div>
-                        </div>
-
-                        <div class="alert alert-warning py-2.5 px-3 rounded-3 border-warning-subtle small mb-0 d-flex align-items-start gap-2">
-                            <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
-                            <div>
-                                Newly added lots are saved under <strong>Pending Review</strong> status so verification can be completed before approval.
+                            <div class="d-flex justify-content-between align-items-baseline small pt-1 border-top">
+                                <span class="text-muted">Public Buyer Listing:</span>
+                                <span class="fw-semibold text-primary font-monospace" id="previewPublicPrice">$0.00</span>
                             </div>
                         </div>
 
-                    </div>
-                </div>
-
-                <!-- Live Summary Snapshot Card -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clipboard2-check-fill me-2 text-primary"></i> Package Snapshot</h6>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Submitter:</span>
-                            <span class="fw-bold font-monospace text-primary">{{ admin_uid }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Intake Channel:</span>
-                            <span class="fw-bold text-dark" id="summaryChannel">WhatsApp</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Seller Name:</span>
-                            <span class="fw-bold text-dark" id="summarySellerName">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Distinct SKUs:</span>
-                            <span class="fw-bold text-dark" id="summarySkus">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Total Units:</span>
-                            <span class="fw-bold text-dark" id="summaryUnits">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Total MSRP:</span>
-                            <span class="fw-bold text-dark font-monospace" id="summaryMsrp">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
-                            <span class="text-secondary">Surplus Ask:</span>
-                            <span class="fw-bold text-dark font-monospace" id="summaryAsk">-</span>
-                        </div>
-                        <div class="d-flex justify-content-between py-1.5 small">
-                            <span class="text-secondary">Liquidation Discount:</span>
-                            <span class="fw-bold text-success" id="summaryDiscount">-</span>
+                        <!-- Lot Details Summary List -->
+                        <div class="small">
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span class="text-secondary">Submitter Admin:</span>
+                                <span class="fw-bold font-monospace text-primary">{{ admin_uid }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span class="text-secondary">Seller Name:</span>
+                                <span class="fw-bold text-dark" id="summarySellerName">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span class="text-secondary">Distinct SKUs:</span>
+                                <span class="fw-bold text-dark" id="summarySkus">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-1 border-bottom">
+                                <span class="text-secondary">Total Units:</span>
+                                <span class="fw-bold text-dark" id="summaryUnits">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-1">
+                                <span class="text-secondary">Inventory Location:</span>
+                                <span class="fw-bold text-dark" id="summaryLocation">-</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Action Button Block -->
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4 text-center">
-                        <button type="submit" id="submitLotBottomBtn"
-                            class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2 shadow-sm">
-                            <i class="bi bi-plus-circle-fill"></i> Create Lot Listing
+                <!-- 2. Dynamic Readiness Checklist -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-clipboard2-check-fill text-primary me-1"></i> Listing Readiness
+                        </h6>
+                        <span class="badge bg-primary rounded-pill px-2.5 py-1" id="checklistProgressPct">0%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 6px; border-radius: 999px;">
+                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
+                    </div>
+
+                    <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 text-secondary">
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkSeller">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Seller Contact Name &amp; Phone</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkTitle">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Listing Title &amp; Key Brands</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkManifest">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Manifest File &amp; SKU Count</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkCategory">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Category Breakdown (100% Balanced)</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkLogistics">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Location &amp; Logistics Specs</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkPricing">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Pricing (&ge; 60% Liquidation Discount)</span>
+                        </li>
+                        <li class="checklist-item d-flex align-items-center gap-2" id="checkMedia">
+                            <i class="bi bi-circle text-muted"></i>
+                            <span>Warehouse Photos / Videos</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Sticky Action Box -->
+                <div class="card admin-form-card border-0 shadow-sm p-4 sticky-action-box">
+                    <button type="submit" form="addLotForm" id="submitLotBottomBtn"
+                        class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2 shadow-sm">
+                        <i class="bi bi-plus-circle-fill"></i> Create Lot Listing
+                    </button>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <button type="button" class="btn btn-link text-danger text-decoration-none small p-0" id="btnClearForm">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Clear All Fields
                         </button>
-                        <a href="/admin/enquiries/lots/" class="btn btn-link text-secondary text-decoration-none small">
+                        <a href="/admin/enquiries/lots/" class="btn btn-link text-secondary text-decoration-none small p-0">
                             <i class="bi bi-x-circle me-1"></i>Cancel &amp; Discard
                         </a>
                     </div>
@@ -778,10 +968,294 @@
 <!-- SheetJS (XLSX) for Instant Client-Side Manifest Parsing -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+<style>
+    /* Antigravity Surplus Market Design System */
+    .admin-verification-banner {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    [data-bs-theme="dark"] .admin-verification-banner {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+        border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .admin-avatar-pill {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Cards & Container Shells */
+    .admin-form-card {
+        border-radius: 1rem !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        background: var(--bs-card-bg, #ffffff) !important;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+        margin-bottom: 2rem !important;
+        overflow: hidden;
+    }
+
+    .admin-form-card .card-header {
+        padding: 1.25rem 1.75rem !important;
+        background-color: var(--bs-card-bg, #ffffff) !important;
+        border-bottom: 1px solid var(--bs-border-color, #e2e8f0) !important;
+    }
+
+    .admin-form-card .card-body {
+        padding: 2rem !important;
+    }
+
+    .section-icon-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    /* Typography & Custom Labels */
+    .form-label-custom {
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--bs-secondary-color, #64748b) !important;
+        margin-bottom: 0.55rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .form-control-custom,
+    .form-select-custom {
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        border-radius: 0.65rem !important;
+        padding: 0.65rem 0.95rem !important;
+        font-size: 0.925rem !important;
+        transition: all 0.15s ease-in-out;
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
+    }
+
+    .form-control-custom:focus,
+    .form-select-custom:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+        outline: none;
+    }
+
+    .form-control-hero {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        padding: 0.85rem 1.1rem !important;
+        border-radius: 0.75rem !important;
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
+    }
+
+    .form-control-hero:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+    }
+
+    /* Channel Selection Cards */
+    .channel-box {
+        background: var(--bs-body-bg, #ffffff) !important;
+        border-color: var(--bs-border-color, #e2e8f0) !important;
+        padding: 1.1rem 0.75rem !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .channel-radio-card input:checked + .channel-box {
+        background-color: rgba(37, 99, 235, 0.08) !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px #2563eb;
+    }
+
+    .channel-radio-card:hover .channel-box {
+        border-color: #94a3b8 !important;
+        transform: translateY(-2px);
+    }
+
+    /* Pricing Financial Terminal Box */
+    .pricing-terminal {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 1rem !important;
+        padding: 1.5rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    [data-bs-theme="dark"] .pricing-terminal {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+        border-color: #334155 !important;
+    }
+
+    .metric-kpi-tile {
+        background: var(--bs-body-bg, #ffffff) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.75rem !important;
+        padding: 1.25rem !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .metric-kpi-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    }
+
+    /* Option Toggle Boxes */
+    .option-toggle-box {
+        background-color: var(--bs-tertiary-bg, #f8fafc) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.85rem !important;
+        padding: 1.25rem 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .option-toggle-box.active-box {
+        border-color: #10b981 !important;
+        background-color: rgba(16, 185, 129, 0.04) !important;
+    }
+
+    /* Dropzone Enhanced */
+    .dropzone-enhanced {
+        border: 2px dashed #93c5fd;
+        background: rgba(239, 246, 255, 0.45);
+        border-radius: 1rem;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dropzone-enhanced:hover,
+    .dropzone-enhanced.dragover {
+        border-color: #2563eb;
+        background: rgba(219, 234, 254, 0.65);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+    }
+
+    [data-bs-theme="dark"] .dropzone-enhanced {
+        border-color: #3b82f6;
+        background: rgba(30, 41, 59, 0.4);
+    }
+
+    [data-bs-theme="dark"] .dropzone-enhanced:hover,
+    [data-bs-theme="dark"] .dropzone-enhanced.dragover {
+        background: rgba(30, 58, 138, 0.3);
+    }
+
+    /* Media Preview Cards */
+    .media-preview-card {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--bs-border-color, #e5e7eb);
+        background: var(--bs-body-bg, #ffffff);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .media-preview-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .media-preview-card img,
+    .media-preview-card video {
+        width: 100%;
+        height: 95px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .media-preview-card .badge-cover {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(15, 23, 42, 0.88);
+        color: #fff;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+    }
+
+    .media-preview-card .btn-remove {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.9);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.15s;
+    }
+
+    .media-preview-card .btn-remove:hover {
+        background: #b91c1c;
+        transform: scale(1.1);
+    }
+
+    /* Checklist Progress */
+    .checklist-item {
+        transition: color 0.15s ease;
+    }
+
+    .checklist-item.done i {
+        color: #10b981 !important;
+    }
+
+    .checklist-item.done {
+        color: var(--bs-body-color, #0f172a);
+        font-weight: 500;
+    }
+
+    .sticky-preview-card,
+    .sticky-action-box {
+        position: sticky;
+        top: 1.5rem;
+        z-index: 5;
+    }
+
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .shadow-xs {
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // --- 0. Standard Category List for Allocations ---
+    // -------------------------------------------------------------
+    // 0. Standard Category List for Allocations
+    // -------------------------------------------------------------
     const STANDARD_CATEGORIES = [
         "Electricals",
         "Electronics",
@@ -795,16 +1269,20 @@ document.addEventListener('DOMContentLoaded', function () {
         "Other"
     ];
 
-    // --- 1. Category Allocation Rows Management ---
+    // -------------------------------------------------------------
+    // 1. Category Allocation Rows Management & Visual Progress
+    // -------------------------------------------------------------
     const allocationsContainer = document.getElementById('categoryAllocationsContainer');
     const addCategoryRowBtn = document.getElementById('addCategoryRowBtn');
     const allocationTotalBadge = document.getElementById('allocationTotalBadge');
     const allocationSumText = document.getElementById('allocationSumText');
     const allocationWarningText = document.getElementById('allocationWarningText');
+    const allocationProgressBar = document.getElementById('allocationProgressBar');
+    const allocationProgressLabel = document.getElementById('allocationProgressLabel');
 
     function createCategoryRow(categoryName = '', allocationPct = 100) {
         const row = document.createElement('div');
-        row.className = 'category-row row g-2 align-items-center mb-2';
+        row.className = 'category-row row g-2 align-items-center mb-2.5';
 
         let optionsHtml = '';
         STANDARD_CATEGORIES.forEach(cat => {
@@ -814,16 +1292,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         row.innerHTML = `
             <div class="col-7">
-                <select class="form-select form-select-sm" name="category_name[]" required>
+                <select class="form-select form-select-custom form-select-sm" name="category_name[]" required>
                     <option value="">-- Select Category --</option>
                     ${optionsHtml}
                 </select>
             </div>
             <div class="col-4">
                 <div class="input-group input-group-sm">
-                    <input type="number" min="1" max="100" class="form-control text-end category-pct-input" 
+                    <input type="number" min="1" max="100" class="form-control form-control-custom text-end category-pct-input" 
                         name="category_allocation[]" value="${allocationPct}" placeholder="100" required>
-                    <span class="input-group-text">%</span>
+                    <span class="input-group-text bg-light text-muted font-monospace">%</span>
                 </div>
             </div>
             <div class="col-1 text-center">
@@ -835,6 +1313,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         allocationsContainer.appendChild(row);
         updateAllocationSum();
+        updateReadinessChecklist();
     }
 
     // Initialize with 1 default row (100%)
@@ -854,6 +1333,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (allRows.length > 1) {
                     row.remove();
                     updateAllocationSum();
+                    updateReadinessChecklist();
                 } else {
                     alert('At least one category allocation row is required.');
                 }
@@ -863,6 +1343,7 @@ document.addEventListener('DOMContentLoaded', function () {
         allocationsContainer.addEventListener('input', function (e) {
             if (e.target.classList.contains('category-pct-input')) {
                 updateAllocationSum();
+                updateReadinessChecklist();
             }
         });
     }
@@ -876,23 +1357,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         allocationSumText.textContent = sum;
+        allocationProgressLabel.textContent = `${sum}% / 100%`;
+
+        const clampedSum = Math.min(sum, 100);
+        allocationProgressBar.style.width = `${clampedSum}%`;
 
         if (sum === 100) {
             allocationTotalBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold';
             allocationWarningText.className = 'text-success small fw-medium';
             allocationWarningText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Perfect: 100% Allocation Balanced';
+            allocationProgressBar.className = 'progress-bar bg-success';
         } else {
             allocationTotalBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold';
             allocationWarningText.className = 'text-danger small fw-medium';
             allocationWarningText.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Total must equal 100% (Current: ${sum}%)`;
+            allocationProgressBar.className = sum > 100 ? 'progress-bar bg-danger' : 'progress-bar bg-warning';
         }
     }
 
-    // --- 2. Live Pricing & Discount Calculations ---
+    // -------------------------------------------------------------
+    // 2. Live Pricing & Financial Terminal Calculations
+    // -------------------------------------------------------------
     const msrpInput = document.getElementById('msrpInput');
     const askPriceInput = document.getElementById('askPriceInput');
     const currencySelect = document.getElementById('currencySelect');
     const discountBadge = document.getElementById('discountBadge');
+    const discountProgressBar = document.getElementById('discountProgressBar');
+    const discountProgressBarText = document.getElementById('discountProgressBarText');
     const publicListingPriceText = document.getElementById('publicListingPriceText');
     const maxPayoutText = document.getElementById('maxPayoutText');
     const liquidationWarningBanner = document.getElementById('liquidationWarningBanner');
@@ -922,63 +1413,99 @@ document.addEventListener('DOMContentLoaded', function () {
         if (msrp > 0 && ask > 0) {
             const discountPct = Math.round(((msrp - ask) / msrp) * 100);
             discountBadge.textContent = `${discountPct}% Off MSRP`;
+            discountProgressBarText.textContent = `${discountPct}% (Policy Target: >= 60%)`;
+
+            const barWidth = Math.max(0, Math.min(discountPct, 100));
+            discountProgressBar.style.width = `${barWidth}%`;
 
             if (discountPct >= 60) {
-                discountBadge.className = 'badge bg-success px-2.5 py-1 rounded-pill fw-bold';
+                discountBadge.className = 'badge bg-success px-3 py-1.5 rounded-pill fw-bold';
+                discountProgressBar.className = 'progress-bar bg-success';
                 liquidationWarningBanner.classList.add('d-none');
             } else {
-                discountBadge.className = 'badge bg-danger px-2.5 py-1 rounded-pill fw-bold';
+                discountBadge.className = 'badge bg-danger px-3 py-1.5 rounded-pill fw-bold';
+                discountProgressBar.className = 'progress-bar bg-danger';
                 liquidationWarningBanner.classList.remove('d-none');
             }
 
-            document.getElementById('summaryDiscount').textContent = `${discountPct}% Off`;
+            document.getElementById('previewDiscountPill').textContent = `${discountPct}% OFF`;
+            document.getElementById('previewDiscountPill').classList.remove('d-none');
         } else {
             discountBadge.textContent = '0% Off MSRP';
-            discountBadge.className = 'badge bg-secondary px-2.5 py-1 rounded-pill fw-bold';
+            discountBadge.className = 'badge bg-secondary px-3 py-1.5 rounded-pill fw-bold';
+            discountProgressBar.style.width = '0%';
+            discountProgressBarText.textContent = '0% (Policy Target: >= 60%)';
+            discountProgressBar.className = 'progress-bar bg-secondary';
             liquidationWarningBanner.classList.add('d-none');
-            document.getElementById('summaryDiscount').textContent = '-';
+            document.getElementById('previewDiscountPill').classList.add('d-none');
         }
 
-        // Update summary card
-        document.getElementById('summaryMsrp').textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString()}` : '-';
-        document.getElementById('summaryAsk').textContent = ask > 0 ? `${curr} ${ask.toLocaleString()}` : '-';
+        updateLivePreview();
+        updateReadinessChecklist();
     }
 
     if (msrpInput) msrpInput.addEventListener('input', updatePricingCalculations);
     if (askPriceInput) askPriceInput.addEventListener('input', updatePricingCalculations);
     if (currencySelect) currencySelect.addEventListener('change', updatePricingCalculations);
 
-    // --- 3. Live Snapshot Syncing ---
+    // -------------------------------------------------------------
+    // 3. Live Marketplace Preview Card Updating
+    // -------------------------------------------------------------
+    const lotTitleInput = document.getElementById('lotTitleInput');
+    const keyBrandsInput = document.getElementById('keyBrandsInput');
     const sellerNameInput = document.getElementById('sellerNameInput');
-    const intakeChannelSelect = document.getElementById('intakeChannelSelect');
+    const inventoryLocationInput = document.getElementById('inventoryLocationInput');
     const distinctSkusInput = document.getElementById('distinctSkusInput');
     const totalUnitsInput = document.getElementById('totalUnitsInput');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewBrands = document.getElementById('previewBrands');
+    const previewPrice = document.getElementById('previewPrice');
+    const previewMsrp = document.getElementById('previewMsrp');
+    const previewPublicPrice = document.getElementById('previewPublicPrice');
+    const summarySellerName = document.getElementById('summarySellerName');
+    const summaryLocation = document.getElementById('summaryLocation');
+    const summarySkus = document.getElementById('summarySkus');
+    const summaryUnits = document.getElementById('summaryUnits');
 
-    if (sellerNameInput) {
-        sellerNameInput.addEventListener('input', () => {
-            document.getElementById('summarySellerName').textContent = sellerNameInput.value.trim() || '-';
-        });
+    function updateLivePreview() {
+        const curr = currencySelect ? currencySelect.value : 'USD';
+        const msrp = parseFloat(msrpInput.value) || 0;
+        const ask = parseFloat(askPriceInput.value) || 0;
+
+        previewTitle.textContent = lotTitleInput.value.trim() || 'Package Listing Title Preview';
+        previewBrands.textContent = keyBrandsInput.value.trim() ? `Key Brands: ${keyBrandsInput.value.trim()}` : 'Key Brands: -';
+
+        previewPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+        previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+        previewPublicPrice.textContent = ask > 0 ? `${curr} ${(ask * 1.10).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+
+        summarySellerName.textContent = sellerNameInput.value.trim() || '-';
+        summaryLocation.textContent = inventoryLocationInput.value.trim() || '-';
+        summarySkus.textContent = distinctSkusInput.value || '-';
+        summaryUnits.textContent = totalUnitsInput.value ? Number(totalUnitsInput.value).toLocaleString() : '-';
     }
 
-    if (intakeChannelSelect) {
-        intakeChannelSelect.addEventListener('change', () => {
-            document.getElementById('summaryChannel').textContent = intakeChannelSelect.value;
-        });
-    }
+    if (lotTitleInput) lotTitleInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
+    if (keyBrandsInput) keyBrandsInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
+    if (sellerNameInput) sellerNameInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
+    if (inventoryLocationInput) inventoryLocationInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
+    if (distinctSkusInput) distinctSkusInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
+    if (totalUnitsInput) totalUnitsInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
 
-    if (distinctSkusInput) {
-        distinctSkusInput.addEventListener('input', () => {
-            document.getElementById('summarySkus').textContent = distinctSkusInput.value || '-';
+    // Intake Channel Radio Cards
+    const channelRadios = document.querySelectorAll('input[name="intake_channel"]');
+    const previewChannelBadge = document.getElementById('previewChannelBadge');
+    channelRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.checked && previewChannelBadge) {
+                previewChannelBadge.textContent = this.value;
+            }
         });
-    }
+    });
 
-    if (totalUnitsInput) {
-        totalUnitsInput.addEventListener('input', () => {
-            document.getElementById('summaryUnits').textContent = totalUnitsInput.value ? Number(totalUnitsInput.value).toLocaleString() : '-';
-        });
-    }
-
-    // --- 4. Character Limit Counters ---
+    // -------------------------------------------------------------
+    // 4. Character Limit Counters
+    // -------------------------------------------------------------
     const setupCharCounter = (inputId, counterId, maxLen) => {
         const inp = document.getElementById(inputId);
         const cnt = document.getElementById(counterId);
@@ -992,53 +1519,152 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCharCounter('keyBrandsInput', 'brandsCharCount', 300);
     setupCharCounter('lotDescInput', 'descCharCount', 3000);
 
-    // --- 5. Certificate Document Toggle ---
+    // -------------------------------------------------------------
+    // 5. Certificate Document Toggle Box
+    // -------------------------------------------------------------
     const certSwitch = document.getElementById('certSwitch');
     const certUploadBlock = document.getElementById('certUploadBlock');
+    const certToggleBox = document.getElementById('certToggleBox');
     if (certSwitch && certUploadBlock) {
         certSwitch.addEventListener('change', () => {
             if (certSwitch.checked) {
                 certUploadBlock.classList.remove('d-none');
+                if (certToggleBox) certToggleBox.classList.add('active-box');
             } else {
                 certUploadBlock.classList.add('d-none');
+                if (certToggleBox) certToggleBox.classList.remove('active-box');
             }
         });
     }
 
-    // --- 6. Media Gallery Previews ---
+    // -------------------------------------------------------------
+    // 6. Media Gallery Previews with Cover Badge and Remove Buttons
+    // -------------------------------------------------------------
     const mediaFileInput = document.getElementById('mediaFileInput');
+    const mediaDropzone = document.getElementById('mediaDropzone');
     const mediaPreviewGallery = document.getElementById('mediaPreviewGallery');
+    const mediaCountBadge = document.getElementById('mediaCountBadge');
+    const previewCoverImg = document.getElementById('previewCoverImg');
+    const previewMediaPlaceholder = document.getElementById('previewMediaPlaceholder');
+    const previewPhotoCountBadge = document.getElementById('previewPhotoCountBadge');
 
-    if (mediaFileInput && mediaPreviewGallery) {
+    let uploadedMediaFiles = [];
+
+    if (mediaDropzone && mediaFileInput) {
+        mediaDropzone.addEventListener('click', () => mediaFileInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            mediaDropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                mediaDropzone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            mediaDropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                mediaDropzone.classList.remove('dragover');
+            }, false);
+        });
+
+        mediaDropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                handleNewMediaFiles(dt.files);
+            }
+        });
+
         mediaFileInput.addEventListener('change', function () {
-            mediaPreviewGallery.innerHTML = '';
-            const files = Array.from(this.files);
-
-            files.forEach((file, idx) => {
-                const item = document.createElement('div');
-                item.className = 'position-relative border rounded-3 p-1 bg-white shadow-sm';
-                item.style.width = '70px';
-                item.style.height = '70px';
-
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.className = 'w-100 h-100 object-fit-cover rounded-2';
-                    img.src = URL.createObjectURL(file);
-                    item.appendChild(img);
-                } else {
-                    const iconBox = document.createElement('div');
-                    iconBox.className = 'w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light rounded-2 text-muted';
-                    iconBox.innerHTML = '<i class="bi bi-film fs-4"></i>';
-                    item.appendChild(iconBox);
-                }
-
-                mediaPreviewGallery.appendChild(item);
-            });
+            if (this.files && this.files.length) {
+                handleNewMediaFiles(this.files);
+            }
         });
     }
 
-    // --- 7. Strict Manifest Validation & SheetJS Client-Side Parsing ---
+    function handleNewMediaFiles(fileList) {
+        for (let i = 0; i < fileList.length; i++) {
+            const file = fileList[i];
+            const exists = uploadedMediaFiles.some(f => f.name === file.name && f.size === file.size);
+            if (!exists) {
+                uploadedMediaFiles.push(file);
+            }
+        }
+        syncMediaFileInput();
+        renderMediaPreviews();
+    }
+
+    function syncMediaFileInput() {
+        const dt = new DataTransfer();
+        uploadedMediaFiles.forEach(f => dt.items.add(f));
+        mediaFileInput.files = dt.files;
+        mediaCountBadge.textContent = `${uploadedMediaFiles.length} file${uploadedMediaFiles.length === 1 ? '' : 's'}`;
+        previewPhotoCountBadge.innerHTML = `<i class="bi bi-images me-1"></i>${uploadedMediaFiles.length} media`;
+
+        if (uploadedMediaFiles.length > 0 && uploadedMediaFiles[0].type.startsWith('image/')) {
+            previewCoverImg.src = URL.createObjectURL(uploadedMediaFiles[0]);
+            previewCoverImg.classList.remove('d-none');
+            previewMediaPlaceholder.classList.add('d-none');
+        } else {
+            previewCoverImg.classList.add('d-none');
+            previewMediaPlaceholder.classList.remove('d-none');
+        }
+
+        updateReadinessChecklist();
+    }
+
+    function renderMediaPreviews() {
+        mediaPreviewGallery.innerHTML = '';
+        uploadedMediaFiles.forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-6 col-sm-4 col-md-3';
+
+            const card = document.createElement('div');
+            card.className = 'media-preview-card';
+
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                card.appendChild(img);
+            } else {
+                const videoBox = document.createElement('div');
+                videoBox.className = 'd-flex flex-column align-items-center justify-content-center bg-light text-muted';
+                videoBox.style.height = '95px';
+                videoBox.innerHTML = '<i class="bi bi-film fs-3"></i><span class="small font-monospace" style="font-size: 10px;">Video</span>';
+                card.appendChild(videoBox);
+            }
+
+            if (index === 0) {
+                const coverBadge = document.createElement('span');
+                coverBadge.className = 'badge-cover';
+                coverBadge.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>Cover';
+                card.appendChild(coverBadge);
+            }
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-remove';
+            removeBtn.title = 'Remove file';
+            removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                uploadedMediaFiles.splice(index, 1);
+                syncMediaFileInput();
+                renderMediaPreviews();
+            });
+
+            card.appendChild(removeBtn);
+            col.appendChild(card);
+            mediaPreviewGallery.appendChild(col);
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 7. Strict Manifest Validation & SheetJS Client-Side Parsing
+    // -------------------------------------------------------------
     const manifestFileInput = document.getElementById('manifestFileInput');
+    const manifestDropzone = document.getElementById('manifestDropzone');
     const manifestFileName = document.getElementById('manifestFileName');
     const manifestParsedSummary = document.getElementById('manifestParsedSummary');
     const manifestErrorAlert = document.getElementById('manifestErrorAlert');
@@ -1060,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', function () {
         items: []
     };
 
-    // Standard 32 surplus manifest column definitions with synonyms (strictly synchronized with surplus-frontend)
+    // Standard 32 surplus manifest column definitions with synonyms (strictly matching surplus-frontend)
     const TEMPLATE_HEADER_DEFINITIONS = [
         { key: 'sno', label: 'S.No*', mandatory: true, matches: ['s.no', 'sno', 'serial no', 's.no.', 'item no', 'item no.', '#', 'sl no', 'sl.no', 'line_no', 'row'] },
         { key: 'productName', label: 'Product Name*', mandatory: true, matches: ['product name', 'title', 'item name', 'name', 'product title'] },
@@ -1111,6 +1737,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clientManifestData.msrp = 0.0;
         clientManifestData.askPrice = 0.0;
         clientManifestData.items = [];
+        updateReadinessChecklist();
     }
 
     function clearManifestError() {
@@ -1152,201 +1779,177 @@ document.addEventListener('DOMContentLoaded', function () {
                     const data = new Uint8Array(event.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
 
-                    // 1. Target specifically the 'Inventory' tab (case-insensitive check) or the sole sheet for CSV files
-                    const inventorySheetName = workbook.SheetNames.find(
-                        name => name.trim().toLowerCase() === 'inventory'
-                    ) || (isCsv && workbook.SheetNames.length === 1 ? workbook.SheetNames[0] : null);
-
-                    if (!inventorySheetName) {
-                        showManifestError(
-                            'Sheet Validation Failed',
-                            `The uploaded Excel file must contain an <strong><code>Inventory</code></strong> tab. Found tabs: <code>[${workbook.SheetNames.join(', ')}]</code>. Please use our standard Surplus template.`
-                        );
-                        return;
+                    // 1. Sheet selection: strictly enforce 'Inventory' sheet for Excel files
+                    let targetSheetName = null;
+                    if (isXlsx) {
+                        const foundName = workbook.SheetNames.find(s => s.trim().toLowerCase() === 'inventory');
+                        if (!foundName) {
+                            showManifestError(
+                                'Missing "Inventory" Sheet Tab',
+                                `The uploaded Excel file must contain a sheet named <strong>'Inventory'</strong>. Found sheet tabs: <em>[${workbook.SheetNames.join(', ')}]</em>.<br><br>Please download and use our official <a href="/admin/lots/template/download/?format=xlsx" class="fw-bold text-primary">Surplus Market XLSX Format</a> template.`
+                            );
+                            return;
+                        }
+                        targetSheetName = foundName;
+                    } else {
+                        targetSheetName = workbook.SheetNames[0];
                     }
 
-                    const worksheet = workbook.Sheets[inventorySheetName];
+                    const worksheet = workbook.Sheets[targetSheetName];
                     const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
-                    // Filter out completely blank rows
-                    const validRows = rawRows.filter(row => Array.isArray(row) && row.some(cell => String(cell || '').trim() !== ''));
-
-                    if (validRows.length < 2) {
+                    if (!rawRows || rawRows.length < 2) {
                         showManifestError(
-                            'Empty Sheet Error',
-                            `The '<strong>Inventory</strong>' sheet must contain a header row and at least 1 item data row.`
+                            'Empty Spreadsheet',
+                            `The <strong>'${targetSheetName}'</strong> sheet does not contain enough data. It must contain a header row followed by at least 1 product row.`
                         );
                         return;
                     }
 
-                    // 2. Locate Header Row among the top rows
-                    let headerRowIdx = 0;
-                    let bestScore = -1;
+                    // 2. Identify header row (skipping instruction banners)
+                    let headerIndex = -1;
+                    const instructionKeywords = [
+                        'reference directory', 'classification taxonomy', 'select a valid product category',
+                        'total categories', 'ensure consistent reporting', 'master classification',
+                        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+                    ];
 
-                    for (let r = 0; r < Math.min(validRows.length, 10); r++) {
-                        const rowCells = validRows[r].map(c => String(c || '').replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase());
-                        let matchCount = 0;
-                        rowCells.forEach(cell => {
-                            if (!cell) return;
-                            const matched = TEMPLATE_HEADER_DEFINITIONS.some(def =>
-                                def.matches.some(m => {
-                                    const normM = m.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
-                                    return normM === cell || cell === def.key.toLowerCase();
-                                })
-                            );
-                            if (matched) matchCount++;
-                        });
-                        if (matchCount > bestScore) {
-                            bestScore = matchCount;
-                            headerRowIdx = r;
+                    for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
+                        const rowStr = rawRows[r].map(c => String(c).toLowerCase().trim()).join(' ');
+                        const isInstruction = instructionKeywords.some(kw => rowStr.includes(kw));
+                        if (isInstruction) continue;
+
+                        const hasKeyColumn = ['product name', 'product name*', 's.no', 's.no*', 'quantity', 'available quantity*'].some(kw => rowStr.includes(kw));
+                        if (hasKeyColumn) {
+                            headerIndex = r;
+                            break;
                         }
                     }
 
-                    const rawHeaderRow = validRows[headerRowIdx].map(cell => String(cell || '').trim());
-                    const colIndexMap = {};
-
-                    for (let i = 0; i < rawHeaderRow.length; i++) {
-                        const rawH = rawHeaderRow[i];
-                        if (!rawH) continue;
-                        const normalizedH = rawH.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
-
-                        const matchedDef = TEMPLATE_HEADER_DEFINITIONS.find(def =>
-                            def.matches.some(m => {
-                                const normM = m.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
-                                return normM === normalizedH || normalizedH === def.key.toLowerCase();
-                            })
-                        );
-
-                        if (matchedDef && colIndexMap[matchedDef.key] === undefined) {
-                            colIndexMap[matchedDef.key] = i;
-                        }
+                    if (headerIndex === -1) {
+                        headerIndex = 0;
                     }
 
-                    // Check ONLY the mandatory fields marked with *
-                    const missingMandatoryHeaders = TEMPLATE_HEADER_DEFINITIONS
-                        .filter(d => d.mandatory && colIndexMap[d.key] === undefined)
-                        .map(d => d.label);
+                    const rawHeaders = rawRows[headerIndex].map(h => String(h || '').trim());
+                    const columnMap = {};
+                    const matchedDefinitions = [];
 
-                    if (missingMandatoryHeaders.length > 0) {
+                    rawHeaders.forEach((rawH, colIdx) => {
+                        const norm = rawH.toLowerCase().replace(/[\*\_\-]/g, ' ').replace(/\s+/g, ' ').trim();
+                        for (const def of TEMPLATE_HEADER_DEFINITIONS) {
+                            if (columnMap[def.key] !== undefined) continue;
+                            const matches = def.matches.some(m => {
+                                const normM = m.toLowerCase().replace(/[\*\_\-]/g, ' ').replace(/\s+/g, ' ').trim();
+                                return norm === normM || norm.includes(normM);
+                            });
+                            if (matches) {
+                                columnMap[def.key] = colIdx;
+                                matchedDefinitions.push(def.key);
+                                break;
+                            }
+                        }
+                    });
+
+                    // 3. Strict Check: Are all 6 mandatory headers present?
+                    const missingMandatory = TEMPLATE_HEADER_DEFINITIONS.filter(def => def.mandatory && columnMap[def.key] === undefined);
+                    if (missingMandatory.length > 0) {
+                        const missingLabels = missingMandatory.map(m => `<code>${m.label}</code>`).join(', ');
                         showManifestError(
-                            'Header Validation Error',
-                            `Missing mandatory column header(s) with <strong>*</strong> in manifest: <strong class="text-dark">[${missingMandatoryHeaders.join(', ')}]</strong>.<br>Required mandatory headers: <code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code>. If you uploaded another format sheet, please download our official Surplus Market template.`
+                            'Missing Mandatory Headers',
+                            `The uploaded manifest is missing <strong>${missingMandatory.length}</strong> required column(s): ${missingLabels}.<br><br>All columns with <strong>*</strong> must be present exactly as structured in the Surplus Manifest format.`
                         );
                         return;
                     }
 
-                    // Structure validation: check if another format sheet was added
-                    const recognizedCount = Object.keys(colIndexMap).length;
-                    if (recognizedCount < 3) {
+                    // 4. Sheet Structure Check: Reject completely unrelated formats
+                    if (matchedDefinitions.length < 3) {
                         showManifestError(
                             'Invalid Sheet Structure',
-                            `The uploaded spreadsheet does not match our Surplus Manifest template. Please ensure your sheet follows the surplus structure and download the official template.`
+                            `The uploaded spreadsheet does not match our Surplus Manifest template. Only ${matchedDefinitions.length} standard columns were recognized.<br><br>Please download and use the official <a href="/admin/lots/template/download/?format=xlsx" class="fw-bold text-primary">Surplus Market XLSX Format</a> template.`
                         );
                         return;
                     }
 
-                    // 3. Row-level Mandatory Data Validation Check
-                    const rowErrorMessages = [];
-                    const parsedItems = [];
-                    let totalUnitsSum = 0;
-                    let totalMsrpSum = 0.0;
-                    let totalAskSum = 0.0;
+                    // 5. Parse data rows and validate mandatory values
+                    const dataRows = rawRows.slice(headerIndex + 1);
+                    let validSkus = 0;
+                    let totalUnits = 0;
+                    let totalMsrp = 0.0;
+                    let totalAsk = 0.0;
+                    const rowErrors = [];
 
-                    for (let r = headerRowIdx + 1; r < validRows.length; r++) {
-                        const row = validRows[r];
-                        const rowNum = r + 1;
+                    dataRows.forEach((row, rowIdx) => {
+                        const actualRowNum = headerIndex + 2 + rowIdx;
+                        const rowStr = row.map(c => String(c).trim()).join('');
+                        if (!rowStr) return; // Skip blank rows
 
-                        const snoVal = String(row[colIndexMap['sno']] || '').trim();
-                        const nameVal = String(row[colIndexMap['productName']] || '').trim();
-                        const descVal = String(row[colIndexMap['productDescription']] || '').trim();
-                        const catVal = String(row[colIndexMap['productCategory']] || '').trim();
-                        const subcatVal = String(row[colIndexMap['subcategory']] || '').trim();
-                        const qtyRaw = String(row[colIndexMap['quantity']] || '').trim();
-                        const qtyVal = Number(qtyRaw.replace(/[^0-9.]/g, ''));
+                        const pName = String(row[columnMap['productName']] || '').trim();
+                        const pDesc = String(row[columnMap['productDescription']] || '').trim();
+                        const pCat = String(row[columnMap['productCategory']] || '').trim();
+                        const pSub = String(row[columnMap['subcategory']] || '').trim();
+                        const pQtyRaw = row[columnMap['quantity']];
+                        const pQty = parseFloat(String(pQtyRaw || '').replace(/[^0-9.]/g, '')) || 0;
 
-                        // Filter out template instruction / reference rows
-                        const rowStrFull = row.map(c => String(c || '').toLowerCase()).join(' ');
-                        if (rowStrFull.includes('reference directory') || rowStrFull.includes('classification taxonomy') || rowStrFull.includes('ensure consistent reporting') || rowStrFull.includes('total categories')) {
-                            continue;
+                        const missingFields = [];
+                        if (!pName) missingFields.push('Product Name*');
+                        if (!pDesc) missingFields.push('Product Description*');
+                        if (!pCat) missingFields.push('Product Category*');
+                        if (!pSub) missingFields.push('Subcategory*');
+                        if (pQty <= 0) missingFields.push('Available Quantity* (must be > 0)');
+
+                        if (missingFields.length > 0) {
+                            rowErrors.push(`Row ${actualRowNum}: Missing [${missingFields.join(', ')}]`);
+                            return;
                         }
 
-                        // Filter out summary / total rows
-                        const firstCell = String(row[0] || '').trim().toLowerCase();
-                        if (firstCell === 'total' || firstCell === 'grand total' || firstCell === 'summary') {
-                            continue;
+                        validSkus++;
+                        totalUnits += pQty;
+
+                        // Optional financial columns
+                        if (columnMap['msrp'] !== undefined) {
+                            const unitMsrp = parseFloat(String(row[columnMap['msrp']] || '').replace(/[^0-9.]/g, '')) || 0;
+                            totalMsrp += (unitMsrp * pQty);
                         }
-
-                        const missingInThisRow = [];
-                        if (!snoVal) missingInThisRow.push('S.No*');
-                        if (!nameVal) missingInThisRow.push('Product Name*');
-                        if (!descVal) missingInThisRow.push('Product Description*');
-                        if (!catVal) missingInThisRow.push('Product Category*');
-                        if (!subcatVal) missingInThisRow.push('Subcategory*');
-                        if (!qtyRaw || isNaN(qtyVal) || qtyVal <= 0) missingInThisRow.push('Available Quantity* (must be > 0)');
-
-                        if (missingInThisRow.length > 0) {
-                            rowErrorMessages.push(`Row ${rowNum}: Missing [${missingInThisRow.join(', ')}]`);
-                        } else {
-                            totalUnitsSum += qtyVal;
-
-                            const rawMsrpVal = colIndexMap['msrp'] !== undefined ? Number(String(row[colIndexMap['msrp']]).replace(/[^0-9.]/g, '')) : 0;
-                            const msrpVal = (!isNaN(rawMsrpVal) && rawMsrpVal > 0) ? rawMsrpVal : 0;
-
-                            const rawAskVal = colIndexMap['askPrice'] !== undefined ? Number(String(row[colIndexMap['askPrice']]).replace(/[^0-9.]/g, '')) : 0;
-                            const askVal = (!isNaN(rawAskVal) && rawAskVal > 0) ? rawAskVal : 0;
-
-                            totalMsrpSum += (qtyVal * msrpVal);
-                            totalAskSum += (qtyVal * askVal);
-
-                            parsedItems.push({
-                                s_no: snoVal,
-                                product_name: nameVal,
-                                product_description: descVal,
-                                product_category: catVal,
-                                subcategory: subcatVal,
-                                available_quantity: qtyVal,
-                                original_price: msrpVal,
-                                asking_price: askVal
-                            });
+                        if (columnMap['askPrice'] !== undefined) {
+                            const unitAsk = parseFloat(String(row[columnMap['askPrice']] || '').replace(/[^0-9.]/g, '')) || 0;
+                            totalAsk += (unitAsk * pQty);
                         }
-                    }
+                    });
 
-                    if (rowErrorMessages.length > 0) {
-                        const summaryText = rowErrorMessages.length > 5
-                            ? `${rowErrorMessages.slice(0, 5).join('; ')} ...and ${rowErrorMessages.length - 5} more row(s) with invalid data.`
-                            : rowErrorMessages.join('; ');
+                    // 6. Check if data rows have row errors
+                    if (rowErrors.length > 0) {
+                        const errList = rowErrors.slice(0, 5).join('<br>');
+                        const moreTxt = rowErrors.length > 5 ? `<br>...and ${rowErrors.length - 5} more row(s) with missing mandatory values.` : '';
                         showManifestError(
-                            'Data Validation Failed',
-                            `Data Validation Failed in 'Inventory' sheet: <strong>${summaryText}</strong><br>All mandatory fields with * (<code>S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*</code>) must be filled in with valid data for every row.`
+                            'Mandatory Data Missing in Rows',
+                            `Validation failed for mandatory fields in the <strong>'${targetSheetName}'</strong> sheet:<br><br>${errList}${moreTxt}<br><br>All mandatory columns marked with <strong>*</strong> must have valid values for every product row.`
                         );
                         return;
                     }
 
-                    if (parsedItems.length === 0) {
+                    if (validSkus === 0) {
                         showManifestError(
-                            'No Products Found',
-                            `No valid inventory items found in 'Inventory' sheet. Please ensure your sheet contains at least 1 valid product row below the header.`
+                            'No Valid Inventory Rows Found',
+                            `The <strong>'${targetSheetName}'</strong> sheet does not contain any valid inventory rows below the header.`
                         );
                         return;
                     }
 
-                    // --- Validation Passed Cleanly! ---
+                    // 7. Success state
                     clientManifestData.isValid = true;
-                    clientManifestData.skus = parsedItems.length;
-                    clientManifestData.units = totalUnitsSum;
-                    clientManifestData.msrp = totalMsrpSum;
-                    clientManifestData.askPrice = totalAskSum;
-                    clientManifestData.items = parsedItems;
+                    clientManifestData.skus = validSkus;
+                    clientManifestData.units = totalUnits;
+                    clientManifestData.msrp = totalMsrp;
+                    clientManifestData.askPrice = totalAsk;
 
-                    parsedSkuCount.textContent = parsedItems.length.toLocaleString();
-                    parsedTotalUnits.textContent = totalUnitsSum.toLocaleString();
-                    parsedTotalMsrp.textContent = totalMsrpSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    if (parsedTotalAsk) {
-                        parsedTotalAsk.textContent = totalAskSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    }
+                    parsedSkuCount.textContent = validSkus;
+                    parsedTotalUnits.textContent = totalUnits.toLocaleString();
+                    parsedTotalMsrp.textContent = totalMsrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    parsedTotalAsk.textContent = totalAsk.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+                    if (manifestParsedSummary) manifestParsedSummary.classList.remove('d-none');
                     clearManifestError();
-                    manifestParsedSummary.classList.remove('d-none');
+                    updateReadinessChecklist();
 
                 } catch (err) {
                     console.error('Error reading manifest in browser:', err);
@@ -1381,14 +1984,207 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- 8. Form Validation on Submit ---
+    // -------------------------------------------------------------
+    // 8. Excluded Export Countries Tag / Pill Selector & Embargo Presets
+    // -------------------------------------------------------------
+    const excludedCountriesSelect = document.getElementById('excludedCountriesSelect');
+    const selectedCountriesBadges = document.getElementById('selectedCountriesBadges');
+    const btnClearExcluded = document.getElementById('btnClearExcluded');
+    const quickEmbargoBtns = document.querySelectorAll('.btn-quick-embargo');
+
+    let activeRestrictedCountries = [];
+
+    function updateExcludedBadges() {
+        if (!selectedCountriesBadges) return;
+        selectedCountriesBadges.innerHTML = '';
+
+        if (activeRestrictedCountries.length === 0) {
+            selectedCountriesBadges.innerHTML = `
+                <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                    <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                </span>
+            `;
+        } else {
+            activeRestrictedCountries.forEach((c) => {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5';
+                badge.innerHTML = `
+                    <i class="bi bi-shield-x"></i> ${c}
+                    <button type="button" class="btn-close btn-close-sm ms-1" style="font-size: 8px;" aria-label="Remove"></button>
+                `;
+                badge.querySelector('button').addEventListener('click', () => {
+                    removeExcludedCountry(c);
+                });
+                selectedCountriesBadges.appendChild(badge);
+            });
+        }
+
+        // Sync hidden select options
+        if (excludedCountriesSelect) {
+            Array.from(excludedCountriesSelect.options).forEach(opt => {
+                opt.selected = activeRestrictedCountries.includes(opt.value);
+            });
+        }
+
+        // Update quick embargo buttons active state
+        quickEmbargoBtns.forEach(btn => {
+            const country = btn.getAttribute('data-country');
+            if (activeRestrictedCountries.includes(country)) {
+                btn.className = 'btn btn-sm btn-danger py-1 px-3 rounded-pill small';
+            } else {
+                btn.className = 'btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small';
+            }
+        });
+    }
+
+    function addExcludedCountry(country) {
+        if (!country || country === 'None (Worldwide)') return;
+        if (!activeRestrictedCountries.includes(country)) {
+            activeRestrictedCountries.push(country);
+            updateExcludedBadges();
+        }
+    }
+
+    function removeExcludedCountry(country) {
+        activeRestrictedCountries = activeRestrictedCountries.filter(c => c !== country);
+        updateExcludedBadges();
+    }
+
+    quickEmbargoBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const country = this.getAttribute('data-country');
+            if (activeRestrictedCountries.includes(country)) {
+                removeExcludedCountry(country);
+            } else {
+                addExcludedCountry(country);
+            }
+        });
+    });
+
+    if (btnClearExcluded) {
+        btnClearExcluded.addEventListener('click', () => {
+            activeRestrictedCountries = [];
+            updateExcludedBadges();
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 9. Listing Readiness Dynamic Checklist Progress
+    // -------------------------------------------------------------
+    const checkSeller = document.getElementById('checkSeller');
+    const checkTitle = document.getElementById('checkTitle');
+    const checkManifest = document.getElementById('checkManifest');
+    const checkCategory = document.getElementById('checkCategory');
+    const checkLogistics = document.getElementById('checkLogistics');
+    const checkPricing = document.getElementById('checkPricing');
+    const checkMedia = document.getElementById('checkMedia');
+    const checklistProgressBar = document.getElementById('checklistProgressBar');
+    const checklistProgressPct = document.getElementById('checklistProgressPct');
+
+    function setCheckItem(el, passed) {
+        if (!el) return;
+        el.classList.toggle('done', passed);
+        const icon = el.querySelector('i');
+        if (icon) {
+            icon.className = passed ? 'bi bi-check-circle-fill text-success' : 'bi bi-circle text-muted';
+        }
+    }
+
+    function updateReadinessChecklist() {
+        const total = 7;
+        let count = 0;
+
+        // 1. Seller Info
+        const sellerOk = Boolean(sellerNameInput.value.trim() && document.getElementById('sellerPhoneInput').value.trim());
+        setCheckItem(checkSeller, sellerOk);
+        if (sellerOk) count++;
+
+        // 2. Title & Brands
+        const titleOk = Boolean(lotTitleInput.value.trim().length >= 5 && keyBrandsInput.value.trim());
+        setCheckItem(checkTitle, titleOk);
+        if (titleOk) count++;
+
+        // 3. Manifest File / SKUs
+        const manifestOk = Boolean(clientManifestData.isValid || (parseInt(distinctSkusInput.value) > 0 && parseInt(totalUnitsInput.value) > 0));
+        setCheckItem(checkManifest, manifestOk);
+        if (manifestOk) count++;
+
+        // 4. Category 100% Balanced
+        let catSum = 0;
+        document.querySelectorAll('.category-pct-input').forEach(inp => catSum += parseFloat(inp.value) || 0);
+        const categoryOk = (catSum === 100);
+        setCheckItem(checkCategory, categoryOk);
+        if (categoryOk) count++;
+
+        // 5. Logistics & Location
+        const logisticsOk = Boolean(inventoryLocationInput.value.trim());
+        setCheckItem(checkLogistics, logisticsOk);
+        if (logisticsOk) count++;
+
+        // 6. Pricing & Liquidation Discount
+        const msrp = parseFloat(msrpInput.value) || 0;
+        const ask = parseFloat(askPriceInput.value) || 0;
+        const pricingOk = Boolean(msrp > 0 && ask > 0 && ask <= msrp * 0.40);
+        setCheckItem(checkPricing, pricingOk);
+        if (pricingOk) count++;
+
+        // 7. Media
+        const mediaOk = Boolean(uploadedMediaFiles.length > 0);
+        setCheckItem(checkMedia, mediaOk);
+        if (mediaOk) count++;
+
+        const pct = Math.round((count / total) * 100);
+        checklistProgressBar.style.width = `${pct}%`;
+        checklistProgressPct.textContent = `${pct}%`;
+
+        if (pct === 100) {
+            checklistProgressBar.className = 'progress-bar bg-success';
+        } else {
+            checklistProgressBar.className = 'progress-bar bg-primary';
+        }
+    }
+
+    // -------------------------------------------------------------
+    // 10. Clear All Fields Reset Button with Confirmation
+    // -------------------------------------------------------------
+    const btnClearForm = document.getElementById('btnClearForm');
+    if (btnClearForm) {
+        btnClearForm.addEventListener('click', function () {
+            if (confirm('Are you sure you want to clear and reset all fields in this lot creation form?')) {
+                const addLotForm = document.getElementById('addLotForm');
+                if (addLotForm) {
+                    addLotForm.reset();
+                    uploadedMediaFiles = [];
+                    syncMediaFileInput();
+                    renderMediaPreviews();
+                    clearManifestError();
+                    if (manifestParsedSummary) manifestParsedSummary.classList.add('d-none');
+                    if (manifestFileName) {
+                        manifestFileName.innerHTML = 'Drag & drop Excel manifest file or <span class="text-primary text-decoration-underline cursor-pointer">browse</span>';
+                    }
+                    clientManifestData = { isValid: false, skus: 0, units: 0, msrp: 0.0, askPrice: 0.0, items: [] };
+                    activeRestrictedCountries = [];
+                    updateExcludedBadges();
+                    allocationsContainer.innerHTML = '';
+                    createCategoryRow('Electronics', 100);
+                    updatePricingCalculations();
+                    updateLivePreview();
+                    updateReadinessChecklist();
+                }
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 11. Form Validation on Submit & Loading Spinners
+    // -------------------------------------------------------------
     const addLotForm = document.getElementById('addLotForm');
     if (addLotForm) {
         addLotForm.addEventListener('submit', function (e) {
             let isValid = true;
             let firstInvalidEl = null;
 
-            // 0. Strict Manifest File Check: if file is attached, it MUST be valid
+            // Strict Manifest File Check: if file is attached, it MUST be valid
             if (manifestFileInput && manifestFileInput.files && manifestFileInput.files.length > 0 && !clientManifestData.isValid) {
                 alert('Manifest Validation Error: The uploaded manifest file does not follow our surplus manifest structure or has validation errors. Please check the error message in the Manifest section, or download the official template.');
                 const card = document.getElementById('manifestUploadCard');
@@ -1397,7 +2193,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // 1. Mandatory Text Inputs
+            // Mandatory Text Inputs
             const requiredFields = [
                 { id: 'sellerNameInput', name: 'Seller Contact Name' },
                 { id: 'sellerPhoneInput', name: 'Seller WhatsApp / Phone' },
@@ -1422,7 +2218,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // 2. Media Files Check
+            // Media Files Check
             if (mediaFileInput && mediaFileInput.files.length === 0) {
                 alert('Please upload at least 1 photo or video of the warehouse/lot items.');
                 mediaFileInput.focus();
@@ -1430,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // 3. Category Allocation Sum Check
+            // Category Allocation Sum Check
             let sum = 0;
             document.querySelectorAll('.category-pct-input').forEach(inp => {
                 sum += parseFloat(inp.value) || 0;
@@ -1441,7 +2237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // 4. Liquidation Discount Policy Check (>= 60%)
+            // Liquidation Discount Policy Check (>= 60%)
             const msrpVal = parseFloat(msrpInput.value) || 0;
             const askVal = parseFloat(askPriceInput.value) || 0;
             if (msrpVal > 0 && askVal > 0) {
@@ -1465,9 +2261,27 @@ document.addEventListener('DOMContentLoaded', function () {
                     firstInvalidEl.focus();
                 }
                 alert('Please fill in all mandatory required fields.');
+                return;
+            }
+
+            // Loading state on submit buttons
+            const submitLotTopBtn = document.getElementById('submitLotTopBtn');
+            const submitLotBottomBtn = document.getElementById('submitLotBottomBtn');
+            if (submitLotTopBtn) {
+                submitLotTopBtn.disabled = true;
+                submitLotTopBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+            }
+            if (submitLotBottomBtn) {
+                submitLotBottomBtn.disabled = true;
+                submitLotBottomBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
             }
         });
     }
+
+    // Initialize all preview calculations
+    updatePricingCalculations();
+    updateLivePreview();
+    updateReadinessChecklist();
 
 });
 </script>
