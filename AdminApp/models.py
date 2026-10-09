@@ -766,6 +766,8 @@ class Lot(models.Model):
     )
 
     vendor = models.ForeignKey(VendorDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="lots")
+    admin = models.ForeignKey(AdminDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="lots", help_text="Admin who created or submitted this lot")
+    intake_channel = models.CharField(max_length=50, blank=True, default="", help_text="Intake channel for assisted lot submission (WhatsApp, Email, etc.)")
     lot_number = models.CharField(max_length=30, unique=True, db_index=True, editable=False)
     title = models.CharField(max_length=255, db_index=True, blank=True, default="")
     description = models.TextField(blank=True, default="")
@@ -1019,6 +1021,14 @@ class Product(models.Model):
     Core Product model for single item listings and seller enquiries.
     """
     product_id = models.CharField(max_length=30, blank=True, default="", db_index=True)
+    admin = models.ForeignKey(
+        AdminDetails,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="products",
+        help_text="Admin who created or submitted this product"
+    )
     vendor = models.ForeignKey(
         VendorDetails, 
         on_delete=models.SET_NULL, 
@@ -1047,6 +1057,7 @@ class Product(models.Model):
     
     manufacturing_country = models.CharField(max_length=100, blank=True, default="")
     inventory_location = models.CharField(max_length=255, blank=True, default="", help_text="Warehouse / stock location")
+    intake_channel = models.CharField(max_length=50, blank=True, default="", help_text="Intake channel for assisted product submission (WhatsApp, Email, etc.)")
     manufacturing_year = models.PositiveIntegerField(null=True, blank=True)
     dimensions = models.CharField(max_length=100, blank=True, default="")
     expiry_date = models.DateField(null=True, blank=True)
@@ -1169,7 +1180,10 @@ class Product(models.Model):
 
             recipient_email = None
             recipient_name = "Valued Seller"
-            if target_vendor:
+            if self.admin:
+                recipient_email = self.admin.email
+                recipient_name = self.admin.username or "Admin"
+            elif target_vendor:
                 recipient_email = target_vendor.email
                 recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
 
@@ -1182,7 +1196,7 @@ class Product(models.Model):
                 pct = profile_info["percentage"] if profile_info else 100
                 missing_labels = profile_info["missing_fields_labels"] if profile_info else []
 
-                if target_vendor:
+                if target_vendor and not self.admin:
                     try:
                         from .services import create_vendor_notification
                         if not is_prof_complete:
@@ -1320,7 +1334,7 @@ class Product(models.Model):
     @property
     def raw_data(self):
         first_url = self.images.first().url if self.images.exists() else ""
-        return {
+        data = {
             "product_name": self.product_name,
             "title": self.product_name,
             "price": self.liquidating_price,
@@ -1336,7 +1350,20 @@ class Product(models.Model):
             "image": first_url,
             "featured_image_url": first_url,
             "product_image": first_url,
+            "intake_channel": getattr(self, "intake_channel", "") or "",
         }
+        if hasattr(self, '_extra_raw_data') and isinstance(self._extra_raw_data, dict):
+            data.update(self._extra_raw_data)
+        return data
+
+    @raw_data.setter
+    def raw_data(self, value):
+        if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+            self._extra_raw_data = {}
+        if isinstance(value, dict):
+            self._extra_raw_data.update(value)
+            if "intake_channel" in value and value["intake_channel"]:
+                self.intake_channel = str(value["intake_channel"]).strip()
 
     @property
     def condition(self):

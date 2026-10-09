@@ -4,14 +4,15 @@
 {% block title %}{{ page_title|default:"Add New Product Listing" }} | Admin Portal{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3">
+<div class="container-fluid">
 
     <!-- Page Header & Breadcrumb -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
         <div>
             <nav class="custom-breadcrumb" aria-label="breadcrumb">
                 <ol class="breadcrumb-list">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i>
+                            Dashboard</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                     <li class="breadcrumb-item"><a href="/admin/enquiries/seller/">Seller Enquiries</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
@@ -19,13 +20,16 @@
                 </ol>
             </nav>
             <h1 class="header-title">Add New Product Listing</h1>
-            <p class="header-subtitle">Submit a verified surplus inventory listing matching the frontend Simple Inventory format</p>
+            <p class="header-subtitle">Submit a verified surplus inventory listing matching the frontend Simple
+                Inventory format</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/enquiries/seller/" class="btn btn-outline-secondary px-3.5 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5">
+            <a href="/admin/enquiries/seller/"
+                class="btn btn-outline-secondary px-3.5 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5">
                 <i class="bi bi-arrow-left"></i> Cancel
             </a>
-            <button type="submit" form="addProductForm" id="btnSubmitTop" class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold">
+            <button type="submit" form="addProductForm" id="btnSubmitTop"
+                class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold">
                 <i class="bi bi-check-circle-fill fs-6"></i> Submit to Seller Enquiries
             </button>
         </div>
@@ -35,7 +39,8 @@
     {% if messages %}
     <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2"
+            role="alert">
             {% if message.tags == 'error' %}
             <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
             {% else %}
@@ -49,22 +54,27 @@
     {% endif %}
 
     <!-- Admin Submitter Status Banner (Matches SimpleListingModal Verified Badge) -->
-    <div class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div
+        class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="p-2.5 rounded-3 bg-primary text-white d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+            <div class="p-2.5 rounded-3 bg-primary text-white d-flex align-items-center justify-content-center"
+                style="width: 44px; height: 44px;">
                 <i class="bi bi-shield-check fs-4"></i>
             </div>
             <div>
                 <div class="fw-bold text-dark" style="font-size: 0.95rem;">
-                    Submitting as Verified Admin: <span class="badge bg-primary text-white font-monospace ms-1">{{ admin_uid }}</span> <span class="text-secondary fw-normal">({{ admin.username }})</span>
+                    Submitting as Verified Admin: <span class="badge bg-primary text-white font-monospace ms-1">{{
+                        admin_uid }}</span> <span class="text-secondary fw-normal">({{ admin.username }})</span>
                 </div>
                 <div class="text-secondary small mt-0.5">
-                    This inventory listing will be submitted to <strong>Seller Enquiries</strong> under Pending review with verified Admin identity.
+                    This inventory listing will be submitted to <strong>Seller Enquiries</strong> under Pending review
+                    with verified Admin identity.
                 </div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
+            <span
+                class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
                 <i class="bi bi-hourglass-split me-1"></i>Initial Status: PENDING
             </span>
         </div>
@@ -79,10 +89,102 @@
             <!-- LEFT COLUMN (Modal Sections 1 to 4) -->
             <div class="col-lg-8">
 
+                <!-- 0. Seller / Vendor Information (Assisted Intake via WhatsApp / Email) -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="border-left: 4px solid #10b981 !important;">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center"
+                                style="width: 32px; height: 32px;">
+                                <i class="bi bi-person-lines-fill fs-6"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Seller / Vendor Information</h6>
+                                <div class="text-muted small">Record which vendor sent these product details (WhatsApp / Email / Offline)</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">
+                            <i class="bi bi-person-check-fill me-1"></i>Offline Seller Intake
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Intake Channel & Seller Contact Name -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Intake Channel <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="intake_channel" id="intakeChannelSelect" required>
+                                    <option value="WhatsApp" {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}selected{% endif %}>WhatsApp</option>
+                                    <option value="Email" {% if form_data.intake_channel == 'Email' %}selected{% endif %}>Email</option>
+                                    <option value="Phone Call" {% if form_data.intake_channel == 'Phone Call' %}selected{% endif %}>Phone Call</option>
+                                    <option value="Direct / Walk-In" {% if form_data.intake_channel == 'Direct / Walk-In' %}selected{% endif %}>Direct / Walk-In</option>
+                                </select>
+                                <div class="form-text small">How the vendor submitted this listing to admin.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Seller Contact Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_name" id="sellerNameInput"
+                                    value="{{ form_data.seller_name|default:'' }}"
+                                    placeholder="e.g. Rahul Sharma / John Doe" required>
+                                <div class="form-text small">Individual or contact person name.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    WhatsApp / Mobile <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_phone" id="sellerPhoneInput"
+                                    value="{{ form_data.seller_phone|default:'' }}"
+                                    placeholder="e.g. +91 98765 43210" required>
+                                <div class="form-text small">Used to auto-match or register the seller.</div>
+                            </div>
+                        </div>
+
+                        <!-- Email, Company & Business Location -->
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Seller Email <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="email" class="form-control" name="seller_email" id="sellerEmailInput"
+                                    value="{{ form_data.seller_email|default:'' }}"
+                                    placeholder="e.g. vendor@company.com">
+                                <div class="form-text small">Auto-generated if left empty.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Company / Shop Name <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_company" id="sellerCompanyInput"
+                                    value="{{ form_data.seller_company|default:'' }}"
+                                    placeholder="e.g. Apex Industrial Solutions">
+                                <div class="form-text small">Leave blank if individual seller.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Business Location <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_location" id="sellerLocationInput"
+                                    value="{{ form_data.seller_location|default:'' }}"
+                                    placeholder="e.g. Mumbai, India or Dubai, UAE">
+                                <div class="form-text small">Seller's city or warehouse location.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
                 <!-- 1. Product Details -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center"
+                            style="width: 32px; height: 32px;">
                             <i class="bi bi-box-seam-fill"></i>
                         </div>
                         <div>
@@ -97,8 +199,11 @@
                             <label class="form-label fw-semibold small text-uppercase text-secondary">
                                 Product Title / Name <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-lg fs-6" name="product_name" id="productNameInput" value="{{ form_data.product_name|default:'' }}" placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU Module" required>
-                            <div class="form-text small">Enter the descriptive title including manufacturer, product line, and main model.</div>
+                            <input type="text" class="form-control form-control-lg fs-6" name="product_name"
+                                id="productNameInput" value="{{ form_data.product_name|default:'' }}"
+                                placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU Module" required>
+                            <div class="form-text small">Enter the descriptive title including manufacturer, product
+                                line, and main model.</div>
                         </div>
 
                         <!-- Category & Subcategory Cascading Dropdowns -->
@@ -109,9 +214,12 @@
                                     Product Category <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" name="category_id" id="categorySelect" required>
-                                    <option value="" disabled {% if not form_data.category_id %}selected{% endif %}>-- Select Category --</option>
+                                    <option value="" disabled {% if not form_data.category_id %}selected{% endif %}>--
+                                        Select Category --</option>
                                     {% for cat in categories %}
-                                    <option value="{{ cat.id }}" {% if form_data.category_id|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                                    <option value="{{ cat.id }}" {% if
+                                        form_data.category_id|stringformat:"s"==cat.id|stringformat:"s" %}selected{%
+                                        endif %}>
                                         {{ cat.name }}
                                     </option>
                                     {% endfor %}
@@ -123,7 +231,8 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Subcategory <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select" name="subcategory_id" id="subcategorySelect" required disabled>
+                                <select class="form-select" name="subcategory_id" id="subcategorySelect" required
+                                    disabled>
                                     <option value="" selected>-- Select Subcategory --</option>
                                 </select>
                             </div>
@@ -136,8 +245,11 @@
                                     Brand Name
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-tag-fill"></i></span>
-                                    <input type="text" class="form-control border-start-0" name="brand_name" value="{{ form_data.brand_name|default:'' }}" placeholder="e.g. Siemens, Dell, Bosch">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i
+                                            class="bi bi-tag-fill"></i></span>
+                                    <input type="text" class="form-control border-start-0" name="brand_name"
+                                        value="{{ form_data.brand_name|default:'' }}"
+                                        placeholder="e.g. Siemens, Dell, Bosch">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -145,8 +257,11 @@
                                     Model No. / Part Number
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted border-end-0 font-monospace"><i class="bi bi-upc-scan"></i></span>
-                                    <input type="text" class="form-control border-start-0 font-monospace" name="model_no" value="{{ form_data.model_no|default:'' }}" placeholder="e.g. 6ES7214-1AG40-0XB0">
+                                    <span class="input-group-text bg-light text-muted border-end-0 font-monospace"><i
+                                            class="bi bi-upc-scan"></i></span>
+                                    <input type="text" class="form-control border-start-0 font-monospace"
+                                        name="model_no" value="{{ form_data.model_no|default:'' }}"
+                                        placeholder="e.g. 6ES7214-1AG40-0XB0">
                                 </div>
                             </div>
                         </div>
@@ -157,12 +272,14 @@
                 <!-- 2. Origin & Specifications -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-purple bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #ede9fe; color: #7c3aed;">
+                        <div class="rounded-3 bg-purple bg-opacity-10 text-primary d-flex align-items-center justify-content-center"
+                            style="width: 32px; height: 32px; background-color: #ede9fe; color: #7c3aed;">
                             <i class="bi bi-geo-alt-fill"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">2. Origin &amp; Specifications</h6>
-                            <div class="text-muted small">Origin, manufacturing timeline, dimensions, and expiry details</div>
+                            <div class="text-muted small">Origin, manufacturing timeline, dimensions, and expiry details
+                            </div>
                         </div>
                     </div>
                     <div class="card-body p-4">
@@ -174,9 +291,11 @@
                                     Manufacturing Country <span class="text-danger">*</span>
                                 </label>
                                 <select class="form-select" name="manufacturing_country" required>
-                                    <option value="" disabled {% if not form_data.manufacturing_country %}selected{% endif %}>-- Select Country --</option>
+                                    <option value="" disabled {% if not form_data.manufacturing_country %}selected{%
+                                        endif %}>-- Select Country --</option>
                                     {% for c in countries %}
-                                    <option value="{{ c }}" {% if form_data.manufacturing_country == c %}selected{% endif %}>{{ c }}</option>
+                                    <option value="{{ c }}" {% if form_data.manufacturing_country==c %}selected{% endif
+                                        %}>{{ c }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -186,7 +305,9 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Manufacturing Year
                                 </label>
-                                <input type="number" class="form-control" name="manufacturing_year" min="1950" max="2035" value="{{ form_data.manufacturing_year|default:'' }}" placeholder="e.g. 2024">
+                                <input type="number" class="form-control" name="manufacturing_year" min="1950"
+                                    max="2035" value="{{ form_data.manufacturing_year|default:'' }}"
+                                    placeholder="e.g. 2024">
                             </div>
                         </div>
 
@@ -196,7 +317,8 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Dimensions (Optional)
                                 </label>
-                                <input type="text" class="form-control" name="dimensions" value="{{ form_data.dimensions|default:'' }}" placeholder="e.g. 400 x 300 x 150 mm">
+                                <input type="text" class="form-control" name="dimensions"
+                                    value="{{ form_data.dimensions|default:'' }}" placeholder="e.g. 400 x 300 x 150 mm">
                             </div>
 
                             <!-- Expiry Date (If applicable) -->
@@ -204,7 +326,8 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Expiry Date (If applicable)
                                 </label>
-                                <input type="date" class="form-control" name="expiry_date" value="{{ form_data.expiry_date|default:'' }}">
+                                <input type="date" class="form-control" name="expiry_date"
+                                    value="{{ form_data.expiry_date|default:'' }}">
                             </div>
                         </div>
 
@@ -214,12 +337,14 @@
                 <!-- 3. Pricing & Quantity -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <div class="rounded-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center"
+                            style="width: 32px; height: 32px;">
                             <i class="bi bi-currency-dollar fs-5"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">3. Pricing &amp; Quantity</h6>
-                            <div class="text-muted small">Lot inventory count, currency, MSRP, and surplus liquidation price</div>
+                            <div class="text-muted small">Lot inventory count, currency, MSRP, and surplus liquidation
+                                price</div>
                         </div>
                     </div>
                     <div class="card-body p-4">
@@ -230,7 +355,9 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Available Quantity <span class="text-danger">*</span>
                                 </label>
-                                <input type="number" class="form-control form-control-lg fs-6" name="quantity" id="quantityInput" min="1" value="{{ form_data.quantity|default:'1' }}" placeholder="e.g. 50" required>
+                                <input type="number" class="form-control form-control-lg fs-6" name="quantity"
+                                    id="quantityInput" min="1" value="{{ form_data.quantity|default:'1' }}"
+                                    placeholder="e.g. 50" required>
                             </div>
 
                             <!-- Currency * -->
@@ -238,9 +365,11 @@
                                 <label class="form-label fw-semibold small text-uppercase text-secondary">
                                     Currency <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select form-select-lg fs-6 font-monospace fw-semibold" name="currency" id="currencySelect" required>
+                                <select class="form-select form-select-lg fs-6 font-monospace fw-semibold"
+                                    name="currency" id="currencySelect" required>
                                     {% for curr in currencies %}
-                                    <option value="{{ curr }}" {% if form_data.currency|default:'USD' == curr %}selected{% endif %}>{{ curr }}</option>
+                                    <option value="{{ curr }}" {% if form_data.currency|default:'USD'==curr %}selected{%
+                                        endif %}>{{ curr }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -254,7 +383,9 @@
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol bg-light fw-bold">$</span>
-                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fs-6" name="msrp" id="msrpInput" value="{{ form_data.msrp|default:'' }}" placeholder="e.g. 350.00" required>
+                                    <input type="number" step="0.01" min="0.01"
+                                        class="form-control form-control-lg fs-6" name="msrp" id="msrpInput"
+                                        value="{{ form_data.msrp|default:'' }}" placeholder="e.g. 350.00" required>
                                 </div>
                                 <div class="form-text small">Manufacturer standard catalog unit price.</div>
                             </div>
@@ -265,13 +396,21 @@
                                     <label class="form-label fw-semibold small text-uppercase text-secondary mb-1">
                                         Liquidating / Surplus Price (Per Unit) <span class="text-danger">*</span>
                                     </label>
-                                    <button type="button" id="btnApplyMaxPrice" class="btn btn-sm btn-outline-success py-0 px-2 fw-semibold d-none" style="font-size: 0.75rem;" title="Apply suggested maximum price (60% discount)">
+                                    <button type="button" id="btnApplyMaxPrice"
+                                        class="btn btn-sm btn-outline-success py-0 px-2 fw-semibold d-none"
+                                        style="font-size: 0.75rem;"
+                                        title="Apply suggested maximum price (60% discount)">
                                         Apply Max 60%
                                     </button>
                                 </div>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol bg-light fw-bold text-success">$</span>
-                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-lg fs-6 fw-bold text-success" name="liquidating_price" id="liquidatingPriceInput" value="{{ form_data.liquidating_price|default:'' }}" placeholder="e.g. 140.00" required>
+                                    <span
+                                        class="input-group-text currency-symbol bg-light fw-bold text-success">$</span>
+                                    <input type="number" step="0.01" min="0.01"
+                                        class="form-control form-control-lg fs-6 fw-bold text-success"
+                                        name="liquidating_price" id="liquidatingPriceInput"
+                                        value="{{ form_data.liquidating_price|default:'' }}" placeholder="e.g. 140.00"
+                                        required>
                                 </div>
                                 <div id="priceDiscountHint" class="form-text small text-muted">
                                     Liquidating price must be below MSRP (minimum 60% discount recommended).
@@ -285,16 +424,19 @@
                                 <div class="col-sm-4 border-end-sm">
                                     <div class="text-muted small">Calculated Discount</div>
                                     <div class="mt-1">
-                                        <span class="badge bg-secondary fs-6 fw-bold px-2.5 py-1" id="discountBadge">0% OFF</span>
+                                        <span class="badge bg-secondary fs-6 fw-bold px-2.5 py-1" id="discountBadge">0%
+                                            OFF</span>
                                     </div>
                                 </div>
                                 <div class="col-sm-4 border-end-sm ps-sm-3">
                                     <div class="text-muted small">Buyer Marketplace Price (+10%)</div>
-                                    <div class="fw-bold font-monospace fs-6 text-dark mt-1" id="buyerPricePreview">$0.00</div>
+                                    <div class="fw-bold font-monospace fs-6 text-dark mt-1" id="buyerPricePreview">$0.00
+                                    </div>
                                 </div>
                                 <div class="col-sm-4 ps-sm-3">
                                     <div class="text-muted small">Total Lot Payout Value</div>
-                                    <div class="fw-bold font-monospace fs-6 text-success mt-1" id="totalLotPayout">$0.00</div>
+                                    <div class="fw-bold font-monospace fs-6 text-success mt-1" id="totalLotPayout">$0.00
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -304,7 +446,8 @@
                             <label class="form-label fw-semibold small text-uppercase text-secondary">
                                 Excluded Export Countries (Optional)
                             </label>
-                            <select class="form-select" name="excluded_countries" multiple size="4" style="height: auto;">
+                            <select class="form-select" name="excluded_countries" multiple size="4"
+                                style="height: auto;">
                                 <option value="None (Worldwide)">None (Worldwide)</option>
                                 <option value="Russia">Russia</option>
                                 <option value="Iran">Iran</option>
@@ -315,7 +458,8 @@
                                 <option value="{{ c }}">{{ c }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text small">Hold Ctrl (or Cmd on Mac) to select multiple countries where this product cannot be exported.</div>
+                            <div class="form-text small">Hold Ctrl (or Cmd on Mac) to select multiple countries where
+                                this product cannot be exported.</div>
                         </div>
 
                     </div>
@@ -324,12 +468,14 @@
                 <!-- 4. Description & Media -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                        <div class="rounded-3 bg-teal bg-opacity-10 text-teal d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background-color: #ccfbf1; color: #0d9488;">
+                        <div class="rounded-3 bg-teal bg-opacity-10 text-teal d-flex align-items-center justify-content-center"
+                            style="width: 32px; height: 32px; background-color: #ccfbf1; color: #0d9488;">
                             <i class="bi bi-file-earmark-text-fill"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0 text-dark">4. Description &amp; Media</h6>
-                            <div class="text-muted small">Technical condition narrative, liquidation reason, warranty, and test reports</div>
+                            <div class="text-muted small">Technical condition narrative, liquidation reason, warranty,
+                                and test reports</div>
                         </div>
                     </div>
                     <div class="card-body p-4">
@@ -339,8 +485,11 @@
                             <label class="form-label fw-semibold small text-uppercase text-secondary">
                                 Description &amp; Technical Condition <span class="text-danger">*</span>
                             </label>
-                            <textarea class="form-control" name="description" rows="4" placeholder="Describe the product condition, packaging (original box, pallet, sealed), technical specifications, and condition..." required>{{ form_data.description|default:'' }}</textarea>
-                            <div class="form-text small">Provide clear details on condition, packaging, and operating specifications.</div>
+                            <textarea class="form-control" name="description" rows="4"
+                                placeholder="Describe the product condition, packaging (original box, pallet, sealed), technical specifications, and condition..."
+                                required>{{ form_data.description|default:'' }}</textarea>
+                            <div class="form-text small">Provide clear details on condition, packaging, and operating
+                                specifications.</div>
                         </div>
 
                         <!-- Reason to Sell * (Select dropdown matching SimpleListingModal) -->
@@ -350,7 +499,8 @@
                             </label>
                             <select class="form-select" name="reason_to_sell" required>
                                 {% for r_opt in reason_to_sell_options %}
-                                <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus Inventory' == r_opt %}selected{% endif %}>
+                                <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus
+                                    Inventory'==r_opt %}selected{% endif %}>
                                     {{ r_opt }}
                                 </option>
                                 {% endfor %}
@@ -366,33 +516,48 @@
                                         <i class="bi bi-shield-check"></i>
                                     </div>
                                     <div>
-                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0" for="warrantyToggle">
+                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0"
+                                            for="warrantyToggle">
                                             Product Warranty Included
                                         </label>
-                                        <div class="text-muted small">Enable if replacement guarantee or manufacturer warranty applies</div>
+                                        <div class="text-muted small">Enable if replacement guarantee or manufacturer
+                                            warranty applies</div>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="warrantyToggle" name="warranty_included" {% if form_data.warranty_included %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="warrantyToggle" name="warranty_included" {% if form_data.warranty_included
+                                        %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
                                 </div>
                             </div>
 
                             <div id="warrantyFields" class="mt-3 pt-3 border-top" style="display: none;">
                                 <div class="mb-3">
-                                    <label class="form-label small fw-semibold text-secondary">Warranty Period / Guarantee *</label>
-                                    <input type="text" class="form-control" id="warrantyInput" name="warranty" value="{{ form_data.warranty|default:'' }}" placeholder="e.g. 30 Days, 90 Days, 1 Year">
+                                    <label class="form-label small fw-semibold text-secondary">Warranty Period /
+                                        Guarantee *</label>
+                                    <input type="text" class="form-control" id="warrantyInput" name="warranty"
+                                        value="{{ form_data.warranty|default:'' }}"
+                                        placeholder="e.g. 30 Days, 90 Days, 1 Year">
                                 </div>
                                 <!-- Preset Buttons matching SimpleListingModal -->
                                 <div class="d-flex flex-wrap gap-1.5 mb-3">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="30 Days">30 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="60 Days">60 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="90 Days">90 Days</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="6 Months">6 Months</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty" data-preset="1 Year">1 Year</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty"
+                                        data-preset="30 Days">30 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty"
+                                        data-preset="60 Days">60 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty"
+                                        data-preset="90 Days">90 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty"
+                                        data-preset="6 Months">6 Months</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty"
+                                        data-preset="1 Year">1 Year</button>
                                 </div>
                                 <div>
-                                    <label class="form-label small fw-semibold text-secondary">Upload Warranty Document (Optional) <span class="text-muted fw-normal">PDF, JPG, PNG (Max 10MB)</span></label>
-                                    <input type="file" class="form-control" name="warranty_document" accept=".pdf,image/png,image/jpeg,image/webp">
+                                    <label class="form-label small fw-semibold text-secondary">Upload Warranty Document
+                                        (Optional) <span class="text-muted fw-normal">PDF, JPG, PNG (Max
+                                            10MB)</span></label>
+                                    <input type="file" class="form-control" name="warranty_document"
+                                        accept=".pdf,image/png,image/jpeg,image/webp">
                                 </div>
                             </div>
                         </div>
@@ -405,21 +570,30 @@
                                         <i class="bi bi-patch-check-fill"></i>
                                     </div>
                                     <div>
-                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0" for="certificateToggle">
+                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0"
+                                            for="certificateToggle">
                                             3rd Party Certificate Available
                                         </label>
-                                        <div class="text-muted small">Check if material test reports or manufacturer calibration certs are available</div>
+                                        <div class="text-muted small">Check if material test reports or manufacturer
+                                            calibration certs are available</div>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="certificateToggle" name="third_party_certificate" {% if form_data.third_party_certificate %}checked{% endif %} style="width: 2.5em; height: 1.3em;">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="certificateToggle" name="third_party_certificate" {% if
+                                        form_data.third_party_certificate %}checked{% endif %}
+                                        style="width: 2.5em; height: 1.3em;">
                                 </div>
                             </div>
 
                             <div id="certificateFields" class="mt-3 pt-3 border-top" style="display: none;">
-                                <label class="form-label small fw-semibold text-secondary">Upload Certificate / Test Report Document * <span class="text-muted fw-normal">PDF, JPG, PNG (Max 10MB)</span></label>
-                                <input type="file" class="form-control" name="certificate_document" accept=".pdf,image/png,image/jpeg,image/webp">
-                                <div class="form-text small">Calibration certificate, material test report, or compliance documentation.</div>
+                                <label class="form-label small fw-semibold text-secondary">Upload Certificate / Test
+                                    Report Document * <span class="text-muted fw-normal">PDF, JPG, PNG (Max
+                                        10MB)</span></label>
+                                <input type="file" class="form-control" name="certificate_document"
+                                    accept=".pdf,image/png,image/jpeg,image/webp">
+                                <div class="form-text small">Calibration certificate, material test report, or
+                                    compliance documentation.</div>
                             </div>
                         </div>
 
@@ -433,7 +607,8 @@
 
                 <!-- Product Images * (Dropzone Multi-Upload) -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                    <div
+                        class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
                         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                             <i class="bi bi-images text-primary"></i>
                             <span>Product Images <span class="text-danger">*</span></span>
@@ -443,15 +618,18 @@
                     <div class="card-body p-4">
 
                         <!-- Hidden File Input -->
-                        <input type="file" name="images" id="imageInput" multiple accept="image/png, image/jpeg, image/jpg, image/webp" class="d-none">
+                        <input type="file" name="images" id="imageInput" multiple
+                            accept="image/png, image/jpeg, image/jpg, image/webp" class="d-none">
 
                         <!-- Dropzone Area -->
-                        <div class="dropzone-box text-center p-4 rounded-3 border border-2 border-dashed" id="dropzoneBox" style="cursor: pointer; background: #fafbfc; transition: all 0.2s ease;">
+                        <div class="dropzone-box text-center p-4 rounded-3 border border-2 border-dashed"
+                            id="dropzoneBox" style="cursor: pointer; background: #fafbfc; transition: all 0.2s ease;">
                             <div class="mb-2 text-primary">
                                 <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
                             </div>
                             <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
-                            <div class="text-muted small">PNG, JPG, WEBP, or GIF (max. 10MB per file). At least 1 image is required.</div>
+                            <div class="text-muted small">PNG, JPG, WEBP, or GIF (max. 10MB per file). At least 1 image
+                                is required.</div>
                         </div>
 
                         <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-2 small d-none">
@@ -468,10 +646,12 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4">
                         <div class="d-grid gap-2">
-                            <button type="submit" id="btnSubmitBottom" class="btn btn-primary btn-lg py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2">
+                            <button type="submit" id="btnSubmitBottom"
+                                class="btn btn-primary btn-lg py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2">
                                 <i class="bi bi-check-circle-fill"></i> Submit to Seller Enquiries
                             </button>
-                            <a href="/admin/enquiries/seller/" class="btn btn-outline-secondary py-2 rounded-3 text-decoration-none text-center">
+                            <a href="/admin/enquiries/seller/"
+                                class="btn btn-outline-secondary py-2 rounded-3 text-decoration-none text-center">
                                 Cancel &amp; Return
                             </a>
                         </div>
@@ -489,68 +669,75 @@
 </div>
 
 <style>
-.dropzone-box:hover, .dropzone-box.dragover {
-    background-color: #f0fdf4 !important;
-    border-color: #10b981 !important;
-}
-.image-preview-card {
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.image-preview-card img {
-    width: 100%;
-    height: 90px;
-    object-fit: cover;
-    display: block;
-}
-.image-preview-card .badge-cover {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(15, 23, 42, 0.85);
-    color: #fff;
-    font-weight: 600;
-}
-.image-preview-card .btn-remove {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(220, 38, 38, 0.9);
-    color: #fff;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.image-preview-card .btn-remove:hover {
-    background: #b91c1c;
-}
-.btn-preset-warranty.active {
-    background-color: #0a5c48 !important;
-    color: #fff !important;
-    border-color: #0a5c48 !important;
-}
+    .dropzone-box:hover,
+    .dropzone-box.dragover {
+        background-color: #f0fdf4 !important;
+        border-color: #10b981 !important;
+    }
+
+    .image-preview-card {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .image-preview-card img {
+        width: 100%;
+        height: 90px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .image-preview-card .badge-cover {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(15, 23, 42, 0.85);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .image-preview-card .btn-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.9);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .image-preview-card .btn-remove:hover {
+        background: #b91c1c;
+    }
+
+    .btn-preset-warranty.active {
+        background-color: #0a5c48 !important;
+        color: #fff !important;
+        border-color: #0a5c48 !important;
+    }
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // -------------------------------------------------------------
-    // 1. Cascading Categories -> Subcategories
-    // -------------------------------------------------------------
-    const subcategoriesMap = {{ subcategories_json|safe }};
+    document.addEventListener("DOMContentLoaded", function () {
+        // -------------------------------------------------------------
+        // 1. Cascading Categories -> Subcategories
+        // -------------------------------------------------------------
+        const subcategoriesMap = JSON.parse('{{ subcategories_json|escapejs|default:"{}" }}');
     const categorySelect = document.getElementById("categorySelect");
     const subcategorySelect = document.getElementById("subcategorySelect");
     const initialSubCatVal = "{{ form_data.subcategory_id|default:'' }}";
@@ -580,7 +767,7 @@ document.addEventListener("DOMContentLoaded", function() {
         populateSubcategories(categorySelect.value, initialSubCatVal);
     }
 
-    categorySelect.addEventListener("change", function() {
+    categorySelect.addEventListener("change", function () {
         populateSubcategories(this.value);
     });
 
@@ -603,7 +790,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Preset chips click
     const presetButtons = document.querySelectorAll(".btn-preset-warranty");
     presetButtons.forEach(btn => {
-        btn.addEventListener("click", function() {
+        btn.addEventListener("click", function () {
             const val = this.getAttribute("data-preset");
             warrantyInput.value = val;
             presetButtons.forEach(b => b.classList.remove("active"));
@@ -637,7 +824,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function getCurrencySymbol(curr) {
         if (!curr) return "$";
         const c = curr.split("-")[0].trim().toUpperCase();
-        switch(c) {
+        switch (c) {
             case "EUR": return "€";
             case "GBP": return "£";
             case "INR": return "₹";
@@ -696,7 +883,7 @@ document.addEventListener("DOMContentLoaded", function() {
         totalLotPayout.textContent = `${sym}${totalPayout}`;
     }
 
-    btnApplyMaxPrice.addEventListener("click", function() {
+    btnApplyMaxPrice.addEventListener("click", function () {
         if (this.dataset.maxPrice) {
             lpInput.value = this.dataset.maxPrice;
             updateCalculations();
@@ -744,7 +931,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    imageInput.addEventListener("change", function() {
+    imageInput.addEventListener("change", function () {
         if (this.files && this.files.length) {
             handleNewFiles(this.files);
         }
@@ -815,7 +1002,22 @@ document.addEventListener("DOMContentLoaded", function() {
     // 5. Client-Side Form Validation Before Submit
     // -------------------------------------------------------------
     const form = document.getElementById("addProductForm");
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", function (e) {
+        const sellerName = document.getElementById("sellerNameInput") ? document.getElementById("sellerNameInput").value.trim() : "";
+        const sellerPhone = document.getElementById("sellerPhoneInput") ? document.getElementById("sellerPhoneInput").value.trim() : "";
+        if (!sellerName) {
+            e.preventDefault();
+            alert("Please enter the Seller Contact Name (the vendor who provided these details).");
+            document.getElementById("sellerNameInput")?.focus();
+            return false;
+        }
+        if (!sellerPhone) {
+            e.preventDefault();
+            alert("Please enter the WhatsApp / Mobile Number of the seller.");
+            document.getElementById("sellerPhoneInput")?.focus();
+            return false;
+        }
+
         if (selectedFiles.length === 0) {
             e.preventDefault();
             imageValidationAlert.classList.remove("d-none");

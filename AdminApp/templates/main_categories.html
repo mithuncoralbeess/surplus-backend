@@ -10,34 +10,42 @@
         background-color: var(--bs-body-bg) !important;
         color: var(--bs-body-color) !important;
     }
+
     [data-bs-theme="dark"] .custom-category-accordion .accordion-button:not(.collapsed) {
         background-color: var(--bs-secondary-bg) !important;
         color: var(--bs-primary) !important;
     }
+
     [data-bs-theme="dark"] .custom-category-accordion .accordion-item {
         background-color: var(--bs-body-bg) !important;
         border-color: var(--bs-border-color) !important;
     }
+
     [data-bs-theme="dark"] .custom-category-accordion .accordion-body {
         background-color: var(--bs-tertiary-bg) !important;
     }
+
     [data-bs-theme="dark"] .subcat-table-card {
         background-color: var(--bs-body-bg) !important;
         border-color: var(--bs-border-color) !important;
     }
+
     [data-bs-theme="dark"] .table-light {
         --bs-table-bg: var(--bs-tertiary-bg) !important;
         --bs-table-color: var(--bs-body-color) !important;
     }
+
     [data-bs-theme="dark"] .modal-content {
         background-color: var(--bs-body-bg) !important;
         color: var(--bs-body-color) !important;
     }
+
     [data-bs-theme="dark"] .modal-header,
     [data-bs-theme="dark"] .modal-footer {
         background-color: var(--bs-tertiary-bg) !important;
         border-color: var(--bs-border-color) !important;
     }
+
     [data-bs-theme="dark"] .form-control,
     [data-bs-theme="dark"] .form-select,
     [data-bs-theme="dark"] .input-group-text {
@@ -45,19 +53,21 @@
         color: var(--bs-body-color) !important;
         border-color: var(--bs-border-color) !important;
     }
+
     [data-bs-theme="dark"] .badge.bg-light {
         background-color: var(--bs-tertiary-bg) !important;
         color: var(--bs-body-color) !important;
     }
 </style>
 
-<div class="container-fluid px-4 py-3">
+<div class="container-fluid">
     <!-- Page Header & Action -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
         <div>
             <nav class="custom-breadcrumb" aria-label="breadcrumb">
                 <ol class="breadcrumb-list">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i>
+                            Dashboard</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                     <li class="breadcrumb-item active" aria-current="page"><span>Category Management</span></li>
                 </ol>
@@ -66,7 +76,9 @@
             <p class="header-subtitle">Organize and manage top-level catalog categories and their subcategories</p>
         </div>
         <div>
-            <button type="button" class="btn btn-primary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-2 font-weight-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addMainCategoryModal">
+            <button type="button"
+                class="btn btn-primary px-3.5 py-2 rounded-3 d-inline-flex align-items-center gap-2 font-weight-bold shadow-sm"
+                data-bs-toggle="modal" data-bs-target="#addMainCategoryModal">
                 <i class="bi bi-plus-lg fs-6"></i>
                 <span>Add Main Category</span>
             </button>
@@ -79,7 +91,8 @@
             <div class="card border shadow-sm rounded-3 p-3 bg-body-tertiary">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Main Categories</span>
+                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Main
+                            Categories</span>
                         <h3 class="fw-bold mb-0 text-body">{{ categories|length }}</h3>
                     </div>
                     <div class="p-3 rounded-3 bg-primary bg-opacity-10 text-primary">
@@ -92,13 +105,14 @@
             <div class="card border shadow-sm rounded-3 p-3 bg-body-tertiary">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Total Subcategories</span>
+                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Total
+                            Subcategories</span>
                         <h3 class="fw-bold mb-0 text-body">
                             {% with total_subs=0 %}
                             {% for c in categories %}
-                                {% if forloop.first %}
-                                    {% comment %} Calculated dynamically below {% endcomment %}
-                                {% endif %}
+                            {% if forloop.first %}
+                            {% comment %} Calculated dynamically below {% endcomment %}
+                            {% endif %}
                             {% endfor %}
                             <span id="totalSubCount">--</span>
                             {% endwith %}
@@ -114,13 +128,14 @@
             <div class="card border shadow-sm rounded-3 p-3 bg-body-tertiary">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Active Categories</span>
+                        <span class="text-secondary small text-uppercase fw-semibold d-block mb-1">Active
+                            Categories</span>
                         <h3 class="fw-bold mb-0 text-success">
                             {% with active_mains=0 %}
                             {% for c in categories %}
-                                {% if c.is_active %}
-                                    {% comment %} Calculated in JS {% endcomment %}
-                                {% endif %}
+                            {% if c.is_active %}
+                            {% comment %} Calculated in JS {% endcomment %}
+                            {% endif %}
                             {% endfor %}
                             <span id="activeCatCount">{{ categories|length }}</span>
                             {% endwith %}
@@ -137,23 +152,30 @@
     <!-- Main Categories Card -->
     <div class="card border shadow-sm rounded-4 overflow-hidden mb-4 bg-body-tertiary">
         <div class="card-body p-4">
-            
+
             <!-- Filters & Search Toolbar -->
             <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center pb-3 border-bottom">
                 <div class="flex-grow-1" style="max-width: 480px;">
                     <div class="input-group shadow-sm">
-                        <span class="input-group-text bg-body border-end-0 text-secondary"><i class="bi bi-search"></i></span>
-                        <input type="text" id="categorySearch" class="form-control border-start-0 ps-0" placeholder="Search main categories or subcategories...">
-                        <button class="btn btn-outline-secondary px-3" type="button" onclick="document.getElementById('categorySearch').value=''; filterCategories();">Clear</button>
+                        <span class="input-group-text bg-body border-end-0 text-secondary"><i
+                                class="bi bi-search"></i></span>
+                        <input type="text" id="categorySearch" class="form-control border-start-0 ps-0"
+                            placeholder="Search main categories or subcategories...">
+                        <button class="btn btn-outline-secondary px-3" type="button"
+                            onclick="document.getElementById('categorySearch').value=''; filterCategories();">Clear</button>
                     </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 d-inline-flex align-items-center gap-2" onclick="expandAllAccordion()" style="font-size: 14px !important;">
+                    <button type="button"
+                        class="btn btn-outline-secondary btn-sm px-3 py-2 d-inline-flex align-items-center gap-2"
+                        onclick="expandAllAccordion()" style="font-size: 14px !important;">
                         <i class="bi bi-arrows-expand me-1"></i>
                         <span>Expand All</span>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 py-2 d-inline-flex align-items-center gap-2" onclick="collapseAllAccordion()" style="font-size: 14px !important;">
+                    <button type="button"
+                        class="btn btn-outline-secondary btn-sm px-3 py-2 d-inline-flex align-items-center gap-2"
+                        onclick="collapseAllAccordion()" style="font-size: 14px !important;">
                         <i class="bi bi-arrows-collapse me-1"></i>
                         <span>Collapse All</span>
                     </button>
@@ -163,40 +185,42 @@
             <!-- Categories Accordion List -->
             <div class="accordion custom-category-accordion" id="categoriesAccordion">
                 {% for main_cat in categories %}
-                <div class="accordion-item border rounded-3 mb-3 overflow-hidden category-card-item" data-name="{{ main_cat.name|lower }}" data-slug="{{ main_cat.slug|lower }}">
+                <div class="accordion-item border rounded-3 mb-3 overflow-hidden category-card-item"
+                    data-name="{{ main_cat.name|lower }}" data-slug="{{ main_cat.slug|lower }}">
                     <!-- Main Category Header -->
                     <div class="accordion-header position-relative" id="heading{{ main_cat.id }}">
-                        <div class="accordion-button collapsed py-3 px-3.5 shadow-none d-flex align-items-center justify-content-between w-100" 
-                                type="button" 
-                                data-bs-toggle="collapse" 
-                                data-bs-target="#collapse{{ main_cat.id }}" 
-                                aria-expanded="false" 
-                                aria-controls="collapse{{ main_cat.id }}"
-                                style="cursor: pointer;">
-                            
+                        <div class="accordion-button collapsed py-3 px-3.5 shadow-none d-flex align-items-center justify-content-between w-100"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ main_cat.id }}"
+                            aria-expanded="false" aria-controls="collapse{{ main_cat.id }}" style="cursor: pointer;">
+
                             <div class="d-flex align-items-center gap-3 flex-grow-1">
                                 <!-- Category Icon Avatar -->
                                 {% if main_cat.image %}
-                                <img src="{{ main_cat.image.url }}" alt="{{ main_cat.name }}" class="rounded-3 shadow-sm border" style="width: 44px; height: 44px; object-fit: cover;">
+                                <img src="{{ main_cat.image.url }}" alt="{{ main_cat.name }}"
+                                    class="rounded-3 shadow-sm border"
+                                    style="width: 44px; height: 44px; object-fit: cover;">
                                 {% else %}
-                                <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 44px; height: 44px; min-width: 44px;">
+                                <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                                    style="width: 44px; height: 44px; min-width: 44px;">
                                     {% if "electronics" in main_cat.name|lower %}
-                                        <i class="bi bi-cpu fs-5"></i>
+                                    <i class="bi bi-cpu fs-5"></i>
                                     {% elif "electrical" in main_cat.name|lower %}
-                                        <i class="bi bi-lightning-charge fs-5"></i>
+                                    <i class="bi bi-lightning-charge fs-5"></i>
                                     {% elif "machinery" in main_cat.name|lower %}
-                                        <i class="bi bi-gear-wide-connected fs-5"></i>
+                                    <i class="bi bi-gear-wide-connected fs-5"></i>
                                     {% elif "oil" in main_cat.name|lower or "gas" in main_cat.name|lower %}
-                                        <i class="bi bi-fuel-pump fs-5"></i>
+                                    <i class="bi bi-fuel-pump fs-5"></i>
                                     {% else %}
-                                        <i class="bi bi-grid-3x3-gap fs-5"></i>
+                                    <i class="bi bi-grid-3x3-gap fs-5"></i>
                                     {% endif %}
                                 </div>
                                 {% endif %}
 
                                 <div>
                                     <h5 class="fw-bold text-body mb-0 fs-6">{{ main_cat.name }}</h5>
-                                    <span class="badge bg-body-secondary text-body-secondary border font-monospace mt-1 px-2 py-0.5" style="font-size: 0.72rem;">{{ main_cat.slug }}</span>
+                                    <span
+                                        class="badge bg-body-secondary text-body-secondary border font-monospace mt-1 px-2 py-0.5"
+                                        style="font-size: 0.72rem;">{{ main_cat.slug }}</span>
                                 </div>
                             </div>
 
@@ -205,11 +229,15 @@
                                 <!-- Status Badge -->
                                 <div>
                                     {% if main_cat.is_active %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.78rem;">
+                                    <span
+                                        class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold"
+                                        style="font-size: 0.78rem;">
                                         <i class="bi bi-check-circle-fill me-1"></i>Active
                                     </span>
                                     {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.78rem;">
+                                    <span
+                                        class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1 rounded-pill fw-semibold"
+                                        style="font-size: 0.78rem;">
                                         <i class="bi bi-dash-circle-fill me-1"></i>Inactive
                                     </span>
                                     {% endif %}
@@ -217,49 +245,68 @@
 
                                 <!-- Subcategories Count Pill -->
                                 <div>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-medium sub-counter-badge" style="font-size: 0.80rem;">
-                                        <i class="bi bi-diagram-3 me-1"></i> {{ main_cat.subcategories.count }} Subcategories
+                                    <span
+                                        class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-medium sub-counter-badge"
+                                        style="font-size: 0.80rem;">
+                                        <i class="bi bi-diagram-3 me-1"></i> {{ main_cat.subcategories.count }}
+                                        Subcategories
                                     </span>
                                 </div>
 
                                 <!-- Add Subcategory, Edit & Delete Buttons -->
                                 <div class="d-flex align-items-center gap-2" onclick="event.stopPropagation();">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#addSubCategoryModal{{ main_cat.id }}" title="Add Subcategory">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1 fw-medium"
+                                        data-bs-toggle="modal" data-bs-target="#addSubCategoryModal{{ main_cat.id }}"
+                                        title="Add Subcategory">
                                         <i class="bi bi-plus-circle me-1"></i>
                                         <span>Add Sub</span>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#editMainCategoryModal{{ main_cat.id }}" title="Edit Main Category">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium"
+                                        data-bs-toggle="modal" data-bs-target="#editMainCategoryModal{{ main_cat.id }}"
+                                        title="Edit Main Category">
                                         <i class="bi bi-pencil-fill"></i>
                                         <span>Edit</span>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium" data-bs-toggle="modal" data-bs-target="#deleteMainCategoryModal{{ main_cat.id }}" title="Delete Main Category">
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-medium"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteMainCategoryModal{{ main_cat.id }}"
+                                        title="Delete Main Category">
                                         <i class="bi bi-trash-fill"></i>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Subcategories Collapse Container -->
-                    <div id="collapse{{ main_cat.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ main_cat.id }}" data-bs-parent="#categoriesAccordion">
+                    <div id="collapse{{ main_cat.id }}" class="accordion-collapse collapse"
+                        aria-labelledby="heading{{ main_cat.id }}" data-bs-parent="#categoriesAccordion">
                         <div class="accordion-body bg-body-secondary bg-opacity-75 p-4 border-top">
-                            
+
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-uppercase text-secondary mb-0" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-list-nested me-1 text-primary"></i> Subcategories under {{ main_cat.name }}
+                                <h6 class="fw-bold text-uppercase text-secondary mb-0"
+                                    style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-list-nested me-1 text-primary"></i> Subcategories under {{
+                                    main_cat.name }}
                                 </h6>
-                                <span class="text-secondary small">Total: <strong>{{ main_cat.subcategories.count }}</strong> items</span>
+                                <span class="text-secondary small">Total: <strong>{{ main_cat.subcategories.count
+                                        }}</strong> items</span>
                             </div>
 
                             <div class="card border shadow-sm rounded-3 overflow-hidden bg-body subcat-table-card">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
                                         <thead class="table-light">
-                                            <tr class="text-secondary text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                            <tr class="text-secondary text-uppercase"
+                                                style="font-size: 0.72rem; letter-spacing: 0.5px;">
                                                 <th class="ps-3 py-2.5 fw-semibold">Subcategory Name</th>
                                                 <th class="py-2.5 fw-semibold">Slug Identifier</th>
                                                 <th class="py-2.5 fw-semibold">Status</th>
-                                                <th class="pe-3 py-2.5 fw-semibold text-end" style="width: 140px;">Actions</th>
+                                                <th class="pe-3 py-2.5 fw-semibold text-end" style="width: 140px;">
+                                                    Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -268,64 +315,118 @@
                                                 <td class="ps-3 py-2.5">
                                                     <span class="fw-bold text-body">{{ sub.name }}</span>
                                                     {% if sub.description %}
-                                                    <span class="d-block text-secondary small text-truncate" style="max-width: 320px; font-size: 0.78rem;">{{ sub.description }}</span>
+                                                    <span class="d-block text-secondary small text-truncate"
+                                                        style="max-width: 320px; font-size: 0.78rem;">{{ sub.description
+                                                        }}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="py-2.5">
-                                                    <code class="text-primary bg-primary bg-opacity-10 px-2 py-0.5 rounded font-monospace" style="font-size: 0.78rem;">{{ sub.slug }}</code>
+                                                    <code
+                                                        class="text-primary bg-primary bg-opacity-10 px-2 py-0.5 rounded font-monospace"
+                                                        style="font-size: 0.78rem;">{{ sub.slug }}</code>
                                                 </td>
                                                 <td class="py-2.5">
                                                     {% if sub.is_active %}
-                                                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-0.5 rounded-pill fw-medium" style="font-size: 0.72rem;">Active</span>
+                                                    <span
+                                                        class="badge bg-success bg-opacity-10 text-success px-2 py-0.5 rounded-pill fw-medium"
+                                                        style="font-size: 0.72rem;">Active</span>
                                                     {% else %}
-                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-0.5 rounded-pill fw-medium" style="font-size: 0.72rem;">Inactive</span>
+                                                    <span
+                                                        class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-0.5 rounded-pill fw-medium"
+                                                        style="font-size: 0.72rem;">Inactive</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="pe-3 py-2.5 text-end">
                                                     <div class="d-flex align-items-center justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-0.5 rounded" data-bs-toggle="modal" data-bs-target="#editSubCategoryModal{{ sub.id }}" title="Edit Subcategory" style="font-size: 0.78rem;">
+                                                        <button type="button"
+                                                            class="btn btn-outline-secondary btn-sm px-2 py-0.5 rounded"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#editSubCategoryModal{{ sub.id }}"
+                                                            title="Edit Subcategory" style="font-size: 0.78rem;">
                                                             <i class="bi bi-pencil-fill"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm px-2 py-0.5 rounded" data-bs-toggle="modal" data-bs-target="#deleteSubCategoryModal{{ sub.id }}" title="Delete Subcategory" style="font-size: 0.78rem;">
+                                                        <button type="button"
+                                                            class="btn btn-outline-danger btn-sm px-2 py-0.5 rounded"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteSubCategoryModal{{ sub.id }}"
+                                                            title="Delete Subcategory" style="font-size: 0.78rem;">
                                                             <i class="bi bi-trash-fill"></i>
                                                         </button>
                                                     </div>
 
                                                     <!-- Edit Subcategory Modal -->
-                                                    <div class="modal fade text-start" id="editSubCategoryModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal fade text-start"
+                                                        id="editSubCategoryModal{{ sub.id }}" tabindex="-1"
+                                                        aria-hidden="true">
                                                         <div class="modal-dialog modal-dialog-centered">
                                                             <div class="modal-content border-0 shadow-lg rounded-4">
                                                                 <form method="POST">
                                                                     {% csrf_token %}
-                                                                    <input type="hidden" name="action" value="edit_sub_category">
-                                                                    <input type="hidden" name="sub_category_id" value="{{ sub.id }}">
-                                                                    <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
-                                                                        <h5 class="modal-title fw-bold text-body mb-0 fs-6">Edit Subcategory</h5>
-                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    <input type="hidden" name="action"
+                                                                        value="edit_sub_category">
+                                                                    <input type="hidden" name="sub_category_id"
+                                                                        value="{{ sub.id }}">
+                                                                    <div
+                                                                        class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
+                                                                        <h5
+                                                                            class="modal-title fw-bold text-body mb-0 fs-6">
+                                                                            Edit Subcategory</h5>
+                                                                        <button type="button" class="btn-close"
+                                                                            data-bs-dismiss="modal"
+                                                                            aria-label="Close"></button>
                                                                     </div>
                                                                     <div class="modal-body p-4">
                                                                         <div class="mb-3">
-                                                                            <label class="form-label fw-semibold text-body small">Subcategory Name <span class="text-danger">*</span></label>
-                                                                            <input type="text" class="form-control form-control-md rounded-3" name="name" value="{{ sub.name }}" required>
+                                                                            <label
+                                                                                class="form-label fw-semibold text-body small">Subcategory
+                                                                                Name <span
+                                                                                    class="text-danger">*</span></label>
+                                                                            <input type="text"
+                                                                                class="form-control form-control-md rounded-3"
+                                                                                name="name" value="{{ sub.name }}"
+                                                                                required>
                                                                         </div>
                                                                         <div class="mb-3">
-                                                                            <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
-                                                                            <input type="text" class="form-control form-control-md rounded-3 font-monospace" name="slug" value="{{ sub.slug }}" required style="font-size: 0.85rem;">
+                                                                            <label
+                                                                                class="form-label fw-semibold text-body small">Slug
+                                                                                Identifier <span
+                                                                                    class="text-danger">*</span></label>
+                                                                            <input type="text"
+                                                                                class="form-control form-control-md rounded-3 font-monospace"
+                                                                                name="slug" value="{{ sub.slug }}"
+                                                                                required style="font-size: 0.85rem;">
                                                                         </div>
                                                                         <div class="mb-3">
-                                                                            <label class="form-label fw-semibold text-body small">Description</label>
-                                                                            <textarea class="form-control rounded-3" name="description" rows="2">{{ sub.description }}</textarea>
+                                                                            <label
+                                                                                class="form-label fw-semibold text-body small">Description</label>
+                                                                            <textarea class="form-control rounded-3"
+                                                                                name="description"
+                                                                                rows="2">{{ sub.description }}</textarea>
                                                                         </div>
                                                                         <div class="mb-2">
-                                                                            <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
-                                                                                <label class="form-check-label fw-medium text-body small mb-0" for="isActiveSubEdit{{ sub.id }}">Active Status</label>
-                                                                                <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveSubEdit{{ sub.id }}" {% if sub.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
+                                                                            <div
+                                                                                class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                                                                                <label
+                                                                                    class="form-check-label fw-medium text-body small mb-0"
+                                                                                    for="isActiveSubEdit{{ sub.id }}">Active
+                                                                                    Status</label>
+                                                                                <input class="form-check-input ms-0"
+                                                                                    type="checkbox" name="is_active"
+                                                                                    id="isActiveSubEdit{{ sub.id }}" {%
+                                                                                    if sub.is_active %}checked{% endif
+                                                                                    %}
+                                                                                    style="cursor: pointer; height: 20px; width: 40px;">
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                    <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
-                                                                        <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
-                                                                        <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Save Changes</button>
+                                                                    <div
+                                                                        class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-secondary px-4 rounded-3"
+                                                                            data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit"
+                                                                            class="btn btn-primary px-4 rounded-3 fw-semibold">Save
+                                                                            Changes</button>
                                                                     </div>
                                                                 </form>
                                                             </div>
@@ -333,19 +434,32 @@
                                                     </div>
 
                                                     <!-- Delete Subcategory Modal -->
-                                                    <div class="modal fade text-start" id="deleteSubCategoryModal{{ sub.id }}" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal fade text-start"
+                                                        id="deleteSubCategoryModal{{ sub.id }}" tabindex="-1"
+                                                        aria-hidden="true">
                                                         <div class="modal-dialog modal-dialog-centered modal-sm">
-                                                            <div class="modal-content border-0 shadow-lg rounded-4 text-center p-3">
+                                                            <div
+                                                                class="modal-content border-0 shadow-lg rounded-4 text-center p-3">
                                                                 <form method="POST">
                                                                     {% csrf_token %}
-                                                                    <input type="hidden" name="action" value="delete_sub_category">
-                                                                    <input type="hidden" name="sub_category_id" value="{{ sub.id }}">
-                                                                    <div class="p-3 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i></div>
-                                                                    <h5 class="fw-bold mb-2 fs-6">Delete Subcategory?</h5>
-                                                                    <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ sub.name }}</strong>?</p>
+                                                                    <input type="hidden" name="action"
+                                                                        value="delete_sub_category">
+                                                                    <input type="hidden" name="sub_category_id"
+                                                                        value="{{ sub.id }}">
+                                                                    <div class="p-3 text-danger"><i
+                                                                            class="bi bi-exclamation-triangle fs-1"></i>
+                                                                    </div>
+                                                                    <h5 class="fw-bold mb-2 fs-6">Delete Subcategory?
+                                                                    </h5>
+                                                                    <p class="small text-secondary mb-3">Are you sure
+                                                                        you want to delete <strong>{{ sub.name
+                                                                            }}</strong>?</p>
                                                                     <div class="d-flex gap-2 justify-content-center">
-                                                                        <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Cancel</button>
-                                                                        <button type="submit" class="btn btn-danger btn-sm px-3 rounded-3">Delete</button>
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-secondary btn-sm px-3 rounded-3"
+                                                                            data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit"
+                                                                            class="btn btn-danger btn-sm px-3 rounded-3">Delete</button>
                                                                     </div>
                                                                 </form>
                                                             </div>
@@ -357,8 +471,10 @@
                                             {% empty %}
                                             <tr>
                                                 <td colspan="4" class="text-center py-4 text-secondary small">
-                                                    <i class="bi bi-folder-x d-block fs-4 text-secondary opacity-50 mb-1"></i>
-                                                    No subcategories found in this category. Click <strong>'Add Sub'</strong> above to create one.
+                                                    <i
+                                                        class="bi bi-folder-x d-block fs-4 text-secondary opacity-50 mb-1"></i>
+                                                    No subcategories found in this category. Click <strong>'Add
+                                                        Sub'</strong> above to create one.
                                                 </td>
                                             </tr>
                                             {% endfor %}
@@ -379,38 +495,55 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="add_sub_category">
                                 <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
-                                
+
                                 <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
                                     <div>
                                         <h5 class="modal-title fw-bold text-body mb-0 fs-6">Add Subcategory</h5>
-                                        <span class="text-secondary small">Parent Category: <strong class="text-primary">{{ main_cat.name }}</strong></span>
+                                        <span class="text-secondary small">Parent Category: <strong
+                                                class="text-primary">{{ main_cat.name }}</strong></span>
                                     </div>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Subcategory Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-md rounded-3 subcat-name-input" name="name" placeholder="e.g. Mobile Phones and Tablets" required oninput="autoGenerateSubSlug(this, 'subSlug{{ main_cat.id }}', '{{ main_cat.name|slugify }}')">
+                                        <label class="form-label fw-semibold text-body small">Subcategory Name <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text"
+                                            class="form-control form-control-md rounded-3 subcat-name-input" name="name"
+                                            placeholder="e.g. Mobile Phones and Tablets" required
+                                            oninput="autoGenerateSubSlug(this, 'subSlug{{ main_cat.id }}', '{{ main_cat.name|slugify }}')">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-md rounded-3 font-monospace" id="subSlug{{ main_cat.id }}" name="slug" placeholder="e.g. electronics-ict-mobile-phones" required style="font-size: 0.85rem;">
+                                        <label class="form-label fw-semibold text-body small">Slug Identifier <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-md rounded-3 font-monospace"
+                                            id="subSlug{{ main_cat.id }}" name="slug"
+                                            placeholder="e.g. electronics-ict-mobile-phones" required
+                                            style="font-size: 0.85rem;">
                                         <div class="form-text small">Unique URL key for API & catalog filtering</div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold text-body small">Description</label>
-                                        <textarea class="form-control rounded-3" name="description" rows="2" placeholder="Brief description of products in this subcategory..."></textarea>
+                                        <textarea class="form-control rounded-3" name="description" rows="2"
+                                            placeholder="Brief description of products in this subcategory..."></textarea>
                                     </div>
                                     <div class="mb-2">
-                                        <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
-                                            <label class="form-check-label fw-medium text-body small mb-0" for="isActiveSub{{ main_cat.id }}">Active Status</label>
-                                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveSub{{ main_cat.id }}" checked style="cursor: pointer; height: 20px; width: 40px;">
+                                        <div
+                                            class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                                            <label class="form-check-label fw-medium text-body small mb-0"
+                                                for="isActiveSub{{ main_cat.id }}">Active Status</label>
+                                            <input class="form-check-input ms-0" type="checkbox" name="is_active"
+                                                id="isActiveSub{{ main_cat.id }}" checked
+                                                style="cursor: pointer; height: 20px; width: 40px;">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
-                                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Create Subcategory</button>
+                                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Create
+                                        Subcategory</button>
                                 </div>
                             </form>
                         </div>
@@ -427,41 +560,57 @@
                                 <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
                                 <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
                                     <h5 class="modal-title fw-bold text-body mb-0 fs-6">Edit Main Category</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body p-4">
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Main Category Name <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-md rounded-3" name="name" value="{{ main_cat.name }}" required>
+                                        <label class="form-label fw-semibold text-body small">Main Category Name <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-md rounded-3" name="name"
+                                            value="{{ main_cat.name }}" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control form-control-md rounded-3 font-monospace" name="slug" value="{{ main_cat.slug }}" required style="font-size: 0.85rem;">
+                                        <label class="form-label fw-semibold text-body small">Slug Identifier <span
+                                                class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-md rounded-3 font-monospace"
+                                            name="slug" value="{{ main_cat.slug }}" required
+                                            style="font-size: 0.85rem;">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold text-body small">Description</label>
-                                        <textarea class="form-control rounded-3" name="description" rows="2">{{ main_cat.description }}</textarea>
+                                        <textarea class="form-control rounded-3" name="description"
+                                            rows="2">{{ main_cat.description }}</textarea>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold text-body small">Category Icon Image</label>
+                                        <label class="form-label fw-semibold text-body small">Category Icon
+                                            Image</label>
                                         {% if main_cat.image %}
                                         <div class="d-flex align-items-center gap-2 mb-2">
-                                            <img src="{{ main_cat.image.url }}" class="rounded-2 border" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <img src="{{ main_cat.image.url }}" class="rounded-2 border"
+                                                style="width: 40px; height: 40px; object-fit: cover;">
                                             <span class="small text-secondary">Current Image</span>
                                         </div>
                                         {% endif %}
                                         <input type="file" class="form-control rounded-3" name="image" accept="image/*">
                                     </div>
                                     <div class="mb-2">
-                                        <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
-                                            <label class="form-check-label fw-medium text-body small mb-0" for="isActiveMainEdit{{ main_cat.id }}">Active Status</label>
-                                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveMainEdit{{ main_cat.id }}" {% if main_cat.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
+                                        <div
+                                            class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                                            <label class="form-check-label fw-medium text-body small mb-0"
+                                                for="isActiveMainEdit{{ main_cat.id }}">Active Status</label>
+                                            <input class="form-check-input ms-0" type="checkbox" name="is_active"
+                                                id="isActiveMainEdit{{ main_cat.id }}" {% if main_cat.is_active
+                                                %}checked{% endif %}
+                                                style="cursor: pointer; height: 20px; width: 40px;">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
-                                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Save Changes</button>
+                                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Save
+                                        Changes</button>
                                 </div>
                             </form>
                         </div>
@@ -478,9 +627,11 @@
                                 <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
                                 <div class="p-3 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i></div>
                                 <h5 class="fw-bold mb-2 fs-6">Delete Category?</h5>
-                                <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ main_cat.name }}</strong> and all its subcategories?</p>
+                                <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{
+                                        main_cat.name }}</strong> and all its subcategories?</p>
                                 <div class="d-flex gap-2 justify-content-center">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3"
+                                        data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-danger btn-sm px-3 rounded-3">Delete</button>
                                 </div>
                             </form>
@@ -492,14 +643,16 @@
                 <div class="text-center py-5 text-secondary bg-body-secondary rounded-4 border">
                     <i class="bi bi-grid-3x3-gap fs-1 d-block mb-2 text-secondary opacity-50"></i>
                     <h5 class="fw-bold text-body mb-1">No Categories Configured</h5>
-                    <p class="small text-secondary mb-3">Click 'Add Main Category' to create your first product category.</p>
-                    <button type="button" class="btn btn-primary px-4 rounded-3" data-bs-toggle="modal" data-bs-target="#addMainCategoryModal">
+                    <p class="small text-secondary mb-3">Click 'Add Main Category' to create your first product
+                        category.</p>
+                    <button type="button" class="btn btn-primary px-4 rounded-3" data-bs-toggle="modal"
+                        data-bs-target="#addMainCategoryModal">
                         <i class="bi bi-plus-lg me-1"></i> Add Main Category
                     </button>
                 </div>
                 {% endfor %}
             </div>
-            
+
         </div>
     </div>
 </div>
@@ -511,38 +664,49 @@
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_main_category">
-                
+
                 <div class="modal-header border-bottom px-4 py-3 bg-body-secondary rounded-top-4">
                     <h5 class="modal-title fw-bold text-body mb-0 fs-6">Add Main Category</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-body small">Main Category Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-md rounded-3" name="name" placeholder="e.g. Electronics & ICT" required oninput="autoGenerateMainSlug(this, 'mainCategorySlugInput')">
+                        <label class="form-label fw-semibold text-body small">Main Category Name <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-md rounded-3" name="name"
+                            placeholder="e.g. Electronics & ICT" required
+                            oninput="autoGenerateMainSlug(this, 'mainCategorySlugInput')">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold text-body small">Slug Identifier <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-md rounded-3 font-monospace" id="mainCategorySlugInput" name="slug" placeholder="e.g. electronics-ict" required style="font-size: 0.85rem;">
+                        <label class="form-label fw-semibold text-body small">Slug Identifier <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-md rounded-3 font-monospace"
+                            id="mainCategorySlugInput" name="slug" placeholder="e.g. electronics-ict" required
+                            style="font-size: 0.85rem;">
                         <div class="form-text small">URL slug identifier for catalog filtering</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-body small">Description</label>
-                        <textarea class="form-control rounded-3" name="description" rows="2" placeholder="General description of this category..."></textarea>
+                        <textarea class="form-control rounded-3" name="description" rows="2"
+                            placeholder="General description of this category..."></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold text-body small">Category Thumbnail (Optional)</label>
                         <input type="file" class="form-control rounded-3" name="image" accept="image/*">
                     </div>
                     <div class="mb-2">
-                        <div class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
-                            <label class="form-check-label fw-medium text-body small mb-0" for="isActiveMain">Active Status</label>
-                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveMain" checked style="cursor: pointer; height: 20px; width: 40px;">
+                        <div
+                            class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
+                            <label class="form-check-label fw-medium text-body small mb-0" for="isActiveMain">Active
+                                Status</label>
+                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveMain"
+                                checked style="cursor: pointer; height: 20px; width: 40px;">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-top px-4 py-3 bg-body-secondary rounded-bottom-4">
-                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary px-4 rounded-3"
+                        data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary px-4 rounded-3 fw-semibold">Create Category</button>
                 </div>
             </form>
@@ -555,7 +719,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         calculateSubCount();
-        
+
         // Instant Live Search Filter
         const searchInput = document.getElementById("categorySearch");
         if (searchInput) {
@@ -650,4 +814,3 @@
     }
 </script>
 {% endblock %}
-

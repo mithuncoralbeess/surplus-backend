@@ -1153,7 +1153,7 @@ def seller_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Product.objects.all().select_related("vendor", "category", "subcategory").order_by("-created_at")
+    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1322,7 +1322,13 @@ def seller_enquiry_status_api(request, enquiry_id):
                     if not target_vendor:
                         target_vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
 
-            if target_vendor:
+            if enquiry.admin or (target_vendor and AdminDetails.objects.filter(email__iexact=target_vendor.email).exists()):
+                vendor_profile_info = {
+                    "is_complete": True,
+                    "percentage": 100,
+                    "missing_fields_labels": [],
+                }
+            elif target_vendor:
                 vendor_profile_info = target_vendor.get_profile_completion_details()
 
             if new_status.lower() == "approved":
@@ -1512,9 +1518,9 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=enquiry_id) | Q(product_id=str(enquiry_id))
-    enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category").filter(lookup).first()
+    enquiry = Product.objects.select_related("admin", "vendor", "category", "subcategory__main_category").filter(lookup).first()
     if not enquiry:
-        enquiry = Product.objects.select_related("vendor", "category", "subcategory__main_category").first()
+        enquiry = Product.objects.select_related("admin", "vendor", "category", "subcategory__main_category").first()
     if not enquiry:
         return redirect("seller_enquiries")
 
@@ -1538,19 +1544,30 @@ def seller_enquiry_detail_view(request, enquiry_id):
                 enquiry.vendor = vendor
                 enquiry.save(update_fields=["vendor"])
 
-    company_val = "N/A"
-    full_name_val = "N/A"
-    phone_val = "N/A"
-    email_val = "N/A"
-    business_location_val = "N/A"
-    industry_val = "N/A"
+    # Resolve admin details if submitted by an Admin
+    admin_obj = enquiry.admin
+    if not admin_obj and vendor and vendor.email:
+        admin_obj = AdminDetails.objects.filter(email__iexact=vendor.email).first()
+    if not admin_obj and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_aid = enquiry.raw_data.get('admin_id') or enquiry.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = ""
+    if hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        intake_channel = enquiry.raw_data.get("intake_channel", "")
+
+    assisted_by_admin = admin_obj if (admin_obj and vendor) else None
 
     if vendor:
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         full_name_val = vendor.full_name or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
-        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         business_location_val = vendor.business_location or "N/A"
+        industry_val = "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
                 industry_val = ", ".join(vendor.category_interested)
@@ -1561,21 +1578,71 @@ def seller_enquiry_detail_view(request, enquiry_id):
         elif vendor.user_type:
             industry_val = vendor.user_type
 
-    admin_match = AdminDetails.objects.filter(email__iexact=email_val).first() if email_val != "N/A" else None
-    vendor_display_id = f"ADM-{admin_match.id:04d}" if admin_match else (vendor.vendor_id if vendor else "N/A")
-
-    user_data = {
-        "vendor_id": vendor_display_id,
-        "user_id": vendor_display_id,
-        "raw_vendor_id": vendor.id if vendor else None,
-        "raw_user_id": vendor.id if vendor else None,
-        "full_name": full_name_val,
-        "phone_no": phone_val,
-        "email": email_val,
-        "company": company_val,
-        "business_location": business_location_val,
-        "industry": industry_val,
-    }
+        vendor_display_id = vendor.vendor_id
+        user_data = {
+            "vendor_id": vendor_display_id,
+            "user_id": vendor_display_id,
+            "admin_id": f"ADM-{admin_obj.id:04d}" if admin_obj else None,
+            "raw_vendor_id": vendor.id,
+            "raw_user_id": vendor.id,
+            "is_admin": False,
+            "is_assisted": bool(admin_obj),
+            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.username})" if admin_obj else None,
+            "intake_channel": intake_channel,
+            "name": full_name_val,
+            "full_name": full_name_val,
+            "phone_no": phone_val,
+            "email": email_val,
+            "company": company_val,
+            "business_location": business_location_val,
+            "industry": industry_val,
+        }
+        vendor_profile = vendor.get_profile_completion_details()
+    elif admin_obj:
+        admin_display_id = f"ADM-{admin_obj.id:04d}"
+        user_data = {
+            "vendor_id": admin_display_id,
+            "user_id": admin_display_id,
+            "admin_id": admin_display_id,
+            "raw_admin_id": admin_obj.id,
+            "is_admin": True,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": admin_obj.username,
+            "full_name": admin_obj.username,
+            "email": admin_obj.email,
+            "company": "N/A",
+            "phone_no": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+        vendor_profile = {
+            "is_complete": True,
+            "percentage": 100,
+            "missing_fields_labels": [],
+            "status_label": f"Verified Admin (ID {admin_display_id})",
+        }
+    else:
+        user_data = {
+            "vendor_id": "N/A",
+            "user_id": "N/A",
+            "admin_id": None,
+            "raw_vendor_id": None,
+            "raw_user_id": None,
+            "is_admin": False,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": "N/A",
+            "full_name": "N/A",
+            "phone_no": "N/A",
+            "email": "N/A",
+            "company": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+        vendor_profile = None
 
     product_data = {}
     processed_raw_keys = set()
@@ -1678,12 +1745,6 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from .models import MainCategory
     categories = MainCategory.objects.prefetch_related("subcategories").all()
 
-    vendor_profile = vendor.get_profile_completion_details() if vendor else None
-    if admin_match and vendor_profile:
-        vendor_profile["is_complete"] = True
-        vendor_profile["percentage"] = 100
-        vendor_profile["missing_fields_labels"] = []
-
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
@@ -1693,6 +1754,8 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "product_data": product_data,
         "required_product_keys": required_product_keys,
         "categories": categories,
+        "assisted_by_admin": assisted_by_admin,
+        "intake_channel": intake_channel,
     }
     return render(request, "seller_enquiry_detail.html", context)
 
@@ -2252,8 +2315,34 @@ def lot_enquiry_detail_view(request, enquiry_id):
         if raw_vid:
             user_data["vendor_id"] = _clean_val(raw_vid) or "N/A"
             user_data["user_id"] = user_data["vendor_id"]
+        if combined_raw.get("seller_name"):
+            user_data["full_name"] = combined_raw.get("seller_name")
+        elif combined_raw.get("contact_person"):
+            user_data["full_name"] = combined_raw.get("contact_person")
+        if combined_raw.get("seller_phone"):
+            user_data["phone_no"] = combined_raw.get("seller_phone")
+        if combined_raw.get("seller_email"):
+            user_data["email"] = combined_raw.get("seller_email")
+        if combined_raw.get("seller_company"):
+            user_data["company"] = combined_raw.get("seller_company")
+        if combined_raw.get("seller_location"):
+            user_data["business_location"] = combined_raw.get("seller_location")
+
+    admin_obj = getattr(enquiry, 'admin', None)
+    if not admin_obj and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_aid = enquiry.raw_data.get('admin_id') or enquiry.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = getattr(enquiry, 'intake_channel', '')
+    if not intake_channel and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        intake_channel = enquiry.raw_data.get("intake_channel", "")
 
     context["user_data"] = user_data
+    context["assisted_by_admin"] = admin_obj
+    context["intake_channel"] = intake_channel
 
     # Batch Data Construction
     # Category Breakdown
@@ -3210,13 +3299,6 @@ def add_product_view(request):
 
     admin_uid = f"ADM-{admin_user.id:04d}"
 
-    # Retrieve existing vendor details for admin if already saved
-    admin_vendor = VendorDetails.objects.filter(email__iexact=admin_user.email).first()
-    default_contact_number = admin_vendor.mobile_number if admin_vendor else ""
-    default_industry = admin_vendor.business_type if admin_vendor else ""
-    default_business_location = admin_vendor.business_location if admin_vendor else ""
-    default_company = admin_vendor.company_name if admin_vendor else "Surplus Admin"
-
     main_categories = MainCategory.objects.filter(is_active=True).order_by("name")
     subcategories_qs = SubCategory.objects.filter(is_active=True).select_related("main_category").order_by("name")
 
@@ -3241,13 +3323,15 @@ def add_product_view(request):
     ]
 
     if request.method == "POST":
-        # 1. Submitter Defaults from Admin Session
-        contact_number = (request.POST.get("contact_number") or default_contact_number).strip()
-        industry = (request.POST.get("industry") or default_industry).strip()
-        business_location = (request.POST.get("business_location") or default_business_location).strip()
-        company = (request.POST.get("company") or default_company).strip()
+        # 0. Seller / Vendor Contact Information (Assisted Intake via WhatsApp / Email)
+        seller_name = request.POST.get("seller_name", "").strip()
+        seller_phone = request.POST.get("seller_phone", "").strip()
+        seller_email = request.POST.get("seller_email", "").strip()
+        seller_company = request.POST.get("seller_company", "").strip()
+        seller_location = request.POST.get("seller_location", "").strip()
+        intake_channel = request.POST.get("intake_channel", "WhatsApp").strip()
 
-        # 2. Product Specifications (Strictly matching SimpleListingModal)
+        # 1. Product Specifications (Strictly matching SimpleListingModal)
         product_name = (request.POST.get("product_name") or request.POST.get("title") or "").strip()
         category_id = request.POST.get("category_id") or request.POST.get("category")
         subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
@@ -3325,6 +3409,10 @@ def add_product_view(request):
 
         # Validation of Mandatory Fields matching SimpleListingModal
         errors = []
+        if not seller_name:
+            errors.append("Seller Contact Name is required (record which vendor gave these product details).")
+        if not seller_phone:
+            errors.append("WhatsApp / Mobile Number is required for the seller.")
         if not product_name:
             errors.append("Product Title / Name is required.")
         if not category_id:
@@ -3362,38 +3450,69 @@ def add_product_view(request):
             }
             return render(request, "add_product.html", context)
 
-        # 3. Create or update the VendorDetails profile for Admin
-        vendor, _ = VendorDetails.objects.get_or_create(
-            email=admin_user.email,
-            defaults={
-                "username": f"admin_{admin_user.id}",
-                "full_name": admin_user.username,
-                "mobile_number": contact_number,
-                "business_location": business_location,
-                "company_name": company,
-                "business_type": industry,
-                "category_interested": [industry] if industry else [],
-                "user_type": "SELLER",
-                "account_entity_type": "COMPANY",
-            }
-        )
-        vendor.full_name = admin_user.username
-        if contact_number:
-            vendor.mobile_number = contact_number
-        if business_location:
-            vendor.business_location = business_location
-        if industry:
-            vendor.business_type = industry
-            vendor.category_interested = [industry]
-        if company:
-            vendor.company_name = company
-        vendor.save()
-
-        # 4. Resolve Categories
+        # 3. Resolve Categories
         category_obj = MainCategory.objects.filter(id=int(category_id)).first()
         subcategory_obj = SubCategory.objects.filter(id=int(subcategory_id)).first()
         if subcategory_obj and not category_obj:
             category_obj = subcategory_obj.main_category
+
+        # 4. Resolve or Auto-Register VendorDetails for this Seller (WhatsApp / Email Intake)
+        vendor = None
+        import re, time
+        clean_mobile = re.sub(r"[^\d+]", "", seller_phone).strip() if seller_phone else ""
+        clean_email = seller_email.lower().strip() if seller_email else ""
+
+        if clean_email:
+            vendor = VendorDetails.objects.filter(email__iexact=clean_email).first()
+        if not vendor and clean_mobile:
+            vendor = VendorDetails.objects.filter(mobile_number__iexact=clean_mobile).first()
+
+        if not vendor and (seller_name or clean_mobile or clean_email):
+            if not clean_email:
+                phone_digits = re.sub(r"[^\d]", "", clean_mobile) if clean_mobile else str(int(time.time()))
+                clean_email = f"seller_{phone_digits}@vendor.surplus"
+
+            uname = clean_email.split("@")[0]
+            base_uname = uname
+            counter = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname}{counter}"
+                counter += 1
+
+            name_parts = seller_name.strip().split(" ", 1)
+            f_name = name_parts[0] if name_parts else uname
+            l_name = name_parts[1] if len(name_parts) > 1 else ""
+
+            vendor = VendorDetails.objects.create(
+                username=uname,
+                email=clean_email,
+                full_name=seller_name.strip() or f_name,
+                first_name=f_name,
+                last_name=l_name,
+                mobile_number=clean_mobile,
+                company_name=seller_company.strip(),
+                business_location=seller_location.strip() or manufacturing_country,
+                category_interested=[category_obj.name] if category_obj else [],
+                business_type=category_obj.name if category_obj else "",
+                user_type="SELLER",
+                status=True
+            )
+        elif vendor:
+            updated = False
+            if seller_name and not vendor.full_name:
+                vendor.full_name = seller_name.strip()
+                updated = True
+            if seller_company and not vendor.company_name:
+                vendor.company_name = seller_company.strip()
+                updated = True
+            if clean_mobile and not vendor.mobile_number:
+                vendor.mobile_number = clean_mobile
+                updated = True
+            if seller_location and not vendor.business_location:
+                vendor.business_location = seller_location.strip()
+                updated = True
+            if updated:
+                vendor.save()
 
         # 5. Calculate Discount / Offer Percentage
         if msrp and msrp > 0 and liquidating_price and msrp > liquidating_price:
@@ -3401,16 +3520,26 @@ def add_product_view(request):
         else:
             offer = Decimal("0.00")
 
-        # 6. Save Product Record with PENDING Enquiry Status
+        # 6. Save Product Record with PENDING Enquiry Status (linked to both Admin and Vendor)
+        raw_data_info = {
+            "intake_channel": intake_channel,
+            "intake_admin_id": admin_uid,
+            "intake_admin_name": admin_user.username,
+            "seller_name": seller_name,
+            "seller_phone": clean_mobile,
+        }
         product = Product.objects.create(
+            admin=admin_user,
             vendor=vendor,
+            intake_channel=intake_channel,
+            raw_data=raw_data_info,
             product_name=product_name,
             category=category_obj,
             subcategory=subcategory_obj,
             brand_name=brand_name,
             model_no=model_no,
             manufacturing_country=manufacturing_country,
-            inventory_location=business_location or (vendor.business_location if vendor else "") or manufacturing_country,
+            inventory_location=seller_location.strip() or manufacturing_country,
             manufacturing_year=manufacturing_year,
             dimensions=dimensions,
             expiry_date=expiry_date,
@@ -3438,9 +3567,10 @@ def add_product_view(request):
                 is_real_photo=True
             )
 
+        vendor_info_str = f" for seller '{vendor.full_name}' ({vendor.vendor_id}) via {intake_channel}" if vendor else ""
         messages.success(
             request,
-            f"Product '{product.product_name}' ({product.product_id}) added successfully with Admin ID {admin_uid} and submitted to Seller Enquiries."
+            f"Product '{product.product_name}' ({product.product_id}) added successfully{vendor_info_str} by Admin {admin_uid} and submitted to Seller Enquiries."
         )
         return redirect("seller_enquiries")
 
@@ -3460,202 +3590,391 @@ def add_product_view(request):
 def add_lot_view(request):
     """
     Form view for creating a new Lot batch package with full specs.
+    Strictly matches surplus-frontend LotImportModal specifications,
+    with Assisted Offline Seller Intake support for Admin.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    categories = SubCategory.objects.select_related("main_category").all()
-    vendors = VendorDetails.objects.all()
+    admin_uid = f"ADM-{admin_user.id:04d}"
+
+    condition_options = ["New", "Like New", "Returns", "Used", "Salvage", "Mixed"]
+    source_type_options = ["Overstock", "Customer Returns", "Liquidation", "Closeout", "Surplus", "Other"]
+    stock_age_options = ["Current / < 6 Months", "6 - 12 Months", "1 - 2 Years", "Over 2 Years", "Mixed Ages"]
+    unit_type_options = ["Pieces / Units", "Pairs", "Kilograms (kg)", "Pounds (lbs)", "Mixed Types"]
+    load_type_options = ["Pallet", "LTL", "Truckload", "Container", "Other"]
+    shipping_size_options = [
+        "Small Parcel / Box",
+        "Single Pallet",
+        "Multi-Pallet / LTL",
+        "Full Truckload (FTL)",
+        "20ft / 40ft Container"
+    ]
+    shipping_terms_options = ["Buyer Arranges Freight", "Seller Arranges Freight", "Free Shipping"]
+    sale_method_options = [
+        {"value": "offer", "label": "Accept Offers"},
+        {"value": "fixed", "label": "Fixed Price"},
+        {"value": "auction", "label": "Auction"}
+    ]
+    currency_options = ["USD", "AED", "SAR", "EUR", "GBP"]
+    excluded_countries_options = ["Russia", "Iran", "North Korea", "Syria", "Cuba"]
+    standard_categories = [
+        "Electricals",
+        "Electronics",
+        "Apparel",
+        "Industrial Hardware",
+        "Automotive & Spare Parts",
+        "Home & Living",
+        "Tools & Machinery",
+        "Medical & Health",
+        "General Surplus",
+        "Other"
+    ]
 
     if request.method == "POST":
-        title = request.POST.get("title")
-        description = request.POST.get("description", "")
-        category_id = request.POST.get("category")
-        vendor_id = request.POST.get("vendor")
-        user_full_name = request.POST.get("user_full_name", "")
-        user_email = request.POST.get("user_email", "")
-        user_mobile = request.POST.get("user_mobile", "")
-        user_company = request.POST.get("user_company", "")
-        user_industry = request.POST.get("user_industry", "")
-        business_location = request.POST.get("business_location", "")
-        inventory_location = request.POST.get("inventory_location", "") or business_location
+        from django.core.files.storage import default_storage
+        from django.contrib import messages
+        import uuid
+        import re
 
-        total_price = request.POST.get("total_price", "0.00")
-        total_retail_value = request.POST.get("total_retail_value", "0.00")
-        currency = request.POST.get("currency", "USD")
-        allocation = request.POST.get("allocation", "100")
-        sale_method = request.POST.get("sale_method", "offer")
-        allow_counter_offers = request.POST.get("allow_counter_offers") == "on"
+        # --- 0. Assisted Offline Seller Intake ---
+        intake_channel = request.POST.get("intake_channel", "WhatsApp").strip() or "WhatsApp"
+        seller_name = request.POST.get("seller_name", "").strip()
+        seller_phone = request.POST.get("seller_phone", "").strip()
+        seller_email = request.POST.get("seller_email", "").strip()
+        seller_company = request.POST.get("seller_company", "").strip()
+        seller_location = request.POST.get("seller_location", "").strip()
+        intake_notes = request.POST.get("intake_notes", "").strip()
 
-        condition = request.POST.get("condition", "")
-        source_type = request.POST.get("source_type", "")
-        load_type = request.POST.get("load_type", "")
-        unit_type = request.POST.get("unit_type", "Pieces / Units")
-        lot_size = request.POST.get("lot_size", "")
-        pallet_count = request.POST.get("pallet_count", 1)
-        weight = request.POST.get("weight", "")
-        shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight")
-
-        reason_to_sell = request.POST.get("reason_to_sell", "")
-        is_active = request.POST.get("is_active") == "on"
-
-        category = None
-        if category_id:
-            category = SubCategory.objects.filter(id=category_id).first()
-
+        # Lookup or auto-register VendorDetails
         vendor = None
-        if user_email:
-            vendor = VendorDetails.objects.filter(email__iexact=user_email).first()
-            if not vendor:
-                # Auto-register new Seller user for this email
-                uname = user_email.split("@")[0]
-                base_uname = uname
-                counter = 1
-                while VendorDetails.objects.filter(username=uname).exists():
-                    uname = f"{base_uname}{counter}"
-                    counter += 1
+        if seller_email:
+            vendor = VendorDetails.objects.filter(email__iexact=seller_email).first()
+        if not vendor and seller_phone:
+            vendor = VendorDetails.objects.filter(mobile_number=seller_phone).first()
 
-                name_parts = user_full_name.strip().split(" ", 1)
-                f_name = name_parts[0] if name_parts else uname
-                l_name = name_parts[1] if len(name_parts) > 1 else ""
+        if not vendor:
+            # Generate unique username
+            clean_seed = ""
+            if seller_email:
+                clean_seed = seller_email.split("@")[0]
+            elif seller_phone:
+                clean_phone = re.sub(r"[^0-9]", "", seller_phone)
+                clean_seed = f"seller_{clean_phone[-6:]}" if len(clean_phone) >= 6 else "seller"
+            elif seller_name:
+                clean_seed = re.sub(r"[^a-zA-Z0-9_]", "", seller_name.lower().replace(" ", "_"))
+            if not clean_seed:
+                clean_seed = f"seller_{uuid.uuid4().hex[:6]}"
 
-                vendor = VendorDetails.objects.create(
-                    username=uname,
-                    email=user_email,
-                    first_name=f_name,
-                    last_name=l_name,
-                    mobile_number=user_mobile,
-                    company_name=user_company,
-                    business_location=business_location,
-                    category_interested=user_industry,
-                    user_type="SELLER",
-                    status=True
-                )
-            else:
-                # Update missing seller profile fields if provided
-                updated = False
-                if user_company and not vendor.company_name:
-                    vendor.company_name = user_company
-                    updated = True
-                if user_mobile and not vendor.mobile_number:
-                    vendor.mobile_number = user_mobile
-                    updated = True
-                if business_location and not vendor.business_location:
-                    vendor.business_location = business_location
-                    updated = True
-                if user_industry and not vendor.category_interested:
-                    vendor.category_interested = user_industry
-                    updated = True
-                if updated:
-                    vendor.save()
+            base_uname = clean_seed[:20]
+            uname = base_uname
+            cnt = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname[:15]}{cnt}"
+                cnt += 1
 
-        if not vendor and vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
+            # Auto-generate email if missing
+            auto_email = seller_email
+            if not auto_email:
+                phone_slug = re.sub(r"[^0-9]", "", seller_phone)[-8:] if seller_phone else uuid.uuid4().hex[:6]
+                auto_email = f"seller_{phone_slug}@offline.surplus.local"
 
-        raw_data = {
-            "full_name": user_full_name or (vendor.username if vendor else ""),
-            "user_full_name": user_full_name or (vendor.username if vendor else ""),
-            "email": user_email or (vendor.email if vendor else ""),
-            "user_email": user_email or (vendor.email if vendor else ""),
-            "phone_no": user_mobile or (vendor.mobile_number if vendor else ""),
-            "user_mobile": user_mobile or (vendor.mobile_number if vendor else ""),
-            "company": user_company or (vendor.company_name if vendor else ""),
-            "industry": user_industry or (vendor.category_interested if vendor else ""),
-            "business_location": business_location or (vendor.business_location if vendor else ""),
-            "vendor_id": vendor.id if vendor else None,
-            "condition": condition,
-            "stock_condition": condition,
-            "source_type": source_type,
-            "load_type": load_type,
-            "unit_type": unit_type,
-            "lot_size": lot_size,
-            "pallet_count": pallet_count,
-            "weight": weight,
-            "shipping_terms": shipping_terms,
-            "msrp": total_retail_value,
-            "total_retail_value": total_retail_value,
-            "allocation": allocation,
-            "sale_method": sale_method,
-            "open_to_offer": "Yes" if allow_counter_offers else "No",
-            "allow_counter_offers": allow_counter_offers,
-        }
+            vendor = VendorDetails.objects.create(
+                username=uname,
+                email=auto_email,
+                full_name=seller_name or uname,
+                mobile_number=seller_phone,
+                company_name=seller_company,
+                business_location=seller_location,
+                user_type="SELLER",
+                status=True
+            )
+        else:
+            # Update any missing profile fields
+            updated = False
+            if seller_company and not vendor.company_name:
+                vendor.company_name = seller_company
+                updated = True
+            if seller_phone and not vendor.mobile_number:
+                vendor.mobile_number = seller_phone
+                updated = True
+            if seller_location and not vendor.business_location:
+                vendor.business_location = seller_location
+                updated = True
+            if updated:
+                vendor.save()
 
-        # Handle lot products if submitted via dynamic rows
-        products_list = []
-        item_skus = request.POST.getlist("item_sku[]")
-        item_names = request.POST.getlist("item_name[]")
-        item_categories = request.POST.getlist("item_category[]")
-        item_conditions = request.POST.getlist("item_condition[]")
-        item_quantities = request.POST.getlist("item_quantity[]")
-        item_msrps = request.POST.getlist("item_msrp[]")
+        # --- 1. Basic Lot Information ---
+        title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
+        key_brands_included = request.POST.get("key_brands_included", "").strip()
 
-        for i in range(len(item_names)):
-            name = item_names[i].strip()
-            if name:
-                sku = item_skus[i].strip() if i < len(item_skus) else ""
-                cat = item_categories[i].strip() if i < len(item_categories) else ""
-                cond = item_conditions[i].strip() if i < len(item_conditions) else (condition or "New / Surplus")
-                qty = int(item_quantities[i]) if i < len(item_quantities) and item_quantities[i].isdigit() else 1
-                msrp = float(item_msrps[i]) if i < len(item_msrps) and item_msrps[i] else 0.0
-
-                products_list.append({
-                    "sku": sku,
-                    "product_name": name,
-                    "category": cat,
-                    "condition": cond,
-                    "quantity": qty,
-                    "msrp": msrp,
-                    "ext_msrp": qty * msrp
+        # --- 2. Category Allocations ---
+        category_allocations = []
+        cat_names = request.POST.getlist("category_name[]")
+        cat_allocs = request.POST.getlist("category_allocation[]")
+        for c_name, c_pct in zip(cat_names, cat_allocs):
+            c_name_clean = str(c_name).strip()
+            c_pct_clean = str(c_pct).strip().replace("%", "")
+            if c_name_clean and c_pct_clean:
+                category_allocations.append({
+                    "category_name": c_name_clean,
+                    "alocation": f"{c_pct_clean}%"
                 })
+        if not category_allocations:
+            raw_alloc_str = request.POST.get("category_allocations", "")
+            if raw_alloc_str:
+                try:
+                    parsed_alloc = json.loads(raw_alloc_str)
+                    if isinstance(parsed_alloc, list):
+                        category_allocations = parsed_alloc
+                except Exception:
+                    pass
 
-        # Handle Excel file import if provided
-        excel_file = request.FILES.get("excel_file")
-        if excel_file:
+        # --- 3. Condition & Logistics Specs ---
+        condition = request.POST.get("condition", "New").strip()
+        source_type = request.POST.get("source_type", "Overstock").strip()
+        inventory_stock_age = request.POST.get("inventory_stock_age", "Current / < 6 Months").strip()
+        third_party_certificate_available = request.POST.get("third_party_certificate_available") in ("on", "true", "1")
+        
+        inventory_location = request.POST.get("inventory_location", "").strip() or seller_location
+
+        try:
+            number_of_distinct_skus = int(request.POST.get("number_of_distinct_skus", 0) or 0)
+        except (ValueError, TypeError):
+            number_of_distinct_skus = 0
+
+        try:
+            total_units_quantity = int(request.POST.get("total_units_quantity", 0) or 0)
+        except (ValueError, TypeError):
+            total_units_quantity = 0
+
+        primary_unit_type = request.POST.get("primary_unit_type", "Pieces / Units").strip()
+        total_weight = request.POST.get("total_weight", "").strip()
+        load_type = request.POST.get("load_type", "Pallet").strip()
+        shipping_size = request.POST.get("shipping_size", "Single Pallet").strip()
+        lot_size = request.POST.get("lot_size", "").strip()
+
+        try:
+            pallet_count = int(request.POST.get("pallet_count", 1) or 1)
+        except (ValueError, TypeError):
+            pallet_count = 1
+
+        shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight").strip()
+
+        # --- 4. Pricing & Commercial Terms ---
+        currency = request.POST.get("currency", "USD").strip()
+        try:
+            total_est_retail_value_msrp = float(request.POST.get("total_est_retail_value_msrp", 0.0) or 0.0)
+        except (ValueError, TypeError):
+            total_est_retail_value_msrp = 0.0
+
+        try:
+            ask_price_surplus_payout = float(request.POST.get("ask_price_surplus_payout", 0.0) or 0.0)
+        except (ValueError, TypeError):
+            ask_price_surplus_payout = 0.0
+
+        sale_method = request.POST.get("sale_method", "offer").strip()
+        allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
+        excluded_export_countries = request.POST.getlist("excluded_export_countries")
+
+        discount_val = 0
+        if total_est_retail_value_msrp > 0 and ask_price_surplus_payout > 0:
+            discount_val = round(((total_est_retail_value_msrp - ask_price_surplus_payout) / total_est_retail_value_msrp) * 100)
+        offer_text = f"{discount_val}% Off MSRP" if discount_val > 0 else ("Open to Offer" if allow_counter_offers else "")
+
+        # --- 5. Media & Document Uploads ---
+        third_party_documents = []
+        if third_party_certificate_available:
+            for doc_key in ("certificate_document", "third_party_documents"):
+                if doc_key in request.FILES:
+                    c_file = request.FILES[doc_key]
+                    safe_doc_name = f"{uuid.uuid4().hex[:8]}_{c_file.name}"
+                    sp = default_storage.save(f"lots/documents/{safe_doc_name}", c_file)
+                    third_party_documents.append(default_storage.url(sp))
+
+        warehouse_images = []
+        for img_key in ("warehouse_images", "warehouse_image", "images", "media_files", "photos"):
+            if img_key in request.FILES:
+                for img_file in request.FILES.getlist(img_key):
+                    if hasattr(img_file, "name"):
+                        safe_img_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
+                        sp = default_storage.save(f"lots/images/{safe_img_name}", img_file)
+                        warehouse_images.append(default_storage.url(sp))
+
+        # --- 6. Manifest Spreadsheet & Products ---
+        manifest_file = request.FILES.get("manifest_file") or request.FILES.get("excel_file") or request.FILES.get("file")
+        parsed_items = []
+        parse_summary = {}
+
+        if manifest_file:
             try:
                 from lots.importer import parse_spreadsheet
-                excel_file.seek(0)
-                parse_res = parse_spreadsheet(excel_file)
-                parsed_prods = parse_res.get("all_items", [])
-                if parsed_prods:
-                    products_list.extend(parsed_prods)
-                raw_data["parse_summary"] = parse_res.get("summary")
-                raw_data["is_valid"] = parse_res.get("is_valid")
-                raw_data["row_errors"] = parse_res.get("row_errors")
-                raw_data["missing_mandatory_columns"] = parse_res.get("missing_mandatory_columns")
+                manifest_file.seek(0)
+                parse_res = parse_spreadsheet(manifest_file)
+                parsed_items = parse_res.get("all_items", [])
+                parse_summary = parse_res.get("summary", {})
+
+                if not number_of_distinct_skus and parsed_items:
+                    number_of_distinct_skus = len(parsed_items)
+
+                if not total_units_quantity and parsed_items:
+                    tot_u = sum(
+                        int(p.get("quantity") or p.get("available_quantity") or 0)
+                        for p in parsed_items
+                        if str(p.get("quantity") or p.get("available_quantity") or "0").isdigit()
+                    )
+                    if tot_u > 0:
+                        total_units_quantity = tot_u
+
+                if not total_est_retail_value_msrp and parsed_items:
+                    tot_m = 0.0
+                    for p in parsed_items:
+                        qty = int(p.get("quantity") or p.get("available_quantity") or 1)
+                        m_val = float(p.get("msrp") or p.get("original_price") or 0.0)
+                        tot_m += qty * m_val
+                    if tot_m > 0:
+                        total_est_retail_value_msrp = tot_m
             except Exception as e:
-                print(f"Error parsing admin excel file: {e}")
+                print(f"Error parsing manifest spreadsheet: {e}")
 
-        raw_data["products"] = products_list
+        # Check dynamic manual rows if submitted
+        manual_skus = request.POST.getlist("item_sku[]")
+        manual_names = request.POST.getlist("item_name[]")
+        manual_cats = request.POST.getlist("item_category[]")
+        manual_conds = request.POST.getlist("item_condition[]")
+        manual_qtys = request.POST.getlist("item_quantity[]")
+        manual_msrps = request.POST.getlist("item_msrp[]")
 
-        # Create single unified Lot model
+        for i in range(len(manual_names)):
+            m_name = manual_names[i].strip()
+            if m_name:
+                m_sku = manual_skus[i].strip() if i < len(manual_skus) else ""
+                m_cat = manual_cats[i].strip() if i < len(manual_cats) else ""
+                m_cond = manual_conds[i].strip() if i < len(manual_conds) else condition
+                try:
+                    m_qty = int(manual_qtys[i]) if i < len(manual_qtys) and manual_qtys[i].isdigit() else 1
+                except (ValueError, TypeError):
+                    m_qty = 1
+                try:
+                    m_msrp = float(manual_msrps[i]) if i < len(manual_msrps) and manual_msrps[i] else 0.0
+                except (ValueError, TypeError):
+                    m_msrp = 0.0
+
+                parsed_items.append({
+                    "sku": m_sku,
+                    "product_name": m_name,
+                    "category": m_cat,
+                    "condition": m_cond,
+                    "quantity": m_qty,
+                    "msrp": m_msrp,
+                    "ext_msrp": m_qty * m_msrp
+                })
+
+        if not number_of_distinct_skus and parsed_items:
+            number_of_distinct_skus = len(parsed_items)
+        if not total_units_quantity and parsed_items:
+            total_units_quantity = sum(int(p.get("quantity") or 1) for p in parsed_items)
+
+        # Status
+        is_active = request.POST.get("is_active") == "on"
+
+        raw_data = {
+            "admin_id": admin_uid,
+            "admin_username": admin_user.username,
+            "intake_channel": intake_channel,
+            "intake_notes": intake_notes,
+            "seller_name": seller_name or (vendor.full_name if vendor else ""),
+            "seller_phone": seller_phone or (vendor.mobile_number if vendor else ""),
+            "seller_email": seller_email or (vendor.email if vendor else ""),
+            "seller_company": seller_company or (vendor.company_name if vendor else ""),
+            "seller_location": seller_location or (vendor.business_location if vendor else ""),
+            "warehouse_images": warehouse_images,
+            "third_party_documents": third_party_documents,
+            "allow_counter_offers": allow_counter_offers,
+            "open_to_offer": "Yes" if allow_counter_offers else "No",
+            "is_saved_to_db": True,
+            "parse_summary": parse_summary,
+            "products": parsed_items,
+        }
+
+        # --- 7. Save Lot Record ---
         lot = Lot.objects.create(
-            title=title,
+            title=title or f"Lot of {key_brands_included or 'Assorted Inventory'}",
             description=description,
-            category_allocations=(
-                [{"category_name": category.name, "alocation": f"{allocation}%"}] if category else []
-            ),
             vendor=vendor,
+            admin=admin_user,
+            intake_channel=intake_channel,
+            key_brands_included=key_brands_included,
+            category_allocations=category_allocations,
+            condition=condition,
+            source_type=source_type,
+            inventory_stock_age=inventory_stock_age,
+            warehouse_images=warehouse_images,
+            third_party_certificate_available=third_party_certificate_available,
+            third_party_documents=third_party_documents,
             inventory_location=inventory_location,
-            ask_price_surplus_payout=total_price or 0,
-            total_est_retail_value_msrp=total_retail_value or 0,
-            offer="Open to Offer" if allow_counter_offers else "",
-            sale_method=sale_method,
+            number_of_distinct_skus=number_of_distinct_skus,
+            total_units_quantity=total_units_quantity,
+            primary_unit_type=primary_unit_type,
+            total_weight=total_weight,
+            load_type=load_type,
+            shipping_size=shipping_size,
+            lot_size=lot_size,
+            pallet_count=pallet_count,
+            shipping_terms=shipping_terms,
             currency=currency,
-            file=excel_file,
+            total_est_retail_value_msrp=total_est_retail_value_msrp,
+            ask_price_surplus_payout=ask_price_surplus_payout,
+            offer=offer_text,
+            excluded_export_countries=excluded_export_countries,
+            sale_method=sale_method,
+            file=manifest_file,
             enquiry_status="pending",
             active_status="active" if is_active else "inactive",
             is_active=is_active,
             raw_data=raw_data,
         )
 
+        # Create LotProduct records for manifest items
+        for p_item in parsed_items:
+            p_name = p_item.get("product_name") or p_item.get("title") or "Lot Item"
+            try:
+                p_qty = int(p_item.get("quantity") or p_item.get("available_quantity") or 1)
+            except (ValueError, TypeError):
+                p_qty = 1
+            p_cond = p_item.get("condition") or condition
+            LotProduct.objects.create(
+                lot=lot,
+                product_name=p_name,
+                quantity=p_qty,
+                condition=p_cond,
+                raw_data=p_item
+            )
+
+        vendor_name_display = vendor.full_name or vendor.company_name or vendor.username or "Offline Seller"
+        messages.success(
+            request,
+            f"Lot listing '{lot.title or lot.lot_number}' ({lot.lot_number}) created successfully for seller '{vendor_name_display}' via {intake_channel} by Admin {admin_uid} and submitted to Lot Enquiries."
+        )
         return redirect("/admin/enquiries/lots/pending/")
 
     context = {
         "admin": admin_user,
-        "categories": categories,
-        "vendors": vendors,
-        "page_title": "Create New Lot Package",
+        "admin_uid": admin_uid,
+        "condition_options": condition_options,
+        "source_type_options": source_type_options,
+        "stock_age_options": stock_age_options,
+        "unit_type_options": unit_type_options,
+        "load_type_options": load_type_options,
+        "shipping_size_options": shipping_size_options,
+        "shipping_terms_options": shipping_terms_options,
+        "sale_method_options": sale_method_options,
+        "currency_options": currency_options,
+        "excluded_countries_options": excluded_countries_options,
+        "standard_categories": standard_categories,
+        "page_title": "Add Lot Request (Assisted Offline Intake)",
     }
     return render(request, "add_lot.html", context)
 
@@ -3932,9 +4251,9 @@ def product_detail_view(request, product_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=product_id) | Q(product_id=str(product_id))
-    product = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").filter(lookup).first()
+    product = Product.objects.select_related("admin", "category", "subcategory", "vendor").prefetch_related("images").filter(lookup).first()
     if not product:
-        product = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").first()
+        product = Product.objects.select_related("admin", "category", "subcategory", "vendor").prefetch_related("images").first()
     if not product:
         return redirect("all_products")
 
@@ -3958,19 +4277,30 @@ def product_detail_view(request, product_id):
                 product.vendor = vendor
                 product.save(update_fields=["vendor"])
 
-    company_val = "N/A"
-    full_name_val = "N/A"
-    phone_val = "N/A"
-    email_val = "N/A"
-    business_location_val = "N/A"
-    industry_val = "N/A"
+    # Resolve admin details if submitted by an Admin
+    admin_obj = product.admin
+    if not admin_obj and vendor and vendor.email:
+        admin_obj = AdminDetails.objects.filter(email__iexact=vendor.email).first()
+    if not admin_obj and hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        raw_aid = product.raw_data.get('admin_id') or product.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = ""
+    if hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        intake_channel = product.raw_data.get("intake_channel", "")
+
+    assisted_by_admin = admin_obj if (admin_obj and vendor) else None
 
     if vendor:
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         full_name_val = vendor.full_name or "N/A"
         phone_val = vendor.mobile_number or "N/A"
         email_val = vendor.email or "N/A"
-        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
         business_location_val = vendor.business_location or "N/A"
+        industry_val = "N/A"
         if vendor.category_interested:
             if isinstance(vendor.category_interested, list):
                 industry_val = ", ".join(vendor.category_interested)
@@ -3981,18 +4311,63 @@ def product_detail_view(request, product_id):
         elif vendor.user_type:
             industry_val = vendor.user_type
 
-    user_data = {
-        "vendor_id": vendor.vendor_id if vendor else "N/A",
-        "user_id": vendor.vendor_id if vendor else "N/A",
-        "raw_vendor_id": vendor.id if vendor else None,
-        "raw_user_id": vendor.id if vendor else None,
-        "full_name": full_name_val,
-        "phone_no": phone_val,
-        "email": email_val,
-        "company": company_val,
-        "business_location": business_location_val,
-        "industry": industry_val,
-    }
+        vendor_display_id = vendor.vendor_id
+        user_data = {
+            "vendor_id": vendor_display_id,
+            "user_id": vendor_display_id,
+            "admin_id": f"ADM-{admin_obj.id:04d}" if admin_obj else None,
+            "raw_vendor_id": vendor.id,
+            "raw_user_id": vendor.id,
+            "is_admin": False,
+            "is_assisted": bool(admin_obj),
+            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.username})" if admin_obj else None,
+            "intake_channel": intake_channel,
+            "name": full_name_val,
+            "full_name": full_name_val,
+            "phone_no": phone_val,
+            "email": email_val,
+            "company": company_val,
+            "business_location": business_location_val,
+            "industry": industry_val,
+        }
+    elif admin_obj:
+        admin_display_id = f"ADM-{admin_obj.id:04d}"
+        user_data = {
+            "vendor_id": admin_display_id,
+            "user_id": admin_display_id,
+            "admin_id": admin_display_id,
+            "raw_admin_id": admin_obj.id,
+            "is_admin": True,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": admin_obj.username,
+            "full_name": admin_obj.username,
+            "email": admin_obj.email,
+            "company": "N/A",
+            "phone_no": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+    else:
+        user_data = {
+            "vendor_id": "N/A",
+            "user_id": "N/A",
+            "admin_id": None,
+            "raw_vendor_id": None,
+            "raw_user_id": None,
+            "is_admin": False,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": "N/A",
+            "full_name": "N/A",
+            "phone_no": "N/A",
+            "email": "N/A",
+            "company": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
 
     from .models import MainCategory
     categories = MainCategory.objects.prefetch_related("subcategories").all()
@@ -4002,6 +4377,8 @@ def product_detail_view(request, product_id):
         "product": product,
         "user_data": user_data,
         "categories": categories,
+        "assisted_by_admin": assisted_by_admin,
+        "intake_channel": intake_channel,
         "page_title": f"Product Details - {product.product_name}",
     }
     return render(request, "product_detail.html", context)

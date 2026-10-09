@@ -157,6 +157,14 @@
                                     title="{{ item.title|default:'Lot Inventory Package' }}">
                                     {{ item.title|default:'Lot Inventory Package' }}
                                 </span>
+                                {% if item.admin %}
+                                <div class="mt-0.5">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;">
+                                        <i class="bi bi-shield-check me-0.5"></i>Assisted ADM-{{ item.admin.id|stringformat:"04d" }}
+                                        {% if item.intake_channel %}• {{ item.intake_channel }}{% endif %}
+                                    </span>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </td>

@@ -1,237 +1,608 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Add Lot Request | Admin Panel{% endblock %}
+{% block title %}Add Lot Request (Assisted Intake) | Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3">
-    
+<div class="container-fluid pb-5">
+
     <!-- Page Header & Breadcrumb -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
         <div>
             <nav class="custom-breadcrumb" aria-label="breadcrumb">
                 <ol class="breadcrumb-list">
                     <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator"><li class="breadcrumb-item"><a href="/admin/enquiries/lots/">Lot Enquiries</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item"><a href="/admin/enquiries/lots/">Lot Enquiries</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                     <li class="breadcrumb-item active" aria-current="page"><span>Add Lot Request</span></li>
                 </ol>
             </nav>
             <h1 class="header-title">Add Lot Request</h1>
-            <p class="header-subtitle">Submit a seller lot request on behalf of a user (auto-links/registers seller user profile by Contact Email)</p>
+            <p class="header-subtitle mb-0">Create a bulk lot inventory package on behalf of a seller with Assisted Offline Intake and verified admin attribution</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="/admin/enquiries/lots/" class="btn btn-outline-secondary px-3.5 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5">
                 <i class="bi bi-arrow-left"></i> Cancel
             </a>
-            <button type="submit" form="addLotForm" class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold">
-                <i class="bi bi-plus-lg fs-6"></i> Add Lot Request
+            <button type="submit" form="addLotForm" id="submitLotTopBtn" class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold">
+                <i class="bi bi-plus-lg fs-6"></i> Create Lot Listing
             </button>
         </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" id="addLotForm">
+    <!-- Django Messages Alerts -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-3 shadow-sm d-flex align-items-center gap-2" role="alert">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% else %}bi-info-circle-fill text-info{% endif %} fs-5"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Admin Submitter Status Banner -->
+    <div class="alert alert-primary bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-4 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-2.5 rounded-3 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                <i class="bi bi-shield-check fs-4"></i>
+            </div>
+            <div>
+                <div class="fw-bold text-dark" style="font-size: 0.95rem;">
+                    Submitting as Verified Admin: <span class="badge bg-primary text-white font-monospace ms-1">{{ admin_uid }}</span> 
+                    <span class="text-secondary fw-normal">({{ admin.username }})</span>
+                </div>
+                <div class="text-secondary small mt-0.5">
+                    Assisted Offline Intake &bull; Auto-links or creates verified seller profile &bull; Routed to <strong>Lot Enquiries (Pending Review)</strong>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold">
+                <i class="bi bi-hourglass-split me-1"></i>Initial Status: PENDING
+            </span>
+        </div>
+    </div>
+
+    <!-- MAIN FORM -->
+    <form method="POST" enctype="multipart/form-data" id="addLotForm" novalidate>
         {% csrf_token %}
-        
+
         <div class="row g-4">
-            
-            <!-- Left Main Form Column -->
+
+            <!-- Left Main Column (Sections 0 to 5) -->
             <div class="col-lg-8">
-                
-                <!-- Section 1: User / Seller Contact Information -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-person-badge me-2 text-primary"></i> Seller & Contact Information</h6>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Contact Person Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="user_full_name" id="userFullName" placeholder="e.g. John Doe" required>
+
+                <!-- 0. Seller / Vendor Information (Assisted Offline Intake) -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="border-left: 4px solid #10b981 !important;">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="bi bi-person-lines-fill fs-6"></i>
                             </div>
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Contact Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" name="user_email" id="userEmail" placeholder="seller@company.com" required>
-                                <div class="form-text small">Checks existing user or registers new seller profile</div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Contact Mobile</label>
-                                <input type="text" class="form-control" name="user_mobile" id="userMobile" placeholder="+1 (555) 000-0000">
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Company Name</label>
-                                <input type="text" class="form-control" name="user_company" id="userCompany" placeholder="e.g. Acme Surplus Ltd">
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Business Location</label>
-                                <input type="text" class="form-control" name="business_location" id="businessLocation" placeholder="e.g. Houston, TX, USA">
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Industry / Sector</label>
-                                <input type="text" class="form-control" name="user_industry" id="userIndustry" placeholder="e.g. Electronics & Hardware">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Information</h6>
+                                <div class="text-muted small">Record which vendor sent these lot details (WhatsApp, Email, Offline Intake)</div>
                             </div>
                         </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold" style="font-size: 0.75rem;">
+                            <i class="bi bi-person-check-fill me-1"></i>Offline Seller Intake
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Intake Channel & Seller Contact Name -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Intake Channel <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="intake_channel" id="intakeChannelSelect" required>
+                                    <option value="WhatsApp" selected>WhatsApp</option>
+                                    <option value="Email">Email</option>
+                                    <option value="Phone Call">Phone Call</option>
+                                    <option value="Direct / Walk-In">Direct / Walk-In</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <div class="form-text small">How seller contacted admin.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Seller Contact Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_name" id="sellerNameInput"
+                                    placeholder="e.g. Rahul Sharma / John Doe" required>
+                                <div class="form-text small">Individual or contact person name.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    WhatsApp / Mobile <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_phone" id="sellerPhoneInput"
+                                    placeholder="e.g. +971 50 123 4567" required>
+                                <div class="form-text small">Auto-matches or registers seller.</div>
+                            </div>
+                        </div>
+
+                        <!-- Email, Company & Location -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Seller Email <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="email" class="form-control" name="seller_email" id="sellerEmailInput"
+                                    placeholder="e.g. vendor@company.com">
+                                <div class="form-text small">Auto-generated if left blank.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Company / Store Name <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_company" id="sellerCompanyInput"
+                                    placeholder="e.g. Apex Industrial Supplies">
+                                <div class="form-text small">Leave blank if individual.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Seller Location <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" name="seller_location" id="sellerLocationInput"
+                                    placeholder="e.g. Dubai, UAE / Houston, TX">
+                                <div class="form-text small">Seller city or country.</div>
+                            </div>
+                        </div>
+
+                        <!-- Internal Admin Notes -->
+                        <div>
+                            <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                Internal Admin Intake Notes <span class="text-muted fw-normal">(Optional)</span>
+                            </label>
+                            <input type="text" class="form-control" name="intake_notes" id="intakeNotesInput"
+                                placeholder="e.g. Received manifest via WhatsApp chat, verified stock location in JAFZA warehouse">
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Section 2: Basic Lot Details -->
+                <!-- 1. Manifest Spreadsheet Upload -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-layers me-2 text-primary"></i> Basic Lot Information</h6>
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="bi bi-file-earmark-spreadsheet-fill fs-6"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">1. Manifest Spreadsheet File</h6>
+                                <div class="text-muted small">Upload inventory spreadsheet (.xlsx / .csv) for automatic metric calculation</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill fw-semibold">
+                            Mandatory Headers: S.No*, Product Name*, Available Quantity*
+                        </span>
                     </div>
                     <div class="card-body p-4">
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Listing Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="title" placeholder="e.g. 6 Pallets of Mixed Brand Mini Fridges & Freezers" required>
-                            <div class="form-text small">Descriptive title for this bulk lot bundle.</div>
+
+                        <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-3" id="manifestDropzone">
+                            <input type="file" name="manifest_file" id="manifestFileInput" accept=".xlsx,.xls,.csv" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
+                            <div class="py-2">
+                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 52px; height: 52px;">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-3"></i>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1" id="manifestFileName">Drag &amp; drop Excel manifest file or <span class="text-primary text-decoration-underline cursor-pointer">browse</span></h6>
+                                <p class="text-muted small mb-0">Supports <strong>.XLSX</strong> and <strong>.CSV</strong> format (up to 25MB)</p>
+                            </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Category <span class="text-danger">*</span></label>
-                                <select class="form-select" name="category">
-                                    <option value="" selected>-- Select Category --</option>
-                                    {% for cat in categories %}
-                                    <option value="{{ cat.id }}">{{ cat.main_category.name }} &raquo; {{ cat.name }}</option>
+                        <!-- Manifest Parser Result Card (Hidden until file selected) -->
+                        <div id="manifestParsedSummary" class="d-none alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 rounded-3 p-3 mb-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <div class="fw-bold text-success d-flex align-items-center gap-2">
+                                    <i class="bi bi-check-circle-fill"></i> Manifest Spreadsheet Processed
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold" id="autoPopulateMetricsBtn">
+                                    <i class="bi bi-magic me-1"></i> Auto-Apply Metrics to Form
+                                </button>
+                            </div>
+                            <div class="row g-2 text-dark small">
+                                <div class="col-md-4">
+                                    <strong>Detected SKUs:</strong> <span id="parsedSkuCount" class="badge bg-white text-dark border ms-1">0</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Total Units:</strong> <span id="parsedTotalUnits" class="badge bg-white text-dark border ms-1">0</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Total MSRP:</strong> <span id="parsedTotalMsrp" class="badge bg-white text-dark border ms-1">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between text-muted small">
+                            <span><i class="bi bi-info-circle me-1"></i>Mandatory columns: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*, MOQ*, Product Condition*</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. Basic Lot Details -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="bi bi-card-heading fs-6"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">2. Basic Lot Details</h6>
+                            <div class="text-muted small">Listing title, description, key brands, and warehouse media</div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Listing Title -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
+                                    Listing Title <span class="text-danger">*</span>
+                                </label>
+                                <span class="text-muted small" id="titleCharCount">0 / 200</span>
+                            </div>
+                            <input type="text" class="form-control" name="title" id="lotTitleInput" maxlength="200"
+                                placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances" required>
+                            <div class="form-text small">Descriptive title highlighting brands and bundle size.</div>
+                        </div>
+
+                        <!-- Key Brands Included -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
+                                    Key Brands Included <span class="text-danger">*</span>
+                                </label>
+                                <span class="text-muted small" id="brandsCharCount">0 / 300</span>
+                            </div>
+                            <input type="text" class="form-control" name="key_brands_included" id="keyBrandsInput" maxlength="300"
+                                placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt" required>
+                            <div class="form-text small">Comma-separated list of major brands contained in the lot.</div>
+                        </div>
+
+                        <!-- Description & Notes -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary mb-0">
+                                    Lot Description &amp; Notes <span class="text-danger">*</span>
+                                </label>
+                                <span class="text-muted small" id="descCharCount">0 / 3000</span>
+                            </div>
+                            <textarea class="form-control" name="description" id="lotDescInput" rows="4" maxlength="3000"
+                                placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..." required></textarea>
+                        </div>
+
+                        <!-- Warehouse & Product Photos / Videos -->
+                        <div>
+                            <label class="form-label fw-semibold small text-uppercase text-secondary mb-1">
+                                Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span>
+                            </label>
+                            <div class="border border-2 border-dashed rounded-4 p-4 text-center bg-light bg-opacity-50 position-relative mb-2" id="mediaDropzone">
+                                <input type="file" name="warehouse_images" id="mediaFileInput" accept="image/*,video/*" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
+                                <div class="py-2">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-images fs-4"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Click to upload photos/videos or drag &amp; drop</h6>
+                                    <p class="text-muted small mb-0">Upload real photos or videos of pallets and warehouse storage (up to 20 files, max 50MB each)</p>
+                                </div>
+                            </div>
+                            <div id="mediaPreviewGallery" class="d-flex flex-wrap gap-2 pt-2"></div>
+                            <div class="form-text small">At least 1 photo or video is required.</div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 3. Category Breakdown -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="bi bi-pie-chart-fill fs-6"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">3. Category Breakdown</h6>
+                                <div class="text-muted small">Specify inventory percentage allocation across categories (must total 100%)</div>
+                            </div>
+                        </div>
+                        <span id="allocationTotalBadge" class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold">
+                            Total: <span id="allocationSumText">0</span>%
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <div id="categoryAllocationsContainer">
+                            <!-- Dynamic Allocation Rows rendered here -->
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-2 border-top">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" id="addCategoryRowBtn">
+                                <i class="bi bi-plus-lg"></i> Add Category Row
+                            </button>
+                            <span class="text-muted small" id="allocationWarningText">
+                                Allocation percentages across all rows must sum exactly to 100%.
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 4. Condition & Logistics Specifications -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="bi bi-box-seam-fill fs-6"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">4. Condition &amp; Logistics Specifications</h6>
+                            <div class="text-muted small">Quality grade, inventory age, freight packaging, and warehouse location</div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Row 1: Condition, Source Type, Stock Age -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Overall Lot Condition <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="condition" required>
+                                    {% for cond in condition_options %}
+                                    <option value="{{ cond }}" {% if cond == 'New' %}selected{% endif %}>{{ cond }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Overall Lot Condition</label>
-                                <select class="form-select" name="condition">
-                                    <option value="New / Sealed" selected>New / Sealed</option>
-                                    <option value="Like New / Shelf Pulls">Like New / Shelf Pulls</option>
-                                    <option value="Customer Returns">Customer Returns</option>
-                                    <option value="Used / Tested">Used / Tested</option>
-                                    <option value="Salvage / For Parts">Salvage / For Parts</option>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Source Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="source_type" required>
+                                    {% for src in source_type_options %}
+                                    <option value="{{ src }}" {% if src == 'Overstock' %}selected{% endif %}>{{ src }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Inventory Stock Age
+                                </label>
+                                <select class="form-select" name="inventory_stock_age">
+                                    {% for age in stock_age_options %}
+                                    <option value="{{ age }}" {% if forloop.first %}selected{% endif %}>{{ age }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
 
-                        <div>
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Lot Description & Notes</label>
-                            <textarea class="form-control" name="description" rows="4" placeholder="Detailed package description, testing condition, pallet breakdown, manifestation notes..."></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Packaging & Logistics Specifications -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i> Packaging, Source & Logistics Specs</h6>
-                    </div>
-                    <div class="card-body p-4">
+                        <!-- Row 2: Location, Distinct SKUs, Total Units -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Source Type</label>
-                                <select class="form-select" name="source_type">
-                                    <option value="Overstock" selected>Overstock</option>
-                                    <option value="Customer Returns">Customer Returns</option>
-                                    <option value="Shelf Pulls">Shelf Pulls</option>
-                                    <option value="Liquidation">Liquidation</option>
-                                    <option value="Refurbished">Refurbished</option>
-                                </select>
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Inventory Location <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" name="inventory_location" id="inventoryLocationInput"
+                                    placeholder="e.g. Warehouse 4B, JAFZA, Dubai" required>
                             </div>
+
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Load Type</label>
-                                <select class="form-select" name="load_type">
-                                    <option value="Pallet(s)" selected>Pallet(s)</option>
-                                    <option value="Truckload">Truckload</option>
-                                    <option value="LTL">LTL (Less Than Truckload)</option>
-                                    <option value="Box / Case">Box / Case</option>
-                                </select>
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Number of Distinct SKUs <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" min="1" class="form-control" name="number_of_distinct_skus" id="distinctSkusInput"
+                                    placeholder="e.g. 24" required>
                             </div>
+
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Unit Type</label>
-                                <select class="form-select" name="unit_type">
-                                    <option value="Pieces / Units" selected>Pieces / Units</option>
-                                    <option value="Cartons">Cartons</option>
-                                    <option value="Boxes">Boxes</option>
-                                    <option value="Pallets">Pallets</option>
-                                </select>
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Total Units / Quantity <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" min="1" class="form-control" name="total_units_quantity" id="totalUnitsInput"
+                                    placeholder="e.g. 1500" required>
                             </div>
                         </div>
 
+                        <!-- Row 3: Unit Type, Total Weight, Load Type -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Lot Size / Volume</label>
-                                <input type="text" class="form-control" name="lot_size" placeholder="e.g. 500 Units / 6 Pallets">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Primary Unit Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="primary_unit_type" required>
+                                    {% for ut in unit_type_options %}
+                                    <option value="{{ ut }}" {% if ut == 'Pieces / Units' %}selected{% endif %}>{{ ut }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
+
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Pallet Count</label>
-                                <input type="number" min="1" class="form-control" name="pallet_count" value="1">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Total Weight <span class="text-muted fw-normal">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control" name="total_weight"
+                                    placeholder="e.g. 1,500 kg / 3,300 lbs">
                             </div>
+
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Total Weight</label>
-                                <input type="text" class="form-control" name="weight" placeholder="e.g. 1,200 lbs / 550 kg">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Load Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="load_type" required>
+                                    {% for lt in load_type_options %}
+                                    <option value="{{ lt }}" {% if lt == 'Pallet' %}selected{% endif %}>{{ lt }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Inventory Location</label>
-                                <input type="text" class="form-control" name="inventory_location" placeholder="e.g. Warehouse B, Houston TX">
+                        <!-- Row 4: Shipping Size, Lot Size, Pallet Count, Shipping Terms -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Shipping Size <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" name="shipping_size" required>
+                                    {% for sz in shipping_size_options %}
+                                    <option value="{{ sz }}" {% if sz == 'Single Pallet' %}selected{% endif %}>{{ sz }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Shipping Terms</label>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Lot Size / Volume
+                                </label>
+                                <input type="text" class="form-control" name="lot_size"
+                                    placeholder="e.g. 4 Pallets / Half Truck">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Pallet Count <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" min="1" class="form-control" name="pallet_count" value="1" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Shipping Terms
+                                </label>
                                 <select class="form-select" name="shipping_terms">
-                                    <option value="Buyer Arranges Freight" selected>Buyer Arranges Freight</option>
-                                    <option value="Seller Ships">Seller Ships</option>
-                                    <option value="FOB Warehouse">FOB Warehouse</option>
-                                    <option value="Free Shipping">Free Shipping</option>
+                                    {% for st in shipping_terms_options %}
+                                    <option value="{{ st }}" {% if st == 'Buyer Arranges Freight' %}selected{% endif %}>{{ st }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
+
+                        <!-- Certificate & Inspection Documents Toggle -->
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                    id="certSwitch" name="third_party_certificate_available">
+                                <label class="form-check-label fw-semibold cursor-pointer ms-2" for="certSwitch">
+                                    Third-Party Certificate or Inspection Report Available
+                                </label>
+                            </div>
+                            <div id="certUploadBlock" class="d-none mt-2 pt-2 border-top">
+                                <label class="form-label small fw-semibold text-secondary">Upload Certificate / Inspection Document (.PDF, .PNG, .JPG)</label>
+                                <input type="file" class="form-control form-control-sm" name="certificate_document" accept=".pdf,image/*">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Section 4: Pricing, Value & Commercial Terms -->
+                <!-- 5. Commercial Terms & Pricing -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-currency-exchange me-2 text-primary"></i> Commercial Terms & Pricing</h6>
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
+                        <div class="rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="bi bi-cash-stack fs-6"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">5. Commercial Terms &amp; Liquidation Pricing</h6>
+                            <div class="text-muted small">Total estimated retail value, seller payout ask price, and sales method</div>
+                        </div>
                     </div>
                     <div class="card-body p-4">
+
+                        <!-- Currency, MSRP, Ask Price -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Currency Code</label>
-                                <select class="form-select font-monospace" name="currency">
-                                    <option value="USD" selected>USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="AUD">AUD ($)</option>
-                                    <option value="CAD">CAD ($)</option>
-                                    <option value="INR">INR (₹)</option>
-                                    <option value="AED">AED (AED)</option>
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Currency <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select font-monospace" name="currency" id="currencySelect" required>
+                                    {% for cur in currency_options %}
+                                    <option value="{{ cur }}" {% if cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Asking Price ($) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="total_price" value="0.00" required>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Total Est. Retail Value (MSRP) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text currency-symbol font-monospace">USD</span>
+                                    <input type="number" step="0.01" min="1" class="form-control" name="total_est_retail_value_msrp" id="msrpInput"
+                                        placeholder="0.00" required>
+                                </div>
+                                <div class="form-text small">Original aggregate retail value.</div>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Total MSRP Retail ($)</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="total_retail_value" value="0.00" placeholder="Original Retail MSRP">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Allocation (%)</label>
-                                <input type="number" min="1" max="100" class="form-control" name="allocation" value="100">
+
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Ask Price (Surplus Payout) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text currency-symbol font-monospace">USD</span>
+                                    <input type="number" step="0.01" min="1" class="form-control" name="ask_price_surplus_payout" id="askPriceInput"
+                                        placeholder="0.00" required>
+                                </div>
+                                <div class="form-text small">Target payout seller seeks for this lot.</div>
                             </div>
                         </div>
 
+                        <!-- Real-time Liquidation Validator & Calculations -->
+                        <div class="p-3 rounded-4 bg-light border mb-3" id="pricingAnalysisBox">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <span class="fw-bold small text-dark d-flex align-items-center gap-1.5">
+                                    <i class="bi bi-graph-down-arrow text-primary"></i> Liquidation Pricing Analysis
+                                </span>
+                                <span id="discountBadge" class="badge bg-secondary px-2.5 py-1 rounded-pill fw-bold">0% Off MSRP</span>
+                            </div>
+
+                            <div class="row g-2 small">
+                                <div class="col-md-6">
+                                    <div class="p-2 rounded-3 bg-white border">
+                                        <div class="text-muted" style="font-size: 0.78rem;">Public Listing Price (+10% Platform Markup):</div>
+                                        <div class="fw-bold text-dark fs-6 font-monospace" id="publicListingPriceText">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-2 rounded-3 bg-white border">
+                                        <div class="text-muted" style="font-size: 0.78rem;">Max Allowed Payout (Min 60% Discount):</div>
+                                        <div class="fw-bold text-dark fs-6 font-monospace" id="maxPayoutText">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="liquidationWarningBanner" class="d-none alert alert-danger bg-danger bg-opacity-10 border-danger border-opacity-25 rounded-3 py-2 px-3 mt-2 mb-0 small">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>Liquidation Policy:</strong> Ask Price must provide at least a 60% discount off the Total Est. Retail Value (MSRP).
+                            </div>
+                        </div>
+
+                        <!-- Sale Method & Counter Offers -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Sale Method</label>
+                                <label class="form-label fw-semibold small text-uppercase text-secondary">
+                                    Sale Method
+                                </label>
                                 <select class="form-select" name="sale_method">
-                                    <option value="offer" selected>Best Offer / RFQ</option>
-                                    <option value="buy_now">Fixed Price (Buy Now)</option>
-                                    <option value="auction">Auction</option>
+                                    {% for sm in sale_method_options %}
+                                    <option value="{{ sm.value }}" {% if sm.value == 'offer' %}selected{% endif %}>{{ sm.label }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
+
                             <div class="col-md-6 d-flex align-items-end">
-                                <div class="p-3 rounded-3 bg-surface-subtle border w-100">
+                                <div class="p-3 rounded-3 bg-light border w-100">
                                     <div class="form-check form-switch mb-0">
-                                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="counterOfferSwitch" name="allow_counter_offers" checked>
+                                        <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                            id="counterOfferSwitch" name="allow_counter_offers" checked>
                                         <label class="form-check-label fw-semibold cursor-pointer ms-2" for="counterOfferSwitch">
                                             Allow Counter Offers from Buyers
                                         </label>
@@ -240,70 +611,24 @@
                             </div>
                         </div>
 
-
-                    </div>
-                </div>
-
-                <!-- Section 5: Interactive Manifest Items Table -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-2 text-primary"></i> Manifest Products Data Grid</h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="addLotItemBtn">
-                            <i class="bi bi-plus-lg me-1"></i> Add Item Row
-                        </button>
-                    </div>
-                    <div class="card-body p-4">
-                        <p class="text-muted small mb-3">Add items manually below OR upload an Excel manifest file.</p>
-                        
-                        <div class="table-responsive mb-3">
-                            <table class="table table-bordered align-middle mb-0" id="lotItemsTable" style="font-size: 0.875rem;">
-                                <thead class="table-light small uppercase">
-                                    <tr>
-                                        <th style="width: 140px;">SKU / ID</th>
-                                        <th>Product Title <span class="text-danger">*</span></th>
-                                        <th style="width: 130px;">Category</th>
-                                        <th style="width: 130px;">Condition</th>
-                                        <th style="width: 90px;" class="text-end">Qty</th>
-                                        <th style="width: 110px;" class="text-end">MSRP/Unit</th>
-                                        <th style="width: 50px;" class="text-center">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <input type="text" name="item_sku[]" class="form-control form-control-sm font-monospace" placeholder="SKU-001">
-                                        </td>
-                                        <td>
-                                            <input type="text" name="item_name[]" class="form-control form-control-sm" placeholder="Product title / model" required>
-                                        </td>
-                                        <td>
-                                            <input type="text" name="item_category[]" class="form-control form-control-sm" placeholder="Category">
-                                        </td>
-                                        <td>
-                                            <input type="text" name="item_condition[]" class="form-control form-control-sm" placeholder="New/Used" value="New">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="item_quantity[]" class="form-control form-control-sm text-end" value="1" min="1">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" name="item_msrp[]" class="form-control form-control-sm text-end" value="0.00">
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-row-btn"><i class="bi bi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <!-- Excel Manifest Upload -->
+                        <!-- Excluded Export Countries -->
                         <div>
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Or Upload Excel Manifest (.xlsx / .csv)</label>
-                            <input type="file" class="form-control" name="excel_file" accept=".xlsx,.xls,.csv">
-                            <div class="form-text small">Columns expected: <code>SKU</code>, <code>Product Title</code>, <code>Category</code>, <code>Condition</code>, <code>Qty</code>, <code>MSRP</code>.</div>
+                            <label class="form-label fw-semibold small text-uppercase text-secondary mb-1">
+                                Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span>
+                            </label>
+                            <div class="d-flex flex-wrap gap-3 p-3 rounded-3 bg-light border">
+                                {% for country in excluded_countries_options %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="excluded_export_countries" value="{{ country }}" id="country_{{ forloop.counter }}">
+                                    <label class="form-check-label small" for="country_{{ forloop.counter }}">
+                                        {{ country }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text small">Select destinations where export or distribution is prohibited.</div>
                         </div>
+
                     </div>
                 </div>
 
@@ -311,34 +636,88 @@
 
             <!-- Right Sidebar Column -->
             <div class="col-lg-4">
-                
-                <!-- Section 6: Publishing & Status Controls -->
+
+                <!-- Publishing & Visibility -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-primary"></i> Publishing & Visibility</h6>
+                    <div class="card-header bg-white border-bottom py-3 px-4">
+                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-eye-fill me-2 text-primary"></i> Visibility &amp; Status</h6>
                     </div>
                     <div class="card-body p-4">
-                        
-                        <div class="p-3 rounded-3 bg-surface-subtle border mb-3">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="isLotActiveSwitch" name="is_active" checked>
+
+                        <div class="p-3 rounded-3 bg-light border mb-3">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                    id="isLotActiveSwitch" name="is_active" checked>
                                 <label class="form-check-label fw-semibold cursor-pointer ms-2" for="isLotActiveSwitch">
-                                    Active Package
+                                    Active on Marketplace
                                 </label>
                             </div>
-                            <div class="form-text small mt-1 ms-4">When active, buyers can view and place batch enquiries for this Lot package on the marketplace.</div>
+                            <div class="text-muted small ms-4">
+                                Once approved, lot will be immediately visible for buyer discovery.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning py-2.5 px-3 rounded-3 border-warning-subtle small mb-0 d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                Newly added lots are saved under <strong>Pending Review</strong> status so verification can be completed before approval.
+                            </div>
                         </div>
 
                     </div>
                 </div>
 
-                <!-- Submit Button Block -->
+                <!-- Live Summary Snapshot Card -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-bottom py-3 px-4">
+                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-clipboard2-check-fill me-2 text-primary"></i> Package Snapshot</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Submitter:</span>
+                            <span class="fw-bold font-monospace text-primary">{{ admin_uid }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Intake Channel:</span>
+                            <span class="fw-bold text-dark" id="summaryChannel">WhatsApp</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Seller Name:</span>
+                            <span class="fw-bold text-dark" id="summarySellerName">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Distinct SKUs:</span>
+                            <span class="fw-bold text-dark" id="summarySkus">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Total Units:</span>
+                            <span class="fw-bold text-dark" id="summaryUnits">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Total MSRP:</span>
+                            <span class="fw-bold text-dark font-monospace" id="summaryMsrp">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 border-bottom small">
+                            <span class="text-secondary">Surplus Ask:</span>
+                            <span class="fw-bold text-dark font-monospace" id="summaryAsk">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1.5 small">
+                            <span class="text-secondary">Liquidation Discount:</span>
+                            <span class="fw-bold text-success" id="summaryDiscount">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Block -->
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4 text-center">
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2">
-                            <i class="bi bi-plus-circle-fill"></i> Add Lot Request
+                        <button type="submit" id="submitLotBottomBtn"
+                            class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2 shadow-sm">
+                            <i class="bi bi-plus-circle-fill"></i> Create Lot Listing
                         </button>
-                        <a href="/admin/enquiries/lots/" class="btn btn-link text-secondary text-decoration-none small">Cancel & Go Back</a>
+                        <a href="/admin/enquiries/lots/" class="btn btn-link text-secondary text-decoration-none small">
+                            <i class="bi bi-x-circle me-1"></i>Cancel &amp; Discard
+                        </a>
                     </div>
                 </div>
 
@@ -346,54 +725,452 @@
 
         </div>
     </form>
+
 </div>
 
-<!-- Dynamic Row Addition JS -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const addBtn = document.getElementById('addLotItemBtn');
-    const tbody = document.querySelector('#lotItemsTable tbody');
+<!-- SheetJS (XLSX) for Instant Client-Side Manifest Parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    if (addBtn && tbody) {
-        addBtn.addEventListener('click', function() {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <input type="text" name="item_sku[]" class="form-control form-control-sm font-monospace" placeholder="SKU">
-                </td>
-                <td>
-                    <input type="text" name="item_name[]" class="form-control form-control-sm" placeholder="Product title" required>
-                </td>
-                <td>
-                    <input type="text" name="item_category[]" class="form-control form-control-sm" placeholder="Category">
-                </td>
-                <td>
-                    <input type="text" name="item_condition[]" class="form-control form-control-sm" placeholder="Condition" value="New">
-                </td>
-                <td>
-                    <input type="number" name="item_quantity[]" class="form-control form-control-sm text-end" value="1" min="1">
-                </td>
-                <td>
-                    <input type="number" step="0.01" name="item_msrp[]" class="form-control form-control-sm text-end" value="0.00">
-                </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-row-btn"><i class="bi bi-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(tr);
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // --- 0. Standard Category List for Allocations ---
+    const STANDARD_CATEGORIES = [
+        "Electricals",
+        "Electronics",
+        "Apparel",
+        "Industrial Hardware",
+        "Automotive & Spare Parts",
+        "Home & Living",
+        "Tools & Machinery",
+        "Medical & Health",
+        "General Surplus",
+        "Other"
+    ];
+
+    // --- 1. Category Allocation Rows Management ---
+    const allocationsContainer = document.getElementById('categoryAllocationsContainer');
+    const addCategoryRowBtn = document.getElementById('addCategoryRowBtn');
+    const allocationTotalBadge = document.getElementById('allocationTotalBadge');
+    const allocationSumText = document.getElementById('allocationSumText');
+    const allocationWarningText = document.getElementById('allocationWarningText');
+
+    function createCategoryRow(categoryName = '', allocationPct = 100) {
+        const row = document.createElement('div');
+        row.className = 'category-row row g-2 align-items-center mb-2';
+
+        let optionsHtml = '';
+        STANDARD_CATEGORIES.forEach(cat => {
+            const isSel = (cat.toLowerCase() === categoryName.toLowerCase()) ? 'selected' : '';
+            optionsHtml += `<option value="${cat}" ${isSel}>${cat}</option>`;
         });
 
-        tbody.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-row-btn')) {
-                const tr = e.target.closest('tr');
-                if (tbody.rows.length > 1) {
-                    tr.remove();
+        row.innerHTML = `
+            <div class="col-7">
+                <select class="form-select form-select-sm" name="category_name[]" required>
+                    <option value="">-- Select Category --</option>
+                    ${optionsHtml}
+                </select>
+            </div>
+            <div class="col-4">
+                <div class="input-group input-group-sm">
+                    <input type="number" min="1" max="100" class="form-control text-end category-pct-input" 
+                        name="category_allocation[]" value="${allocationPct}" placeholder="100" required>
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+            <div class="col-1 text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-cat-btn" title="Remove row">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+
+        allocationsContainer.appendChild(row);
+        updateAllocationSum();
+    }
+
+    // Initialize with 1 default row (100%)
+    createCategoryRow('Electronics', 100);
+
+    if (addCategoryRowBtn) {
+        addCategoryRowBtn.addEventListener('click', function () {
+            createCategoryRow('', 10);
+        });
+    }
+
+    if (allocationsContainer) {
+        allocationsContainer.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-cat-btn')) {
+                const row = e.target.closest('.category-row');
+                const allRows = allocationsContainer.querySelectorAll('.category-row');
+                if (allRows.length > 1) {
+                    row.remove();
+                    updateAllocationSum();
                 } else {
-                    tr.querySelectorAll('input').forEach(i => i.value = '');
+                    alert('At least one category allocation row is required.');
                 }
             }
         });
+
+        allocationsContainer.addEventListener('input', function (e) {
+            if (e.target.classList.contains('category-pct-input')) {
+                updateAllocationSum();
+            }
+        });
     }
+
+    function updateAllocationSum() {
+        let sum = 0;
+        const pctInputs = document.querySelectorAll('.category-pct-input');
+        pctInputs.forEach(inp => {
+            const val = parseFloat(inp.value) || 0;
+            sum += val;
+        });
+
+        allocationSumText.textContent = sum;
+
+        if (sum === 100) {
+            allocationTotalBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold';
+            allocationWarningText.className = 'text-success small fw-medium';
+            allocationWarningText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Perfect: 100% Allocation Balanced';
+        } else {
+            allocationTotalBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold';
+            allocationWarningText.className = 'text-danger small fw-medium';
+            allocationWarningText.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Total must equal 100% (Current: ${sum}%)`;
+        }
+    }
+
+    // --- 2. Live Pricing & Discount Calculations ---
+    const msrpInput = document.getElementById('msrpInput');
+    const askPriceInput = document.getElementById('askPriceInput');
+    const currencySelect = document.getElementById('currencySelect');
+    const discountBadge = document.getElementById('discountBadge');
+    const publicListingPriceText = document.getElementById('publicListingPriceText');
+    const maxPayoutText = document.getElementById('maxPayoutText');
+    const liquidationWarningBanner = document.getElementById('liquidationWarningBanner');
+
+    function updatePricingCalculations() {
+        const msrp = parseFloat(msrpInput.value) || 0;
+        const ask = parseFloat(askPriceInput.value) || 0;
+        const curr = currencySelect ? currencySelect.value : 'USD';
+
+        // Update all currency symbols
+        document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = curr);
+
+        if (msrp > 0) {
+            const maxPayout = msrp * 0.40;
+            maxPayoutText.textContent = `${curr} ${maxPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else {
+            maxPayoutText.textContent = '-';
+        }
+
+        if (ask > 0) {
+            const publicPrice = ask * 1.10;
+            publicListingPriceText.textContent = `${curr} ${publicPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else {
+            publicListingPriceText.textContent = '-';
+        }
+
+        if (msrp > 0 && ask > 0) {
+            const discountPct = Math.round(((msrp - ask) / msrp) * 100);
+            discountBadge.textContent = `${discountPct}% Off MSRP`;
+
+            if (discountPct >= 60) {
+                discountBadge.className = 'badge bg-success px-2.5 py-1 rounded-pill fw-bold';
+                liquidationWarningBanner.classList.add('d-none');
+            } else {
+                discountBadge.className = 'badge bg-danger px-2.5 py-1 rounded-pill fw-bold';
+                liquidationWarningBanner.classList.remove('d-none');
+            }
+
+            document.getElementById('summaryDiscount').textContent = `${discountPct}% Off`;
+        } else {
+            discountBadge.textContent = '0% Off MSRP';
+            discountBadge.className = 'badge bg-secondary px-2.5 py-1 rounded-pill fw-bold';
+            liquidationWarningBanner.classList.add('d-none');
+            document.getElementById('summaryDiscount').textContent = '-';
+        }
+
+        // Update summary card
+        document.getElementById('summaryMsrp').textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString()}` : '-';
+        document.getElementById('summaryAsk').textContent = ask > 0 ? `${curr} ${ask.toLocaleString()}` : '-';
+    }
+
+    if (msrpInput) msrpInput.addEventListener('input', updatePricingCalculations);
+    if (askPriceInput) askPriceInput.addEventListener('input', updatePricingCalculations);
+    if (currencySelect) currencySelect.addEventListener('change', updatePricingCalculations);
+
+    // --- 3. Live Snapshot Syncing ---
+    const sellerNameInput = document.getElementById('sellerNameInput');
+    const intakeChannelSelect = document.getElementById('intakeChannelSelect');
+    const distinctSkusInput = document.getElementById('distinctSkusInput');
+    const totalUnitsInput = document.getElementById('totalUnitsInput');
+
+    if (sellerNameInput) {
+        sellerNameInput.addEventListener('input', () => {
+            document.getElementById('summarySellerName').textContent = sellerNameInput.value.trim() || '-';
+        });
+    }
+
+    if (intakeChannelSelect) {
+        intakeChannelSelect.addEventListener('change', () => {
+            document.getElementById('summaryChannel').textContent = intakeChannelSelect.value;
+        });
+    }
+
+    if (distinctSkusInput) {
+        distinctSkusInput.addEventListener('input', () => {
+            document.getElementById('summarySkus').textContent = distinctSkusInput.value || '-';
+        });
+    }
+
+    if (totalUnitsInput) {
+        totalUnitsInput.addEventListener('input', () => {
+            document.getElementById('summaryUnits').textContent = totalUnitsInput.value ? Number(totalUnitsInput.value).toLocaleString() : '-';
+        });
+    }
+
+    // --- 4. Character Limit Counters ---
+    const setupCharCounter = (inputId, counterId, maxLen) => {
+        const inp = document.getElementById(inputId);
+        const cnt = document.getElementById(counterId);
+        if (inp && cnt) {
+            inp.addEventListener('input', () => {
+                cnt.textContent = `${inp.value.length} / ${maxLen}`;
+            });
+        }
+    };
+    setupCharCounter('lotTitleInput', 'titleCharCount', 200);
+    setupCharCounter('keyBrandsInput', 'brandsCharCount', 300);
+    setupCharCounter('lotDescInput', 'descCharCount', 3000);
+
+    // --- 5. Certificate Document Toggle ---
+    const certSwitch = document.getElementById('certSwitch');
+    const certUploadBlock = document.getElementById('certUploadBlock');
+    if (certSwitch && certUploadBlock) {
+        certSwitch.addEventListener('change', () => {
+            if (certSwitch.checked) {
+                certUploadBlock.classList.remove('d-none');
+            } else {
+                certUploadBlock.classList.add('d-none');
+            }
+        });
+    }
+
+    // --- 6. Media Gallery Previews ---
+    const mediaFileInput = document.getElementById('mediaFileInput');
+    const mediaPreviewGallery = document.getElementById('mediaPreviewGallery');
+
+    if (mediaFileInput && mediaPreviewGallery) {
+        mediaFileInput.addEventListener('change', function () {
+            mediaPreviewGallery.innerHTML = '';
+            const files = Array.from(this.files);
+
+            files.forEach((file, idx) => {
+                const item = document.createElement('div');
+                item.className = 'position-relative border rounded-3 p-1 bg-white shadow-sm';
+                item.style.width = '70px';
+                item.style.height = '70px';
+
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.className = 'w-100 h-100 object-fit-cover rounded-2';
+                    img.src = URL.createObjectURL(file);
+                    item.appendChild(img);
+                } else {
+                    const iconBox = document.createElement('div');
+                    iconBox.className = 'w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light rounded-2 text-muted';
+                    iconBox.innerHTML = '<i class="bi bi-film fs-4"></i>';
+                    item.appendChild(iconBox);
+                }
+
+                mediaPreviewGallery.appendChild(item);
+            });
+        });
+    }
+
+    // --- 7. SheetJS Client-Side Manifest Parsing ---
+    const manifestFileInput = document.getElementById('manifestFileInput');
+    const manifestFileName = document.getElementById('manifestFileName');
+    const manifestParsedSummary = document.getElementById('manifestParsedSummary');
+    const parsedSkuCount = document.getElementById('parsedSkuCount');
+    const parsedTotalUnits = document.getElementById('parsedTotalUnits');
+    const parsedTotalMsrp = document.getElementById('parsedTotalMsrp');
+    const autoPopulateMetricsBtn = document.getElementById('autoPopulateMetricsBtn');
+
+    let clientManifestData = {
+        skus: 0,
+        units: 0,
+        msrp: 0.0
+    };
+
+    if (manifestFileInput) {
+        manifestFileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            manifestFileName.innerHTML = `<i class="bi bi-file-earmark-spreadsheet-fill text-success me-1"></i> ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+            if (typeof XLSX === 'undefined') {
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (!rows || rows.length < 2) return;
+
+                    const headers = rows[0].map(h => String(h || '').trim().toLowerCase());
+
+                    // Find quantity column index
+                    let qtyIdx = headers.findIndex(h => h.includes('quantity') || h.includes('qty') || h.includes('units') || h.includes('count'));
+                    // Find MSRP / retail price column index
+                    let msrpIdx = headers.findIndex(h => h.includes('msrp') || h.includes('retail') || h.includes('original price') || h.includes('unit price'));
+
+                    let totalUnits = 0;
+                    let totalMsrp = 0.0;
+                    let distinctCount = 0;
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length === 0 || !row[0]) continue;
+                        distinctCount++;
+
+                        let qty = 1;
+                        if (qtyIdx !== -1 && row[qtyIdx]) {
+                            const qVal = parseInt(String(row[qtyIdx]).replace(/[^0-9]/g, ''));
+                            if (!isNaN(qVal) && qVal > 0) qty = qVal;
+                        }
+                        totalUnits += qty;
+
+                        if (msrpIdx !== -1 && row[msrpIdx]) {
+                            const mVal = parseFloat(String(row[msrpIdx]).replace(/[^0-9.]/g, ''));
+                            if (!isNaN(mVal) && mVal > 0) {
+                                totalMsrp += (mVal * qty);
+                            }
+                        }
+                    }
+
+                    clientManifestData.skus = distinctCount;
+                    clientManifestData.units = totalUnits;
+                    clientManifestData.msrp = totalMsrp;
+
+                    parsedSkuCount.textContent = distinctCount.toLocaleString();
+                    parsedTotalUnits.textContent = totalUnits.toLocaleString();
+                    parsedTotalMsrp.textContent = totalMsrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    manifestParsedSummary.classList.remove('d-none');
+                } catch (err) {
+                    console.error('Error reading manifest in browser:', err);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    if (autoPopulateMetricsBtn) {
+        autoPopulateMetricsBtn.addEventListener('click', function () {
+            if (clientManifestData.skus > 0) {
+                distinctSkusInput.value = clientManifestData.skus;
+                distinctSkusInput.dispatchEvent(new Event('input'));
+            }
+            if (clientManifestData.units > 0) {
+                totalUnitsInput.value = clientManifestData.units;
+                totalUnitsInput.dispatchEvent(new Event('input'));
+            }
+            if (clientManifestData.msrp > 0) {
+                msrpInput.value = clientManifestData.msrp.toFixed(2);
+                msrpInput.dispatchEvent(new Event('input'));
+            }
+        });
+    }
+
+    // --- 8. Form Validation on Submit ---
+    const addLotForm = document.getElementById('addLotForm');
+    if (addLotForm) {
+        addLotForm.addEventListener('submit', function (e) {
+            let isValid = true;
+            let firstInvalidEl = null;
+
+            // 1. Mandatory Text Inputs
+            const requiredFields = [
+                { id: 'sellerNameInput', name: 'Seller Contact Name' },
+                { id: 'sellerPhoneInput', name: 'Seller WhatsApp / Phone' },
+                { id: 'lotTitleInput', name: 'Listing Title' },
+                { id: 'keyBrandsInput', name: 'Key Brands Included' },
+                { id: 'lotDescInput', name: 'Lot Description' },
+                { id: 'inventoryLocationInput', name: 'Inventory Location' },
+                { id: 'distinctSkusInput', name: 'Distinct SKUs' },
+                { id: 'totalUnitsInput', name: 'Total Units' },
+                { id: 'msrpInput', name: 'Total Est. Retail Value (MSRP)' },
+                { id: 'askPriceInput', name: 'Ask Price (Surplus Payout)' }
+            ];
+
+            for (const f of requiredFields) {
+                const el = document.getElementById(f.id);
+                if (el && !el.value.trim()) {
+                    el.classList.add('is-invalid');
+                    isValid = false;
+                    if (!firstInvalidEl) firstInvalidEl = el;
+                } else if (el) {
+                    el.classList.remove('is-invalid');
+                }
+            }
+
+            // 2. Media Files Check
+            if (mediaFileInput && mediaFileInput.files.length === 0) {
+                alert('Please upload at least 1 photo or video of the warehouse/lot items.');
+                mediaFileInput.focus();
+                e.preventDefault();
+                return;
+            }
+
+            // 3. Category Allocation Sum Check
+            let sum = 0;
+            document.querySelectorAll('.category-pct-input').forEach(inp => {
+                sum += parseFloat(inp.value) || 0;
+            });
+            if (sum !== 100) {
+                alert(`Category allocation percentages must equal exactly 100%. Current sum: ${sum}%. Please adjust allocations.`);
+                e.preventDefault();
+                return;
+            }
+
+            // 4. Liquidation Discount Policy Check (>= 60%)
+            const msrpVal = parseFloat(msrpInput.value) || 0;
+            const askVal = parseFloat(askPriceInput.value) || 0;
+            if (msrpVal > 0 && askVal > 0) {
+                const discount = ((msrpVal - askVal) / msrpVal) * 100;
+                if (discount < 59.9) {
+                    const confirmed = confirm(
+                        `Liquidation Warning: The ask price offers a ${Math.round(discount)}% discount off MSRP, which is below the recommended 60% liquidation discount.\n\nDo you want to proceed as an administrative override?`
+                    );
+                    if (!confirmed) {
+                        askPriceInput.focus();
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                if (firstInvalidEl) {
+                    firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalidEl.focus();
+                }
+                alert('Please fill in all mandatory required fields.');
+            }
+        });
+    }
+
 });
 </script>
 {% endblock %}
