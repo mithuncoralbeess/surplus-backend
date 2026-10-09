@@ -552,15 +552,21 @@
                                 <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill small" id="btnClearExcluded">Clear All</button>
                             </div>
 
-                            <!-- Modern Dropdown to add extra countries -->
+                            <!-- Modern Dropdown to add extra countries with Clear button -->
                             <div class="row g-2 mb-3">
                                 <div class="col-md-7">
-                                    <select class="form-select form-select-custom" id="addExcludedCountrySelect">
-                                        <option value="" selected>+ Add another destination to embargo list...</option>
-                                        {% for c in countries %}
-                                        <option value="{{ c }}">{{ c }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+                                        <select class="form-select form-select-custom border-start-0" id="addExcludedCountrySelect">
+                                            <option value="" selected>+ Add another destination to embargo list...</option>
+                                            {% for c in countries %}
+                                            <option value="{{ c }}">{{ c }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-outline-secondary" id="btnClearDropdown" title="Reset dropdown selector">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1400,10 +1406,15 @@
                     const badge = document.createElement("span");
                     badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 small fw-semibold";
                     badge.innerHTML = `<i class="bi bi-slash-circle"></i><span>${country}</span><button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;" aria-label="Remove"></button>`;
-                    badge.querySelector(".btn-close").addEventListener("click", () => {
-                        selectedCountriesSet.delete(country);
-                        syncExcludedCountries();
-                    });
+                    const closeBtn = badge.querySelector(".btn-close");
+                    if (closeBtn) {
+                        closeBtn.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectedCountriesSet.delete(country);
+                            syncExcludedCountries();
+                        });
+                    }
                     badgesContainer.appendChild(badge);
                 });
             }
@@ -1419,7 +1430,9 @@
         }
 
         quickEmbargoBtns.forEach(btn => {
-            btn.addEventListener("click", function () {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const c = this.dataset.country;
                 if (selectedCountriesSet.has(c)) {
                     selectedCountriesSet.delete(c);
@@ -1431,19 +1444,46 @@
         });
 
         if (btnClearExcluded) {
-            btnClearExcluded.addEventListener("click", function () {
+            btnClearExcluded.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 selectedCountriesSet.clear();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
                 syncExcludedCountries();
+            });
+        }
+
+        const btnClearDropdown = document.getElementById("btnClearDropdown");
+        if (btnClearDropdown) {
+            btnClearDropdown.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
             });
         }
 
         if (addCountrySelect) {
             addCountrySelect.addEventListener("change", function () {
-                if (this.value) {
-                    selectedCountriesSet.add(this.value);
-                    this.value = "";
+                const country = this.value;
+                if (country) {
+                    selectedCountriesSet.add(country);
                     syncExcludedCountries();
                 }
+                // Always reset select back to placeholder
+                this.selectedIndex = 0;
+                this.value = "";
+                setTimeout(() => {
+                    if (addCountrySelect) {
+                        addCountrySelect.selectedIndex = 0;
+                        addCountrySelect.value = "";
+                    }
+                }, 10);
             });
         }
 
