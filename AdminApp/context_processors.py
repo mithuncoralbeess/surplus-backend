@@ -1,4 +1,5 @@
-from .models import SystemSettings, PopupSetting, AdminDetails
+from django.db.models import Q
+from .models import SystemSettings, PopupSetting, AdminDetails, AdminNotification
 
 def maintenance_mode_context(request):
     """
@@ -9,6 +10,8 @@ def maintenance_mode_context(request):
         "maintenance_message": "Website is under maintenance. Please check back later.",
         "popup_setting": None,
         "pending_admins_count": 0,
+        "admin_unread_notifications_count": 0,
+        "admin_recent_notifications": [],
     }
     try:
         sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
@@ -27,6 +30,15 @@ def maintenance_mode_context(request):
                 context_data["is_super_admin"] = is_super
                 if is_super:
                     context_data["pending_admins_count"] = AdminDetails.objects.filter(status=False).count()
+                    notif_qs = AdminNotification.objects.filter(
+                        Q(admin=admin_user) | Q(for_superadmins_only=True) | Q(admin__isnull=True)
+                    )
+                else:
+                    notif_qs = AdminNotification.objects.filter(
+                        Q(admin=admin_user) | (Q(admin__isnull=True) & Q(for_superadmins_only=False))
+                    )
+                context_data["admin_unread_notifications_count"] = notif_qs.filter(is_read=False).count()
+                context_data["admin_recent_notifications"] = notif_qs[:5]
     except Exception:
         pass
 

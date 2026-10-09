@@ -747,3 +747,54 @@ def create_vendor_notification(vendor, title, message, notification_type="SYSTEM
     _logger.info(f"[VendorNotification] Created ID {notification.id} for {target_vendor.vendor_id}: {title}")
     return notification
 
+
+def create_admin_notification(
+    title,
+    message,
+    notification_type="SYSTEM",
+    action_url="",
+    target_admin=None,
+    for_superadmins_only=False,
+):
+    """
+    Creates an AdminNotification record for admin staff or SuperAdmins.
+    - target_admin: Specific AdminDetails instance or None (broadcast)
+    - for_superadmins_only: Boolean flag to restrict visibility to SuperAdmins
+    - notification_type: ADMIN_REGISTRATION, APPROVAL, ENQUIRY, LISTING, SYSTEM
+    """
+    from .models import AdminDetails, AdminNotification
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    admin_obj = None
+    if isinstance(target_admin, AdminDetails):
+        admin_obj = target_admin
+    elif target_admin:
+        adm_str = str(target_admin).strip()
+        if adm_str.isdigit():
+            admin_obj = AdminDetails.objects.filter(id=int(adm_str)).first()
+        elif adm_str.upper().startswith("ADM-") and adm_str[4:].isdigit():
+            admin_obj = AdminDetails.objects.filter(id=int(adm_str[4:])).first()
+        if not admin_obj:
+            admin_obj = AdminDetails.objects.filter(email__iexact=adm_str).first()
+        if not admin_obj:
+            admin_obj = AdminDetails.objects.filter(username__iexact=adm_str).first()
+
+    valid_types = ("ADMIN_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "SYSTEM")
+    n_type = str(notification_type).upper()
+    if n_type not in valid_types:
+        n_type = "SYSTEM"
+
+    notification = AdminNotification.objects.create(
+        admin=admin_obj,
+        for_superadmins_only=for_superadmins_only,
+        title=title,
+        message=message,
+        notification_type=n_type,
+        action_url=action_url or "",
+        is_read=False,
+    )
+    _logger.info(f"[AdminNotification] Created ID {notification.id} ({n_type}): {title}")
+    return notification
+
+

@@ -1940,6 +1940,66 @@ class VendorNotification(models.Model):
         return f"[{v_label}] {self.title} ({'Read' if self.is_read else 'Unread'})"
 
 
+class AdminNotification(models.Model):
+    """
+    In-app notification system for administrative staff and SuperAdmins.
+    Tracks admin registrations, approvals, enquiries, listings, alerts, and system notices.
+    """
+    NOTIFICATION_TYPE_CHOICES = (
+        ("ADMIN_REGISTRATION", "Admin Registration"),
+        ("APPROVAL", "Approval"),
+        ("ENQUIRY", "Enquiry"),
+        ("LISTING", "Listing"),
+        ("SYSTEM", "System"),
+    )
+
+    admin = models.ForeignKey(
+        AdminDetails,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Target admin. If null, broadcasts to all SuperAdmins/relevant staff."
+    )
+    for_superadmins_only = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="If true, only visible to SuperAdmins."
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NOTIFICATION_TYPE_CHOICES,
+        default="SYSTEM",
+        db_index=True
+    )
+    action_url = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Admin portal destination route, e.g. /admin/admins/ or /admin/enquiries/lots/pending/"
+    )
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Admin Notification"
+        verbose_name_plural = "Admin Notifications"
+        db_table = "admin_notifications"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["admin", "is_read"], name="idx_anotif_a_read"),
+            models.Index(fields=["for_superadmins_only", "is_read"], name="idx_anotif_super_read"),
+            models.Index(fields=["-created_at"], name="idx_anotif_created"),
+        ]
+
+    def __str__(self):
+        target = self.admin.username if self.admin else ("SuperAdmins" if self.for_superadmins_only else "All Staff")
+        return f"[{target}] {self.title} ({'Read' if self.is_read else 'Unread'})"
+
+
 class ProductEmbedding(models.Model):
     """
     Vector embeddings for Semantic Natural Language Search using pgvector in Neon DB.

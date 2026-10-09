@@ -169,6 +169,19 @@ def admin_signup_view(request):
             web_is_active="live",
         )
 
+        if not status_bool:
+            try:
+                from .services import create_admin_notification
+                create_admin_notification(
+                    title="New Admin Registration",
+                    message=f"'{full_name or username}' ({email}) registered for an admin account and requires SuperAdmin approval.",
+                    notification_type="ADMIN_REGISTRATION",
+                    action_url="/admin/admins/?status=pending",
+                    for_superadmins_only=True,
+                )
+            except Exception:
+                pass
+
         msg = (
             "Admin registration successful. Please proceed to login."
             if status_bool
@@ -255,6 +268,19 @@ def admin_register(request):
         session_version=1,
         web_is_active=web_is_active,
     )
+
+    if not status_bool:
+        try:
+            from .services import create_admin_notification
+            create_admin_notification(
+                title="New Admin Registration",
+                message=f"'{full_name or username}' ({email}) registered for an admin account and requires SuperAdmin approval.",
+                notification_type="ADMIN_REGISTRATION",
+                action_url="/admin/admins/?status=pending",
+                for_superadmins_only=True,
+            )
+        except Exception:
+            pass
 
     msg = (
         "Admin registration successful. Please proceed to login."
@@ -2984,6 +3010,27 @@ def toggle_admin_status_api(request, admin_id):
         target_admin.session_version = (target_admin.session_version or 1) + 1
         target_admin.save(update_fields=["status", "session_version", "updated_at"])
 
+        try:
+            from .services import create_admin_notification
+            if target_admin.status:
+                create_admin_notification(
+                    title="Account Approved",
+                    message=f"Admin account for '{target_admin.full_name or target_admin.username}' has been approved and activated.",
+                    notification_type="APPROVAL",
+                    action_url="/admin/dashboard/",
+                    target_admin=target_admin,
+                )
+            else:
+                create_admin_notification(
+                    title="Account Deactivated",
+                    message=f"Admin account for '{target_admin.full_name or target_admin.username}' has been deactivated.",
+                    notification_type="SYSTEM",
+                    action_url="/admin/login/",
+                    target_admin=target_admin,
+                )
+        except Exception:
+            pass
+
         status_text = "Approved & Active" if target_admin.status else "Pending Approval / Inactive"
         return Response({
             "success": True,
@@ -2992,6 +3039,134 @@ def toggle_admin_status_api(request, admin_id):
         }, status=status.HTTP_200_OK)
     except AdminDetails.DoesNotExist:
         return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+def _get_admin_notifications_qs(admin_user):
+    from .models import AdminNotification
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if is_super:
+        return AdminNotification.objects.filter(
+            Q(admin=admin_user) | Q(for_superadmins_only=True) | Q(admin__isnull=True)
+        )
+    else:
+        return AdminNotification.objects.filter(
+            Q(admin=admin_user) | (Q(admin__isnull=True) & Q(for_superadmins_only=False))
+        )
+
+
+def admin_notifications_page(request):
+    """
+    Renders notifications management center for admins.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    notif_qs = _get_admin_notifications_qs(admin_user)
+
+    filter_type = request.GET.get("filter", "all").lower()
+    search_q = request.GET.get("q", "").strip()
+
+    if search_q:
+        notif_qs = notif_qs.filter(Q(title__icontains=search_q) | Q(message__icontains=search_q))
+
+    total_count = notif_qs.count()
+    unread_count = notif_qs.filter(is_read=False).count()
+
+    if filter_type == "unread":
+        notif_qs = notif_qs.filter(is_read=False)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": is_super,
+        "notifications": notif_qs[:100],
+        "filter_type": filter_type,
+        "search_q": search_q,
+        "total_count": total_count,
+        "unread_count": unread_count,
+    }
+    return render(request, "notifications.html", context)
+
+
+@api_view(["GET"])
+def admin_notifications_api(request):
+    """
+    Returns unread count and latest notifications list for the top navbar bell dropdown.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    unread_count = notif_qs.filter(is_read=False).count()
+    recent_notifs = notif_qs[:10]
+
+    from .serializers import AdminNotificationSerializer
+    return Response({
+        "success": True,
+        "unread_count": unread_count,
+        "notifications": AdminNotificationSerializer(recent_notifs, many=True).data,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def admin_mark_notification_read_api(request, notification_id):
+    """
+    Marks a single notification as read.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import AdminNotification
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    try:
+        notif = notif_qs.get(id=notification_id)
+        notif.is_read = True
+        notif.save(update_fields=["is_read"])
+        unread_count = notif_qs.filter(is_read=False).count()
+        return Response({"success": True, "unread_count": unread_count}, status=status.HTTP_200_OK)
+    except AdminNotification.DoesNotExist:
+        return Response({"success": False, "message": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+def admin_mark_all_notifications_read_api(request):
+    """
+    Marks all notifications for current admin as read.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    updated_count = notif_qs.filter(is_read=False).update(is_read=True)
+    return Response({
+        "success": True,
+        "message": f"Marked {updated_count} notification(s) as read.",
+        "unread_count": 0
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST", "DELETE"])
+def admin_delete_notification_api(request, notification_id):
+    """
+    Deletes an admin notification.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import AdminNotification
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    try:
+        notif = notif_qs.get(id=notification_id)
+        notif.delete()
+        unread_count = notif_qs.filter(is_read=False).count()
+        return Response({"success": True, "message": "Notification deleted.", "unread_count": unread_count}, status=status.HTTP_200_OK)
+    except AdminNotification.DoesNotExist:
+        return Response({"success": False, "message": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["POST", "DELETE"])

@@ -15,6 +15,11 @@ from .views import (
     manage_admins_view,
     toggle_admin_status_api,
     delete_admin_api,
+    admin_notifications_page,
+    admin_notifications_api,
+    admin_mark_notification_read_api,
+    admin_mark_all_notifications_read_api,
+    admin_delete_notification_api,
     super_admin_password_reset,
     super_admin_verify_otp,
     adminDashBoard,
@@ -144,6 +149,13 @@ urlpatterns = [
     path("staff/", manage_admins_view, name="manage_admins_staff_alias"),
     path("api/admins/<int:admin_id>/status/", toggle_admin_status_api, name="toggle_admin_status_api"),
     path("api/admins/<int:admin_id>/delete/", delete_admin_api, name="delete_admin_api"),
+
+    # Admin Notifications System
+    path("notifications/", admin_notifications_page, name="admin_notifications"),
+    path("api/notifications/", admin_notifications_api, name="admin_notifications_api"),
+    path("api/notifications/<int:notification_id>/read/", admin_mark_notification_read_api, name="admin_mark_notification_read_api"),
+    path("api/notifications/read-all/", admin_mark_all_notifications_read_api, name="admin_mark_all_notifications_read_api"),
+    path("api/notifications/<int:notification_id>/delete/", admin_delete_notification_api, name="admin_delete_notification_api"),
 
     # Redirect legacy sellers-buyers to manage users
     path("sellers-buyers/", lambda request: redirect("manage_users")),

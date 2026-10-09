@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Notification Center | Surplus Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Breadcrumb & Header -->
+    <div class="mb-4">
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>Notification Center</span></li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h1 class="header-title">Admin Notification Center</h1>
+                <p class="header-subtitle">Real-time alerts, staff registrations awaiting approval, enquiries, and platform audits</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-secondary fw-semibold px-3 py-2 rounded-3 shadow-xs" id="pageMarkAllReadBtn">
+                    <i class="bi bi-check2-all me-1"></i> Mark All as Read
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Container -->
+    <div id="notifPageAlertBox" class="alert d-none py-2.5 px-3 small rounded-3 mb-4 shadow-sm" role="alert"></div>
+
+    <!-- Main Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <!-- Filter Tabs & Search Bar -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <!-- Status Tabs -->
+                <ul class="nav nav-pills gap-1 p-1 bg-light rounded-3">
+                    <li class="nav-item">
+                        <a href="?filter=all{% if search_q %}&q={{ search_q }}{% endif %}" class="nav-link py-1.5 px-3 rounded-2 small fw-semibold {% if not filter_type or filter_type == 'all' %}active bg-white text-dark shadow-xs{% else %}text-secondary{% endif %}">
+                            All Alerts ({{ total_count }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="?filter=unread{% if search_q %}&q={{ search_q }}{% endif %}" class="nav-link py-1.5 px-3 rounded-2 small fw-semibold {% if filter_type == 'unread' %}active bg-primary text-white shadow-xs{% else %}text-secondary{% endif %}">
+                            Unread ({{ unread_count }})
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Search Input -->
+                <form method="GET" action="/admin/notifications/" class="d-flex align-items-center gap-2" style="min-width: 280px;">
+                    {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
+                    <div class="input-group input-group-sm">
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ search_q }}"
+                            class="form-control rounded-start-2 border-end-0"
+                            placeholder="Search notifications..."
+                        >
+                        <button class="btn btn-primary px-3 rounded-end-2" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    {% if search_q %}
+                    <a href="/admin/notifications/{% if filter_type %}?filter={{ filter_type }}{% endif %}" class="btn btn-sm btn-outline-secondary rounded-2" title="Clear Search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="d-flex flex-column gap-2.5" id="notificationsContainer">
+                {% for n in notifications %}
+                <div class="card border rounded-3 p-3 transition-all notif-card {% if not n.is_read %}bg-light bg-opacity-50 border-primary border-opacity-25{% endif %}" id="notifItem-{{ n.id }}">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Icon Avatar -->
+                        <div class="rounded-circle p-2 mt-1 d-flex align-items-center justify-content-center flex-shrink-0 {% if n.notification_type == 'ADMIN_REGISTRATION' %}bg-warning bg-opacity-15 text-warning{% elif n.notification_type == 'APPROVAL' %}bg-success bg-opacity-15 text-success{% elif n.notification_type == 'ENQUIRY' %}bg-info bg-opacity-15 text-info{% else %}bg-primary bg-opacity-15 text-primary{% endif %}" style="width: 44px; height: 44px;">
+                            {% if n.notification_type == 'ADMIN_REGISTRATION' %}
+                                <i class="bi bi-person-plus-fill fs-5"></i>
+                            {% elif n.notification_type == 'APPROVAL' %}
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                            {% elif n.notification_type == 'ENQUIRY' %}
+                                <i class="bi bi-envelope-fill fs-5"></i>
+                            {% elif n.notification_type == 'LISTING' %}
+                                <i class="bi bi-box-seam-fill fs-5"></i>
+                            {% else %}
+                                <i class="bi bi-bell-fill fs-5"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <h6 class="fw-bold mb-0 text-dark">{{ n.title }}</h6>
+                                    {% if not n.is_read %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small unread-pill" style="font-size: 0.7rem;">New</span>
+                                    {% endif %}
+                                    {% if n.for_superadmins_only %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small" style="font-size: 0.68rem;">SuperAdmin Alert</span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-secondary small">
+                                    <i class="bi bi-clock me-1"></i>{{ n.created_at|date:"M d, Y" }} at {{ n.created_at|time:"h:i A" }}
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-2" style="line-height: 1.5;">
+                                {{ n.message }}
+                            </p>
+                            <!-- Action Footer -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-1 border-top border-light-subtle">
+                                <div>
+                                    {% if n.action_url %}
+                                    <a href="{{ n.action_url }}" class="btn btn-sm btn-primary rounded-2 px-3 fw-semibold py-1 shadow-xs" onclick="markPageNotifRead({{ n.id }})">
+                                        Take Action <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if not n.is_read %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-2 px-2.5 py-1 mark-read-btn" id="markReadBtn-{{ n.id }}" onclick="markPageNotifRead({{ n.id }})">
+                                        <i class="bi bi-check2 me-1"></i> Mark as Read
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-1" onclick="deletePageNotif({{ n.id }})" title="Delete notification">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <div class="text-muted mb-2">
+                        <i class="bi bi-bell-slash fs-1 text-secondary opacity-50"></i>
+                    </div>
+                    <h6 class="fw-semibold text-dark">No Notifications</h6>
+                    <p class="text-muted small mb-0">
+                        {% if search_q %}
+                            No alerts matching "<strong>{{ search_q }}</strong>".
+                        {% elif filter_type == 'unread' %}
+                            You have no unread notifications right now.
+                        {% else %}
+                            There are currently no notifications logged in the system.
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function showNotifToast(msg, type = 'success') {
+    const box = document.getElementById('notifPageAlertBox');
+    if (!box) return;
+    box.className = `alert alert-${type} d-flex align-items-center gap-2 py-2.5 px-3 small rounded-3 mb-4 shadow-sm`;
+    box.innerHTML = `
+        <i class="bi ${type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger'} flex-shrink-0"></i>
+        <span>${msg}</span>
+    `;
+    box.classList.remove('d-none');
+    setTimeout(() => box.classList.add('d-none'), 4000);
+}
+
+async function markPageNotifRead(notifId) {
+    try {
+        const res = await fetch(`/admin/api/notifications/${notifId}/read/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getNavbarCsrfToken() }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            const card = document.getElementById(`notifItem-${notifId}`);
+            if (card) {
+                card.classList.remove('bg-light', 'bg-opacity-50', 'border-primary', 'border-opacity-25');
+                const badge = card.querySelector('.unread-pill');
+                if (badge) badge.remove();
+                const btn = document.getElementById(`markReadBtn-${notifId}`);
+                if (btn) btn.remove();
+            }
+        }
+    } catch (err) {
+        console.error('Failed to mark notification read', err);
+    }
+}
+
+async function deletePageNotif(notifId) {
+    try {
+        const res = await fetch(`/admin/api/notifications/${notifId}/delete/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getNavbarCsrfToken() }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            const card = document.getElementById(`notifItem-${notifId}`);
+            if (card) card.remove();
+            showNotifToast(data.message || 'Notification deleted.');
+        } else {
+            showNotifToast(data.message || 'Failed to delete notification.', 'danger');
+        }
+    } catch (err) {
+        showNotifToast('Server communication error.', 'danger');
+    }
+}
+
+document.getElementById('pageMarkAllReadBtn')?.addEventListener('click', async () => {
+    try {
+        const res = await fetch('/admin/api/notifications/read-all/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getNavbarCsrfToken() }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            document.querySelectorAll('.notif-card').forEach(card => {
+                card.classList.remove('bg-light', 'bg-opacity-50', 'border-primary', 'border-opacity-25');
+                const badge = card.querySelector('.unread-pill');
+                if (badge) badge.remove();
+                const btn = card.querySelector('.mark-read-btn');
+                if (btn) btn.remove();
+            });
+            showNotifToast(data.message || 'All notifications marked as read.');
+        }
+    } catch (err) {
+        showNotifToast('Failed to mark all as read.', 'danger');
+    }
+});
+</script>
+{% endblock %}

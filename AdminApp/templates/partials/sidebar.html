@@ -31,6 +31,17 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="/admin/notifications/" class="nav-link d-flex justify-content-between align-items-center {% if request.path == '/admin/notifications/' %}active{% endif %}">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bell"></i>
+                        <span>Notifications</span>
+                    </div>
+                    {% if admin_unread_notifications_count and admin_unread_notifications_count > 0 %}
+                    <span class="badge bg-danger rounded-pill px-2 py-0.5" style="font-size: 0.72rem;">{{ admin_unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="/admin/excel-test/" class="nav-link {% if request.path == '/admin/excel-test/' %}active{% endif %}">
                     <i class="bi bi-file-earmark-excel"></i>
                     <span>Excel Test</span>

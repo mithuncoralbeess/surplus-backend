@@ -688,3 +688,36 @@ class LotBatchEnquirySerializer(LotSerializer):
     pass
 
 
+class AdminNotificationSerializer(serializers.ModelSerializer):
+    created_at_formatted = serializers.SerializerMethodField()
+    admin_name = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import AdminNotification
+        model = AdminNotification
+        fields = [
+            "id",
+            "admin",
+            "admin_name",
+            "for_superadmins_only",
+            "title",
+            "message",
+            "notification_type",
+            "action_url",
+            "is_read",
+            "created_at",
+            "created_at_formatted",
+        ]
+
+    def get_created_at_formatted(self, obj):
+        if not obj.created_at:
+            return ""
+        return obj.created_at.strftime("%b %d, %Y %I:%M %p")
+
+    def get_admin_name(self, obj):
+        if obj.admin:
+            return obj.admin.full_name or obj.admin.username
+        return "All SuperAdmins" if obj.for_superadmins_only else "All Staff"
+
+
+

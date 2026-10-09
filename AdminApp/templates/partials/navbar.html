@@ -17,8 +17,69 @@
         </div>
     </div>
 
-    <!-- Right: Theme Switcher, Fullscreen & User Profile Dropdown -->
+    <!-- Right: Notifications, Theme Switcher, Fullscreen & User Profile Dropdown -->
     <div class="d-flex align-items-center gap-2 gap-md-3">
+        <!-- Admin Notifications Dropdown -->
+        <div class="dropdown" id="adminNotificationDropdownWrapper">
+            <button class="navbar-action-btn position-relative" id="adminNotificationBellBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Admin Notifications">
+                <i class="bi bi-bell-fill"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not admin_unread_notifications_count or admin_unread_notifications_count == 0 %}d-none{% endif %}" id="navbarNotifBadge" style="font-size: 0.65rem; padding: 0.25em 0.5em;">
+                    {{ admin_unread_notifications_count }}
+                </span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow-lg border rounded-4 mt-2 p-0" style="width: 360px; max-width: 90vw; z-index: 1060;" aria-labelledby="adminNotificationBellBtn">
+                <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-light rounded-top-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bell text-primary"></i>
+                        <span class="fw-bold small text-dark">Notifications</span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill small" id="notifDropdownUnreadCount">{{ admin_unread_notifications_count|default:"0" }} unread</span>
+                    </div>
+                    <button class="btn btn-link text-decoration-none p-0 text-muted small" id="markAllReadNavbarBtn" style="font-size: 0.75rem;" title="Mark all notifications as read">
+                        Mark all read
+                    </button>
+                </div>
+                <div class="list-group list-group-flush overflow-auto" id="navbarNotifList" style="max-height: 320px;">
+                    {% for n in admin_recent_notifications %}
+                    <a href="{{ n.action_url|default:'/admin/notifications/' }}" class="list-group-item list-group-item-action p-3 text-decoration-none {% if not n.is_read %}bg-light-subtle{% endif %}" onclick="markNotifReadDirectly({{ n.id }})">
+                        <div class="d-flex align-items-start gap-2.5">
+                            <div class="rounded-circle p-1.5 mt-0.5 d-flex align-items-center justify-content-center flex-shrink-0 {% if n.notification_type == 'ADMIN_REGISTRATION' %}bg-warning bg-opacity-15 text-warning{% elif n.notification_type == 'APPROVAL' %}bg-success bg-opacity-15 text-success{% else %}bg-primary bg-opacity-15 text-primary{% endif %}" style="width: 32px; height: 32px;">
+                                {% if n.notification_type == 'ADMIN_REGISTRATION' %}
+                                    <i class="bi bi-person-plus-fill" style="font-size: 0.88rem;"></i>
+                                {% elif n.notification_type == 'APPROVAL' %}
+                                    <i class="bi bi-check-circle-fill" style="font-size: 0.88rem;"></i>
+                                {% elif n.notification_type == 'ENQUIRY' %}
+                                    <i class="bi bi-envelope-fill" style="font-size: 0.88rem;"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill" style="font-size: 0.88rem;"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold small text-dark text-truncate">{{ n.title }}</span>
+                                    <span class="text-muted" style="font-size: 0.68rem;">{{ n.created_at|timesince }} ago</span>
+                                </div>
+                                <p class="text-secondary small mb-0 text-truncate" style="line-height: 1.35; font-size: 0.78rem;">{{ n.message }}</p>
+                            </div>
+                            {% if not n.is_read %}
+                            <span class="rounded-circle bg-primary mt-1.5 flex-shrink-0" style="width: 7px; height: 7px;"></span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="p-4 text-center text-muted small" id="navbarNotifEmptyState">
+                        <i class="bi bi-bell-slash fs-4 d-block mb-1 text-secondary opacity-50"></i>
+                        <span>No new notifications</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="p-2.5 border-top text-center bg-light rounded-bottom-4">
+                    <a href="/admin/notifications/" class="text-primary text-decoration-none small fw-semibold">
+                        View All Notifications <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- Theme Switching Button (Gear Icon) -->
         <button class="navbar-action-btn" id="themeSwitchBtn" type="button" title="Switch Theme (Light / Dark)" aria-label="Switch Theme">
             <i class="bi bi-gear-fill" id="themeIcon"></i>
@@ -148,5 +209,45 @@
                 }
             });
         }
+
+        // Navbar Notifications Handling
+        const markAllNavbarBtn = document.getElementById('markAllReadNavbarBtn');
+        if (markAllNavbarBtn) {
+            markAllNavbarBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    const res = await fetch('/admin/api/notifications/read-all/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getNavbarCsrfToken() }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        const badge = document.getElementById('navbarNotifBadge');
+                        if (badge) badge.classList.add('d-none');
+                        const unreadText = document.getElementById('notifDropdownUnreadCount');
+                        if (unreadText) unreadText.textContent = '0 unread';
+                        document.querySelectorAll('#navbarNotifList .bg-light-subtle').forEach(el => el.classList.remove('bg-light-subtle'));
+                    }
+                } catch (err) {
+                    console.error('Failed to mark all notifications read:', err);
+                }
+            });
+        }
     });
+
+    function markNotifReadDirectly(notifId) {
+        fetch(`/admin/api/notifications/${notifId}/read/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getNavbarCsrfToken() }
+        }).catch(() => {});
+    }
+
+    function getNavbarCsrfToken() {
+        const cookies = document.cookie.split(';');
+        for (let c of cookies) {
+            const [name, val] = c.trim().split('=');
+            if (name === 'csrftoken') return val;
+        }
+        return '';
+    }
 </script>

@@ -73,7 +73,7 @@ class ProductImageAdmin(admin.ModelAdmin):
     search_fields = ("product__product_name", "product__product_id", "image_url")
 
 
-from .models import VendorNotification
+from .models import VendorNotification, AdminNotification
 
 @admin.register(VendorNotification)
 class VendorNotificationAdmin(admin.ModelAdmin):
@@ -94,4 +94,19 @@ class VendorNotificationAdmin(admin.ModelAdmin):
     def mark_as_read(self, request, queryset):
         updated = queryset.update(is_read=True)
         self.message_user(request, f"{updated} notification(s) marked as read.")
+
+
+@admin.register(AdminNotification)
+class AdminNotificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "admin", "for_superadmins_only", "notification_type", "is_read", "created_at")
+    list_filter = ("notification_type", "for_superadmins_only", "is_read", "created_at")
+    search_fields = ("title", "message", "admin__username", "admin__email", "admin__full_name")
+    readonly_fields = ("created_at",)
+    actions = ["mark_as_read"]
+
+    @admin.action(description="Mark selected admin notifications as read")
+    def mark_as_read(self, request, queryset):
+        updated = queryset.update(is_read=True)
+        self.message_user(request, f"{updated} notification(s) marked as read.")
+
 

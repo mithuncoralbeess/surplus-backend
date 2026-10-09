@@ -139,6 +139,67 @@ class AdminAppAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data["success"])
 
+    def test_admin_notification_system_endpoints(self):
+        """
+        Tests the admin notification lifecycle: creation, listing, marking read, and deleting.
+        """
+        from .models import AdminNotification
+        from .services import create_admin_notification
+
+        superadmin = AdminDetails.objects.create(
+            username="super_notif_tester",
+            email="super@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = superadmin.id
+        session["session_version"] = 1
+        session.save()
+
+        # 1. Create notifications
+        notif1 = create_admin_notification(
+            title="System Alert 1",
+            message="Test alert message",
+            notification_type="SYSTEM",
+            for_superadmins_only=True,
+        )
+        notif2 = create_admin_notification(
+            title="Registration Notice",
+            message="Someone registered",
+            notification_type="ADMIN_REGISTRATION",
+            for_superadmins_only=True,
+        )
+
+        # 2. List notifications via API
+        list_res = self.client.get("/admin/api/notifications/")
+        self.assertEqual(list_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(list_res.data["success"])
+        self.assertGreaterEqual(list_res.data["unread_count"], 2)
+
+        # 3. View notification center HTML page
+        page_res = self.client.get("/admin/notifications/")
+        self.assertEqual(page_res.status_code, status.HTTP_200_OK)
+
+        # 4. Mark notif1 as read
+        read_res = self.client.post(f"/admin/api/notifications/{notif1.id}/read/")
+        self.assertEqual(read_res.status_code, status.HTTP_200_OK)
+        notif1.refresh_from_db()
+        self.assertTrue(notif1.is_read)
+
+        # 5. Mark all as read
+        read_all_res = self.client.post("/admin/api/notifications/read-all/")
+        self.assertEqual(read_all_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(read_all_res.data["unread_count"], 0)
+        notif2.refresh_from_db()
+        self.assertTrue(notif2.is_read)
+
+        # 6. Delete notification
+        del_res = self.client.post(f"/admin/api/notifications/{notif1.id}/delete/")
+        self.assertEqual(del_res.status_code, status.HTTP_200_OK)
+        self.assertFalse(AdminNotification.objects.filter(id=notif1.id).exists())
+
     def test_admin_login_and_session_setup(self):
         """
         Admin login sets session and returns role-based routing.
