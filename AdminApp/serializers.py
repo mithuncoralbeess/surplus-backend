@@ -311,7 +311,7 @@ class LotSerializer(serializers.ModelSerializer):
             "created_at_formatted",
             "updated_at",
         ]
-        read_only_fields = ["id", "lot_number", "file_url", "warehouse_images", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
+        read_only_fields = ["id", "lot_number", "file_url", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
 
     def get_vendor_id(self, obj):
         if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
@@ -562,10 +562,13 @@ class LotSerializer(serializers.ModelSerializer):
 
             raw_wh = data_copy['warehouse_images']
             wh_items = []
-            if isinstance(raw_wh, (list, tuple)):
-                wh_items = list(raw_wh)
-            elif raw_wh is not None:
-                wh_items = [raw_wh]
+            def _flatten_wh_items(val):
+                if isinstance(val, (list, tuple)):
+                    for sub in val:
+                        _flatten_wh_items(sub)
+                elif val is not None:
+                    wh_items.append(val)
+            _flatten_wh_items(raw_wh)
 
             processed_wh_urls = []
             seen_names = set()
@@ -611,7 +614,32 @@ class LotSerializer(serializers.ModelSerializer):
                 if isinstance(val, str):
                     data_copy[field] = val.lower() in ('true', '1', 'yes')
 
-        return super().to_internal_value(data_copy)
+        ret = super().to_internal_value(data_copy)
+        if 'warehouse_images' in data_copy and data_copy['warehouse_images']:
+            ret['warehouse_images'] = data_copy['warehouse_images']
+        return ret
+
+    def create(self, validated_data):
+        warehouse_images = validated_data.pop('warehouse_images', [])
+        lot = super().create(validated_data)
+        if warehouse_images:
+            lot.warehouse_images = warehouse_images
+            if not isinstance(lot.raw_data, dict):
+                lot.raw_data = {}
+            lot.raw_data['warehouse_images'] = warehouse_images
+            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        return lot
+
+    def update(self, instance, validated_data):
+        warehouse_images = validated_data.pop('warehouse_images', None)
+        lot = super().update(instance, validated_data)
+        if warehouse_images is not None:
+            lot.warehouse_images = warehouse_images
+            if not isinstance(lot.raw_data, dict):
+                lot.raw_data = {}
+            lot.raw_data['warehouse_images'] = warehouse_images
+            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        return lot
 
 
 class LotBatchEnquirySerializer(LotSerializer):

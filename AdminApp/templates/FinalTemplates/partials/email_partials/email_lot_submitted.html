@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lot Listing Received - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #0a5c48, #0f766e);
+            padding: 36px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .content {
+            padding: 32px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #334155;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+        .lot-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .lot-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .meta-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .meta-grid td {
+            padding: 8px 0;
+            font-size: 14px;
+            vertical-align: top;
+        }
+        .meta-label {
+            color: #64748b;
+            width: 40%;
+            font-weight: 500;
+        }
+        .meta-val {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 30px 0 10px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #0a5c48;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(10, 92, 72, 0.25);
+        }
+        .footer {
+            padding: 22px 30px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="badge">Under Review</span>
+            <h1>Lot Listing Received</h1>
+            <p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 14px;">Surplus Market Bulk Liquidation</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello <strong>{{ user_name }}</strong>,</p>
+            <p class="message">
+                Thank you for submitting your bulk lot listing. We have received your manifest and lot details. Our team is currently reviewing your inventory for marketplace quality and compliance. You will receive an email update as soon as the review is complete.
+            </p>
+
+            <div class="lot-card">
+                <div class="lot-title">{{ lot_title }}</div>
+                <table class="meta-grid">
+                    <tr>
+                        <td class="meta-label">Lot ID / Batch No:</td>
+                        <td class="meta-val" style="font-family: monospace; color: #0a5c48;">{{ lot_number }}</td>
+                    </tr>
+                    {% if distinct_skus %}
+                    <tr>
+                        <td class="meta-label">Distinct SKUs:</td>
+                        <td class="meta-val">{{ distinct_skus }} SKUs</td>
+                    </tr>
+                    {% endif %}
+                    {% if total_units %}
+                    <tr>
+                        <td class="meta-label">Total Units:</td>
+                        <td class="meta-val">{{ total_units }} Units</td>
+                    </tr>
+                    {% endif %}
+                    {% if ask_price %}
+                    <tr>
+                        <td class="meta-label">Asking Payout Price:</td>
+                        <td class="meta-val" style="color: #0a5c48;">{{ currency }} {{ ask_price }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if msrp %}
+                    <tr>
+                        <td class="meta-label">Est. Retail Value (MSRP):</td>
+                        <td class="meta-val">{{ currency }} {{ msrp }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if inventory_location %}
+                    <tr>
+                        <td class="meta-label">Location:</td>
+                        <td class="meta-val">{{ inventory_location }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="meta-label">Review Status:</td>
+                        <td class="meta-val" style="color: #d97706;">Pending Admin Review</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="btn-wrapper">
+                <a href="{{ action_url }}" class="cta-btn">View Your Listings & Profile</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Surplus Market. All rights reserved.<br>The trusted platform for surplus B2B inventory liquidation.</p>
+        </div>
+    </div>
+</body>
+</html>

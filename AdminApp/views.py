@@ -2003,21 +2003,56 @@ def lot_enquiry_status_api(request, enquiry_id):
         enquiry.is_active = bool(request.data.get("is_active"))
         enquiry.active_status = "active" if enquiry.is_active else "inactive"
 
+    new_status = enquiry.enquiry_status
+    vendor_profile_info = None
+    target_vendor = enquiry.vendor
+    if target_vendor:
+        vendor_profile_info = target_vendor.get_profile_completion_details()
+
     if "status" in request.data:
         new_status = str(request.data.get("status")).lower()
         if new_status in ("pending", "approved", "declined"):
             enquiry.enquiry_status = new_status
-            if not has_explicit_active:
-                enquiry.active_status = "active" if new_status == "approved" else "inactive"
-                enquiry.is_active = (new_status == "approved")
+            if new_status == "approved":
+                if vendor_profile_info and not vendor_profile_info["is_complete"]:
+                    enquiry.is_active = False
+                    enquiry.active_status = "inactive"
+                elif not has_explicit_active:
+                    enquiry.active_status = "active"
+                    enquiry.is_active = True
+            elif new_status == "declined":
+                if not has_explicit_active:
+                    enquiry.active_status = "inactive"
+                    enquiry.is_active = False
+
+            if "reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+            elif "rejection_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+            elif "note" in request.data or "notes" in request.data:
+                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
 
+    msg = f"Lot status updated to {new_status}."
+    if enquiry.enquiry_status == "approved":
+        if vendor_profile_info and not vendor_profile_info["is_complete"]:
+            msg = (
+                f"Lot approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
+                f"To list lot publicly, vendor must complete all profile details."
+            )
+        else:
+            msg = "Lot approved and published to marketplace."
+    elif enquiry.enquiry_status == "declined":
+        msg = "Lot listing declined."
+
     return Response({
         "success": True,
-        "message": f"Lot status updated to {new_status}.",
+        "message": msg,
         "batch_id": enquiry.lot_number,
-        "status": enquiry.enquiry_status
+        "status": enquiry.enquiry_status,
+        "is_active": enquiry.is_active,
+        "active_status": enquiry.active_status
     })
 
 

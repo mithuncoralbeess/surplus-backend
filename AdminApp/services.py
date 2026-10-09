@@ -316,7 +316,7 @@ class EmailService:
                 )
 
         if not is_profile_complete:
-            subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Complete Profile to Publish"
+            subject = f"Listing Approved: {product_name} - Action Required: Complete Profile to Publish"
         else:
             subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "ProductApproved", context=context)
@@ -389,6 +389,290 @@ class EmailService:
 
         subject = f"Listing Update: {product_name} [{product_id or 'PRO'}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "ProductDeclined", context=context)
+
+    @classmethod
+    def send_lot_submitted_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email confirmation to the vendor when their bulk lot listing is submitted and under review.
+        """
+        if not to_email:
+            logger.warning("send_lot_submitted_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-PENDING"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_submitted.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for lot submitted email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Lot Listing Received</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Thank you for submitting your lot listing <strong>{lot_title}</strong> ({lot_number}). Our team is reviewing your inventory.</p>"
+                f"<p><a href='{action_url or default_action_url}'>View Your Listings</a></p>"
+            )
+
+        subject = f"Lot Listing Received: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotSubmitted", context=context)
+
+    @classmethod
+    def notify_admin_lot_submitted(cls, seller_info: dict, lot) -> bool:
+        """
+        Notifies admin when a seller submits a bulk lot listing for review.
+        """
+        backend_base = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+        lot_id = getattr(lot, "id", None) or (lot.get("id") if isinstance(lot, dict) else "")
+        admin_review_url = f"{backend_base}/superadmin/lot-enquiries/{lot_id}/" if lot_id else f"{backend_base}/superadmin/lot-enquiries/"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-PENDING"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        seller_name = seller_info.get("name") or seller_info.get("full_name") or "Seller"
+        seller_email = seller_info.get("email") or ""
+
+        context = {
+            "seller_name": seller_name,
+            "seller_email": seller_email,
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "admin_review_url": admin_review_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_admin_lot_added.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin lot added email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>New Lot Submitted for Review</h2>"
+                f"<p>Seller: <strong>{seller_name}</strong> ({seller_email})</p>"
+                f"<p>Lot: <strong>{lot_title}</strong> ({lot_number})</p>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
+        subject = f"New Lot Submitted for Review: {lot_title} [{lot_number}]"
+        return cls.send_email(admin_email, subject, html_content, "AdminLotReview", context=context)
+
+    @classmethod
+    def send_lot_approved_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        action_url: str = "",
+        is_profile_complete: bool = True,
+        profile_completion_percentage: int = 100,
+        missing_fields_labels: list = None,
+        profile_url: str = "",
+    ) -> bool:
+        """
+        Sends an email notification to the vendor when their lot listing is approved.
+        Includes profile completion alert if vendor profile is incomplete.
+        """
+        if not to_email:
+            logger.warning("send_lot_approved_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+        profile_link = profile_url or f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-APPROVED"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+            "profile_url": profile_link,
+            "is_profile_complete": is_profile_complete,
+            "profile_completion_percentage": profile_completion_percentage,
+            "missing_fields_labels": missing_fields_labels or [],
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_approved.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for approved lot email, using fallback HTML: {e}")
+            if not is_profile_complete:
+                missing_str = f"<p><strong>Missing details:</strong> {', '.join(missing_fields_labels or [])}</p>" if missing_fields_labels else ""
+                html_content = (
+                    f"<h2>Your Lot Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your bulk lot <strong>{lot_title}</strong> ({lot_number}) has been approved by admin review.</p>"
+                    f"<div style='background-color:#fffbeb;border:1px solid #fde68a;padding:12px;border-radius:6px;'>"
+                    f"<p style='color:#92400e;margin:0;'><strong>Action Required: Profile Incomplete ({profile_completion_percentage}%)</strong></p>"
+                    f"<p style='color:#b45309;'>To list your lot for public visibility, you must complete all your user profile details.</p>"
+                    f"{missing_str}"
+                    f"<p><a href='{profile_link}' style='color:#d97706;font-weight:bold;'>Complete your profile to publish</a></p>"
+                    f"</div>"
+                )
+            else:
+                html_content = (
+                    f"<h2>Your Lot Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your bulk lot <strong>{lot_title}</strong> ({lot_number}) has been approved and is now live on Surplus Market.</p>"
+                    f"<p><a href='{action_url or default_action_url}'>View your lot listing</a></p>"
+                )
+
+        if not is_profile_complete:
+            subject = f"Lot Approved: {lot_title} [{lot_number}] - Action Required: Complete Profile to Publish"
+        else:
+            subject = f"Lot Approved: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotApproved", context=context)
+
+    @classmethod
+    def send_lot_declined_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the vendor when their lot listing is declined.
+        """
+        if not to_email:
+            logger.warning("send_lot_declined_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-DECLINED"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "currency": currency,
+            "reason": reason or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_declined.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for declined lot email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Lot Listing Review Notice</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your bulk lot listing <strong>{lot_title}</strong> ({lot_number}) could not be approved at this time.</p>"
+                f"<p>{reason or 'Please review your lot manifest and resubmit.'}</p>"
+                f"<p><a href='{action_url or default_action_url}'>Review your listing</a></p>"
+            )
+
+        subject = f"Lot Listing Update: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotDeclined", context=context)
 
     @classmethod
     def email_linsting_confirm(cls, seller_email: str, product_title: str) -> bool:

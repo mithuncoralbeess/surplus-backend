@@ -464,7 +464,7 @@ def submit_lot_enquiry(request):
             lot.vendor = vendor_obj
             lot.save(update_fields=["vendor"])
             try:
-                from AdminApp.services import create_vendor_notification
+                from AdminApp.services import create_vendor_notification, EmailService
                 create_vendor_notification(
                     vendor=vendor_obj,
                     title="Lot Manifest Uploaded",
@@ -472,8 +472,20 @@ def submit_lot_enquiry(request):
                     notification_type="LISTING",
                     action_url="/profile"
                 )
+                EmailService.send_lot_submitted_email(
+                    to_email=vendor_obj.email,
+                    lot=lot,
+                    recipient_name=vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Valued Seller"
+                )
+                EmailService.notify_admin_lot_submitted(
+                    seller_info={
+                        "name": vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Seller",
+                        "email": vendor_obj.email
+                    },
+                    lot=lot
+                )
             except Exception as e:
-                print(f"Error creating lot notification: {e}")
+                print(f"Error creating lot notification/emails: {e}")
 
     return Response({
         "success": True,
@@ -690,7 +702,10 @@ def complete_profile(request):
             vendor.company_name = ""
         
     if "business_location" in data:
-        vendor.business_location = data["business_location"]
+        loc_str = str(data["business_location"]).strip()
+        if not loc_str:
+            return Response({"success": False, "message": "Business location is required."}, status=status.HTTP_400_BAD_REQUEST)
+        vendor.business_location = loc_str
     
     if "business_address" in data:
         vendor.business_address = data["business_address"]
@@ -711,21 +726,29 @@ def complete_profile(request):
 
     prof_info = vendor.get_profile_completion_details()
     activated_products_count = 0
+    activated_lots_count = 0
     if prof_info["is_complete"]:
-        from AdminApp.models import Product
+        from AdminApp.models import Product, Lot
         activated_products_count = Product.objects.filter(
             vendor=vendor,
             enquiry_status__iexact="APPROVED",
             is_active=False
         ).update(is_active=True)
 
-        if activated_products_count > 0:
+        activated_lots_count = Lot.objects.filter(
+            vendor=vendor,
+            enquiry_status__iexact="approved",
+            is_active=False
+        ).update(is_active=True, active_status="active")
+
+        total_activated = activated_products_count + activated_lots_count
+        if total_activated > 0:
             try:
                 from AdminApp.services import create_vendor_notification
                 create_vendor_notification(
                     vendor=vendor,
-                    title="Profile Completed - Products Published!",
-                    message=f"Congratulations! Your profile is 100% complete and {activated_products_count} approved product listing(s) have now been published live to the marketplace.",
+                    title="Profile Completed - Listings Published!",
+                    message=f"Congratulations! Your profile is 100% complete and {total_activated} approved listing(s) have now been published live to the marketplace.",
                     notification_type="LISTING",
                     action_url="/profile"
                 )
@@ -1483,8 +1506,12 @@ def submit_lot_request(request):
             lot.raw_data = raw_payload
             lot.save(update_fields=["raw_data"])
 
-            # Send vendor notification if vendor is resolved
+            # Dispatch vendor in-app notification and email alerts
+            seller_email = None
+            seller_name = "Valued Seller"
             if vendor_obj:
+                seller_email = vendor_obj.email
+                seller_name = vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Valued Seller"
                 try:
                     from AdminApp.services import create_vendor_notification
                     create_vendor_notification(
@@ -1496,6 +1523,38 @@ def submit_lot_request(request):
                     )
                 except Exception as e:
                     print(f"Error creating vendor notification for lot: {e}")
+
+            if not seller_email:
+                seller_email = (
+                    data.get("email") or data.get("user_email") or data.get("seller_email") or
+                    (raw_payload.get("user_email") if isinstance(raw_payload, dict) else None) or
+                    (raw_payload.get("email") if isinstance(raw_payload, dict) else None)
+                )
+
+            # 1. Send confirmation email to seller
+            if seller_email:
+                try:
+                    from AdminApp.services import EmailService
+                    EmailService.send_lot_submitted_email(
+                        to_email=seller_email,
+                        lot=lot,
+                        recipient_name=seller_name
+                    )
+                except Exception as e:
+                    print(f"Error sending lot submitted confirmation email: {e}")
+
+            # 2. Send notification email to admin
+            try:
+                from AdminApp.services import EmailService
+                EmailService.notify_admin_lot_submitted(
+                    seller_info={
+                        "name": seller_name,
+                        "email": seller_email or "Unregistered / Guest"
+                    },
+                    lot=lot
+                )
+            except Exception as e:
+                print(f"Error sending admin lot notification email: {e}")
 
             serialized_lot_data = LotSerializer(lot, context={"request": request}).data
             return Response({
