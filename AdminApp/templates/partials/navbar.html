@@ -79,69 +79,148 @@
     border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-.notif-tab-nav {
-    display: flex;
-    background: #f1f5f9;
-    padding: 3px;
+/* Header Bell Icon Squircle */
+.notif-header-bell {
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
-}
-[data-bs-theme="dark"] .notif-tab-nav {
-    background: #1e293b;
-}
-.notif-tab-item {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 5px 12px;
-    border-radius: 7px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #64748b;
+    background: #eff6ff;
+    color: #2563eb;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    transition: all 0.15s ease;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+[data-bs-theme="dark"] .notif-header-bell {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+}
+
+/* Header Action Buttons (Removes default browser borders) */
+.btn-icon-subtle {
+    border: none !important;
+    background: transparent !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    color: #64748b !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    padding: 0 !important;
+    outline: none !important;
+}
+.btn-icon-subtle:hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+[data-bs-theme="dark"] .btn-icon-subtle:hover {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+.btn-mark-all-read {
+    border: none !important;
+    background: transparent !important;
+    color: #2563eb !important;
+    font-weight: 600 !important;
+    font-size: 0.78rem !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+    display: inline-block !important;
+}
+.btn-mark-all-read:hover {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+}
+[data-bs-theme="dark"] .btn-mark-all-read {
+    color: #60a5fa !important;
+}
+[data-bs-theme="dark"] .btn-mark-all-read:hover {
+    background: rgba(37, 99, 235, 0.2) !important;
+    color: #93c5fd !important;
+}
+
+/* Filter Tab Pills */
+.notif-filter-pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+.notif-pill-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s ease;
+    outline: none;
 }
-.notif-tab-item:hover {
+.notif-pill-btn:hover {
+    background: #f1f5f9;
     color: #0f172a;
+    border-color: #cbd5e1;
 }
-[data-bs-theme="dark"] .notif-tab-item:hover {
-    color: #f8fafc;
+.notif-pill-btn.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
-.notif-tab-item.active {
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+[data-bs-theme="dark"] .notif-pill-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
 }
-[data-bs-theme="dark"] .notif-tab-item.active {
+[data-bs-theme="dark"] .notif-pill-btn:hover {
     background: #334155;
     color: #f8fafc;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
-.notif-tab-counter {
+[data-bs-theme="dark"] .notif-pill-btn.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+}
+.notif-pill-count {
     font-size: 0.68rem;
     font-weight: 700;
-    padding: 1px 6px;
+    padding: 1px 7px;
     border-radius: 9999px;
-    background: rgba(148, 163, 184, 0.18);
+    background: #e2e8f0;
     color: #475569;
 }
-.notif-tab-counter.is-unread {
+.notif-pill-btn.active .notif-pill-count {
+    background: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+}
+.notif-pill-count.is-unread-counter {
     background: #fee2e2;
     color: #dc2626;
 }
-[data-bs-theme="dark"] .notif-tab-counter.is-unread {
-    background: rgba(239, 68, 68, 0.25);
-    color: #f87171;
+.notif-pill-btn.active .notif-pill-count.is-unread-counter {
+    background: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
 }
 
 /* Category Avatars */
 .notif-avatar {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
     border-radius: 12px !important;
     display: flex !important;
     align-items: center !important;
@@ -153,27 +232,27 @@
 .notif-avatar-listing {
     background: #ecfdf5 !important;
     color: #059669 !important;
-    border: 1px solid #d1fae5 !important;
+    border: 1px solid #a7f3d0 !important;
 }
 .notif-avatar-rfq {
     background: #eef2ff !important;
     color: #4f46e5 !important;
-    border: 1px solid #e0e7ff !important;
+    border: 1px solid #c7d2fe !important;
 }
 .notif-avatar-enquiry {
     background: #f0f9ff !important;
     color: #0284c7 !important;
-    border: 1px solid #e0f2fe !important;
+    border: 1px solid #bae6fd !important;
 }
 .notif-avatar-admin {
     background: #fffbeb !important;
     color: #d97706 !important;
-    border: 1px solid #fef3c7 !important;
+    border: 1px solid #fde68a !important;
 }
 .notif-avatar-approval {
     background: #faf5ff !important;
     color: #9333ea !important;
-    border: 1px solid #f3e8ff !important;
+    border: 1px solid #e9d5ff !important;
 }
 .notif-avatar-system {
     background: #f8fafc !important;
@@ -188,29 +267,51 @@
 [data-bs-theme="dark"] .notif-avatar-approval { background: rgba(147,51,234,0.2) !important; color: #c084fc !important; border-color: rgba(147,51,234,0.35) !important; }
 [data-bs-theme="dark"] .notif-avatar-system { background: rgba(148,163,184,0.15) !important; color: #cbd5e1 !important; border-color: rgba(148,163,184,0.3) !important; }
 
-/* Category Tags */
-.notif-tag {
+/* Category Pill Badges */
+.notif-category-pill {
     font-size: 0.65rem;
     font-weight: 700;
-    padding: 1.5px 6.5px;
-    border-radius: 5px;
-    letter-spacing: 0.02em;
+    padding: 2.5px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid;
+    line-height: 1.2;
 }
-.notif-tag-listing { background: #ecfdf5; color: #059669; }
-.notif-tag-rfq { background: #eef2ff; color: #4f46e5; }
-.notif-tag-enquiry { background: #f0f9ff; color: #0284c7; }
-.notif-tag-admin { background: #fffbeb; color: #d97706; }
-.notif-tag-approval { background: #faf5ff; color: #9333ea; }
-.notif-tag-system { background: #f1f5f9; color: #475569; }
+.notif-tag-listing { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.notif-tag-rfq { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+.notif-tag-enquiry { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; }
+.notif-tag-admin { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+.notif-tag-approval { background: #faf5ff; color: #9333ea; border-color: #e9d5ff; }
+.notif-tag-system { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 
-[data-bs-theme="dark"] .notif-tag-listing { background: rgba(5,150,105,0.25); color: #34d399; }
-[data-bs-theme="dark"] .notif-tag-rfq { background: rgba(79,70,229,0.25); color: #818cf8; }
-[data-bs-theme="dark"] .notif-tag-enquiry { background: rgba(2,132,199,0.25); color: #38bdf8; }
-[data-bs-theme="dark"] .notif-tag-admin { background: rgba(217,119,6,0.25); color: #fbbf24; }
-[data-bs-theme="dark"] .notif-tag-approval { background: rgba(147,51,234,0.25); color: #c084fc; }
-[data-bs-theme="dark"] .notif-tag-system { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+[data-bs-theme="dark"] .notif-tag-listing { background: rgba(5,150,105,0.25); color: #34d399; border-color: rgba(5,150,105,0.4); }
+[data-bs-theme="dark"] .notif-tag-rfq { background: rgba(79,70,229,0.25); color: #818cf8; border-color: rgba(79,70,229,0.4); }
+[data-bs-theme="dark"] .notif-tag-enquiry { background: rgba(2,132,199,0.25); color: #38bdf8; border-color: rgba(2,132,199,0.4); }
+[data-bs-theme="dark"] .notif-tag-admin { background: rgba(217,119,6,0.25); color: #fbbf24; border-color: rgba(217,119,6,0.4); }
+[data-bs-theme="dark"] .notif-tag-approval { background: rgba(147,51,234,0.25); color: #c084fc; border-color: rgba(147,51,234,0.4); }
+[data-bs-theme="dark"] .notif-tag-system { background: rgba(255,255,255,0.08); color: #cbd5e1; border-color: rgba(255,255,255,0.15); }
+
+/* NEW Badge */
+.notif-badge-new {
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+    line-height: 1.2;
+}
+[data-bs-theme="dark"] .notif-badge-new {
+    background: #3b82f6;
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.4);
+}
 
 /* Notification Card */
 .notif-item-card {
@@ -220,9 +321,10 @@
     align-items: flex-start;
     gap: 13px;
     text-decoration: none !important;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.65);
+    border-bottom: 1px solid #f1f5f9;
+    border-left: 3px solid transparent;
     background: #ffffff;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     cursor: pointer;
 }
 [data-bs-theme="dark"] .notif-item-card {
@@ -249,48 +351,27 @@
     flex: 1;
     min-width: 0;
 }
-.notif-meta-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-}
-.notif-dot-sep {
-    color: #cbd5e1;
-    font-size: 0.72rem;
-}
 .notif-time {
     font-size: 0.72rem;
     color: #94a3b8;
     font-weight: 500;
     white-space: nowrap;
-}
-.notif-unread-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
     flex-shrink: 0;
+    margin-left: 8px;
 }
-[data-bs-theme="dark"] .notif-unread-dot {
-    background: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-}
-
 .notif-title {
     font-size: 0.88rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #0f172a;
     line-height: 1.35;
-    margin-bottom: 3px;
+    margin-bottom: 0;
     word-break: break-word;
+    flex: 1;
 }
 [data-bs-theme="dark"] .notif-title {
     color: #f1f5f9;
 }
 .notif-item-card.is-unread .notif-title {
-    font-weight: 700;
     color: #020617;
 }
 [data-bs-theme="dark"] .notif-item-card.is-unread .notif-title {
@@ -305,54 +386,62 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 0;
+    margin: 3px 0 6px 0;
 }
 [data-bs-theme="dark"] .notif-desc {
     color: #94a3b8;
 }
 
-/* Hover Actions */
+/* Inline Card Hover Actions */
 .notif-hover-actions {
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
-    opacity: 0;
+    opacity: 0.8;
     transition: opacity 0.15s ease;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 2px 4px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-[data-bs-theme="dark"] .notif-hover-actions {
-    background: rgba(30, 41, 59, 0.95);
 }
 .notif-item-card:hover .notif-hover-actions {
     opacity: 1;
 }
 .notif-action-btn {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 6px;
     padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: none;
-    background: transparent;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
     color: #64748b;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     transition: all 0.15s;
+    cursor: pointer;
+}
+[data-bs-theme="dark"] .notif-action-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
 }
 .notif-action-btn:hover {
     background: #eff6ff;
     color: #2563eb;
+    border-color: #bfdbfe;
+}
+[data-bs-theme="dark"] .notif-action-btn:hover {
+    background: rgba(37, 99, 235, 0.25);
+    color: #60a5fa;
+    border-color: #3b82f6;
 }
 .notif-action-btn.notif-action-delete:hover {
     background: #fef2f2;
     color: #ef4444;
+    border-color: #fecaca;
+}
+[data-bs-theme="dark"] .notif-action-btn.notif-action-delete:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    border-color: #ef4444;
 }
 
 /* Feed Scroll Container */
@@ -371,7 +460,6 @@
     background: rgba(148, 163, 184, 0.3);
     border-radius: 4px;
 }
-
 
 /* Panel Footer */
 .notif-panel-footer {
@@ -462,37 +550,42 @@
                 <!-- Panel Header -->
                 <div class="notif-panel-header px-4 py-3 border-bottom">
                     <!-- Top Title Bar -->
-                    <div class="d-flex align-items-center justify-content-between mb-2.5">
-                        <div class="d-flex align-items-center gap-2">
-                            <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.98rem; letter-spacing: -0.01em;">Notifications</h6>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace" id="liveSyncStatus" style="font-size: 0.68rem; font-weight: 600; padding: 2px 7px;">
-                                Live
-                            </span>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <div class="notif-header-bell">
+                                <i class="bi bi-bell-fill"></i>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.98rem; letter-spacing: -0.01em;">Notifications</h6>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" id="liveSyncStatus" style="font-size: 0.68rem; font-weight: 600; padding: 2px 7px;">
+                                    ● Live
+                                </span>
+                            </div>
                         </div>
 
                         <!-- Right Actions: Sound, Refresh, Mark all read -->
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-1">
                             <button type="button" class="btn-icon-subtle" id="notifSoundToggleBtn" title="Sound alerts">
                                 <i class="bi bi-volume-up-fill" id="notifSoundIcon"></i>
                             </button>
                             <button type="button" class="btn-icon-subtle" id="notifRefreshBtn" title="Sync now">
                                 <i class="bi bi-arrow-clockwise" id="notifRefreshIcon"></i>
                             </button>
-                            <button type="button" class="btn btn-link p-0 text-primary text-decoration-none fw-semibold small" id="markAllReadNavbarBtn" style="font-size: 0.78rem;">
+                            <button type="button" class="btn-mark-all-read" id="markAllReadNavbarBtn">
                                 Mark all read
                             </button>
                         </div>
                     </div>
 
-                    <!-- Clean Segmented Tabs -->
-                    <div class="notif-tab-nav">
-                        <button type="button" class="notif-tab-item active" id="tabFilterAll" data-filter="all">
+                    <!-- Clean Filter Pills -->
+                    <div class="notif-filter-pills">
+                        <button type="button" class="notif-pill-btn active" id="tabFilterAll" data-filter="all">
                             <span>All</span>
-                            <span class="notif-tab-counter" id="countFilterAll">{{ admin_recent_notifications|length|default:"0" }}</span>
+                            <span class="notif-pill-count" id="countFilterAll">{{ admin_recent_notifications|length|default:"0" }}</span>
                         </button>
-                        <button type="button" class="notif-tab-item" id="tabFilterUnread" data-filter="unread">
+                        <button type="button" class="notif-pill-btn" id="tabFilterUnread" data-filter="unread">
                             <span>Unread</span>
-                            <span class="notif-tab-counter is-unread" id="countFilterUnread">{{ admin_unread_notifications_count|default:"0" }}</span>
+                            <span class="notif-pill-count is-unread-counter" id="countFilterUnread">{{ admin_unread_notifications_count|default:"0" }}</span>
                         </button>
                     </div>
                 </div>
@@ -522,31 +615,35 @@
 
                         <!-- Card Body -->
                         <div class="notif-body">
-                            <div class="notif-meta-row">
-                                <div class="d-flex align-items-center gap-1.5">
-                                    <span class="notif-tag {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-tag-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-tag-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-tag-admin{% elif n.notification_type == 'APPROVAL' %}notif-tag-approval{% else %}notif-tag-enquiry{% endif %}">
-                                        {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}Lot Listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}Buyer RFQ{% elif n.notification_type == 'ADMIN_REGISTRATION' %}Admin Staff{% elif n.notification_type == 'APPROVAL' %}Approval{% else %}Product Enquiry{% endif %}
-                                    </span>
-                                    <span class="notif-dot-sep">·</span>
-                                    <span class="notif-time">{{ n.created_at|timesince }} ago</span>
-                                </div>
-                                {% if not n.is_read %}
-                                <span class="notif-unread-dot" title="Unread notification"></span>
-                                {% endif %}
+                            <!-- Top: Title & Time -->
+                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                <div class="notif-title">{{ n.title }}</div>
+                                <span class="notif-time">{{ n.created_at|timesince }} ago</span>
                             </div>
 
-                            <div class="notif-title">{{ n.title }}</div>
+                            <!-- Middle: Message Preview -->
                             <div class="notif-desc">{{ n.message }}</div>
-                        </div>
 
-                        <!-- Hover Actions -->
-                        <div class="notif-hover-actions">
-                            <button type="button" class="notif-action-btn" title="{% if n.is_read %}Mark as unread{% else %}Mark as read{% endif %}" onclick="if (window.adminNotifEngine) window.adminNotifEngine.toggleRead({{ n.id }}, {% if n.is_read %}false{% else %}true{% endif %}, event)">
-                                <i class="bi {% if n.is_read %}bi-envelope{% else %}bi-check2{% endif %}"></i>
-                            </button>
-                            <button type="button" class="notif-action-btn notif-action-delete" title="Dismiss" onclick="if (window.adminNotifEngine) window.adminNotifEngine.deleteNotif({{ n.id }}, event)">
-                                <i class="bi bi-x"></i>
-                            </button>
+                            <!-- Footer: Category Pill + NEW Badge + Actions -->
+                            <div class="d-flex align-items-center justify-content-between mt-2 pt-0.5">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="notif-category-pill {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-tag-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-tag-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-tag-admin{% elif n.notification_type == 'APPROVAL' %}notif-tag-approval{% else %}notif-tag-enquiry{% endif %}">
+                                        {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}Lot Listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}Buyer RFQ{% elif n.notification_type == 'ADMIN_REGISTRATION' %}Admin Staff{% elif n.notification_type == 'APPROVAL' %}Approval{% else %}Product Enquiry{% endif %}
+                                    </span>
+                                    {% if not n.is_read %}
+                                    <span class="notif-badge-new">NEW</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="notif-hover-actions">
+                                    <button type="button" class="notif-action-btn" title="{% if n.is_read %}Mark as unread{% else %}Mark as read{% endif %}" onclick="if (window.adminNotifEngine) window.adminNotifEngine.toggleRead({{ n.id }}, {% if n.is_read %}false{% else %}true{% endif %}, event)">
+                                        <i class="bi {% if n.is_read %}bi-envelope{% else %}bi-check2{% endif %}"></i>
+                                    </button>
+                                    <button type="button" class="notif-action-btn notif-action-delete" title="Dismiss" onclick="if (window.adminNotifEngine) window.adminNotifEngine.deleteNotif({{ n.id }}, event)">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% empty %}
@@ -1010,25 +1107,28 @@
                             </div>
 
                             <div class="notif-body">
-                                <div class="notif-meta-row">
-                                    <div class="d-flex align-items-center gap-1.5">
-                                        <span class="notif-tag ${meta.tagClass}">${meta.label}</span>
-                                        <span class="notif-dot-sep">·</span>
-                                        <span class="notif-time">${this.escapeHtml(timeAgo)}</span>
-                                    </div>
-                                    ${!n.is_read ? '<span class="notif-unread-dot" title="Unread notification"></span>' : ''}
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                                    <div class="notif-title">${this.escapeHtml(n.title)}</div>
+                                    <span class="notif-time">${this.escapeHtml(timeAgo)}</span>
                                 </div>
-                                <div class="notif-title">${this.escapeHtml(n.title)}</div>
-                                <div class="notif-desc">${this.escapeHtml(n.message)}</div>
-                            </div>
 
-                            <div class="notif-hover-actions">
-                                <button type="button" class="notif-action-btn" title="${n.is_read ? 'Mark as unread' : 'Mark as read'}" onclick="window.adminNotifEngine.toggleRead(${n.id}, ${!n.is_read}, event)">
-                                    <i class="bi ${n.is_read ? 'bi-envelope' : 'bi-check2'}"></i>
-                                </button>
-                                <button type="button" class="notif-action-btn notif-action-delete" title="Dismiss" onclick="window.adminNotifEngine.deleteNotif(${n.id}, event)">
-                                    <i class="bi bi-x"></i>
-                                </button>
+                                <div class="notif-desc">${this.escapeHtml(n.message)}</div>
+
+                                <div class="d-flex align-items-center justify-content-between mt-2 pt-0.5">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="notif-category-pill ${meta.tagClass}">${meta.label}</span>
+                                        ${!n.is_read ? '<span class="notif-badge-new">NEW</span>' : ''}
+                                    </div>
+
+                                    <div class="notif-hover-actions">
+                                        <button type="button" class="notif-action-btn" title="${n.is_read ? 'Mark as unread' : 'Mark as read'}" onclick="window.adminNotifEngine.toggleRead(${n.id}, ${!n.is_read}, event)">
+                                            <i class="bi ${n.is_read ? 'bi-envelope' : 'bi-check2'}"></i>
+                                        </button>
+                                        <button type="button" class="notif-action-btn notif-action-delete" title="Dismiss" onclick="window.adminNotifEngine.deleteNotif(${n.id}, event)">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
