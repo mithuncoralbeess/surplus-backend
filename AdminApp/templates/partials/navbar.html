@@ -461,13 +461,73 @@
     border-radius: 4px;
 }
 
-/* Panel Footer */
+/* Panel Footer & View Notification Center Button */
 .notif-panel-footer {
     background: #f8fafc;
+    padding: 12px 18px !important;
+    border-top: 1px solid #eef2f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 [data-bs-theme="dark"] .notif-panel-footer {
-    background: #1f2937;
+    background: #0f172a;
     border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.notif-footer-sync {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74rem;
+    color: #64748b;
+    font-weight: 500;
+}
+[data-bs-theme="dark"] .notif-footer-sync {
+    color: #94a3b8;
+}
+
+.notif-footer-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border-radius: 9999px;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #dbeafe;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+    cursor: pointer;
+}
+.notif-footer-action-btn i {
+    font-size: 0.80rem;
+    transition: transform 0.2s ease;
+}
+.notif-footer-action-btn:hover {
+    background: #2563eb;
+    color: #ffffff !important;
+    border-color: #2563eb;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
+    transform: translateY(-1px);
+}
+.notif-footer-action-btn:hover i {
+    transform: translateX(3px);
+}
+[data-bs-theme="dark"] .notif-footer-action-btn {
+    background: rgba(37, 99, 235, 0.18);
+    color: #60a5fa;
+    border-color: rgba(37, 99, 235, 0.35);
+}
+[data-bs-theme="dark"] .notif-footer-action-btn:hover {
+    background: #3b82f6;
+    color: #ffffff !important;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
 }
 
 /* Floating Toast Notifications Container */
@@ -658,11 +718,11 @@
                 </div>
 
                 <!-- Panel Footer -->
-                <div class="notif-panel-footer px-4 py-2.5 border-top d-flex align-items-center justify-content-between">
-                    <span class="text-muted small" id="notifLastSyncedText" style="font-size: 0.72rem;">
+                <div class="notif-panel-footer">
+                    <span class="notif-footer-sync" id="notifLastSyncedText">
                         <i class="bi bi-check2 text-success me-1"></i>Synced just now
                     </span>
-                    <a href="/admin/notifications/" class="text-primary text-decoration-none small fw-semibold d-inline-flex align-items-center gap-1 hover-arrow" style="font-size: 0.76rem;">
+                    <a href="/admin/notifications/" class="notif-footer-action-btn" id="notifFooterCenterBtn">
                         <span>View Notification Center</span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
