@@ -1,15 +1,29 @@
 from django.db.models import Q
-from .models import SystemSettings, PopupSetting, AdminDetails, AdminNotification
+from .models import (
+    SystemSettings,
+    PopupSetting,
+    AdminDetails,
+    AdminNotification,
+    Lot,
+    Product,
+    RfqEnquiry,
+    ContactUsEnquiry,
+)
 
 def maintenance_mode_context(request):
     """
-    Context processor to pass maintenance mode status, popup settings, and admin session context to all templates.
+    Context processor to pass maintenance mode status, popup settings,
+    sidebar pending counts, and admin session context to all templates.
     """
     context_data = {
         "is_maintenance_mode": False,
         "maintenance_message": "Website is under maintenance. Please check back later.",
         "popup_setting": None,
         "pending_admins_count": 0,
+        "pending_lots_count": 0,
+        "pending_seller_enquiries_count": 0,
+        "pending_rfqs_count": 0,
+        "pending_general_enquiries_count": 0,
         "admin_unread_notifications_count": 0,
         "admin_recent_notifications": [],
     }
@@ -19,6 +33,12 @@ def maintenance_mode_context(request):
         context_data["is_maintenance_mode"] = sys_settings.is_maintenance_mode
         context_data["maintenance_message"] = sys_settings.maintenance_message
         context_data["popup_setting"] = popup_setting
+
+        # Global sidebar pending alert badges
+        context_data["pending_lots_count"] = Lot.objects.filter(enquiry_status__iexact="pending").count()
+        context_data["pending_seller_enquiries_count"] = Product.objects.filter(enquiry_status__iexact="pending").count()
+        context_data["pending_rfqs_count"] = RfqEnquiry.objects.filter(status__iexact="pending").count()
+        context_data["pending_general_enquiries_count"] = ContactUsEnquiry.objects.filter(status__iexact="pending").count()
 
         # Check admin session
         admin_id = request.session.get("adminid")
@@ -43,4 +63,3 @@ def maintenance_mode_context(request):
         pass
 
     return context_data
-

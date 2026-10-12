@@ -1,4 +1,46 @@
 {% load static %}
+<style>
+/* Enterprise Sidebar Alert & Pending Badges */
+.sidebar-alert-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    padding: 0 6px !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    color: #ffffff !important;
+    background: #ef4444 !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4) !important;
+    letter-spacing: -0.01em !important;
+    flex-shrink: 0 !important;
+    margin-right: 2px;
+}
+.sidebar-alert-badge.badge-amber {
+    background: #f59e0b !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4) !important;
+}
+
+.sidebar-submenu-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    padding: 0 5px !important;
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    color: #ffffff !important;
+    background: #ef4444 !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 1px 4px rgba(239, 68, 68, 0.35) !important;
+    flex-shrink: 0 !important;
+}
+</style>
 <aside class="dashboard-sidebar" id="dashboardSidebar">
     <!-- Sidebar Brand -->
     <a href="/admin/dashboard/" class="sidebar-brand">
@@ -84,11 +126,25 @@
                         <i class="bi bi-box-seam"></i>
                         <span>Lot Enquiries</span>
                     </div>
-                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if pending_lots_count and pending_lots_count > 0 %}
+                        <span class="sidebar-alert-badge" title="{{ pending_lots_count }} Pending Lot Inquiries">
+                            {{ pending_lots_count }}
+                        </span>
+                        {% endif %}
+                        <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    </div>
                 </a>
                 <div class="collapse submenu-collapse {% if '/admin/enquiries/lot' in request.path %}show{% endif %}" id="lotEnquiriesCollapse">
                     <ul class="submenu-list">
-                        <li><a href="/admin/enquiries/lots/pending/" class="submenu-link {% if request.path == '/admin/enquiries/lots/pending/' %}active{% endif %}">Pending</a></li>
+                        <li>
+                            <a href="/admin/enquiries/lots/pending/" class="submenu-link d-flex align-items-center justify-content-between {% if request.path == '/admin/enquiries/lots/pending/' %}active{% endif %}">
+                                <span>Pending</span>
+                                {% if pending_lots_count and pending_lots_count > 0 %}
+                                <span class="sidebar-submenu-badge">{{ pending_lots_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
                         <li><a href="/admin/enquiries/lots/approved/" class="submenu-link {% if request.path == '/admin/enquiries/lots/approved/' %}active{% endif %}">Approved</a></li>
                         <li><a href="/admin/enquiries/lots/declined/" class="submenu-link {% if request.path == '/admin/enquiries/lots/declined/' %}active{% endif %}">Declined</a></li>
                     </ul>
@@ -102,12 +158,26 @@
                         <i class="bi bi-chat-dots"></i>
                         <span>General Enquiries</span>
                     </div>
-                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if pending_general_enquiries_count and pending_general_enquiries_count > 0 %}
+                        <span class="sidebar-alert-badge" title="{{ pending_general_enquiries_count }} Pending Contact Enquiries">
+                            {{ pending_general_enquiries_count }}
+                        </span>
+                        {% endif %}
+                        <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    </div>
                 </a>
                 <div class="collapse submenu-collapse {% if '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}show{% endif %}" id="generalEnquiriesCollapse">
                     <ul class="submenu-list">
                         <li><a href="/admin/enquiries/whatsapp/" class="submenu-link {% if '/admin/enquiries/whatsapp' in request.path %}active{% endif %}">WhatsApp Enquiries</a></li>
-                        <li><a href="/admin/enquiries/contact-us/" class="submenu-link {% if '/admin/enquiries/contact-us' in request.path %}active{% endif %}">Contact Us</a></li>
+                        <li>
+                            <a href="/admin/enquiries/contact-us/" class="submenu-link d-flex align-items-center justify-content-between {% if '/admin/enquiries/contact-us' in request.path %}active{% endif %}">
+                                <span>Contact Us</span>
+                                {% if pending_general_enquiries_count and pending_general_enquiries_count > 0 %}
+                                <span class="sidebar-submenu-badge">{{ pending_general_enquiries_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
                         <li><a href="/admin/enquiries/partnership/" class="submenu-link {% if '/admin/enquiries/partnership' in request.path %}active{% endif %}">Partnership Enquiries</a></li>
                     </ul>
                 </div>
@@ -120,11 +190,25 @@
                         <i class="bi bi-envelope"></i>
                         <span>Seller Enquiries</span>
                     </div>
-                    <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if pending_seller_enquiries_count and pending_seller_enquiries_count > 0 %}
+                        <span class="sidebar-alert-badge" title="{{ pending_seller_enquiries_count }} Pending Review">
+                            {{ pending_seller_enquiries_count }}
+                        </span>
+                        {% endif %}
+                        <i class="bi bi-chevron-right small arrow-indicator"></i>
+                    </div>
                 </a>
                 <div class="collapse submenu-collapse {% if '/admin/enquiries/seller' in request.path %}show{% endif %}" id="sellerEnquiriesCollapse">
                     <ul class="submenu-list">
-                        <li><a href="/admin/enquiries/seller/pending/" class="submenu-link {% if request.path == '/admin/enquiries/seller/pending/' %}active{% endif %}">Pending</a></li>
+                        <li>
+                            <a href="/admin/enquiries/seller/pending/" class="submenu-link d-flex align-items-center justify-content-between {% if request.path == '/admin/enquiries/seller/pending/' %}active{% endif %}">
+                                <span>Pending</span>
+                                {% if pending_seller_enquiries_count and pending_seller_enquiries_count > 0 %}
+                                <span class="sidebar-submenu-badge">{{ pending_seller_enquiries_count }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
                         <li><a href="/admin/enquiries/seller/approved/" class="submenu-link {% if request.path == '/admin/enquiries/seller/approved/' %}active{% endif %}">Approved</a></li>
                         <li><a href="/admin/enquiries/seller/declined/" class="submenu-link {% if request.path == '/admin/enquiries/seller/declined/' %}active{% endif %}">Declined</a></li>
                     </ul>
@@ -133,9 +217,16 @@
 
             <!-- RFQ Requests -->
             <li class="nav-item">
-                <a href="/admin/rfq-requests/" class="nav-link {% if '/admin/rfq-requests' in request.path or '/admin/enquiries/rfq' in request.path %}active{% endif %}">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>RFQ Requests</span>
+                <a href="/admin/rfq-requests/" class="nav-link d-flex justify-content-between align-items-center {% if '/admin/rfq-requests' in request.path or '/admin/enquiries/rfq' in request.path %}active{% endif %}">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>RFQ Requests</span>
+                    </div>
+                    {% if pending_rfqs_count and pending_rfqs_count > 0 %}
+                    <span class="sidebar-alert-badge" title="{{ pending_rfqs_count }} Pending RFQs">
+                        {{ pending_rfqs_count }}
+                    </span>
+                    {% endif %}
                 </a>
             </li>
 
@@ -157,7 +248,7 @@
                         <span>Manage Admins</span>
                     </div>
                     {% if pending_admins_count and pending_admins_count > 0 %}
-                    <span class="badge bg-warning text-dark rounded-pill px-2 py-0.5" style="font-size: 0.72rem;" title="{{ pending_admins_count }} Pending Approvals">
+                    <span class="sidebar-alert-badge badge-amber" title="{{ pending_admins_count }} Pending Approvals">
                         {{ pending_admins_count }}
                     </span>
                     {% endif %}
