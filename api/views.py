@@ -464,7 +464,7 @@ def submit_lot_enquiry(request):
             lot.vendor = vendor_obj
             lot.save(update_fields=["vendor"])
             try:
-                from AdminApp.services import create_vendor_notification, EmailService
+                from AdminApp.services import create_vendor_notification, create_admin_notification, EmailService
                 create_vendor_notification(
                     vendor=vendor_obj,
                     title="Lot Manifest Uploaded",
@@ -483,6 +483,12 @@ def submit_lot_enquiry(request):
                         "email": vendor_obj.email
                     },
                     lot=lot
+                )
+                create_admin_notification(
+                    title=f"New Lot Manifest Uploaded: {lot.lot_number}",
+                    message=f"Spreadsheet lot manifest '{lot.lot_number}' submitted by {vendor_obj.full_name or vendor_obj.username} ({len(products_list)} items).",
+                    notification_type="ENQUIRY",
+                    action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
                 )
             except Exception as e:
                 print(f"Error creating lot notification/emails: {e}")
@@ -1596,6 +1602,26 @@ def submit_product_request(request):
         except Exception as e:
             print(f"Error creating product submit notification: {e}")
 
+    try:
+        from AdminApp.services import create_admin_notification, EmailService
+        seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else "Guest Seller"
+        create_admin_notification(
+            title=f"New Product Enquiry: {product.product_id} - {product.product_name}",
+            message=f"New listing '{product.product_name}' ({product.product_id}) submitted by {seller_label} and is pending review.",
+            notification_type="ENQUIRY",
+            action_url=f"/admin/enquiries/seller/{product.id}/detail/"
+        )
+        if product.vendor and product.vendor.email:
+            EmailService.notify_admin_enquiry_received(
+                seller_info={
+                    "name": seller_label,
+                    "email": product.vendor.email
+                },
+                enquiry=product
+            )
+    except Exception as e:
+        print(f"Error creating admin notification for product enquiry: {e}")
+
     return response_obj
 
 
@@ -1783,9 +1809,9 @@ def submit_lot_request(request):
                 except Exception as e:
                     print(f"Error sending lot submitted confirmation email: {e}")
 
-            # 2. Send notification email to admin
+            # 2. Send notification email and create in-app notification for admin
             try:
-                from AdminApp.services import EmailService
+                from AdminApp.services import EmailService, create_admin_notification
                 EmailService.notify_admin_lot_submitted(
                     seller_info={
                         "name": seller_name,
@@ -1793,8 +1819,14 @@ def submit_lot_request(request):
                     },
                     lot=lot
                 )
+                create_admin_notification(
+                    title=f"New Lot Listing: {lot.lot_number}",
+                    message=f"New lot listing '{lot.title or lot.lot_number}' ({lot.lot_number}) submitted by {seller_name} and is pending review.",
+                    notification_type="ENQUIRY",
+                    action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
+                )
             except Exception as e:
-                print(f"Error sending admin lot notification email: {e}")
+                print(f"Error sending admin lot notification: {e}")
 
             serialized_lot_data = LotSerializer(lot, context={"request": request}).data
             return Response({
