@@ -487,7 +487,7 @@ def submit_lot_enquiry(request):
                 create_admin_notification(
                     title=f"New Lot Manifest Uploaded: {lot.lot_number}",
                     message=f"Spreadsheet lot manifest '{lot.lot_number}' submitted by {vendor_obj.full_name or vendor_obj.username} ({len(products_list)} items).",
-                    notification_type="ENQUIRY",
+                    notification_type="LISTING",
                     action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
                 )
             except Exception as e:
@@ -1138,7 +1138,7 @@ def submit_rfq_enquiry(request):
         create_admin_notification(
             title=f"New Buyer RFQ {rfq.reference} - {rfq.company_name}",
             message=f"Buyer {contact_person} ({email}) submitted a consolidated RFQ for {item_count} items ({rfq.total_units} units, est. {rfq.currency} {rfq.estimated_value:,.2f}).",
-            notification_type="ENQUIRY",
+            notification_type="RFQ",
             action_url=f"/admin/rfq-requests/{rfq.id}/detail/"
         )
     except Exception as e:
@@ -1822,7 +1822,7 @@ def submit_lot_request(request):
                 create_admin_notification(
                     title=f"New Lot Listing: {lot.lot_number}",
                     message=f"New lot listing '{lot.title or lot.lot_number}' ({lot.lot_number}) submitted by {seller_name} and is pending review.",
-                    notification_type="ENQUIRY",
+                    notification_type="LISTING",
                     action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
                 )
             except Exception as e:

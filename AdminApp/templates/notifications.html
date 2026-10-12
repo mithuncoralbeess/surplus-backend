@@ -79,24 +79,27 @@
                 <div class="card border rounded-3 p-3 transition-all notif-card {% if not n.is_read %}bg-light bg-opacity-50 border-primary border-opacity-25{% endif %}" id="notifItem-{{ n.id }}">
                     <div class="d-flex align-items-start gap-3">
                         <!-- Icon Avatar Squircle -->
-                        <div class="notif-type-avatar flex-shrink-0 {% if n.notification_type == 'ENQUIRY' %}type-enquiry{% elif n.notification_type == 'LISTING' %}type-listing{% elif n.notification_type == 'ADMIN_REGISTRATION' %}type-admin{% elif n.notification_type == 'APPROVAL' %}type-approval{% else %}type-system{% endif %}" style="width: 46px !important; height: 46px !important; min-width: 46px !important; border-radius: 14px !important; font-size: 1.25rem;">
-                            {% if n.notification_type == 'ENQUIRY' %}
-                                <i class="bi bi-tag-fill"></i>
-                            {% elif n.notification_type == 'LISTING' %}
+                        <div class="notif-avatar flex-shrink-0 {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-avatar-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-avatar-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-avatar-admin{% elif n.notification_type == 'APPROVAL' %}notif-avatar-approval{% else %}notif-avatar-enquiry{% endif %}" style="width: 44px !important; height: 44px !important; min-width: 44px !important; border-radius: 12px !important; font-size: 1.2rem;">
+                            {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}
                                 <i class="bi bi-boxes"></i>
+                            {% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}
+                                <i class="bi bi-file-earmark-text-fill"></i>
                             {% elif n.notification_type == 'ADMIN_REGISTRATION' %}
-                                <i class="bi bi-person-badge-fill"></i>
+                                <i class="bi bi-shield-check"></i>
                             {% elif n.notification_type == 'APPROVAL' %}
-                                <i class="bi bi-check-circle-fill"></i>
+                                <i class="bi bi-check2-circle"></i>
                             {% else %}
-                                <i class="bi bi-bell-fill"></i>
+                                <i class="bi bi-tag-fill"></i>
                             {% endif %}
                         </div>
 
                         <!-- Content -->
                         <div class="flex-grow-1">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-                                <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="notif-tag {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-tag-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-tag-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-tag-admin{% elif n.notification_type == 'APPROVAL' %}notif-tag-approval{% else %}notif-tag-enquiry{% endif %}">
+                                        {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}Lot Listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}Buyer RFQ{% elif n.notification_type == 'ADMIN_REGISTRATION' %}Admin Staff{% elif n.notification_type == 'APPROVAL' %}Approval{% else %}Product Enquiry{% endif %}
+                                    </span>
                                     <h6 class="fw-bold mb-0 text-dark">{{ n.title }}</h6>
                                     {% if not n.is_read %}
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small unread-pill" style="font-size: 0.7rem;">New</span>
