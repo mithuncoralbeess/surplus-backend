@@ -1102,6 +1102,10 @@ def submit_rfq_enquiry(request):
                         linked_lot = Lot.objects.filter(id=int(lot_str)).first()
                     elif lot_str.upper().startswith("LOT-") or lot_str.upper().startswith("BAT-"):
                         linked_lot = Lot.objects.filter(batch_id__iexact=lot_str).first()
+                if linked_lot and (not item_title or item_title == "Quotation Item"):
+                    item_title = linked_lot.title or getattr(linked_lot, "product_name", "") or f"Lot {linked_lot.batch_id}"
+                if linked_lot and not item_sku:
+                    item_sku = getattr(linked_lot, "batch_id", "") or ""
             else:
                 if prod_id_raw:
                     p_str = str(prod_id_raw).strip()
@@ -1109,6 +1113,10 @@ def submit_rfq_enquiry(request):
                         linked_product = Product.objects.filter(id=int(p_str)).first()
                     elif p_str.upper().startswith("PRO-"):
                         linked_product = Product.objects.filter(product_id__iexact=p_str).first()
+                if linked_product and (not item_title or item_title == "Quotation Item"):
+                    item_title = linked_product.title or getattr(linked_product, "name", "") or f"Product {linked_product.product_id}"
+                if linked_product and not item_sku:
+                    item_sku = getattr(linked_product, "sku", "") or getattr(linked_product, "product_id", "") or ""
 
             RfqEnquiryItem.objects.create(
                 rfq=rfq,
