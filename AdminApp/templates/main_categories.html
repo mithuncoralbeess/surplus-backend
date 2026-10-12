@@ -287,13 +287,10 @@
                         <div class="accordion-body bg-body-secondary bg-opacity-75 p-4 border-top">
 
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-uppercase text-secondary mb-0"
-                                    style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-list-nested me-1 text-primary"></i> Subcategories under {{
-                                    main_cat.name }}
+                                <h6 class="fw-bold text-uppercase text-secondary mb-0" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-list-nested me-1 text-primary"></i> Subcategories under {{ main_cat.name }}
                                 </h6>
-                                <span class="text-secondary small">Total: <strong>{{ main_cat.subcategories.count
-                                        }}</strong> items</span>
+                                <span class="text-secondary small">Total: <strong>{{ main_cat.subcategories.count }}</strong> items</span>
                             </div>
 
                             <div class="card border shadow-sm rounded-3 overflow-hidden bg-body subcat-table-card">
@@ -315,9 +312,7 @@
                                                 <td class="ps-3 py-2.5">
                                                     <span class="fw-bold text-body">{{ sub.name }}</span>
                                                     {% if sub.description %}
-                                                    <span class="d-block text-secondary small text-truncate"
-                                                        style="max-width: 320px; font-size: 0.78rem;">{{ sub.description
-                                                        }}</span>
+                                                    <span class="d-block text-secondary small text-truncate" style="max-width: 320px; font-size: 0.78rem;">{{ sub.description }}</span>
                                                     {% endif %}
                                                 </td>
                                                 <td class="py-2.5">
@@ -410,12 +405,7 @@
                                                                                     class="form-check-label fw-medium text-body small mb-0"
                                                                                     for="isActiveSubEdit{{ sub.id }}">Active
                                                                                     Status</label>
-                                                                                <input class="form-check-input ms-0"
-                                                                                    type="checkbox" name="is_active"
-                                                                                    id="isActiveSubEdit{{ sub.id }}" {%
-                                                                                    if sub.is_active %}checked{% endif
-                                                                                    %}
-                                                                                    style="cursor: pointer; height: 20px; width: 40px;">
+                                                                                <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveSubEdit{{ sub.id }}" {% if sub.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -451,9 +441,7 @@
                                                                     </div>
                                                                     <h5 class="fw-bold mb-2 fs-6">Delete Subcategory?
                                                                     </h5>
-                                                                    <p class="small text-secondary mb-3">Are you sure
-                                                                        you want to delete <strong>{{ sub.name
-                                                                            }}</strong>?</p>
+                                                                    <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ sub.name }}</strong>?</p>
                                                                     <div class="d-flex gap-2 justify-content-center">
                                                                         <button type="button"
                                                                             class="btn btn-outline-secondary btn-sm px-3 rounded-3"
@@ -599,10 +587,7 @@
                                             class="form-check form-switch bg-body-secondary p-2.5 rounded-3 border d-flex align-items-center justify-content-between pe-3">
                                             <label class="form-check-label fw-medium text-body small mb-0"
                                                 for="isActiveMainEdit{{ main_cat.id }}">Active Status</label>
-                                            <input class="form-check-input ms-0" type="checkbox" name="is_active"
-                                                id="isActiveMainEdit{{ main_cat.id }}" {% if main_cat.is_active
-                                                %}checked{% endif %}
-                                                style="cursor: pointer; height: 20px; width: 40px;">
+                                            <input class="form-check-input ms-0" type="checkbox" name="is_active" id="isActiveMainEdit{{ main_cat.id }}" {% if main_cat.is_active %}checked{% endif %} style="cursor: pointer; height: 20px; width: 40px;">
                                         </div>
                                     </div>
                                 </div>
@@ -627,8 +612,7 @@
                                 <input type="hidden" name="main_category_id" value="{{ main_cat.id }}">
                                 <div class="p-3 text-danger"><i class="bi bi-exclamation-triangle fs-1"></i></div>
                                 <h5 class="fw-bold mb-2 fs-6">Delete Category?</h5>
-                                <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{
-                                        main_cat.name }}</strong> and all its subcategories?</p>
+                                <p class="small text-secondary mb-3">Are you sure you want to delete <strong>{{ main_cat.name }}</strong> and all its subcategories?</p>
                                 <div class="d-flex gap-2 justify-content-center">
                                     <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-3"
                                         data-bs-dismiss="modal">Cancel</button>
