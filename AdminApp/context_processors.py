@@ -38,7 +38,7 @@ def maintenance_mode_context(request):
                         Q(admin=admin_user) | (Q(admin__isnull=True) & Q(for_superadmins_only=False))
                     )
                 context_data["admin_unread_notifications_count"] = notif_qs.filter(is_read=False).count()
-                context_data["admin_recent_notifications"] = notif_qs[:5]
+                context_data["admin_recent_notifications"] = notif_qs[:12]
     except Exception:
         pass
 

@@ -78,18 +78,18 @@
                 {% for n in notifications %}
                 <div class="card border rounded-3 p-3 transition-all notif-card {% if not n.is_read %}bg-light bg-opacity-50 border-primary border-opacity-25{% endif %}" id="notifItem-{{ n.id }}">
                     <div class="d-flex align-items-start gap-3">
-                        <!-- Icon Avatar -->
-                        <div class="rounded-circle p-2 mt-1 d-flex align-items-center justify-content-center flex-shrink-0 {% if n.notification_type == 'ADMIN_REGISTRATION' %}bg-warning bg-opacity-15 text-warning{% elif n.notification_type == 'APPROVAL' %}bg-success bg-opacity-15 text-success{% elif n.notification_type == 'ENQUIRY' %}bg-info bg-opacity-15 text-info{% else %}bg-primary bg-opacity-15 text-primary{% endif %}" style="width: 44px; height: 44px;">
-                            {% if n.notification_type == 'ADMIN_REGISTRATION' %}
-                                <i class="bi bi-person-plus-fill fs-5"></i>
-                            {% elif n.notification_type == 'APPROVAL' %}
-                                <i class="bi bi-check-circle-fill fs-5"></i>
-                            {% elif n.notification_type == 'ENQUIRY' %}
-                                <i class="bi bi-envelope-fill fs-5"></i>
+                        <!-- Icon Avatar Squircle -->
+                        <div class="notif-type-avatar flex-shrink-0 {% if n.notification_type == 'ENQUIRY' %}type-enquiry{% elif n.notification_type == 'LISTING' %}type-listing{% elif n.notification_type == 'ADMIN_REGISTRATION' %}type-admin{% elif n.notification_type == 'APPROVAL' %}type-approval{% else %}type-system{% endif %}" style="width: 46px !important; height: 46px !important; min-width: 46px !important; border-radius: 14px !important; font-size: 1.25rem;">
+                            {% if n.notification_type == 'ENQUIRY' %}
+                                <i class="bi bi-tag-fill"></i>
                             {% elif n.notification_type == 'LISTING' %}
-                                <i class="bi bi-box-seam-fill fs-5"></i>
+                                <i class="bi bi-boxes"></i>
+                            {% elif n.notification_type == 'ADMIN_REGISTRATION' %}
+                                <i class="bi bi-person-badge-fill"></i>
+                            {% elif n.notification_type == 'APPROVAL' %}
+                                <i class="bi bi-check-circle-fill"></i>
                             {% else %}
-                                <i class="bi bi-bell-fill fs-5"></i>
+                                <i class="bi bi-bell-fill"></i>
                             {% endif %}
                         </div>
 
