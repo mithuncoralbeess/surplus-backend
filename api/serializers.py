@@ -185,3 +185,78 @@ class VendorNotificationSerializer(serializers.ModelSerializer):
         return ""
 
 
+from AdminApp.models import RfqEnquiry, RfqEnquiryItem
+
+class RfqEnquiryItemSerializer(serializers.ModelSerializer):
+    unitPrice = serializers.DecimalField(source='unit_price', max_digits=12, decimal_places=2, required=False)
+    targetPrice = serializers.DecimalField(source='target_price', max_digits=12, decimal_places=2, required=False, allow_null=True)
+    productId = serializers.IntegerField(source='product_id', required=False, allow_null=True)
+    lotId = serializers.IntegerField(source='lot_id', required=False, allow_null=True)
+
+    class Meta:
+        model = RfqEnquiryItem
+        fields = [
+            'id',
+            'product_id',
+            'productId',
+            'lot_id',
+            'lotId',
+            'item_type',
+            'title',
+            'sku',
+            'category',
+            'quantity',
+            'unit_price',
+            'unitPrice',
+            'target_price',
+            'targetPrice',
+            'notes',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
+class RfqEnquirySerializer(serializers.ModelSerializer):
+    items = RfqEnquiryItemSerializer(many=True, read_only=True)
+    contactPerson = serializers.CharField(source='contact_person', required=False)
+    companyName = serializers.CharField(source='company_name', required=False)
+    destinationPort = serializers.CharField(source='destination_port', required=False, allow_blank=True)
+    paymentMethod = serializers.CharField(source='payment_method', required=False, allow_blank=True)
+    additionalNotes = serializers.CharField(source='additional_notes', required=False, allow_blank=True)
+    totalUnits = serializers.IntegerField(source='total_units', required=False)
+    estimatedValue = serializers.DecimalField(source='estimated_value', max_digits=14, decimal_places=2, required=False)
+
+    class Meta:
+        model = RfqEnquiry
+        fields = [
+            'id',
+            'reference',
+            'contact_person',
+            'contactPerson',
+            'company_name',
+            'companyName',
+            'email',
+            'phone',
+            'country',
+            'destination_port',
+            'destinationPort',
+            'incoterm',
+            'payment_method',
+            'paymentMethod',
+            'additional_notes',
+            'additionalNotes',
+            'total_units',
+            'totalUnits',
+            'estimated_value',
+            'estimatedValue',
+            'currency',
+            'status',
+            'proforma_amount',
+            'items',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+

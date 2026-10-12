@@ -687,7 +687,7 @@ class EmailService:
     def send_contact_form_email(cls, user_data: dict, form_type="query") -> bool:
         """Dispatches contact/partnership queries to admins."""
         html_content = (
-            f"<h3>Contact Inquiry ({form_type.upper()})</h3>"
+            f"<h3>Contact Enquiry ({form_type.upper()})</h3>"
             f"<p><strong>Name:</strong> {user_data.get('name')}</p>"
             f"<p><strong>Email:</strong> {user_data.get('email')}</p>"
             f"<p><strong>Message:</strong> {user_data.get('message')}</p>"

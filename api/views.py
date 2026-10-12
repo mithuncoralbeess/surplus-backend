@@ -958,6 +958,246 @@ def submit_contact_us_enquiry(request):
     }, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["POST", "GET"])
+@permission_classes([AllowAny])
+def submit_rfq_enquiry(request):
+    """
+    Public REST API endpoint to submit a Buyer Request For Quotation (RFQ) from the frontend cart.
+    Endpoint: POST /api/enquiries/rfq/
+    """
+    from AdminApp.models import RfqEnquiry, RfqEnquiryItem, VendorDetails, Product, Lot
+    from AdminApp.services import create_admin_notification, create_vendor_notification
+    from .serializers import RfqEnquirySerializer
+    from django.db import transaction
+    from decimal import Decimal, InvalidOperation
+
+    if request.method == "GET":
+        ref = request.GET.get("reference", "").strip()
+        if ref:
+            rfq = RfqEnquiry.objects.prefetch_related("items").filter(reference__iexact=ref).first()
+            if not rfq:
+                return Response({"success": False, "message": f"RFQ '{ref}' not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"success": True, "data": RfqEnquirySerializer(rfq).data}, status=status.HTTP_200_OK)
+        return Response({"success": True, "message": "RFQ endpoint is active. Use POST to submit requests."}, status=status.HTTP_200_OK)
+
+    payload = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+
+    contact_person = (payload.get("contact_person") or payload.get("contactPerson") or payload.get("fullName") or payload.get("name") or "").strip()
+    company_name = (payload.get("company_name") or payload.get("companyName") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+
+    if not email:
+        return Response({"success": False, "message": "Corporate email address is required."}, status=status.HTTP_400_BAD_REQUEST)
+    if not company_name:
+        return Response({"success": False, "message": "Company name is required."}, status=status.HTTP_400_BAD_REQUEST)
+    if not contact_person:
+        contact_person = company_name
+
+    phone = str(payload.get("phone") or payload.get("contactNo") or payload.get("mobile") or "").strip()
+    country = str(payload.get("country") or "").strip()
+    destination_port = str(payload.get("destination_port") or payload.get("destinationPort") or payload.get("location") or "").strip()
+    incoterm = str(payload.get("incoterm") or "EXW").strip().upper()
+    payment_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "Escrow").strip()
+    additional_notes = str(payload.get("additional_notes") or payload.get("additionalNotes") or payload.get("notes") or "").strip()
+    currency = str(payload.get("currency") or "USD").strip().upper()
+
+    ref = str(payload.get("reference") or "").strip()
+    current_year = timezone.now().year
+    if not ref or not ref.upper().startswith("RFQ-"):
+        ref = f"RFQ-{current_year}-{random.randint(100000, 999999)}"
+
+    while RfqEnquiry.objects.filter(reference=ref).exists():
+        ref = f"RFQ-{current_year}-{random.randint(100000, 999999)}"
+
+    try:
+        raw_units = payload.get("total_units") or payload.get("totalUnits") or 0
+        total_units = int(raw_units)
+    except (ValueError, TypeError):
+        total_units = 0
+
+    try:
+        raw_val = payload.get("estimated_value") or payload.get("estimatedValue") or 0
+        estimated_value = Decimal(str(raw_val))
+    except (InvalidOperation, ValueError, TypeError):
+        estimated_value = Decimal("0.00")
+
+    buyer_vendor = None
+    buyer_param = payload.get("vendor_id") or payload.get("user_id") or request.headers.get("X-Vendor-Id")
+    if buyer_param:
+        buyer_vendor = _resolve_vendor_from_param(buyer_param)
+    if not buyer_vendor:
+        buyer_vendor = VendorDetails.objects.filter(email__iexact=email).first()
+
+    raw_items = payload.get("items") or []
+    if isinstance(raw_items, str):
+        try:
+            raw_items = json.loads(raw_items)
+        except Exception:
+            raw_items = []
+
+    with transaction.atomic():
+        rfq = RfqEnquiry.objects.create(
+            reference=ref,
+            buyer=buyer_vendor,
+            contact_person=contact_person,
+            company_name=company_name,
+            email=email,
+            phone=phone,
+            country=country,
+            destination_port=destination_port,
+            incoterm=incoterm,
+            payment_method=payment_method,
+            additional_notes=additional_notes,
+            total_units=total_units,
+            estimated_value=estimated_value,
+            currency=currency,
+            status="PENDING",
+        )
+
+        item_count = 0
+        calc_units = 0
+        calc_val = Decimal("0.00")
+
+        for it in raw_items:
+            if not isinstance(it, dict):
+                continue
+            item_title = str(it.get("title") or it.get("product_name") or it.get("name") or "Quotation Item").strip()
+            item_sku = str(it.get("sku") or it.get("model_no") or "").strip()
+            item_cat = str(it.get("category") or "").strip()
+            item_type = str(it.get("type") or "product").strip().lower()
+
+            try:
+                qty = int(it.get("quantity") or 1)
+            except (ValueError, TypeError):
+                qty = 1
+
+            try:
+                u_price = Decimal(str(it.get("unit_price") or it.get("unitPrice") or it.get("price") or 0))
+            except (InvalidOperation, ValueError, TypeError):
+                u_price = Decimal("0.00")
+
+            t_price = None
+            if it.get("target_price") or it.get("targetPrice"):
+                try:
+                    t_price = Decimal(str(it.get("target_price") or it.get("targetPrice")))
+                except (InvalidOperation, ValueError, TypeError):
+                    t_price = None
+
+            notes = str(it.get("notes") or "").strip()
+
+            prod_id_raw = it.get("productId") or it.get("product_id") or it.get("id")
+            linked_product = None
+            linked_lot = None
+
+            if item_type == "lot":
+                if prod_id_raw:
+                    lot_str = str(prod_id_raw).strip()
+                    if lot_str.isdigit():
+                        linked_lot = Lot.objects.filter(id=int(lot_str)).first()
+                    elif lot_str.upper().startswith("LOT-") or lot_str.upper().startswith("BAT-"):
+                        linked_lot = Lot.objects.filter(batch_id__iexact=lot_str).first()
+            else:
+                if prod_id_raw:
+                    p_str = str(prod_id_raw).strip()
+                    if p_str.isdigit():
+                        linked_product = Product.objects.filter(id=int(p_str)).first()
+                    elif p_str.upper().startswith("PRO-"):
+                        linked_product = Product.objects.filter(product_id__iexact=p_str).first()
+
+            RfqEnquiryItem.objects.create(
+                rfq=rfq,
+                product=linked_product,
+                lot=linked_lot,
+                item_type=item_type,
+                title=item_title,
+                sku=item_sku,
+                category=item_cat,
+                quantity=qty,
+                unit_price=u_price,
+                target_price=t_price,
+                notes=notes,
+            )
+
+            item_count += 1
+            calc_units += qty
+            calc_val += (u_price * qty)
+
+        if total_units == 0 and calc_units > 0:
+            rfq.total_units = calc_units
+        if estimated_value == Decimal("0.00") and calc_val > Decimal("0.00"):
+            rfq.estimated_value = calc_val
+        rfq.save(update_fields=["total_units", "estimated_value"])
+
+    try:
+        create_admin_notification(
+            title=f"New Buyer RFQ {rfq.reference} - {rfq.company_name}",
+            message=f"Buyer {contact_person} ({email}) submitted a consolidated RFQ for {item_count} items ({rfq.total_units} units, est. {rfq.currency} {rfq.estimated_value:,.2f}).",
+            notification_type="ENQUIRY",
+            action_url=f"/admin/rfq-requests/{rfq.id}/detail/"
+        )
+    except Exception as e:
+        print(f"[submit_rfq_enquiry] Admin notification error: {e}")
+
+    if buyer_vendor:
+        try:
+            create_vendor_notification(
+                vendor=buyer_vendor,
+                title=f"Quotation Request {rfq.reference} Received",
+                message=f"Your consolidated RFQ for {rfq.total_units} units has been submitted. Our commercial team will prepare your proforma quotation.",
+                notification_type="RFQ",
+                action_url="/profile"
+            )
+        except Exception as e:
+            print(f"[submit_rfq_enquiry] Vendor notification error: {e}")
+
+    try:
+        from django.template.loader import render_to_string
+        from django.core.mail import send_mail
+        from django.conf import settings
+
+        subject = f"Official RFQ Confirmation [{rfq.reference}] - Surplus Market"
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <inquiry@surplusmarket.com>')
+        context = {
+            "rfq": rfq,
+            "items": rfq.items.all(),
+            "contact_person": contact_person,
+            "company_name": company_name,
+        }
+        try:
+            html_message = render_to_string("FinalTemplates/partials/email_partials/email_rfq_buyer_confirmation.html", context)
+        except Exception:
+            html_message = f"<h2>Surplus Market RFQ Confirmation</h2><p>Reference: <strong>{rfq.reference}</strong></p><p>Total Units: {rfq.total_units}</p><p>Estimated Value: {rfq.currency} {rfq.estimated_value}</p>"
+
+        plain_message = f"Hello {contact_person},\n\nYour quotation request {rfq.reference} has been received. Our verification team will review your requirements and provide an official proforma quotation.\n\nThank you,\nSurplus Market Team"
+
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            html_message=html_message,
+            from_email=from_email,
+            recipient_list=[email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        print(f"[submit_rfq_enquiry] Email delivery error: {e}")
+
+    return Response({
+        "success": True,
+        "message": f"Official RFQ '{rfq.reference}' submitted successfully. Our commercial representative will contact {email} within 12 business hours.",
+        "data": {
+            "id": rfq.id,
+            "reference": rfq.reference,
+            "companyName": rfq.company_name,
+            "contactPerson": rfq.contact_person,
+            "email": rfq.email,
+            "itemsCount": item_count,
+            "totalUnits": rfq.total_units,
+            "estimatedValue": float(rfq.estimated_value),
+            "currency": rfq.currency,
+            "status": rfq.status,
+            "createdAt": rfq.created_at.isoformat() if rfq.created_at else None,
+        }
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])

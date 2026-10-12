@@ -144,7 +144,7 @@
 
             <!-- RFQ Requests -->
             <li class="nav-item">
-                <a href="/admin/rfq-requests/" class="nav-link {% if request.path == '/admin/rfq-requests/' %}active{% endif %}">
+                <a href="/admin/rfq-requests/" class="nav-link {% if '/admin/rfq-requests' in request.path or '/admin/enquiries/rfq' in request.path %}active{% endif %}">
                     <i class="bi bi-file-earmark-text"></i>
                     <span>RFQ Requests</span>
                 </a>

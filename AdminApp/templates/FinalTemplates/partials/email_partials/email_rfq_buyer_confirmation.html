@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official RFQ Received - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+        .header {
+            background: linear-gradient(135deg, #0f7a61, #0c6651);
+            padding: 36px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-family: monospace;
+        }
+        .content {
+            padding: 32px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #1e293b;
+            margin-bottom: 14px;
+        }
+        .message {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+        .details-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 13px;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .detail-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .detail-value {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 14px;
+        }
+        .items-table th {
+            text-align: left;
+            padding: 10px 8px;
+            background: #edf2f7;
+            color: #475569;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .items-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #edf2f7;
+            color: #334155;
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 24px 30px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Quotation Request Received</h1>
+            <div class="badge">{{ rfq.reference }}</div>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                Hello <strong>{{ contact_person|default:company_name }}</strong>,
+            </div>
+            <p class="message">
+                Thank you for submitting your Request For Quotation (RFQ) on <strong>Surplus Market</strong>. Your enquiry has been routed to our commercial verification desk. A formal proforma quotation will be prepared and delivered to your corporate email within 12 business hours.
+            </p>
+
+            <div class="details-card">
+                <div class="detail-row">
+                    <span class="detail-label">RFQ Reference</span>
+                    <span class="detail-value" style="font-family: monospace;">{{ rfq.reference }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Company / Organization</span>
+                    <span class="detail-value">{{ rfq.company_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Units</span>
+                    <span class="detail-value">{{ rfq.total_units }} units</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Estimated Baseline Value</span>
+                    <span class="detail-value" style="color: #0f7a61;">{{ rfq.currency }} {{ rfq.estimated_value|floatformat:2 }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Trade Incoterm</span>
+                    <span class="detail-value">{{ rfq.incoterm }}</span>
+                </div>
+                {% if rfq.destination_port %}
+                <div class="detail-row">
+                    <span class="detail-label">Destination</span>
+                    <span class="detail-value">{{ rfq.destination_port }}</span>
+                </div>
+                {% endif %}
+                <div class="detail-row">
+                    <span class="detail-label">Payment Terms</span>
+                    <span class="detail-value">{{ rfq.payment_method }}</span>
+                </div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1e293b;">Basket Line Items ({{ items|length }}):</h4>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.title }}</strong>
+                            {% if item.sku %}<br><small style="color: #64748b;">SKU: {{ item.sku }}</small>{% endif %}
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td style="text-align: right;">${{ item.unit_price|floatformat:2 }}</td>
+                        <td style="text-align: right;">${{ item.total_estimated_value|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if rfq.additional_notes %}
+            <div style="margin-top: 20px; padding: 14px; background: #fffbeb; border-radius: 8px; border: 1px solid #fde68a; font-size: 12px; color: #92400e;">
+                <strong>Special Requirements:</strong> {{ rfq.additional_notes }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0 0 6px 0;">Surplus Market B2B Verification Desk</p>
+            <p style="margin: 0;">Have urgent questions about this RFQ? Reply directly to this email or contact support@surplusmarket.com.</p>
+        </div>
+    </div>
+</body>
+</html>

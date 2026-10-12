@@ -158,11 +158,15 @@
                                     {{ item.title|default:'Lot Inventory Package' }}
                                 </span>
                                 {% if item.admin %}
-                                <div class="mt-0.5">
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;">
-                                        <i class="bi bi-shield-check me-0.5"></i>Assisted ADM-{{ item.admin.id|stringformat:"04d" }}
-                                        {% if item.intake_channel %}• {{ item.intake_channel }}{% endif %}
+                                <div class="mt-0.5 d-flex align-items-center gap-1 flex-wrap">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
+                                        <i class="bi bi-shield-check me-0.5"></i>Assisted ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
                                     </span>
+                                    {% if item.intake_channel %}
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-1.5 py-0.5 rounded-pill" style="font-size: 0.65rem;">
+                                        {{ item.intake_channel }}
+                                    </span>
+                                    {% endif %}
                                 </div>
                                 {% endif %}
                             </div>

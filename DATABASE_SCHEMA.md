@@ -206,6 +206,30 @@ Spreadsheets uploaded by sellers containing hundreds of inventory items.
 
 ---
 
+### 4.3 Buyer Cart Quotation Enquiries (`RfqEnquiry` & `RfqEnquiryItem`)
+Consolidated commercial Request For Quotation (RFQ) packages submitted by buyers from the marketplace cart basket.
+
+| Field Name | Simple Data Type | Plain English Description |
+| :--- | :--- | :--- |
+| `reference` | Unique Code | Official RFQ identifier (e.g. `RFQ-2026-849201`) |
+| `buyer` | User Link | Optional registered buyer account (`VendorDetails`) |
+| `company_name` | Text | Buyer corporation / business name |
+| `contact_person` | Text | Name of authorized procurement officer |
+| `email` | Email | Official corporate communication email |
+| `phone` | Phone Number | Contact telephone / WhatsApp |
+| `country` | Country | Destination territory |
+| `destination_port`| Text | Port of arrival / discharge |
+| `incoterm` | Choice | Trade terms (`EXW`, `FOB`, `CIF`, `DDP`) |
+| `payment_method` | Choice | Settlement terms (`Escrow`, `WireTransfer`, `LC`) |
+| `total_units` | Number | Consolidated units requested across items |
+| `estimated_value` | Currency Amount | Baseline total catalog value |
+| `proforma_amount` | Currency Amount | Admin-issued proforma quotation amount |
+| `status` | Choice | Workflow state (`PENDING`, `QUOTED`, `ACCEPTED`, `DECLINED`, `CLOSED`) |
+
+**Line Items (`RfqEnquiryItem`)**: Stores each item, requested quantity, baseline price, buyer target counter-offer price, and special notes.
+
+---
+
 ## 5. Website Content & Marketing (CMS)
 
 ### 5.1 Dynamic Pages (`ContentPage`)

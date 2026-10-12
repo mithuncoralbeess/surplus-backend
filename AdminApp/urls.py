@@ -51,6 +51,9 @@ from .views import (
     page_views_analytics_view,
     whatsapp_enquiries_view,
     partnership_enquiries_view,
+    rfq_requests_view,
+    rfq_request_detail_view,
+    rfq_request_status_api,
 
     main_categories_view,
     all_products_view,
@@ -169,6 +172,13 @@ urlpatterns = [
 
     path("enquiries/whatsapp/", whatsapp_enquiries_view, name="whatsapp_enquiries"),
     path("enquiries/partnership/", partnership_enquiries_view, name="partnership_enquiries"),
+
+    # Buyer RFQ Requests / Quotations (Frontend Cart & RFQ Basket)
+    path("rfq-requests/", rfq_requests_view, name="rfq_requests_list"),
+    path("rfq-requests/<int:rfq_id>/detail/", rfq_request_detail_view, name="rfq_request_detail"),
+    path("rfq-requests/<str:status_filter>/", rfq_requests_view, name="rfq_requests_filtered"),
+    path("api/rfq-requests/<int:rfq_id>/status/", rfq_request_status_api, name="rfq_request_status_api"),
+    path("enquiries/rfq/", rfq_requests_view, name="enquiries_rfq_alias"),
 
     # Category Management
     path("categories/main/", main_categories_view, name="main_categories"),

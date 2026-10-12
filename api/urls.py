@@ -15,6 +15,7 @@ from .views import (
     submit_lot_enquiry,
     submit_partnership_enquiry,
     submit_contact_us_enquiry,
+    submit_rfq_enquiry,
     send_registration_otp,
     verify_registration_otp,
     complete_profile,
@@ -75,6 +76,11 @@ urlpatterns = [
     path("enquiries/partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_alias"),
     path("partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_legacy"),
     path("contact-us/", submit_contact_us_enquiry, name="public_contact_us_enquiry_submit_alt"),
+
+    # Public RFQ / Quotation Requests (Frontend Cart & RFQ Basket)
+    path("enquiries/rfq/", submit_rfq_enquiry, name="public_rfq_enquiry_submit"),
+    path("enquiries/rfqs/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alias"),
+    path("rfq-requests/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alt"),
 
 
 

@@ -1356,7 +1356,7 @@ def lot_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Lot.objects.all().select_related("vendor").order_by("-created_at")
+    qs = Lot.objects.all().select_related("vendor", "admin").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1747,8 +1747,8 @@ def seller_enquiry_detail_view(request, enquiry_id):
             "is_assisted": False,
             "assisted_by": None,
             "intake_channel": "",
-            "name": admin_obj.username,
-            "full_name": admin_obj.username,
+            "name": admin_obj.full_name or admin_obj.username,
+            "full_name": admin_obj.full_name or admin_obj.username,
             "email": admin_obj.email,
             "company": "N/A",
             "phone_no": "N/A",
@@ -3238,8 +3238,8 @@ def contact_enquiries_view(request):
             "email": item.email,
             "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
             "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
-            "type": item.enquiry_type or "General Inquiry",
-            "enquiry_type": item.enquiry_type or "General Inquiry",
+            "type": item.enquiry_type or "General Enquiry",
+            "enquiry_type": item.enquiry_type or "General Enquiry",
             "message": item.message,
             "status": item.status,
             "is_blocked": item.is_blocked,
@@ -3932,7 +3932,8 @@ def add_product_view(request):
         raw_data_info = {
             "intake_channel": intake_channel,
             "intake_admin_id": admin_uid,
-            "intake_admin_name": admin_user.username,
+            "intake_admin_name": admin_user.full_name or admin_user.username,
+            "intake_admin_email": admin_user.email,
             "seller_name": seller_name,
             "seller_phone": clean_mobile,
         }
@@ -4327,6 +4328,9 @@ def add_lot_view(request):
             "admin_id": admin_uid,
             "admin_username": admin_user.username,
             "intake_channel": intake_channel,
+            "intake_admin_id": admin_uid,
+            "intake_admin_name": admin_user.full_name or admin_user.username,
+            "intake_admin_email": admin_user.email,
             "intake_notes": intake_notes,
             "seller_name": seller_name or (vendor.full_name if vendor else ""),
             "seller_phone": seller_phone or (vendor.mobile_number if vendor else ""),
@@ -4776,7 +4780,7 @@ def product_detail_view(request, product_id):
             "raw_user_id": vendor.id,
             "is_admin": False,
             "is_assisted": bool(admin_obj),
-            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.username})" if admin_obj else None,
+            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.full_name or admin_obj.username})" if admin_obj else None,
             "intake_channel": intake_channel,
             "name": full_name_val,
             "full_name": full_name_val,
@@ -4797,8 +4801,8 @@ def product_detail_view(request, product_id):
             "is_assisted": False,
             "assisted_by": None,
             "intake_channel": "",
-            "name": admin_obj.username,
-            "full_name": admin_obj.username,
+            "name": admin_obj.full_name or admin_obj.username,
+            "full_name": admin_obj.full_name or admin_obj.username,
             "email": admin_obj.email,
             "company": "N/A",
             "phone_no": "N/A",
@@ -5631,6 +5635,218 @@ def search_products_api(request):
         })
 
     return Response({"success": True, "results": results})
+
+
+def rfq_requests_view(request, status_filter=None):
+    """
+    Renders the Buyer RFQ Requests / Quotation Enquiries dashboard in the Admin Portal.
+    Lists consolidated RFQ basket submissions from frontend buyers with status, line item count,
+    target pricing, destination, and quick actions.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import RfqEnquiry
+    from django.db.models import Q, Sum
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+    current_status = (status_filter or request.GET.get("status", "all")).upper()
+    search = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    date_filter = request.GET.get("date_filter", "all")
+    page_num = request.GET.get("page", 1)
+
+    qs = RfqEnquiry.objects.prefetch_related("items").select_related("buyer").order_by("-created_at")
+
+    if date_filter == "today":
+        qs = qs.filter(created_at__date=timezone.now().date())
+    elif date_filter == "7days":
+        qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7))
+    elif date_filter == "30days":
+        qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
+
+    total_count = RfqEnquiry.objects.count()
+    pending_count = RfqEnquiry.objects.filter(status="PENDING").count()
+    quoted_count = RfqEnquiry.objects.filter(status="QUOTED").count()
+    accepted_count = RfqEnquiry.objects.filter(status="ACCEPTED").count()
+    declined_count = RfqEnquiry.objects.filter(status="DECLINED").count()
+    pipeline_val = RfqEnquiry.objects.aggregate(total_val=Sum("estimated_value"))["total_val"] or Decimal("0.00")
+
+    if current_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+        qs = qs.filter(status=current_status)
+
+    if search:
+        qs = qs.filter(
+            Q(reference__icontains=search) |
+            Q(company_name__icontains=search) |
+            Q(contact_person__icontains=search) |
+            Q(email__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(destination_port__icontains=search)
+        )
+
+    paginator = Paginator(qs, 25)
+    try:
+        page_obj = paginator.page(page_num)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com",
+        "enquiries": page_obj,
+        "page_obj": page_obj,
+        "current_status": current_status.lower(),
+        "search": search,
+        "date_filter": date_filter,
+        "counts": {
+            "total": total_count,
+            "pending": pending_count,
+            "quoted": quoted_count,
+            "accepted": accepted_count,
+            "declined": declined_count,
+            "pipeline_value": pipeline_val,
+        }
+    }
+    return render(request, "rfq_requests.html", context)
+
+
+def rfq_request_detail_view(request, rfq_id):
+    """
+    Detailed RFQ Enquiry inspection page in the Admin Portal.
+    Displays buyer profile, logistics specifications, line items with target vs baseline prices,
+    and a commercial quotation response tool to issue proforma quotes and update status.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import RfqEnquiry
+    from .services import create_vendor_notification
+    from decimal import Decimal, InvalidOperation
+
+    rfq = RfqEnquiry.objects.prefetch_related("items__product", "items__lot").select_related("buyer").filter(
+        Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))
+    ).first()
+
+    if not rfq:
+        messages.error(request, f"RFQ request #{rfq_id} was not found.")
+        return redirect("rfq_requests_list")
+
+    if request.method == "POST":
+        new_status = request.POST.get("status", "").strip().upper()
+        admin_notes = request.POST.get("admin_notes", "").strip()
+        proforma_raw = request.POST.get("proforma_amount", "").strip()
+
+        if new_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+            rfq.status = new_status
+
+        rfq.admin_notes = admin_notes
+
+        if proforma_raw:
+            try:
+                rfq.proforma_amount = Decimal(proforma_raw)
+                rfq.proforma_issued_at = timezone.now()
+            except (InvalidOperation, ValueError):
+                pass
+
+        rfq.save()
+        messages.success(request, f"RFQ '{rfq.reference}' has been updated to status {rfq.status}.")
+
+        if rfq.buyer:
+            try:
+                create_vendor_notification(
+                    vendor=rfq.buyer,
+                    title=f"Update on RFQ {rfq.reference}",
+                    message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
+                    notification_type="RFQ",
+                    action_url="/profile"
+                )
+            except Exception as e:
+                print(f"[rfq_request_detail_view] Vendor notification error: {e}")
+
+        return redirect("rfq_request_detail", rfq_id=rfq.id)
+
+    items = rfq.items.all()
+    total_target_val = Decimal("0.00")
+    for item in items:
+        if item.target_price:
+            total_target_val += (item.target_price * item.quantity)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com",
+        "rfq": rfq,
+        "items": items,
+        "items_count": items.count(),
+        "total_target_val": total_target_val,
+    }
+    return render(request, "rfq_request_detail.html", context)
+
+
+@api_view(["POST", "PUT", "DELETE"])
+@permission_classes([AllowAny])
+def rfq_request_status_api(request, rfq_id):
+    """
+    AJAX endpoint to quickly update RFQ status, issue proforma quote amount, or delete.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user and getattr(request, "user", None) and request.user.is_authenticated:
+        admin_user = request.user
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import RfqEnquiry
+    from .services import create_vendor_notification
+    from decimal import Decimal, InvalidOperation
+
+    rfq = RfqEnquiry.objects.filter(Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))).first()
+    if not rfq:
+        return Response({"success": False, "message": "RFQ not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        ref = rfq.reference
+        rfq.delete()
+        return Response({"success": True, "message": f"RFQ '{ref}' deleted successfully."})
+
+    new_status = (request.data.get("status") or "").strip().upper()
+    if new_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+        rfq.status = new_status
+
+    if "admin_notes" in request.data:
+        rfq.admin_notes = str(request.data.get("admin_notes") or "").strip()
+
+    if "proforma_amount" in request.data:
+        p_raw = request.data.get("proforma_amount")
+        if p_raw:
+            try:
+                rfq.proforma_amount = Decimal(str(p_raw))
+                rfq.proforma_issued_at = timezone.now()
+            except (InvalidOperation, ValueError):
+                pass
+
+    rfq.save()
+
+    if rfq.buyer:
+        try:
+            create_vendor_notification(
+                vendor=rfq.buyer,
+                title=f"Update on RFQ {rfq.reference}",
+                message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
+                notification_type="RFQ",
+                action_url="/profile"
+            )
+        except Exception:
+            pass
+
+    return Response({
+        "success": True,
+        "message": f"RFQ '{rfq.reference}' updated successfully.",
+        "status": rfq.status,
+        "proforma_amount": float(rfq.proforma_amount) if rfq.proforma_amount else None
+    })
 
 
 

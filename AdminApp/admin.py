@@ -110,3 +110,28 @@ class AdminNotificationAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} notification(s) marked as read.")
 
 
+from .models import RfqEnquiry, RfqEnquiryItem
+
+class RfqEnquiryItemInline(admin.TabularInline):
+    model = RfqEnquiryItem
+    extra = 0
+    readonly_fields = ("created_at",)
+
+@admin.register(RfqEnquiry)
+class RfqEnquiryAdmin(admin.ModelAdmin):
+    list_display = ("reference", "company_name", "contact_person", "email", "total_units", "estimated_value", "currency", "status", "created_at")
+    list_filter = ("status", "incoterm", "payment_method", "currency", "created_at")
+    search_fields = ("reference", "company_name", "contact_person", "email", "destination_port")
+    readonly_fields = ("created_at", "updated_at")
+    inlines = [RfqEnquiryItemInline]
+
+
+@admin.register(RfqEnquiryItem)
+class RfqEnquiryItemAdmin(admin.ModelAdmin):
+    list_display = ("id", "rfq", "title", "sku", "category", "quantity", "unit_price", "target_price", "created_at")
+    list_filter = ("item_type", "created_at")
+    search_fields = ("title", "sku", "rfq__reference", "rfq__company_name")
+    readonly_fields = ("created_at",)
+
+
+

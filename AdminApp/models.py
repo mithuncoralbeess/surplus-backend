@@ -538,7 +538,7 @@ class SellerProductEnquiry(models.Model):
                             notif_title = "Listing Approved"
                             notif_msg = (
                                 f"Your product '{prod_title}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer inquiries and quote requests."
+                                f"Ensure your profile remains complete to receive buyer enquiries and quote requests."
                             )
                             create_vendor_notification(
                                 vendor=target_vendor,
@@ -903,7 +903,7 @@ class Lot(models.Model):
                             notif_title = "Lot Listing Approved"
                             notif_msg = (
                                 f"Your lot '{lot_name}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer bids and inquiries."
+                                f"Ensure your profile remains complete to receive buyer bids and enquiries."
                             )
                             create_vendor_notification(
                                 vendor=target_vendor,
@@ -1225,7 +1225,7 @@ class Product(models.Model):
                             notif_title = "Listing Approved"
                             notif_msg = (
                                 f"Your product '{self.product_name}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer inquiries and quote requests."
+                                f"Ensure your profile remains complete to receive buyer enquiries and quote requests."
                             )
                             create_vendor_notification(
                                 vendor=target_vendor,
@@ -2034,3 +2034,128 @@ class ProductEmbedding(models.Model):
 
     def __str__(self):
         return f"Embedding for Product #{self.product_id}"
+
+
+class RfqEnquiry(models.Model):
+    """
+    Consolidated Buyer RFQ / Quotation Request submitted from the Cart / RFQ basket.
+    """
+    STATUS_CHOICES = (
+        ("PENDING", "Pending Review"),
+        ("QUOTED", "Quoted / Proforma Issued"),
+        ("ACCEPTED", "Accepted by Buyer"),
+        ("DECLINED", "Declined"),
+        ("CLOSED", "Closed"),
+    )
+    INCOTERM_CHOICES = (
+        ("EXW", "EXW - Ex Works"),
+        ("FOB", "FOB - Free on Board"),
+        ("CIF", "CIF - Cost, Insurance & Freight"),
+        ("DDP", "DDP - Delivered Duty Paid"),
+    )
+    PAYMENT_CHOICES = (
+        ("Escrow", "Surplus Escrow Protected"),
+        ("WireTransfer", "Bank Wire Transfer (T/T)"),
+        ("LC", "Letter of Credit (L/C)"),
+    )
+
+    reference = models.CharField(
+        max_length=50,
+        unique=True,
+        db_index=True,
+        help_text="Unique RFQ reference code (e.g. RFQ-2026-123456)"
+    )
+    buyer = models.ForeignKey(
+        'VendorDetails',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfq_enquiries",
+        help_text="Linked buyer account if authenticated or resolved from email"
+    )
+    contact_person = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255)
+    email = models.EmailField(db_index=True)
+    phone = models.CharField(max_length=50, blank=True, default="")
+    country = models.CharField(max_length=100, blank=True, default="")
+    destination_port = models.CharField(max_length=255, blank=True, default="")
+    incoterm = models.CharField(max_length=20, default="EXW")
+    payment_method = models.CharField(max_length=50, default="Escrow")
+    additional_notes = models.TextField(blank=True, default="")
+
+    total_units = models.PositiveIntegerField(default=0)
+    estimated_value = models.DecimalField(max_digits=14, decimal_places=2, default=0.00)
+    currency = models.CharField(max_length=10, default="USD")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING", db_index=True)
+    admin_notes = models.TextField(blank=True, default="")
+    proforma_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    proforma_issued_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Buyer RFQ Enquiry"
+        verbose_name_plural = "Buyer RFQ Enquiries"
+        db_table = "rfq_enquiries"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status", "-created_at"], name="idx_rfq_status_created"),
+            models.Index(fields=["email", "-created_at"], name="idx_rfq_email_created"),
+        ]
+
+    def __str__(self):
+        return f"{self.reference} - {self.company_name} ({self.status})"
+
+
+class RfqEnquiryItem(models.Model):
+    """
+    Individual item line in an RFQ Enquiry submission (linked to Product or Lot).
+    """
+    rfq = models.ForeignKey(
+        RfqEnquiry,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfq_items"
+    )
+    lot = models.ForeignKey(
+        'Lot',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfq_items"
+    )
+    item_type = models.CharField(max_length=20, default="product")
+    title = models.CharField(max_length=255)
+    sku = models.CharField(max_length=100, blank=True, default="")
+    category = models.CharField(max_length=150, blank=True, default="")
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    target_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "RFQ Enquiry Item"
+        verbose_name_plural = "RFQ Enquiry Items"
+        db_table = "rfq_enquiry_items"
+
+    def __str__(self):
+        return f"{self.title} x {self.quantity} ({self.rfq.reference})"
+
+    @property
+    def total_estimated_value(self):
+        return self.unit_price * self.quantity
+
+    @property
+    def total_target_value(self):
+        if self.target_price:
+            return self.target_price * self.quantity
+        return None
