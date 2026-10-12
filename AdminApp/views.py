@@ -3063,19 +3063,28 @@ def admin_notifications_page(request):
         return redirect("admin_login_page")
 
     is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
-    notif_qs = _get_admin_notifications_qs(admin_user)
+    base_qs = _get_admin_notifications_qs(admin_user)
+    total_count = base_qs.count()
+    unread_count = base_qs.filter(is_read=False).count()
+    listing_count = base_qs.filter(Q(notification_type="LISTING") | Q(title__icontains="Lot")).count()
+    rfq_count = base_qs.filter(Q(notification_type="RFQ") | Q(title__icontains="RFQ")).count()
+    enquiry_count = base_qs.filter(Q(notification_type="ENQUIRY") | Q(title__icontains="Product")).count()
 
     filter_type = request.GET.get("filter", "all").lower()
     search_q = request.GET.get("q", "").strip()
 
+    notif_qs = base_qs
     if search_q:
         notif_qs = notif_qs.filter(Q(title__icontains=search_q) | Q(message__icontains=search_q))
 
-    total_count = notif_qs.count()
-    unread_count = notif_qs.filter(is_read=False).count()
-
     if filter_type == "unread":
         notif_qs = notif_qs.filter(is_read=False)
+    elif filter_type == "listing":
+        notif_qs = notif_qs.filter(Q(notification_type="LISTING") | Q(title__icontains="Lot"))
+    elif filter_type == "rfq":
+        notif_qs = notif_qs.filter(Q(notification_type="RFQ") | Q(title__icontains="RFQ"))
+    elif filter_type == "enquiry":
+        notif_qs = notif_qs.filter(Q(notification_type="ENQUIRY") | Q(title__icontains="Product"))
 
     context = {
         "admin": admin_user,
@@ -3085,6 +3094,9 @@ def admin_notifications_page(request):
         "search_q": search_q,
         "total_count": total_count,
         "unread_count": unread_count,
+        "listing_count": listing_count,
+        "rfq_count": rfq_count,
+        "enquiry_count": enquiry_count,
     }
     return render(request, "notifications.html", context)
 
