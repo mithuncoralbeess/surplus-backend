@@ -691,6 +691,7 @@ class LotBatchEnquirySerializer(LotSerializer):
 class AdminNotificationSerializer(serializers.ModelSerializer):
     created_at_formatted = serializers.SerializerMethodField()
     admin_name = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
 
     class Meta:
         from .models import AdminNotification
@@ -707,6 +708,7 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
             "is_read",
             "created_at",
             "created_at_formatted",
+            "time_ago",
         ]
 
     def get_created_at_formatted(self, obj):
@@ -718,6 +720,22 @@ class AdminNotificationSerializer(serializers.ModelSerializer):
         if obj.admin:
             return obj.admin.full_name or obj.admin.username
         return "All SuperAdmins" if obj.for_superadmins_only else "All Staff"
+
+    def get_time_ago(self, obj):
+        if not obj.created_at:
+            return ""
+        from django.utils import timezone
+        diff = timezone.now() - obj.created_at
+        secs = diff.total_seconds()
+        if secs < 45:
+            return "Just now"
+        if secs < 3600:
+            mins = int(secs // 60)
+            return f"{mins}m ago"
+        if secs < 86400:
+            hrs = int(secs // 3600)
+            return f"{hrs}h ago"
+        return f"{int(secs // 86400)}d ago"
 
 
 

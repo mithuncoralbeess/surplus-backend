@@ -3092,7 +3092,7 @@ def admin_notifications_page(request):
 @api_view(["GET"])
 def admin_notifications_api(request):
     """
-    Returns unread count and latest notifications list for the top navbar bell dropdown.
+    Returns unread count, total count, and latest notifications list for the top navbar bell dropdown.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -3100,12 +3100,19 @@ def admin_notifications_api(request):
 
     notif_qs = _get_admin_notifications_qs(admin_user)
     unread_count = notif_qs.filter(is_read=False).count()
-    recent_notifs = notif_qs[:10]
+    total_count = notif_qs.count()
+
+    filter_mode = request.GET.get("filter", "all").lower()
+    if filter_mode == "unread":
+        recent_notifs = notif_qs.filter(is_read=False)[:25]
+    else:
+        recent_notifs = notif_qs[:25]
 
     from .serializers import AdminNotificationSerializer
     return Response({
         "success": True,
         "unread_count": unread_count,
+        "total_count": total_count,
         "notifications": AdminNotificationSerializer(recent_notifs, many=True).data,
     }, status=status.HTTP_200_OK)
 
@@ -3113,7 +3120,7 @@ def admin_notifications_api(request):
 @api_view(["POST"])
 def admin_mark_notification_read_api(request, notification_id):
     """
-    Marks a single notification as read.
+    Marks a single notification as read or toggles read state.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -3123,10 +3130,13 @@ def admin_mark_notification_read_api(request, notification_id):
     notif_qs = _get_admin_notifications_qs(admin_user)
     try:
         notif = notif_qs.get(id=notification_id)
-        notif.is_read = True
+        if request.data and "is_read" in request.data:
+            notif.is_read = bool(request.data.get("is_read"))
+        else:
+            notif.is_read = True
         notif.save(update_fields=["is_read"])
         unread_count = notif_qs.filter(is_read=False).count()
-        return Response({"success": True, "unread_count": unread_count}, status=status.HTTP_200_OK)
+        return Response({"success": True, "is_read": notif.is_read, "unread_count": unread_count}, status=status.HTTP_200_OK)
     except AdminNotification.DoesNotExist:
         return Response({"success": False, "message": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
 
