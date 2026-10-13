@@ -50,6 +50,9 @@ urlpatterns = [
     path("products/collections/", get_homepage_collections, name="public_homepage_collections"),
     path("products/semantic-search/", semantic_search_products, name="public_products_semantic_search"),
     path("products/search/semantic/", semantic_search_products, name="public_products_semantic_search_alias"),
+    path("lots/semantic-search/", semantic_search_products, name="public_lots_semantic_search"),
+    path("search/semantic/", semantic_search_products, name="public_search_semantic"),
+    path("search/", semantic_search_products, name="public_search_direct"),
 
     # Public Category & Subcategory REST API
     path("categories/", get_public_categories, name="public_categories_list"),

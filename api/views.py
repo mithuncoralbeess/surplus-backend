@@ -2539,12 +2539,14 @@ def semantic_search_products(request):
             limit = int(request.data.get("limit", 12))
         except (ValueError, TypeError):
             limit = 12
+        entity_type = (request.data.get("type") or request.data.get("entity_type") or "all").strip().lower()
     else:
         query = (request.query_params.get("query") or request.query_params.get("q") or "").strip()
         try:
             limit = int(request.query_params.get("limit", 12))
         except (ValueError, TypeError):
             limit = 12
+        entity_type = (request.query_params.get("type") or request.query_params.get("entity_type") or "all").strip().lower()
 
     if not query:
         return Response({
@@ -2558,7 +2560,7 @@ def semantic_search_products(request):
 
     from AdminApp.semantic_search import semantic_product_search
     try:
-        search_result = semantic_product_search(query_text=query, limit=limit)
+        search_result = semantic_product_search(query_text=query, limit=limit, entity_type=entity_type)
         return Response(search_result, status=status.HTTP_200_OK)
     except Exception as e:
         logger.exception(f"Semantic search error: {e}")

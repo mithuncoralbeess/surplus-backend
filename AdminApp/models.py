@@ -978,6 +978,13 @@ class Lot(models.Model):
                     except Exception:
                         pass
 
+        if self.is_active and str(self.enquiry_status).lower() == "approved":
+            try:
+                from .semantic_search import sync_lot_embedding
+                sync_lot_embedding(self)
+            except Exception:
+                pass
+
     @property
     def batch_id(self):
         return self.lot_number
@@ -2060,6 +2067,42 @@ class ProductEmbedding(models.Model):
 
     def __str__(self):
         return f"Embedding for Product #{self.product_id}"
+
+
+class LotEmbedding(models.Model):
+    """
+    Vector embeddings for Semantic Natural Language Search for Lots using pgvector in Neon DB.
+    Enables conversational & hybrid searching across wholesale surplus lots and manifests.
+    """
+    lot = models.OneToOneField(
+        'Lot',
+        on_delete=models.CASCADE,
+        related_name="vector_embedding",
+        db_index=True
+    )
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    embedded_text = models.TextField(blank=True, default="")
+    model_name = models.CharField(max_length=100, default="surplus-semantic-v1")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Lot Vector Embedding"
+        verbose_name_plural = "Lot Vector Embeddings"
+        db_table = "lot_embeddings"
+        indexes = [
+            HnswIndex(
+                name="idx_lot_embed_hnsw",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            )
+        ]
+
+    def __str__(self):
+        return f"Embedding for Lot #{self.lot_id}"
 
 
 class RfqEnquiry(models.Model):
