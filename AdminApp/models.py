@@ -1033,7 +1033,10 @@ class LotProduct(models.Model):
         ]
 
     def save(self, *args, **kwargs):
-        if not self.product_id:
+        # Lot products inside a lot batch must NEVER have IDs starting with 'PRO-'.
+        # 'PRO-' is strictly reserved for standalone marketplace Product listings.
+        # Lot products use 'BLK-XXXXX' batch line-item identifiers.
+        if not self.product_id or str(self.product_id).upper().startswith("PRO-"):
             max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.product_id = f"BLK-{(max_id + 1):05d}"
         super().save(*args, **kwargs)

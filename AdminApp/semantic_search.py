@@ -759,10 +759,6 @@ def semantic_product_search(
 
             exact_phrase_in_name = (len(query_phrase) > 2 and query_phrase in p_name)
             exact_phrase_in_subcat = (len(query_phrase) > 2 and query_phrase in p_subcat_name.lower())
-            
-            clean_q_alnum = re.sub(r'[^a-zA-Z0-9]', '', query_text).lower()
-            p_num_clean = re.sub(r'[^a-zA-Z0-9]', '', prod.product_id or '').lower()
-            exact_match_prod_num = bool(clean_q_alnum and clean_q_alnum == p_num_clean)
 
             # Domain Concept Evaluation (e.g. 'spare parts' matches valves, pumps, motors, auto parts)
             prod_concept_matched = False
@@ -783,11 +779,8 @@ def semantic_product_search(
 
             reasons = []
 
-            # Lexical & Concept Scoring
-            if exact_match_prod_num:
-                lexical_score = 99.0
-                reasons.append(f"Exact match for Product ID '{prod.product_id}'")
-            elif exact_phrase_in_name:
+            # Lexical & Concept Scoring (titles, categories, brands, specs, concepts)
+            if exact_phrase_in_name:
                 lexical_score = 98.0
                 reasons.append(f"Direct match for '{query_phrase}' in product title")
             elif exact_phrase_in_subcat:
@@ -878,7 +871,6 @@ def semantic_product_search(
                 "reasons": reasons,
                 "all_coverage": all_coverage,
                 "concept_match": prod_concept_matched,
-                "exact_id_match": exact_match_prod_num,
             })
 
     # ----------------------------------------------------
@@ -969,9 +961,6 @@ def semantic_product_search(
             all_coverage = len(all_matched_tokens) / num_tokens
 
             exact_phrase_in_title = (len(query_phrase) > 2 and query_phrase in l_title)
-            clean_q_alnum = re.sub(r'[^a-zA-Z0-9]', '', query_text).lower()
-            l_num_clean = re.sub(r'[^a-zA-Z0-9]', '', lot.lot_number or '').lower()
-            exact_match_lot_num = bool(clean_q_alnum and clean_q_alnum == l_num_clean) or (query_phrase == l_num or any(tok == l_num for tok in raw_tokens))
 
             # Domain Concept Evaluation for Lots
             lot_concept_matched = False
@@ -993,10 +982,7 @@ def semantic_product_search(
             user_wants_lots = bool(parsed.get("is_bulk")) or any(w in raw_tokens for w in ("lot", "lots", "wholesale", "bulk", "manifest", "pallet"))
 
             reasons = []
-            if exact_match_lot_num:
-                lexical_score = 99.0
-                reasons.append(f"Exact match for Lot ID '{lot.lot_number}'")
-            elif exact_phrase_in_title:
+            if exact_phrase_in_title:
                 lexical_score = 98.0
                 reasons.append(f"Direct match for '{query_phrase}' in lot title")
             elif title_coverage == 1.0:
@@ -1053,11 +1039,21 @@ def semantic_product_search(
             if not reasons:
                 reasons.append("Ranked by contextual vector similarity")
 
+            # Manifest product preview (IDs strictly use 'BLK-XXXXX', never 'PRO-')
+            manifest_items = []
+            for lp in lot.products.all()[:15]:
+                manifest_items.append({
+                    "item_id": lp.product_id,
+                    "product_name": lp.product_name,
+                    "quantity": lp.quantity,
+                    "condition": lp.condition,
+                })
+
             scored_candidates.append({
                 "item_type": "lot",
                 "is_lot": True,
                 "id": lot.id,
-                "product_id": lot.lot_number,
+                "product_id": "",
                 "sku": lot.lot_number,
                 "lot_number": lot.lot_number,
                 "product_name": lot.title,
@@ -1078,8 +1074,8 @@ def semantic_product_search(
                 "reasons": reasons,
                 "all_coverage": all_coverage,
                 "concept_match": lot_concept_matched,
-                "exact_id_match": exact_match_lot_num,
                 "bulk_priority": user_wants_lots,
+                "manifest_items": manifest_items,
             })
 
     # Sort descending by final score (and prioritize lots when user requested bulk)
@@ -1093,27 +1089,24 @@ def semantic_product_search(
     min_threshold = threshold if threshold is not None else 50.0
 
     filtered_records = []
-    if top_score >= 95.0 and any(it.get("exact_id_match") for it in scored_candidates):
-        filtered_records = [it for it in scored_candidates if it.get("exact_id_match")]
-    else:
-        for it in scored_candidates:
-            score = it["final_score"]
-            is_concept = it.get("concept_match", False)
-            if top_score >= 70.0:
-                # Strong matches exist: keep items with >= 50% keyword coverage or concept match or score >= 75
-                if is_concept or (it["all_coverage"] >= 0.5 and score >= 60.0) or score >= 75.0:
-                    filtered_records.append(it)
-            elif top_score >= min_threshold:
-                # Moderate matches
-                if score >= min_threshold and (is_concept or it["all_coverage"] >= 0.5 or it["dist"] < 0.70):
-                    filtered_records.append(it)
-            # If top_score < min_threshold: nothing matches well, return empty!
+    for it in scored_candidates:
+        score = it["final_score"]
+        is_concept = it.get("concept_match", False)
+        if top_score >= 70.0:
+            # Strong matches exist: keep items with >= 50% keyword coverage or concept match or score >= 75
+            if is_concept or (it["all_coverage"] >= 0.5 and score >= 60.0) or score >= 75.0:
+                filtered_records.append(it)
+        elif top_score >= min_threshold:
+            # Moderate matches
+            if score >= min_threshold and (is_concept or it["all_coverage"] >= 0.5 or it["dist"] < 0.70):
+                filtered_records.append(it)
+        # If top_score < min_threshold: nothing matches well, return empty!
 
     filtered_records = filtered_records[:limit]
 
     formatted_results = []
     for it in filtered_records:
-        formatted_results.append({
+        rec = {
             "id": it["id"],
             "product_id": it["product_id"],
             "sku": it["sku"],
@@ -1135,7 +1128,13 @@ def semantic_product_search(
             "has_warranty": it["has_warranty"],
             "similarity_score": it["final_score"],
             "match_reasons": it["reasons"],
-        })
+        }
+        if it.get("is_lot"):
+            rec["manifest_items"] = it.get("manifest_items", [])
+        formatted_results.append(rec)
+
+    products_only = [it for it in formatted_results if not it.get("is_lot")]
+    lots_only = [it for it in formatted_results if it.get("is_lot")]
 
     return {
         "success": True,
@@ -1143,5 +1142,9 @@ def semantic_product_search(
         "parsed_intent": parsed,
         "is_relaxed": is_relaxed,
         "total_results": len(formatted_results),
-        "results": formatted_results
+        "total_products": len(products_only),
+        "total_lots": len(lots_only),
+        "results": formatted_results,
+        "products": products_only,
+        "lots": lots_only,
     }
