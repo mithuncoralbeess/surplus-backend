@@ -443,9 +443,9 @@
 
                 <div class="rounded-3 overflow-hidden bg-light p-3 border mb-3 d-flex align-items-center justify-content-center" style="min-height: 280px; background-color: #f8fafc !important;">
                     {% if product.images.first %}
-                    <img id="main-showcase-image" src="{{ product.images.first.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;">
+                    <img id="main-showcase-image" src="{{ product.images.first.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                     {% elif product.image %}
-                    <img id="main-showcase-image" src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;">
+                    <img id="main-showcase-image" src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                     {% else %}
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 3rem;"></i>
@@ -462,6 +462,7 @@
                     <div class="position-relative d-inline-block">
                         <img src="{{ img_obj.url }}" 
                              onclick="document.getElementById('main-showcase-image').src = this.src"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200&q=80';"
                              class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75 {% if img_obj.is_real_photo %}border-success{% endif %}" 
                              style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
                              alt="Gallery Thumbnail"

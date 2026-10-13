@@ -1347,7 +1347,7 @@ class Product(models.Model):
     @property
     def image(self):
         first_img = self.images.first()
-        return first_img.image if first_img else None
+        return first_img if first_img else None
 
     @property
     def raw_data(self):
@@ -1461,9 +1461,18 @@ class ProductImage(models.Model):
         return f"{photo_type} for {self.product.product_name}"
 
     @property
+    def name(self):
+        if self.image and hasattr(self.image, "name"):
+            return self.image.name
+        return str(self.image_url or "")
+
+    @property
     def url(self):
         if self.image_url:
-            return self.image_url
+            url_str = str(self.image_url).strip()
+            if url_str.startswith("http://") or url_str.startswith("https://") or url_str.startswith("/"):
+                return url_str
+            return f"/media/products/images/gallery/{url_str}"
         if self.image:
             try:
                 return self.image.url

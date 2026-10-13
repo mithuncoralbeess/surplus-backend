@@ -5638,7 +5638,7 @@ def search_products_api(request):
 
     results = []
     for p in qs[:25]:
-        img_url = p.images.first().image.url if p.images.exists() else ""
+        img_url = p.images.first().url if p.images.exists() else ""
         results.append({
             "id": p.id,
             "product_id": p.product_id,
