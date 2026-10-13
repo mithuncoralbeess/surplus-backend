@@ -85,7 +85,7 @@ DATABASE_URL = os.getenv("DATABASE_URL") or _NEON_DB_DEFAULT
 DATABASES = {
     "default": dj_database_url.config(
         default=DATABASE_URL,
-        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "0")),
+        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
         ssl_require=True,
     )
 }

@@ -648,6 +648,16 @@ def semantic_product_search(
     4. Dynamic Relevance Cutoff Thresholding so irrelevant items are not returned as noise.
     5. Entity filtering: entity_type="all" | "product" | "lot"
     """
+    from django.core.cache import cache
+    import hashlib
+
+    entity_norm = (entity_type or "all").strip().lower()
+    q_hash = hashlib.md5(query_text.lower().strip().encode("utf-8")).hexdigest()
+    cache_key = f"surplus_search_v3_{q_hash}_{entity_norm}_{limit}_{threshold}"
+    cached_payload = cache.get(cache_key)
+    if cached_payload:
+        return cached_payload
+
     parsed = NaturalLanguageQueryParser.parse(query_text)
     search_keywords = (parsed.get("semantic_keywords") or query_text).strip()
 
@@ -665,9 +675,9 @@ def semantic_product_search(
     scored_candidates = []
     is_relaxed = False
 
-    entity_norm = (entity_type or "all").strip().lower()
     include_products = entity_norm in ("all", "product", "products", "")
     include_lots = entity_norm in ("all", "lot", "lots", "")
+    candidate_limit = min(40, max(20, limit * 2))
 
     # ----------------------------------------------------
     # 1. SEARCH PRODUCTS
@@ -682,7 +692,7 @@ def semantic_product_search(
             "product__category",
             "product__subcategory",
             "product__vendor"
-        ).prefetch_related("product__images")
+        ).prefetch_related("product__images").defer("embedding", "embedded_text")
 
         prod_annotated_qs = prod_base_qs.annotate(distance=CosineDistance("embedding", query_vector))
         prod_filtered_qs = prod_annotated_qs
@@ -701,11 +711,14 @@ def semantic_product_search(
                 Q(product__vendor__business_location__icontains=loc_term) |
                 Q(product__vendor__country__icontains=loc_term)
             )
-            if loc_qs.exists():
-                prod_filtered_qs = loc_qs
+            prod_candidates = list(loc_qs.order_by("distance")[:candidate_limit])
+            if prod_candidates:
                 prod_has_local_stock = True
             else:
                 is_relaxed = True
+                prod_candidates = list(prod_annotated_qs.order_by("distance")[:candidate_limit])
+        else:
+            prod_candidates = list(prod_filtered_qs.order_by("distance")[:candidate_limit])
 
         if parsed["has_warranty"] is True:
             prod_filtered_qs = prod_filtered_qs.filter(
@@ -714,11 +727,6 @@ def semantic_product_search(
             )
         if parsed["brand"]:
             prod_filtered_qs = prod_filtered_qs.filter(product__brand_name__icontains=parsed["brand"])
-
-        prod_candidates = list(prod_filtered_qs.order_by("distance")[:75])
-        if not prod_candidates:
-            prod_candidates = list(prod_annotated_qs.order_by("distance")[:75])
-            is_relaxed = True
 
         for rec in prod_candidates:
             prod = rec.product
@@ -875,8 +883,7 @@ def semantic_product_search(
 
     # ----------------------------------------------------
     # 2. SEARCH LOTS
-    # ----------------------------------------------------
-    if include_lots:
+    # ------------------------    if include_lots:
         lot_base_qs = LotEmbedding.objects.filter(
             lot__is_active=True,
             lot__enquiry_status__iexact="approved",
@@ -884,7 +891,7 @@ def semantic_product_search(
         ).select_related(
             "lot",
             "lot__vendor"
-        ).prefetch_related("lot__products")
+        ).prefetch_related("lot__products").defer("embedding", "embedded_text")
 
         lot_annotated_qs = lot_base_qs.annotate(distance=CosineDistance("embedding", query_vector))
         lot_filtered_qs = lot_annotated_qs
@@ -903,21 +910,19 @@ def semantic_product_search(
                 Q(lot__vendor__business_location__icontains=loc_term) |
                 Q(lot__vendor__country__icontains=loc_term)
             )
-            if loc_qs.exists():
-                lot_filtered_qs = loc_qs
+            lot_candidates = list(loc_qs.order_by("distance")[:candidate_limit])
+            if lot_candidates:
                 lot_has_local_stock = True
             else:
                 is_relaxed = True
+                lot_candidates = list(lot_annotated_qs.order_by("distance")[:candidate_limit])
+        else:
+            lot_candidates = list(lot_filtered_qs.order_by("distance")[:candidate_limit])
 
         if parsed["has_warranty"] is True:
             lot_filtered_qs = lot_filtered_qs.filter(lot__third_party_certificate_available=True)
         if parsed["brand"]:
             lot_filtered_qs = lot_filtered_qs.filter(lot__key_brands_included__icontains=parsed["brand"])
-
-        lot_candidates = list(lot_filtered_qs.order_by("distance")[:50])
-        if not lot_candidates:
-            lot_candidates = list(lot_annotated_qs.order_by("distance")[:50])
-            is_relaxed = True
 
         for rec in lot_candidates:
             lot = rec.lot
@@ -933,8 +938,9 @@ def semantic_product_search(
             l_cat_words, l_cat_stems = extract_word_set(l_cat_name)
             l_desc_words, l_desc_stems = extract_word_set(lot.description)
 
-            # Check manifest products
-            manifest_prods = list(lot.products.values_list("product_name", flat=True)[:40])
+            # Check manifest products from prefetched memory cache (zero N+1 queries)
+            lot_prods = list(lot.products.all())
+            manifest_prods = [str(p.product_name or '') for p in lot_prods[:40]]
             manifest_text = " ".join(manifest_prods).lower()
             manifest_words, manifest_stems = extract_word_set(manifest_text)
 
@@ -1040,14 +1046,15 @@ def semantic_product_search(
                 reasons.append("Ranked by contextual vector similarity")
 
             # Manifest product preview (IDs strictly use 'BLK-XXXXX', never 'PRO-')
-            manifest_items = []
-            for lp in lot.products.all()[:15]:
-                manifest_items.append({
+            manifest_items = [
+                {
                     "item_id": lp.product_id,
                     "product_name": lp.product_name,
                     "quantity": lp.quantity,
                     "condition": lp.condition,
-                })
+                }
+                for lp in lot_prods[:15]
+            ]
 
             scored_candidates.append({
                 "item_type": "lot",
@@ -1136,7 +1143,7 @@ def semantic_product_search(
     products_only = [it for it in formatted_results if not it.get("is_lot")]
     lots_only = [it for it in formatted_results if it.get("is_lot")]
 
-    return {
+    result_payload = {
         "success": True,
         "query": query_text,
         "parsed_intent": parsed,
@@ -1148,3 +1155,6 @@ def semantic_product_search(
         "products": products_only,
         "lots": lots_only,
     }
+
+    cache.set(cache_key, result_payload, timeout=60)
+    return result_payload
