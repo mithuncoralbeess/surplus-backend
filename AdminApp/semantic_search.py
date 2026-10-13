@@ -246,30 +246,36 @@ class SemanticEmbedder:
             "server": 0, "rackmount": 10, "cpu": 20, "xeon": 30, "ram": 40, "storage": 50,
             "pump": 100, "valve": 110, "motor": 120, "hydraulic": 130, "compressor": 140,
             "laptop": 200, "desktop": 210, "mobile": 220, "tablet": 230, "monitor": 240,
+            "camera": 250, "optical": 255, "lens": 260, "video": 265, "cinema": 270, "audio": 275,
             "industrial": 300, "machinery": 310, "generator": 320, "transformer": 330,
+            "solar": 350, "inverter": 360, "photovoltaic": 370,
+            "fitness": 380, "treadmill": 390,
             "electrical": 400, "circuit": 410, "breaker": 420, "cable": 430, "switch": 440,
+            "packaging": 450, "strapping": 460,
+            "vehicle": 470, "tyre": 480, "brake": 490, "forklift": 495,
             "warranty": 500, "certified": 510, "surplus": 520, "new": 530, "refurbished": 540,
-            "dell": 600, "hp": 610, "cisco": 620, "siemens": 630, "schneider": 640
+            "tool": 550, "drill": 560, "cleaner": 570, "valve": 580,
+            "dell": 600, "hp": 610, "cisco": 620, "siemens": 630, "schneider": 640, "sony": 650, "toyota": 660
         }
 
         for word in words:
             # Word hashing across primary partition
             h = int(hashlib.sha256(word.encode('utf-8')).hexdigest(), 16)
             idx = h % EMBEDDING_DIMENSION
-            weight = 1.8 if word not in STOP_WORDS else 0.4
+            weight = 2.5 if word not in STOP_WORDS else 0.2
             vec[idx] += weight
 
             # Check domain clusters
             for cluster_term, offset in cluster_offsets.items():
                 if cluster_term in word:
-                    vec[(offset + (h % 30)) % EMBEDDING_DIMENSION] += 2.5
+                    vec[(offset + (h % 30)) % EMBEDDING_DIMENSION] += 3.5
 
-            # Subword character 3-grams
+            # Subword character 3-grams (subtle smoothing for typos / variations)
             if len(word) >= 3:
                 for i in range(len(word) - 2):
                     trigram = word[i:i+3]
                     th = int(hashlib.md5(trigram.encode('utf-8')).hexdigest(), 16)
-                    vec[th % EMBEDDING_DIMENSION] += 0.35
+                    vec[th % EMBEDDING_DIMENSION] += 0.08
 
         norm = np.linalg.norm(vec)
         if norm > 0:
@@ -354,18 +360,52 @@ def sync_product_embedding(product: Product, force: bool = False) -> Tuple[Produ
     return emb_record, True
 
 
+def stem_token(t: str) -> str:
+    """
+    Lightweight rule-based stemmer for search token normalization (plurals and common suffixes).
+    """
+    t = t.lower().strip()
+    if len(t) > 3 and t.endswith('ies'):
+        return t[:-3] + 'y'
+    if len(t) > 3 and t.endswith('es') and not t.endswith('ses'):
+        return t[:-2]
+    if len(t) > 3 and t.endswith('s') and not t.endswith('ss'):
+        return t[:-1]
+    return t
+
+
+def extract_word_set(text: Optional[str]) -> Tuple[set, set]:
+    """
+    Extracts lowercase words and their stemmed forms with word-boundary preservation.
+    """
+    words = [w.lower() for w in re.findall(r'[a-zA-Z0-9]+', text or "") if len(w) > 0]
+    stemmed = [stem_token(w) for w in words]
+    return set(words), set(stemmed)
+
+
 def semantic_product_search(
     query_text: str,
     limit: int = 12,
     threshold: Optional[float] = None
 ) -> Dict[str, Any]:
     """
-    Executes a Conversational Semantic Search using pgvector in Neon DB.
-    Parses natural language queries (e.g. 'Show me 2U rackmount servers under $500 in Maharashtra'),
-    calculates cosine similarity over vector embeddings, and applies hybrid structured ranking.
+    Executes a Conversational Semantic & Hybrid Search using pgvector in Neon DB.
+    Combines:
+    1. Natural Language Intent & Constraint Extraction (price, location, warranty, brand)
+    2. High-precision Lexical Matching (exact phrase, multi-field title/brand/category token overlap)
+    3. Dense Vector Cosine Similarity via pgvector
+    4. Dynamic Relevance Cutoff Thresholding so irrelevant products are not returned as noise.
     """
     parsed = NaturalLanguageQueryParser.parse(query_text)
-    search_keywords = parsed.get("semantic_keywords") or query_text
+    search_keywords = (parsed.get("semantic_keywords") or query_text).strip()
+
+    # Extract clean query tokens (ignoring stop words)
+    raw_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]+', search_keywords) if len(t) > 1 and t not in STOP_WORDS]
+    if not raw_tokens:
+        raw_tokens = [t.lower() for t in re.findall(r'[a-zA-Z0-9]+', query_text) if len(t) > 1]
+    stemmed_tokens = [stem_token(t) for t in raw_tokens]
+    query_phrase = " ".join(raw_tokens).lower()
+    num_tokens = len(raw_tokens) if raw_tokens else 1
 
     # Generate query vector
     query_vector = SemanticEmbedder.get_embedding(search_keywords)
@@ -410,38 +450,145 @@ def semantic_product_search(
     if parsed["brand"]:
         filtered_qs = filtered_qs.filter(product__brand_name__icontains=parsed["brand"])
 
-    # Check if filtered results are sufficient
-    results_records = list(filtered_qs.order_by("distance")[:limit])
-
-    # If strict filtering yielded zero results, gracefully fall back to top vector matches
-    # so the buyer always gets the most semantically relevant inventory
+    # Fetch candidate pool (up to 100 top semantic candidates to re-rank with hybrid scoring)
     is_relaxed = False
-    if not results_records:
-        results_records = list(annotated_qs.order_by("distance")[:limit])
+    candidates = list(filtered_qs.order_by("distance")[:100])
+
+    if not candidates:
+        candidates = list(annotated_qs.order_by("distance")[:100])
         is_relaxed = True
 
-    formatted_results = []
-    for rec in results_records:
+    scored_candidates = []
+    for rec in candidates:
         prod = rec.product
         dist = float(rec.distance) if rec.distance is not None else 1.0
-        # Convert cosine distance to 0..100 similarity percentage
-        similarity_score = max(0.0, min(100.0, round((1.0 - (dist / 2.0)) * 100, 1)))
 
-        # Generate intelligent match reasons for the user
+        dot_product = max(0.0, 1.0 - dist)
+        vector_sim = dot_product * 100.0
+
+        p_name = (prod.product_name or "").lower()
+        p_name_words, p_name_stems = extract_word_set(prod.product_name)
+        p_brand_words, p_brand_stems = extract_word_set(prod.brand_name)
+        p_model_words, p_model_stems = extract_word_set(prod.model_no)
+        p_cat_words, p_cat_stems = extract_word_set(prod.category.name if prod.category else "")
+        p_subcat_name = (prod.subcategory.name or "") if prod.subcategory else ""
+        p_subcat_words, p_subcat_stems = extract_word_set(p_subcat_name)
+        p_desc_words, p_desc_stems = extract_word_set(prod.description)
+
+        # Word-boundary matching across catalog attributes
+        matched_tokens_name = set()
+        matched_tokens_brand_model = set()
+        matched_tokens_cat = set()
+        matched_tokens_desc = set()
+
+        for tok, stem in zip(raw_tokens, stemmed_tokens):
+            if tok in p_name_words or stem in p_name_stems:
+                matched_tokens_name.add(tok)
+            if tok in p_brand_words or stem in p_brand_stems or tok in p_model_words or stem in p_model_stems:
+                matched_tokens_brand_model.add(tok)
+            if tok in p_cat_words or stem in p_cat_stems or tok in p_subcat_words or stem in p_subcat_stems:
+                matched_tokens_cat.add(tok)
+            if tok in p_desc_words or stem in p_desc_stems:
+                matched_tokens_desc.add(tok)
+
+        all_matched_tokens = matched_tokens_name | matched_tokens_brand_model | matched_tokens_cat | matched_tokens_desc
+        name_coverage = len(matched_tokens_name) / num_tokens
+        all_coverage = len(all_matched_tokens) / num_tokens
+
+        exact_phrase_in_name = (len(query_phrase) > 2 and query_phrase in p_name)
+        exact_phrase_in_subcat = (len(query_phrase) > 2 and query_phrase in p_subcat_name.lower())
+
         reasons = []
-        if similarity_score >= 65:
-            reasons.append(f"Semantic match ({similarity_score}%) for '{search_keywords}'")
+
+        # Lexical Scoring
+        if exact_phrase_in_name:
+            lexical_score = 98.0
+            reasons.append(f"Direct match for '{query_phrase}' in product title")
+        elif exact_phrase_in_subcat:
+            lexical_score = 92.0
+            reasons.append(f"Matches category '{p_subcat_name}' for '{query_phrase}'")
+        elif name_coverage == 1.0:
+            lexical_score = 94.0
+            if matched_tokens_brand_model:
+                lexical_score = min(99.0, lexical_score + 4.0)
+            reasons.append(f"Product title matches all query keywords ({', '.join(raw_tokens)})")
+        elif all_coverage == 1.0:
+            lexical_score = 88.0
+            reasons.append(f"Catalog matches all terms ({', '.join(raw_tokens)}) across title, category & specs")
+        elif name_coverage >= 0.5:
+            lexical_score = 65.0 + (name_coverage * 20.0)
+            reasons.append(f"Title matches {len(matched_tokens_name)}/{num_tokens} keywords")
+        elif all_coverage >= 0.5:
+            lexical_score = 50.0 + (all_coverage * 20.0)
+            reasons.append(f"Catalog matches {len(all_matched_tokens)}/{num_tokens} terms")
+        else:
+            lexical_score = 0.0
+
+        # Natural language structured constraint reasons
         if parsed["max_price"] is not None and prod.liquidating_price and prod.liquidating_price <= parsed["max_price"]:
             reasons.append(f"Price ({prod.currency or 'USD'} {prod.liquidating_price}) is within budget (max {parsed['max_price']})")
+        if parsed["brand"] and prod.brand_name and parsed["brand"].lower() in prod.brand_name.lower():
+            reasons.append(f"Matches requested brand: {prod.brand_name}")
         if parsed["location"] and prod.inventory_location and parsed["location"].lower() in prod.inventory_location.lower():
             reasons.append(f"Located in requested region: {prod.inventory_location}")
         if parsed["has_warranty"] and (prod.warranty or prod.warranty_attachment):
             reasons.append("Includes verified warranty coverage")
-        if parsed["brand"] and prod.brand_name and parsed["brand"].lower() in prod.brand_name.lower():
-            reasons.append(f"Matches brand: {prod.brand_name}")
+
+        # Blend final hybrid score
+        if lexical_score >= 80.0:
+            final_score = min(99.0, max(lexical_score, lexical_score * 0.95 + vector_sim * 0.05))
+        elif lexical_score >= 40.0:
+            final_score = lexical_score * 0.75 + vector_sim * 0.25
+        else:
+            # Contextual vector similarity when no direct lexical keyword match
+            if dist < 0.75:
+                final_score = max(30.0, min(70.0, 30.0 + (0.75 - dist) * 150.0))
+                reasons.append(f"Contextual semantic similarity match ({round(final_score)}%)")
+            else:
+                final_score = 0.0
 
         if not reasons:
             reasons.append("Ranked by contextual vector similarity")
+
+        final_score = round(final_score, 1)
+
+        scored_candidates.append({
+            "rec": rec,
+            "dist": dist,
+            "final_score": final_score,
+            "reasons": reasons,
+            "all_coverage": all_coverage,
+            "name_coverage": name_coverage,
+        })
+
+    # Sort descending by final score
+    scored_candidates.sort(key=lambda x: x["final_score"], reverse=True)
+
+    # Dynamic Relevance Filtering
+    top_score = scored_candidates[0]["final_score"] if scored_candidates else 0.0
+    min_threshold = threshold if threshold is not None else 50.0
+
+    filtered_records = []
+    for it in scored_candidates:
+        score = it["final_score"]
+        if top_score >= 70.0:
+            # Strong matches exist: only keep items with >= 50% keyword coverage and score >= 60, or very strong score >= 75
+            if (it["all_coverage"] >= 0.5 and score >= 60.0) or score >= 75.0:
+                filtered_records.append(it)
+        elif top_score >= min_threshold:
+            # Moderate matches: require score >= threshold and some keyword coverage or semantic match
+            if score >= min_threshold and (it["all_coverage"] >= 0.5 or it["dist"] < 0.70):
+                filtered_records.append(it)
+        # If top_score < min_threshold: nothing matches well, return empty!
+
+    filtered_records = filtered_records[:limit]
+
+    formatted_results = []
+    for it in filtered_records:
+        rec = it["rec"]
+        prod = rec.product
+        similarity_score = it["final_score"]
+        reasons = it["reasons"]
 
         first_img = prod.images.first()
         img_url = first_img.url if first_img else ""
