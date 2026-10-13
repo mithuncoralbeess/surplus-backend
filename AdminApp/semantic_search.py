@@ -32,23 +32,153 @@ KNOWN_BRANDS = [
     "honda", "toyota", "mitsubishi", "omron", "fanuc", "fluke", "kuka"
 ]
 
-# Known locations & states (India, UAE, US, global hubs)
+# Known locations & states (GCC, India, US, global hubs)
 KNOWN_LOCATIONS = [
-    "maharashtra", "mumbai", "pune", "delhi", "bengaluru", "bangalore", "karnataka",
+    # Qatar
+    "qatar", "doha", "ras laffan", "al wakrah", "al khor", "mesaieed",
+    # UAE
+    "uae", "dubai", "abu dhabi", "sharjah", "ajman", "ras al khaimah", "fujairah",
+    "jebel ali", "al quoz", "kizad", "jafza", "mussafah",
+    # Saudi Arabia
+    "saudi arabia", "saudi", "ksa", "riyadh", "jeddah", "dammam", "khobar", "jubail",
+    # Other GCC
+    "bahrain", "manama", "oman", "muscat", "sohar", "kuwait", "kuwait city",
+    # India
+    "india", "maharashtra", "mumbai", "pune", "delhi", "bengaluru", "bangalore", "karnataka",
     "hyderabad", "telangana", "chennai", "tamil nadu", "gujarat", "ahmedabad", "surat",
-    "kolkata", "west bengal", "dubai", "abu dhabi", "sharjah", "uae", "california",
-    "texas", "new york", "london", "singapore", "germany"
+    "kolkata", "west bengal",
+    # Global Hubs
+    "usa", "united states", "california", "texas", "new york", "uk", "london", "singapore", "germany", "europe"
 ]
+
+# Non-location words that must never be mistaken for locations (e.g., 'in bulk', 'in lots', 'in wholesale')
+NON_LOCATION_WORDS = {
+    "bulk", "wholesale", "lot", "lots", "pallet", "pallets", "stock", "surplus",
+    "case", "cases", "pack", "packs", "box", "boxes", "container", "containers",
+    "advance", "demand", "cash", "store", "total", "units", "pieces", "pcs",
+    "order", "sale", "auction", "rfq", "deal", "discount", "qty", "quantity",
+    "parts", "spares", "goods", "items", "tshirt", "tshirts", "clothing", "wear"
+}
+
+# Regex patterns indicating buyer wants wholesale surplus lots / bulk buying
+BULK_LOT_PHRASES = [
+    r'\bin\s+bulk\b', r'\bbulk\b', r'\bwholesale\s+lots?\b', r'\bwholesale\b',
+    r'\bin\s+lots?\b', r'\blots?\b', r'\bpallets?\b', r'\bmanifest\b',
+    r'\bcontainer\s+loads?\b', r'\bbulk\s+quantity\b', r'\blarge\s+quantity\b'
+]
+
+# Domain conceptual mappings for natural language B2B queries
+DOMAIN_CONCEPTS = {
+    "spare_parts": {
+        "triggers": [
+            "spare part", "spare parts", "spares", "spare", "replacement part", "replacement parts",
+            "mro", "maintenance part", "maintenance parts", "machinery parts", "equipment parts",
+            "industrial spares", "auto parts", "automobile spares", "hardware spares", "components"
+        ],
+        "categories": [
+            "Oil & Gas Equipment & MRO",
+            "Industrial Machinery & Equipment",
+            "Automotive",
+            "Construction, Hardware & MRO",
+            "Electrical & Lighting",
+        ],
+        "subcategories": [
+            "Valves, flanges, pipes, fittings",
+            "Auto parts",
+            "Tyres and batteries",
+            "Motors and gearboxes",
+            "Compressors and pumps",
+            "Tools and workshop equipment",
+            "Material-handling equipment",
+            "Generators and backup-power equipment",
+            "Control panels and sensors",
+            "Cables, Wires & Accessories",
+            "Hand tools",
+            "Power tools"
+        ],
+        "keywords": [
+            "valve", "valves", "pump", "pumps", "motor", "motors", "caliper", "brake", "filter", "filters",
+            "seal", "seals", "gasket", "gaskets", "bearing", "bearings", "reducer", "gearbox", "breaker",
+            "switch", "cable", "flange", "flanges", "fitting", "fittings", "compressor", "generator", "jack",
+            "tool", "hose", "pipe", "spares", "parts", "component", "assembly"
+        ],
+        "label": "Spare Parts & MRO Components",
+        "reason_template": "Classified as industrial spare parts & replacement components ({category})"
+    },
+    "apparel_clothing": {
+        "triggers": [
+            "tshirt", "tshirts", "t-shirt", "t-shirts", "tee", "tees", "shirt", "shirts",
+            "boys tshirt", "boys t-shirt", "boys clothing", "kids clothing", "children clothing",
+            "garment", "garments", "apparel", "clothing", "wear", "uniform", "coverall", "coveralls",
+            "vest", "vests", "pants", "trousers", "jacket", "hoodie"
+        ],
+        "categories": [
+            "Apparel, Footwear & Accessories"
+        ],
+        "subcategories": [
+            "Clothing",
+            "Uniforms and workwear",
+            "Fashion accessories",
+            "Textiles and fabrics"
+        ],
+        "keywords": [
+            "t-shirt", "tshirt", "t-shirts", "tshirts", "tee", "tees", "shirt", "shirts", "cotton",
+            "clothing", "apparel", "garment", "garments", "crew neck", "polo", "wear", "coveralls",
+            "vest", "vests", "fabric", "textile", "boys", "kids", "children", "mens", "womens"
+        ],
+        "label": "Apparel, Garments & Clothing",
+        "reason_template": "Matches apparel, garments & clothing catalog ({category})"
+    },
+    "safety_ppe": {
+        "triggers": [
+            "safety", "ppe", "safety equipment", "safety gear", "protective equipment",
+            "helmet", "helmets", "respirator", "respirators", "face shield", "safety glasses"
+        ],
+        "categories": [
+            "Oil & Gas Equipment & MRO",
+            "Construction, Hardware & MRO"
+        ],
+        "subcategories": [
+            "PPE and safety equipment"
+        ],
+        "keywords": [
+            "safety", "ppe", "helmet", "helmets", "respirator", "respirators", "n95", "mask", "shield", "goggle"
+        ],
+        "label": "Safety Equipment & PPE",
+        "reason_template": "Matches personal protective equipment & safety catalog"
+    },
+    "it_datacenter": {
+        "triggers": [
+            "server", "servers", "rackmount", "switch", "switches", "networking", "router", "routers",
+            "workstation", "workstations", "laptop", "laptops", "datacenter", "ict", "it equipment"
+        ],
+        "categories": [
+            "Electronics & ICT",
+            "Consumer Electronics"
+        ],
+        "subcategories": [
+            "Servers and networking equipment",
+            "Computers and laptops",
+            "Servers & Workstations"
+        ],
+        "keywords": [
+            "server", "rack", "switch", "router", "cisco", "dell", "poweredge", "workstation", "thinkpad"
+        ],
+        "label": "IT & Datacenter Equipment",
+        "reason_template": "Matches IT, networking & datacenter surplus equipment"
+    }
+}
 
 
 class NaturalLanguageQueryParser:
     """
     Parses conversational user queries into structured constraints and semantic search terms.
-    Example: 'Show me 2U rackmount servers under $500 available in Maharashtra'
+    Example: 'Show me 2U rackmount servers under $500 available in Qatar'
     -> semantic_terms: '2U rackmount servers'
     -> max_price: 500.0
     -> currency: 'USD'
-    -> location: 'Maharashtra'
+    -> location: 'Qatar'
+    -> is_bulk: False
     """
 
     @classmethod
@@ -66,10 +196,26 @@ class NaturalLanguageQueryParser:
             "has_warranty": None,
             "brand": None,
             "condition": None,
+            "is_bulk": False,
+            "detected_concepts": [],
         }
 
-        # 1. Extract Price Constraints & Currency
-        # Currency detection
+        # 1. Detect Bulk / Lot Buying Intent ('bulk means lot')
+        for bp in BULK_LOT_PHRASES:
+            if re.search(bp, q_lower):
+                extracted["is_bulk"] = True
+                break
+
+        # 2. Detect Domain Concepts (e.g. 'spare parts', 'boys tshirt')
+        detected = []
+        for concept_id, concept_info in DOMAIN_CONCEPTS.items():
+            for trig in concept_info["triggers"]:
+                if re.search(r'\b' + re.escape(trig) + r'\b', q_lower):
+                    detected.append(concept_id)
+                    break
+        extracted["detected_concepts"] = detected
+
+        # 3. Extract Price Constraints & Currency
         if "$" in q_lower or "usd" in q_lower:
             extracted["currency"] = "USD"
         elif "₹" in q_lower or "inr" in q_lower or "rs" in q_lower or "rupee" in q_lower:
@@ -81,7 +227,6 @@ class NaturalLanguageQueryParser:
         elif "£" in q_lower or "gbp" in q_lower or "pound" in q_lower:
             extracted["currency"] = "GBP"
 
-        # Max price (under $500, below 500, less than 500, max 500, up to 500)
         max_price_match = re.search(
             r'(?:under|below|less\s+than|max|maximum|up\s+to|within|budget\s+of)\s*(?:[$₹€£]|usd|inr|aed|eur|rs\.?)?\s*([\d,]+(?:\.\d+)?)',
             q_lower
@@ -92,7 +237,6 @@ class NaturalLanguageQueryParser:
             except ValueError:
                 pass
 
-        # Min price (above $100, over 100, more than 100, min 100, starting from 100)
         min_price_match = re.search(
             r'(?:above|over|more\s+than|min|minimum|starting\s+from|greater\s+than)\s*(?:[$₹€£]|usd|inr|aed|eur|rs\.?)?\s*([\d,]+(?:\.\d+)?)',
             q_lower
@@ -103,17 +247,15 @@ class NaturalLanguageQueryParser:
             except ValueError:
                 pass
 
-        # If no explicit "under/above" was matched, check standalone price like "$500" or "under 500"
         if extracted["max_price"] is None and extracted["min_price"] is None:
             standalone_price = re.search(r'[$₹€£]\s*([\d,]+(?:\.\d+)?)', q_lower)
             if standalone_price:
                 try:
-                    # Treat standalone price as upper target threshold
                     extracted["max_price"] = float(standalone_price.group(1).replace(",", ""))
                 except ValueError:
                     pass
 
-        # 2. Extract Location
+        # 4. Extract Location (Must match known locations or valid geographic names, NEVER bulk/wholesale words)
         for loc in KNOWN_LOCATIONS:
             if re.search(r'\b' + re.escape(loc) + r'\b', q_lower):
                 extracted["location"] = loc.title()
@@ -125,23 +267,23 @@ class NaturalLanguageQueryParser:
                 q_lower
             )
             if loc_match:
-                cand = loc_match.group(1).strip()
-                if cand not in STOP_WORDS and len(cand) > 3:
+                cand = loc_match.group(1).strip().lower()
+                if cand not in STOP_WORDS and cand not in NON_LOCATION_WORDS and len(cand) > 3:
                     extracted["location"] = cand.title()
 
-        # 3. Extract Warranty Constraint
+        # 5. Extract Warranty Constraint
         if re.search(r'\b(?:with\s+warranty|has\s+warranty|under\s+warranty|warranty\s+included)\b', q_lower):
             extracted["has_warranty"] = True
         elif re.search(r'\b(?:no\s+warranty|without\s+warranty)\b', q_lower):
             extracted["has_warranty"] = False
 
-        # 4. Extract Brand
+        # 6. Extract Brand
         for b in KNOWN_BRANDS:
             if re.search(r'\b' + re.escape(b) + r'\b', q_lower):
                 extracted["brand"] = b.upper() if len(b) <= 3 else b.title()
                 break
 
-        # 5. Extract Condition
+        # 7. Extract Condition
         if "brand new" in q_lower or "factory new" in q_lower:
             extracted["condition"] = "Brand New"
         elif "surplus" in q_lower:
@@ -151,7 +293,7 @@ class NaturalLanguageQueryParser:
         elif "used" in q_lower or "second hand" in q_lower:
             extracted["condition"] = "Used"
 
-        # 6. Extract Semantic Keywords for Vector Search
+        # 8. Extract Semantic Keywords for Vector Search
         cleaned = q_lower
         # Remove price phrases
         cleaned = re.sub(r'(?:under|below|less\s+than|max|maximum|up\s+to|within|budget\s+of|above|over|more\s+than|min|starting\s+from)\s*(?:[$₹€£]|usd|inr|aed|eur|rs\.?)?\s*[\d,]+(?:\.\d+)?', ' ', cleaned)
@@ -159,6 +301,9 @@ class NaturalLanguageQueryParser:
         # Remove location phrase
         if extracted["location"]:
             cleaned = re.sub(r'(?:available\s+in|located\s+in|in|from|at)?\s*' + re.escape(extracted["location"].lower()), ' ', cleaned)
+        # Remove bulk phrases ('in bulk', 'bulk', 'wholesale lots', etc.)
+        for bp in BULK_LOT_PHRASES:
+            cleaned = re.sub(bp, ' ', cleaned)
         # Remove warranty phrase
         cleaned = re.sub(r'\b(?:with|has|under|no|without)?\s*warranty(?:\s+included)?\b', ' ', cleaned)
         # Remove conversational stopwords
@@ -255,6 +400,9 @@ class SemanticEmbedder:
             "vehicle": 470, "tyre": 480, "brake": 490, "forklift": 495,
             "warranty": 500, "certified": 510, "surplus": 520, "new": 530, "refurbished": 540,
             "tool": 550, "drill": 560, "cleaner": 570, "valve": 580,
+            "spare": 150, "part": 155, "mro": 160, "bearing": 165, "gasket": 170, "fitting": 175,
+            "tshirt": 670, "shirt": 675, "apparel": 680, "clothing": 685, "garment": 690, "cotton": 695,
+            "qatar": 700, "doha": 705, "bulk": 720, "wholesale": 730,
             "dell": 600, "hp": 610, "cisco": 620, "siemens": 630, "schneider": 640, "sony": 650, "toyota": 660
         }
 
@@ -543,12 +691,22 @@ def semantic_product_search(
             prod_filtered_qs = prod_filtered_qs.filter(product__liquidating_price__lte=parsed["max_price"])
         if parsed["min_price"] is not None:
             prod_filtered_qs = prod_filtered_qs.filter(product__liquidating_price__gte=parsed["min_price"])
+
+        # Smart Location Filtering: Check if matching inventory exists in requested location
+        prod_has_local_stock = False
         if parsed["location"]:
             loc_term = parsed["location"]
-            prod_filtered_qs = prod_filtered_qs.filter(
+            loc_qs = prod_filtered_qs.filter(
                 Q(product__inventory_location__icontains=loc_term) |
-                Q(product__vendor__business_location__icontains=loc_term)
+                Q(product__vendor__business_location__icontains=loc_term) |
+                Q(product__vendor__country__icontains=loc_term)
             )
+            if loc_qs.exists():
+                prod_filtered_qs = loc_qs
+                prod_has_local_stock = True
+            else:
+                is_relaxed = True
+
         if parsed["has_warranty"] is True:
             prod_filtered_qs = prod_filtered_qs.filter(
                 Q(product__warranty__isnull=False) & ~Q(product__warranty="") |
@@ -558,7 +716,7 @@ def semantic_product_search(
             prod_filtered_qs = prod_filtered_qs.filter(product__brand_name__icontains=parsed["brand"])
 
         prod_candidates = list(prod_filtered_qs.order_by("distance")[:75])
-        if not prod_candidates and not include_lots:
+        if not prod_candidates:
             prod_candidates = list(prod_annotated_qs.order_by("distance")[:75])
             is_relaxed = True
 
@@ -573,7 +731,8 @@ def semantic_product_search(
             p_name_words, p_name_stems = extract_word_set(prod.product_name)
             p_brand_words, p_brand_stems = extract_word_set(prod.brand_name)
             p_model_words, p_model_stems = extract_word_set(prod.model_no)
-            p_cat_words, p_cat_stems = extract_word_set(prod.category.name if prod.category else "")
+            p_cat_name = (prod.category.name or "") if prod.category else ""
+            p_cat_words, p_cat_stems = extract_word_set(p_cat_name)
             p_subcat_name = (prod.subcategory.name or "") if prod.subcategory else ""
             p_subcat_words, p_subcat_stems = extract_word_set(p_subcat_name)
             p_desc_words, p_desc_stems = extract_word_set(prod.description)
@@ -605,9 +764,26 @@ def semantic_product_search(
             p_num_clean = re.sub(r'[^a-zA-Z0-9]', '', prod.product_id or '').lower()
             exact_match_prod_num = bool(clean_q_alnum and clean_q_alnum == p_num_clean)
 
+            # Domain Concept Evaluation (e.g. 'spare parts' matches valves, pumps, motors, auto parts)
+            prod_concept_matched = False
+            prod_concept_reason = ""
+            for cid in parsed.get("detected_concepts", []):
+                cinfo = DOMAIN_CONCEPTS.get(cid, {})
+                c_cats = cinfo.get("categories", [])
+                c_subcats = cinfo.get("subcategories", [])
+                c_kws = cinfo.get("keywords", [])
+
+                in_cat = (p_cat_name in c_cats) or any(sc.lower() in p_subcat_name.lower() for sc in c_subcats)
+                has_kw = any(kw in p_name_words or kw in p_brand_words or kw in p_desc_words for kw in c_kws)
+
+                if in_cat or has_kw:
+                    prod_concept_matched = True
+                    prod_concept_reason = cinfo.get("reason_template", "").format(category=p_cat_name or p_subcat_name)
+                    break
+
             reasons = []
 
-            # Lexical Scoring
+            # Lexical & Concept Scoring
             if exact_match_prod_num:
                 lexical_score = 99.0
                 reasons.append(f"Exact match for Product ID '{prod.product_id}'")
@@ -625,6 +801,9 @@ def semantic_product_search(
             elif all_coverage == 1.0:
                 lexical_score = 88.0
                 reasons.append(f"Catalog matches all terms ({', '.join(raw_tokens)}) across title, category & specs")
+            elif prod_concept_matched:
+                lexical_score = 88.0
+                reasons.append(prod_concept_reason)
             elif name_coverage >= 0.5:
                 lexical_score = 65.0 + (name_coverage * 20.0)
                 reasons.append(f"Title matches {len(matched_tokens_name)}/{num_tokens} keywords")
@@ -639,8 +818,11 @@ def semantic_product_search(
                 reasons.append(f"Price ({prod.currency or 'USD'} {prod.liquidating_price}) is within budget (max {parsed['max_price']})")
             if parsed["brand"] and prod.brand_name and parsed["brand"].lower() in prod.brand_name.lower():
                 reasons.append(f"Matches requested brand: {prod.brand_name}")
-            if parsed["location"] and prod.inventory_location and parsed["location"].lower() in prod.inventory_location.lower():
-                reasons.append(f"Located in requested region: {prod.inventory_location}")
+            if parsed["location"]:
+                if prod.inventory_location and parsed["location"].lower() in prod.inventory_location.lower():
+                    reasons.append(f"Inventory located in requested location: {prod.inventory_location}")
+                else:
+                    reasons.append(f"Available stock in {prod.inventory_location or 'UAE'} (no local stock in {parsed['location']})")
             if parsed["has_warranty"] and (prod.warranty or prod.warranty_attachment):
                 reasons.append("Includes verified warranty coverage")
 
@@ -657,11 +839,19 @@ def semantic_product_search(
                 else:
                     final_score = 0.0
 
+            # Bulk intent adjustment ('bulk means lot')
+            if parsed.get("is_bulk"):
+                if prod.quantity and prod.quantity >= 100:
+                    reasons.append(f"Wholesale volume available ({prod.quantity} units) for bulk order")
+                else:
+                    # Slightly prioritize lots over low-quantity single products
+                    final_score = max(0.0, final_score - 8.0)
+
             if not reasons:
                 reasons.append("Ranked by contextual vector similarity")
 
             first_img = prod.images.first()
-            img_url = first_img.url if first_img else ""
+            img_url = first_img.url if first_img else (first_img.image_url if hasattr(first_img, 'image_url') else "")
 
             scored_candidates.append({
                 "item_type": "product",
@@ -687,6 +877,7 @@ def semantic_product_search(
                 "final_score": round(final_score, 1),
                 "reasons": reasons,
                 "all_coverage": all_coverage,
+                "concept_match": prod_concept_matched,
                 "exact_id_match": exact_match_prod_num,
             })
 
@@ -710,19 +901,29 @@ def semantic_product_search(
             lot_filtered_qs = lot_filtered_qs.filter(lot__ask_price_surplus_payout__lte=parsed["max_price"])
         if parsed["min_price"] is not None:
             lot_filtered_qs = lot_filtered_qs.filter(lot__ask_price_surplus_payout__gte=parsed["min_price"])
+
+        # Smart Location Filtering for Lots
+        lot_has_local_stock = False
         if parsed["location"]:
             loc_term = parsed["location"]
-            lot_filtered_qs = lot_filtered_qs.filter(
+            loc_qs = lot_filtered_qs.filter(
                 Q(lot__inventory_location__icontains=loc_term) |
-                Q(lot__vendor__business_location__icontains=loc_term)
+                Q(lot__vendor__business_location__icontains=loc_term) |
+                Q(lot__vendor__country__icontains=loc_term)
             )
+            if loc_qs.exists():
+                lot_filtered_qs = loc_qs
+                lot_has_local_stock = True
+            else:
+                is_relaxed = True
+
         if parsed["has_warranty"] is True:
             lot_filtered_qs = lot_filtered_qs.filter(lot__third_party_certificate_available=True)
         if parsed["brand"]:
             lot_filtered_qs = lot_filtered_qs.filter(lot__key_brands_included__icontains=parsed["brand"])
 
         lot_candidates = list(lot_filtered_qs.order_by("distance")[:50])
-        if not lot_candidates and not include_products:
+        if not lot_candidates:
             lot_candidates = list(lot_annotated_qs.order_by("distance")[:50])
             is_relaxed = True
 
@@ -772,8 +973,24 @@ def semantic_product_search(
             l_num_clean = re.sub(r'[^a-zA-Z0-9]', '', lot.lot_number or '').lower()
             exact_match_lot_num = bool(clean_q_alnum and clean_q_alnum == l_num_clean) or (query_phrase == l_num or any(tok == l_num for tok in raw_tokens))
 
-            # Did the user explicitly ask for wholesale lots / bulk inventory?
-            user_wants_lots = any(w in raw_tokens for w in ("lot", "lots", "wholesale", "bulk", "manifest", "pallet"))
+            # Domain Concept Evaluation for Lots
+            lot_concept_matched = False
+            lot_concept_reason = ""
+            for cid in parsed.get("detected_concepts", []):
+                cinfo = DOMAIN_CONCEPTS.get(cid, {})
+                c_cats = cinfo.get("categories", [])
+                c_kws = cinfo.get("keywords", [])
+
+                in_cat = (l_cat_name in c_cats) or any(c.lower() in l_cat_name.lower() for c in c_cats)
+                has_kw = any(kw in l_title_words or kw in l_brands_words or kw in manifest_words for kw in c_kws)
+
+                if in_cat or has_kw:
+                    lot_concept_matched = True
+                    lot_concept_reason = cinfo.get("reason_template", "").format(category=l_cat_name)
+                    break
+
+            # Bulk / Lot request prioritization ('bulk means lot')
+            user_wants_lots = bool(parsed.get("is_bulk")) or any(w in raw_tokens for w in ("lot", "lots", "wholesale", "bulk", "manifest", "pallet"))
 
             reasons = []
             if exact_match_lot_num:
@@ -792,9 +1009,10 @@ def semantic_product_search(
                 reasons.append(f"Lot manifest includes: {', '.join(manifest_prods[:2])}")
             elif all_coverage == 1.0:
                 lexical_score = 88.0
-                if user_wants_lots:
-                    lexical_score = min(96.0, lexical_score + 6.0)
                 reasons.append(f"Lot matches all terms ({', '.join(raw_tokens)}) across title, brand & manifest")
+            elif lot_concept_matched:
+                lexical_score = 90.0
+                reasons.append(lot_concept_reason)
             elif title_coverage >= 0.5:
                 lexical_score = 65.0 + (title_coverage * 20.0)
                 reasons.append(f"Lot title matches {len(matched_tokens_title)}/{num_tokens} keywords")
@@ -808,10 +1026,18 @@ def semantic_product_search(
                 reasons.append(f"Price ({lot.currency or 'USD'} {lot.ask_price_surplus_payout}) is within budget (max {parsed['max_price']})")
             if parsed["brand"] and lot.key_brands_included and parsed["brand"].lower() in lot.key_brands_included.lower():
                 reasons.append(f"Includes requested brand: {parsed['brand']}")
-            if parsed["location"] and lot.inventory_location and parsed["location"].lower() in lot.inventory_location.lower():
-                reasons.append(f"Located in requested region: {lot.inventory_location}")
+            if parsed["location"]:
+                if lot.inventory_location and parsed["location"].lower() in lot.inventory_location.lower():
+                    reasons.append(f"Inventory located in requested location: {lot.inventory_location}")
+                else:
+                    reasons.append(f"Available stock in {lot.inventory_location or 'UAE'} (no local stock in {parsed['location']})")
             if parsed["has_warranty"] and lot.third_party_certificate_available:
                 reasons.append("Includes 3rd party verified inspection certificate")
+
+            # Prioritize lots for bulk inquiries ('bulk means lot')
+            if user_wants_lots and lexical_score >= 50.0:
+                lexical_score = min(98.0, lexical_score + 10.0)
+                reasons.append("Prioritized wholesale surplus Lot for bulk buyer request")
 
             if lexical_score >= 80.0:
                 final_score = min(99.0, max(lexical_score, lexical_score * 0.95 + vector_sim * 0.05))
@@ -851,11 +1077,16 @@ def semantic_product_search(
                 "final_score": round(final_score, 1),
                 "reasons": reasons,
                 "all_coverage": all_coverage,
+                "concept_match": lot_concept_matched,
                 "exact_id_match": exact_match_lot_num,
+                "bulk_priority": user_wants_lots,
             })
 
-    # Sort descending by final score
-    scored_candidates.sort(key=lambda x: x["final_score"], reverse=True)
+    # Sort descending by final score (and prioritize lots when user requested bulk)
+    if parsed.get("is_bulk"):
+        scored_candidates.sort(key=lambda x: (x.get("is_lot", False), x["final_score"]), reverse=True)
+    else:
+        scored_candidates.sort(key=lambda x: x["final_score"], reverse=True)
 
     # Dynamic Relevance Filtering
     top_score = scored_candidates[0]["final_score"] if scored_candidates else 0.0
@@ -867,13 +1098,14 @@ def semantic_product_search(
     else:
         for it in scored_candidates:
             score = it["final_score"]
+            is_concept = it.get("concept_match", False)
             if top_score >= 70.0:
-                # Strong matches exist: only keep items with >= 50% keyword coverage and score >= 60, or very strong score >= 75
-                if (it["all_coverage"] >= 0.5 and score >= 60.0) or score >= 75.0:
+                # Strong matches exist: keep items with >= 50% keyword coverage or concept match or score >= 75
+                if is_concept or (it["all_coverage"] >= 0.5 and score >= 60.0) or score >= 75.0:
                     filtered_records.append(it)
             elif top_score >= min_threshold:
-                # Moderate matches: require score >= threshold and some keyword coverage or semantic match
-                if score >= min_threshold and (it["all_coverage"] >= 0.5 or it["dist"] < 0.70):
+                # Moderate matches
+                if score >= min_threshold and (is_concept or it["all_coverage"] >= 0.5 or it["dist"] < 0.70):
                     filtered_records.append(it)
             # If top_score < min_threshold: nothing matches well, return empty!
 

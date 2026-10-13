@@ -848,10 +848,12 @@ class Lot(models.Model):
             max_id = Lot.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.lot_number = f"LOT-{(max_id + 1):05d}"
             
-        if self.active_status == 'active':
+        if self.is_active or str(self.active_status).lower() == 'active':
             self.is_active = True
+            self.active_status = 'active'
         else:
             self.is_active = False
+            self.active_status = 'inactive'
 
         super().save(*args, **kwargs)
 
