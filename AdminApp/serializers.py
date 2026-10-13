@@ -166,6 +166,7 @@ class VendorDetailsSerializer(serializers.ModelSerializer):
             "email",
             "full_name",
             "mobile_number",
+            "country",
             "company_name",
             "account_entity_type",
             "business_location",

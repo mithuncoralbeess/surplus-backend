@@ -608,6 +608,7 @@ def verify_registration_otp(request):
         full_name=reg_data.get("full_name") or "",
         email=email,
         mobile_number=reg_data.get("mobile_number") or "",
+        country=reg_data.get("country") or "United Arab Emirates",
         company_name=reg_data.get("company_name") or "",
         business_location=reg_data.get("business_location") or "",
         category_interested=reg_data.get("category_interested") or "",
@@ -635,6 +636,7 @@ def verify_registration_otp(request):
         "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
+        "country": getattr(vendor, "country", ""),
         "business_location": vendor.business_location,
     })
 
@@ -668,11 +670,12 @@ def complete_profile(request):
             "company_name": vendor.company_name,
             "user_type": vendor.user_type,
             "mobile_number": vendor.mobile_number,
+            "country": getattr(vendor, "country", ""),
             "business_location": vendor.business_location,
             "business_address": vendor.business_address,
             "tax_registration_number": vendor.tax_registration_number,
             "business_type": vendor.business_type,
-            "category_interested": vendor.category_interested,
+            "category_interested": vendor.category_interested_list,
             "profile_completion_percentage": prof_info["percentage"],
             "is_profile_complete": prof_info["is_complete"],
             "profile_completion": prof_info
@@ -698,14 +701,23 @@ def complete_profile(request):
     elif "mobile_number" in request.data and str(request.data["mobile_number"]).strip():
         vendor.mobile_number = str(request.data["mobile_number"]).strip()
 
+    if "user_type" in data:
+        vendor.user_type = data["user_type"]
+
+    vendor.country = str(request.data.get("country", "")).strip()
+
     if "account_entity_type" in data:
         vendor.account_entity_type = data["account_entity_type"]
         if vendor.account_entity_type == "COMPANY":
-            if not data.get("company_name"):
+            if vendor.user_type != "BUYER" and not data.get("company_name"):
                 return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
-            vendor.company_name = data["company_name"]
+            vendor.company_name = data.get("company_name", "")
         else:
             vendor.company_name = ""
+    elif "company_name" in data:
+        if vendor.account_entity_type == "COMPANY" and vendor.user_type != "BUYER" and not data.get("company_name"):
+            return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
+        vendor.company_name = data.get("company_name", "")
         
     if "business_location" in data:
         loc_str = str(data["business_location"]).strip()
@@ -719,13 +731,29 @@ def complete_profile(request):
         vendor.tax_registration_number = data["tax_registration_number"]
     if "business_type" in data:
         vendor.business_type = data["business_type"]
-        
-    if "user_type" in data:
-        vendor.user_type = data["user_type"]
     
     cat_inst = data.get("category_interested", [])
     if isinstance(cat_inst, str):
-        cat_inst = [c.strip() for c in cat_inst.split(",") if c.strip()]
+        val = cat_inst.strip()
+        if val.startswith("[") and val.endswith("]"):
+            try:
+                import json
+                parsed = json.loads(val)
+                if isinstance(parsed, list):
+                    cat_inst = parsed
+                else:
+                    cat_inst = [c.strip() for c in str(parsed).split(",") if c.strip()]
+            except Exception:
+                cat_inst = [c.strip().strip("'\"[]") for c in val.split(",") if c.strip().strip("'\"[]")]
+        else:
+            cat_inst = [c.strip() for c in val.split(",") if c.strip()]
+    elif isinstance(cat_inst, list):
+        cat_inst = [str(c).strip().strip("'\"[]") for c in cat_inst if str(c).strip().strip("'\"[]")]
+
+    if not cat_inst or len(cat_inst) < 1:
+        return Response({"success": False, "message": "Please select at least 1 interested category."}, status=status.HTTP_400_BAD_REQUEST)
+    if len(cat_inst) > 3:
+        return Response({"success": False, "message": "You can select a maximum of 3 interested categories."}, status=status.HTTP_400_BAD_REQUEST)
     vendor.category_interested = cat_inst
     
     vendor.save()
@@ -774,11 +802,12 @@ def complete_profile(request):
         "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
+        "country": getattr(vendor, "country", ""),
         "business_location": vendor.business_location,
         "business_address": vendor.business_address,
         "tax_registration_number": vendor.tax_registration_number,
         "business_type": vendor.business_type,
-        "category_interested": vendor.category_interested,
+        "category_interested": vendor.category_interested_list,
         "profile_completion_percentage": prof_info["percentage"],
         "is_profile_complete": prof_info["is_complete"],
         "profile_completion": prof_info,
@@ -879,11 +908,12 @@ def verify_login_otp(request):
         "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
+        "country": getattr(vendor, "country", ""),
         "business_location": vendor.business_location,
         "business_address": vendor.business_address,
         "tax_registration_number": vendor.tax_registration_number,
         "business_type": vendor.business_type,
-        "category_interested": vendor.category_interested
+        "category_interested": vendor.category_interested_list
     })
 
 
@@ -984,6 +1014,22 @@ def submit_rfq_enquiry(request):
             if not rfq:
                 return Response({"success": False, "message": f"RFQ '{ref}' not found."}, status=status.HTTP_404_NOT_FOUND)
             return Response({"success": True, "data": RfqEnquirySerializer(rfq).data}, status=status.HTTP_200_OK)
+
+        email = (request.GET.get("email") or "").strip().lower()
+        vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
+        if email or vendor_param:
+            from django.db.models import Q
+            qs = RfqEnquiry.objects.prefetch_related("items").all().order_by("-created_at")
+            q_filter = Q()
+            if email:
+                q_filter |= Q(email__iexact=email)
+            if vendor_param:
+                vendor_obj = _resolve_vendor_from_param(vendor_param)
+                if vendor_obj:
+                    q_filter |= Q(buyer=vendor_obj)
+            qs = qs.filter(q_filter)
+            return Response({"success": True, "data": RfqEnquirySerializer(qs, many=True).data}, status=status.HTTP_200_OK)
+
         return Response({"success": True, "message": "RFQ endpoint is active. Use POST to submit requests."}, status=status.HTTP_200_OK)
 
     payload = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
@@ -2384,7 +2430,15 @@ def get_public_products_list(request):
     from django.db.models import Case, When, Value, IntegerField, Q
     from django.core.paginator import Paginator
 
-    qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
+    vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
+    if vendor_param:
+        vendor_obj = _resolve_vendor_from_param(vendor_param)
+        if vendor_obj:
+            qs = Product.objects.filter(vendor=vendor_obj).select_related("category", "subcategory").prefetch_related("images")
+        else:
+            qs = Product.objects.none()
+    else:
+        qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
 
     collection = (request.GET.get("collection") or request.GET.get("badge") or "").lower()
     order_field = "display_order"

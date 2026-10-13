@@ -29,6 +29,7 @@ class CompleteProfileSerializer(serializers.Serializer):
     email = serializers.EmailField()
     full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     mobile_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
     account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")), required=False)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     business_location = serializers.CharField(max_length=255, required=True, allow_blank=False)

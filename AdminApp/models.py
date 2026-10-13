@@ -124,6 +124,7 @@ class VendorDetails(models.Model):
     account_entity_type = models.CharField(max_length=20, choices=ENTITY_TYPE_CHOICES, default="COMPANY")
     
     company_name = models.CharField(max_length=255, blank=True, default="")
+    country = models.CharField(max_length=100, blank=True, default="United Arab Emirates")
     business_location = models.CharField(max_length=255, blank=True, default="")
     business_address = models.TextField(blank=True, default="")
     tax_registration_number = models.CharField(max_length=100, blank=True, default="")
@@ -137,9 +138,18 @@ class VendorDetails(models.Model):
         Returns interested categories as a list of strings (supports 1 or more categories).
         """
         if isinstance(self.category_interested, list):
-            return self.category_interested
+            return [str(c).strip() for c in self.category_interested if str(c).strip()]
         if isinstance(self.category_interested, str) and self.category_interested:
-            return [c.strip() for c in self.category_interested.split(",") if c.strip()]
+            val = self.category_interested.strip()
+            if val.startswith("[") and val.endswith("]"):
+                try:
+                    import json
+                    parsed = json.loads(val)
+                    if isinstance(parsed, list):
+                        return [str(c).strip() for c in parsed if str(c).strip()]
+                except Exception:
+                    pass
+            return [c.strip() for c in val.split(",") if c.strip()]
         return []
 
     @property
@@ -159,25 +169,32 @@ class VendorDetails(models.Model):
         Calculates vendor profile completion percentage, completed fields, and missing fields.
         All required profile fields must be filled for 100% completion.
         """
+        is_buyer = str(self.user_type).upper() == "BUYER"
+        is_company = str(self.account_entity_type).upper() == "COMPANY"
+
         required_fields = [
             ("full_name", "Full Name", bool(self.full_name and self.full_name.strip())),
             ("email", "Email Address", bool(self.email and self.email.strip())),
             ("mobile_number", "Mobile Number", bool(self.mobile_number and self.mobile_number.strip())),
+            ("country", "Country", bool(getattr(self, "country", None) and str(self.country).strip())),
             ("account_entity_type", "Account Entity Type", bool(self.account_entity_type and self.account_entity_type.strip())),
             ("business_location", "Business Location", bool(self.business_location and self.business_location.strip())),
-            ("business_address", "Business Address", bool(self.business_address and self.business_address.strip())),
-            ("tax_registration_number", "Tax / GST Registration Number", bool(self.tax_registration_number and self.tax_registration_number.strip())),
-            ("business_type", "Business Type", bool(self.business_type and self.business_type.strip())),
             ("category_interested", "Interested Categories", bool(self.category_interested_list and len(self.category_interested_list) > 0)),
             ("user_type", "User Type", bool(self.user_type and self.user_type.strip())),
         ]
 
-        # For COMPANY accounts, company_name is mandatory
-        is_company = str(self.account_entity_type).upper() == "COMPANY"
-        if is_company:
-            required_fields.append(
-                ("company_name", "Company Name", bool(self.company_name and self.company_name.strip()))
-            )
+        # For non-buyer accounts (Seller/Both), business and tax details are required
+        if not is_buyer:
+            required_fields.extend([
+                ("business_address", "Business Address", bool(self.business_address and self.business_address.strip())),
+                ("tax_registration_number", "Tax / GST Registration Number", bool(self.tax_registration_number and self.tax_registration_number.strip())),
+                ("business_type", "Business Type", bool(self.business_type and self.business_type.strip())),
+            ])
+            # For COMPANY accounts, company_name is mandatory
+            if is_company:
+                required_fields.append(
+                    ("company_name", "Company Name", bool(self.company_name and self.company_name.strip()))
+                )
 
         total_fields = len(required_fields)
         completed = [item for item in required_fields if item[2]]
