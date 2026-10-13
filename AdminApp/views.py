@@ -1636,6 +1636,33 @@ def seller_enquiry_edit_api(request, enquiry_id):
     if "third_party_documents" in data:
         product.third_party_documents = str(data["third_party_documents"]).strip()
 
+    # Collection showcases: Featured Deals, Best Selling, New Arrivals
+    if "is_featured" in data:
+        f_val = data["is_featured"]
+        product.is_featured = f_val in (True, "true", "1", 1, "on")
+    if "is_best_selling" in data:
+        b_val = data["is_best_selling"]
+        product.is_best_selling = b_val in (True, "true", "1", 1, "on")
+    if "is_new_arrival" in data:
+        n_val = data["is_new_arrival"]
+        product.is_new_arrival = n_val in (True, "true", "1", 1, "on")
+
+    if "featured_order" in data and data["featured_order"] not in (None, ""):
+        try:
+            product.featured_order = max(0, int(data["featured_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "best_selling_order" in data and data["best_selling_order"] not in (None, ""):
+        try:
+            product.best_selling_order = max(0, int(data["best_selling_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "new_arrival_order" in data and data["new_arrival_order"] not in (None, ""):
+        try:
+            product.new_arrival_order = max(0, int(data["new_arrival_order"]))
+        except (ValueError, TypeError):
+            pass
+
     product.save()
 
     return Response({

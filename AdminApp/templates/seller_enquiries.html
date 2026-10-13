@@ -177,6 +177,25 @@
                                     <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
                                 </span>
                                 {% endif %}
+
+                                <!-- Marketplace Collection Badges -->
+                                <div class="mt-1 d-flex gap-1 flex-wrap align-items-center">
+                                    {% if item.is_featured %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="Featured Deal">
+                                        <i class="bi bi-star-fill me-0.5"></i>Featured
+                                    </span>
+                                    {% endif %}
+                                    {% if item.is_best_selling %}
+                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="Best Selling">
+                                        <i class="bi bi-fire me-0.5"></i>Best Seller
+                                    </span>
+                                    {% endif %}
+                                    {% if item.is_new_arrival %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="New Arrival">
+                                        <i class="bi bi-rocket-takeoff-fill me-0.5"></i>New Arrival
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </td>
@@ -239,6 +258,11 @@
                                     <li><a class="dropdown-item py-1.5 btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending"><i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending</a></li>
                                     <li><hr class="dropdown-divider my-1"></li>
                                     {% endif %}
+                                    <!-- Collections Toggles in Dropdown -->
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}"><i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}</a></li>
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_best_selling" data-active="{% if item.is_best_selling %}true{% else %}false{% endif %}"><i class="bi bi-fire text-warning me-2"></i> {% if item.is_best_selling %}Remove Best Seller{% else %}Mark as Best Seller{% endif %}</a></li>
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_new_arrival" data-active="{% if item.is_new_arrival %}true{% else %}false{% endif %}"><i class="bi bi-rocket-takeoff-fill text-info me-2"></i> {% if item.is_new_arrival %}Remove New Arrival{% else %}Mark as New Arrival{% endif %}</a></li>
+                                    <li><hr class="dropdown-divider my-1"></li>
                                     <li><a class="dropdown-item py-1.5 text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}"><i class="bi bi-trash3 me-2"></i> Delete Enquiry</a></li>
                                 </ul>
                             </div>
@@ -449,6 +473,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) {
                     alert("Error deleting enquiry.");
                 }
+            }
+        });
+    });
+    // Collection Toggle in Dropdown
+    document.querySelectorAll('.btn-action-collection').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const flag = btn.dataset.flag;
+            const isCurrentlyActive = btn.dataset.active === 'true';
+            const nextState = !isCurrentlyActive;
+
+            try {
+                const res = await fetch('/admin/api/products/collections/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: id,
+                        [flag]: nextState
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to update collection.');
+                }
+            } catch (err) {
+                alert('Network error while updating collection.');
             }
         });
     });

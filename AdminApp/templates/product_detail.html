@@ -51,6 +51,37 @@
                     <i class="bi bi-eye-slash me-1"></i> Inactive
                 </span>
                 {% endif %}
+
+                <!-- Marketplace Collection Badges / Quick Toggles -->
+                <span class="d-inline-flex align-items-center gap-1.5 flex-wrap ms-lg-2" id="catalog-collections-group">
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_featured %}btn-danger text-white{% else %}btn-outline-danger{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_featured" data-active="{% if product.is_featured %}true{% else %}false{% endif %}"
+                            title="Toggle Featured Deal status" style="font-size: 0.78rem;">
+                        <i class="bi bi-star-fill me-1"></i>Featured
+                        <span class="badge {% if product.is_featured %}bg-white text-danger{% else %}bg-danger-subtle text-danger{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_best_selling" data-active="{% if product.is_best_selling %}true{% else %}false{% endif %}"
+                            title="Toggle Best Selling status" style="font-size: 0.78rem;">
+                        <i class="bi bi-fire me-1"></i>Best Seller
+                        <span class="badge {% if product.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_new_arrival" data-active="{% if product.is_new_arrival %}true{% else %}false{% endif %}"
+                            title="Toggle New Arrival status" style="font-size: 0.78rem;">
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i>New Arrival
+                        <span class="badge {% if product.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                </span>
             </div>
             <p class="text-muted small mb-0">Master catalog entry & comprehensive product profile</p>
         </div>
@@ -540,6 +571,63 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error('Error:', err);
                 alert('An error occurred while updating offer availability status.');
             });
+        });
+    });
+
+    // Quick Collection Toggle Handlers
+    document.querySelectorAll('.btn-collection-toggle').forEach(btn => {
+        btn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            const productId = this.dataset.id;
+            const flag = this.dataset.flag;
+            const isCurrentlyActive = this.dataset.active === 'true';
+            const nextState = !isCurrentlyActive;
+
+            this.disabled = true;
+            this.style.opacity = '0.6';
+
+            try {
+                const res = await fetch('/admin/api/products/collections/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        [flag]: nextState
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.dataset.active = nextState ? 'true' : 'false';
+                    
+                    if (flag === 'is_featured') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-danger text-white' : 'btn-outline-danger'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-white text-danger' : 'bg-danger-subtle text-danger'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    } else if (flag === 'is_best_selling') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-dark text-white' : 'bg-warning-subtle text-dark'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    } else if (flag === 'is_new_arrival') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-info text-white' : 'btn-outline-info'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-white text-info' : 'bg-info-subtle text-info'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    }
+                } else {
+                    alert(data.message || 'Failed to update collection status.');
+                }
+            } catch (err) {
+                console.error('Error toggling collection:', err);
+                alert('Network error while updating collection badge.');
+            } finally {
+                this.disabled = false;
+                this.style.opacity = '1';
+            }
         });
     });
 });
