@@ -2152,6 +2152,7 @@ class RfqEnquiry(models.Model):
     email = models.EmailField(db_index=True)
     phone = models.CharField(max_length=50, blank=True, default="")
     country = models.CharField(max_length=100, blank=True, default="")
+    business_location = models.CharField(max_length=255, blank=True, default="")
     destination_port = models.CharField(max_length=255, blank=True, default="")
     incoterm = models.CharField(max_length=20, default="EXW")
     payment_method = models.CharField(max_length=50, default="Escrow")

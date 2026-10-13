@@ -119,9 +119,9 @@ class RfqEnquiryItemInline(admin.TabularInline):
 
 @admin.register(RfqEnquiry)
 class RfqEnquiryAdmin(admin.ModelAdmin):
-    list_display = ("reference", "company_name", "contact_person", "email", "total_units", "estimated_value", "currency", "status", "created_at")
+    list_display = ("reference", "contact_person", "email", "country", "business_location", "total_units", "estimated_value", "currency", "status", "created_at")
     list_filter = ("status", "incoterm", "payment_method", "currency", "created_at")
-    search_fields = ("reference", "company_name", "contact_person", "email", "destination_port")
+    search_fields = ("reference", "company_name", "contact_person", "email", "business_location", "country", "destination_port")
     readonly_fields = ("created_at", "updated_at")
     inlines = [RfqEnquiryItemInline]
 

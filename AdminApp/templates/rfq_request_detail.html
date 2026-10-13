@@ -210,52 +210,54 @@
         <!-- Buyer Profile Card -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-2">
-                <i class="bi bi-building text-primary fs-5"></i>
-                <h6 class="card-title mb-0 fw-bold">Buyer Company &amp; Contact</h6>
+                <i class="bi bi-person-circle text-primary fs-5"></i>
+                <h6 class="card-title mb-0 fw-bold">Buyer Details</h6>
             </div>
             <div class="card-body p-4">
                 <div class="mb-3">
-                    <span class="text-secondary small d-block">Company Name</span>
-                    <strong class="text-dark fs-6">{{ rfq.company_name }}</strong>
+                    <span class="text-secondary small d-block">Full Name</span>
+                    <strong class="text-dark fs-6">{{ rfq.contact_person|default:rfq.buyer.full_name|default:rfq.company_name|default:"N/A" }}</strong>
                 </div>
 
                 <div class="mb-3">
-                    <span class="text-secondary small d-block">Contact Representative</span>
-                    <span class="text-dark fw-semibold">{{ rfq.contact_person }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <span class="text-secondary small d-block">Corporate Email</span>
-                    <a href="mailto:{{ rfq.email }}" class="text-primary text-decoration-none fw-medium">
-                        <i class="bi bi-envelope me-1"></i>{{ rfq.email }}
+                    <span class="text-secondary small d-block">Email</span>
+                    {% if rfq.email or rfq.buyer.email %}
+                    <a href="mailto:{{ rfq.email|default:rfq.buyer.email }}" class="text-primary text-decoration-none fw-medium">
+                        <i class="bi bi-envelope me-1"></i>{{ rfq.email|default:rfq.buyer.email }}
                     </a>
+                    {% else %}
+                    <span class="text-muted small">N/A</span>
+                    {% endif %}
                 </div>
 
-                {% if rfq.phone %}
                 <div class="mb-3">
-                    <span class="text-secondary small d-block">Phone / WhatsApp</span>
-                    <a href="tel:{{ rfq.phone }}" class="text-dark text-decoration-none fw-medium">
-                        <i class="bi bi-telephone me-1"></i>{{ rfq.phone }}
+                    <span class="text-secondary small d-block">Phone</span>
+                    {% if rfq.phone or rfq.buyer.mobile_number %}
+                    <a href="tel:{{ rfq.phone|default:rfq.buyer.mobile_number }}" class="text-dark text-decoration-none fw-medium">
+                        <i class="bi bi-telephone me-1"></i>{{ rfq.phone|default:rfq.buyer.mobile_number }}
                     </a>
+                    {% else %}
+                    <span class="text-muted small">N/A</span>
+                    {% endif %}
                 </div>
-                {% endif %}
 
-                {% if rfq.country %}
                 <div class="mb-3">
-                    <span class="text-secondary small d-block">Buyer Country</span>
-                    <span class="text-dark">{{ rfq.country }}</span>
+                    <span class="text-secondary small d-block">Country</span>
+                    <span class="text-dark">{{ rfq.country|default:rfq.buyer.country|default:"N/A" }}</span>
                 </div>
-                {% endif %}
 
-                {% if rfq.buyer %}
-                <div class="p-3 bg-light rounded-3 mt-3 border">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <span class="badge bg-success-subtle text-success py-1 px-2">Verified Account</span>
-                        <span class="text-muted font-monospace small">{{ rfq.buyer.vendor_id }}</span>
-                    </div>
-                    <div class="small text-muted">User is registered in the Surplus database. In-app notifications will sync directly to their dashboard.</div>
+                <div>
+                    <span class="text-secondary small d-block">Business Location</span>
+                    <span class="text-dark">
+                        {% if rfq.business_location %}
+                            {{ rfq.business_location }}
+                        {% elif rfq.buyer.business_location %}
+                            {{ rfq.buyer.business_location }}
+                        {% else %}
+                            <span class="text-muted small">N/A</span>
+                        {% endif %}
+                    </span>
                 </div>
-                {% endif %}
             </div>
         </div>
 

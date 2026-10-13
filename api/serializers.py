@@ -222,6 +222,7 @@ class RfqEnquirySerializer(serializers.ModelSerializer):
     contactPerson = serializers.CharField(source='contact_person', required=False)
     companyName = serializers.CharField(source='company_name', required=False)
     destinationPort = serializers.CharField(source='destination_port', required=False, allow_blank=True)
+    businessLocation = serializers.CharField(source='business_location', required=False, allow_blank=True)
     paymentMethod = serializers.CharField(source='payment_method', required=False, allow_blank=True)
     additionalNotes = serializers.CharField(source='additional_notes', required=False, allow_blank=True)
     totalUnits = serializers.IntegerField(source='total_units', required=False)
@@ -239,6 +240,8 @@ class RfqEnquirySerializer(serializers.ModelSerializer):
             'email',
             'phone',
             'country',
+            'business_location',
+            'businessLocation',
             'destination_port',
             'destinationPort',
             'incoterm',

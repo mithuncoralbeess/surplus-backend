@@ -1047,7 +1047,8 @@ def submit_rfq_enquiry(request):
 
     phone = str(payload.get("phone") or payload.get("contactNo") or payload.get("mobile") or "").strip()
     country = str(payload.get("country") or "").strip()
-    destination_port = str(payload.get("destination_port") or payload.get("destinationPort") or payload.get("location") or "").strip()
+    business_location = str(payload.get("business_location") or payload.get("businessLocation") or payload.get("location") or "").strip()
+    destination_port = str(payload.get("destination_port") or payload.get("destinationPort") or "").strip()
     incoterm = str(payload.get("incoterm") or "EXW").strip().upper()
     payment_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "Escrow").strip()
     additional_notes = str(payload.get("additional_notes") or payload.get("additionalNotes") or payload.get("notes") or "").strip()
@@ -1080,6 +1081,11 @@ def submit_rfq_enquiry(request):
     if not buyer_vendor:
         buyer_vendor = VendorDetails.objects.filter(email__iexact=email).first()
 
+    if not country and buyer_vendor and getattr(buyer_vendor, "country", None):
+        country = buyer_vendor.country
+    if not business_location and buyer_vendor and getattr(buyer_vendor, "business_location", None):
+        business_location = buyer_vendor.business_location
+
     raw_items = payload.get("items") or []
     if isinstance(raw_items, str):
         try:
@@ -1096,6 +1102,7 @@ def submit_rfq_enquiry(request):
             email=email,
             phone=phone,
             country=country,
+            business_location=business_location,
             destination_port=destination_port,
             incoterm=incoterm,
             payment_method=payment_method,

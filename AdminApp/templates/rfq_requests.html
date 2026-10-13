@@ -151,7 +151,7 @@
             <thead>
                 <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
                     <th style="width: 180px; font-weight: 600;">RFQ Reference</th>
-                    <th style="width: 250px; font-weight: 600;">Buyer / Organization</th>
+                    <th style="width: 250px; font-weight: 600;">Buyer Details</th>
                     <th style="width: 180px; font-weight: 600;">Basket Summary</th>
                     <th style="width: 160px; font-weight: 600;">Est. Value / Quote</th>
                     <th style="width: 150px; font-weight: 600;">Incoterm &amp; Port</th>
@@ -181,11 +181,8 @@
                         </div>
                     </td>
                     <td>
-                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.company_name }}">
-                            {{ item.company_name }}
-                        </div>
-                        <div class="text-muted small">
-                            <i class="bi bi-person me-1"></i>{{ item.contact_person }}
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:item.company_name }}">
+                            {{ item.contact_person|default:item.buyer.full_name|default:item.company_name }}
                         </div>
                         <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.email }}">
                             <i class="bi bi-envelope me-1"></i>{{ item.email }}
@@ -193,6 +190,11 @@
                         {% if item.phone %}
                         <div class="text-muted small">
                             <i class="bi bi-telephone me-1"></i>{{ item.phone }}
+                        </div>
+                        {% endif %}
+                        {% if item.business_location or item.country %}
+                        <div class="text-muted small">
+                            <i class="bi bi-geo-alt me-1"></i>{{ item.business_location|default:item.country }}
                         </div>
                         {% endif %}
                     </td>

@@ -230,7 +230,7 @@
                                                 type="button"
                                                 class="btn btn-sm btn-success fw-semibold shadow-xs rounded-2 px-2.5 py-1 approve-btn"
                                                 id="approveBtn-{{ adm.id }}"
-                                                onclick="handleStatusToggle({{ adm.id }}, 'approve', '{{ adm.full_name|default:adm.username|escapejs }}')"
+                                                onclick="handleStatusToggle('{{ adm.id }}', 'approve', '{{ adm.full_name|default:adm.username|escapejs }}')"
                                                 title="Grant SuperAdmin Approval"
                                             >
                                                 <i class="bi bi-check2-circle me-1"></i>Approve
@@ -241,7 +241,7 @@
                                                 type="button"
                                                 class="btn btn-sm btn-outline-warning fw-semibold rounded-2 px-2.5 py-1 deactivate-btn"
                                                 id="deactivateBtn-{{ adm.id }}"
-                                                onclick="handleStatusToggle({{ adm.id }}, 'deactivate', '{{ adm.full_name|default:adm.username|escapejs }}')"
+                                                onclick="handleStatusToggle('{{ adm.id }}', 'deactivate', '{{ adm.full_name|default:adm.username|escapejs }}')"
                                                 title="Revoke login access"
                                             >
                                                 <i class="bi bi-pause-circle me-1"></i>Deactivate
@@ -252,7 +252,7 @@
                                         <button
                                             type="button"
                                             class="btn btn-sm btn-outline-danger rounded-2 px-2 py-1"
-                                            onclick="confirmDeleteAdmin({{ adm.id }}, '{{ adm.full_name|default:adm.username|escapejs }}')"
+                                            onclick="confirmDeleteAdmin('{{ adm.id }}', '{{ adm.full_name|default:adm.username|escapejs }}')"
                                             title="Delete account"
                                         >
                                             <i class="bi bi-trash3"></i>
@@ -367,7 +367,7 @@ async function handleStatusToggle(adminId, action, adminName) {
                             type="button"
                             class="btn btn-sm btn-outline-warning fw-semibold rounded-2 px-2.5 py-1 deactivate-btn"
                             id="deactivateBtn-${adminId}"
-                            onclick="handleStatusToggle(${adminId}, 'deactivate', '${adminName.replace(/'/g, "\\'")}')"
+                            onclick="handleStatusToggle('${adminId}', 'deactivate', '${adminName.replace(/'/g, "\\'")}')"
                             title="Revoke login access"
                         >
                             <i class="bi bi-pause-circle me-1"></i>Deactivate
@@ -375,7 +375,7 @@ async function handleStatusToggle(adminId, action, adminName) {
                         <button
                             type="button"
                             class="btn btn-sm btn-outline-danger rounded-2 px-2 py-1"
-                            onclick="confirmDeleteAdmin(${adminId}, '${adminName.replace(/'/g, "\\'")}')"
+                            onclick="confirmDeleteAdmin('${adminId}', '${adminName.replace(/'/g, "\\'")}')"
                             title="Delete account"
                         >
                             <i class="bi bi-trash3"></i>
@@ -398,7 +398,7 @@ async function handleStatusToggle(adminId, action, adminName) {
                             type="button"
                             class="btn btn-sm btn-success fw-semibold shadow-xs rounded-2 px-2.5 py-1 approve-btn"
                             id="approveBtn-${adminId}"
-                            onclick="handleStatusToggle(${adminId}, 'approve', '${adminName.replace(/'/g, "\\'")}')"
+                            onclick="handleStatusToggle('${adminId}', 'approve', '${adminName.replace(/'/g, "\\'")}')"
                             title="Grant SuperAdmin Approval"
                         >
                             <i class="bi bi-check2-circle me-1"></i>Approve
@@ -406,7 +406,7 @@ async function handleStatusToggle(adminId, action, adminName) {
                         <button
                             type="button"
                             class="btn btn-sm btn-outline-danger rounded-2 px-2 py-1"
-                            onclick="confirmDeleteAdmin(${adminId}, '${adminName.replace(/'/g, "\\'")}')"
+                            onclick="confirmDeleteAdmin('${adminId}', '${adminName.replace(/'/g, "\\'")}')"
                             title="Delete account"
                         >
                             <i class="bi bi-trash3"></i>
