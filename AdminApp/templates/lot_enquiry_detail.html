@@ -28,7 +28,7 @@
                 data-id="{{ enquiry.id }}" data-active="inactive">
                 <i class="bi bi-pause-circle"></i> Set Inactive
             </button>
-            {% else %}
+            {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
                 class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-lot-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
@@ -59,6 +59,9 @@
                 <i class="bi bi-x-circle-fill"></i> Decline
             </button>
             {% endif %}
+            <a href="/admin/whatsapp/?lot_id={{ enquiry.id }}" class="btn btn-premium d-inline-flex align-items-center gap-2 text-white shadow-sm" style="background-color: #25D366; border-color: #25D366;" title="Launch WhatsApp Liquidation Alert">
+                <i class="bi bi-whatsapp"></i> Broadcast on WhatsApp
+            </a>
         </div>
     </div>
 
@@ -975,6 +978,23 @@
         // Edit Lot Form Submit Handler
         const editLotForm = document.getElementById('editLotEnquiryForm');
         if (editLotForm) {
+            const enqSelect = editLotForm.querySelector('select[name="enquiry_status"]');
+            const actSelect = editLotForm.querySelector('select[name="active_status"]');
+            if (enqSelect && actSelect) {
+                const syncLotActiveState = () => {
+                    const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const activeOpt = actSelect.querySelector('option[value="active"]');
+                    if (activeOpt) {
+                        activeOpt.disabled = !isApproved;
+                    }
+                    if (!isApproved && actSelect.value === 'active') {
+                        actSelect.value = 'inactive';
+                    }
+                };
+                enqSelect.addEventListener('change', syncLotActiveState);
+                syncLotActiveState();
+            }
+
             editLotForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('saveLotEditBtn');

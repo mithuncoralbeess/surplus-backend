@@ -419,14 +419,18 @@
                                 <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill" id="mediaCountBadge">0 files</span>
                             </div>
 
-                            <div class="dropzone-enhanced position-relative mb-2" id="mediaDropzone">
-                                <input type="file" name="warehouse_images" id="mediaFileInput" accept="image/*,video/*" multiple class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="z-index: 5;">
+                            <input type="file" name="warehouse_images" id="mediaFileInput" accept="image/*,video/*" multiple class="d-none">
+
+                            <div class="dropzone-enhanced mb-2" id="mediaDropzone" style="cursor: pointer;">
                                 <div class="py-2">
                                     <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
                                         <i class="bi bi-images fs-4"></i>
                                     </div>
                                     <h6 class="fw-bold text-dark mb-1">Click to upload photos/videos or drag &amp; drop</h6>
-                                    <p class="text-muted small mb-0">Upload real warehouse photos of pallets, product labels, and packing (up to 20 files, max 50MB each)</p>
+                                    <p class="text-muted small mb-2">Upload real warehouse photos of pallets, product labels, and packing (up to 20 files, max 50MB each)</p>
+                                    <button type="button" class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill">
+                                        <i class="bi bi-folder2-open me-1"></i> Choose Photos / Videos
+                                    </button>
                                 </div>
                             </div>
 
@@ -847,6 +851,7 @@
                             <span class="small">Upload warehouse photos to preview</span>
                         </div>
                         <img id="previewCoverImg" src="" alt="Cover Media" class="w-100 h-100 object-fit-cover d-none">
+                        <video id="previewCoverVideo" src="" class="w-100 h-100 object-fit-cover d-none" muted autoplay loop playsinline></video>
                         <span class="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white" id="previewPhotoCountBadge">
                             <i class="bi bi-images me-1"></i>0 media
                         </span>
@@ -1164,6 +1169,10 @@
         background: rgba(30, 58, 138, 0.3);
     }
 
+    #mediaDropzone * {
+        pointer-events: none;
+    }
+
     /* Media Preview Cards */
     .media-preview-card {
         position: relative;
@@ -1322,9 +1331,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateAllocationSum();
         updateReadinessChecklist();
     }
-
-    // Initialize with 1 default row (100%)
-    createCategoryRow('Electronics', 100);
 
     if (addCategoryRowBtn) {
         addCategoryRowBtn.addEventListener('click', function () {
@@ -1552,13 +1558,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const mediaPreviewGallery = document.getElementById('mediaPreviewGallery');
     const mediaCountBadge = document.getElementById('mediaCountBadge');
     const previewCoverImg = document.getElementById('previewCoverImg');
+    const previewCoverVideo = document.getElementById('previewCoverVideo');
     const previewMediaPlaceholder = document.getElementById('previewMediaPlaceholder');
     const previewPhotoCountBadge = document.getElementById('previewPhotoCountBadge');
 
     let uploadedMediaFiles = [];
 
     if (mediaDropzone && mediaFileInput) {
-        mediaDropzone.addEventListener('click', () => mediaFileInput.click());
+        mediaDropzone.addEventListener('click', (e) => {
+            if (e.target !== mediaFileInput) {
+                mediaFileInput.click();
+            }
+        });
 
         ['dragenter', 'dragover'].forEach(eventName => {
             mediaDropzone.addEventListener(eventName, (e) => {
@@ -1577,6 +1588,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         mediaDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const dt = e.dataTransfer;
             if (dt && dt.files && dt.files.length) {
                 handleNewMediaFiles(dt.files);
@@ -1591,6 +1604,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleNewMediaFiles(fileList) {
+        if (!fileList || !fileList.length) return;
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i];
             const exists = uploadedMediaFiles.some(f => f.name === file.name && f.size === file.size);
@@ -1603,26 +1617,61 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function syncMediaFileInput() {
+        if (!mediaFileInput) return;
         const dt = new DataTransfer();
         uploadedMediaFiles.forEach(f => dt.items.add(f));
         mediaFileInput.files = dt.files;
-        mediaCountBadge.textContent = `${uploadedMediaFiles.length} file${uploadedMediaFiles.length === 1 ? '' : 's'}`;
-        previewPhotoCountBadge.innerHTML = `<i class="bi bi-images me-1"></i>${uploadedMediaFiles.length} media`;
 
-        if (uploadedMediaFiles.length > 0 && uploadedMediaFiles[0].type.startsWith('image/')) {
-            previewCoverImg.src = URL.createObjectURL(uploadedMediaFiles[0]);
-            previewCoverImg.classList.remove('d-none');
-            previewMediaPlaceholder.classList.add('d-none');
+        if (mediaCountBadge) {
+            mediaCountBadge.textContent = `${uploadedMediaFiles.length} file${uploadedMediaFiles.length === 1 ? '' : 's'}`;
+        }
+        if (previewPhotoCountBadge) {
+            previewPhotoCountBadge.innerHTML = `<i class="bi bi-images me-1"></i>${uploadedMediaFiles.length} media`;
+        }
+
+        const coverVideoEl = document.getElementById('previewCoverVideo');
+        if (uploadedMediaFiles.length > 0) {
+            const first = uploadedMediaFiles[0];
+            if (first.type.startsWith('video/')) {
+                if (coverVideoEl) {
+                    coverVideoEl.src = URL.createObjectURL(first);
+                    coverVideoEl.classList.remove('d-none');
+                }
+                if (previewCoverImg) {
+                    previewCoverImg.classList.add('d-none');
+                    previewCoverImg.src = '';
+                }
+                if (previewMediaPlaceholder) previewMediaPlaceholder.classList.add('d-none');
+            } else {
+                if (previewCoverImg) {
+                    previewCoverImg.src = URL.createObjectURL(first);
+                    previewCoverImg.classList.remove('d-none');
+                }
+                if (coverVideoEl) {
+                    coverVideoEl.classList.add('d-none');
+                    coverVideoEl.src = '';
+                }
+                if (previewMediaPlaceholder) previewMediaPlaceholder.classList.add('d-none');
+            }
         } else {
-            previewCoverImg.classList.add('d-none');
-            previewMediaPlaceholder.classList.remove('d-none');
+            if (previewCoverImg) {
+                previewCoverImg.src = '';
+                previewCoverImg.classList.add('d-none');
+            }
+            if (coverVideoEl) {
+                coverVideoEl.src = '';
+                coverVideoEl.classList.add('d-none');
+            }
+            if (previewMediaPlaceholder) previewMediaPlaceholder.classList.remove('d-none');
         }
 
         updateReadinessChecklist();
     }
 
     function renderMediaPreviews() {
+        if (!mediaPreviewGallery) return;
         mediaPreviewGallery.innerHTML = '';
+
         uploadedMediaFiles.forEach((file, index) => {
             const col = document.createElement('div');
             col.className = 'col-6 col-sm-4 col-md-3';
@@ -1630,23 +1679,53 @@ document.addEventListener('DOMContentLoaded', function () {
             const card = document.createElement('div');
             card.className = 'media-preview-card';
 
-            if (file.type.startsWith('image/')) {
+            const isVideo = file.type.startsWith('video/');
+            if (!isVideo) {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
+                img.alt = file.name;
                 card.appendChild(img);
             } else {
-                const videoBox = document.createElement('div');
-                videoBox.className = 'd-flex flex-column align-items-center justify-content-center bg-light text-muted';
-                videoBox.style.height = '95px';
-                videoBox.innerHTML = '<i class="bi bi-film fs-3"></i><span class="small font-monospace" style="font-size: 10px;">Video</span>';
-                card.appendChild(videoBox);
+                const videoEl = document.createElement('video');
+                videoEl.src = URL.createObjectURL(file);
+                videoEl.muted = true;
+                videoEl.preload = 'metadata';
+                videoEl.playsInline = true;
+                card.appendChild(videoEl);
+
+                const playOverlay = document.createElement('div');
+                playOverlay.className = 'position-absolute top-50 start-50 translate-middle text-white bg-dark bg-opacity-50 rounded-circle d-flex align-items-center justify-content-center';
+                playOverlay.style.width = '30px';
+                playOverlay.style.height = '30px';
+                playOverlay.style.pointerEvents = 'none';
+                playOverlay.innerHTML = '<i class="bi bi-play-fill fs-5" style="margin-left: 2px;"></i>';
+                card.appendChild(playOverlay);
             }
 
+            // Cover badge on first item
             if (index === 0) {
                 const coverBadge = document.createElement('span');
                 coverBadge.className = 'badge-cover';
                 coverBadge.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>Cover';
                 card.appendChild(coverBadge);
+            } else {
+                const setCoverBtn = document.createElement('button');
+                setCoverBtn.type = 'button';
+                setCoverBtn.className = 'badge bg-dark bg-opacity-75 text-white border-0 position-absolute';
+                setCoverBtn.style.top = '6px';
+                setCoverBtn.style.left = '6px';
+                setCoverBtn.style.fontSize = '0.65rem';
+                setCoverBtn.style.cursor = 'pointer';
+                setCoverBtn.title = 'Set as cover photo/video';
+                setCoverBtn.innerHTML = '<i class="bi bi-arrow-up-circle me-1"></i>Set Cover';
+                setCoverBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const chosen = uploadedMediaFiles.splice(index, 1)[0];
+                    uploadedMediaFiles.unshift(chosen);
+                    syncMediaFileInput();
+                    renderMediaPreviews();
+                });
+                card.appendChild(setCoverBtn);
             }
 
             const removeBtn = document.createElement('button');
@@ -1660,8 +1739,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 syncMediaFileInput();
                 renderMediaPreviews();
             });
-
             card.appendChild(removeBtn);
+
+            // File size & name tooltip
+            const sizeBadge = document.createElement('span');
+            sizeBadge.className = 'position-absolute bottom-0 end-0 m-1 badge bg-dark bg-opacity-75 text-white font-monospace';
+            sizeBadge.style.fontSize = '9px';
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+            sizeBadge.textContent = Number(sizeMb) > 0 ? `${sizeMb} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+            card.appendChild(sizeBadge);
+
             col.appendChild(card);
             mediaPreviewGallery.appendChild(col);
         });
@@ -2102,17 +2189,25 @@ document.addEventListener('DOMContentLoaded', function () {
         let count = 0;
 
         // 1. Seller Info
-        const sellerOk = Boolean(sellerNameInput.value.trim() && document.getElementById('sellerPhoneInput').value.trim());
+        const sellerNameVal = (typeof sellerNameInput !== 'undefined' && sellerNameInput && sellerNameInput.value) ? sellerNameInput.value.trim() : '';
+        const sellerPhoneEl = document.getElementById('sellerPhoneInput');
+        const sellerPhoneVal = (sellerPhoneEl && sellerPhoneEl.value) ? sellerPhoneEl.value.trim() : '';
+        const sellerOk = Boolean(sellerNameVal && sellerPhoneVal);
         setCheckItem(checkSeller, sellerOk);
         if (sellerOk) count++;
 
         // 2. Title & Brands
-        const titleOk = Boolean(lotTitleInput.value.trim().length >= 5 && keyBrandsInput.value.trim());
+        const lotTitleVal = (typeof lotTitleInput !== 'undefined' && lotTitleInput && lotTitleInput.value) ? lotTitleInput.value.trim() : '';
+        const keyBrandsVal = (typeof keyBrandsInput !== 'undefined' && keyBrandsInput && keyBrandsInput.value) ? keyBrandsInput.value.trim() : '';
+        const titleOk = Boolean(lotTitleVal.length >= 5 && keyBrandsVal);
         setCheckItem(checkTitle, titleOk);
         if (titleOk) count++;
 
         // 3. Manifest File / SKUs
-        const manifestOk = Boolean(clientManifestData.isValid || (parseInt(distinctSkusInput.value) > 0 && parseInt(totalUnitsInput.value) > 0));
+        const distinctSkusVal = (typeof distinctSkusInput !== 'undefined' && distinctSkusInput && distinctSkusInput.value) ? parseInt(distinctSkusInput.value) : 0;
+        const totalUnitsVal = (typeof totalUnitsInput !== 'undefined' && totalUnitsInput && totalUnitsInput.value) ? parseInt(totalUnitsInput.value) : 0;
+        const manifestValid = (typeof clientManifestData !== 'undefined' && clientManifestData && clientManifestData.isValid);
+        const manifestOk = Boolean(manifestValid || (distinctSkusVal > 0 && totalUnitsVal > 0));
         setCheckItem(checkManifest, manifestOk);
         if (manifestOk) count++;
 
@@ -2124,30 +2219,33 @@ document.addEventListener('DOMContentLoaded', function () {
         if (categoryOk) count++;
 
         // 5. Logistics & Location
-        const logisticsOk = Boolean(inventoryLocationInput.value.trim());
+        const locVal = (typeof inventoryLocationInput !== 'undefined' && inventoryLocationInput && inventoryLocationInput.value) ? inventoryLocationInput.value.trim() : '';
+        const logisticsOk = Boolean(locVal);
         setCheckItem(checkLogistics, logisticsOk);
         if (logisticsOk) count++;
 
         // 6. Pricing & Liquidation Discount
-        const msrp = parseFloat(msrpInput.value) || 0;
-        const ask = parseFloat(askPriceInput.value) || 0;
+        const msrp = (typeof msrpInput !== 'undefined' && msrpInput && msrpInput.value) ? parseFloat(msrpInput.value) : 0;
+        const ask = (typeof askPriceInput !== 'undefined' && askPriceInput && askPriceInput.value) ? parseFloat(askPriceInput.value) : 0;
         const pricingOk = Boolean(msrp > 0 && ask > 0 && ask <= msrp * 0.40);
         setCheckItem(checkPricing, pricingOk);
         if (pricingOk) count++;
 
         // 7. Media
-        const mediaOk = Boolean(uploadedMediaFiles.length > 0);
+        const mediaOk = Boolean(typeof uploadedMediaFiles !== 'undefined' && uploadedMediaFiles && uploadedMediaFiles.length > 0);
         setCheckItem(checkMedia, mediaOk);
         if (mediaOk) count++;
 
         const pct = Math.round((count / total) * 100);
-        checklistProgressBar.style.width = `${pct}%`;
-        checklistProgressPct.textContent = `${pct}%`;
+        if (checklistProgressBar) checklistProgressBar.style.width = `${pct}%`;
+        if (checklistProgressPct) checklistProgressPct.textContent = `${pct}%`;
 
-        if (pct === 100) {
-            checklistProgressBar.className = 'progress-bar bg-success';
-        } else {
-            checklistProgressBar.className = 'progress-bar bg-primary';
+        if (checklistProgressBar) {
+            if (pct === 100) {
+                checklistProgressBar.className = 'progress-bar bg-success';
+            } else {
+                checklistProgressBar.className = 'progress-bar bg-primary';
+            }
         }
     }
 
@@ -2285,7 +2383,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Initialize all preview calculations
+    // Initialize all calculations, previews and default category allocation
+    createCategoryRow('Electronics', 100);
     updatePricingCalculations();
     updateLivePreview();
     updateReadinessChecklist();

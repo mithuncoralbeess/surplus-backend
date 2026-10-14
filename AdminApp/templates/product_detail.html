@@ -88,15 +88,19 @@
 
         <!-- Header Actions -->
         <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if product.is_active %}
             <a href="/admin/products/{{ product.id }}/toggle-status/" 
-               class="btn btn-sm {% if product.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
+               class="btn btn-sm btn-outline-warning rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
                title="Toggle Active Listing Status">
-                {% if product.is_active %}
                 <i class="bi bi-toggle-on fs-6"></i> Set Inactive
-                {% else %}
-                <i class="bi bi-toggle-off fs-6"></i> Set Active
-                {% endif %}
             </a>
+            {% elif product.enquiry_status|lower == 'approved' %}
+            <a href="/admin/products/{{ product.id }}/toggle-status/" 
+               class="btn btn-sm btn-outline-success rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
+               title="Toggle Active Listing Status">
+                <i class="bi bi-toggle-off fs-6"></i> Set Active
+            </a>
+            {% endif %}
 
             <a href="/admin/products/all/" class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm">
                 <i class="bi bi-arrow-left"></i> Back to Catalog

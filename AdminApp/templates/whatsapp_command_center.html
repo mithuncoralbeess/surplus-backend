@@ -1,0 +1,1308 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Command Center | Surplus Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4 py-3">
+
+    <!-- Breadcrumb & Page Header -->
+    <div class="page-header-container mb-4">
+        <div>
+            <nav class="custom-breadcrumb mb-2" aria-label="breadcrumb">
+                <ol class="breadcrumb-list d-flex align-items-center gap-2 list-unstyled mb-0 small text-muted">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/" class="text-decoration-none text-muted"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right" style="font-size: 11px;"></i></li>
+                    <li class="breadcrumb-item"><span>Communications</span></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right" style="font-size: 11px;"></i></li>
+                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><span>WhatsApp Command Center</span></li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h1 class="header-title fs-3 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                        <span class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-whatsapp"></i>
+                        </span>
+                        WhatsApp Liquidation Command Center
+                    </h1>
+                    <p class="header-subtitle text-muted mb-0 small">
+                        Two-Way Deal Broadcasts, Assisted Seller Intake & Buyer Liquidation Alert Dispatcher
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                        <i class="bi bi-shield-check me-1"></i>{% if config.is_cloud_api_enabled %}Meta Cloud API Active{% else %}100% Free WhatsApp Web Mode{% endif %}
+                    </span>
+                    <a href="https://wa.me/{{ config.default_business_phone|cut:'+'|cut:' '|cut:'-' }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" title="Test Click-to-Chat">
+                        <i class="bi bi-box-arrow-up-right"></i> Open Business Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric KPI Cards Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Alert Subscribers</span>
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill p-2"><i class="bi bi-people-fill"></i></span>
+                </div>
+                <h3 class="fw-bold mb-0 text-dark">{{ stats.active_subscribers }}</h3>
+                <span class="text-muted" style="font-size: 0.78rem;">{{ stats.total_subscribers }} registered buyers</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Deals Broadcasted</span>
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill p-2"><i class="bi bi-broadcast"></i></span>
+                </div>
+                <h3 class="fw-bold mb-0 text-dark">{{ stats.total_broadcasts }}</h3>
+                <span class="text-muted" style="font-size: 0.78rem;">Outbound liquidation alerts</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Inbound WhatsApp Leads</span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill p-2"><i class="bi bi-chat-left-dots-fill"></i></span>
+                </div>
+                <h3 class="fw-bold mb-0 text-dark">{{ stats.pending_inbound }}</h3>
+                <span class="text-warning fw-semibold" style="font-size: 0.78rem;">Requires review / conversion</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-muted small fw-medium text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Delivery Engine</span>
+                    <span class="badge bg-info bg-opacity-10 text-info rounded-pill p-2"><i class="bi bi-cpu-fill"></i></span>
+                </div>
+                <h4 class="fw-bold mb-0 text-dark" style="font-size: 1.15rem;">
+                    {% if config.is_cloud_api_enabled %}Meta Cloud API{% else %}Free Web Direct{% endif %}
+                </h4>
+                <span class="text-success fw-medium" style="font-size: 0.78rem;">0$ API Cost (Zero-Cost Mode)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills custom-pills-nav gap-2 p-1.5 bg-white rounded-4 shadow-sm border mb-4" id="whatsappTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-2 fw-semibold {% if active_tab == 'broadcast' %}active{% endif %}" id="broadcast-tab" data-bs-toggle="pill" data-bs-target="#tab-broadcast" type="button" role="tab">
+                <i class="bi bi-broadcast me-1.5"></i> Deal Broadcast Center
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-2 fw-semibold position-relative {% if active_tab == 'inbound' %}active{% endif %}" id="inbound-tab" data-bs-toggle="pill" data-bs-target="#tab-inbound" type="button" role="tab">
+                <i class="bi bi-chat-left-text-fill me-1.5"></i> Inbound Intake Queue
+                {% if stats.pending_inbound > 0 %}
+                <span class="badge bg-danger rounded-pill ms-1.5" style="font-size: 0.68rem;">{{ stats.pending_inbound }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-2 fw-semibold {% if active_tab == 'subscribers' %}active{% endif %}" id="subscribers-tab" data-bs-toggle="pill" data-bs-target="#tab-subscribers" type="button" role="tab">
+                <i class="bi bi-people-fill me-1.5"></i> Alert Subscribers ({{ stats.total_subscribers }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4 py-2 fw-semibold {% if active_tab == 'settings' %}active{% endif %}" id="settings-tab" data-bs-toggle="pill" data-bs-target="#tab-settings" type="button" role="tab">
+                <i class="bi bi-sliders me-1.5"></i> Settings &amp; Simulator
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="whatsappTabContent">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: DEAL BROADCAST CENTER -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade {% if active_tab == 'broadcast' %}show active{% endif %}" id="tab-broadcast" role="tabpanel">
+            <div class="row g-4">
+                
+                <!-- Left: Deal Configuration & Audience Targeting -->
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-send-fill text-success"></i> Compose Liquidation Broadcast
+                            </h5>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill small">
+                                Outbound Pipeline
+                            </span>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="broadcastForm">
+                                {% csrf_token %}
+
+                                <!-- Lot Selector -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">
+                                        Select Lot Package to Liquidate <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-select-custom" id="lotSelect" name="lot_id" required>
+                                        {% if active_lots %}
+                                            {% for lot in active_lots %}
+                                            <option value="{{ lot.id }}" {% if selected_lot and selected_lot.id == lot.id %}selected{% endif %}>
+                                                {{ lot.lot_number|default:"LOT" }} — {{ lot.title|truncatechars:45 }} ({{ lot.total_units_quantity|default:0 }} units, {{ lot.currency }} {{ lot.ask_price_surplus_payout|default:0 }})
+                                            </option>
+                                            {% endfor %}
+                                        {% else %}
+                                            <option value="">-- No active lots available. Please create or approve a lot first --</option>
+                                        {% endif %}
+                                    </select>
+                                    <div class="form-text small">Select an approved wholesale inventory lot to generate formatted message.</div>
+                                </div>
+
+                                <!-- Audience Filter Row -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark small mb-1">Target Category Filter</label>
+                                        <select class="form-select form-select-custom form-select-sm" id="categoryFilter" name="target_category">
+                                            {% for cat in standard_categories %}
+                                            <option value="{{ cat }}">{{ cat }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark small mb-1">Target Location Preference</label>
+                                        <select class="form-select form-select-custom form-select-sm" id="locationFilter" name="target_location">
+                                            <option value="All">All Regions (Worldwide)</option>
+                                            <option value="UAE">United Arab Emirates (UAE)</option>
+                                            <option value="Saudi Arabia">Saudi Arabia (KSA)</option>
+                                            <option value="Qatar">Qatar</option>
+                                            <option value="India">India</option>
+                                            <option value="USA">USA / North America</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Minimum Discount Filter & Send Mode -->
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark small mb-1">
+                                            Minimum Buyer Discount Filter
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted fw-semibold">&ge;</span>
+                                            <input type="number" class="form-control" id="minDiscountInput" name="min_discount" value="0" min="0" max="95">
+                                            <span class="input-group-text bg-light text-muted font-monospace">% OFF MSRP</span>
+                                        </div>
+                                        <div class="form-text small" style="font-size: 11px;">Only buyers looking for &ge; this discount will be targeted.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-dark small mb-1">Dispatch Mode</label>
+                                        <select class="form-select form-select-custom form-select-sm" id="sendModeSelect" name="send_mode">
+                                            <option value="WHATSAPP_WEB" selected>WhatsApp Web (1-Click, 100% Free)</option>
+                                            {% if config.is_cloud_api_enabled %}
+                                            <option value="CLOUD_API">Meta Cloud API (Automated Background)</option>
+                                            {% endif %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Admin Note -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">Optional Admin Note / Deal Exclusivity Hook</label>
+                                    <input type="text" class="form-control form-control-custom" id="customNotesInput" name="custom_notes" placeholder="e.g. Price negotiable for full take-all; immediate dispatch from JAFZA.">
+                                </div>
+
+                                <!-- Matched Recipients Badge -->
+                                <div class="p-3 bg-light rounded-3 border mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div>
+                                        <span class="text-muted small d-block">Target Audience Reach:</span>
+                                        <span class="fw-bold text-dark fs-6" id="matchedRecipientsCount">Loading matching buyers...</span>
+                                    </div>
+                                    <span class="badge bg-success text-white px-3 py-1.5 rounded-pill fw-semibold" id="coverageBadge">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Verified Active
+                                    </span>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-success px-4 py-2.5 rounded-pill fw-bold d-inline-flex align-items-center gap-2 shadow-sm" id="btnLaunchBroadcast">
+                                        <i class="bi bi-whatsapp fs-5"></i> Launch WhatsApp Broadcast
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary px-3.5 py-2.5 rounded-pill fw-semibold d-inline-flex align-items-center gap-1.5" id="btnCopyText">
+                                        <i class="bi bi-clipboard"></i> Copy Broadcast Text
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary px-3.5 py-2.5 rounded-pill fw-semibold d-inline-flex align-items-center gap-1.5" id="btnRefreshPreview">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh Preview
+                                    </button>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Smartphone WhatsApp Live Mockup -->
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-phone text-primary"></i> Real-time Mobile WhatsApp Preview
+                            </h6>
+                            <span class="badge bg-light text-muted border px-2.5 py-1 rounded-pill small">Buyer Screen</span>
+                        </div>
+                        <div class="card-body p-4 d-flex justify-content-center">
+                            
+                            <!-- Smartphone Outer Frame -->
+                            <div class="smartphone-frame shadow-lg">
+                                <!-- Phone Speaker Notch -->
+                                <div class="phone-notch">
+                                    <div class="phone-speaker"></div>
+                                </div>
+
+                                <!-- WhatsApp Chat Header -->
+                                <div class="whatsapp-header">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-arrow-left text-white fs-6"></i>
+                                        <div class="whatsapp-avatar">
+                                            <i class="bi bi-boxes text-white" style="font-size: 14px;"></i>
+                                        </div>
+                                        <div>
+                                            <div class="whatsapp-title">Surplus Liquidation Alerts</div>
+                                            <div class="whatsapp-status">Official Business Account • Online</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-3 text-white" style="font-size: 14px;">
+                                        <i class="bi bi-camera-video-fill"></i>
+                                        <i class="bi bi-telephone-fill"></i>
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </div>
+                                </div>
+
+                                <!-- WhatsApp Chat Screen Body -->
+                                <div class="whatsapp-body p-3" id="whatsappChatBody">
+                                    
+                                    <!-- Date Badge -->
+                                    <div class="text-center mb-2">
+                                        <span class="badge bg-white text-muted shadow-xs px-2.5 py-1 rounded-pill fw-normal" style="font-size: 10px;">
+                                            TODAY
+                                        </span>
+                                    </div>
+
+                                    <!-- Chat Bubble -->
+                                    <div class="whatsapp-bubble shadow-sm" id="whatsappBubbleContent">
+                                        <div class="bubble-text" id="bubbleFormattedText">
+                                            {{ initial_broadcast_text|linebreaksbr }}
+                                        </div>
+                                        <div class="bubble-meta">
+                                            <span class="bubble-time" id="bubbleTime">12:00 PM</span>
+                                            <span class="bubble-ticks"><i class="bi bi-check2-all text-primary"></i></span>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- WhatsApp Bottom Input Mockup -->
+                                <div class="whatsapp-footer">
+                                    <div class="input-pill">
+                                        <i class="bi bi-emoji-smile text-muted"></i>
+                                        <span class="text-muted small flex-grow-1" style="font-size: 11px;">Type a message...</span>
+                                        <i class="bi bi-paperclip text-muted"></i>
+                                        <i class="bi bi-camera text-muted"></i>
+                                    </div>
+                                    <div class="mic-button">
+                                        <i class="bi bi-mic-fill text-white" style="font-size: 13px;"></i>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Broadcast History Table -->
+            <div class="card border-0 shadow-sm rounded-4 mt-4">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-secondary"></i> Past Deal Broadcasts Log
+                    </h6>
+                    <span class="badge bg-light text-muted border px-2.5 py-1 rounded-pill small">{{ recent_broadcasts.count }} recorded</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="ps-4">Broadcast ID</th>
+                                    <th>Deal / Title</th>
+                                    <th>Category &amp; Location</th>
+                                    <th>Recipients</th>
+                                    <th>Dispatch Mode</th>
+                                    <th>Status</th>
+                                    <th>Timestamp</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_broadcasts %}
+                                    {% for b in recent_broadcasts %}
+                                    <tr>
+                                        <td class="ps-4 font-monospace fw-bold text-dark">{{ b.broadcast_id }}</td>
+                                        <td>
+                                            <div class="fw-semibold text-dark text-truncate" style="max-width: 250px;">{{ b.title }}</div>
+                                            {% if b.lot %}<span class="badge bg-light text-secondary border font-monospace" style="font-size: 10px;">{{ b.lot.lot_number }}</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill">{{ b.target_category }}</span>
+                                            <span class="text-muted small">({{ b.target_location }})</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-bold">
+                                                <i class="bi bi-person-check-fill me-1"></i>{{ b.recipients_count }} buyers
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if b.send_mode == 'CLOUD_API' %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Meta API</span>
+                                            {% else %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">WhatsApp Web</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success px-2.5 py-1 rounded-pill">{{ b.status }}</span>
+                                        </td>
+                                        <td class="text-muted small">{{ b.created_at|date:"M d, Y h:i A" }}</td>
+                                        <td class="text-end pe-4">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 btn-view-broadcast" data-msg="{{ b.message_body }}" title="View text">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4 text-muted">
+                                            <i class="bi bi-broadcast fs-3 d-block mb-1 text-secondary"></i>
+                                            No deal broadcasts launched yet. Select a lot above and launch your first alert!
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: INBOUND INTAKE QUEUE -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade {% if active_tab == 'inbound' %}show active{% endif %}" id="tab-inbound" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-inbox-fill text-warning"></i> Inbound WhatsApp Inquiries &amp; Stock Offers
+                        </h5>
+                        <p class="text-muted small mb-0">Messages received from sellers submitting inventory or buyers requesting deals via WhatsApp</p>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-bold">
+                        {{ inbound_messages.count }} Total Inbound
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="ps-4">Sender / Phone</th>
+                                    <th>Type</th>
+                                    <th>Message Snippet</th>
+                                    <th>Status</th>
+                                    <th>Received At</th>
+                                    <th class="text-end pe-4">Pipeline Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if inbound_messages %}
+                                    {% for msg in inbound_messages %}
+                                    <tr id="inboundRow-{{ msg.id }}">
+                                        <td class="ps-4">
+                                            <div class="fw-bold text-dark">{{ msg.sender_name|default:"WhatsApp User" }}</div>
+                                            <a href="https://wa.me/{{ msg.sender_phone|cut:'+'|cut:' '|cut:'-' }}" target="_blank" class="text-success text-decoration-none font-monospace small">
+                                                <i class="bi bi-whatsapp me-1"></i>{{ msg.sender_phone }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {% if msg.intake_type == 'SELLER_OFFER' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Seller Stock Offer</span>
+                                            {% elif msg.intake_type == 'BUYER_RFQ' %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">Buyer RFQ</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill">General</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="text-dark fw-medium text-truncate-2" style="max-width: 320px;">
+                                                {{ msg.message_text }}
+                                            </div>
+                                            {% if msg.media_url %}
+                                            <span class="badge bg-light text-muted border mt-1"><i class="bi bi-paperclip me-1"></i>{{ msg.media_type|default:"Attachment" }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if msg.status == 'NEW' %}
+                                            <span class="badge bg-danger rounded-pill px-2.5 py-1">New</span>
+                                            {% elif msg.status == 'CONVERTED_TO_LOT' %}
+                                            <span class="badge bg-success rounded-pill px-2.5 py-1">Converted to Lot</span>
+                                            {% elif msg.status == 'CONVERTED_TO_ENQUIRY' %}
+                                            <span class="badge bg-info rounded-pill px-2.5 py-1">Converted to Enquiry</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary rounded-pill px-2.5 py-1">{{ msg.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-muted small">{{ msg.created_at|date:"M d, Y h:i A" }}</td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-inline-flex gap-1.5">
+                                                <a href="https://wa.me/{{ msg.sender_phone|cut:'+'|cut:' '|cut:'-' }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-2.5 py-1" title="Reply on WhatsApp">
+                                                    <i class="bi bi-reply-fill"></i> Reply
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 btn-convert-lot" data-id="{{ msg.id }}" title="Convert into Lot intake">
+                                                    <i class="bi bi-box-seam me-1"></i>To Lot
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2.5 py-1 btn-convert-enquiry" data-id="{{ msg.id }}" title="Save as Contact Us lead">
+                                                    <i class="bi bi-envelope me-1"></i>To Enquiry
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="bi bi-chat-left-dots fs-1 d-block mb-2 text-secondary"></i>
+                                            No inbound WhatsApp messages received yet. Test inbound leads using the Simulator tab!
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: ALERT SUBSCRIBERS DIRECTORY -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade {% if active_tab == 'subscribers' %}show active{% endif %}" id="tab-subscribers" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-people-fill text-success"></i> WhatsApp Deal Alert Subscribers
+                        </h5>
+                        <p class="text-muted small mb-0">Verified wholesale buyers receiving instant category alerts</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3.5 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm" data-bs-toggle="modal" data-bs-target="#addSubscriberModal">
+                        <i class="bi bi-person-plus-fill"></i> Add Buyer Subscriber
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead class="bg-light text-muted">
+                                <tr>
+                                    <th class="ps-4">Buyer / Phone</th>
+                                    <th>Company</th>
+                                    <th>Subscribed Categories</th>
+                                    <th>Location</th>
+                                    <th>Min Discount Target</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if subscribers %}
+                                    {% for sub in subscribers %}
+                                    <tr id="subRow-{{ sub.id }}">
+                                        <td class="ps-4">
+                                            <div class="fw-bold text-dark">{{ sub.name }}</div>
+                                            <a href="https://wa.me/{{ sub.phone|cut:'+'|cut:' '|cut:'-' }}" target="_blank" class="text-success text-decoration-none font-monospace small">
+                                                <i class="bi bi-whatsapp me-1"></i>{{ sub.phone }}
+                                            </a>
+                                        </td>
+                                        <td class="text-muted">{{ sub.company_name|default:"-" }}</td>
+                                        <td>
+                                            {% if sub.categories %}
+                                                {% for c in sub.categories %}
+                                                <span class="badge bg-light text-dark border me-1">{{ c }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="badge bg-light text-muted border">All Categories</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><i class="bi bi-geo-alt text-danger me-1"></i>{{ sub.preferred_location }}</td>
+                                        <td>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-bold">
+                                                &ge; {{ sub.min_discount_pct }}% OFF
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if sub.is_active %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1">Paused</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <div class="d-inline-flex gap-1.5">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 btn-toggle-sub" data-id="{{ sub.id }}" title="Toggle Active">
+                                                    {% if sub.is_active %}<i class="bi bi-pause-fill"></i>{% else %}<i class="bi bi-play-fill"></i>{% endif %}
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1 btn-delete-sub" data-id="{{ sub.id }}" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5 text-muted">
+                                            No alert subscribers registered yet. Click "Add Buyer Subscriber" above.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: SETTINGS & INBOUND SIMULATOR -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade {% if active_tab == 'settings' %}show active{% endif %}" id="tab-settings" role="tabpanel">
+            <div class="row g-4">
+                
+                <!-- Left: Configuration Settings -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-header bg-white border-bottom py-3 px-4">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-gear-fill text-primary"></i> WhatsApp Pipeline Configuration
+                            </h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="configForm">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">Official Surplus Business WhatsApp Phone</label>
+                                    <input type="text" class="form-control form-control-custom" id="cfgBusinessPhone" name="default_business_phone" value="{{ config.default_business_phone }}">
+                                    <div class="form-text small">Used for click-to-chat links across the website (with country code, e.g. +971501234567).</div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="cfgCloudApiEnabled" name="is_cloud_api_enabled" {% if config.is_cloud_api_enabled %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold text-dark small" for="cfgCloudApiEnabled">
+                                        Enable Meta WhatsApp Cloud API (Automated Background Dispatch)
+                                    </label>
+                                    <div class="text-muted small">Leave OFF to use the 100% Free WhatsApp Web mode without any credentials.</div>
+                                </div>
+
+                                <div id="cloudApiFields" class="{% if not config.is_cloud_api_enabled %}opacity-50{% endif %}">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark small mb-1">Phone Number ID</label>
+                                        <input type="text" class="form-control form-control-custom" name="phone_number_id" value="{{ config.phone_number_id }}" placeholder="e.g. 109283746592837">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark small mb-1">WhatsApp Business Account ID (WABA ID)</label>
+                                        <input type="text" class="form-control form-control-custom" name="waba_id" value="{{ config.waba_id }}" placeholder="e.g. 982736451293847">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark small mb-1">Permanent System User Access Token</label>
+                                        <input type="password" class="form-control form-control-custom" name="access_token" value="{{ config.access_token }}" placeholder="EAAG...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark small mb-1">Webhook Verify Token</label>
+                                        <input type="text" class="form-control form-control-custom font-monospace" name="webhook_verify_token" value="{{ config.webhook_verify_token }}">
+                                    </div>
+                                    <div class="p-3 bg-light rounded-3 border mb-3">
+                                        <span class="text-muted small d-block mb-1">Webhook Inbound URL for Meta Developer Portal:</span>
+                                        <code class="user-select-all fw-bold text-primary" style="font-size: 11px;">https://your-domain.com/admin/api/whatsapp/webhook/</code>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold" id="btnSaveConfig">
+                                    <i class="bi bi-save me-1"></i> Save Configuration
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Inbound Simulator -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100" style="border-left: 4px solid #10b981 !important;">
+                        <div class="card-header bg-white border-bottom py-3 px-4">
+                            <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-terminal-fill text-success"></i> Test Inbound WhatsApp Simulator
+                            </h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <p class="text-muted small">
+                                Simulate an incoming message from a seller or buyer. This tests lead ingestion, intent detection, and automated acknowledgement without requiring an external webhook setup.
+                            </p>
+
+                            <form id="simulatorForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">Simulated Sender Phone</label>
+                                    <input type="text" class="form-control form-control-custom" id="simPhone" value="+971509988776" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">Simulated Contact Name</label>
+                                    <input type="text" class="form-control form-control-custom" id="simName" value="Tariq Mansoor (Doha Trading)" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-dark small mb-1">Message Content</label>
+                                    <textarea class="form-control form-control-custom" id="simMessage" rows="3" required>Hi Surplus Team! I have 1,500 surplus HP EliteBook laptops in Dubai warehouse ready to liquidate this week. 70% off MSRP.</textarea>
+                                </div>
+
+                                <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-1.5" id="btnRunSimulation">
+                                    <i class="bi bi-play-circle-fill"></i> Simulate Inbound Message
+                                </button>
+                            </form>
+
+                            <div id="simResultBox" class="mt-4 p-3 bg-light rounded-3 border d-none">
+                                <div class="fw-bold text-success mb-2 d-flex align-items-center gap-1.5">
+                                    <i class="bi bi-check-circle-fill"></i> Simulation Success!
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    <strong>Detected Intent:</strong> <span class="badge bg-success-subtle text-success" id="simIntent">-</span> |
+                                    <strong>Reference ID:</strong> <span class="font-monospace fw-bold text-dark" id="simRef">-</span>
+                                </div>
+                                <div class="p-2 bg-white rounded border small" style="white-space: pre-wrap;" id="simReply"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Modal: Add Subscriber -->
+<div class="modal fade" id="addSubscriberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3 px-4">
+                <h6 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-person-plus-fill text-success"></i> Add WhatsApp Alert Subscriber
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addSubscriberForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-1">WhatsApp Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom" id="subPhone" placeholder="e.g. +971501234567" required>
+                        <div class="form-text small">Include international country code with + prefix.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-1">Buyer / Contact Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom" id="subName" placeholder="e.g. Ahmed Al-Qasimi" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-1">Company / Organization</label>
+                        <input type="text" class="form-control form-control-custom" id="subCompany" placeholder="e.g. Gulf Wholesale Traders">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-1">Preferred Location</label>
+                        <select class="form-select form-select-custom form-select-sm" id="subLocation">
+                            <option value="Worldwide">Worldwide / All Locations</option>
+                            <option value="UAE">UAE / GCC</option>
+                            <option value="Saudi Arabia">Saudi Arabia</option>
+                            <option value="India">India</option>
+                            <option value="USA">USA / North America</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-1">Minimum Discount Target</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light text-muted">&ge;</span>
+                            <input type="number" class="form-control" id="subMinDiscount" value="60" min="10" max="95">
+                            <span class="input-group-text bg-light text-muted">% OFF MSRP</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold" id="btnSaveSubscriber">
+                        <i class="bi bi-check-circle-fill me-1"></i> Save Alert Subscriber
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Direct WhatsApp Dispatch Batch Modal -->
+<div class="modal fade" id="dispatchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom py-3 px-4 bg-success text-white">
+                <h6 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-whatsapp"></i> WhatsApp Broadcast Ready
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border mb-3">
+                    <div>
+                        <div class="fw-bold text-dark fs-6" id="dispatchTitle">Deal Title</div>
+                        <div class="text-muted small" id="dispatchMeta">Recipients count</div>
+                    </div>
+                    <a href="#" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 py-1.5 fw-bold" id="masterShareBtn">
+                        <i class="bi bi-share-fill me-1"></i> Open General WhatsApp Share
+                    </a>
+                </div>
+
+                <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px;">Click to Send to Individual Subscribers:</h6>
+                <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th>Subscriber</th>
+                                <th>Phone</th>
+                                <th>Company</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispatchListBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-2 px-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom Styling for WhatsApp Command Center */
+.custom-pills-nav .nav-link {
+    color: #4b5563;
+    transition: all 0.2s ease;
+}
+.custom-pills-nav .nav-link.active {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+.form-select-custom, .form-control-custom {
+    border-radius: 10px;
+    border: 1px solid var(--bs-border-color, #e5e7eb);
+    padding: 0.55rem 0.85rem;
+}
+.form-select-custom:focus, .form-control-custom:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* Smartphone Mockup */
+.smartphone-frame {
+    width: 320px;
+    height: 580px;
+    background: #111827;
+    border-radius: 36px;
+    border: 10px solid #1f2937;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.phone-notch {
+    height: 22px;
+    background: #111827;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.phone-speaker {
+    width: 50px;
+    height: 4px;
+    background: #374151;
+    border-radius: 4px;
+}
+.whatsapp-header {
+    background: #075e54;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.whatsapp-avatar {
+    width: 32px;
+    height: 32px;
+    background: #128c7e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.whatsapp-title {
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.whatsapp-status {
+    color: #bbf7d0;
+    font-size: 9px;
+}
+.whatsapp-body {
+    flex: 1;
+    background: #efeae2;
+    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-size: 12px 12px;
+    overflow-y: auto;
+}
+.whatsapp-bubble {
+    background: #ffffff;
+    border-radius: 10px 10px 10px 2px;
+    padding: 10px 12px;
+    max-width: 92%;
+    position: relative;
+}
+.bubble-text {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #111827;
+    word-break: break-word;
+}
+.bubble-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    margin-top: 4px;
+}
+.bubble-time {
+    font-size: 9px;
+    color: #9ca3af;
+}
+.bubble-ticks {
+    font-size: 11px;
+    line-height: 1;
+}
+.whatsapp-footer {
+    background: #f0f2f5;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.whatsapp-footer .input-pill {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 6px 10px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.whatsapp-footer .mic-button {
+    width: 32px;
+    height: 32px;
+    background: #00a884;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const lotSelect = document.getElementById('lotSelect');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    const minDiscountInput = document.getElementById('minDiscountInput');
+    const customNotesInput = document.getElementById('customNotesInput');
+    const matchedCountEl = document.getElementById('matchedRecipientsCount');
+    const bubbleFormattedText = document.getElementById('bubbleFormattedText');
+    const bubbleTime = document.getElementById('bubbleTime');
+    const btnRefreshPreview = document.getElementById('btnRefreshPreview');
+    const btnLaunchBroadcast = document.getElementById('btnLaunchBroadcast');
+    const btnCopyText = document.getElementById('btnCopyText');
+
+    let currentMessageText = '';
+    let currentEligibleSubs = [];
+    let masterShareUrl = '';
+
+    // Update current time on phone bubble
+    const now = new Date();
+    bubbleTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Fetch live preview from backend
+    function updateLivePreview() {
+        const lotId = lotSelect ? lotSelect.value : '';
+        if (!lotId) return;
+
+        const payload = {
+            lot_id: lotId,
+            custom_notes: customNotesInput ? customNotesInput.value.trim() : '',
+            target_category: categoryFilter ? categoryFilter.value : 'All',
+            target_location: locationFilter ? locationFilter.value : 'All',
+            min_discount: minDiscountInput ? minDiscountInput.value : 0
+        };
+
+        fetch('/admin/api/whatsapp/preview/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                currentMessageText = data.message_body;
+                bubbleFormattedText.innerHTML = currentMessageText.replace(/\n/g, '<br>');
+                matchedCountEl.innerHTML = `<span class="text-success">${data.eligible_count}</span> Verified Wholesale Buyer${data.eligible_count === 1 ? '' : 's'}`;
+                currentEligibleSubs = data.eligible_subscribers || [];
+                masterShareUrl = data.links ? data.links.wa_me_link : '';
+            } else {
+                matchedCountEl.textContent = 'Error calculating audience';
+            }
+        })
+        .catch(err => {
+            console.error('Preview error:', err);
+        });
+    }
+
+    if (lotSelect) lotSelect.addEventListener('change', updateLivePreview);
+    if (categoryFilter) categoryFilter.addEventListener('change', updateLivePreview);
+    if (locationFilter) locationFilter.addEventListener('change', updateLivePreview);
+    if (minDiscountInput) minDiscountInput.addEventListener('input', updateLivePreview);
+    if (customNotesInput) customNotesInput.addEventListener('input', updateLivePreview);
+    if (btnRefreshPreview) btnRefreshPreview.addEventListener('click', updateLivePreview);
+
+    // Initial load preview
+    updateLivePreview();
+
+    // Copy formatted text
+    if (btnCopyText) {
+        btnCopyText.addEventListener('click', function () {
+            if (!currentMessageText) return;
+            navigator.clipboard.writeText(currentMessageText).then(() => {
+                const orig = btnCopyText.innerHTML;
+                btnCopyText.innerHTML = '<i class="bi bi-check-lg text-success"></i> Copied!';
+                setTimeout(() => { btnCopyText.innerHTML = orig; }, 2000);
+            });
+        });
+    }
+
+    // Launch Broadcast Action
+    if (btnLaunchBroadcast) {
+        btnLaunchBroadcast.addEventListener('click', function () {
+            const lotId = lotSelect ? lotSelect.value : '';
+            if (!lotId) {
+                alert('Please select a lot to broadcast.');
+                return;
+            }
+
+            btnLaunchBroadcast.disabled = true;
+            btnLaunchBroadcast.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Preparing...';
+
+            const payload = {
+                lot_id: lotId,
+                custom_notes: customNotesInput ? customNotesInput.value.trim() : '',
+                target_category: categoryFilter ? categoryFilter.value : 'All',
+                target_location: locationFilter ? locationFilter.value : 'All',
+                min_discount: minDiscountInput ? minDiscountInput.value : 0,
+                send_mode: document.getElementById('sendModeSelect').value,
+                custom_message: currentMessageText
+            };
+
+            fetch('/admin/api/whatsapp/broadcast/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnLaunchBroadcast.disabled = false;
+                btnLaunchBroadcast.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Launch WhatsApp Broadcast';
+
+                if (data.success) {
+                    // Populate and open dispatch modal
+                    document.getElementById('dispatchTitle').textContent = data.title;
+                    document.getElementById('dispatchMeta').textContent = `${data.recipients_count} matching buyers targeted • Broadcast ID: ${data.broadcast_id}`;
+                    document.getElementById('masterShareBtn').href = data.master_share_link;
+
+                    const tbody = document.getElementById('dispatchListBody');
+                    tbody.innerHTML = '';
+                    if (data.subscribers && data.subscribers.length > 0) {
+                        data.subscribers.forEach(s => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td><strong>${s.name}</strong></td>
+                                <td class="font-monospace text-muted">${s.phone}</td>
+                                <td>${s.company || '-'}</td>
+                                <td class="text-end">
+                                    <a href="${s.web_link}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-whatsapp"></i> Send Chat
+                                    </a>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">No individual subscribers matched. You can use the master share link above to post into WhatsApp groups!</td></tr>`;
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('dispatchModal'));
+                    modal.show();
+                } else {
+                    alert('Broadcast error: ' + (data.error || 'Failed to dispatch broadcast'));
+                }
+            })
+            .catch(err => {
+                btnLaunchBroadcast.disabled = false;
+                btnLaunchBroadcast.innerHTML = '<i class="bi bi-whatsapp fs-5"></i> Launch WhatsApp Broadcast';
+                alert('Request failed: ' + err);
+            });
+        });
+    }
+
+    // Add Subscriber Form
+    const addSubForm = document.getElementById('addSubscriberForm');
+    if (addSubForm) {
+        addSubForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveSubscriber');
+            btn.disabled = true;
+
+            const payload = {
+                phone: document.getElementById('subPhone').value.trim(),
+                name: document.getElementById('subName').value.trim(),
+                company_name: document.getElementById('subCompany').value.trim(),
+                preferred_location: document.getElementById('subLocation').value,
+                min_discount_pct: document.getElementById('subMinDiscount').value
+            };
+
+            fetch('/admin/api/whatsapp/subscribers/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                if (data.success) {
+                    alert('Subscriber saved successfully!');
+                    location.href = '/admin/whatsapp/?tab=subscribers';
+                } else {
+                    alert('Error: ' + (data.error || 'Could not save subscriber'));
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                alert('Request failed: ' + err);
+            });
+        });
+    }
+
+    // Toggle Subscriber Active / Pause
+    document.querySelectorAll('.btn-toggle-sub').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const subId = this.getAttribute('data-id');
+            fetch(`/admin/api/whatsapp/subscribers/${subId}/toggle/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.href = '/admin/whatsapp/?tab=subscribers';
+                }
+            });
+        });
+    });
+
+    // Delete Subscriber
+    document.querySelectorAll('.btn-delete-sub').forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (!confirm('Are you sure you want to remove this alert subscriber?')) return;
+            const subId = this.getAttribute('data-id');
+            fetch(`/admin/api/whatsapp/subscribers/${subId}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById(`subRow-${subId}`);
+                    if (row) row.remove();
+                }
+            });
+        });
+    });
+
+    // Inbound Action: Convert to Lot
+    document.querySelectorAll('.btn-convert-lot').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const msgId = this.getAttribute('data-id');
+            fetch(`/admin/api/whatsapp/inbound/${msgId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ action: 'convert_to_lot' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.redirect_url) {
+                    location.href = data.redirect_url;
+                }
+            });
+        });
+    });
+
+    // Inbound Action: Convert to Enquiry
+    document.querySelectorAll('.btn-convert-enquiry').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const msgId = this.getAttribute('data-id');
+            fetch(`/admin/api/whatsapp/inbound/${msgId}/action/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ action: 'convert_to_enquiry' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.redirect_url) {
+                    location.href = data.redirect_url;
+                }
+            });
+        });
+    });
+
+    // Save Configuration
+    const btnSaveConfig = document.getElementById('btnSaveConfig');
+    if (btnSaveConfig) {
+        btnSaveConfig.addEventListener('click', function () {
+            const form = document.getElementById('configForm');
+            const formData = new FormData(form);
+            const payload = {
+                default_business_phone: formData.get('default_business_phone'),
+                is_cloud_api_enabled: document.getElementById('cfgCloudApiEnabled').checked,
+                phone_number_id: formData.get('phone_number_id'),
+                waba_id: formData.get('waba_id'),
+                access_token: formData.get('access_token'),
+                webhook_verify_token: formData.get('webhook_verify_token')
+            };
+
+            btnSaveConfig.disabled = true;
+            fetch('/admin/api/whatsapp/config/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnSaveConfig.disabled = false;
+                if (data.success) {
+                    alert('WhatsApp configuration updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error saving configuration.');
+                }
+            })
+            .catch(err => {
+                btnSaveConfig.disabled = false;
+                alert('Request failed: ' + err);
+            });
+        });
+    }
+
+    // Run Simulator
+    const btnRunSim = document.getElementById('btnRunSimulation');
+    if (btnRunSim) {
+        btnRunSim.addEventListener('click', function () {
+            const payload = {
+                sender_phone: document.getElementById('simPhone').value.trim(),
+                sender_name: document.getElementById('simName').value.trim(),
+                message_text: document.getElementById('simMessage').value.trim()
+            };
+
+            btnRunSim.disabled = true;
+            fetch('/admin/api/whatsapp/simulate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnRunSim.disabled = false;
+                if (data.success) {
+                    document.getElementById('simIntent').textContent = data.intake_type;
+                    document.getElementById('simRef').textContent = data.ref_code;
+                    document.getElementById('simReply').textContent = data.auto_reply;
+                    document.getElementById('simResultBox').classList.remove('d-none');
+                } else {
+                    alert('Simulation error.');
+                }
+            })
+            .catch(err => {
+                btnRunSim.disabled = false;
+                alert('Request failed: ' + err);
+            });
+        });
+    }
+
+    // View broadcast text modal helper
+    document.querySelectorAll('.btn-view-broadcast').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const msg = this.getAttribute('data-msg');
+            alert(msg);
+        });
+    });
+
+});
+</script>
+{% endblock %}

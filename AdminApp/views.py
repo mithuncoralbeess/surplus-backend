@@ -1427,15 +1427,32 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
 
+    target_status = enquiry.enquiry_status
+    if "status" in request.data:
+        s_val = str(request.data.get("status", "")).upper()
+        if s_val in ("PENDING", "APPROVED", "DECLINED"):
+            target_status = s_val
+
     if "active_status" in request.data:
         act_val = str(request.data.get("active_status")).lower()
         if act_val in ("active", "true", "1"):
+            if target_status != "APPROVED":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             enquiry.is_active = True
         elif act_val in ("inactive", "false", "0"):
             enquiry.is_active = False
 
     if "is_active" in request.data:
-        enquiry.is_active = bool(request.data.get("is_active"))
+        is_act = bool(request.data.get("is_active"))
+        if is_act and target_status != "APPROVED":
+            return Response({
+                "success": False,
+                "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        enquiry.is_active = is_act
 
     vendor_profile_info = None
     if "status" in request.data:
@@ -1474,9 +1491,8 @@ def seller_enquiry_status_api(request, enquiry_id):
                     enquiry.is_active = False
                 elif not has_explicit_active:
                     enquiry.is_active = True
-            elif new_status.lower() == "declined":
-                if not has_explicit_active:
-                    enquiry.is_active = False
+            elif new_status.lower() in ("declined", "pending"):
+                enquiry.is_active = False
 
             if "reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("reason", "")).strip()
@@ -1620,14 +1636,27 @@ def seller_enquiry_edit_api(request, enquiry_id):
         status_val = str(data["enquiry_status"]).upper()
         if status_val in ("PENDING", "APPROVED", "DECLINED"):
             product.enquiry_status = status_val
+            if status_val != "APPROVED":
+                product.is_active = False
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
+            if str(product.enquiry_status).upper() != "APPROVED":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             product.is_active = True
         elif act_val in ("inactive", "false", "0"):
             product.is_active = False
     elif "is_active" in data:
-        product.is_active = bool(data["is_active"])
+        is_act = bool(data["is_active"])
+        if is_act and str(product.enquiry_status).upper() != "APPROVED":
+            return Response({
+                "success": False,
+                "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        product.is_active = is_act
     if "warranty_attachment" in data:
         product.warranty_attachment = str(data["warranty_attachment"]).strip()
     if "third_party_certificate" in data:
@@ -2040,16 +2069,30 @@ def lot_enquiry_edit_api(request, enquiry_id):
         status_val = str(data["enquiry_status"]).lower()
         if status_val in ("pending", "approved", "declined"):
             lot.enquiry_status = status_val
+            if status_val != "approved":
+                lot.is_active = False
+                lot.active_status = "inactive"
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
+            if str(lot.enquiry_status).lower() != "approved":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             lot.active_status = "active"
             lot.is_active = True
         elif act_val in ("inactive", "false", "0"):
             lot.active_status = "inactive"
             lot.is_active = False
     elif "is_active" in data:
-        lot.is_active = bool(data["is_active"])
+        is_act = bool(data["is_active"])
+        if is_act and str(lot.enquiry_status).lower() != "approved":
+            return Response({
+                "success": False,
+                "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        lot.is_active = is_act
         lot.active_status = "active" if lot.is_active else "inactive"
 
     # Vendor Details
@@ -2235,9 +2278,20 @@ def lot_enquiry_status_api(request, enquiry_id):
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
 
+    target_status = enquiry.enquiry_status
+    if "status" in request.data:
+        s_val = str(request.data.get("status", "")).lower()
+        if s_val in ("pending", "approved", "declined"):
+            target_status = s_val
+
     if "active_status" in request.data:
         act_val = str(request.data.get("active_status")).lower()
         if act_val in ("active", "true", "1"):
+            if target_status != "approved":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             enquiry.active_status = "active"
             enquiry.is_active = True
         elif act_val in ("inactive", "false", "0"):
@@ -2245,8 +2299,14 @@ def lot_enquiry_status_api(request, enquiry_id):
             enquiry.is_active = False
 
     if "is_active" in request.data:
-        enquiry.is_active = bool(request.data.get("is_active"))
-        enquiry.active_status = "active" if enquiry.is_active else "inactive"
+        is_act = bool(request.data.get("is_active"))
+        if is_act and target_status != "approved":
+            return Response({
+                "success": False,
+                "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        enquiry.is_active = is_act
+        enquiry.active_status = "active" if is_act else "inactive"
 
     new_status = enquiry.enquiry_status
     vendor_profile_info = None
@@ -2265,10 +2325,9 @@ def lot_enquiry_status_api(request, enquiry_id):
                 elif not has_explicit_active:
                     enquiry.active_status = "active"
                     enquiry.is_active = True
-            elif new_status == "declined":
-                if not has_explicit_active:
-                    enquiry.active_status = "inactive"
-                    enquiry.is_active = False
+            elif new_status in ("declined", "pending"):
+                enquiry.active_status = "inactive"
+                enquiry.is_active = False
 
             if "reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("reason", "")).strip()
@@ -3447,57 +3506,609 @@ def page_views_analytics_view(request):
 
 
 
-def whatsapp_enquiries_view(request):
+# -------------------------------------------------------------
+# WhatsApp Inbound & Outbound Liquidation Alerts Engine
+# -------------------------------------------------------------
+
+def whatsapp_command_center_view(request):
     """
-    View for the WhatsApp Enquiries page using real database records.
+    Unified WhatsApp Command Center:
+    - Outbound Liquidation Deal Broadcasts (with interactive smartphone preview)
+    - Inbound Seller/Buyer Intake Queue (with 1-click Convert to Lot)
+    - Subscribers Directory (Categories, location, min discount filters)
+    - Meta Cloud API / Webhook Settings & Built-in Simulator
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    from .models import ContactUsEnquiry
-    from django.db.models import Q
+    from .models import (
+        WhatsAppAlertSubscriber,
+        WhatsAppBroadcast,
+        WhatsAppInboundMessage,
+        WhatsAppApiConfig,
+        Lot,
+        Product,
+    )
+    from .whatsapp_service import format_lot_liquidation_alert, generate_whatsapp_web_link
 
-    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    active_tab = request.GET.get("tab", "broadcast").strip().lower()
+    preselected_lot_id = request.GET.get("lot_id", "").strip()
 
-    qs = ContactUsEnquiry.objects.filter(
-        Q(enquiry_type__icontains="whatsapp") | Q(message__icontains="whatsapp")
-    ).order_by("-created_at")
+    # Active Lots available for broadcast
+    active_lots = Lot.objects.filter(is_active=True).order_by("-created_at")[:50]
 
-    if search_query:
-        qs = qs.filter(
-            Q(full_name__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(phone__icontains=search_query) |
-            Q(message__icontains=search_query)
+    # Pre-select lot or default to first
+    selected_lot = None
+    if preselected_lot_id:
+        if preselected_lot_id.isdigit():
+            selected_lot = Lot.objects.filter(id=int(preselected_lot_id)).first()
+        else:
+            selected_lot = Lot.objects.filter(lot_number=preselected_lot_id).first()
+    if not selected_lot and active_lots.exists():
+        selected_lot = active_lots.first()
+
+    initial_broadcast_text = ""
+    initial_preview_links = {}
+    if selected_lot:
+        initial_broadcast_text = format_lot_liquidation_alert(selected_lot)
+        initial_preview_links = generate_whatsapp_web_link("", initial_broadcast_text)
+
+    # Subscribers
+    subscribers_qs = WhatsAppAlertSubscriber.objects.all().order_by("-created_at")
+    sub_search = request.GET.get("sub_q", "").strip()
+    if sub_search:
+        subscribers_qs = subscribers_qs.filter(
+            Q(name__icontains=sub_search) |
+            Q(phone__icontains=sub_search) |
+            Q(company_name__icontains=sub_search)
         )
 
-    contacts = []
-    for item in qs:
-        contacts.append({
-            "id": item.id,
-            "name": item.full_name,
-            "full_name": item.full_name,
-            "phone": item.phone,
-            "email": item.email,
-            "date": item.created_at.strftime("%b. %d, %Y"),
-            "time": item.created_at.strftime("%I:%M %p").lower(),
-            "type": item.enquiry_type or "WhatsApp",
-            "enquiry_type": item.enquiry_type or "WhatsApp",
-            "message": item.message,
-            "status": item.status,
-            "is_blocked": item.is_blocked,
-            "created_at": item.created_at,
-        })
+    # Inbound messages
+    inbound_qs = WhatsAppInboundMessage.objects.all().order_by("-created_at")[:60]
+
+    # Recent broadcasts
+    recent_broadcasts = WhatsAppBroadcast.objects.all().order_by("-created_at")[:30]
+
+    # API Configuration
+    config = WhatsAppApiConfig.get_config()
+
+    # Standard Categories list
+    standard_categories = [
+        "All",
+        "Electronics",
+        "Industrial Hardware",
+        "Electricals",
+        "Apparel",
+        "Automotive & Spare Parts",
+        "Home & Living",
+        "Tools & Machinery",
+        "Medical & Health",
+        "General Surplus",
+        "Other"
+    ]
 
     context = {
         "admin": admin_user,
-        "contacts": contacts,
-        "search_query": search_query,
-        "page_title": "WhatsApp Enquiries",
-        "page_subtitle": "All WhatsApp Enquiries"
+        "active_tab": active_tab,
+        "active_lots": active_lots,
+        "selected_lot": selected_lot,
+        "initial_broadcast_text": initial_broadcast_text,
+        "initial_preview_links": initial_preview_links,
+        "subscribers": subscribers_qs,
+        "inbound_messages": inbound_qs,
+        "recent_broadcasts": recent_broadcasts,
+        "config": config,
+        "standard_categories": standard_categories,
+        "stats": {
+            "total_subscribers": WhatsAppAlertSubscriber.objects.count(),
+            "active_subscribers": WhatsAppAlertSubscriber.objects.filter(is_active=True).count(),
+            "total_broadcasts": WhatsAppBroadcast.objects.count(),
+            "pending_inbound": WhatsAppInboundMessage.objects.filter(status="NEW").count(),
+        },
+        "page_title": "WhatsApp Liquidation Command Center",
+        "page_subtitle": "Two-Way Deal Broadcasts, Assisted Seller Intake & Buyer Alert Dispatcher",
     }
-    return render(request, "contact_us.html", context)
+    return render(request, "whatsapp_command_center.html", context)
+
+
+@api_view(["POST", "GET"])
+def whatsapp_preview_api(request):
+    """
+    Returns live preview of formatted WhatsApp message & eligible subscriber count.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    lot_id = request.data.get("lot_id") or request.GET.get("lot_id")
+    custom_notes = request.data.get("custom_notes") or request.GET.get("custom_notes", "")
+    target_category = request.data.get("target_category") or request.GET.get("target_category", "All")
+    target_location = request.data.get("target_location") or request.GET.get("target_location", "All")
+    min_discount = request.data.get("min_discount") or request.GET.get("min_discount", 0)
+
+    from .models import Lot
+    from .whatsapp_service import format_lot_liquidation_alert, get_eligible_subscribers, generate_whatsapp_web_link
+
+    lot = None
+    if lot_id:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.filter(id=int(lot_id)).first()
+        else:
+            lot = Lot.objects.filter(lot_number=str(lot_id)).first()
+
+    if not lot:
+        return JsonResponse({"success": False, "error": "Lot not found"}, status=404)
+
+    msg_text = format_lot_liquidation_alert(lot, custom_notes=custom_notes)
+    links = generate_whatsapp_web_link("", msg_text)
+
+    try:
+        min_disc_val = int(min_discount)
+    except Exception:
+        min_disc_val = 0
+
+    eligible_subs = get_eligible_subscribers(
+        category=target_category,
+        location=target_location,
+        min_discount_pct=min_disc_val
+    )
+
+    return JsonResponse({
+        "success": True,
+        "lot_id": lot.id,
+        "lot_title": lot.title,
+        "message_body": msg_text,
+        "links": links,
+        "eligible_count": len(eligible_subs),
+        "eligible_subscribers": [
+            {"id": s.id, "name": s.name, "phone": s.phone, "company": s.company_name}
+            for s in eligible_subs[:10]
+        ]
+    })
+
+
+@api_view(["POST"])
+def whatsapp_send_broadcast_api(request):
+    """
+    Executes a WhatsApp deal broadcast:
+    - Logs WhatsAppBroadcast record
+    - Finds matching subscribers
+    - Prepares 1-Click WhatsApp Web batch dispatch links (Free Mode)
+    - If Cloud API enabled, attempts direct API dispatch
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    import uuid
+    from django.utils import timezone
+    from .models import Lot, WhatsAppBroadcast, WhatsAppAlertSubscriber, WhatsAppApiConfig
+    from .whatsapp_service import (
+        format_lot_liquidation_alert,
+        get_eligible_subscribers,
+        generate_whatsapp_web_link,
+        send_cloud_api_message
+    )
+
+    data = request.data
+    lot_id = data.get("lot_id")
+    custom_notes = data.get("custom_notes", "").strip()
+    target_category = data.get("target_category", "All").strip()
+    target_location = data.get("target_location", "All").strip()
+    min_discount = int(data.get("min_discount", 0) or 0)
+    send_mode = data.get("send_mode", "WHATSAPP_WEB").strip()
+    custom_message = data.get("custom_message", "").strip()
+
+    lot = None
+    if lot_id:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.filter(id=int(lot_id)).first()
+        else:
+            lot = Lot.objects.filter(lot_number=str(lot_id)).first()
+
+    message_body = custom_message or (format_lot_liquidation_alert(lot, custom_notes=custom_notes) if lot else "")
+    if not message_body:
+        return JsonResponse({"success": False, "error": "No broadcast message text generated."}, status=400)
+
+    broadcast_title = (lot.title if lot else "Liquidation Alert")[:250]
+    broadcast_code = f"WAB-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+
+    subscribers = get_eligible_subscribers(
+        category=target_category,
+        location=target_location,
+        min_discount_pct=min_discount
+    )
+
+    # Cloud API dispatch if requested and configured
+    api_results = []
+    if send_mode == "CLOUD_API":
+        for sub in subscribers:
+            res = send_cloud_api_message(sub.phone, message_body)
+            api_results.append({"phone": sub.phone, "name": sub.name, "result": res})
+            if res.get("success"):
+                sub.last_alert_sent_at = timezone.now()
+                sub.save(update_fields=["last_alert_sent_at"])
+
+    # Create Broadcast log record
+    broadcast_obj = WhatsAppBroadcast.objects.create(
+        broadcast_id=broadcast_code,
+        lot=lot,
+        title=broadcast_title,
+        message_body=message_body,
+        target_category=target_category,
+        target_location=target_location,
+        min_discount_filter=min_discount,
+        recipients_count=len(subscribers),
+        status="SENT",
+        send_mode=send_mode,
+        sent_by=admin_user,
+        sent_at=timezone.now()
+    )
+
+    # Build direct click-to-chat links for each subscriber (100% Free WhatsApp Web mode)
+    sub_links = []
+    for sub in subscribers:
+        links = generate_whatsapp_web_link(sub.phone, message_body)
+        sub_links.append({
+            "id": sub.id,
+            "name": sub.name,
+            "phone": sub.phone,
+            "company": sub.company_name,
+            "wa_me": links["wa_me_link"],
+            "web_link": links["whatsapp_web_link"],
+        })
+
+    # Master link for general WhatsApp sharing
+    master_links = generate_whatsapp_web_link("", message_body)
+
+    return JsonResponse({
+        "success": True,
+        "broadcast_id": broadcast_obj.broadcast_id,
+        "title": broadcast_obj.title,
+        "recipients_count": len(subscribers),
+        "send_mode": send_mode,
+        "message_body": message_body,
+        "master_share_link": master_links["wa_me_link"],
+        "master_web_link": master_links["whatsapp_web_link"],
+        "subscribers": sub_links,
+        "api_results": api_results,
+    })
+
+
+@api_view(["GET", "POST"])
+def whatsapp_subscriber_api(request):
+    """
+    CRUD management for WhatsApp Alert Subscribers.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    from .whatsapp_service import clean_phone_number
+
+    if request.method == "POST":
+        data = request.data
+        phone = data.get("phone", "").strip()
+        name = data.get("name", "").strip()
+        company = data.get("company_name", "").strip()
+        email = data.get("email", "").strip()
+        categories = data.get("categories", [])
+        if isinstance(categories, str):
+            categories = [c.strip() for c in categories.split(",") if c.strip()]
+        location = data.get("preferred_location", "Worldwide").strip() or "Worldwide"
+        min_disc = int(data.get("min_discount_pct", 50) or 50)
+
+        if not phone or not name:
+            return JsonResponse({"success": False, "error": "Phone number and Name are required."}, status=400)
+
+        clean_p = clean_phone_number(phone)
+        formatted_phone = f"+{clean_p}" if clean_p else phone
+
+        sub_obj, created = WhatsAppAlertSubscriber.objects.update_or_create(
+            phone=formatted_phone,
+            defaults={
+                "name": name,
+                "company_name": company,
+                "email": email,
+                "categories": categories,
+                "preferred_location": location,
+                "min_discount_pct": min_disc,
+                "is_active": True,
+            }
+        )
+
+        return JsonResponse({
+            "success": True,
+            "created": created,
+            "subscriber": {
+                "id": sub_obj.id,
+                "name": sub_obj.name,
+                "phone": sub_obj.phone,
+                "company": sub_obj.company_name,
+                "categories": sub_obj.categories,
+                "location": sub_obj.preferred_location,
+                "min_discount": sub_obj.min_discount_pct,
+                "is_active": sub_obj.is_active,
+            }
+        })
+
+    # GET list
+    subs = WhatsAppAlertSubscriber.objects.all().order_by("-created_at")
+    return JsonResponse({
+        "success": True,
+        "count": subs.count(),
+        "subscribers": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "phone": s.phone,
+                "company": s.company_name,
+                "email": s.email,
+                "categories": s.categories,
+                "location": s.preferred_location,
+                "min_discount": s.min_discount_pct,
+                "is_active": s.is_active,
+                "created_at": s.created_at.strftime("%b %d, %Y"),
+            }
+            for s in subs
+        ]
+    })
+
+
+@api_view(["POST"])
+def whatsapp_subscriber_toggle_api(request, sub_id):
+    """Toggles active/paused status of a subscriber."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    sub = get_object_or_404(WhatsAppAlertSubscriber, id=sub_id)
+    sub.is_active = not sub.is_active
+    sub.save(update_fields=["is_active", "updated_at"])
+    return JsonResponse({"success": True, "is_active": sub.is_active})
+
+
+@api_view(["POST", "DELETE"])
+def whatsapp_subscriber_delete_api(request, sub_id):
+    """Deletes a subscriber."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    sub = get_object_or_404(WhatsAppAlertSubscriber, id=sub_id)
+    sub.delete()
+    return JsonResponse({"success": True, "message": "Subscriber removed."})
+
+
+@api_view(["POST"])
+def whatsapp_inbound_action_api(request, msg_id):
+    """
+    Handles actions on Inbound WhatsApp messages:
+    - mark_reviewed
+    - convert_to_lot (pre-populates lot intake redirect)
+    - convert_to_enquiry
+    - archive
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppInboundMessage, ContactUsEnquiry
+    msg = get_object_or_404(WhatsAppInboundMessage, id=msg_id)
+    action = request.data.get("action", "").strip().lower()
+
+    if action == "mark_reviewed":
+        msg.status = "REVIEWED"
+        msg.save(update_fields=["status"])
+        return JsonResponse({"success": True, "status": msg.status})
+
+    elif action == "archive":
+        msg.status = "ARCHIVED"
+        msg.save(update_fields=["status"])
+        return JsonResponse({"success": True, "status": msg.status})
+
+    elif action == "convert_to_enquiry":
+        enquiry = ContactUsEnquiry.objects.create(
+            full_name=msg.sender_name or f"WhatsApp {msg.sender_phone}",
+            phone=msg.sender_phone,
+            enquiry_type="WhatsApp Inquiry",
+            message=msg.message_text,
+            status="Pending"
+        )
+        msg.status = "CONVERTED_TO_ENQUIRY"
+        msg.converted_enquiry = enquiry
+        msg.save(update_fields=["status", "converted_enquiry"])
+        return JsonResponse({
+            "success": True,
+            "status": msg.status,
+            "enquiry_id": enquiry.id,
+            "redirect_url": f"/admin/enquiries/contact-us/?search={msg.sender_phone}"
+        })
+
+    elif action == "convert_to_lot":
+        msg.status = "CONVERTED_TO_LOT"
+        msg.save(update_fields=["status"])
+        import urllib.parse
+        params = urllib.parse.urlencode({
+            "intake_channel": "WhatsApp",
+            "seller_name": msg.sender_name or "",
+            "seller_phone": msg.sender_phone or "",
+            "intake_notes": f"Received via WhatsApp: {msg.message_text[:200]}",
+        })
+        return JsonResponse({
+            "success": True,
+            "status": msg.status,
+            "redirect_url": f"/admin/lots/add/?{params}"
+        })
+
+    return JsonResponse({"success": False, "error": "Unknown action"}, status=400)
+
+
+@api_view(["POST"])
+def whatsapp_config_update_api(request):
+    """
+    Updates WhatsApp Meta Cloud API or Business phone configuration.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppApiConfig
+    cfg = WhatsAppApiConfig.get_config()
+
+    data = request.data
+    cfg.is_cloud_api_enabled = bool(data.get("is_cloud_api_enabled", False))
+    cfg.phone_number_id = data.get("phone_number_id", "").strip()
+    cfg.waba_id = data.get("waba_id", "").strip()
+    if data.get("access_token"):
+        cfg.access_token = data.get("access_token", "").strip()
+    cfg.webhook_verify_token = data.get("webhook_verify_token", "").strip() or cfg.webhook_verify_token
+    cfg.default_business_phone = data.get("default_business_phone", "").strip() or cfg.default_business_phone
+    cfg.save()
+
+    return JsonResponse({
+        "success": True,
+        "is_cloud_api_enabled": cfg.is_cloud_api_enabled,
+        "default_business_phone": cfg.default_business_phone,
+        "phone_number_id": cfg.phone_number_id,
+        "waba_id": cfg.waba_id,
+        "webhook_verify_token": cfg.webhook_verify_token,
+    })
+
+
+@csrf_exempt
+def whatsapp_webhook_view(request):
+    """
+    Meta WhatsApp Cloud API Webhook:
+    - GET: Hub challenge verification
+    - POST: Message payload ingestion
+    """
+    from .models import WhatsAppApiConfig
+    from .whatsapp_service import process_inbound_message
+
+    config = WhatsAppApiConfig.get_config()
+
+    # GET: Verification Challenge from Meta
+    if request.method == "GET":
+        mode = request.GET.get("hub.mode")
+        token = request.GET.get("hub.verify_token")
+        challenge = request.GET.get("hub.challenge")
+
+        if mode == "subscribe" and token == config.webhook_verify_token:
+            return HttpResponse(challenge, content_type="text/plain", status=200)
+        return HttpResponse("Verification token mismatch", status=403)
+
+    # POST: Incoming webhook events
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            entries = payload.get("entry", [])
+            for entry in entries:
+                changes = entry.get("changes", [])
+                for ch in changes:
+                    value = ch.get("value", {})
+                    messages = value.get("messages", [])
+                    contacts = value.get("contacts", [])
+                    contact_map = {c.get("wa_id"): c.get("profile", {}).get("name", "") for c in contacts}
+
+                    for m in messages:
+                        from_number = m.get("from")
+                        sender_name = contact_map.get(from_number, "")
+                        msg_type = m.get("type")
+                        text_body = ""
+                        media_url = ""
+
+                        if msg_type == "text":
+                            text_body = m.get("text", {}).get("body", "")
+                        elif msg_type in ("image", "document", "video"):
+                            media_url = m.get(msg_type, {}).get("id", "")
+                            text_body = m.get(msg_type, {}).get("caption", f"[{msg_type.upper()} Attachment]")
+
+                        if text_body or media_url:
+                            process_inbound_message(
+                                sender_phone=from_number,
+                                message_text=text_body,
+                                sender_name=sender_name,
+                                media_url=media_url,
+                                media_type=msg_type
+                            )
+
+            return JsonResponse({"status": "received"}, status=200)
+        except Exception as e:
+            logger.error(f"Error handling WhatsApp webhook: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+@api_view(["POST"])
+def whatsapp_simulate_inbound_api(request):
+    """
+    Interactive Inbound Simulator:
+    Allows admin to test an incoming message or seller liquidation lead right from the UI.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .whatsapp_service import process_inbound_message
+
+    data = request.data
+    phone = data.get("sender_phone", "+971509998877").strip()
+    name = data.get("sender_name", "Test Seller").strip()
+    text = data.get("message_text", "Hi, I have 10 pallets of Cisco routers to liquidate.").strip()
+
+    res = process_inbound_message(
+        sender_phone=phone,
+        message_text=text,
+        sender_name=name
+    )
+    return JsonResponse(res)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def whatsapp_public_subscribe_api(request):
+    """
+    Public API endpoint for marketplace buyers to subscribe their WhatsApp
+    for flash liquidation deal alerts in their preferred categories.
+    """
+    from .models import WhatsAppAlertSubscriber
+    from .whatsapp_service import clean_phone_number
+
+    data = request.data
+    phone = data.get("phone", "").strip()
+    name = data.get("name", "Marketplace Buyer").strip()
+    company = data.get("company_name", "").strip()
+    email = data.get("email", "").strip()
+    categories = data.get("categories", ["All"])
+    if isinstance(categories, str):
+        categories = [c.strip() for c in categories.split(",") if c.strip()]
+    location = data.get("preferred_location", "Worldwide").strip()
+    min_disc = int(data.get("min_discount_pct", 50) or 50)
+
+    clean_p = clean_phone_number(phone)
+    if not clean_p or len(clean_p) < 7:
+        return Response({"success": False, "message": "Please provide a valid WhatsApp phone number with country code."}, status=status.HTTP_400_BAD_REQUEST)
+
+    formatted_phone = f"+{clean_p}"
+    sub, created = WhatsAppAlertSubscriber.objects.update_or_create(
+        phone=formatted_phone,
+        defaults={
+            "name": name,
+            "company_name": company,
+            "email": email,
+            "categories": categories,
+            "preferred_location": location,
+            "min_discount_pct": min_disc,
+            "is_active": True,
+        }
+    )
+
+    msg = "You have been successfully subscribed to Surplus WhatsApp Liquidation Alerts!" if created else "Your WhatsApp alert preferences have been updated!"
+    return Response({"success": True, "message": msg, "created": created})
 
 
 def partnership_enquiries_view(request):
@@ -3666,7 +4277,7 @@ def all_products_view(request):
         selected_ids = request.POST.getlist("selected_products")
         if selected_ids and action:
             if action == "Mark Active":
-                Product.objects.filter(id__in=selected_ids).update(is_active=True)
+                Product.objects.filter(id__in=selected_ids, enquiry_status__iexact="APPROVED").update(is_active=True)
             elif action == "Mark Inactive":
                 Product.objects.filter(id__in=selected_ids).update(is_active=False)
             elif action == "Delete Selected":
@@ -3716,7 +4327,15 @@ def toggle_product_status_view(request, product_id):
 
     from django.shortcuts import get_object_or_404
     product = get_object_or_404(Product, id=product_id)
-    product.is_active = not product.is_active
+    if not product.is_active:
+        if str(product.enquiry_status).upper() != "APPROVED":
+            from django.contrib import messages
+            messages.error(request, "Cannot activate product: Product enquiry must be APPROVED before it can be marked active.")
+            next_url = request.META.get("HTTP_REFERER") or f"/admin/products/{product_id}/"
+            return redirect(next_url)
+        product.is_active = True
+    else:
+        product.is_active = False
     product.save()
 
     next_url = request.META.get("HTTP_REFERER") or f"/admin/products/{product_id}/"
@@ -4428,8 +5047,8 @@ def add_lot_view(request):
             sale_method=sale_method,
             file=manifest_file,
             enquiry_status="pending",
-            active_status="active" if is_active else "inactive",
-            is_active=is_active,
+            active_status="inactive",
+            is_active=False,
             raw_data=raw_data,
         )
 

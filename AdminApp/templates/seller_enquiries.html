@@ -250,7 +250,7 @@
                                     <li><hr class="dropdown-divider my-1"></li>
                                     {% if item.is_active %}
                                     <li><a class="dropdown-item py-1.5 text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive"><i class="bi bi-pause-circle me-2"></i> Mark as Inactive</a></li>
-                                    {% else %}
+                                    {% elif item.enquiry_status|lower == 'approved' %}
                                     <li><a class="dropdown-item py-1.5 text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active"><i class="bi bi-play-circle-fill me-2"></i> Mark as Active</a></li>
                                     {% endif %}
                                     <li><hr class="dropdown-divider my-1"></li>

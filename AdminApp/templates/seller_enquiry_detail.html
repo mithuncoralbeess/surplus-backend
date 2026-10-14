@@ -72,7 +72,7 @@
                 data-id="{{ enquiry.id }}" data-active="inactive">
                 <i class="bi bi-pause-circle"></i> Set Inactive
             </button>
-            {% else %}
+            {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
                 class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-action-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
@@ -621,7 +621,26 @@
                     btn.textContent = 'Save Changes';
                 }
             });
+        const enqModalForm = document.getElementById('editSellerEnquiryForm');
+        if (enqModalForm) {
+            const enqSelect = enqModalForm.querySelector('select[name="enquiry_status"]');
+            const actSelect = enqModalForm.querySelector('select[name="active_status"]');
+            if (enqSelect && actSelect) {
+                const syncActiveState = () => {
+                    const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const activeOpt = actSelect.querySelector('option[value="active"]');
+                    if (activeOpt) {
+                        activeOpt.disabled = !isApproved;
+                    }
+                    if (!isApproved && actSelect.value === 'active') {
+                        actSelect.value = 'inactive';
+                    }
+                };
+                enqSelect.addEventListener('change', syncActiveState);
+                syncActiveState();
+            }
         }
+
         // Quick Collection Toggle Handlers (Featured, Best Seller, New Arrival)
         document.querySelectorAll('.btn-collection-toggle').forEach(btn => {
             btn.addEventListener('click', async function (e) {

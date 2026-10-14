@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views_auction
+from AdminApp.views import whatsapp_public_subscribe_api
 from .views import (
     api_root,
     health_check,
@@ -84,6 +85,9 @@ urlpatterns = [
     path("enquiries/rfq/", submit_rfq_enquiry, name="public_rfq_enquiry_submit"),
     path("enquiries/rfqs/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alias"),
     path("rfq-requests/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alt"),
+
+    # Public WhatsApp Liquidation Alert Subscription
+    path("whatsapp/subscribe/", whatsapp_public_subscribe_api, name="public_whatsapp_subscribe"),
 
 
 

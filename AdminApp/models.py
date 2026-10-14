@@ -57,6 +57,14 @@ class AdminDetails(models.Model):
     def __str__(self):
         return f"{self.username} ({self.account_type})"
 
+    @property
+    def is_active(self):
+        return self.status
+
+    @property
+    def is_authenticated(self):
+        return True
+
     @staticmethod
     def hash_password(raw_password: str) -> str:
         """
@@ -848,7 +856,11 @@ class Lot(models.Model):
             max_id = Lot.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.lot_number = f"LOT-{(max_id + 1):05d}"
             
-        if self.is_active or str(self.active_status).lower() == 'active':
+        # Enforce rule: Lot can ONLY be active if its enquiry_status is 'approved'
+        if str(self.enquiry_status).lower() != 'approved':
+            self.is_active = False
+            self.active_status = 'inactive'
+        elif self.is_active or str(self.active_status).lower() == 'active':
             self.is_active = True
             self.active_status = 'active'
         else:
@@ -1178,12 +1190,14 @@ class Product(models.Model):
         else:
             self.current_price = Decimal("0.00")
 
-        # Auto-set date_approved when status becomes APPROVED
+        # Auto-set date_approved and enforce active rule
         if str(self.enquiry_status).upper() == 'APPROVED':
             if not self.date_approved:
                 self.date_approved = timezone.now()
         else:
             self.date_approved = None
+            # Enforce rule: Product can ONLY be active if its enquiry_status is 'APPROVED'
+            self.is_active = False
 
         super().save(*args, **kwargs)
 
@@ -2234,3 +2248,142 @@ class RfqEnquiryItem(models.Model):
         if self.target_price:
             return self.target_price * self.quantity
         return None
+
+
+# -------------------------------------------------------------
+# WhatsApp Liquidation Alerts & Inbound Intake Module
+# -------------------------------------------------------------
+
+class WhatsAppAlertSubscriber(models.Model):
+    """
+    Subscribers (Buyers, Traders, Liquidators) receiving WhatsApp alerts for new surplus deals.
+    """
+    phone = models.CharField(max_length=50, unique=True, db_index=True, help_text="E.164 phone number, e.g. +971501234567")
+    name = models.CharField(max_length=150)
+    company_name = models.CharField(max_length=200, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    categories = models.JSONField(default=list, blank=True, help_text="Target category names list")
+    preferred_location = models.CharField(max_length=150, blank=True, default="Worldwide")
+    min_discount_pct = models.PositiveIntegerField(default=50, help_text="Minimum discount % off MSRP to trigger alert")
+    is_active = models.BooleanField(default=True, db_index=True)
+    notes = models.TextField(blank=True, default="")
+    last_alert_sent_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "WhatsApp Alert Subscriber"
+        verbose_name_plural = "WhatsApp Alert Subscribers"
+        db_table = "whatsapp_alert_subscribers"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
+class WhatsAppBroadcast(models.Model):
+    """
+    Record of outbound liquidation alerts broadcast to buyers.
+    """
+    STATUS_CHOICES = (
+        ("DRAFT", "Draft"),
+        ("SENT", "Sent"),
+        ("FAILED", "Failed"),
+    )
+    SEND_MODE_CHOICES = (
+        ("WHATSAPP_WEB", "WhatsApp Web (1-Click)"),
+        ("CLOUD_API", "Meta Cloud API"),
+    )
+
+    broadcast_id = models.CharField(max_length=50, unique=True, db_index=True)
+    lot = models.ForeignKey('Lot', on_delete=models.SET_NULL, null=True, blank=True, related_name="whatsapp_broadcasts")
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, related_name="whatsapp_broadcasts")
+    title = models.CharField(max_length=255)
+    message_body = models.TextField()
+    target_category = models.CharField(max_length=100, blank=True, default="All")
+    target_location = models.CharField(max_length=100, blank=True, default="All")
+    min_discount_filter = models.PositiveIntegerField(default=0)
+    recipients_count = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, default="SENT", choices=STATUS_CHOICES)
+    send_mode = models.CharField(max_length=30, default="WHATSAPP_WEB", choices=SEND_MODE_CHOICES)
+    sent_by = models.ForeignKey('AdminDetails', on_delete=models.SET_NULL, null=True, blank=True, related_name="whatsapp_broadcasts")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "WhatsApp Broadcast"
+        verbose_name_plural = "WhatsApp Broadcasts"
+        db_table = "whatsapp_broadcasts"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.broadcast_id} - {self.title} ({self.recipients_count} recipients)"
+
+
+class WhatsAppInboundMessage(models.Model):
+    """
+    Inbound messages received from sellers/buyers via WhatsApp Webhook or Intake desk.
+    """
+    INTAKE_TYPE_CHOICES = (
+        ("SELLER_OFFER", "Seller Liquidation Offer"),
+        ("BUYER_RFQ", "Buyer RFQ Enquiry"),
+        ("GENERAL", "General Inquiry"),
+    )
+    STATUS_CHOICES = (
+        ("NEW", "New"),
+        ("REVIEWED", "Reviewed"),
+        ("CONVERTED_TO_LOT", "Converted to Lot"),
+        ("CONVERTED_TO_ENQUIRY", "Converted to Enquiry"),
+        ("ARCHIVED", "Archived"),
+    )
+
+    sender_phone = models.CharField(max_length=50, db_index=True)
+    sender_name = models.CharField(max_length=150, blank=True, default="")
+    message_text = models.TextField()
+    media_url = models.CharField(max_length=500, blank=True, default="")
+    media_type = models.CharField(max_length=50, blank=True, default="")
+    intake_type = models.CharField(max_length=50, default="SELLER_OFFER", choices=INTAKE_TYPE_CHOICES)
+    status = models.CharField(max_length=30, default="NEW", choices=STATUS_CHOICES)
+    converted_lot = models.ForeignKey('Lot', on_delete=models.SET_NULL, null=True, blank=True, related_name="inbound_whatsapp_messages")
+    converted_enquiry = models.ForeignKey('ContactUsEnquiry', on_delete=models.SET_NULL, null=True, blank=True, related_name="inbound_whatsapp_messages")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "WhatsApp Inbound Message"
+        verbose_name_plural = "WhatsApp Inbound Messages"
+        db_table = "whatsapp_inbound_messages"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.sender_name or self.sender_phone}: {self.message_text[:40]}"
+
+
+class WhatsAppApiConfig(models.Model):
+    """
+    Optional API credentials for Meta WhatsApp Cloud API or Twilio integration.
+    """
+    is_cloud_api_enabled = models.BooleanField(default=False)
+    phone_number_id = models.CharField(max_length=100, blank=True, default="")
+    waba_id = models.CharField(max_length=100, blank=True, default="", help_text="WhatsApp Business Account ID")
+    access_token = models.TextField(blank=True, default="")
+    webhook_verify_token = models.CharField(max_length=100, blank=True, default="surplus_whatsapp_verify_token")
+    default_business_phone = models.CharField(
+        max_length=50, blank=True, default="+971500000000",
+        help_text="Official Surplus WhatsApp number for click-to-chat links"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "WhatsApp API Configuration"
+        verbose_name_plural = "WhatsApp API Configuration"
+        db_table = "whatsapp_api_config"
+
+    def __str__(self):
+        status = "Cloud API Enabled" if self.is_cloud_api_enabled else "Free WhatsApp Web Mode"
+        return f"WhatsApp Config ({status})"
+
+    @classmethod
+    def get_config(cls):
+        cfg, _ = cls.objects.get_or_create(id=1)
+        return cfg
+
