@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Contacting Us - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #0d9488, #0f766e);
+            padding: 28px 24px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .content {
+            padding: 28px 24px;
+        }
+        .summary-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 18px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .message-preview {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid #0d9488;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #475569;
+            white-space: pre-wrap;
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>We Received Your Message!</h1>
+            <p style="margin: 0; color: #ccfbf1; font-size: 13px;">Thank you for contacting Surplus Market</p>
+        </div>
+        <div class="content">
+            <p style="font-size: 15px; margin-top: 0;">
+                Hello <strong>{{ enquiry.full_name|default:"Valued Customer" }}</strong>,
+            </p>
+            <p style="font-size: 14px; line-height: 1.6;">
+                Thank you for reaching out to us. We have received your inquiry and our support team has been notified. We will review your message and get back to you within <strong>24 to 48 business hours</strong>.
+            </p>
+            <div class="summary-box">
+                <p style="margin: 0 0 6px 0;"><strong>Enquiry Reference:</strong> <span style="font-family: monospace;">#{{ enquiry.id }}</span></p>
+                <p style="margin: 0 0 6px 0;"><strong>Category / Type:</strong> {{ enquiry.enquiry_type|default:"General Inquiry" }}</p>
+                <p style="margin: 0 0 4px 0;"><strong>Your Message:</strong></p>
+                <div class="message-preview">{{ enquiry.message|default:"(No message body provided)" }}</div>
+            </div>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
+                If your inquiry is urgent, you can also reach us via phone or reply directly to this email notification.
+            </p>
+        </div>
+        <div class="footer">
+            &copy; Surplus Market Team &bull; All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

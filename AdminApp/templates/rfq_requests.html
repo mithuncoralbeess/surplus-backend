@@ -181,9 +181,14 @@
                         </div>
                     </td>
                     <td>
-                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:item.company_name }}">
-                            {{ item.contact_person|default:item.buyer.full_name|default:item.company_name }}
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:'Valued Buyer' }}">
+                            {{ item.contact_person|default:item.buyer.full_name|default:"Valued Buyer" }}
                         </div>
+                        {% if item.company_name and item.company_name|lower != item.contact_person|lower and item.company_name != 'Individual Buyer' %}
+                        <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.company_name }}">
+                            <i class="bi bi-building me-1"></i>{{ item.company_name }}
+                        </div>
+                        {% endif %}
                         <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.email }}">
                             <i class="bi bi-envelope me-1"></i>{{ item.email }}
                         </div>

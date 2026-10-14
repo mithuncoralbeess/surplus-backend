@@ -79,7 +79,9 @@
             </p>
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 20px; font-size: 13px;">
                 <p style="margin: 0 0 8px 0;"><strong>Reference:</strong> <span style="font-family: monospace;">{{ rfq.reference }}</span></p>
+                {% if rfq.company_name and rfq.company_name|lower != rfq.contact_person|lower and rfq.company_name != 'Individual Buyer' %}
                 <p style="margin: 0 0 8px 0;"><strong>Company:</strong> {{ rfq.company_name }}</p>
+                {% endif %}
                 <p style="margin: 0 0 8px 0;"><strong>Buyer Contact:</strong> {{ rfq.contact_person }} ({{ rfq.email }})</p>
                 <p style="margin: 0 0 8px 0;"><strong>Total Units:</strong> {{ rfq.total_units }} units across {{ rfq.items.count }} items</p>
                 <p style="margin: 0 0 8px 0;"><strong>Est. Baseline Value:</strong> <span class="stat-badge">{{ rfq.currency }} {{ rfq.estimated_value|floatformat:2 }}</span></p>

@@ -215,9 +215,16 @@
             </div>
             <div class="card-body p-4">
                 <div class="mb-3">
-                    <span class="text-secondary small d-block">Full Name</span>
-                    <strong class="text-dark fs-6">{{ rfq.contact_person|default:rfq.buyer.full_name|default:rfq.company_name|default:"N/A" }}</strong>
+                    <span class="text-secondary small d-block">Buyer Name</span>
+                    <strong class="text-dark fs-6">{{ rfq.contact_person|default:rfq.buyer.full_name|default:"Valued Buyer" }}</strong>
                 </div>
+
+                {% if rfq.company_name and rfq.company_name|lower != rfq.contact_person|lower and rfq.company_name != 'Individual Buyer' %}
+                <div class="mb-3">
+                    <span class="text-secondary small d-block">Company / Organization</span>
+                    <strong class="text-dark fs-6">{{ rfq.company_name }}</strong>
+                </div>
+                {% endif %}
 
                 <div class="mb-3">
                     <span class="text-secondary small d-block">Email</span>

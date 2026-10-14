@@ -684,16 +684,175 @@ class EmailService:
         )
 
     @classmethod
+    def get_admin_notification_email(cls) -> str:
+        """Resolves target email for admin alerts with database fallback."""
+        env_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "").strip()
+        if env_email:
+            return env_email
+        try:
+            from .models import AdminDetails
+            superadmin = AdminDetails.objects.filter(account_type="SuperAdmin", status=True).first()
+            if superadmin and superadmin.email:
+                return superadmin.email
+            admin = AdminDetails.objects.filter(status=True).first()
+            if admin and admin.email:
+                return admin.email
+        except Exception:
+            pass
+        return "super@gmail.com"
+
+    @classmethod
+    def send_contact_us_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email and user confirmation email for a ContactUsEnquiry.
+        Accepts model instance or dictionary.
+        """
+        full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Customer"
+        email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        enquiry_type = getattr(enquiry, "enquiry_type", None) or (enquiry.get("enquiry_type") if isinstance(enquiry, dict) else "") or "General Inquiry"
+        message = getattr(enquiry, "message", None) or (enquiry.get("message") if isinstance(enquiry, dict) else "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        admin_url = "https://surplusmarket.com/admin/contact-us/"
+        admin_email = cls.get_admin_notification_email()
+
+        context = {
+            "enquiry": enquiry,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "enquiry_type": enquiry_type,
+            "message": message,
+            "enquiry_id": enquiry_id,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_contact_us_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for contact us admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Contact Enquiry Received</h2>"
+                f"<p><strong>Name:</strong> {full_name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Phone:</strong> {phone}</p>"
+                f"<p><strong>Type:</strong> {enquiry_type}</p>"
+                f"<p><strong>Message:</strong></p><blockquote>{message}</blockquote>"
+                f"<p><a href='{admin_url}'>View in Admin Dashboard</a></p>"
+            )
+
+        admin_subject = f"New Contact Enquiry from {full_name} [{enquiry_type}]"
+        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "ContactAdminAlert", context=context)
+
+        # 2. User Confirmation Email
+        if email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_contact_us_user_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for contact us user confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>Thank You for Contacting Surplus Market</h2>"
+                    f"<p>Hello {full_name},</p>"
+                    f"<p>We have received your enquiry regarding {enquiry_type}. Our support team will review it and reply within 24 to 48 business hours.</p>"
+                    f"<p><strong>Your Message:</strong></p><blockquote>{message}</blockquote>"
+                )
+
+            user_subject = f"We have received your enquiry - Surplus Market [Ref #{enquiry_id or 'General'}]"
+            results["user_email"] = cls.send_email(email, user_subject, user_html, "ContactUserConfirm", context=context)
+
+        return results
+
+    @classmethod
+    def send_partnership_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email and partner confirmation email for a PartnershipEnquiry.
+        Accepts model instance or dictionary.
+        """
+        name = getattr(enquiry, "name", None) or (enquiry.get("name") if isinstance(enquiry, dict) else "") or "Prospective Partner"
+        email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        business_location = getattr(enquiry, "business_location", None) or (enquiry.get("business_location") if isinstance(enquiry, dict) else "")
+        partnership_interest = getattr(enquiry, "partnership_interest", None) or (enquiry.get("partnership_interest") if isinstance(enquiry, dict) else "") or "Strategic Partnership"
+        subject_text = getattr(enquiry, "subject", None) or (enquiry.get("subject") if isinstance(enquiry, dict) else "")
+        collaboration_details = getattr(enquiry, "collaboration_details", None) or (enquiry.get("collaboration_details") if isinstance(enquiry, dict) else "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        admin_url = "https://surplusmarket.com/admin/enquiries/partnership/"
+        admin_email = cls.get_admin_notification_email()
+
+        context = {
+            "enquiry": enquiry,
+            "name": name,
+            "email": email,
+            "business_location": business_location,
+            "partnership_interest": partnership_interest,
+            "subject": subject_text,
+            "collaboration_details": collaboration_details,
+            "enquiry_id": enquiry_id,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_partnership_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for partnership admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Partnership Proposal Received</h2>"
+                f"<p><strong>Partner Name:</strong> {name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Location:</strong> {business_location}</p>"
+                f"<p><strong>Interest:</strong> {partnership_interest}</p>"
+                f"<p><strong>Subject:</strong> {subject_text}</p>"
+                f"<p><strong>Collaboration Details:</strong></p><blockquote>{collaboration_details}</blockquote>"
+                f"<p><a href='{admin_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_subject = f"New Partnership Proposal from {name} [{partnership_interest}]"
+        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "PartnershipAdminAlert", context=context)
+
+        # 2. Partner/User Confirmation Email
+        if email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_partnership_user_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for partnership user confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>Partnership Proposal Received</h2>"
+                    f"<p>Hello {name},</p>"
+                    f"<p>Thank you for reaching out regarding a partnership with Surplus Market. Our Business Development team is reviewing your proposal and will be in touch shortly.</p>"
+                )
+
+            user_subject = f"Partnership Proposal Received - Surplus Market [Ref #{enquiry_id or 'General'}]"
+            results["user_email"] = cls.send_email(email, user_subject, user_html, "PartnershipUserConfirm", context=context)
+
+        return results
+
+    @classmethod
     def send_contact_form_email(cls, user_data: dict, form_type="query") -> bool:
         """Dispatches contact/partnership queries to admins."""
-        html_content = (
-            f"<h3>Contact Enquiry ({form_type.upper()})</h3>"
-            f"<p><strong>Name:</strong> {user_data.get('name')}</p>"
-            f"<p><strong>Email:</strong> {user_data.get('email')}</p>"
-            f"<p><strong>Message:</strong> {user_data.get('message')}</p>"
-        )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
-        return cls.send_email(admin_email, f"Contact Form Submission: {form_type}", html_content, "Contact")
+        if str(form_type).lower() in ("partnership", "partnership_enquiry"):
+            res = cls.send_partnership_emails(user_data)
+            return res.get("admin_email", False)
+        res = cls.send_contact_us_emails(user_data)
+        return res.get("admin_email", False)
 
     @classmethod
     def send_prize_email(cls, to_email: str, prize_name: str, certificate_path=None) -> bool:
@@ -703,6 +862,10 @@ class EmailService:
         return cls.send_email_with_attachments(
             to_email, f"Surplus Reward: You won {prize_name}!", html_content, file_paths=file_paths
         )
+
+
+# Backwards compatibility alias
+EmailNotificationService = EmailService
 
 
 def create_vendor_notification(vendor, title, message, notification_type="SYSTEM", action_url=""):

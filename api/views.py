@@ -933,7 +933,27 @@ def submit_partnership_enquiry(request):
 
     serializer = PartnershipEnquirySerializer(data=payload)
     if serializer.is_valid():
-        serializer.save()
+        enquiry = serializer.save()
+
+        # In-app Admin Notification
+        try:
+            from AdminApp.services import create_admin_notification
+            create_admin_notification(
+                title=f"New Partnership Proposal - {enquiry.name}",
+                message=f"Received a partnership proposal ({enquiry.partnership_interest or 'Strategic Partnership'}) from {enquiry.name} ({enquiry.email}) in {enquiry.business_location or 'N/A'}.",
+                notification_type="ENQUIRY",
+                action_url="/admin/enquiries/partnership/"
+            )
+        except Exception as e:
+            logger.error(f"[submit_partnership_enquiry] Admin notification error: {e}")
+
+        # Email Notifications (Admin Alert + Partner Confirmation)
+        try:
+            from AdminApp.services import EmailService
+            EmailService.send_partnership_emails(enquiry)
+        except Exception as e:
+            logger.error(f"[submit_partnership_enquiry] Email dispatch error: {e}")
+
         return Response({
             "success": True, 
             "message": "Partnership enquiry submitted successfully. We will get back to you soon.",
@@ -974,6 +994,26 @@ def submit_contact_us_enquiry(request):
     serializer = ContactUsEnquirySerializer(data=payload)
     if serializer.is_valid():
         enquiry = serializer.save()
+
+        # In-app Admin Notification
+        try:
+            from AdminApp.services import create_admin_notification
+            create_admin_notification(
+                title=f"New Contact Enquiry - {enquiry.full_name}",
+                message=f"Received a new {enquiry.enquiry_type or 'General'} inquiry from {enquiry.full_name} ({enquiry.email}).",
+                notification_type="ENQUIRY",
+                action_url="/admin/contact-us/"
+            )
+        except Exception as e:
+            logger.error(f"[submit_contact_us_enquiry] Admin notification error: {e}")
+
+        # Email Notifications (Admin Alert + User Confirmation)
+        try:
+            from AdminApp.services import EmailService
+            EmailService.send_contact_us_emails(enquiry)
+        except Exception as e:
+            logger.error(f"[submit_contact_us_enquiry] Email dispatch error: {e}")
+
         return Response({
             "success": True,
             "message": "Contact enquiry submitted successfully. Thank you for reaching out!",
@@ -1039,11 +1079,7 @@ def submit_rfq_enquiry(request):
     email = (payload.get("email") or "").strip().lower()
 
     if not email:
-        return Response({"success": False, "message": "Corporate email address is required."}, status=status.HTTP_400_BAD_REQUEST)
-    if not company_name:
-        return Response({"success": False, "message": "Company name is required."}, status=status.HTTP_400_BAD_REQUEST)
-    if not contact_person:
-        contact_person = company_name
+        return Response({"success": False, "message": "Email address is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     phone = str(payload.get("phone") or payload.get("contactNo") or payload.get("mobile") or "").strip()
     country = str(payload.get("country") or "").strip()
@@ -1080,6 +1116,24 @@ def submit_rfq_enquiry(request):
         buyer_vendor = _resolve_vendor_from_param(buyer_param)
     if not buyer_vendor:
         buyer_vendor = VendorDetails.objects.filter(email__iexact=email).first()
+
+    if not contact_person:
+        if buyer_vendor and buyer_vendor.full_name:
+            contact_person = buyer_vendor.full_name.strip()
+        elif company_name and company_name.lower() not in ["individual", "individual buyer", "n/a", "none"]:
+            contact_person = company_name
+        else:
+            contact_person = email.split("@")[0]
+
+    # Clean company_name: avoid personal name or placeholder being recorded as company
+    if company_name.lower() in [contact_person.lower(), "individual", "individual buyer", "n/a", "none"]:
+        company_name = ""
+
+    # Check buyer_vendor profile if company_name was not provided
+    if not company_name and buyer_vendor and getattr(buyer_vendor, "company_name", None):
+        saved_comp = buyer_vendor.company_name.strip()
+        if saved_comp.lower() not in [contact_person.lower(), "individual", "individual buyer", "n/a", "none"]:
+            company_name = saved_comp
 
     if not country and buyer_vendor and getattr(buyer_vendor, "country", None):
         country = buyer_vendor.country
@@ -1196,8 +1250,9 @@ def submit_rfq_enquiry(request):
         rfq.save(update_fields=["total_units", "estimated_value"])
 
     try:
+        company_label = f" - {rfq.company_name}" if rfq.company_name else f" - {rfq.contact_person}"
         create_admin_notification(
-            title=f"New Buyer RFQ {rfq.reference} - {rfq.company_name}",
+            title=f"New Buyer RFQ {rfq.reference}{company_label}",
             message=f"Buyer {contact_person} ({email}) submitted a consolidated RFQ for {item_count} items ({rfq.total_units} units, est. {rfq.currency} {rfq.estimated_value:,.2f}).",
             notification_type="RFQ",
             action_url=f"/admin/rfq-requests/{rfq.id}/detail/"

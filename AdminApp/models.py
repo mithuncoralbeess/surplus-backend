@@ -2148,7 +2148,7 @@ class RfqEnquiry(models.Model):
         help_text="Linked buyer account if authenticated or resolved from email"
     )
     contact_person = models.CharField(max_length=255)
-    company_name = models.CharField(max_length=255)
+    company_name = models.CharField(max_length=255, blank=True, default="")
     email = models.EmailField(db_index=True)
     phone = models.CharField(max_length=50, blank=True, default="")
     country = models.CharField(max_length=100, blank=True, default="")
