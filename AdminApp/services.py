@@ -714,7 +714,8 @@ class EmailService:
         message = getattr(enquiry, "message", None) or (enquiry.get("message") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        admin_url = "https://surplusmarket.com/admin/contact-us/"
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/contact-us/"
         admin_email = cls.get_admin_notification_email()
 
         context = {
@@ -786,7 +787,8 @@ class EmailService:
         collaboration_details = getattr(enquiry, "collaboration_details", None) or (enquiry.get("collaboration_details") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        admin_url = "https://surplusmarket.com/admin/enquiries/partnership/"
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/partnership/"
         admin_email = cls.get_admin_notification_email()
 
         context = {

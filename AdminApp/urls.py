@@ -169,9 +169,11 @@ urlpatterns = [
 
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),
+    path("contact-us/", contact_enquiries_view, name="contact_enquiries_alias"),
 
     path("enquiries/whatsapp/", whatsapp_enquiries_view, name="whatsapp_enquiries"),
     path("enquiries/partnership/", partnership_enquiries_view, name="partnership_enquiries"),
+    path("partnership/", partnership_enquiries_view, name="partnership_enquiries_alias"),
 
     # Buyer RFQ Requests / Quotations (Frontend Cart & RFQ Basket)
     path("rfq-requests/", rfq_requests_view, name="rfq_requests_list"),

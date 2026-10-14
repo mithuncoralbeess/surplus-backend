@@ -1002,7 +1002,7 @@ def submit_contact_us_enquiry(request):
                 title=f"New Contact Enquiry - {enquiry.full_name}",
                 message=f"Received a new {enquiry.enquiry_type or 'General'} inquiry from {enquiry.full_name} ({enquiry.email}).",
                 notification_type="ENQUIRY",
-                action_url="/admin/contact-us/"
+                action_url="/admin/enquiries/contact-us/"
             )
         except Exception as e:
             logger.error(f"[submit_contact_us_enquiry] Admin notification error: {e}")
