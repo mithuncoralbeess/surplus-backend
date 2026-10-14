@@ -45,6 +45,7 @@ from .views import (
     upload_lot_manifest_api,
     parse_lot_spreadsheet_api,
     save_lot_products_api,
+    lot_warehouse_explorer_admin_api,
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
@@ -151,6 +152,7 @@ urlpatterns = [
     path("api/enquiries/lots/<int:enquiry_id>/parse/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api"),
     path("api/enquiries/lots/<int:enquiry_id>/parse-spreadsheet/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api_alt"),
     path("api/enquiries/lots/<int:enquiry_id>/save-products/", save_lot_products_api, name="save_lot_products_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/explorer/", lot_warehouse_explorer_admin_api, name="lot_warehouse_explorer_admin_api"),
     # User Management (Registered Users List without RFQs/Products)
     path("users/", manage_users_view, name="manage_users"),
     path("manage-users/", manage_users_view, name="manage_users_alias"),

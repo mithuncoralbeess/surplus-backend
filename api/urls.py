@@ -25,6 +25,7 @@ from .views import (
     submit_product_request,
     submit_lot_request,
     public_lot_detail_api,
+    lot_warehouse_explorer_api,
     track_view_api,
     get_public_categories,
     get_vendor_notifications,
@@ -102,6 +103,7 @@ urlpatterns = [
     path("lots/", submit_lot_request, name="public_lots_api"),
     path("lots/create/", submit_lot_request, name="create_lot_api"),
     path("lots/<str:lot_id>/", public_lot_detail_api, name="public_lot_detail_api"),
+    path("lots/<str:lot_id>/explorer/", lot_warehouse_explorer_api, name="lot_warehouse_explorer_api"),
     path("submit-product-request/", submit_product_request, name="submit_product_request"),
     path("submit-lot-request/", submit_lot_request, name="submit_lot_request"),
 

@@ -2000,6 +2000,33 @@ def public_lot_detail_api(request, lot_id):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def lot_warehouse_explorer_api(request, lot_id):
+    """
+    Public GET API for the Interactive Virtual Warehouse Explorer.
+    Fetches structured SKU grid items and wholesale analytics:
+    (Total SKUs, Units, MSRP vs Ask, Brand % Breakdown, Condition Distribution, Top Profit Drivers).
+    """
+    from AdminApp.models import Lot
+    from AdminApp.warehouse_explorer import get_lot_warehouse_explorer_data
+    from django.db.models import Q
+
+    try:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.get(Q(id=int(lot_id)) | Q(lot_number__iexact=str(lot_id)))
+        else:
+            lot = Lot.objects.get(lot_number__iexact=str(lot_id))
+    except Lot.DoesNotExist:
+        return Response(
+            {"success": False, "message": f"Lot '{lot_id}' not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    data = get_lot_warehouse_explorer_data(lot)
+    return Response(data, status=status.HTTP_200_OK)
+
+
 from datetime import timedelta
 from django.db.models import F, Q
 from AdminApp.models import PageViewLog, BlogPost, Product, Lot

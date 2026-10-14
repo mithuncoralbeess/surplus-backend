@@ -2247,12 +2247,16 @@ def parse_lot_spreadsheet_api(request, enquiry_id):
                 cleaned_products.append(p_clean)
                 row_counter += 1
 
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(lot, items_override=cleaned_products)
+
     return Response({
         "success": True,
         "message": f"Successfully parsed {len(cleaned_products)} products from Inventory tab.",
         "is_saved_to_db": False,
         "count": len(cleaned_products),
         "products": cleaned_products,
+        "explorer_data": explorer_data,
         "summary": parse_res.get("summary", {})
     }, status=status.HTTP_200_OK)
 
@@ -2782,6 +2786,11 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     context["extra_data"] = extra_data
 
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(enquiry, items_override=cleaned_products if cleaned_products else None)
+    context["explorer_data"] = explorer_data
+    context["explorer_json"] = json.dumps(explorer_data)
+
     return render(request, "lot_enquiry_detail.html", context)
 
 
@@ -2864,11 +2873,37 @@ def save_lot_products_api(request, enquiry_id):
     enquiry.raw_data["is_saved_to_db"] = True
     enquiry.save()
 
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(enquiry)
+
     return Response({
         "success": True,
         "message": f"Successfully saved {saved_count} products to database.",
-        "saved_count": saved_count
+        "saved_count": saved_count,
+        "explorer_data": explorer_data,
+        "is_saved_to_db": True,
     })
+
+
+@api_view(["GET"])
+def lot_warehouse_explorer_admin_api(request, enquiry_id):
+    """
+    Admin API endpoint to retrieve full Virtual Warehouse Explorer data and metrics for a Lot.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Lot
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    data = get_lot_warehouse_explorer_data(lot)
+    return Response(data, status=status.HTTP_200_OK)
 
 
 def manage_users_view(request):

@@ -3,6 +3,35 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/enquiry_detail.css' %}">
+<style>
+    .shadow-xs {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hover-shadow-sm {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .hover-shadow-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    #explorer-sku-table thead th {
+        background-color: #f8fafc !important;
+        border-bottom: 2px solid #e2e8f0;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+    .brand-filter-chip {
+        transition: all 0.15s ease;
+    }
+    .brand-filter-chip:hover {
+        transform: translateY(-1px);
+    }
+    #explorer-brand-progressbar .progress-bar {
+        transition: width 0.4s ease;
+    }
+</style>
 
 <div class="container-fluid detail-page-wrapper p-0">
     <!-- Header -->
@@ -454,18 +483,33 @@
     </div>
 
 
+    <!-- ========================================== -->
+    <!-- INTERACTIVE VIRTUAL WAREHOUSE EXPLORER     -->
+    <!-- ========================================== -->
     <div class="row mb-4">
-        <!-- Main Products Table -->
         <div class="col-12">
-            <div class="premium-card h-100">
-                <div class="card-body p-4 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                            <i class="bi bi-table me-2 text-primary"></i>Extracted Products
-                            <span class="badge bg-primary rounded-pill ms-2">{{ products|length }}</span>
-                        </h6>
+            <div class="premium-card h-100 shadow-sm border-0 rounded-4 overflow-hidden" id="warehouseExplorerCard">
+                <!-- Header Toolbar -->
+                <div class="card-body p-4 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3 bg-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2.5 bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-grid-3x3-gap-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="fw-bold text-dark mb-0">Virtual Warehouse Explorer</h5>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
+                                    LIVE SKU GRID
+                                </span>
+                                <span id="explorer-total-skus-badge" class="badge bg-dark rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.72rem;">
+                                    {{ explorer_data.summary.total_skus|default:0 }} SKUs
+                                </span>
+                            </div>
+                            <small class="text-secondary">Interactive wholesale lot explorer with instant search, brand allocation, condition filters & line economics</small>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+
+                    <div class="d-flex align-items-center flex-wrap gap-2">
                         {% if enquiry.file %}
                         <button type="button" id="btn-parse-spreadsheet-data" class="btn btn-outline-primary btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" data-id="{{ enquiry.id }}">
                             <i class="bi bi-file-earmark-spreadsheet-fill fs-6 text-primary"></i> Parse Spreadsheet Data
@@ -474,8 +518,8 @@
 
                         <span id="db-status-container">
                             {% if is_saved_to_db %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.82rem;">
-                                <i class="bi bi-database-check me-1"></i> Saved to Database
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                                <i class="bi bi-database-check fs-6"></i> Saved to Database
                             </span>
                             {% else %}
                             <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
@@ -483,188 +527,258 @@
                             </button>
                             {% endif %}
                         </span>
+
+                        <button type="button" id="btn-export-explorer-csv" class="btn btn-light border btn-sm px-3 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm text-secondary hover-dark" title="Export currently filtered SKU items to CSV">
+                            <i class="bi bi-cloud-arrow-down-fill text-success fs-6"></i> Export Filtered CSV
+                        </button>
                     </div>
                 </div>
 
-                <div id="preview-alert-container" class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 {% if not products or is_saved_to_db %}d-none{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <!-- Preview Alert Container -->
+                <div id="preview-alert-container" class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 {% if not explorer_data.items or is_saved_to_db %}d-none{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="p-2.5 bg-warning bg-opacity-25 text-warning-emphasis rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                             <i class="bi bi-eye-fill fs-5"></i>
                         </div>
                         <div>
-                            <h6 class="fw-bold text-dark mb-0.5">Previewing Extracted Spreadsheet Data (Not Saved to DB Yet)</h6>
-                            <small class="text-secondary" id="preview-alert-text">Products parsed from Inventory tab. Click "Save Products to Database" to commit these records.</small>
+                            <h6 class="fw-bold text-dark mb-0.5">Previewing Extracted Spreadsheet Data (Not Committed to Database)</h6>
+                            <small class="text-secondary" id="preview-alert-text">Inventory is running in live memory explorer. Click "Save Products to Database" to commit these SKUs.</small>
                         </div>
                     </div>
                     <button type="button" class="btn btn-success px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
-                        <i class="bi bi-database-add"></i> Save Products to Database
+                        <i class="bi bi-database-add"></i> Commit to Database
                     </button>
                 </div>
 
+                <!-- Executive Valuation & Volume KPI Stats Bar -->
+                <div class="p-4 bg-light bg-opacity-50 border-bottom" id="explorer-kpi-bar">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Distinct SKUs</small>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-distinct-skus">{{ explorer_data.summary.total_skus|default:0 }}</h4>
+                                    <small class="text-muted" style="font-size: 0.75rem;">lines</small>
+                                </div>
+                                <small class="text-primary mt-1" style="font-size: 0.72rem;"><i class="bi bi-diagram-3 me-1"></i>Catalog Diversity</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Units</small>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-units">{{ explorer_data.summary.total_units|default:0 }}</h4>
+                                    <small class="text-muted" style="font-size: 0.75rem;">pcs</small>
+                                </div>
+                                <small class="text-secondary mt-1" style="font-size: 0.72rem;"><i class="bi bi-boxes me-1"></i>Physical Inventory</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Retail MSRP</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <span class="text-secondary fw-semibold">$</span>
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-msrp">{{ explorer_data.summary.total_msrp|floatformat:2|default:"0.00" }}</h4>
+                                </div>
+                                <small class="text-muted mt-1" style="font-size: 0.72rem;"><i class="bi bi-tag me-1"></i>Benchmark Value</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ask / Liquidation</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <span class="text-success fw-bold">$</span>
+                                    <h4 class="fw-bold text-success mb-0 font-monospace" id="kpi-total-ask">{{ explorer_data.summary.total_ask|floatformat:2|default:"0.00" }}</h4>
+                                </div>
+                                <small class="text-success mt-1" style="font-size: 0.72rem;"><i class="bi bi-cash-stack me-1"></i>Payout / Lot Price</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-gradient text-white" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                                <small class="text-white text-opacity-75 text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Blended Discount</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <h4 class="fw-bold text-white mb-0 font-monospace" id="kpi-discount-pct">{{ explorer_data.summary.blended_discount_pct|default:0 }}%</h4>
+                                    <small class="text-white text-opacity-90 fw-semibold ms-1" style="font-size: 0.75rem;">OFF MSRP</small>
+                                </div>
+                                <small class="text-white text-opacity-75 mt-1" style="font-size: 0.72rem;"><i class="bi bi-graph-down-arrow me-1"></i>Wholesale Margin Spread</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Intelligence: Brand Breakdown & Top Profit Drivers Spotlight -->
+                <div class="p-4 border-bottom bg-white" id="explorer-intelligence-section">
+                    <div class="row g-4">
+                        <!-- Brand Value Distribution -->
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                                    <i class="bi bi-pie-chart-fill text-primary"></i> Brand Allocation (% of Lot Value)
+                                </h6>
+                                <small class="text-muted" style="font-size: 0.75rem;">Click a brand chip to filter</small>
+                            </div>
+                            <!-- Multi-segment brand progress bar -->
+                            <div class="progress rounded-pill mb-3" style="height: 10px;" id="explorer-brand-progressbar">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                            <!-- Brand Chips -->
+                            <div class="d-flex flex-wrap gap-1.5" id="explorer-brand-chips">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Top Profit Drivers Spotlight -->
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                                    <i class="bi bi-lightning-charge-fill text-warning"></i> Top Profit Drivers (High-Value SKUs)
+                                </h6>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.7rem;">
+                                    VALUE CORE
+                                </span>
+                            </div>
+                            <div class="row g-2" id="explorer-profit-drivers-container">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live SKU Filter & Search Toolbar -->
+                <div class="p-3 bg-light border-bottom" id="explorer-toolbar">
+                    <div class="row g-2 align-items-center">
+                        <!-- Live Search -->
+                        <div class="col-12 col-md-4 col-lg-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" id="explorer-search-input" class="form-control border-start-0 ps-0" placeholder="Search SKU, name, part #..." autocomplete="off">
+                                <button type="button" id="explorer-clear-search-btn" class="btn btn-outline-secondary border-start-0 d-none" title="Clear Search">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Brand Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-brand-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Brands</option>
+                            </select>
+                        </div>
+
+                        <!-- Category Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-category-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+
+                        <!-- Condition / Tested Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-condition-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Conditions</option>
+                                <option value="tested_yes">Tested & Verified Only</option>
+                                <option value="tested_no">Untested Only</option>
+                                <option value="no_damage">No Visible Damage</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By Selector -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-sort-select" class="form-select form-select-sm text-dark">
+                                <option value="line_msrp_desc">Sort: Line MSRP (High to Low)</option>
+                                <option value="line_msrp_asc">Sort: Line MSRP (Low to High)</option>
+                                <option value="unit_msrp_desc">Sort: Unit MSRP (High to Low)</option>
+                                <option value="qty_desc">Sort: Quantity (High to Low)</option>
+                                <option value="name_asc">Sort: Product Name (A-Z)</option>
+                                <option value="s_no_asc">Sort: Sheet Order (S.No)</option>
+                            </select>
+                        </div>
+
+                        <!-- Page Size Selector -->
+                        <div class="col-12 col-md-2 col-lg-1 d-flex justify-content-end align-items-center gap-1">
+                            <label class="small text-muted mb-0 d-none d-lg-inline" style="font-size: 0.72rem;">Show:</label>
+                            <select id="explorer-page-size-select" class="form-select form-select-sm" style="width: auto;">
+                                <option value="15">15</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Pill Bar -->
+                    <div id="explorer-active-filters-bar" class="d-none mt-2 pt-2 border-top d-flex align-items-center gap-2 flex-wrap">
+                        <small class="text-muted fw-semibold" style="font-size: 0.72rem;">Active Filters:</small>
+                        <div id="explorer-filter-pills" class="d-flex flex-wrap gap-1"></div>
+                        <button type="button" id="explorer-reset-filters-btn" class="btn btn-link btn-sm text-danger p-0 ms-auto text-decoration-none" style="font-size: 0.75rem;">
+                            <i class="bi bi-x-circle me-1"></i>Reset All Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Paginated Table Container -->
                 <div class="card-body p-0" id="extracted-products-container">
-                    {% if products %}
-                    <div class="table-responsive border rounded-3">
-                        <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
-                            <thead class="table-light">
+                    <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
+                        <table class="table table-hover table-striped align-middle mb-0" id="explorer-sku-table" style="font-size: 0.83rem;">
+                            <thead class="table-light sticky-top shadow-xs" style="z-index: 5;">
                                 <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
                                     <th class="ps-4 py-3 fw-semibold text-nowrap" style="min-width: 65px;">S.No*</th>
                                     <th class="py-3 fw-semibold text-nowrap" style="min-width: 220px;">Product Name*</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 240px;">Product Description*</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Product Category*</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Subcategory*</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Brand / Manufacturer</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Model / Part Number</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Available Quantity*</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Original Price</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Product Description*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Category*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Subcategory*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Brand / Mfr</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Model / Part #</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Available Qty*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Unit MSRP</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Total Line MSRP</th>
                                     <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Asking Price</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Country of Origin</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Year of Manufacture</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Datasheet / Certificate Link</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Gross Weight per Unit</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Length</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Width</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Height</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Measurement Unit</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Stock Age</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Tested and verified</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Functional Status</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Visible Damage?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Missing Parts?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Warranty Available?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Safety Certificate Available?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Certificate Type</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Regulatory Approval</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Hazardous Material?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Recyclable?</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Estimated Product Life Remaining</th>
-                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Seller Custom Field 1</th>
-                                    <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 160px;">Seller Custom Field 2</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Country of Origin</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Mfg Year</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Datasheet / Cert</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Gross Weight</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Length</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Width</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Height</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 100px;">UOM</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Stock Age</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Tested & Verified</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Functional Status</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Visible Damage?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Missing Parts?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Warranty?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Safety Certificate?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Certificate Type</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Regulatory Approval</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Hazardous?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 100px;">Recyclable?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 170px;">Estimated Remaining Life</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Custom Field 1</th>
+                                    <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 150px;">Custom Field 2</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for prod in products %}
-                                <tr>
-                                    <td class="ps-4 fw-bold font-monospace text-dark text-nowrap">{{ prod.s_no|default:forloop.counter }}</td>
-                                    <td class="fw-bold text-dark text-nowrap">{{ prod.product_name|default:"-" }}</td>
-                                    <td>
-                                        <div class="text-secondary text-truncate" style="max-width: 240px;" title="{{ prod.product_description }}">{{ prod.product_description|default:"-" }}</div>
-                                    </td>
-                                    <td class="text-nowrap"><span class="badge bg-light text-dark border">{{ prod.product_category|default:"-" }}</span></td>
-                                    <td class="text-nowrap"><span class="badge bg-light text-dark border">{{ prod.subcategory|default:"-" }}</span></td>
-                                    <td class="fw-medium text-dark text-nowrap">{{ prod.brand|default:"-" }}</td>
-                                    <td class="font-monospace text-secondary text-nowrap">{{ prod.model_part_number|default:"-" }}</td>
-                                    <td class="fw-bold text-dark text-nowrap">{{ prod.available_quantity|default:"1" }}</td>
-                                    <td class="text-secondary text-nowrap">
-                                        {% if prod.original_price and prod.original_price != "NIL" and prod.original_price != "-" and prod.original_price != "None" %}
-                                            ${{ prod.original_price }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td class="fw-bold text-success text-nowrap">
-                                        {% if prod.asking_price and prod.asking_price != "NIL" and prod.asking_price != "-" and prod.asking_price != "None" %}
-                                            ${{ prod.asking_price }}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">{{ prod.country_of_origin|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.year_of_manufacture|default:"-" }}</td>
-                                    <td class="text-nowrap">
-                                        {% if prod.datasheet_certificate_link and prod.datasheet_certificate_link != "-" and prod.datasheet_certificate_link != "None" %}
-                                            {% if prod.datasheet_certificate_link|slice:":4" == "http" %}
-                                                <a href="{{ prod.datasheet_certificate_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" style="font-size: 11px;">
-                                                    <i class="bi bi-box-arrow-up-right me-1"></i>View Link
-                                                </a>
-                                            {% else %}
-                                                <span class="text-secondary">{{ prod.datasheet_certificate_link }}</span>
-                                            {% endif %}
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">{{ prod.gross_weight_per_unit|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.length|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.width|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.height|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.measurement_unit|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.stock_age|default:"-" }}</td>
-                                    <td class="text-nowrap">
-                                        {% if prod.tested_and_verified == "Yes" or prod.tested_and_verified == True or prod.tested_and_verified == "true" or prod.tested_and_verified == "1" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.tested_and_verified == "No" or prod.tested_and_verified == False or prod.tested_and_verified == "false" or prod.tested_and_verified == "0" %}
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.tested_and_verified|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">{{ prod.functional_status|default:"-" }}</td>
-                                    <td class="text-nowrap">
-                                        {% if prod.visible_damage == "Yes" or prod.visible_damage == True or prod.visible_damage == "true" or prod.visible_damage == "1" %}
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.visible_damage == "No" or prod.visible_damage == False or prod.visible_damage == "false" or prod.visible_damage == "0" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.visible_damage|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {% if prod.missing_parts == "Yes" or prod.missing_parts == True or prod.missing_parts == "true" or prod.missing_parts == "1" %}
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.missing_parts == "No" or prod.missing_parts == False or prod.missing_parts == "false" or prod.missing_parts == "0" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.missing_parts|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {% if prod.warranty_available == "Yes" or prod.warranty_available == True or prod.warranty_available == "true" or prod.warranty_available == "1" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.warranty_available == "No" or prod.warranty_available == False or prod.warranty_available == "false" or prod.warranty_available == "0" %}
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.warranty_available|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {% if prod.safety_certificate_available == "Yes" or prod.safety_certificate_available == True or prod.safety_certificate_available == "true" or prod.safety_certificate_available == "1" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.safety_certificate_available == "No" or prod.safety_certificate_available == False or prod.safety_certificate_available == "false" or prod.safety_certificate_available == "0" %}
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.safety_certificate_available|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">{{ prod.certificate_type|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.regulatory_approval|default:"-" }}</td>
-                                    <td class="text-nowrap">
-                                        {% if prod.hazardous_material == "Yes" or prod.hazardous_material == True or prod.hazardous_material == "true" or prod.hazardous_material == "1" %}
-                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.hazardous_material == "No" or prod.hazardous_material == False or prod.hazardous_material == "false" or prod.hazardous_material == "0" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.hazardous_material|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {% if prod.recyclable == "Yes" or prod.recyclable == True or prod.recyclable == "true" or prod.recyclable == "1" %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">Yes</span>
-                                        {% elif prod.recyclable == "No" or prod.recyclable == False or prod.recyclable == "false" or prod.recyclable == "0" %}
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2">No</span>
-                                        {% else %}
-                                            {{ prod.recyclable|default:"-" }}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-nowrap">{{ prod.estimated_product_life_remaining|default:"-" }}</td>
-                                    <td class="text-nowrap">{{ prod.seller_custom_field_1|default:"-" }}</td>
-                                    <td class="pe-4 text-nowrap">{{ prod.seller_custom_field_2|default:"-" }}</td>
-                                </tr>
-                                {% endfor %}
+                            <tbody id="explorer-grid-body">
+                                <!-- Populated dynamically by JS (Page slice) -->
                             </tbody>
                         </table>
                     </div>
-                    {% else %}
-                    <div class="text-center py-5 px-4" id="products-empty-state">
+
+                    <!-- Empty State Container -->
+                    <div id="explorer-empty-state" class="text-center py-5 px-4 d-none">
+                        <i class="bi bi-search text-muted opacity-50 mb-3 d-block" style="font-size: 2.8rem;"></i>
+                        <h6 class="fw-bold text-dark mb-1">No SKUs Match Your Filters</h6>
+                        <p class="text-muted small mb-3">Try adjusting your search keywords, clearing brand filters, or resetting sorting.</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm px-3 rounded-3" onclick="document.getElementById('explorer-reset-filters-btn').click()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                        </button>
+                    </div>
+
+                    <!-- Initial Empty Manifest State (if no products at all) -->
+                    <div id="explorer-initial-empty-state" class="text-center py-5 px-4 {% if explorer_data.items %}d-none{% endif %}">
                         <i class="bi bi-file-earmark-spreadsheet text-primary opacity-75 mb-3 d-block" style="font-size: 3.2rem;"></i>
                         <h5 class="fw-bold text-dark mb-1">Spreadsheet Manifest Attached</h5>
                         <p class="text-muted small mb-3" style="max-width: 480px; margin: 0 auto;">Click the <strong>"Parse Spreadsheet Data"</strong> button to extract and preview products from the <code>Inventory</code> tab before saving to the database.</p>
@@ -674,7 +788,17 @@
                         </button>
                         {% endif %}
                     </div>
-                    {% endif %}
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="card-footer bg-white border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2" id="explorer-pagination-footer">
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted" id="explorer-pagination-info">Showing 0 to 0 of 0 SKUs</small>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-1" id="explorer-pagination-controls">
+                        <!-- Populated dynamically by JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -685,10 +809,11 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        window.currentParsedProducts = null;
+        window.initialExplorerData = {{ explorer_json|safe }};
+        window.currentParsedProducts = (window.initialExplorerData && window.initialExplorerData.items) ? window.initialExplorerData.items : null;
 
         function escapeHtml(str) {
-            if (!str) return '';
+            if (str === null || str === undefined) return '';
             return String(str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
@@ -697,105 +822,369 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Parse Spreadsheet Data Button Handler
-        const parseBtn = document.getElementById('btn-parse-spreadsheet-data');
-        if (parseBtn) {
-            parseBtn.addEventListener('click', async function () {
-                const id = this.dataset.id || '{{ enquiry.id }}';
-                const originalHtml = this.innerHTML;
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Parsing Inventory Tab...';
-
-                try {
-                    const res = await fetch(`/admin/api/enquiries/lots/${id}/parse/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        }
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        renderParsedProductsTable(data.products || []);
-                    } else {
-                        alert('Parsing Error: ' + (data.message || 'Failed to parse spreadsheet.'));
-                    }
-                } catch (err) {
-                    console.error('Parse error:', err);
-                    alert('An error occurred while parsing the spreadsheet.');
-                } finally {
-                    this.disabled = false;
-                    this.innerHTML = originalHtml;
-                }
-            });
+        function formatYesNoBadge(val, isDanger) {
+            if (val === null || val === undefined || val === '' || val === '-' || val === 'None') return '-';
+            const s = String(val).trim().toLowerCase();
+            if (s === 'yes' || s === 'true' || s === '1') {
+                const badgeClass = isDanger ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle';
+                return `<span class="badge ${badgeClass} rounded-pill px-2">Yes</span>`;
+            }
+            if (s === 'no' || s === 'false' || s === '0') {
+                const badgeClass = isDanger ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle';
+                return `<span class="badge ${badgeClass} rounded-pill px-2">No</span>`;
+            }
+            return escapeHtml(val);
         }
 
-        function renderParsedProductsTable(items) {
-            window.currentParsedProducts = items;
+        function formatPriceVal(val, isSuccess) {
+            if (val === null || val === undefined || val === '' || val === '-' || val === 'NIL' || val === '0' || val === 'None') return '-';
+            const s = String(val).trim().replace(/^\$/, '');
+            const num = parseFloat(s);
+            const formatted = !isNaN(num) ? num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : escapeHtml(s);
+            if (isSuccess) {
+                return `<span class="fw-bold text-success">$${formatted}</span>`;
+            }
+            return `<span class="text-secondary">$${formatted}</span>`;
+        }
 
-            const container = document.getElementById('extracted-products-container');
-            const badgeCounts = document.querySelectorAll('.extracted-products-badge');
-            badgeCounts.forEach(b => b.textContent = items.length);
+        function formatLinkVal(val) {
+            if (!val || val === '-' || val === 'None') return '-';
+            const s = String(val).trim();
+            if (s.startsWith('http://') || s.startsWith('https://')) {
+                return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2 text-nowrap" style="font-size: 11px;"><i class="bi bi-box-arrow-up-right me-1"></i>View Link</a>`;
+            }
+            return escapeHtml(s);
+        }
 
-            const previewAlert = document.getElementById('preview-alert-container');
-            if (previewAlert) previewAlert.classList.remove('d-none');
+        const explorerState = {
+            data: window.initialExplorerData || { items: [], summary: {}, brand_breakdown: [], top_profit_drivers: [] },
+            filteredItems: [],
+            searchQuery: '',
+            selectedBrand: 'all',
+            selectedCategory: 'all',
+            selectedCondition: 'all',
+            sortBy: 'line_msrp_desc',
+            currentPage: 1,
+            pageSize: 25,
+        };
 
-            const dbStatusContainer = document.getElementById('db-status-container');
-            if (dbStatusContainer) {
-                dbStatusContainer.innerHTML = `
-                    <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
-                        <i class="bi bi-database-add fs-6"></i> Save Products to Database
-                    </button>
-                `;
+        const BRAND_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1', '#64748b'];
+
+        function initWarehouseExplorer(explorerData) {
+            if (!explorerData) return;
+            explorerState.data = explorerData;
+            window.currentParsedProducts = explorerData.items || [];
+
+            // Update badge counts
+            const totalItems = (explorerData.items || []).length;
+            const badgeEl = document.getElementById('explorer-total-skus-badge');
+            if (badgeEl) badgeEl.textContent = `${totalItems} SKUs`;
+
+            const legacyBadges = document.querySelectorAll('.extracted-products-badge');
+            legacyBadges.forEach(b => b.textContent = totalItems);
+
+            // Update Empty States
+            const initialEmpty = document.getElementById('explorer-initial-empty-state');
+            if (initialEmpty) {
+                if (totalItems > 0) initialEmpty.classList.add('d-none');
+                else initialEmpty.classList.remove('d-none');
             }
 
-            if (!container) return;
-            if (!items || items.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-5 px-4">
-                        <i class="bi bi-exclamation-circle text-warning opacity-75 mb-3 d-block" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold text-dark mb-1">No Valid Product Items Found</h5>
-                        <p class="text-muted small mb-0">No valid inventory product items were found in the <code>Inventory</code> tab.</p>
-                    </div>
-                `;
+            renderExplorerKPIs();
+            renderBrandAllocation();
+            renderProfitDrivers();
+            populateFilterDropdowns();
+            applyFiltersAndSort();
+        }
+
+        function renderExplorerKPIs() {
+            const summary = (explorerState.data && explorerState.data.summary) || {};
+            const skusEl = document.getElementById('kpi-distinct-skus');
+            const unitsEl = document.getElementById('kpi-total-units');
+            const msrpEl = document.getElementById('kpi-total-msrp');
+            const askEl = document.getElementById('kpi-total-ask');
+            const discountEl = document.getElementById('kpi-discount-pct');
+
+            if (skusEl) skusEl.textContent = Number(summary.total_skus || 0).toLocaleString();
+            if (unitsEl) unitsEl.textContent = Number(summary.total_units || 0).toLocaleString();
+            if (msrpEl) msrpEl.textContent = Number(summary.total_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (askEl) askEl.textContent = Number(summary.total_ask || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (discountEl) discountEl.textContent = `${summary.blended_discount_pct || 0}%`;
+        }
+
+        function renderBrandAllocation() {
+            const brands = (explorerState.data && explorerState.data.brand_breakdown) || [];
+            const barContainer = document.getElementById('explorer-brand-progressbar');
+            const chipsContainer = document.getElementById('explorer-brand-chips');
+            if (!barContainer || !chipsContainer) return;
+
+            if (brands.length === 0) {
+                barContainer.innerHTML = '<div class="progress-bar bg-secondary bg-opacity-25 w-100" style="height: 10px;"></div>';
+                chipsContainer.innerHTML = '<small class="text-muted fst-italic">No brand metadata available</small>';
                 return;
             }
 
-            function formatYesNoBadge(val, isDanger) {
-                if (val === null || val === undefined || val === '' || val === '-' || val === 'None') return '-';
-                const s = String(val).trim().toLowerCase();
-                if (s === 'yes' || s === 'true' || s === '1') {
-                    const badgeClass = isDanger ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle';
-                    return `<span class="badge ${badgeClass} rounded-pill px-2">Yes</span>`;
+            let barHtml = '';
+            let chipsHtml = `
+                <button type="button" class="btn btn-sm rounded-pill px-2.5 py-0.5 fw-semibold brand-filter-chip ${explorerState.selectedBrand === 'all' ? 'btn-primary' : 'btn-outline-secondary'}" data-brand="all" style="font-size: 0.73rem;">
+                    All Brands
+                </button>
+            `;
+
+            brands.forEach((b, idx) => {
+                const color = BRAND_COLORS[idx % BRAND_COLORS.length];
+                const pct = Math.max(0, b.pct_of_value || 0);
+                if (pct > 0) {
+                    barHtml += `
+                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${Number(b.total_value || 0).toLocaleString()})"></div>
+                    `;
                 }
-                if (s === 'no' || s === 'false' || s === '0') {
-                    const badgeClass = isDanger ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle';
-                    return `<span class="badge ${badgeClass} rounded-pill px-2">No</span>`;
-                }
-                return escapeHtml(val);
+                const isActive = explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
+                chipsHtml += `
+                    <button type="button" class="btn btn-sm rounded-pill px-2.5 py-0.5 fw-semibold brand-filter-chip ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-brand="${escapeHtml(b.brand)}" style="font-size: 0.73rem;">
+                        <span class="d-inline-block rounded-circle me-1" style="width: 7px; height: 7px; background-color: ${color};"></span>
+                        ${escapeHtml(b.brand)} <span class="opacity-75 ms-1">(${pct > 0 ? pct + '%' : b.skus + ' SKUs'})</span>
+                    </button>
+                `;
+            });
+
+            barContainer.innerHTML = barHtml || '<div class="progress-bar bg-primary w-100"></div>';
+            chipsContainer.innerHTML = chipsHtml;
+
+            chipsContainer.querySelectorAll('.brand-filter-chip').forEach(chip => {
+                chip.addEventListener('click', function () {
+                    const brand = this.dataset.brand;
+                    explorerState.selectedBrand = brand;
+                    const brandSelect = document.getElementById('explorer-brand-filter');
+                    if (brandSelect) brandSelect.value = brand;
+                    explorerState.currentPage = 1;
+                    applyFiltersAndSort();
+                    renderBrandAllocation();
+                });
+            });
+        }
+
+        function renderProfitDrivers() {
+            const drivers = (explorerState.data && explorerState.data.top_profit_drivers) || [];
+            const container = document.getElementById('explorer-profit-drivers-container');
+            if (!container) return;
+
+            if (drivers.length === 0) {
+                container.innerHTML = '<div class="col-12 py-3 text-center text-muted small fst-italic">No high-value driver items identified.</div>';
+                return;
             }
 
-            function formatPriceVal(val, isSuccess) {
-                if (val === null || val === undefined || val === '' || val === '-' || val === 'NIL' || val === '0' || val === 'None') return '-';
-                const s = String(val).trim().replace(/^\$/, '');
-                if (isSuccess) {
-                    return `<span class="fw-bold text-success">$${escapeHtml(s)}</span>`;
-                }
-                return `$${escapeHtml(s)}`;
+            let html = '';
+            drivers.slice(0, 4).forEach((d) => {
+                const lineMsrp = Number(d.line_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const unitMsrp = Number(d.orig_price_num || d.original_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const brand = d.brand && d.brand !== '-' ? d.brand : 'General';
+                const model = d.model_part_number && d.model_part_number !== '-' ? d.model_part_number : '';
+                const qty = d.available_quantity || d.qty_num || 1;
+
+                html += `
+                    <div class="col-6">
+                        <div class="card h-100 border rounded-3 p-2.5 bg-light bg-opacity-40 shadow-xs hover-shadow-sm transition-all">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill text-truncate" style="font-size: 0.65rem; max-width: 110px;">
+                                    ${escapeHtml(brand)}
+                                </span>
+                                <span class="fw-bold font-monospace text-success" style="font-size: 0.8rem;">
+                                    $${lineMsrp}
+                                </span>
+                            </div>
+                            <div class="fw-bold text-dark text-truncate mb-0.5" style="font-size: 0.78rem;" title="${escapeHtml(d.product_name)}">
+                                ${escapeHtml(d.product_name)}
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between text-muted" style="font-size: 0.7rem;">
+                                <span>${escapeHtml(model)}</span>
+                                <span><strong>${qty}</strong> units × $${unitMsrp}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function populateFilterDropdowns() {
+            const items = (explorerState.data && explorerState.data.items) || [];
+            const brandSelect = document.getElementById('explorer-brand-filter');
+            const catSelect = document.getElementById('explorer-category-filter');
+
+            if (brandSelect) {
+                const brandCounts = {};
+                items.forEach(itm => {
+                    const b = (itm.brand && itm.brand !== '-' && itm.brand.toLowerCase() !== 'none') ? itm.brand.trim() : 'General / Unbranded';
+                    brandCounts[b] = (brandCounts[b] || 0) + 1;
+                });
+                const sortedBrands = Object.keys(brandCounts).sort((a, b) => brandCounts[b] - brandCounts[a]);
+
+                let optHtml = '<option value="all">All Brands (' + items.length + ')</option>';
+                sortedBrands.forEach(b => {
+                    const sel = explorerState.selectedBrand.toLowerCase() === b.toLowerCase() ? 'selected' : '';
+                    optHtml += `<option value="${escapeHtml(b)}" ${sel}>${escapeHtml(b)} (${brandCounts[b]})</option>`;
+                });
+                brandSelect.innerHTML = optHtml;
             }
 
-            function formatLinkVal(val) {
-                if (!val || val === '-' || val === 'None') return '-';
-                const s = String(val).trim();
-                if (s.startsWith('http://') || s.startsWith('https://')) {
-                    return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" style="font-size: 11px;"><i class="bi bi-box-arrow-up-right me-1"></i>View Link</a>`;
-                }
-                return escapeHtml(s);
+            if (catSelect) {
+                const catCounts = {};
+                items.forEach(itm => {
+                    const c = (itm.product_category && itm.product_category !== '-' && itm.product_category.toLowerCase() !== 'none') ? itm.product_category.trim() : 'General';
+                    catCounts[c] = (catCounts[c] || 0) + 1;
+                });
+                const sortedCats = Object.keys(catCounts).sort((a, b) => catCounts[b] - catCounts[a]);
+
+                let optHtml = '<option value="all">All Categories</option>';
+                sortedCats.forEach(c => {
+                    const sel = explorerState.selectedCategory.toLowerCase() === c.toLowerCase() ? 'selected' : '';
+                    optHtml += `<option value="${escapeHtml(c)}" ${sel}>${escapeHtml(c)} (${catCounts[c]})</option>`;
+                });
+                catSelect.innerHTML = optHtml;
             }
+        }
+
+        function renderActiveFilterPills() {
+            const bar = document.getElementById('explorer-active-filters-bar');
+            const container = document.getElementById('explorer-filter-pills');
+            if (!bar || !container) return;
+
+            const pills = [];
+            if (explorerState.searchQuery) {
+                pills.push(`Keyword: "${escapeHtml(explorerState.searchQuery)}"`);
+            }
+            if (explorerState.selectedBrand !== 'all') {
+                pills.push(`Brand: ${escapeHtml(explorerState.selectedBrand)}`);
+            }
+            if (explorerState.selectedCategory !== 'all') {
+                pills.push(`Category: ${escapeHtml(explorerState.selectedCategory)}`);
+            }
+            if (explorerState.selectedCondition !== 'all') {
+                const label = explorerState.selectedCondition === 'tested_yes' ? 'Tested Only' : (explorerState.selectedCondition === 'tested_no' ? 'Untested Only' : 'No Damage');
+                pills.push(`Condition: ${label}`);
+            }
+
+            if (pills.length === 0) {
+                bar.classList.add('d-none');
+                container.innerHTML = '';
+            } else {
+                bar.classList.remove('d-none');
+                container.innerHTML = pills.map(p => `
+                    <span class="badge bg-white text-dark border shadow-xs py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                        ${p}
+                    </span>
+                `).join('');
+            }
+        }
+
+        function applyFiltersAndSort() {
+            const allItems = (explorerState.data && explorerState.data.items) || [];
+            const query = (explorerState.searchQuery || '').trim().toLowerCase();
+            const brandFilter = (explorerState.selectedBrand || 'all').toLowerCase();
+            const catFilter = (explorerState.selectedCategory || 'all').toLowerCase();
+            const condFilter = explorerState.selectedCondition || 'all';
+
+            const filtered = allItems.filter(itm => {
+                if (query) {
+                    const name = String(itm.product_name || '').toLowerCase();
+                    const model = String(itm.model_part_number || '').toLowerCase();
+                    const brand = String(itm.brand || '').toLowerCase();
+                    const desc = String(itm.product_description || '').toLowerCase();
+                    const cat = String(itm.product_category || '').toLowerCase();
+                    const subcat = String(itm.subcategory || '').toLowerCase();
+                    const origin = String(itm.country_of_origin || '').toLowerCase();
+                    if (!name.includes(query) && !model.includes(query) && !brand.includes(query) && !desc.includes(query) && !cat.includes(query) && !subcat.includes(query) && !origin.includes(query)) {
+                        return false;
+                    }
+                }
+
+                if (brandFilter !== 'all') {
+                    const itmBrand = String(itm.brand || '').trim().toLowerCase();
+                    if (brandFilter === 'general / unbranded') {
+                        if (itmBrand && itmBrand !== '-' && itmBrand !== 'none' && itmBrand !== 'general / unbranded') return false;
+                    } else if (itmBrand !== brandFilter) {
+                        return false;
+                    }
+                }
+
+                if (catFilter !== 'all') {
+                    const itmCat = String(itm.product_category || '').trim().toLowerCase();
+                    if (itmCat !== catFilter) return false;
+                }
+
+                if (condFilter === 'tested_yes') {
+                    const t = String(itm.tested_and_verified || '').toLowerCase();
+                    if (t !== 'yes' && t !== 'true' && t !== '1') return false;
+                } else if (condFilter === 'tested_no') {
+                    const t = String(itm.tested_and_verified || '').toLowerCase();
+                    if (t !== 'no' && t !== 'false' && t !== '0') return false;
+                } else if (condFilter === 'no_damage') {
+                    const d = String(itm.visible_damage || '').toLowerCase();
+                    if (d === 'yes' || d === 'true' || d === '1') return false;
+                }
+
+                return true;
+            });
+
+            const sortBy = explorerState.sortBy;
+            filtered.sort((a, b) => {
+                if (sortBy === 'line_msrp_desc') return (b.line_msrp || 0) - (a.line_msrp || 0);
+                if (sortBy === 'line_msrp_asc') return (a.line_msrp || 0) - (b.line_msrp || 0);
+                if (sortBy === 'unit_msrp_desc') return (b.orig_price_num || 0) - (a.orig_price_num || 0);
+                if (sortBy === 'qty_desc') return (b.qty_num || 0) - (a.qty_num || 0);
+                if (sortBy === 'name_asc') return String(a.product_name || '').localeCompare(String(b.product_name || ''));
+                if (sortBy === 's_no_asc') return (Number(a.s_no) || 0) - (Number(b.s_no) || 0);
+                return 0;
+            });
+
+            explorerState.filteredItems = filtered;
+
+            renderActiveFilterPills();
+
+            const tableEl = document.getElementById('explorer-sku-table');
+            const emptyEl = document.getElementById('explorer-empty-state');
+            const initialEmpty = document.getElementById('explorer-initial-empty-state');
+
+            if (allItems.length === 0) {
+                if (tableEl) tableEl.classList.add('d-none');
+                if (emptyEl) emptyEl.classList.add('d-none');
+                if (initialEmpty) initialEmpty.classList.remove('d-none');
+                return;
+            }
+
+            if (filtered.length === 0) {
+                if (tableEl) tableEl.classList.add('d-none');
+                if (emptyEl) emptyEl.classList.remove('d-none');
+            } else {
+                if (tableEl) tableEl.classList.remove('d-none');
+                if (emptyEl) emptyEl.classList.add('d-none');
+            }
+
+            renderGridPage();
+            renderPaginationControls();
+        }
+
+        function renderGridPage() {
+            const tbody = document.getElementById('explorer-grid-body');
+            if (!tbody) return;
+
+            const filtered = explorerState.filteredItems;
+            const pageSize = explorerState.pageSize === 'all' ? filtered.length : parseInt(explorerState.pageSize, 10);
+            const total = filtered.length;
+
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (explorerState.currentPage > totalPages) {
+                explorerState.currentPage = totalPages;
+            }
+
+            const startIdx = (explorerState.currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, total);
+            const pageItems = filtered.slice(startIdx, endIdx);
 
             let rowsHtml = '';
-            items.forEach((prod, idx) => {
-                const sNo = prod.s_no || (idx + 1);
+            pageItems.forEach((prod, idx) => {
+                const sNo = prod.s_no || (startIdx + idx + 1);
                 const name = prod.product_name || '-';
                 const desc = prod.product_description || '-';
                 const cat = prod.product_category || '-';
@@ -805,6 +1194,7 @@
                 const qty = prod.available_quantity ?? 1;
                 const origPrice = formatPriceVal(prod.original_price, false);
                 const askPrice = formatPriceVal(prod.asking_price, true);
+                const lineMsrp = (prod.line_msrp && prod.line_msrp > 0) ? `<span class="fw-bold font-monospace text-dark">$${Number(prod.line_msrp).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>` : '-';
                 const origin = prod.country_of_origin || '-';
                 const yom = prod.year_of_manufacture || '-';
                 const link = formatLinkVal(prod.datasheet_certificate_link);
@@ -833,7 +1223,7 @@
                         <td class="ps-4 fw-bold font-monospace text-dark text-nowrap">${sNo}</td>
                         <td class="fw-bold text-dark text-nowrap">${escapeHtml(name)}</td>
                         <td>
-                            <div class="text-secondary text-truncate" style="max-width: 240px;" title="${escapeHtml(desc)}">${escapeHtml(desc)}</div>
+                            <div class="text-secondary text-truncate" style="max-width: 200px;" title="${escapeHtml(desc)}">${escapeHtml(desc)}</div>
                         </td>
                         <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(cat)}</span></td>
                         <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(subcat)}</span></td>
@@ -841,6 +1231,7 @@
                         <td class="font-monospace text-secondary text-nowrap">${escapeHtml(model)}</td>
                         <td class="fw-bold text-dark text-nowrap">${qty}</td>
                         <td class="text-secondary text-nowrap">${origPrice}</td>
+                        <td class="text-nowrap">${lineMsrp}</td>
                         <td class="text-nowrap">${askPrice}</td>
                         <td class="text-nowrap">${escapeHtml(origin)}</td>
                         <td class="text-nowrap">${escapeHtml(yom)}</td>
@@ -868,52 +1259,323 @@
                 `;
             });
 
-            container.innerHTML = `
-                <div class="table-responsive border rounded-3">
-                    <table class="table table-hover table-striped align-middle mb-0" style="font-size: 0.85rem;">
-                        <thead class="table-light">
-                            <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
-                                <th class="ps-4 py-3 fw-semibold text-nowrap" style="min-width: 65px;">S.No*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 220px;">Product Name*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 240px;">Product Description*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Product Category*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Subcategory*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Brand / Manufacturer</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Model / Part Number</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Available Quantity*</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Original Price</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Asking Price</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Country of Origin</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Year of Manufacture</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Datasheet / Certificate Link</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Gross Weight per Unit</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Length</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Width</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 90px;">Height</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Measurement Unit</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Stock Age</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Tested and verified</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Functional Status</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Visible Damage?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Missing Parts?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Warranty Available?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 180px;">Safety Certificate Available?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Certificate Type</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Regulatory Approval</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Hazardous Material?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Recyclable?</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Estimated Product Life Remaining</th>
-                                <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Seller Custom Field 1</th>
-                                <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 160px;">Seller Custom Field 2</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsHtml}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            tbody.innerHTML = rowsHtml;
+
+            const infoEl = document.getElementById('explorer-pagination-info');
+            if (infoEl) {
+                const allTotal = (explorerState.data && explorerState.data.items ? explorerState.data.items.length : 0);
+                if (total === 0) {
+                    infoEl.textContent = 'Showing 0 to 0 of 0 SKUs';
+                } else {
+                    infoEl.innerHTML = `Showing <strong class="text-dark">${startIdx + 1}</strong> to <strong class="text-dark">${endIdx}</strong> of <strong class="text-dark">${total}</strong> SKUs${total !== allTotal ? ' (Filtered from ' + allTotal + ' total)' : ''}`;
+                }
+            }
         }
+
+        function renderPaginationControls() {
+            const container = document.getElementById('explorer-pagination-controls');
+            if (!container) return;
+
+            const total = explorerState.filteredItems.length;
+            const pageSize = explorerState.pageSize === 'all' ? total : parseInt(explorerState.pageSize, 10);
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const curr = explorerState.currentPage;
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="1" ${curr === 1 ? 'disabled' : ''} title="First Page">
+                    <i class="bi bi-chevron-double-left"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${curr - 1}" ${curr === 1 ? 'disabled' : ''} title="Previous Page">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            `;
+
+            let startPage = Math.max(1, curr - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                html += `
+                    <button type="button" class="btn btn-sm px-2.5 py-1 rounded-2 fw-semibold ${p === curr ? 'btn-primary' : 'btn-outline-secondary'}" data-page="${p}">
+                        ${p}
+                    </button>
+                `;
+            }
+
+            html += `
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${curr + 1}" ${curr === totalPages ? 'disabled' : ''} title="Next Page">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${totalPages}" ${curr === totalPages ? 'disabled' : ''} title="Last Page">
+                    <i class="bi bi-chevron-double-right"></i>
+                </button>
+            `;
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('button[data-page]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const page = parseInt(this.dataset.page, 10);
+                    if (page >= 1 && page <= totalPages && page !== explorerState.currentPage) {
+                        explorerState.currentPage = page;
+                        renderGridPage();
+                        renderPaginationControls();
+                    }
+                });
+            });
+        }
+
+        function exportFilteredCSV() {
+            const items = explorerState.filteredItems;
+            if (!items || items.length === 0) {
+                alert('No SKU items available to export.');
+                return;
+            }
+
+            const headers = [
+                "S.No", "Product Name", "Product Description", "Product Category", "Subcategory",
+                "Brand / Manufacturer", "Model / Part Number", "Available Quantity", "Original Price",
+                "Asking Price", "Country of Origin", "Year of Manufacture", "Datasheet / Certificate Link",
+                "Gross Weight per Unit", "Length", "Width", "Height", "Measurement Unit",
+                "Stock Age", "Tested and verified", "Functional Status", "Visible Damage?",
+                "Missing Parts?", "Warranty Available?", "Safety Certificate Available?",
+                "Certificate Type", "Regulatory Approval", "Hazardous Material?", "Recyclable?",
+                "Estimated Product Life Remaining", "Seller Custom Field 1", "Seller Custom Field 2"
+            ];
+
+            const rows = [headers];
+
+            items.forEach((p, idx) => {
+                rows.push([
+                    p.s_no || (idx + 1),
+                    p.product_name || '',
+                    p.product_description || '',
+                    p.product_category || '',
+                    p.subcategory || '',
+                    p.brand || '',
+                    p.model_part_number || '',
+                    p.available_quantity || 1,
+                    p.original_price || '',
+                    p.asking_price || '',
+                    p.country_of_origin || '',
+                    p.year_of_manufacture || '',
+                    p.datasheet_certificate_link || '',
+                    p.gross_weight_per_unit || '',
+                    p.length || '',
+                    p.width || '',
+                    p.height || '',
+                    p.measurement_unit || '',
+                    p.stock_age || '',
+                    p.tested_and_verified || '',
+                    p.functional_status || '',
+                    p.visible_damage || '',
+                    p.missing_parts || '',
+                    p.warranty_available || '',
+                    p.safety_certificate_available || '',
+                    p.certificate_type || '',
+                    p.regulatory_approval || '',
+                    p.hazardous_material || '',
+                    p.recyclable || '',
+                    p.estimated_product_life_remaining || '',
+                    p.seller_custom_field_1 || '',
+                    p.seller_custom_field_2 || ''
+                ]);
+            });
+
+            const csvContent = "\uFEFF" + rows.map(r => r.map(cell => {
+                const s = String(cell ?? '').replace(/"/g, '""');
+                return `"${s}"`;
+            }).join(',')).join('\r\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const lotNum = '{{ enquiry.lot_number|default:"Lot" }}';
+            a.download = `${lotNum}_Warehouse_SKUs_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Toolbar Event Listeners
+        const searchInput = document.getElementById('explorer-search-input');
+        const clearSearchBtn = document.getElementById('explorer-clear-search-btn');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    explorerState.searchQuery = searchInput.value;
+                    if (clearSearchBtn) {
+                        if (searchInput.value) clearSearchBtn.classList.remove('d-none');
+                        else clearSearchBtn.classList.add('d-none');
+                    }
+                    explorerState.currentPage = 1;
+                    applyFiltersAndSort();
+                }, 150);
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function () {
+                if (searchInput) searchInput.value = '';
+                explorerState.searchQuery = '';
+                clearSearchBtn.classList.add('d-none');
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const brandFilterSelect = document.getElementById('explorer-brand-filter');
+        if (brandFilterSelect) {
+            brandFilterSelect.addEventListener('change', function () {
+                explorerState.selectedBrand = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+                renderBrandAllocation();
+            });
+        }
+
+        const catFilterSelect = document.getElementById('explorer-category-filter');
+        if (catFilterSelect) {
+            catFilterSelect.addEventListener('change', function () {
+                explorerState.selectedCategory = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const condFilterSelect = document.getElementById('explorer-condition-filter');
+        if (condFilterSelect) {
+            condFilterSelect.addEventListener('change', function () {
+                explorerState.selectedCondition = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const sortSelect = document.getElementById('explorer-sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function () {
+                explorerState.sortBy = this.value;
+                applyFiltersAndSort();
+            });
+        }
+
+        const pageSizeSelect = document.getElementById('explorer-page-size-select');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', function () {
+                explorerState.pageSize = this.value;
+                explorerState.currentPage = 1;
+                renderGridPage();
+                renderPaginationControls();
+            });
+        }
+
+        const resetFiltersBtn = document.getElementById('explorer-reset-filters-btn');
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function () {
+                explorerState.searchQuery = '';
+                explorerState.selectedBrand = 'all';
+                explorerState.selectedCategory = 'all';
+                explorerState.selectedCondition = 'all';
+                explorerState.sortBy = 'line_msrp_desc';
+                explorerState.currentPage = 1;
+
+                if (searchInput) searchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.classList.add('d-none');
+                if (brandFilterSelect) brandFilterSelect.value = 'all';
+                if (catFilterSelect) catFilterSelect.value = 'all';
+                if (condFilterSelect) condFilterSelect.value = 'all';
+                if (sortSelect) sortSelect.value = 'line_msrp_desc';
+
+                applyFiltersAndSort();
+                renderBrandAllocation();
+            });
+        }
+
+        const exportCsvBtn = document.getElementById('btn-export-explorer-csv');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', exportFilteredCSV);
+        }
+
+        // Parse Spreadsheet Data Button Handler
+        const parseBtn = document.getElementById('btn-parse-spreadsheet-data');
+        if (parseBtn) {
+            parseBtn.addEventListener('click', async function () {
+                const id = this.dataset.id || '{{ enquiry.id }}';
+                const originalHtml = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Parsing Inventory Tab...';
+
+                try {
+                    const res = await fetch(`/admin/api/enquiries/lots/${id}/parse/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        if (data.explorer_data) {
+                            initWarehouseExplorer(data.explorer_data);
+                        } else if (data.products) {
+                            renderParsedProductsTable(data.products);
+                        }
+                        const previewAlert = document.getElementById('preview-alert-container');
+                        if (previewAlert) previewAlert.classList.remove('d-none');
+
+                        const dbStatusContainer = document.getElementById('db-status-container');
+                        if (dbStatusContainer) {
+                            dbStatusContainer.innerHTML = `
+                                <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
+                                    <i class="bi bi-database-add fs-6"></i> Save Products to Database
+                                </button>
+                            `;
+                        }
+                    } else {
+                        alert('Parsing Error: ' + (data.message || 'Failed to parse spreadsheet.'));
+                    }
+                } catch (err) {
+                    console.error('Parse error:', err);
+                    alert('An error occurred while parsing the spreadsheet.');
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // Backward compatibility shim
+        function renderParsedProductsTable(items) {
+            window.currentParsedProducts = items;
+            const expData = {
+                items: items,
+                summary: {
+                    total_skus: items.length,
+                    total_units: items.reduce((acc, itm) => acc + (parseInt(itm.available_quantity, 10) || 1), 0),
+                    total_msrp: items.reduce((acc, itm) => acc + (parseFloat(String(itm.original_price || 0).replace(/[^0-9.]/g, '')) * (parseInt(itm.available_quantity, 10) || 1) || 0), 0),
+                    total_ask: items.reduce((acc, itm) => acc + (parseFloat(String(itm.asking_price || 0).replace(/[^0-9.]/g, '')) * (parseInt(itm.available_quantity, 10) || 1) || 0), 0),
+                    blended_discount_pct: 0
+                },
+                brand_breakdown: [],
+                top_profit_drivers: items.slice(0, 5)
+            };
+            initWarehouseExplorer(expData);
+        }
+
+        // Initialize Virtual Warehouse Explorer on Page Load
+        initWarehouseExplorer(window.initialExplorerData);
 
         // Status update handler
         document.querySelectorAll('.btn-lot-status').forEach(btn => {
