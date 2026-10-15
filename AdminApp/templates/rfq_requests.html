@@ -253,7 +253,7 @@
                             <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn btn-sm btn-primary px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1" title="Review & Quote">
                                 <i class="bi bi-eye"></i> View Quote
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1 rounded-2" onclick="deleteRfq({{ item.id }}, '{{ item.reference }}')" title="Delete RFQ">
+                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1 rounded-2" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>

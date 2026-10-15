@@ -187,23 +187,134 @@ class EmailService:
         )
 
     @classmethod
-    def notify_admin_rfq_submitted(cls, buyer_info: dict, items_list: list) -> bool:
+    def notify_admin_rfq_submitted(cls, buyer_info: dict, items_list: list = None, rfq=None) -> bool:
         """Notifies admin when a Request For Quote (RFQ) is submitted."""
-        rows_html = "".join([
-            f"<tr><td style='padding:8px; border:1px solid #ddd;'>{item.get('title')}</td>"
-            f"<td style='padding:8px; border:1px solid #ddd;'>{item.get('quantity')}</td></tr>"
-            for item in items_list
-        ])
-        html_content = (
-            f"<h2>New RFQ Quote Request Basket</h2>"
-            f"<p>Buyer: <strong>{buyer_info.get('name')}</strong> ({buyer_info.get('email')})</p>"
-            f"<table style='border-collapse: collapse; width: 100%;'>"
-            f"<thead><tr><th style='border:1px solid #ddd; padding:8px;'>Item</th><th style='border:1px solid #ddd; padding:8px;'>Quantity</th></tr></thead>"
-            f"<tbody>{rows_html}</tbody>"
-            f"</table>"
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        rfq_id = getattr(rfq, "id", None) or (rfq.get("id") if isinstance(rfq, dict) else "") or (buyer_info.get("id") if isinstance(buyer_info, dict) else "")
+        admin_review_url = f"{backend_base}/admin/rfq-requests/{rfq_id}/detail/" if rfq_id else f"{backend_base}/admin/rfq-requests/"
+
+        ref = getattr(rfq, "reference", None) or (rfq.get("reference") if isinstance(rfq, dict) else "") or buyer_info.get("reference", "RFQ-PENDING")
+        buyer_name = buyer_info.get("name") or buyer_info.get("contact_person") or getattr(rfq, "contact_person", "Valued Buyer")
+        buyer_email = buyer_info.get("email") or getattr(rfq, "email", "")
+        company_name = buyer_info.get("company_name") or getattr(rfq, "company_name", "")
+        total_units = getattr(rfq, "total_units", None) or buyer_info.get("total_units", 0)
+        estimated_value = getattr(rfq, "estimated_value", None) or buyer_info.get("estimated_value", "0.00")
+        currency = getattr(rfq, "currency", "USD") or buyer_info.get("currency", "USD")
+
+        resolved_items = items_list or (rfq.items.all() if hasattr(rfq, "items") else [])
+
+        context = {
+            "rfq": rfq,
+            "ref": ref,
+            "buyer_name": buyer_name,
+            "buyer_email": buyer_email,
+            "company_name": company_name,
+            "total_units": total_units,
+            "estimated_value": estimated_value,
+            "currency": currency,
+            "items_list": resolved_items,
+            "admin_review_url": admin_review_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_rfq_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin rfq alert, using fallback HTML: {e}")
+            items_html = "".join([
+                f"<tr><td style='padding:8px; border:1px solid #ddd;'>{getattr(it, 'title', it.get('title') if isinstance(it, dict) else str(it))}</td>"
+                f"<td style='padding:8px; border:1px solid #ddd;'>{getattr(it, 'quantity', it.get('quantity') if isinstance(it, dict) else '')}</td></tr>"
+                for it in resolved_items
+            ])
+            html_content = (
+                f"<h2>New RFQ Quote Request Basket</h2>"
+                f"<p>Reference: <strong>{ref}</strong></p>"
+                f"<p>Buyer: <strong>{buyer_name}</strong> ({buyer_email})</p>"
+                f"<p>Total Units: {total_units} | Value: {currency} {estimated_value}</p>"
+                f"<table style='border-collapse: collapse; width: 100%;'>"
+                f"<thead><tr><th style='border:1px solid #ddd; padding:8px;'>Item</th><th style='border:1px solid #ddd; padding:8px;'>Quantity</th></tr></thead>"
+                f"<tbody>{items_html}</tbody>"
+                f"</table>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = cls.get_admin_notification_email()
+        subject = f"New Buyer RFQ Received: {ref} - {buyer_name}"
+        return cls.send_email(admin_email, subject, html_content, "RFQAdminAlert", context=context)
+
+    @classmethod
+    def notify_admin_product_submitted(cls, seller_info: dict, product) -> bool:
+        """
+        Notifies admin when a seller submits a product listing / enquiry for review.
+        """
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        prod_id = getattr(product, "id", None) or (product.get("id") if isinstance(product, dict) else "")
+        admin_review_url = f"{backend_base}/admin/enquiries/seller/{prod_id}/detail/" if prod_id else f"{backend_base}/admin/enquiries/seller/"
+
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
         )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
-        return cls.send_email(admin_email, "New RFQ Quote Basket Submitted", html_content, "RFQ")
+        product_code = (
+            getattr(product, "product_id", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (f"PRO-{prod_id}" if prod_id else "PRO-PENDING")
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", str(product.category))
+        elif isinstance(product, dict):
+            category_name = product.get("category", "")
+
+        quantity = getattr(product, "quantity", None) or (product.get("quantity") if isinstance(product, dict) else 0)
+        currency = getattr(product, "currency", "USD") or "USD"
+        liquidating_price = getattr(product, "liquidating_price", None) or (product.get("liquidating_price") if isinstance(product, dict) else None)
+        msrp = getattr(product, "msrp", None) or (product.get("msrp") if isinstance(product, dict) else None)
+
+        seller_name = seller_info.get("name") or seller_info.get("full_name") or "Seller"
+        seller_email = seller_info.get("email") or ""
+        seller_phone = seller_info.get("phone") or ""
+
+        context = {
+            "seller_name": seller_name,
+            "seller_email": seller_email,
+            "seller_phone": seller_phone,
+            "product_name": product_name,
+            "product_code": product_code,
+            "category_name": category_name,
+            "quantity": quantity,
+            "currency": currency,
+            "liquidating_price": liquidating_price,
+            "msrp": msrp,
+            "admin_review_url": admin_review_url,
+            "product": product,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_admin_product_added.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin product alert: {e}")
+            html_content = (
+                f"<h2>New Product Submitted for Review</h2>"
+                f"<p>Product: <strong>{product_name}</strong> ({product_code})</p>"
+                f"<p>Seller: <strong>{seller_name}</strong> ({seller_email})</p>"
+                f"<p>Category: {category_name} | Qty: {quantity} | Price: {currency} {liquidating_price}</p>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = cls.get_admin_notification_email()
+        subject = f"New Product Submitted for Review: {product_name} [{product_code}]"
+        return cls.send_email(admin_email, subject, html_content, "AdminProductReview", context=context)
+
+    # Backwards-compatibility alias for existing code
+    notify_admin_enquiry_received = notify_admin_product_submitted
 
     @classmethod
     def notify_admin_multiple_products(cls, seller_info: dict, products_list: list) -> bool:
@@ -216,7 +327,7 @@ class EmailService:
                 "product_count": len(products_list),
             },
         )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
+        admin_email = cls.get_admin_notification_email()
         return cls.send_email(admin_email, "New Seller Products Submitted for Review", html_content, "ProductReview")
 
     @classmethod
@@ -461,9 +572,9 @@ class EmailService:
         """
         Notifies admin when a seller submits a bulk lot listing for review.
         """
-        backend_base = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
         lot_id = getattr(lot, "id", None) or (lot.get("id") if isinstance(lot, dict) else "")
-        admin_review_url = f"{backend_base}/superadmin/lot-enquiries/{lot_id}/" if lot_id else f"{backend_base}/superadmin/lot-enquiries/"
+        admin_review_url = f"{backend_base}/admin/enquiries/lots/{lot_id}/detail/" if lot_id else f"{backend_base}/admin/enquiries/lots/"
 
         lot_title = (
             getattr(lot, "title", None)
@@ -514,7 +625,7 @@ class EmailService:
                 f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
             )
 
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
+        admin_email = cls.get_admin_notification_email()
         subject = f"New Lot Submitted for Review: {lot_title} [{lot_number}]"
         return cls.send_email(admin_email, subject, html_content, "AdminLotReview", context=context)
 
@@ -685,21 +796,11 @@ class EmailService:
 
     @classmethod
     def get_admin_notification_email(cls) -> str:
-        """Resolves target email for admin alerts with database fallback."""
-        env_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "").strip()
+        """Resolves target email for admin alerts with default fallback to contact@surplusmarket.com."""
+        env_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "")).strip()
         if env_email:
             return env_email
-        try:
-            from .models import AdminDetails
-            superadmin = AdminDetails.objects.filter(account_type="SuperAdmin", status=True).first()
-            if superadmin and superadmin.email:
-                return superadmin.email
-            admin = AdminDetails.objects.filter(status=True).first()
-            if admin and admin.email:
-                return admin.email
-        except Exception:
-            pass
-        return "super@gmail.com"
+        return "contact@surplusmarket.com"
 
     @classmethod
     def send_contact_us_emails(cls, enquiry) -> dict:

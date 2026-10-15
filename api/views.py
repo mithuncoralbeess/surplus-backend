@@ -457,6 +457,7 @@ def submit_lot_enquiry(request):
         raw_data=raw_data
     )
 
+    vendor_obj = None
     vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id")
     if vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
@@ -464,7 +465,7 @@ def submit_lot_enquiry(request):
             lot.vendor = vendor_obj
             lot.save(update_fields=["vendor"])
             try:
-                from AdminApp.services import create_vendor_notification, create_admin_notification, EmailService
+                from AdminApp.services import create_vendor_notification, EmailService
                 create_vendor_notification(
                     vendor=vendor_obj,
                     title="Lot Manifest Uploaded",
@@ -477,21 +478,29 @@ def submit_lot_enquiry(request):
                     lot=lot,
                     recipient_name=vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Valued Seller"
                 )
-                EmailService.notify_admin_lot_submitted(
-                    seller_info={
-                        "name": vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Seller",
-                        "email": vendor_obj.email
-                    },
-                    lot=lot
-                )
-                create_admin_notification(
-                    title=f"New Lot Manifest Uploaded: {lot.lot_number}",
-                    message=f"Spreadsheet lot manifest '{lot.lot_number}' submitted by {vendor_obj.full_name or vendor_obj.username} ({len(products_list)} items).",
-                    notification_type="LISTING",
-                    action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
-                )
             except Exception as e:
-                print(f"Error creating lot notification/emails: {e}")
+                print(f"Error creating vendor lot notification/emails: {e}")
+
+    # Always notify admin via in-app alert and email
+    try:
+        from AdminApp.services import create_admin_notification, EmailService
+        s_name = (vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username) if vendor_obj else (request.data.get("name") or request.data.get("full_name") or "Seller")
+        s_email = (vendor_obj.email if vendor_obj else (request.data.get("email") or request.data.get("user_email") or ""))
+        EmailService.notify_admin_lot_submitted(
+            seller_info={
+                "name": s_name,
+                "email": s_email or "Unregistered / Guest"
+            },
+            lot=lot
+        )
+        create_admin_notification(
+            title=f"New Lot Manifest Uploaded: {lot.lot_number}",
+            message=f"Spreadsheet lot manifest '{lot.lot_number}' submitted by {s_name} ({len(products_list)} items).",
+            notification_type="LISTING",
+            action_url=f"/admin/enquiries/lots/{lot.id}/detail/"
+        )
+    except Exception as e:
+        print(f"Error creating admin lot notification/emails: {e}")
 
     return Response({
         "success": True,
@@ -1257,8 +1266,23 @@ def submit_rfq_enquiry(request):
             notification_type="RFQ",
             action_url=f"/admin/rfq-requests/{rfq.id}/detail/"
         )
+        from AdminApp.services import EmailService
+        EmailService.notify_admin_rfq_submitted(
+            buyer_info={
+                "name": contact_person,
+                "email": email,
+                "phone": phone,
+                "company_name": company_name,
+                "reference": rfq.reference,
+                "total_units": rfq.total_units,
+                "estimated_value": rfq.estimated_value,
+                "currency": rfq.currency,
+            },
+            items_list=rfq.items.all(),
+            rfq=rfq
+        )
     except Exception as e:
-        print(f"[submit_rfq_enquiry] Admin notification error: {e}")
+        print(f"[submit_rfq_enquiry] Admin notification/email error: {e}")
 
     if buyer_vendor:
         try:
@@ -1720,21 +1744,24 @@ def submit_product_request(request):
 
     try:
         from AdminApp.services import create_admin_notification, EmailService
-        seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else "Guest Seller"
+        seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else (data.get("name") or data.get("full_name") or "Guest Seller")
+        seller_email = (product.vendor.email if product.vendor else (data.get("email") or data.get("user_email") or ""))
+        seller_phone = (product.vendor.phone if product.vendor else (data.get("phone") or data.get("mobile") or ""))
+
         create_admin_notification(
             title=f"New Product Enquiry: {product.product_id} - {product.product_name}",
             message=f"New listing '{product.product_name}' ({product.product_id}) submitted by {seller_label} and is pending review.",
             notification_type="ENQUIRY",
             action_url=f"/admin/enquiries/seller/{product.id}/detail/"
         )
-        if product.vendor and product.vendor.email:
-            EmailService.notify_admin_enquiry_received(
-                seller_info={
-                    "name": seller_label,
-                    "email": product.vendor.email
-                },
-                enquiry=product
-            )
+        EmailService.notify_admin_product_submitted(
+            seller_info={
+                "name": seller_label,
+                "email": seller_email or "Unregistered / Guest",
+                "phone": seller_phone,
+            },
+            product=product
+        )
     except Exception as e:
         print(f"Error creating admin notification for product enquiry: {e}")
 

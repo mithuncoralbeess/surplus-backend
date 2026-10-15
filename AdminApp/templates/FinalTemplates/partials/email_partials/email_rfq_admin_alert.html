@@ -88,7 +88,7 @@
                 <p style="margin: 0 0 8px 0;"><strong>Trade Incoterm:</strong> {{ rfq.incoterm }} ({{ rfq.destination_port }})</p>
                 <p style="margin: 0;"><strong>Payment Term:</strong> {{ rfq.payment_method }}</p>
             </div>
-            <a href="https://surplusmarket.com/admin/rfq-requests/{{ rfq.id }}/detail/" class="cta-btn">
+            <a href="{{ admin_review_url|default:'https://surplusmarket.com/admin/rfq-requests/' }}" class="cta-btn">
                 Review &amp; Issue Proforma in Admin Portal &rarr;
             </a>
         </div>
