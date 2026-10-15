@@ -799,6 +799,8 @@ class Lot(models.Model):
     description = models.TextField(blank=True, default="")
     
     inventory_location = models.CharField(max_length=255, blank=True, default="")
+    inventory_country = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    inventory_city = models.CharField(max_length=100, blank=True, default="", db_index=True)
     currency = models.CharField(max_length=50, default="USD")
     
     # Extended structured fields matching frontend lot payload
@@ -855,6 +857,10 @@ class Lot(models.Model):
         if not self.lot_number:
             max_id = Lot.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.lot_number = f"LOT-{(max_id + 1):05d}"
+
+        if self.inventory_city or self.inventory_country:
+            loc_parts = [p.strip() for p in [self.inventory_city, self.inventory_country] if p and p.strip()]
+            self.inventory_location = ", ".join(loc_parts)
             
         # Enforce rule: Lot can ONLY be active if its enquiry_status is 'approved'
         if str(self.enquiry_status).lower() != 'approved':

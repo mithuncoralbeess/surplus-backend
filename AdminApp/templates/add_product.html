@@ -784,18 +784,18 @@
 
                         <!-- Hidden File Input -->
                         <input type="file" name="images" id="imageInput" multiple
-                            accept="image/png, image/jpeg, image/jpg, image/webp" class="d-none">
+                            accept="image/*, .png, .jpg, .jpeg, .webp, .avif, .gif" class="d-none">
 
                         <!-- Enhanced Dropzone Box -->
-                        <div class="dropzone-enhanced" id="dropzoneBox">
+                        <div class="dropzone-enhanced w-100" id="dropzoneBox" role="button" tabindex="0">
                             <div class="mb-2 text-primary">
                                 <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
                             </div>
                             <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
-                            <div class="text-muted small mb-3">PNG, JPG, WEBP (max 10MB each). First uploaded file is set as cover.</div>
-                            <button type="button" class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill">
+                            <div class="text-muted small mb-3">PNG, JPG, JPEG, WEBP, GIF (up to 15MB each). First uploaded file is set as cover.</div>
+                            <span class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill" id="btnChooseFiles">
                                 <i class="bi bi-folder2-open me-1"></i> Choose Files
-                            </button>
+                            </span>
                         </div>
 
                         <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-3 small d-none rounded-3">
@@ -1051,6 +1051,10 @@
         text-align: center;
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dropzone-enhanced * {
+        pointer-events: none;
     }
 
     .dropzone-enhanced:hover,
@@ -1508,58 +1512,111 @@
         const previewCoverPlaceholder = document.getElementById("previewCoverPlaceholder");
         let selectedFiles = [];
 
-        dropzoneBox.addEventListener("click", () => imageInput.click());
+        function isImageFile(file) {
+            if (!file) return false;
+            if (file.type && file.type.startsWith("image/")) return true;
+            return /\.(jpe?g|png|webp|gif|bmp|svg|avif|heic|heif|jfif)$/i.test(file.name || "");
+        }
 
-        ["dragenter", "dragover"].forEach(eventName => {
-            dropzoneBox.addEventListener(eventName, (e) => {
+        if (dropzoneBox && imageInput) {
+            dropzoneBox.addEventListener("click", () => {
+                imageInput.click();
+            });
+
+            dropzoneBox.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    imageInput.click();
+                }
+            });
+
+            imageInput.addEventListener("click", function () {
+                this.value = "";
+            });
+
+            ["dragenter", "dragover"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.add("dragover");
+                }, false);
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.remove("dragover");
+                }, false);
+            });
+
+            dropzoneBox.addEventListener("drop", (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                dropzoneBox.classList.add("dragover");
-            }, false);
-        });
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length) {
+                    handleNewFiles(dt.files);
+                }
+            });
 
-        ["dragleave", "drop"].forEach(eventName => {
-            dropzoneBox.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzoneBox.classList.remove("dragover");
-            }, false);
-        });
-
-        dropzoneBox.addEventListener("drop", (e) => {
-            const dt = e.dataTransfer;
-            if (dt && dt.files && dt.files.length) {
-                handleNewFiles(dt.files);
-            }
-        });
-
-        imageInput.addEventListener("change", function () {
-            if (this.files && this.files.length) {
-                handleNewFiles(this.files);
-            }
-        });
+            imageInput.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+            });
+        }
 
         function handleNewFiles(fileList) {
+            if (!fileList || !fileList.length) return;
+            let addedCount = 0;
+            let skippedOversize = 0;
+            let skippedInvalid = 0;
+
             for (let i = 0; i < fileList.length; i++) {
                 const file = fileList[i];
-                if (file.type.startsWith("image/")) {
+                if (isImageFile(file)) {
+                    if (file.size > 15 * 1024 * 1024) {
+                        skippedOversize++;
+                        continue;
+                    }
                     const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
                     if (!exists) {
                         selectedFiles.push(file);
+                        addedCount++;
                     }
+                } else {
+                    skippedInvalid++;
                 }
             }
+
+            if (skippedOversize > 0) {
+                alert(`${skippedOversize} file(s) exceeded the 15MB size limit and were skipped.`);
+            }
+            if (skippedInvalid > 0) {
+                alert(`${skippedInvalid} file(s) were not recognized as valid images and were skipped.`);
+            }
+
             syncFileInput();
             renderPreviews();
         }
 
         function syncFileInput() {
-            const dt = new DataTransfer();
-            selectedFiles.forEach(f => dt.items.add(f));
-            imageInput.files = dt.files;
-            imageCountBadge.textContent = `${selectedFiles.length} selected`;
-            previewPhotoCount.textContent = selectedFiles.length;
-            if (selectedFiles.length > 0) {
+            if (!imageInput) return;
+            try {
+                const dt = new DataTransfer();
+                selectedFiles.forEach(f => dt.items.add(f));
+                imageInput.files = dt.files;
+            } catch (err) {
+                console.warn("DataTransfer sync warning:", err);
+            }
+
+            if (imageCountBadge) {
+                imageCountBadge.textContent = `${selectedFiles.length} selected`;
+            }
+            if (previewPhotoCount) {
+                previewPhotoCount.textContent = selectedFiles.length;
+            }
+            if (selectedFiles.length > 0 && imageValidationAlert) {
                 imageValidationAlert.classList.add("d-none");
             }
             updateLivePreview();
@@ -1567,22 +1624,44 @@
         }
 
         function renderPreviews() {
+            if (!imagePreviewGrid) return;
             imagePreviewGrid.innerHTML = "";
+
             selectedFiles.forEach((file, index) => {
                 const col = document.createElement("div");
-                col.className = "col-6 col-sm-4";
+                col.className = "col-6 col-sm-4 col-md-3";
 
                 const card = document.createElement("div");
                 card.className = "image-preview-card";
 
                 const img = document.createElement("img");
-                img.src = URL.createObjectURL(file);
+                try {
+                    img.src = URL.createObjectURL(file);
+                } catch (e) {
+                    img.src = "";
+                }
 
                 if (index === 0) {
                     const coverBadge = document.createElement("span");
                     coverBadge.className = "badge-cover";
                     coverBadge.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>Cover';
                     card.appendChild(coverBadge);
+                } else {
+                    const makeCoverBtn = document.createElement("button");
+                    makeCoverBtn.type = "button";
+                    makeCoverBtn.className = "badge bg-dark bg-opacity-75 text-white border-0 position-absolute bottom-0 start-0 m-1 px-1.5 py-0.5 rounded small";
+                    makeCoverBtn.style.fontSize = "0.68rem";
+                    makeCoverBtn.innerHTML = '<i class="bi bi-star me-0.5"></i>Set Cover';
+                    makeCoverBtn.title = "Make this the primary cover image";
+                    makeCoverBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const chosen = selectedFiles.splice(index, 1)[0];
+                        selectedFiles.unshift(chosen);
+                        syncFileInput();
+                        renderPreviews();
+                    });
+                    card.appendChild(makeCoverBtn);
                 }
 
                 const removeBtn = document.createElement("button");
@@ -1591,6 +1670,7 @@
                 removeBtn.title = "Remove image";
                 removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
                 removeBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     selectedFiles.splice(index, 1);
                     syncFileInput();
@@ -1836,6 +1916,7 @@
                 return false;
             }
 
+            syncFileInput();
             if (selectedFiles.length === 0) {
                 e.preventDefault();
                 imageValidationAlert.classList.remove("d-none");
@@ -1845,14 +1926,16 @@
 
             const btnTop = document.getElementById("btnSubmitTop");
             const btnBottom = document.getElementById("btnSubmitBottom");
-            if (btnTop) {
-                btnTop.disabled = true;
-                btnTop.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
-            }
-            if (btnBottom) {
-                btnBottom.disabled = true;
-                btnBottom.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
-            }
+            setTimeout(() => {
+                if (btnTop) {
+                    btnTop.disabled = true;
+                    btnTop.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                }
+                if (btnBottom) {
+                    btnBottom.disabled = true;
+                    btnBottom.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                }
+            }, 10);
         });
     });
 </script>

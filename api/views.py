@@ -1840,6 +1840,10 @@ def submit_lot_request(request):
                     data['title'] = lot_details.get('title', '')
                 if 'description' not in data and 'lot_description_and_notes' not in data:
                     data['description'] = lot_details.get('description', '')
+                if 'inventory_country' not in data and 'inventory_country' in lot_details:
+                    data['inventory_country'] = lot_details.get('inventory_country', '')
+                if 'inventory_city' not in data and 'inventory_city' in lot_details:
+                    data['inventory_city'] = lot_details.get('inventory_city', '')
 
 
         user_info = {}

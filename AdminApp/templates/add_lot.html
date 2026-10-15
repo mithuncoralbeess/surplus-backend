@@ -537,24 +537,61 @@
                             </div>
                         </div>
 
-                        <!-- Row 2: Location, Distinct SKUs, Total Units -->
+                        <!-- Row 2: Inventory Country & City -->
                         <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Inventory Location <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Physical stock</span>
+                                    <span>Inventory Country <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Physical stock location</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
-                                        placeholder="Warehouse 4B, JAFZA, Dubai" value="{{ form_data.inventory_location|default:'' }}" required>
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-globe-americas"></i></span>
+                                    <select class="form-select form-select-custom" name="inventory_country" id="inventoryCountrySelect" required>
+                                        <option value="">-- Select Country --</option>
+                                        {% for c in countries %}
+                                        <option value="{{ c }}" {% if form_data.inventory_country == c or not form_data.inventory_country and c == 'United Arab Emirates' %}selected{% endif %}>{{ c }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label-custom d-flex justify-content-between align-items-center">
+                                    <span>Inventory City <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal small" id="cityCountBadge">Select or search</span>
+                                </label>
+                                <div class="input-group position-relative">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt-fill text-danger opacity-75"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="inventory_city" id="inventoryCityInput"
+                                        placeholder="Search city in dropdown or type..." value="{{ form_data.inventory_city|default:'' }}"
+                                        autocomplete="off" required>
+                                    <button class="btn btn-outline-secondary dropdown-toggle px-3" type="button" id="btnToggleCityDropdown" title="Toggle cities dropdown" tabindex="-1">
+                                    </button>
+                                </div>
+
+                                <!-- Searchable City Suggestion Dropdown -->
+                                <div class="dropdown-menu shadow-lg w-100 p-0 position-absolute" id="citySuggestionsDropdown"
+                                    style="display: none; max-height: 260px; overflow-y: auto; z-index: 1050; top: calc(100% + 4px); left: 0; border: 1px solid #e2e8f0; border-radius: 10px;">
+                                    <div class="py-2 px-3 border-bottom bg-light d-flex align-items-center justify-content-between sticky-top">
+                                        <small class="text-muted fw-semibold" id="cityDropdownHeader"><i class="bi bi-buildings me-1"></i> Cities</small>
+                                        <small class="badge bg-secondary-subtle text-secondary" id="cityMatchCount">0</small>
+                                    </div>
+                                    <div id="cityOptionsContainer" class="py-1">
+                                        <!-- Dynamically populated options -->
+                                    </div>
+                                </div>
+
+                                <!-- Hidden input for backwards-compatible inventory_location submission -->
+                                <input type="hidden" name="inventory_location" id="inventoryLocationInput" value="{{ form_data.inventory_location|default:'' }}">
+                            </div>
+                        </div>
+
+                        <!-- Row 2b: Distinct SKUs, Total Units -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Distinct SKUs <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Unique items</span>
+                                    <span class="text-muted fw-normal">Unique items in package</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" min="1" class="form-control form-control-custom" name="number_of_distinct_skus" id="distinctSkusInput"
@@ -563,7 +600,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span>Total Units / Quantity <span class="text-danger">*</span></span>
                                     <span class="text-muted fw-normal">Total count</span>
@@ -1462,12 +1499,20 @@ document.addEventListener('DOMContentLoaded', function () {
     if (currencySelect) currencySelect.addEventListener('change', updatePricingCalculations);
 
     // -------------------------------------------------------------
-    // 3. Live Marketplace Preview Card Updating
+    // 3. Country & City Auto-Suggest Dropdown & Live Preview
     // -------------------------------------------------------------
     const lotTitleInput = document.getElementById('lotTitleInput');
     const keyBrandsInput = document.getElementById('keyBrandsInput');
     const sellerNameInput = document.getElementById('sellerNameInput');
+    const inventoryCountrySelect = document.getElementById('inventoryCountrySelect');
+    const inventoryCityInput = document.getElementById('inventoryCityInput');
     const inventoryLocationInput = document.getElementById('inventoryLocationInput');
+    const btnToggleCityDropdown = document.getElementById('btnToggleCityDropdown');
+    const citySuggestionsDropdown = document.getElementById('citySuggestionsDropdown');
+    const cityOptionsContainer = document.getElementById('cityOptionsContainer');
+    const cityMatchCount = document.getElementById('cityMatchCount');
+    const cityDropdownHeader = document.getElementById('cityDropdownHeader');
+    const cityCountBadge = document.getElementById('cityCountBadge');
     const distinctSkusInput = document.getElementById('distinctSkusInput');
     const totalUnitsInput = document.getElementById('totalUnitsInput');
     const previewTitle = document.getElementById('previewTitle');
@@ -1479,6 +1524,477 @@ document.addEventListener('DOMContentLoaded', function () {
     const summaryLocation = document.getElementById('summaryLocation');
     const summarySkus = document.getElementById('summarySkus');
     const summaryUnits = document.getElementById('summaryUnits');
+
+    // Standard country-to-major-cities map for fast client-side suggestions
+    const COUNTRY_CITIES_MAP = {
+        "United Arab Emirates": [
+            "Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain", "Al Ain", "Jebel Ali", "JAFZA", "Dubai South", "Khalifa Port / KIZAD"
+        ],
+        "Saudi Arabia": [
+            "Riyadh", "Jeddah", "Dammam", "Mecca", "Medina", "Khobar", "Jubail", "Tabuk", "Taif", "Yanbu", "Abha", "Hofuf", "Khamis Mushait", "Najran", "Jizan"
+        ],
+        "Qatar": [
+            "Doha", "Al Rayyan", "Al Wakrah", "Al Khor", "Umm Salal", "Mesaieed", "Lusail", "Ras Laffan", "Dukhan"
+        ],
+        "Oman": [
+            "Muscat", "Salalah", "Sohar", "Nizwa", "Sur", "Seeb", "Barka", "Rustaq", "Buraimi", "Duqm"
+        ],
+        "Kuwait": [
+            "Kuwait City", "Al Ahmadi", "Hawally", "Salmiya", "Farwaniya", "Jahra", "Shuwaikh", "Mangaf"
+        ],
+        "Bahrain": [
+            "Manama", "Riffa", "Muharraq", "Hamad Town", "A'ali", "Isa Town", "Sitra", "Budaiya", "Hidd"
+        ],
+        "India": [
+            "Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad", "Pune", "Surat", "Jaipur", "Kochi", "Coimbatore", "Indore", "Chandigarh", "Lucknow", "Vadodara", "Nagpur", "Visakhapatnam", "Noida", "Gurugram"
+        ],
+        "United States": [
+            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Miami", "Atlanta", "Seattle", "San Francisco", "Denver", "Boston", "Las Vegas", "Detroit", "Orlando"
+        ],
+        "United Kingdom": [
+            "London", "Birmingham", "Manchester", "Glasgow", "Leeds", "Liverpool", "Newcastle", "Sheffield", "Bristol", "Edinburgh", "Belfast", "Cardiff", "Coventry", "Leicester", "Nottingham", "Southampton"
+        ],
+        "China": [
+            "Shanghai", "Beijing", "Shenzhen", "Guangzhou", "Hangzhou", "Chengdu", "Wuhan", "Tianjin", "Dongguan", "Ningbo", "Qingdao", "Foshan", "Nanjing", "Chongqing", "Suzhou", "Xiamen", "Yiwu"
+        ],
+        "Germany": [
+            "Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Stuttgart", "Düsseldorf", "Leipzig", "Dortmund", "Essen", "Bremen", "Hanover", "Nuremberg", "Duisburg"
+        ],
+        "France": [
+            "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Strasbourg", "Montpellier", "Bordeaux", "Lille", "Rennes", "Reims", "Le Havre", "Toulon"
+        ],
+        "Italy": [
+            "Rome", "Milan", "Naples", "Turin", "Palermo", "Genoa", "Bologna", "Florence", "Bari", "Venice", "Verona", "Messina", "Padua", "Trieste"
+        ],
+        "Spain": [
+            "Madrid", "Barcelona", "Valencia", "Seville", "Zaragoza", "Malaga", "Murcia", "Palma de Mallorca", "Las Palmas", "Bilbao", "Alicante", "Cordoba", "Valladolid"
+        ],
+        "Netherlands": [
+            "Amsterdam", "Rotterdam", "The Hague", "Utrecht", "Eindhoven", "Tilburg", "Groningen", "Almere", "Breda", "Nijmegen"
+        ],
+        "Canada": [
+            "Toronto", "Montreal", "Vancouver", "Calgary", "Edmonton", "Ottawa", "Winnipeg", "Quebec City", "Hamilton", "Kitchener", "Halifax", "Victoria"
+        ],
+        "Australia": [
+            "Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Gold Coast", "Canberra", "Newcastle", "Wollongong", "Hobart", "Geelong", "Darwin"
+        ],
+        "Singapore": [
+            "Singapore", "Jurong", "Woodlands", "Tampines", "Bedok", "Changi", "Tuas", "Ang Mo Kio"
+        ],
+        "Japan": [
+            "Tokyo", "Yokohama", "Osaka", "Nagoya", "Sapporo", "Fukuoka", "Kobe", "Kyoto", "Kawasaki", "Saitama", "Hiroshima", "Sendai"
+        ],
+        "South Korea": [
+            "Seoul", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Suwon", "Ulsan", "Changwon", "Goyang"
+        ],
+        "Turkey": [
+            "Istanbul", "Ankara", "Izmir", "Bursa", "Antalya", "Adana", "Konya", "Gaziantep", "Sanliurfa", "Kocaeli", "Mersin", "Diyarbakir"
+        ],
+        "Egypt": [
+            "Cairo", "Alexandria", "Giza", "Shubra El Kheima", "Port Said", "Suez", "Mansoura", "Tanta", "Asyut", "Ismailia", "Faiyum", "Zagazig"
+        ],
+        "South Africa": [
+            "Johannesburg", "Cape Town", "Durban", "Pretoria", "Port Elizabeth", "Bloemfontein", "East London", "Polokwane", "Nelspruit"
+        ],
+        "Brazil": [
+            "São Paulo", "Rio de Janeiro", "Brasília", "Salvador", "Fortaleza", "Belo Horizonte", "Manaus", "Curitiba", "Recife", "Porto Alegre"
+        ],
+        "Mexico": [
+            "Mexico City", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "León", "Ciudad Juárez", "Zapopan", "Mérida", "Cancún"
+        ],
+        "Pakistan": [
+            "Karachi", "Lahore", "Faisalabad", "Rawalpindi", "Gujranwala", "Peshawar", "Multan", "Islamabad", "Quetta", "Sialkot"
+        ],
+        "Bangladesh": [
+            "Dhaka", "Chittagong", "Khulna", "Rajshahi", "Sylhet", "Bogra", "Comilla", "Mymensingh", "Barisal", "Rangpur"
+        ],
+        "Indonesia": [
+            "Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", "Makassar", "Palembang", "Tangerang", "Depok", "Batam"
+        ],
+        "Malaysia": [
+            "Kuala Lumpur", "George Town", "Johor Bahru", "Ipoh", "Shah Alam", "Petaling Jaya", "Melaka", "Kota Kinabalu", "Kuching", "Kuantan"
+        ],
+        "Philippines": [
+            "Manila", "Quezon City", "Davao City", "Caloocan", "Cebu City", "Zamboanga", "Taguig", "Pasig", "Cagayan de Oro", "Parañaque"
+        ],
+        "Vietnam": [
+            "Ho Chi Minh City", "Hanoi", "Da Nang", "Haiphong", "Can Tho", "Bien Hoa", "Hue", "Nha Trang", "Vung Tau"
+        ],
+        "Thailand": [
+            "Bangkok", "Nonthaburi", "Chiang Mai", "Hat Yai", "Udon Thani", "Chonburi", "Nakhon Ratchasima", "Pattaya", "Phuket"
+        ],
+        "Switzerland": [
+            "Zurich", "Geneva", "Basel", "Lausanne", "Bern", "Winterthur", "Lucerne", "St. Gallen", "Lugano"
+        ],
+        "Sweden": [
+            "Stockholm", "Gothenburg", "Malmö", "Uppsala", "Västerås", "Örebro", "Linköping", "Helsingborg"
+        ],
+        "Poland": [
+            "Warsaw", "Kraków", "Łódź", "Wrocław", "Poznań", "Gdańsk", "Szczecin", "Bydgoszcz", "Lublin", "Katowice"
+        ],
+        "Belgium": [
+            "Brussels", "Antwerp", "Ghent", "Charleroi", "Liège", "Bruges", "Namur", "Leuven", "Mons"
+        ],
+        "Austria": [
+            "Vienna", "Graz", "Linz", "Salzburg", "Innsbruck", "Klagenfurt", "Villach", "Wels"
+        ],
+        "Norway": [
+            "Oslo", "Bergen", "Trondheim", "Stavanger", "Bærum", "Kristiansand", "Drammen", "Tromsø"
+        ],
+        "Denmark": [
+            "Copenhagen", "Aarhus", "Odense", "Aalborg", "Esbjerg", "Randers", "Kolding", "Horsens"
+        ],
+        "Finland": [
+            "Helsinki", "Espoo", "Tampere", "Vantaa", "Oulu", "Turku", "Jyväskylä", "Lahti"
+        ],
+        "Ireland": [
+            "Dublin", "Cork", "Limerick", "Galway", "Waterford", "Drogheda", "Dundalk", "Swords"
+        ],
+        "New Zealand": [
+            "Auckland", "Wellington", "Christchurch", "Hamilton", "Tauranga", "Napier-Hastings", "Dunedin", "Palmerston North"
+        ],
+        "Portugal": [
+            "Lisbon", "Porto", "Vila Nova de Gaia", "Amadora", "Braga", "Funchal", "Coimbra", "Setúbal"
+        ],
+        "Greece": [
+            "Athens", "Thessaloniki", "Patras", "Heraklion", "Larissa", "Volos", "Ioannina", "Chania"
+        ],
+        "Czech Republic": [
+            "Prague", "Brno", "Ostrava", "Plzeň", "Liberec", "Olomouc", "České Budějovice", "Hradec Králové"
+        ],
+        "Romania": [
+            "Bucharest", "Cluj-Napoca", "Timișoara", "Iași", "Constanța", "Craiova", "Brașov", "Galați"
+        ],
+        "Hungary": [
+            "Budapest", "Debrecen", "Szeged", "Miskolc", "Pécs", "Győr", "Nyíregyháza", "Kecskemét"
+        ],
+        "Argentina": [
+            "Buenos Aires", "Córdoba", "Rosario", "Mendoza", "Tucumán", "La Plata", "Mar del Plata", "Salta"
+        ],
+        "Colombia": [
+            "Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Cúcuta", "Soledad", "Ibagué", "Bucaramanga"
+        ],
+        "Chile": [
+            "Santiago", "Valparaíso", "Concepción", "La Serena", "Antofagasta", "Temuco", "Rancagua", "Iquique"
+        ],
+        "Jordan": [
+            "Amman", "Zarqa", "Irbid", "Russeifa", "Aqaba", "Madaba", "Salt", "Mafraq"
+        ],
+        "Lebanon": [
+            "Beirut", "Tripoli", "Sidon", "Tyre", "Nabatieh", "Zahle", "Jounieh", "Baabda"
+        ],
+        "Morocco": [
+            "Casablanca", "Rabat", "Fes", "Marrakech", "Tangier", "Agadir", "Meknes", "Oujda"
+        ],
+        "Algeria": [
+            "Algiers", "Oran", "Constantine", "Annaba", "Blida", "Batna", "Djelfa", "Sétif"
+        ],
+        "Cyprus": [
+            "Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta", "Kyrenia"
+        ],
+        "Iceland": [
+            "Reykjavik", "Kópavogur", "Hafnarfjörður", "Akureyri", "Garðabær", "Mosfellsbær"
+        ],
+        "Kazakhstan": [
+            "Almaty", "Astana", "Shymkent", "Karaganda", "Aktobe", "Taraz", "Pavlodar", "Ust-Kamenogorsk"
+        ],
+        "Azerbaijan": [
+            "Baku", "Ganja", "Sumqayit", "Mingachevir", "Shirvan", "Nakhchivan"
+        ],
+        "Georgia": [
+            "Tbilisi", "Batumi", "Kutaisi", "Rustavi", "Gori", "Zugdidi"
+        ],
+        "Estonia": [
+            "Tallinn", "Tartu", "Narva", "Pärnu", "Kohtla-Järve", "Viljandi"
+        ],
+        "Latvia": [
+            "Riga", "Daugavpils", "Liepāja", "Jelgava", "Jūrmala", "Ventspils"
+        ],
+        "Lithuania": [
+            "Vilnius", "Kaunas", "Klaipėda", "Šiauliai", "Panevėžys", "Alytus"
+        ],
+        "Luxembourg": [
+            "Luxembourg City", "Esch-sur-Alzette", "Differdange", "Dudelange", "Ettelbruck"
+        ],
+        "Slovakia": [
+            "Bratislava", "Košice", "Prešov", "Žilina", "Banská Bystrica", "Nitra", "Trnava"
+        ],
+        "Slovenia": [
+            "Ljubljana", "Maribor", "Kranj", "Celje", "Koper", "Novo Mesto"
+        ],
+        "Bulgaria": [
+            "Sofia", "Plovdiv", "Varna", "Burgas", "Ruse", "Stara Zagora", "Pleven"
+        ],
+        "Croatia": [
+            "Zagreb", "Split", "Rijeka", "Osijek", "Zadar", "Pula", "Slavonski Brod"
+        ],
+        "Belarus": [
+            "Minsk", "Gomel", "Mogilev", "Vitebsk", "Grodno", "Brest"
+        ],
+        "Armenia": [
+            "Yerevan", "Gyumri", "Vanadzor", "Vagharshapat", "Abovyan", "Kapan"
+        ],
+        "Albania": [
+            "Tirana", "Durrës", "Vlorë", "Shkodër", "Fier", "Korçë"
+        ],
+        "Afghanistan": [
+            "Kabul", "Kandahar", "Herat", "Mazar-i-Sharif", "Jalalabad", "Kunduz"
+        ],
+        "Taiwan": [
+            "Taipei", "Kaohsiung", "Taichung", "Tainan", "Taoyuan", "Hsinchu", "Keelung"
+        ],
+        "Hong Kong": [
+            "Hong Kong Island", "Kowloon", "Sha Tin", "Tsuen Wan", "Tuen Mun", "Kwun Tong", "Yuen Long"
+        ]
+    };
+
+    let activeCityHighlightIndex = -1;
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getCitiesForCountry(countryName) {
+        if (!countryName) return [];
+        return COUNTRY_CITIES_MAP[countryName] || [];
+    }
+
+    function renderCitySuggestions(filterQuery = '') {
+        if (!citySuggestionsDropdown || !cityOptionsContainer) return;
+        const country = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
+        if (!country) {
+            cityOptionsContainer.innerHTML = `
+                <div class="p-3 text-center text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> Please select an inventory country first
+                </div>`;
+            if (cityMatchCount) cityMatchCount.textContent = '0';
+            citySuggestionsDropdown.style.display = 'block';
+            return;
+        }
+
+        const allCities = getCitiesForCountry(country);
+        const query = (filterQuery || '').trim().toLowerCase();
+
+        let filtered = allCities;
+        if (query) {
+            filtered = allCities.filter(c => c.toLowerCase().includes(query));
+            filtered.sort((a, b) => {
+                const aStarts = a.toLowerCase().startsWith(query);
+                const bStarts = b.toLowerCase().startsWith(query);
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return a.localeCompare(b);
+            });
+        }
+
+        if (cityMatchCount) cityMatchCount.textContent = `${filtered.length}`;
+        if (cityDropdownHeader) {
+            cityDropdownHeader.innerHTML = `<i class="bi bi-buildings me-1"></i> Cities in ${escapeHtml(country)}`;
+        }
+        activeCityHighlightIndex = -1;
+
+        let html = '';
+
+        if (filtered.length > 0) {
+            filtered.forEach((city) => {
+                let displayCity = escapeHtml(city);
+                if (query) {
+                    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    displayCity = displayCity.replace(regex, '<span class="text-primary fw-bold">$1</span>');
+                }
+                const currentVal = inventoryCityInput ? inventoryCityInput.value.trim().toLowerCase() : '';
+                const isSelected = (currentVal === city.toLowerCase());
+                html += `
+                    <div class="city-option-item d-flex align-items-center justify-content-between px-3 py-2 cursor-pointer ${isSelected ? 'bg-primary-subtle text-primary fw-semibold' : 'text-dark'}"
+                         data-city="${escapeHtml(city)}" role="button" tabindex="0">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-geo-alt ${isSelected ? 'text-primary' : 'text-muted'} small"></i>
+                            <span>${displayCity}</span>
+                        </div>
+                        ${isSelected ? '<i class="bi bi-check2 text-primary fw-bold"></i>' : ''}
+                    </div>
+                `;
+            });
+        }
+
+        const hasExactMatch = allCities.some(c => c.toLowerCase() === query);
+        if (query && !hasExactMatch) {
+            const rawTyped = inventoryCityInput ? inventoryCityInput.value.trim() : '';
+            html += `
+                <div class="city-option-item border-top px-3 py-2 text-primary cursor-pointer d-flex align-items-center gap-2 bg-light bg-opacity-50"
+                     data-city="${escapeHtml(rawTyped)}" role="button" tabindex="0">
+                    <i class="bi bi-plus-circle-fill text-primary"></i>
+                    <span>Use <strong>"${escapeHtml(rawTyped)}"</strong> as city</span>
+                </div>
+            `;
+        } else if (filtered.length === 0 && !query) {
+            html += `
+                <div class="p-3 text-center text-muted small">
+                    No predefined cities for ${escapeHtml(country)}. You can type any city name directly.
+                </div>
+            `;
+        }
+
+        cityOptionsContainer.innerHTML = html;
+        citySuggestionsDropdown.style.display = 'block';
+
+        cityOptionsContainer.querySelectorAll('.city-option-item').forEach(el => {
+            el.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const chosenCity = this.getAttribute('data-city');
+                selectCity(chosenCity);
+            });
+            el.addEventListener('mouseenter', function () {
+                removeCityHighlights();
+                this.classList.add('bg-light');
+            });
+            el.addEventListener('mouseleave', function () {
+                this.classList.remove('bg-light');
+            });
+        });
+    }
+
+    function removeCityHighlights() {
+        if (!cityOptionsContainer) return;
+        cityOptionsContainer.querySelectorAll('.city-option-item').forEach(el => el.classList.remove('bg-light'));
+    }
+
+    function selectCity(city) {
+        if (!inventoryCityInput) return;
+        inventoryCityInput.value = city;
+        inventoryCityInput.classList.remove('is-invalid');
+        closeCityDropdown();
+        
+        const country = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
+        if (inventoryLocationInput) {
+            inventoryLocationInput.value = [city, country].filter(Boolean).join(', ');
+        }
+        updateLivePreview();
+        updateReadinessChecklist();
+    }
+
+    function closeCityDropdown() {
+        if (citySuggestionsDropdown) {
+            citySuggestionsDropdown.style.display = 'none';
+        }
+        activeCityHighlightIndex = -1;
+    }
+
+    function toggleCityDropdown() {
+        if (!citySuggestionsDropdown) return;
+        if (citySuggestionsDropdown.style.display === 'block') {
+            closeCityDropdown();
+        } else {
+            renderCitySuggestions(inventoryCityInput ? inventoryCityInput.value : '');
+        }
+    }
+
+    if (inventoryCountrySelect) {
+        inventoryCountrySelect.addEventListener('change', function () {
+            const selectedCountry = this.value.trim();
+            const cities = getCitiesForCountry(selectedCountry);
+            
+            if (cityCountBadge) {
+                cityCountBadge.textContent = selectedCountry ? `${cities.length || 'Custom'} cities` : 'Select country';
+            }
+            if (inventoryCityInput) {
+                if (selectedCountry) {
+                    inventoryCityInput.disabled = false;
+                    inventoryCityInput.placeholder = `Search city in dropdown or type...`;
+                    if (inventoryCityInput.value && !cities.some(c => c.toLowerCase() === inventoryCityInput.value.toLowerCase())) {
+                        inventoryCityInput.value = '';
+                    }
+                } else {
+                    inventoryCityInput.value = '';
+                    inventoryCityInput.placeholder = 'Select country first...';
+                }
+            }
+            closeCityDropdown();
+            updateLivePreview();
+            updateReadinessChecklist();
+        });
+    }
+
+    if (inventoryCityInput) {
+        inventoryCityInput.addEventListener('focus', function () {
+            renderCitySuggestions(this.value);
+        });
+
+        inventoryCityInput.addEventListener('input', function () {
+            renderCitySuggestions(this.value);
+            const country = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
+            if (inventoryLocationInput) {
+                inventoryLocationInput.value = [this.value.trim(), country].filter(Boolean).join(', ');
+            }
+            updateLivePreview();
+            updateReadinessChecklist();
+        });
+
+        inventoryCityInput.addEventListener('keydown', function (e) {
+            if (!citySuggestionsDropdown || citySuggestionsDropdown.style.display !== 'block') {
+                if (e.key === 'ArrowDown') {
+                    renderCitySuggestions(this.value);
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            const items = cityOptionsContainer.querySelectorAll('.city-option-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeCityHighlightIndex = (activeCityHighlightIndex + 1) % items.length;
+                highlightItem(items, activeCityHighlightIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeCityHighlightIndex = (activeCityHighlightIndex - 1 + items.length) % items.length;
+                highlightItem(items, activeCityHighlightIndex);
+            } else if (e.key === 'Enter') {
+                if (activeCityHighlightIndex >= 0 && items[activeCityHighlightIndex]) {
+                    e.preventDefault();
+                    const chosenCity = items[activeCityHighlightIndex].getAttribute('data-city');
+                    selectCity(chosenCity);
+                } else if (this.value.trim()) {
+                    closeCityDropdown();
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeCityDropdown();
+            }
+        });
+    }
+
+    function highlightItem(items, index) {
+        items.forEach((item, i) => {
+            if (i === index) {
+                item.classList.add('bg-light');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('bg-light');
+            }
+        });
+    }
+
+    if (btnToggleCityDropdown) {
+        btnToggleCityDropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleCityDropdown();
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        const cityWrapper = document.getElementById('inventoryCityInput')?.closest('.col-md-6');
+        if (cityWrapper && !cityWrapper.contains(e.target)) {
+            closeCityDropdown();
+        }
+    });
 
     function updateLivePreview() {
         const curr = currencySelect ? currencySelect.value : 'USD';
@@ -1493,7 +2009,15 @@ document.addEventListener('DOMContentLoaded', function () {
         previewPublicPrice.textContent = ask > 0 ? `${curr} ${(ask * 1.10).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
 
         summarySellerName.textContent = sellerNameInput.value.trim() || '-';
-        summaryLocation.textContent = inventoryLocationInput.value.trim() || '-';
+        
+        const cityVal = inventoryCityInput ? inventoryCityInput.value.trim() : '';
+        const countryVal = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
+        const combinedLoc = [cityVal, countryVal].filter(Boolean).join(', ');
+        if (inventoryLocationInput) {
+            inventoryLocationInput.value = combinedLoc;
+        }
+        summaryLocation.textContent = combinedLoc || '-';
+
         summarySkus.textContent = distinctSkusInput.value || '-';
         summaryUnits.textContent = totalUnitsInput.value ? Number(totalUnitsInput.value).toLocaleString() : '-';
     }
@@ -1501,7 +2025,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (lotTitleInput) lotTitleInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
     if (keyBrandsInput) keyBrandsInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
     if (sellerNameInput) sellerNameInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
-    if (inventoryLocationInput) inventoryLocationInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
     if (distinctSkusInput) distinctSkusInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
     if (totalUnitsInput) totalUnitsInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
 
@@ -2219,8 +2742,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (categoryOk) count++;
 
         // 5. Logistics & Location
-        const locVal = (typeof inventoryLocationInput !== 'undefined' && inventoryLocationInput && inventoryLocationInput.value) ? inventoryLocationInput.value.trim() : '';
-        const logisticsOk = Boolean(locVal);
+        const countryVal = (typeof inventoryCountrySelect !== 'undefined' && inventoryCountrySelect && inventoryCountrySelect.value) ? inventoryCountrySelect.value.trim() : '';
+        const cityVal = (typeof inventoryCityInput !== 'undefined' && inventoryCityInput && inventoryCityInput.value) ? inventoryCityInput.value.trim() : '';
+        const logisticsOk = Boolean(countryVal && cityVal);
         setCheckItem(checkLogistics, logisticsOk);
         if (logisticsOk) count++;
 
@@ -2305,7 +2829,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 { id: 'lotTitleInput', name: 'Listing Title' },
                 { id: 'keyBrandsInput', name: 'Key Brands Included' },
                 { id: 'lotDescInput', name: 'Lot Description' },
-                { id: 'inventoryLocationInput', name: 'Inventory Location' },
+                { id: 'inventoryCountrySelect', name: 'Inventory Country' },
+                { id: 'inventoryCityInput', name: 'Inventory City' },
                 { id: 'distinctSkusInput', name: 'Distinct SKUs' },
                 { id: 'totalUnitsInput', name: 'Total Units' },
                 { id: 'msrpInput', name: 'Total Est. Retail Value (MSRP)' },
@@ -2384,6 +2909,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Initialize all calculations, previews and default category allocation
+    if (inventoryCountrySelect && inventoryCountrySelect.value) {
+        const initialCities = getCitiesForCountry(inventoryCountrySelect.value);
+        if (cityCountBadge) {
+            cityCountBadge.textContent = `${initialCities.length || 'Custom'} cities`;
+        }
+    }
     createCategoryRow('Electronics', 100);
     updatePricingCalculations();
     updateLivePreview();

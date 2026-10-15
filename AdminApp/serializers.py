@@ -322,6 +322,8 @@ class LotSerializer(serializers.ModelSerializer):
             "third_party_certificate_available",
             "third_party_documents",
             "inventory_location",
+            "inventory_country",
+            "inventory_city",
             "number_of_distinct_skus",
             "total_units_quantity",
             "primary_unit_type",
@@ -493,7 +495,7 @@ class LotSerializer(serializers.ModelSerializer):
             'key_brands_included', 'condition', 'source_type', 'inventory_stock_age',
             'primary_unit_type', 'total_weight', 'load_type', 'shipping_size',
             'lot_size', 'shipping_terms', 'currency', 'offer', 'sale_method',
-            'inventory_location'
+            'inventory_location', 'inventory_country', 'inventory_city'
         ]
         for field in str_fields:
             if field in data_copy and data_copy[field] is None:

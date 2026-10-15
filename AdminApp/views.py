@@ -2023,6 +2023,10 @@ def lot_enquiry_edit_api(request, enquiry_id):
             pass
     if "currency" in data and str(data["currency"]).strip():
         lot.currency = str(data["currency"]).strip()
+    if "inventory_country" in data:
+        lot.inventory_country = str(data["inventory_country"]).strip()
+    if "inventory_city" in data:
+        lot.inventory_city = str(data["inventory_city"]).strip()
     if "inventory_location" in data:
         lot.inventory_location = str(data["inventory_location"]).strip()
 
@@ -4758,6 +4762,7 @@ def add_lot_view(request):
         "currency_options": currency_options,
         "excluded_countries_options": excluded_countries_options,
         "standard_categories": standard_categories,
+        "countries": STANDARD_COUNTRIES,
         "page_title": "Add Lot Request (Assisted Offline Intake)",
     }
 
@@ -4866,8 +4871,13 @@ def add_lot_view(request):
         source_type = request.POST.get("source_type", "Overstock").strip()
         inventory_stock_age = request.POST.get("inventory_stock_age", "Current / < 6 Months").strip()
         third_party_certificate_available = request.POST.get("third_party_certificate_available") in ("on", "true", "1")
-        
-        inventory_location = request.POST.get("inventory_location", "").strip() or seller_location
+        inventory_country = request.POST.get("inventory_country", "").strip()
+        inventory_city = request.POST.get("inventory_city", "").strip()
+        inventory_location = request.POST.get("inventory_location", "").strip()
+        if not inventory_location and (inventory_city or inventory_country):
+            inventory_location = ", ".join([p for p in [inventory_city, inventory_country] if p])
+        if not inventory_location:
+            inventory_location = seller_location
 
         try:
             number_of_distinct_skus = int(request.POST.get("number_of_distinct_skus", 0) or 0)
@@ -5040,6 +5050,9 @@ def add_lot_view(request):
             "seller_email": seller_email or (vendor.email if vendor else ""),
             "seller_company": seller_company or (vendor.company_name if vendor else ""),
             "seller_location": seller_location or (vendor.business_location if vendor else ""),
+            "inventory_country": inventory_country,
+            "inventory_city": inventory_city,
+            "inventory_location": inventory_location,
             "warehouse_images": warehouse_images,
             "third_party_documents": third_party_documents,
             "allow_counter_offers": allow_counter_offers,
@@ -5064,6 +5077,8 @@ def add_lot_view(request):
             warehouse_images=warehouse_images,
             third_party_certificate_available=third_party_certificate_available,
             third_party_documents=third_party_documents,
+            inventory_country=inventory_country,
+            inventory_city=inventory_city,
             inventory_location=inventory_location,
             number_of_distinct_skus=number_of_distinct_skus,
             total_units_quantity=total_units_quantity,
