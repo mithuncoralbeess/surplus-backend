@@ -61,47 +61,47 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
     else:
         # 1. Fetch from database LotProduct records
         db_products = list(LotProduct.objects.filter(lot=lot).order_by("id"))
-    if db_products:
-        is_saved_to_db = True
-        for idx, p in enumerate(db_products, 1):
-            p_data = p.raw_data if isinstance(p.raw_data, dict) else {}
-            cleaned = clean_lot_product_item(p_data, row_counter=idx)
-            if not cleaned:
-                cleaned = {
-                    "s_no": idx,
-                    "product_name": p.product_name or f"SKU Item #{idx}",
-                    "product_description": "-",
-                    "product_category": "-",
-                    "subcategory": "-",
-                    "brand": "-",
-                    "model_part_number": p.product_id or "-",
-                    "available_quantity": p.quantity or 1,
-                    "original_price": "-",
-                    "asking_price": "-",
-                    "country_of_origin": "-",
-                    "year_of_manufacture": "-",
-                    "datasheet_certificate_link": "-",
-                    "gross_weight_per_unit": "-",
-                    "length": "-",
-                    "width": "-",
-                    "height": "-",
-                    "measurement_unit": "-",
-                    "stock_age": "-",
-                    "tested_and_verified": "-",
-                    "functional_status": "-",
-                    "visible_damage": "-",
-                    "missing_parts": "-",
-                    "warranty_available": "-",
-                    "safety_certificate_available": "-",
-                    "certificate_type": "-",
-                    "regulatory_approval": "-",
-                    "hazardous_material": "-",
-                    "recyclable": "-",
-                    "estimated_product_life_remaining": "-",
-                    "seller_custom_field_1": "-",
-                    "seller_custom_field_2": "-",
-                }
-            raw_items.append(cleaned)
+        if db_products:
+            is_saved_to_db = True
+            for idx, p in enumerate(db_products, 1):
+                p_data = p.raw_data if isinstance(p.raw_data, dict) else {}
+                cleaned = clean_lot_product_item(p_data, row_counter=idx)
+                if not cleaned:
+                    cleaned = {
+                        "s_no": idx,
+                        "product_name": p.product_name or f"SKU Item #{idx}",
+                        "product_description": "-",
+                        "product_category": "-",
+                        "subcategory": "-",
+                        "brand": "-",
+                        "model_part_number": p.product_id or "-",
+                        "available_quantity": p.quantity or 1,
+                        "original_price": "-",
+                        "asking_price": "-",
+                        "country_of_origin": "-",
+                        "year_of_manufacture": "-",
+                        "datasheet_certificate_link": "-",
+                        "gross_weight_per_unit": "-",
+                        "length": "-",
+                        "width": "-",
+                        "height": "-",
+                        "measurement_unit": "-",
+                        "stock_age": "-",
+                        "tested_and_verified": "-",
+                        "functional_status": "-",
+                        "visible_damage": "-",
+                        "missing_parts": "-",
+                        "warranty_available": "-",
+                        "safety_certificate_available": "-",
+                        "certificate_type": "-",
+                        "regulatory_approval": "-",
+                        "hazardous_material": "-",
+                        "recyclable": "-",
+                        "estimated_product_life_remaining": "-",
+                        "seller_custom_field_1": "-",
+                        "seller_custom_field_2": "-",
+                    }
+                raw_items.append(cleaned)
 
     # 2. Fallback to lot.raw_data parsed manifest items
     if not raw_items and isinstance(lot.raw_data, dict):
