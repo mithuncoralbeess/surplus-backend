@@ -3610,9 +3610,30 @@ def whatsapp_command_center_view(request):
 
     initial_broadcast_text = ""
     initial_preview_links = {}
+    selected_lot_details = None
     if selected_lot:
         initial_broadcast_text = format_lot_liquidation_alert(selected_lot)
         initial_preview_links = generate_whatsapp_web_link("", initial_broadcast_text)
+        ask_p = float(selected_lot.ask_price_surplus_payout or 0.0)
+        msrp_p = float(selected_lot.total_est_retail_value_msrp or 0.0)
+        disc_p = round(((msrp_p - ask_p) / msrp_p) * 100) if (msrp_p > 0 and ask_p > 0) else 0
+        img_url = ""
+        if isinstance(selected_lot.warehouse_images, list) and len(selected_lot.warehouse_images) > 0:
+            first_img = selected_lot.warehouse_images[0]
+            img_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+        selected_lot_details = {
+            "id": selected_lot.id,
+            "lot_number": selected_lot.lot_number,
+            "title": selected_lot.title,
+            "currency": selected_lot.currency or "USD",
+            "ask_price": ask_p,
+            "msrp": msrp_p,
+            "discount_pct": disc_p,
+            "total_units": selected_lot.total_units_quantity or 0,
+            "image_url": img_url,
+            "location": selected_lot.inventory_location or "Verified Warehouse",
+            "condition": selected_lot.condition or "Surplus Stock",
+        }
 
     # Subscribers
     subscribers_qs = WhatsAppAlertSubscriber.objects.all().order_by("-created_at")
@@ -3653,6 +3674,7 @@ def whatsapp_command_center_view(request):
         "active_tab": active_tab,
         "active_lots": active_lots,
         "selected_lot": selected_lot,
+        "selected_lot_details": selected_lot_details,
         "initial_broadcast_text": initial_broadcast_text,
         "initial_preview_links": initial_preview_links,
         "subscribers": subscribers_qs,
@@ -3687,7 +3709,7 @@ def whatsapp_preview_api(request):
     target_location = request.data.get("target_location") or request.GET.get("target_location", "All")
     min_discount = request.data.get("min_discount") or request.GET.get("min_discount", 0)
 
-    from .models import Lot
+    from .models import Lot, WhatsAppAlertSubscriber
     from .whatsapp_service import format_lot_liquidation_alert, get_eligible_subscribers, generate_whatsapp_web_link
 
     lot = None
@@ -3714,13 +3736,33 @@ def whatsapp_preview_api(request):
         min_discount_pct=min_disc_val
     )
 
+    ask_p = float(lot.ask_price_surplus_payout or 0.0)
+    msrp_p = float(lot.total_est_retail_value_msrp or 0.0)
+    disc_p = round(((msrp_p - ask_p) / msrp_p) * 100) if (msrp_p > 0 and ask_p > 0) else 0
+    img_url = ""
+    if isinstance(lot.warehouse_images, list) and len(lot.warehouse_images) > 0:
+        first_img = lot.warehouse_images[0]
+        img_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+
+    total_active_subs = WhatsAppAlertSubscriber.objects.filter(is_active=True).count()
+
     return JsonResponse({
         "success": True,
         "lot_id": lot.id,
+        "lot_number": lot.lot_number or f"LOT-{lot.id}",
         "lot_title": lot.title,
+        "currency": lot.currency or "USD",
+        "ask_price": ask_p,
+        "msrp": msrp_p,
+        "discount_pct": disc_p,
+        "total_units": lot.total_units_quantity or 0,
+        "image_url": img_url,
+        "location": lot.inventory_location or "Verified Warehouse",
+        "condition": lot.condition or "Surplus Stock",
         "message_body": msg_text,
         "links": links,
         "eligible_count": len(eligible_subs),
+        "total_subscribers": total_active_subs,
         "eligible_subscribers": [
             {"id": s.id, "name": s.name, "phone": s.phone, "company": s.company_name}
             for s in eligible_subs[:10]
