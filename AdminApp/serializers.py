@@ -416,27 +416,19 @@ class LotSerializer(serializers.ModelSerializer):
         if not isinstance(raw_imgs, list):
             raw_imgs = [raw_imgs] if raw_imgs else []
         
+        from .utils import resolve_media_url
         request = self.context.get('request')
         result = []
         for img in raw_imgs:
-            if not img or not isinstance(img, str):
+            if not img:
                 continue
-            s = img.strip()
-            if not s:
+            res_url = resolve_media_url(img)
+            if not res_url:
                 continue
-            if s.startswith('http://') or s.startswith('https://') or s.startswith('//'):
-                result.append(s)
-            elif s.startswith('/'):
-                if request:
-                    result.append(request.build_absolute_uri(s))
-                else:
-                    result.append(s)
+            if res_url.startswith('/') and request:
+                result.append(request.build_absolute_uri(res_url))
             else:
-                path = f"/media/{s.lstrip('/')}"
-                if request:
-                    result.append(request.build_absolute_uri(path))
-                else:
-                    result.append(path)
+                result.append(res_url)
         return result
 
     def get_image(self, obj):

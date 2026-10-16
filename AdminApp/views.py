@@ -91,6 +91,9 @@ def _get_authenticated_admin(request):
     return admin_user
 
 
+from .utils import resolve_media_url
+
+
 def admin_login_page(request):
     """
     Renders the rich Admin Login Screen template.
@@ -1999,7 +2002,9 @@ def lot_enquiry_edit_api(request, enquiry_id):
         if img_key in request.FILES:
             for img_file in request.FILES.getlist(img_key):
                 if hasattr(img_file, "name"):
-                    saved_path = default_storage.save(f"lots/images/{img_file.name}", img_file)
+                    import uuid
+                    safe_wh_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
+                    saved_path = default_storage.save(f"lots/images/{safe_wh_name}", img_file)
                     new_wh_images.append(default_storage.url(saved_path))
     if new_wh_images:
         existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
@@ -2644,7 +2649,10 @@ def lot_enquiry_detail_view(request, enquiry_id):
         is_open_to_offer = True
 
     # Media URL
-    media_url = _extract_media_url(combined_raw.get("media")) or _extract_media_url(combined_raw.get("media_files")) or _extract_media_url(combined_raw.get("images")) or _extract_media_url(combined_raw.get("image")) or _extract_media_url(combined_raw.get("product_and_warehouse_images_or_videos"))
+    raw_media = combined_raw.get("media") or combined_raw.get("media_files") or combined_raw.get("images") or combined_raw.get("image") or combined_raw.get("product_and_warehouse_images_or_videos")
+    media_url = _extract_media_url(raw_media)
+    if media_url:
+        media_url = resolve_media_url(media_url)
 
     batch_data = {
         "category_breakdown": _clean_val(cat_val),
@@ -2713,24 +2721,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         clean_path = img_str.split("?")[0]
         filename = clean_path.replace("\\", "/").split("/")[-1]
         
-        full_url = img_str
-        # If it's an expired or presigned S3 URL, try to refresh or use direct storage URL
-        if ("X-Amz-Algorithm" in img_str or "X-Amz-Credential" in img_str) and filename:
-            for rel_candidate in (filename, f"enquiries/lots/{filename}", f"products/{filename}"):
-                try:
-                    if default_storage.exists(rel_candidate):
-                        full_url = default_storage.url(rel_candidate)
-                        break
-                except Exception:
-                    pass
-        elif not img_str.startswith("http://") and not img_str.startswith("https://") and not img_str.startswith("//"):
-            try:
-                rel = img_str.lstrip("/")
-                if rel.startswith("media/"):
-                    rel = rel[6:]
-                full_url = default_storage.url(rel)
-            except Exception:
-                full_url = f"{settings.MEDIA_URL}{img_str.lstrip('/')}"
+        full_url = resolve_media_url(img_str)
         
         normalized_warehouse_images.append({
             "url": full_url,
@@ -3642,7 +3633,7 @@ def whatsapp_command_center_view(request):
         img_url = ""
         if isinstance(selected_lot.warehouse_images, list) and len(selected_lot.warehouse_images) > 0:
             first_img = selected_lot.warehouse_images[0]
-            img_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+            img_url = resolve_media_url(first_img.get("url") if isinstance(first_img, dict) else str(first_img))
         selected_lot_details = {
             "id": selected_lot.id,
             "lot_number": selected_lot.lot_number,
@@ -3764,7 +3755,7 @@ def whatsapp_preview_api(request):
     img_url = ""
     if isinstance(lot.warehouse_images, list) and len(lot.warehouse_images) > 0:
         first_img = lot.warehouse_images[0]
-        img_url = first_img.get("url") if isinstance(first_img, dict) else str(first_img)
+        img_url = resolve_media_url(first_img.get("url") if isinstance(first_img, dict) else str(first_img))
 
     total_active_subs = WhatsAppAlertSubscriber.objects.filter(is_active=True).count()
 

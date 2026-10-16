@@ -236,13 +236,29 @@ if USE_R2:
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "604800"))
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_CUSTOM_DOMAIN")
+
+    s3_options = {
+        "location": "media",
+        "querystring_expire": AWS_QUERYSTRING_EXPIRE,
+        "signature_version": AWS_S3_SIGNATURE_VERSION,
+        "file_overwrite": AWS_S3_FILE_OVERWRITE,
+    }
+    if AWS_ACCESS_KEY_ID:
+        s3_options["access_key"] = AWS_ACCESS_KEY_ID
+    if AWS_SECRET_ACCESS_KEY:
+        s3_options["secret_key"] = AWS_SECRET_ACCESS_KEY
+    if AWS_STORAGE_BUCKET_NAME:
+        s3_options["bucket_name"] = AWS_STORAGE_BUCKET_NAME
+    if AWS_S3_ENDPOINT_URL:
+        s3_options["endpoint_url"] = AWS_S3_ENDPOINT_URL
+    if AWS_S3_CUSTOM_DOMAIN:
+        s3_options["custom_domain"] = AWS_S3_CUSTOM_DOMAIN
 
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
-            "OPTIONS": {
-                "location": "media",
-            },
+            "OPTIONS": s3_options,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
