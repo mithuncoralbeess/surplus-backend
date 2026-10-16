@@ -1062,6 +1062,11 @@
         pointer-events: none;
     }
 
+    .dropzone-enhanced button,
+    .dropzone-enhanced .btn {
+        pointer-events: auto;
+    }
+
     .dropzone-enhanced:hover,
     .dropzone-enhanced.dragover {
         border-color: #2563eb;
@@ -1170,109 +1175,31 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // -------------------------------------------------------------
-        // 1. Cascading Categories -> Subcategories
-        // -------------------------------------------------------------
+        // =============================================================
+        // DOM ELEMENTS & GLOBAL STATE (Hoisted at top to prevent TDZ errors)
+        // =============================================================
+
+        // 1. Categories & Subcategories
         const subcategoriesMap = JSON.parse('{{ subcategories_json|escapejs|default:"{}" }}');
         const categorySelect = document.getElementById("categorySelect");
         const subcategorySelect = document.getElementById("subcategorySelect");
         const initialSubCatVal = "{{ form_data.subcategory_id|default:'' }}";
 
-        function populateSubcategories(catId, selectedSubId = null) {
-            subcategorySelect.innerHTML = '<option value="" disabled selected>-- Select Subcategory --</option>';
-            if (!catId || !subcategoriesMap[catId] || subcategoriesMap[catId].length === 0) {
-                subcategorySelect.disabled = true;
-                subcategorySelect.innerHTML = '<option value="" selected>-- No Subcategories Available --</option>';
-                updateLivePreview();
-                updateReadinessChecklist();
-                return;
-            }
-
-            const subs = subcategoriesMap[catId];
-            subs.forEach(sub => {
-                const opt = document.createElement("option");
-                opt.value = sub.id;
-                opt.textContent = sub.name;
-                if (selectedSubId && String(sub.id) === String(selectedSubId)) {
-                    opt.selected = true;
-                }
-                subcategorySelect.appendChild(opt);
-            });
-            subcategorySelect.disabled = false;
-            updateLivePreview();
-            updateReadinessChecklist();
-        }
-
-        if (categorySelect.value) {
-            populateSubcategories(categorySelect.value, initialSubCatVal);
-        }
-
-        categorySelect.addEventListener("change", function () {
-            populateSubcategories(this.value);
-        });
-
-        subcategorySelect.addEventListener("change", function () {
-            updateLivePreview();
-            updateReadinessChecklist();
-        });
-
-        // -------------------------------------------------------------
-        // 2. Intake Channel Card Selector Sync
-        // -------------------------------------------------------------
+        // 2. Intake Channel
         const channelRadios = document.querySelectorAll(".intake-radio");
-        channelRadios.forEach(radio => {
-            radio.addEventListener("change", updateReadinessChecklist);
-        });
 
-        // -------------------------------------------------------------
-        // 3. Toggles for Warranty & Certificate
-        // -------------------------------------------------------------
+        // 3. Warranty & Certificate Toggles
         const warrantyToggle = document.getElementById("warrantyToggle");
         const warrantyFields = document.getElementById("warrantyFields");
         const warrantyInput = document.getElementById("warrantyInput");
         const warrantyToggleBox = document.getElementById("warrantyToggleBox");
-
-        function syncWarrantyFields() {
-            const isChecked = warrantyToggle.checked;
-            warrantyFields.style.display = isChecked ? "block" : "none";
-            if (warrantyToggleBox) {
-                warrantyToggleBox.classList.toggle("active-box", isChecked);
-            }
-            if (isChecked && !warrantyInput.value) {
-                warrantyInput.value = "30 Days";
-            }
-        }
-        warrantyToggle.addEventListener("change", syncWarrantyFields);
-        syncWarrantyFields();
-
-        // Preset chips click
         const presetButtons = document.querySelectorAll(".btn-preset-warranty");
-        presetButtons.forEach(btn => {
-            btn.addEventListener("click", function () {
-                const val = this.getAttribute("data-preset");
-                warrantyInput.value = val;
-                presetButtons.forEach(b => b.classList.remove("active"));
-                this.classList.add("active");
-            });
-        });
 
         const certificateToggle = document.getElementById("certificateToggle");
         const certificateFields = document.getElementById("certificateFields");
         const certificateToggleBox = document.getElementById("certificateToggleBox");
 
-        function syncCertificateFields() {
-            const isChecked = certificateToggle.checked;
-            certificateFields.style.display = isChecked ? "block" : "none";
-            if (certificateToggleBox) {
-                certificateToggleBox.classList.toggle("active-box", isChecked);
-            }
-        }
-        certificateToggle.addEventListener("change", syncCertificateFields);
-        syncCertificateFields();
-
-        // -------------------------------------------------------------
-        // 4. Dynamic Live Pricing Calculations & 60% Discount Rule
-        // -------------------------------------------------------------
+        // 4. Pricing & Calculations
         const msrpInput = document.getElementById("msrpInput");
         const lpInput = document.getElementById("liquidatingPriceInput");
         const quantityInput = document.getElementById("quantityInput");
@@ -1286,6 +1213,66 @@
         const discountStatusText = document.getElementById("discountStatusText");
         const discountProgressBar = document.getElementById("discountProgressBar");
         const discountBarLabel = document.getElementById("discountBarLabel");
+
+        // 5. Excluded Countries
+        const excludedSelect = document.getElementById("excludedCountriesSelect");
+        const addCountrySelect = document.getElementById("addExcludedCountrySelect");
+        const badgesContainer = document.getElementById("selectedCountriesBadges");
+        const quickEmbargoBtns = document.querySelectorAll(".btn-quick-embargo");
+        const btnClearExcluded = document.getElementById("btnClearExcluded");
+        const btnClearDropdown = document.getElementById("btnClearDropdown");
+        const selectedCountriesSet = new Set();
+
+        // 6. Product Image Dropzone & Multi-File Upload
+        const dropzoneBox = document.getElementById("dropzoneBox");
+        const imagePicker = document.getElementById("imagePicker");
+        const imageInput = document.getElementById("imageInput");
+        const btnChooseFiles = document.getElementById("btnChooseFiles");
+        const imagePreviewGrid = document.getElementById("imagePreviewGrid");
+        const imageCountBadge = document.getElementById("imageCountBadge");
+        const imageValidationAlert = document.getElementById("imageValidationAlert");
+        const previewPhotoCount = document.getElementById("previewPhotoCount");
+        const previewCoverImg = document.getElementById("previewCoverImg");
+        const previewCoverPlaceholder = document.getElementById("previewCoverPlaceholder");
+        let selectedFiles = [];
+
+        // 7. Product Details & Live Preview Elements
+        const productNameInput = document.getElementById("productNameInput");
+        const titleCharCount = document.getElementById("titleCharCount");
+        const previewTitle = document.getElementById("previewTitle");
+        const previewPrice = document.getElementById("previewPrice");
+        const previewMsrp = document.getElementById("previewMsrp");
+        const previewQty = document.getElementById("previewQty");
+        const previewPayout = document.getElementById("previewPayout");
+        const previewCategoryBadge = document.getElementById("previewCategoryBadge");
+        const previewSubcatBadge = document.getElementById("previewSubcatBadge");
+        const previewOriginBadge = document.getElementById("previewOriginBadge");
+        const countrySelect = document.getElementById("countrySelect");
+        const previewDiscountPill = document.getElementById("previewDiscountPill");
+
+        // 8. Seller Contact & Readiness Checklist
+        const sellerNameInput = document.getElementById("sellerNameInput");
+        const sellerPhoneInput = document.getElementById("sellerPhoneInput");
+        const descriptionInput = document.getElementById("descriptionInput");
+
+        const checkSeller = document.getElementById("checkSeller");
+        const checkTitle = document.getElementById("checkTitle");
+        const checkCountry = document.getElementById("checkCountry");
+        const checkPricing = document.getElementById("checkPricing");
+        const checkDescription = document.getElementById("checkDescription");
+        const checkImages = document.getElementById("checkImages");
+
+        const checklistProgressBar = document.getElementById("checklistProgressBar");
+        const checklistProgressPct = document.getElementById("checklistProgressPct");
+
+        // 9. Form Submission
+        const form = document.getElementById("addProductForm");
+        const btnTop = document.getElementById("btnSubmitTop");
+        const btnBottom = document.getElementById("btnSubmitBottom");
+
+        // =============================================================
+        // CORE HELPER FUNCTIONS
+        // =============================================================
 
         function getCurrencySymbol(curr) {
             if (!curr) return "$";
@@ -1301,224 +1288,6 @@
             }
         }
 
-        function updateCalculations() {
-            const curr = currencySelect.value || "USD";
-            const sym = getCurrencySymbol(curr);
-            currencySymbols.forEach(el => el.textContent = sym);
-
-            const msrp = parseFloat(msrpInput.value) || 0;
-            const lp = parseFloat(lpInput.value) || 0;
-            const qty = parseInt(quantityInput.value) || 1;
-
-            // Suggested max allowed price at 60% discount (MSRP * 0.40)
-            if (msrp > 0) {
-                const maxAllowed = (msrp * 0.40).toFixed(2);
-                btnApplyMaxPrice.classList.remove("d-none");
-                btnApplyMaxPrice.innerHTML = `<i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60% (${sym}${maxAllowed})`;
-                btnApplyMaxPrice.dataset.maxPrice = maxAllowed;
-            } else {
-                btnApplyMaxPrice.classList.add("d-none");
-            }
-
-            if (msrp > 0 && lp > 0) {
-                const discount = (((msrp - lp) / msrp) * 100).toFixed(1);
-                const discountClamped = Math.max(0, Math.min(100, parseFloat(discount)));
-                discountProgressBar.style.width = `${discountClamped}%`;
-                discountBarLabel.textContent = `${discount}% (Policy: 60%+)`;
-
-                if (lp >= msrp) {
-                    discountBadge.textContent = "Over MSRP";
-                    discountBadge.className = "badge bg-danger fs-5 fw-bold px-3 py-1.5 rounded-pill";
-                    priceDiscountHint.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Liquidating price must be below MSRP.</span>';
-                    discountStatusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Over Retail Catalog MSRP</span>';
-                    discountProgressBar.className = "progress-bar bg-danger";
-                } else if (discount < 59.99) {
-                    discountBadge.textContent = `${discount}% OFF`;
-                    discountBadge.className = "badge bg-warning text-dark fs-5 fw-bold px-3 py-1.5 rounded-pill";
-                    const maxAllowed = (msrp * 0.40).toFixed(2);
-                    priceDiscountHint.innerHTML = `<span class="text-warning-emphasis"><i class="bi bi-info-circle-fill me-1"></i>Min. 60% discount recommended (Max: ${sym}${maxAllowed}).</span>`;
-                    discountStatusText.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Target Policy</span>';
-                    discountProgressBar.className = "progress-bar bg-warning";
-                } else {
-                    discountBadge.textContent = `${discount}% OFF`;
-                    discountBadge.className = "badge bg-success fs-5 fw-bold px-3 py-1.5 rounded-pill";
-                    priceDiscountHint.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Valid surplus liquidation discount (60%+ off).</span>';
-                    discountStatusText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Verified Surplus Discount Rate</span>';
-                    discountProgressBar.className = "progress-bar bg-success progress-bar-striped";
-                }
-            } else {
-                discountBadge.textContent = "0% OFF";
-                discountBadge.className = "badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill";
-                priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount recommended).";
-                discountStatusText.textContent = "Waiting for pricing input...";
-                discountProgressBar.style.width = "0%";
-                discountProgressBar.className = "progress-bar bg-secondary";
-                discountBarLabel.textContent = "0% (Policy: 60%+)";
-            }
-
-            const buyerPrice = (lp * 1.10).toFixed(2);
-            buyerPricePreview.textContent = `${sym}${buyerPrice}`;
-
-            const totalPayout = (lp * qty).toFixed(2);
-            totalLotPayout.textContent = `${sym}${totalPayout}`;
-
-            updateLivePreview();
-            updateReadinessChecklist();
-        }
-
-        btnApplyMaxPrice.addEventListener("click", function () {
-            if (this.dataset.maxPrice) {
-                lpInput.value = this.dataset.maxPrice;
-                updateCalculations();
-            }
-        });
-
-        msrpInput.addEventListener("input", updateCalculations);
-        lpInput.addEventListener("input", updateCalculations);
-        quantityInput.addEventListener("input", updateCalculations);
-        currencySelect.addEventListener("change", updateCalculations);
-        updateCalculations();
-
-        // -------------------------------------------------------------
-        // 5. Excluded Countries Modern Tag Selector & Multi-Sync
-        // -------------------------------------------------------------
-        const excludedSelect = document.getElementById("excludedCountriesSelect");
-        const addCountrySelect = document.getElementById("addExcludedCountrySelect");
-        const badgesContainer = document.getElementById("selectedCountriesBadges");
-        const quickEmbargoBtns = document.querySelectorAll(".btn-quick-embargo");
-        const btnClearExcluded = document.getElementById("btnClearExcluded");
-
-        let selectedCountriesSet = new Set();
-
-        // Initialize from pre-selected values
-        if (excludedSelect) {
-            for (let i = 0; i < excludedSelect.options.length; i++) {
-                if (excludedSelect.options[i].selected && excludedSelect.options[i].value && excludedSelect.options[i].value !== "None (Worldwide)") {
-                    selectedCountriesSet.add(excludedSelect.options[i].value);
-                }
-            }
-        }
-
-        function syncExcludedCountries() {
-            if (!excludedSelect || !badgesContainer) return;
-
-            // Sync hidden select options
-            for (let i = 0; i < excludedSelect.options.length; i++) {
-                const opt = excludedSelect.options[i];
-                if (opt.value === "None (Worldwide)") {
-                    opt.selected = (selectedCountriesSet.size === 0);
-                } else {
-                    opt.selected = selectedCountriesSet.has(opt.value);
-                }
-            }
-
-            // Render pill badges
-            badgesContainer.innerHTML = "";
-            if (selectedCountriesSet.size === 0) {
-                badgesContainer.innerHTML = '<span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="bi bi-globe me-1 text-primary"></i>None (Worldwide - No export restrictions)</span>';
-            } else {
-                selectedCountriesSet.forEach(country => {
-                    const badge = document.createElement("span");
-                    badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 small fw-semibold";
-                    badge.innerHTML = `<i class="bi bi-slash-circle"></i><span>${country}</span><button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;" aria-label="Remove"></button>`;
-                    const closeBtn = badge.querySelector(".btn-close");
-                    if (closeBtn) {
-                        closeBtn.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            selectedCountriesSet.delete(country);
-                            syncExcludedCountries();
-                        });
-                    }
-                    badgesContainer.appendChild(badge);
-                });
-            }
-
-            // Sync preset buttons visual toggle
-            quickEmbargoBtns.forEach(btn => {
-                const c = btn.dataset.country;
-                const isSelected = selectedCountriesSet.has(c);
-                btn.classList.toggle("btn-danger", isSelected);
-                btn.classList.toggle("text-white", isSelected);
-                btn.classList.toggle("btn-outline-secondary", !isSelected);
-            });
-        }
-
-        quickEmbargoBtns.forEach(btn => {
-            btn.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const c = this.dataset.country;
-                if (selectedCountriesSet.has(c)) {
-                    selectedCountriesSet.delete(c);
-                } else {
-                    selectedCountriesSet.add(c);
-                }
-                syncExcludedCountries();
-            });
-        });
-
-        if (btnClearExcluded) {
-            btnClearExcluded.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectedCountriesSet.clear();
-                if (addCountrySelect) {
-                    addCountrySelect.selectedIndex = 0;
-                    addCountrySelect.value = "";
-                }
-                syncExcludedCountries();
-            });
-        }
-
-        const btnClearDropdown = document.getElementById("btnClearDropdown");
-        if (btnClearDropdown) {
-            btnClearDropdown.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (addCountrySelect) {
-                    addCountrySelect.selectedIndex = 0;
-                    addCountrySelect.value = "";
-                }
-            });
-        }
-
-        if (addCountrySelect) {
-            addCountrySelect.addEventListener("change", function () {
-                const country = this.value;
-                if (country) {
-                    selectedCountriesSet.add(country);
-                    syncExcludedCountries();
-                }
-                // Always reset select back to placeholder
-                this.selectedIndex = 0;
-                this.value = "";
-                setTimeout(() => {
-                    if (addCountrySelect) {
-                        addCountrySelect.selectedIndex = 0;
-                        addCountrySelect.value = "";
-                    }
-                }, 10);
-            });
-        }
-
-        syncExcludedCountries();
-
-        // -------------------------------------------------------------
-        // 6. Product Image Dropzone & Multi-File Previews
-        // -------------------------------------------------------------
-        const dropzoneBox = document.getElementById("dropzoneBox");
-        const imagePicker = document.getElementById("imagePicker");
-        const imageInput = document.getElementById("imageInput");
-        const btnChooseFiles = document.getElementById("btnChooseFiles");
-        const imagePreviewGrid = document.getElementById("imagePreviewGrid");
-        const imageCountBadge = document.getElementById("imageCountBadge");
-        const imageValidationAlert = document.getElementById("imageValidationAlert");
-        const previewPhotoCount = document.getElementById("previewPhotoCount");
-        const previewCoverImg = document.getElementById("previewCoverImg");
-        const previewCoverPlaceholder = document.getElementById("previewCoverPlaceholder");
-        let selectedFiles = [];
-
         function isImageFile(file) {
             if (!file) return false;
             if (file.type && file.type.startsWith("image/")) return true;
@@ -1531,69 +1300,6 @@
             } else if (imageInput) {
                 imageInput.click();
             }
-        }
-
-        if (dropzoneBox) {
-            dropzoneBox.addEventListener("click", (e) => {
-                if (e.target !== imagePicker && e.target !== imageInput) {
-                    triggerFilePicker();
-                }
-            });
-
-            dropzoneBox.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    triggerFilePicker();
-                }
-            });
-
-            ["dragenter", "dragover"].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.classList.add("dragover");
-                }, false);
-            });
-
-            ["dragleave", "drop"].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.classList.remove("dragover");
-                }, false);
-            });
-
-            dropzoneBox.addEventListener("drop", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const dt = e.dataTransfer;
-                if (dt && dt.files && dt.files.length) {
-                    handleNewFiles(dt.files);
-                }
-            });
-        }
-
-        if (btnChooseFiles) {
-            btnChooseFiles.addEventListener("click", (e) => {
-                e.stopPropagation();
-                triggerFilePicker();
-            });
-        }
-
-        if (imagePicker) {
-            imagePicker.addEventListener("change", function () {
-                if (this.files && this.files.length) {
-                    handleNewFiles(this.files);
-                }
-                // Safely reset picker value so re-selecting the exact same file will always fire change
-                this.value = "";
-            });
-        } else if (imageInput) {
-            imageInput.addEventListener("change", function () {
-                if (this.files && this.files.length) {
-                    handleNewFiles(this.files);
-                }
-            });
         }
 
         function handleNewFiles(fileList) {
@@ -1631,13 +1337,14 @@
         }
 
         function syncFileInput() {
-            if (!imageInput) return;
-            try {
-                const dt = new DataTransfer();
-                selectedFiles.forEach(f => dt.items.add(f));
-                imageInput.files = dt.files;
-            } catch (err) {
-                console.warn("DataTransfer sync warning:", err);
+            if (imageInput) {
+                try {
+                    const dt = new DataTransfer();
+                    selectedFiles.forEach(f => dt.items.add(f));
+                    imageInput.files = dt.files;
+                } catch (err) {
+                    console.warn("DataTransfer sync warning:", err);
+                }
             }
 
             if (imageCountBadge) {
@@ -1714,115 +1421,16 @@
             });
         }
 
-        // -------------------------------------------------------------
-        // 7. Live Marketplace Preview Card Updating
-        // -------------------------------------------------------------
-        const productNameInput = document.getElementById("productNameInput");
-        const titleCharCount = document.getElementById("titleCharCount");
-        const previewTitle = document.getElementById("previewTitle");
-        const previewPrice = document.getElementById("previewPrice");
-        const previewMsrp = document.getElementById("previewMsrp");
-        const previewQty = document.getElementById("previewQty");
-        const previewPayout = document.getElementById("previewPayout");
-        const previewCategoryBadge = document.getElementById("previewCategoryBadge");
-        const previewSubcatBadge = document.getElementById("previewSubcatBadge");
-        const previewOriginBadge = document.getElementById("previewOriginBadge");
-        const countrySelect = document.getElementById("countrySelect");
-        const previewDiscountPill = document.getElementById("previewDiscountPill");
-
-        function updateLivePreview() {
-            // Title & Char count
-            const rawTitle = productNameInput.value.trim();
-            titleCharCount.textContent = `${rawTitle.length} characters`;
-            previewTitle.textContent = rawTitle || "Product Title Preview";
-
-            // Price & Currency
-            const curr = currencySelect.value || "USD";
-            const sym = getCurrencySymbol(curr);
-            const msrp = parseFloat(msrpInput.value) || 0;
-            const lp = parseFloat(lpInput.value) || 0;
-            const qty = parseInt(quantityInput.value) || 1;
-
-            previewPrice.textContent = `${sym}${lp.toFixed(2)}`;
-            previewMsrp.textContent = msrp > 0 ? `${sym}${msrp.toFixed(2)}` : "";
-            previewQty.textContent = `${qty} Units`;
-            previewPayout.textContent = `${sym}${(lp * qty).toFixed(2)}`;
-
-            // Discount pill
-            if (msrp > 0 && lp > 0 && lp < msrp) {
-                const discount = (((msrp - lp) / msrp) * 100).toFixed(0);
-                previewDiscountPill.textContent = `${discount}% OFF`;
-                previewDiscountPill.classList.remove("d-none");
-            } else {
-                previewDiscountPill.classList.add("d-none");
-            }
-
-            // Category & Subcategory
-            if (categorySelect.selectedIndex > 0) {
-                previewCategoryBadge.textContent = categorySelect.options[categorySelect.selectedIndex].text;
-            } else {
-                previewCategoryBadge.textContent = "Category";
-            }
-
-            if (!subcategorySelect.disabled && subcategorySelect.selectedIndex > 0) {
-                previewSubcatBadge.textContent = subcategorySelect.options[subcategorySelect.selectedIndex].text;
-                previewSubcatBadge.classList.remove("d-none");
-            } else {
-                previewSubcatBadge.classList.add("d-none");
-            }
-
-            // Origin country
-            if (countrySelect.selectedIndex > 0) {
-                previewOriginBadge.textContent = countrySelect.value;
-            } else {
-                previewOriginBadge.textContent = "Worldwide";
-            }
-
-            // Cover Photo
-            if (selectedFiles.length > 0) {
-                previewCoverImg.src = URL.createObjectURL(selectedFiles[0]);
-                previewCoverImg.classList.remove("d-none");
-                previewCoverPlaceholder.classList.add("d-none");
-            } else {
-                previewCoverImg.classList.add("d-none");
-                previewCoverPlaceholder.classList.remove("d-none");
-            }
-        }
-
-        productNameInput.addEventListener("input", function () {
-            updateLivePreview();
-            updateReadinessChecklist();
-        });
-
-        countrySelect.addEventListener("change", function () {
-            updateLivePreview();
-            updateReadinessChecklist();
-        });
-
-        // -------------------------------------------------------------
-        // 8. Dynamic Readiness Checklist Progress
-        // -------------------------------------------------------------
-        const sellerNameInput = document.getElementById("sellerNameInput");
-        const sellerPhoneInput = document.getElementById("sellerPhoneInput");
-        const descriptionInput = document.getElementById("descriptionInput");
-
-        const checkSeller = document.getElementById("checkSeller");
-        const checkTitle = document.getElementById("checkTitle");
-        const checkCountry = document.getElementById("checkCountry");
-        const checkPricing = document.getElementById("checkPricing");
-        const checkDescription = document.getElementById("checkDescription");
-        const checkImages = document.getElementById("checkImages");
-
-        const checklistProgressBar = document.getElementById("checklistProgressBar");
-        const checklistProgressPct = document.getElementById("checklistProgressPct");
-
         function setCheckItem(el, passed) {
+            if (!el) return;
             el.classList.toggle("done", passed);
             const icon = el.querySelector("i");
-            if (passed) {
-                icon.className = "bi bi-check-circle-fill text-success";
-            } else {
-                icon.className = "bi bi-circle text-muted";
+            if (icon) {
+                if (passed) {
+                    icon.className = "bi bi-check-circle-fill text-success";
+                } else {
+                    icon.className = "bi bi-circle text-muted";
+                }
             }
         }
 
@@ -1831,142 +1439,608 @@
             let count = 0;
 
             // 1. Seller
-            const sellerOk = Boolean(sellerNameInput.value.trim() && sellerPhoneInput.value.trim());
+            const sellerOk = Boolean(sellerNameInput && sellerPhoneInput && sellerNameInput.value.trim() && sellerPhoneInput.value.trim());
             setCheckItem(checkSeller, sellerOk);
             if (sellerOk) count++;
 
             // 2. Title & Category
-            const titleOk = Boolean(productNameInput.value.trim() && categorySelect.value && subcategorySelect.value);
+            const titleOk = Boolean(productNameInput && categorySelect && subcategorySelect && productNameInput.value.trim() && categorySelect.value && subcategorySelect.value);
             setCheckItem(checkTitle, titleOk);
             if (titleOk) count++;
 
             // 3. Country
-            const countryOk = Boolean(countrySelect.value);
+            const countryOk = Boolean(countrySelect && countrySelect.value);
             setCheckItem(checkCountry, countryOk);
             if (countryOk) count++;
 
             // 4. Pricing
-            const msrp = parseFloat(msrpInput.value) || 0;
-            const lp = parseFloat(lpInput.value) || 0;
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
             const pricingOk = Boolean(msrp > 0 && lp > 0 && lp < msrp);
             setCheckItem(checkPricing, pricingOk);
             if (pricingOk) count++;
 
             // 5. Description
-            const descOk = Boolean(descriptionInput.value.trim().length > 10);
+            const descOk = Boolean(descriptionInput && descriptionInput.value.trim().length > 10);
             setCheckItem(checkDescription, descOk);
             if (descOk) count++;
 
             // 6. Images
-            const imagesOk = Boolean(selectedFiles.length > 0);
+            const imagesOk = Boolean(selectedFiles && selectedFiles.length > 0);
             setCheckItem(checkImages, imagesOk);
             if (imagesOk) count++;
 
             const pct = Math.round((count / total) * 100);
-            checklistProgressBar.style.width = `${pct}%`;
-            checklistProgressPct.textContent = `${pct}%`;
+            if (checklistProgressBar) checklistProgressBar.style.width = `${pct}%`;
+            if (checklistProgressPct) checklistProgressPct.textContent = `${pct}%`;
 
-            if (pct === 100) {
-                checklistProgressBar.className = "progress-bar bg-success";
-            } else {
-                checklistProgressBar.className = "progress-bar bg-primary";
+            if (checklistProgressBar) {
+                if (pct === 100) {
+                    checklistProgressBar.className = "progress-bar bg-success";
+                } else {
+                    checklistProgressBar.className = "progress-bar bg-primary";
+                }
             }
         }
 
-        sellerNameInput.addEventListener("input", updateReadinessChecklist);
-        sellerPhoneInput.addEventListener("input", updateReadinessChecklist);
-        descriptionInput.addEventListener("input", updateReadinessChecklist);
-
-        updateLivePreview();
-        updateReadinessChecklist();
-
-        // -------------------------------------------------------------
-        // 9. Client-Side Form Validation & Submit Button State
-        // -------------------------------------------------------------
-        const form = document.getElementById("addProductForm");
-        form.addEventListener("submit", function (e) {
-            const sellerName = sellerNameInput.value.trim();
-            const sellerPhone = sellerPhoneInput.value.trim();
-
-            if (!sellerName) {
-                e.preventDefault();
-                alert("Please enter the Seller Contact Name (the vendor who provided these details).");
-                sellerNameInput.focus();
-                return false;
+        function updateLivePreview() {
+            // Title & Char count
+            if (productNameInput) {
+                const rawTitle = productNameInput.value.trim();
+                if (titleCharCount) titleCharCount.textContent = `${rawTitle.length} characters`;
+                if (previewTitle) previewTitle.textContent = rawTitle || "Product Title Preview";
             }
 
-            if (!sellerPhone) {
-                e.preventDefault();
-                alert("Please enter the WhatsApp / Mobile Number of the seller.");
-                sellerPhoneInput.focus();
-                return false;
+            // Price & Currency
+            const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
+            const sym = getCurrencySymbol(curr);
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            const qty = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
+
+            if (previewPrice) previewPrice.textContent = `${sym}${lp.toFixed(2)}`;
+            if (previewMsrp) previewMsrp.textContent = msrp > 0 ? `${sym}${msrp.toFixed(2)}` : "";
+            if (previewQty) previewQty.textContent = `${qty} Units`;
+            if (previewPayout) previewPayout.textContent = `${sym}${(lp * qty).toFixed(2)}`;
+
+            // Discount pill
+            if (previewDiscountPill) {
+                if (msrp > 0 && lp > 0 && lp < msrp) {
+                    const discount = (((msrp - lp) / msrp) * 100).toFixed(0);
+                    previewDiscountPill.textContent = `${discount}% OFF`;
+                    previewDiscountPill.classList.remove("d-none");
+                } else {
+                    previewDiscountPill.classList.add("d-none");
+                }
             }
 
-            if (!productNameInput.value.trim()) {
-                e.preventDefault();
-                alert("Please enter the Product Title / Name.");
-                productNameInput.focus();
-                return false;
+            // Category & Subcategory
+            if (previewCategoryBadge && categorySelect) {
+                if (categorySelect.selectedIndex > 0) {
+                    previewCategoryBadge.textContent = categorySelect.options[categorySelect.selectedIndex].text;
+                } else {
+                    previewCategoryBadge.textContent = "Category";
+                }
             }
 
-            if (!categorySelect.value) {
-                e.preventDefault();
-                alert("Please select a Product Category.");
-                categorySelect.focus();
-                return false;
+            if (previewSubcatBadge && subcategorySelect) {
+                if (!subcategorySelect.disabled && subcategorySelect.selectedIndex > 0) {
+                    previewSubcatBadge.textContent = subcategorySelect.options[subcategorySelect.selectedIndex].text;
+                    previewSubcatBadge.classList.remove("d-none");
+                } else {
+                    previewSubcatBadge.classList.add("d-none");
+                }
             }
 
-            if (!subcategorySelect.value) {
-                e.preventDefault();
-                alert("Please select a Subcategory.");
-                subcategorySelect.focus();
-                return false;
+            // Origin country
+            if (previewOriginBadge && countrySelect) {
+                if (countrySelect.selectedIndex > 0) {
+                    previewOriginBadge.textContent = countrySelect.value;
+                } else {
+                    previewOriginBadge.textContent = "Worldwide";
+                }
             }
 
-            if (!countrySelect.value) {
-                e.preventDefault();
-                alert("Please select the Manufacturing Country.");
-                countrySelect.focus();
-                return false;
+            // Cover Photo
+            if (previewCoverImg && previewCoverPlaceholder) {
+                if (selectedFiles && selectedFiles.length > 0) {
+                    try {
+                        previewCoverImg.src = URL.createObjectURL(selectedFiles[0]);
+                        previewCoverImg.classList.remove("d-none");
+                        previewCoverPlaceholder.classList.add("d-none");
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                } else {
+                    previewCoverImg.classList.add("d-none");
+                    previewCoverPlaceholder.classList.remove("d-none");
+                }
+            }
+        }
+
+        function updateCalculations() {
+            const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
+            const sym = getCurrencySymbol(curr);
+            if (currencySymbols) {
+                currencySymbols.forEach(el => el.textContent = sym);
             }
 
-            const msrp = parseFloat(msrpInput.value) || 0;
-            const lp = parseFloat(lpInput.value) || 0;
-            if (msrp <= 0 || lp <= 0) {
-                e.preventDefault();
-                alert("Please enter a valid MSRP and Liquidating Price greater than 0.");
-                (msrp <= 0 ? msrpInput : lpInput).focus();
-                return false;
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            const qty = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
+
+            // Suggested max allowed price at 60% discount (MSRP * 0.40)
+            if (btnApplyMaxPrice) {
+                if (msrp > 0) {
+                    const maxAllowed = (msrp * 0.40).toFixed(2);
+                    btnApplyMaxPrice.classList.remove("d-none");
+                    btnApplyMaxPrice.innerHTML = `<i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60% (${sym}${maxAllowed})`;
+                    btnApplyMaxPrice.dataset.maxPrice = maxAllowed;
+                } else {
+                    btnApplyMaxPrice.classList.add("d-none");
+                }
             }
 
-            if (lp >= msrp) {
-                e.preventDefault();
-                alert("Liquidating price must be lower than the catalog MSRP price.");
-                lpInput.focus();
-                return false;
+            if (msrp > 0 && lp > 0) {
+                const discount = (((msrp - lp) / msrp) * 100).toFixed(1);
+                const discountClamped = Math.max(0, Math.min(100, parseFloat(discount)));
+                if (discountProgressBar) discountProgressBar.style.width = `${discountClamped}%`;
+                if (discountBarLabel) discountBarLabel.textContent = `${discount}% (Policy: 60%+)`;
+
+                if (lp >= msrp) {
+                    if (discountBadge) {
+                        discountBadge.textContent = "Over MSRP";
+                        discountBadge.className = "badge bg-danger fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Liquidating price must be below MSRP.</span>';
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Over Retail Catalog MSRP</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-danger";
+                } else if (discount < 59.99) {
+                    if (discountBadge) {
+                        discountBadge.textContent = `${discount}% OFF`;
+                        discountBadge.className = "badge bg-warning text-dark fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    const maxAllowed = (msrp * 0.40).toFixed(2);
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = `<span class="text-warning-emphasis"><i class="bi bi-info-circle-fill me-1"></i>Min. 60% discount recommended (Max: ${sym}${maxAllowed}).</span>`;
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Target Policy</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-warning";
+                } else {
+                    if (discountBadge) {
+                        discountBadge.textContent = `${discount}% OFF`;
+                        discountBadge.className = "badge bg-success fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Valid surplus liquidation discount (60%+ off).</span>';
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Verified Surplus Discount Rate</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-success progress-bar-striped";
+                }
+            } else {
+                if (discountBadge) {
+                    discountBadge.textContent = "0% OFF";
+                    discountBadge.className = "badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                }
+                if (priceDiscountHint) priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount recommended).";
+                if (discountStatusText) discountStatusText.textContent = "Waiting for pricing input...";
+                if (discountProgressBar) {
+                    discountProgressBar.style.width = "0%";
+                    discountProgressBar.className = "progress-bar bg-secondary";
+                }
+                if (discountBarLabel) discountBarLabel.textContent = "0% (Policy: 60%+)";
             }
 
+            const buyerPrice = (lp * 1.10).toFixed(2);
+            if (buyerPricePreview) buyerPricePreview.textContent = `${sym}${buyerPrice}`;
+
+            const totalPayout = (lp * qty).toFixed(2);
+            if (totalLotPayout) totalLotPayout.textContent = `${sym}${totalPayout}`;
+
+            updateLivePreview();
+            updateReadinessChecklist();
+        }
+
+        function populateSubcategories(catId, selectedSubId = null) {
+            if (!subcategorySelect) return;
+            subcategorySelect.innerHTML = '<option value="" disabled selected>-- Select Subcategory --</option>';
+            if (!catId || !subcategoriesMap[catId] || subcategoriesMap[catId].length === 0) {
+                subcategorySelect.disabled = true;
+                subcategorySelect.innerHTML = '<option value="" selected>-- No Subcategories Available --</option>';
+                updateLivePreview();
+                updateReadinessChecklist();
+                return;
+            }
+
+            const subs = subcategoriesMap[catId];
+            subs.forEach(sub => {
+                const opt = document.createElement("option");
+                opt.value = sub.id;
+                opt.textContent = sub.name;
+                if (selectedSubId && String(sub.id) === String(selectedSubId)) {
+                    opt.selected = true;
+                }
+                subcategorySelect.appendChild(opt);
+            });
+            subcategorySelect.disabled = false;
+            updateLivePreview();
+            updateReadinessChecklist();
+        }
+
+        function syncWarrantyFields() {
+            if (!warrantyToggle || !warrantyFields) return;
+            const isChecked = warrantyToggle.checked;
+            warrantyFields.style.display = isChecked ? "block" : "none";
+            if (warrantyToggleBox) {
+                warrantyToggleBox.classList.toggle("active-box", isChecked);
+            }
+            if (isChecked && warrantyInput && !warrantyInput.value) {
+                warrantyInput.value = "30 Days";
+            }
+        }
+
+        function syncCertificateFields() {
+            if (!certificateToggle || !certificateFields) return;
+            const isChecked = certificateToggle.checked;
+            certificateFields.style.display = isChecked ? "block" : "none";
+            if (certificateToggleBox) {
+                certificateToggleBox.classList.toggle("active-box", isChecked);
+            }
+        }
+
+        function syncExcludedCountries() {
+            if (!excludedSelect || !badgesContainer) return;
+
+            // Sync hidden select options
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                const opt = excludedSelect.options[i];
+                if (opt.value === "None (Worldwide)") {
+                    opt.selected = (selectedCountriesSet.size === 0);
+                } else {
+                    opt.selected = selectedCountriesSet.has(opt.value);
+                }
+            }
+
+            // Render pill badges
+            badgesContainer.innerHTML = "";
+            if (selectedCountriesSet.size === 0) {
+                badgesContainer.innerHTML = '<span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="bi bi-globe me-1 text-primary"></i>None (Worldwide - No export restrictions)</span>';
+            } else {
+                selectedCountriesSet.forEach(country => {
+                    const badge = document.createElement("span");
+                    badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 small fw-semibold";
+                    badge.innerHTML = `<i class="bi bi-slash-circle"></i><span>${country}</span><button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;" aria-label="Remove"></button>`;
+                    const closeBtn = badge.querySelector(".btn-close");
+                    if (closeBtn) {
+                        closeBtn.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectedCountriesSet.delete(country);
+                            syncExcludedCountries();
+                        });
+                    }
+                    badgesContainer.appendChild(badge);
+                });
+            }
+
+            // Sync preset buttons visual toggle
+            if (quickEmbargoBtns) {
+                quickEmbargoBtns.forEach(btn => {
+                    const c = btn.dataset.country;
+                    const isSelected = selectedCountriesSet.has(c);
+                    btn.classList.toggle("btn-danger", isSelected);
+                    btn.classList.toggle("text-white", isSelected);
+                    btn.classList.toggle("btn-outline-secondary", !isSelected);
+                });
+            }
+        }
+
+        // =============================================================
+        // EVENT LISTENERS BINDING
+        // =============================================================
+
+        // 1. Dropzone Box & Choose Files Button
+        if (dropzoneBox) {
+            dropzoneBox.addEventListener("click", function (e) {
+                if (e.target !== imagePicker && e.target !== imageInput) {
+                    triggerFilePicker();
+                }
+            });
+
+            dropzoneBox.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    triggerFilePicker();
+                }
+            });
+
+            ["dragenter", "dragover"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.add("dragover");
+                }, false);
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.remove("dragover");
+                }, false);
+            });
+
+            dropzoneBox.addEventListener("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length) {
+                    handleNewFiles(dt.files);
+                }
+            });
+        }
+
+        if (btnChooseFiles) {
+            btnChooseFiles.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                triggerFilePicker();
+            });
+        }
+
+        if (imagePicker) {
+            imagePicker.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+                this.value = "";
+            });
+        }
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+            });
+        }
+
+        // 2. Pricing & Max Price Quick Apply
+        if (btnApplyMaxPrice) {
+            btnApplyMaxPrice.addEventListener("click", function () {
+                if (this.dataset.maxPrice && lpInput) {
+                    lpInput.value = this.dataset.maxPrice;
+                    updateCalculations();
+                }
+            });
+        }
+
+        if (msrpInput) msrpInput.addEventListener("input", updateCalculations);
+        if (lpInput) lpInput.addEventListener("input", updateCalculations);
+        if (quantityInput) quantityInput.addEventListener("input", updateCalculations);
+        if (currencySelect) currencySelect.addEventListener("change", updateCalculations);
+
+        // 3. Category & Subcategory Selects
+        if (categorySelect) {
+            categorySelect.addEventListener("change", function () {
+                populateSubcategories(this.value);
+            });
+        }
+
+        if (subcategorySelect) {
+            subcategorySelect.addEventListener("change", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        // 4. Intake Channel Radios
+        if (channelRadios) {
+            channelRadios.forEach(radio => {
+                radio.addEventListener("change", updateReadinessChecklist);
+            });
+        }
+
+        // 5. Warranty & Certificate Toggles
+        if (warrantyToggle) warrantyToggle.addEventListener("change", syncWarrantyFields);
+        if (presetButtons) {
+            presetButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const val = this.getAttribute("data-preset");
+                    if (warrantyInput) warrantyInput.value = val;
+                    presetButtons.forEach(b => b.classList.remove("active"));
+                    this.classList.add("active");
+                });
+            });
+        }
+
+        if (certificateToggle) certificateToggle.addEventListener("change", syncCertificateFields);
+
+        // 6. Excluded Countries
+        if (excludedSelect) {
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                if (excludedSelect.options[i].selected && excludedSelect.options[i].value && excludedSelect.options[i].value !== "None (Worldwide)") {
+                    selectedCountriesSet.add(excludedSelect.options[i].value);
+                }
+            }
+        }
+
+        if (quickEmbargoBtns) {
+            quickEmbargoBtns.forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const c = this.dataset.country;
+                    if (selectedCountriesSet.has(c)) {
+                        selectedCountriesSet.delete(c);
+                    } else {
+                        selectedCountriesSet.add(c);
+                    }
+                    syncExcludedCountries();
+                });
+            });
+        }
+
+        if (btnClearExcluded) {
+            btnClearExcluded.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                selectedCountriesSet.clear();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
+                syncExcludedCountries();
+            });
+        }
+
+        if (btnClearDropdown) {
+            btnClearDropdown.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
+            });
+        }
+
+        if (addCountrySelect) {
+            addCountrySelect.addEventListener("change", function () {
+                const country = this.value;
+                if (country) {
+                    selectedCountriesSet.add(country);
+                    syncExcludedCountries();
+                }
+                this.selectedIndex = 0;
+                this.value = "";
+                setTimeout(() => {
+                    if (addCountrySelect) {
+                        addCountrySelect.selectedIndex = 0;
+                        addCountrySelect.value = "";
+                    }
+                }, 10);
+            });
+        }
+
+        // 7. Live Preview & Readiness Input Listeners
+        if (productNameInput) {
+            productNameInput.addEventListener("input", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        if (countrySelect) {
+            countrySelect.addEventListener("change", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        if (sellerNameInput) sellerNameInput.addEventListener("input", updateReadinessChecklist);
+        if (sellerPhoneInput) sellerPhoneInput.addEventListener("input", updateReadinessChecklist);
+        if (descriptionInput) descriptionInput.addEventListener("input", updateReadinessChecklist);
+
+        // 8. Client-Side Form Validation & Submit Button State
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                const sellerName = sellerNameInput ? sellerNameInput.value.trim() : "";
+                const sellerPhone = sellerPhoneInput ? sellerPhoneInput.value.trim() : "";
+
+                if (!sellerName) {
+                    e.preventDefault();
+                    alert("Please enter the Seller Contact Name (the vendor who provided these details).");
+                    if (sellerNameInput) sellerNameInput.focus();
+                    return false;
+                }
+
+                if (!sellerPhone) {
+                    e.preventDefault();
+                    alert("Please enter the WhatsApp / Mobile Number of the seller.");
+                    if (sellerPhoneInput) sellerPhoneInput.focus();
+                    return false;
+                }
+
+                if (!productNameInput || !productNameInput.value.trim()) {
+                    e.preventDefault();
+                    alert("Please enter the Product Title / Name.");
+                    if (productNameInput) productNameInput.focus();
+                    return false;
+                }
+
+                if (!categorySelect || !categorySelect.value) {
+                    e.preventDefault();
+                    alert("Please select a Product Category.");
+                    if (categorySelect) categorySelect.focus();
+                    return false;
+                }
+
+                if (!subcategorySelect || !subcategorySelect.value) {
+                    e.preventDefault();
+                    alert("Please select a Subcategory.");
+                    if (subcategorySelect) subcategorySelect.focus();
+                    return false;
+                }
+
+                if (!countrySelect || !countrySelect.value) {
+                    e.preventDefault();
+                    alert("Please select the Manufacturing Country.");
+                    if (countrySelect) countrySelect.focus();
+                    return false;
+                }
+
+                const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+                const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+                if (msrp <= 0 || lp <= 0) {
+                    e.preventDefault();
+                    alert("Please enter a valid MSRP and Liquidating Price greater than 0.");
+                    if (msrp <= 0 && msrpInput) msrpInput.focus();
+                    else if (lpInput) lpInput.focus();
+                    return false;
+                }
+
+                if (lp >= msrp) {
+                    e.preventDefault();
+                    alert("Liquidating price must be lower than the catalog MSRP price.");
+                    if (lpInput) lpInput.focus();
+                    return false;
+                }
+
+                syncFileInput();
+                if (selectedFiles.length === 0) {
+                    e.preventDefault();
+                    if (imageValidationAlert) imageValidationAlert.classList.remove("d-none");
+                    if (dropzoneBox) dropzoneBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+
+                setTimeout(() => {
+                    if (btnTop) {
+                        btnTop.disabled = true;
+                        btnTop.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                    }
+                    if (btnBottom) {
+                        btnBottom.disabled = true;
+                        btnBottom.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                    }
+                }, 10);
+            });
+        }
+
+        // =============================================================
+        // SAFE INITIAL EXECUTION ON LOAD
+        // =============================================================
+        try {
+            syncWarrantyFields();
+            syncCertificateFields();
+            syncExcludedCountries();
             syncFileInput();
-            if (selectedFiles.length === 0) {
-                e.preventDefault();
-                imageValidationAlert.classList.remove("d-none");
-                dropzoneBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return false;
+            updateCalculations();
+            if (categorySelect && categorySelect.value) {
+                populateSubcategories(categorySelect.value, initialSubCatVal);
             }
-
-            const btnTop = document.getElementById("btnSubmitTop");
-            const btnBottom = document.getElementById("btnSubmitBottom");
-            setTimeout(() => {
-                if (btnTop) {
-                    btnTop.disabled = true;
-                    btnTop.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
-                }
-                if (btnBottom) {
-                    btnBottom.disabled = true;
-                    btnBottom.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
-                }
-            }, 10);
-        });
+            updateLivePreview();
+            updateReadinessChecklist();
+        } catch (initErr) {
+            console.error("Initialization error in add_product:", initErr);
+        }
     });
 </script>
 {% endblock %}
