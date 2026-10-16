@@ -2777,7 +2777,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         })
     context["all_lot_fields"] = all_lot_fields
 
-    # Extra Data dynamic fields
+    # Extra Data dynamic fields (strictly exclude vendor/seller details already presented in the top Vendor card)
     ignore_keys = {
         "products", "manifest_items", "manifest_file", "lot_details", "details",
         "is_saved_to_db", "parse_summary", "is_valid", "row_errors", "missing_mandatory_columns",
@@ -2785,10 +2785,15 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "warehouse_images", "warehouse_image", "warehouse_imgs", "wh_images", "photos",
         "product_and_warehouse_images", "product_images", "product_image",
         "intake_admin_name", "intake_admin_email", "intake_admin_id", "intake_admin",
-        "admin_name", "admin_email", "admin_id", "admin_user", "assigned_admin", "assigned_admin_name", "assigned_admin_id", "intake_channel",
+        "admin_name", "admin_email", "admin_id", "admin_user", "admin_username", "assigned_admin", "assigned_admin_name", "assigned_admin_id", "intake_channel",
         "category_allocations", "excluded_export_countries", "third_party_documents",
         "full_name", "name", "contact_person", "phone", "phone_no", "phone_number", "email", "e_mail",
         "company", "company_name", "vendor_id", "user_id", "location", "inventory_location", "business_location", "industry",
+        "seller_name", "seller_company", "seller_phone", "seller_email", "seller_location", "seller_contact",
+        "seller_city", "seller_country", "seller_address", "seller_notes", "seller_id",
+        "vendor_name", "vendor_company", "vendor_phone", "vendor_email", "vendor_location", "vendor_id", "user_id",
+        "admin_username", "admin_name", "admin_email", "admin_id", "intake_channel", "intake_notes",
+        "inventory_city", "inventory_country",
         "title", "lot_title", "description", "notes", "category", "primary_category",
         "category_breakdown", "stock_condition", "condition", "inventory_age", "inventory_stock_age", "age",
         "distinct_skus", "number_of_distinct_skus", "total_units", "total_units_quantity", "quantity", "units",
@@ -2802,9 +2807,10 @@ def lot_enquiry_detail_view(request, enquiry_id):
         k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
         if k_norm in ignore_keys or str(k) in ignore_keys:
             continue
-        # Exclude internal admin keys, image fields, and credentials
+        # Exclude internal admin keys, seller/vendor contact details (already shown in top Vendor card), image fields, and credentials
         if any(term in k_norm for term in (
-            "warehouse_image", "intake_admin", "admin_name", "admin_email", "admin_id",
+            "warehouse_image", "intake_admin", "admin_name", "admin_email", "admin_id", "admin_username", "admin_user",
+            "seller_", "vendor_", "intake_", "assigned_admin",
             "password", "token", "secret", "credential"
         )):
             continue
