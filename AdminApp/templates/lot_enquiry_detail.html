@@ -22,14 +22,154 @@
         top: 0;
         z-index: 3;
     }
-    .brand-filter-chip {
-        transition: all 0.15s ease;
+    /* Enterprise Intelligence Panel & Brand Distribution */
+    .intelligence-panel {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        position: relative;
     }
-    .brand-filter-chip:hover {
+    [data-bs-theme="dark"] .intelligence-panel {
+        background: #1e293b;
+        border-bottom-color: #334155;
+    }
+
+    .brand-progress-track {
+        height: 12px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: flex;
+    }
+    .brand-progress-track .progress-bar {
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+    }
+    .brand-progress-track .progress-bar:hover {
+        filter: brightness(1.12);
+        transform: scaleY(1.15);
+        z-index: 2;
+    }
+
+    /* Modern Brand Filter Chips */
+    .brand-chips-scroll-wrap {
+        max-height: 128px;
+        overflow-y: auto;
+        padding-right: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar {
+        width: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .brand-chip-modern {
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        user-select: none;
+    }
+    .brand-chip-modern:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
         transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
     }
-    #explorer-brand-progressbar .progress-bar {
-        transition: width 0.4s ease;
+    .brand-chip-modern.active {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+    }
+    .brand-chip-modern.active .brand-pct-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+    .brand-pct-badge {
+        font-size: 0.68rem;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    /* Profit Driver Executive Cards */
+    .profit-driver-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 12px 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .profit-driver-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.03);
+        border-color: #93c5fd;
+    }
+    .profit-driver-card:active {
+        transform: translateY(0);
+    }
+    .driver-rank-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        letter-spacing: 0.3px;
+    }
+    .rank-1 {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .rank-2 {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .rank-3 {
+        background: #ffedd5;
+        color: #9a3412;
+        border: 1px solid #fed7aa;
+    }
+    .rank-4 {
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
     }
 </style>
 
@@ -613,37 +753,57 @@
                 </div>
 
                 <!-- Visual Intelligence: Brand Breakdown & Top Profit Drivers Spotlight -->
-                <div class="p-4 border-bottom bg-white" id="explorer-intelligence-section">
-                    <div class="row g-4">
+                <div class="p-4 border-bottom intelligence-panel" id="explorer-intelligence-section">
+                    <div class="row g-4 align-items-stretch">
                         <!-- Brand Value Distribution -->
-                        <div class="col-lg-6">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                                    <i class="bi bi-pie-chart-fill text-primary"></i> Brand Allocation (% of Lot Value)
-                                </h6>
-                                <small class="text-muted" style="font-size: 0.75rem;">Click a brand chip to filter</small>
+                        <div class="col-lg-6 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary p-1.5 rounded-2">
+                                            <i class="bi bi-pie-chart-fill fs-6"></i>
+                                        </span>
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                                Brand Allocation (% of Lot Value)
+                                            </h6>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Click any brand chip to isolate matching SKUs</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" id="explorer-brand-count-badge" style="font-size: 0.7rem;">
+                                        0 Brands
+                                    </span>
+                                </div>
+                                <!-- Multi-segment brand progress bar -->
+                                <div class="brand-progress-track mb-3" id="explorer-brand-progressbar">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
                             </div>
-                            <!-- Multi-segment brand progress bar -->
-                            <div class="progress rounded-pill mb-3" style="height: 10px;" id="explorer-brand-progressbar">
-                                <!-- Populated dynamically by JS -->
-                            </div>
-                            <!-- Brand Chips -->
-                            <div class="d-flex flex-wrap gap-1.5" id="explorer-brand-chips">
+                            <!-- Brand Chips Scroll Container -->
+                            <div class="brand-chips-scroll-wrap mt-auto" id="explorer-brand-chips">
                                 <!-- Populated dynamically by JS -->
                             </div>
                         </div>
 
                         <!-- Top Profit Drivers Spotlight -->
-                        <div class="col-lg-6">
+                        <div class="col-lg-6 d-flex flex-column justify-content-between">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
-                                    <i class="bi bi-lightning-charge-fill text-warning"></i> Top Profit Drivers (High-Value SKUs)
-                                </h6>
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill" style="font-size: 0.7rem;">
-                                    VALUE CORE
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning bg-opacity-15 text-warning-emphasis p-1.5 rounded-2">
+                                        <i class="bi bi-lightning-charge-fill fs-6"></i>
+                                    </span>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                            Top Profit Drivers (High-Value SKUs)
+                                        </h6>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Click card to isolate line item in table below</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.7rem;">
+                                    <i class="bi bi-star-fill me-1"></i>VALUE CORE
                                 </span>
                             </div>
-                            <div class="row g-2" id="explorer-profit-drivers-container">
+                            <div class="row g-2.5 mt-auto" id="explorer-profit-drivers-container">
                                 <!-- Populated dynamically by JS -->
                             </div>
                         </div>
@@ -870,7 +1030,7 @@
             pageSize: 25,
         };
 
-        const BRAND_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1', '#64748b'];
+        const BRAND_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#4f46e5', '#14b8a6', '#f97316', '#6366f1', '#0ea5e9', '#64748b'];
 
         function initWarehouseExplorer(explorerData) {
             if (!explorerData) return;
@@ -918,34 +1078,43 @@
             const brands = (explorerState.data && explorerState.data.brand_breakdown) || [];
             const barContainer = document.getElementById('explorer-brand-progressbar');
             const chipsContainer = document.getElementById('explorer-brand-chips');
+            const countBadge = document.getElementById('explorer-brand-count-badge');
             if (!barContainer || !chipsContainer) return;
 
+            if (countBadge) {
+                countBadge.textContent = `${brands.length} Brand${brands.length === 1 ? '' : 's'}`;
+            }
+
             if (brands.length === 0) {
-                barContainer.innerHTML = '<div class="progress-bar bg-secondary bg-opacity-25 w-100" style="height: 10px;"></div>';
-                chipsContainer.innerHTML = '<small class="text-muted fst-italic">No brand metadata available</small>';
+                barContainer.innerHTML = '<div class="progress-bar bg-secondary bg-opacity-25 w-100" style="height: 12px; border-radius: 999px;"></div>';
+                chipsContainer.innerHTML = '<small class="text-muted fst-italic py-2">No brand metadata available in this lot manifest.</small>';
                 return;
             }
 
             let barHtml = '';
+            const isAllSelected = !explorerState.selectedBrand || explorerState.selectedBrand === 'all';
             let chipsHtml = `
-                <button type="button" class="btn btn-sm rounded-pill px-2.5 py-0.5 fw-semibold brand-filter-chip ${explorerState.selectedBrand === 'all' ? 'btn-primary' : 'btn-outline-secondary'}" data-brand="all" style="font-size: 0.73rem;">
-                    All Brands
+                <button type="button" class="brand-chip-modern ${isAllSelected ? 'active' : ''}" data-brand="all">
+                    <i class="bi bi-grid-fill ${isAllSelected ? 'text-white' : 'text-primary'}" style="font-size: 0.75rem;"></i>
+                    <span>All Brands</span>
                 </button>
             `;
 
             brands.forEach((b, idx) => {
                 const color = BRAND_COLORS[idx % BRAND_COLORS.length];
                 const pct = Math.max(0, b.pct_of_value || 0);
+                const valFormatted = Number(b.total_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 if (pct > 0) {
                     barHtml += `
-                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${Number(b.total_value || 0).toLocaleString()})"></div>
+                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${valFormatted})"></div>
                     `;
                 }
-                const isActive = explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
+                const isActive = !isAllSelected && explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
                 chipsHtml += `
-                    <button type="button" class="btn btn-sm rounded-pill px-2.5 py-0.5 fw-semibold brand-filter-chip ${isActive ? 'btn-primary' : 'btn-outline-secondary'}" data-brand="${escapeHtml(b.brand)}" style="font-size: 0.73rem;">
-                        <span class="d-inline-block rounded-circle me-1" style="width: 7px; height: 7px; background-color: ${color};"></span>
-                        ${escapeHtml(b.brand)} <span class="opacity-75 ms-1">(${pct > 0 ? pct + '%' : b.skus + ' SKUs'})</span>
+                    <button type="button" class="brand-chip-modern ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="${escapeHtml(b.brand)} &bull; $${valFormatted} (${pct}%)">
+                        <span class="d-inline-block rounded-circle flex-shrink-0" style="width: 8px; height: 8px; background-color: ${color}; box-shadow: 0 0 0 2px ${isActive ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.06)'};"></span>
+                        <span class="text-truncate" style="max-width: 140px;">${escapeHtml(b.brand)}</span>
+                        <span class="brand-pct-badge">${pct > 0 ? pct + '%' : b.skus + ' SKU'}</span>
                     </button>
                 `;
             });
@@ -953,7 +1122,7 @@
             barContainer.innerHTML = barHtml || '<div class="progress-bar bg-primary w-100"></div>';
             chipsContainer.innerHTML = chipsHtml;
 
-            chipsContainer.querySelectorAll('.brand-filter-chip').forEach(chip => {
+            chipsContainer.querySelectorAll('.brand-chip-modern').forEach(chip => {
                 chip.addEventListener('click', function () {
                     const brand = this.dataset.brand;
                     explorerState.selectedBrand = brand;
@@ -972,41 +1141,75 @@
             if (!container) return;
 
             if (drivers.length === 0) {
-                container.innerHTML = '<div class="col-12 py-3 text-center text-muted small fst-italic">No high-value driver items identified.</div>';
+                container.innerHTML = '<div class="col-12 py-4 text-center text-muted small fst-italic">No high-value driver items identified in manifest.</div>';
                 return;
             }
 
+            const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4'];
+            const rankIcons = ['bi-trophy-fill', 'bi-award-fill', 'bi-gem', 'bi-check2-circle'];
+
             let html = '';
-            drivers.slice(0, 4).forEach((d) => {
+            drivers.slice(0, 4).forEach((d, idx) => {
                 const lineMsrp = Number(d.line_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const unitMsrp = Number(d.orig_price_num || d.original_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const brand = d.brand && d.brand !== '-' ? d.brand : 'General';
                 const model = d.model_part_number && d.model_part_number !== '-' ? d.model_part_number : '';
                 const qty = d.available_quantity || d.qty_num || 1;
+                const rankClass = rankClasses[idx] || 'rank-4';
+                const rankIcon = rankIcons[idx] || 'bi-star';
 
                 html += `
                     <div class="col-6">
-                        <div class="card h-100 border rounded-3 p-2.5 bg-light bg-opacity-40 shadow-xs hover-shadow-sm transition-all">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill text-truncate" style="font-size: 0.65rem; max-width: 110px;">
-                                    ${escapeHtml(brand)}
-                                </span>
-                                <span class="fw-bold font-monospace text-success" style="font-size: 0.8rem;">
-                                    $${lineMsrp}
-                                </span>
+                        <div class="profit-driver-card" data-driver-name="${escapeHtml(d.product_name)}" data-driver-model="${escapeHtml(model)}" title="Click to filter table to this SKU">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <span class="driver-rank-badge ${rankClass}">
+                                            <i class="bi ${rankIcon}"></i>#${idx + 1}
+                                        </span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill text-truncate" style="font-size: 0.68rem; max-width: 110px; font-weight: 600;">
+                                            ${escapeHtml(brand)}
+                                        </span>
+                                    </div>
+                                    <span class="fw-bold font-monospace text-success" style="font-size: 0.88rem; letter-spacing: -0.3px;">
+                                        $${lineMsrp}
+                                    </span>
+                                </div>
+                                <h6 class="fw-bold text-dark text-truncate mb-1" style="font-size: 0.81rem; line-height: 1.3;" title="${escapeHtml(d.product_name)}">
+                                    ${escapeHtml(d.product_name)}
+                                </h6>
                             </div>
-                            <div class="fw-bold text-dark text-truncate mb-0.5" style="font-size: 0.78rem;" title="${escapeHtml(d.product_name)}">
-                                ${escapeHtml(d.product_name)}
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between text-muted" style="font-size: 0.7rem;">
-                                <span>${escapeHtml(model)}</span>
-                                <span><strong>${qty}</strong> units × $${unitMsrp}</span>
+                            <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light-subtle text-muted mt-1" style="font-size: 0.71rem;">
+                                <span class="font-monospace text-secondary text-truncate" style="max-width: 100px;">${escapeHtml(model || 'SKU Item')}</span>
+                                <span class="text-nowrap"><strong class="text-dark">${qty}</strong> pcs &times; $${unitMsrp}</span>
                             </div>
                         </div>
                     </div>
                 `;
             });
             container.innerHTML = html;
+
+            // Interactive Click to Filter table to this SKU
+            container.querySelectorAll('.profit-driver-card').forEach(card => {
+                card.addEventListener('click', function () {
+                    const searchTerm = this.dataset.driverModel || this.dataset.driverName;
+                    const searchInput = document.getElementById('explorer-search-input');
+                    const clearBtn = document.getElementById('explorer-clear-search-btn');
+                    if (searchInput && searchTerm) {
+                        searchInput.value = searchTerm;
+                        explorerState.searchQuery = searchTerm;
+                        if (clearBtn) clearBtn.classList.remove('d-none');
+                        explorerState.currentPage = 1;
+                        applyFiltersAndSort();
+
+                        // Smooth scroll to table
+                        const tableCard = document.getElementById('explorer-toolbar');
+                        if (tableCard) {
+                            tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
         }
 
         function populateFilterDropdowns() {
