@@ -325,12 +325,14 @@
                     
                     <!-- Extra Dynamic Fields (if any) -->
                     {% for key, val in extra_data.items %}
+                        {% if "warehouse_image" not in key|lower and "intake_admin" not in key|lower %}
                         <div class="col-md-6 col-lg-4">
                             <div class="spec-item">
-                                <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key|slugify|title }}</span>
+                                <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key }}</span>
                                 <span class="text-dark fw-medium">{{ val|default:"N/A" }}</span>
                             </div>
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>

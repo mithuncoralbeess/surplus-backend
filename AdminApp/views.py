@@ -2769,6 +2769,10 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "products", "manifest_items", "manifest_file", "lot_details", "details",
         "is_saved_to_db", "parse_summary", "is_valid", "row_errors", "missing_mandatory_columns",
         "file_url", "file", "document", "excel_file", "media_files", "product_and_warehouse_images_or_videos",
+        "warehouse_images", "warehouse_image", "warehouse_imgs", "wh_images", "photos",
+        "product_and_warehouse_images", "product_images", "product_image",
+        "intake_admin_name", "intake_admin_email", "intake_admin_id", "intake_admin",
+        "admin_name", "admin_email", "admin_id", "admin_user", "assigned_admin", "assigned_admin_name", "assigned_admin_id", "intake_channel",
         "category_allocations", "excluded_export_countries", "third_party_documents",
         "full_name", "name", "contact_person", "phone", "phone_no", "phone_number", "email", "e_mail",
         "company", "company_name", "vendor_id", "user_id", "location", "inventory_location", "business_location", "industry",
@@ -2783,10 +2787,27 @@ def lot_enquiry_detail_view(request, enquiry_id):
     extra_data = {}
     for k, v in combined_raw.items():
         k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
-        if k_norm not in ignore_keys and str(k) not in ignore_keys:
-            v_cleaned = _clean_val(v)
-            if v_cleaned is not None and not isinstance(v_cleaned, (dict, list)):
-                extra_data[k] = v_cleaned
+        if k_norm in ignore_keys or str(k) in ignore_keys:
+            continue
+        # Exclude internal admin keys, image fields, and credentials
+        if any(term in k_norm for term in (
+            "warehouse_image", "intake_admin", "admin_name", "admin_email", "admin_id",
+            "password", "token", "secret", "credential"
+        )):
+            continue
+
+        v_cleaned = _clean_val(v)
+        if v_cleaned is not None and not isinstance(v_cleaned, (dict, list)):
+            v_str = str(v_cleaned).strip()
+            # Do not display raw URLs, presigned S3/R2 links, or media filenames as text specs
+            if (
+                v_str.startswith(("http://", "https://", "/media/")) or
+                "X-Amz-" in v_str or
+                any(v_str.lower().endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".pdf", ".xlsx", ".csv"))
+            ):
+                continue
+            display_label = str(k).replace("_", " ").replace("-", " ").strip().title()
+            extra_data[display_label] = v_cleaned
 
     context["extra_data"] = extra_data
 
