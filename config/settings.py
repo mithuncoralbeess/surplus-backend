@@ -78,18 +78,25 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database & Connection Pooling (Neon DB / PostgreSQL Cloud)
-_NEON_DB_DEFAULT = "postgresql://neondb_owner:npg_kONtdCLz1I8Y@ep-gentle-surf-b4efeymw-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
-DATABASE_URL = os.getenv("DATABASE_URL") or _NEON_DB_DEFAULT
+# Database & Connection Pooling
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
-        ssl_require=True,
-    )
-}
-DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            ssl_require="sslmode=require" in DATABASE_URL.lower(),
+        )
+    }
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # High-Performance Caching Layer
