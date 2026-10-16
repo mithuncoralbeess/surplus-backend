@@ -2640,57 +2640,594 @@ def get_homepage_collections(request):
     }, status=status.HTTP_200_OK)
 
 
+def _format_typesense_hit(hit):
+    """
+    Normalizes a Typesense search hit into the standard unified listing payload.
+    """
+    doc = hit.get("document", {})
+    item_type = doc.get("item_type", "product")
+    is_lot = doc.get("is_lot", False)
+    db_id = doc.get("db_id")
+    title = doc.get("title", "")
+    brand = doc.get("brand", "")
+    category = doc.get("category", "")
+    subcategory = doc.get("subcategory", "")
+    condition = doc.get("condition", "")
+    location = doc.get("location", "")
+    country = doc.get("country", "")
+    city = doc.get("city", "")
+    price = doc.get("price", 0.0)
+    price_usd = doc.get("price_usd", 0.0)
+    msrp = doc.get("msrp", 0.0)
+    currency = doc.get("currency", "USD")
+    image = doc.get("image", "")
+    images = doc.get("images", [])
+    listing_url = doc.get("listing_url", "")
+    quantity = doc.get("quantity", 1)
+    sku = doc.get("sku", "")
+
+    highlights = hit.get("highlights", [])
+    highlight_text = ""
+    if highlights:
+        for h in highlights:
+            if h.get("snippet"):
+                highlight_text = h["snippet"]
+                break
+
+    return {
+        "id": db_id,
+        "typesense_id": doc.get("id"),
+        "item_type": item_type,
+        "is_lot": is_lot,
+        "title": title,
+        "product_name": title,
+        "description": doc.get("description", ""),
+        "brand": brand,
+        "model_no": doc.get("model_no", ""),
+        "category": category,
+        "subcategory": subcategory,
+        "condition": condition,
+        "location": location,
+        "country": country,
+        "city": city,
+        "inventory_location": location,
+        "price": price,
+        "current_price": price,
+        "liquidating_price": price,
+        "price_usd": price_usd,
+        "msrp": msrp,
+        "original_price": msrp,
+        "currency": currency,
+        "quantity": quantity,
+        "estQty": quantity,
+        "moq": 1,
+        "pallet_count": doc.get("pallet_count", 0),
+        "pallets": doc.get("pallet_count", 0),
+        "distinct_skus": doc.get("distinct_skus", 1),
+        "unit_type": doc.get("unit_type", "units"),
+        "image": image,
+        "images": images,
+        "listing_url": listing_url,
+        "sku": sku,
+        "is_featured": doc.get("is_featured", False),
+        "is_best_selling": doc.get("is_best_selling", False),
+        "is_new_arrival": doc.get("is_new_arrival", False),
+        "highlight": highlight_text,
+        "text_match": hit.get("text_match", 0),
+    }
+
+
+def _fallback_postgresql_search(query_text, entity_type, page, limit, category, subcategory, brand, condition, country, min_usd, max_usd, sort_by):
+    """
+    Zero-downtime PostgreSQL source-of-truth fallback when Typesense is unavailable.
+    """
+    from AdminApp.models import Product, Lot
+    from django.db.models import Q
+
+    results = []
+
+    # 1. Products
+    if entity_type in ("all", "product"):
+        p_qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
+        if query_text:
+            p_qs = p_qs.filter(
+                Q(product_name__icontains=query_text) |
+                Q(brand_name__icontains=query_text) |
+                Q(model_no__icontains=query_text) |
+                Q(description__icontains=query_text) |
+                Q(inventory_location__icontains=query_text)
+            )
+        if category:
+            p_qs = p_qs.filter(Q(category__name__icontains=category) | Q(category__slug__iexact=category))
+        if subcategory:
+            p_qs = p_qs.filter(Q(subcategory__name__icontains=subcategory) | Q(subcategory__slug__iexact=subcategory))
+        if brand:
+            p_qs = p_qs.filter(brand_name__icontains=brand)
+        if country:
+            p_qs = p_qs.filter(Q(manufacturing_country__icontains=country) | Q(inventory_location__icontains=country))
+        if min_usd is not None:
+            p_qs = p_qs.filter(liquidating_price__gte=min_usd)
+        if max_usd is not None:
+            p_qs = p_qs.filter(liquidating_price__lte=max_usd)
+
+        for p in p_qs[:100]:
+            all_imgs = [img.url for img in p.images.all() if getattr(img, "url", None)]
+            main_img = all_imgs[0] if all_imgs else ""
+            results.append({
+                "id": p.id,
+                "typesense_id": f"product_{p.id}",
+                "item_type": "product",
+                "is_lot": False,
+                "title": p.product_name,
+                "product_name": p.product_name,
+                "description": p.description or "",
+                "brand": p.brand_name or "",
+                "model_no": p.model_no or "",
+                "category": p.category.name if p.category else "",
+                "subcategory": p.subcategory.name if p.subcategory else "",
+                "condition": "Surplus",
+                "location": p.inventory_location or p.manufacturing_country or "",
+                "country": p.manufacturing_country or "",
+                "city": "",
+                "inventory_location": p.inventory_location or "",
+                "price": float(p.liquidating_price or p.current_price or 0.0),
+                "current_price": float(p.liquidating_price or p.current_price or 0.0),
+                "liquidating_price": float(p.liquidating_price or 0.0),
+                "price_usd": float(p.liquidating_price or 0.0),
+                "msrp": float(p.msrp or 0.0),
+                "currency": p.currency or "USD",
+                "quantity": p.quantity or 1,
+                "estQty": p.quantity or 1,
+                "moq": 1,
+                "pallet_count": 0,
+                "pallets": 0,
+                "distinct_skus": 1,
+                "unit_type": "units",
+                "image": main_img,
+                "images": all_imgs,
+                "listing_url": f"/product/{p.product_id or p.id}",
+                "sku": p.product_id or "",
+                "is_featured": bool(p.is_featured),
+                "is_best_selling": bool(p.is_best_selling),
+                "is_new_arrival": bool(p.is_new_arrival),
+                "created_at": int(p.created_at.timestamp()) if p.created_at else 0,
+                "text_match": 100,
+            })
+
+    # 2. Lots
+    if entity_type in ("all", "lot"):
+        l_qs = Lot.objects.filter(is_active=True, enquiry_status__iexact="approved")
+        if query_text:
+            l_qs = l_qs.filter(
+                Q(title__icontains=query_text) |
+                Q(description__icontains=query_text) |
+                Q(key_brands_included__icontains=query_text) |
+                Q(inventory_location__icontains=query_text)
+            )
+        if brand:
+            l_qs = l_qs.filter(key_brands_included__icontains=brand)
+        if condition:
+            l_qs = l_qs.filter(condition__icontains=condition)
+        if country:
+            l_qs = l_qs.filter(Q(inventory_country__icontains=country) | Q(inventory_location__icontains=country))
+
+        for lot in l_qs[:100]:
+            imgs = [str(x) for x in lot.warehouse_images] if isinstance(lot.warehouse_images, list) else []
+            main_img = imgs[0] if imgs else ""
+            results.append({
+                "id": lot.id,
+                "typesense_id": f"lot_{lot.id}",
+                "item_type": "lot",
+                "is_lot": True,
+                "title": lot.title or f"Lot #{lot.lot_number}",
+                "product_name": lot.title or "",
+                "description": lot.description or "",
+                "brand": lot.key_brands_included or "",
+                "model_no": "",
+                "category": "Wholesale Lots",
+                "subcategory": "",
+                "condition": lot.condition or "Liquidation Lot",
+                "location": lot.inventory_location or getattr(lot, "inventory_country", "") or "",
+                "country": getattr(lot, "inventory_country", "") or lot.inventory_location or "",
+                "city": getattr(lot, "inventory_city", "") or "",
+                "inventory_location": lot.inventory_location or "",
+                "price": float(lot.ask_price_surplus_payout or 0.0),
+                "current_price": float(lot.ask_price_surplus_payout or 0.0),
+                "liquidating_price": float(lot.ask_price_surplus_payout or 0.0),
+                "price_usd": float(lot.ask_price_surplus_payout or 0.0),
+                "msrp": float(lot.total_est_retail_value_msrp or 0.0),
+                "currency": lot.currency or "USD",
+                "quantity": int(lot.total_units_quantity or 0),
+                "estQty": int(lot.total_units_quantity or 0),
+                "moq": 1,
+                "pallet_count": int(lot.pallet_count or 0),
+                "pallets": int(lot.pallet_count or 0),
+                "distinct_skus": int(lot.number_of_distinct_skus or 1),
+                "unit_type": lot.primary_unit_type or "units",
+                "image": main_img,
+                "images": imgs,
+                "listing_url": f"/lots/{lot.lot_number or lot.id}",
+                "sku": lot.lot_number or "",
+                "is_featured": False,
+                "is_best_selling": False,
+                "is_new_arrival": False,
+                "created_at": int(lot.created_at.timestamp()) if lot.created_at else 0,
+                "text_match": 100,
+            })
+
+    total_count = len(results)
+    start_idx = (page - 1) * limit
+    paged_results = results[start_idx:start_idx + limit]
+    return paged_results, total_count
+
+
 @api_view(["GET", "POST"])
 @permission_classes([AllowAny])
-def semantic_search_products(request):
+def typesense_search_view(request):
     """
-    Semantic Natural Language Search API using pgvector in Neon DB.
-    Allows conversational buyer queries, e.g.:
-    - "Show me 2U rackmount servers under $500 available in Maharashtra"
-    - "Industrial pumps with warranty"
-    - "Used Dell servers under 40000 INR"
+    Intelligent Search API backed by Typesense with automatic PostgreSQL fallback.
+    Supports typo-tolerant prefix searching, multi-currency normalization,
+    rule-based natural language constraint extraction, and faceted categorization.
+    Endpoint: GET /api/search/ or POST /api/search/
+    """
+    from AdminApp.typesense_service import (
+        is_typesense_available,
+        get_typesense_client,
+        get_collection_name,
+        to_usd,
+    )
+    from AdminApp.typesense_query_parser import TypesenseQueryParser
 
-    Parses conversational intent, extracts structured constraints (price, location, warranty, brand),
-    and executes cosine similarity ranking over 768-dimensional vector embeddings in PostgreSQL.
-    """
     if request.method == "POST":
-        query = (request.data.get("query") or request.data.get("q") or "").strip()
-        try:
-            limit = int(request.data.get("limit", 12))
-        except (ValueError, TypeError):
-            limit = 12
-        entity_type = (request.data.get("type") or request.data.get("entity_type") or "all").strip().lower()
+        data = request.data
     else:
-        query = (request.query_params.get("query") or request.query_params.get("q") or "").strip()
-        try:
-            limit = int(request.query_params.get("limit", 12))
-        except (ValueError, TypeError):
-            limit = 12
-        entity_type = (request.query_params.get("type") or request.query_params.get("entity_type") or "all").strip().lower()
+        data = request.query_params
 
-    if not query:
-        return Response({
-            "success": False,
-            "message": "Query parameter ('q' or 'query') is required.",
-            "results": [],
-            "total_results": 0
-        }, status=status.HTTP_400_BAD_REQUEST)
+    raw_query = (data.get("q") or data.get("query") or "").strip()
+    entity_type = (data.get("type") or data.get("entity_type") or "all").strip().lower()
 
-    limit = max(1, min(limit, 50))
-
-    from AdminApp.semantic_search import semantic_product_search
     try:
-        search_result = semantic_product_search(query_text=query, limit=limit, entity_type=entity_type)
-        return Response(search_result, status=status.HTTP_200_OK)
-    except Exception as e:
-        logger.exception(f"Semantic search error: {e}")
-        return Response({
-            "success": False,
-            "message": f"Semantic search failed: {str(e)}",
-            "query": query,
-            "results": [],
-            "total_results": 0
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        page = max(1, int(data.get("page", 1) or 1))
+    except (ValueError, TypeError):
+        page = 1
+
+    try:
+        limit = int(data.get("limit") or data.get("per_page") or 20)
+    except (ValueError, TypeError):
+        limit = 20
+    limit = max(1, min(limit, 100))
+
+    # Filters
+    category_param = (data.get("category") or "").strip()
+    subcategory_param = (data.get("subcategory") or "").strip()
+    brand_param = (data.get("brand") or "").strip()
+    condition_param = (data.get("condition") or "").strip()
+    country_param = (data.get("country") or "").strip()
+    city_param = (data.get("city") or "").strip()
+    currency_param = (data.get("currency") or "USD").strip().upper()
+    min_price_param = data.get("min_price")
+    max_price_param = data.get("max_price")
+    sort_by_param = (data.get("sort_by") or "").strip()
+
+    # Rule-Based Natural Language Query Parsing
+    parsed_intent = TypesenseQueryParser.parse(raw_query) if raw_query else {
+        "cleaned_query": "",
+        "is_lot": None,
+        "currency": None,
+        "min_price": None,
+        "max_price": None,
+        "min_price_usd": None,
+        "max_price_usd": None,
+        "location": None,
+        "brand": None,
+        "condition": None,
+        "category": None,
+        "has_warranty": None,
+        "has_filters": False,
+    }
+
+    # Query text: use cleaned query if NLP stripped conversational phrases, or raw query
+    query_text = parsed_intent.get("cleaned_query") if parsed_intent.get("has_filters") else raw_query
+    if not query_text:
+        query_text = "*"
+
+    # Resolve entity type
+    if entity_type == "all" and parsed_intent.get("is_lot") is True:
+        target_entity = "lot"
+    else:
+        target_entity = entity_type
+
+    # Multi-currency price normalization to USD
+    min_usd = None
+    if min_price_param not in (None, ""):
+        try:
+            min_usd = to_usd(float(min_price_param), currency_param)
+        except (ValueError, TypeError):
+            pass
+    elif parsed_intent.get("min_price_usd") is not None:
+        min_usd = parsed_intent["min_price_usd"]
+
+    max_usd = None
+    if max_price_param not in (None, ""):
+        try:
+            max_usd = to_usd(float(max_price_param), currency_param)
+        except (ValueError, TypeError):
+            pass
+    elif parsed_intent.get("max_price_usd") is not None:
+        max_usd = parsed_intent["max_price_usd"]
+
+    # Active filters
+    active_cat = category_param or parsed_intent.get("category") or ""
+    active_subcat = subcategory_param or ""
+    active_brand = brand_param or parsed_intent.get("brand") or ""
+    active_cond = condition_param or parsed_intent.get("condition") or ""
+    active_country = country_param or parsed_intent.get("location") or ""
+    active_city = city_param or ""
+
+    # Check Typesense availability
+    is_healthy, _ = is_typesense_available()
+
+    if is_healthy:
+        try:
+            client = get_typesense_client()
+            coll_name = get_collection_name()
+
+            filter_clauses = ["is_active:=true", "enquiry_status:=[APPROVED, approved]"]
+
+            if target_entity == "product":
+                filter_clauses.append("is_lot:=false")
+            elif target_entity == "lot":
+                filter_clauses.append("is_lot:=true")
+
+            if active_cat:
+                escaped_cat = active_cat.replace("`", "")
+                filter_clauses.append(f"(category:={escaped_cat} || category_slug:={escaped_cat})")
+
+            if active_subcat:
+                escaped_subcat = active_subcat.replace("`", "")
+                filter_clauses.append(f"(subcategory:={escaped_subcat} || subcategory_slug:={escaped_subcat})")
+
+            if active_brand:
+                escaped_brand = active_brand.replace("`", "")
+                filter_clauses.append(f"brand:={escaped_brand}")
+
+            if active_cond:
+                escaped_cond = active_cond.replace("`", "")
+                filter_clauses.append(f"condition:={escaped_cond}")
+
+            if active_country:
+                escaped_country = active_country.replace("`", "")
+                filter_clauses.append(f"country:={escaped_country}")
+
+            if active_city:
+                escaped_city = active_city.replace("`", "")
+                filter_clauses.append(f"city:={escaped_city}")
+
+            # Price filter in USD
+            if min_usd is not None and max_usd is not None:
+                filter_clauses.append(f"price_usd:[{min_usd}..{max_usd}]")
+            elif min_usd is not None:
+                filter_clauses.append(f"price_usd:>={min_usd}")
+            elif max_usd is not None:
+                filter_clauses.append(f"price_usd:<={max_usd}")
+
+            filter_by_str = " && ".join(filter_clauses)
+
+            # Sort parameters
+            sort_by = "created_at:desc"
+            if sort_by_param in ("price:asc", "price_asc", "low_to_high"):
+                sort_by = "price_usd:asc"
+            elif sort_by_param in ("price:desc", "price_desc", "high_to_low"):
+                sort_by = "price_usd:desc"
+            elif sort_by_param in ("views", "views_count:desc", "popular"):
+                sort_by = "views_count:desc"
+            elif query_text != "*":
+                sort_by = "_text_match:desc,created_at:desc"
+
+            search_params = {
+                "q": query_text,
+                "query_by": "title,product_name,description,brand,category,subcategory,model_no,sku,location,country,city",
+                "query_by_weights": "4,4,2,3,3,3,3,3,2,2,2",
+                "prefix": "true",
+                "num_typos": "2",
+                "drop_tokens_threshold": 1,
+                "filter_by": filter_by_str,
+                "page": page,
+                "per_page": limit,
+                "sort_by": sort_by,
+                "facet_by": "category,brand,condition,country,currency,item_type",
+                "max_facet_values": 20,
+            }
+
+            resp = client.collections[coll_name].documents.search(search_params)
+
+            hits = resp.get("hits", [])
+            results = [_format_typesense_hit(h) for h in hits]
+            total_count = resp.get("found", len(results))
+            total_pages = max(1, (total_count + limit - 1) // limit)
+
+            # Format facet counts
+            facets_dict = {}
+            for fc in resp.get("facet_counts", []):
+                fname = fc.get("field_name")
+                counts = [{"value": c.get("value"), "count": c.get("count")} for c in fc.get("counts", [])]
+                facets_dict[fname] = counts
+
+            return Response({
+                "success": True,
+                "engine": "typesense",
+                "query": raw_query,
+                "count": total_count,
+                "total_results": total_count,
+                "total_pages": total_pages,
+                "current_page": page,
+                "per_page": limit,
+                "parsed_intent": parsed_intent,
+                "facets": facets_dict,
+                "results": results,
+                "products": results,  # Backwards compatibility
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.warning(f"Typesense query execution failed: {e}. Falling back to PostgreSQL.")
+
+    # PostgreSQL Source-of-truth Fallback
+    results, total_count = _fallback_postgresql_search(
+        query_text=query_text if query_text != "*" else "",
+        entity_type=target_entity,
+        page=page,
+        limit=limit,
+        category=active_cat,
+        subcategory=active_subcat,
+        brand=active_brand,
+        condition=active_cond,
+        country=active_country,
+        min_usd=min_usd,
+        max_usd=max_usd,
+        sort_by=sort_by_param
+    )
+    total_pages = max(1, (total_count + limit - 1) // limit)
+
+    return Response({
+        "success": True,
+        "engine": "postgresql_fallback",
+        "query": raw_query,
+        "count": total_count,
+        "total_results": total_count,
+        "total_pages": total_pages,
+        "current_page": page,
+        "per_page": limit,
+        "parsed_intent": parsed_intent,
+        "facets": {},
+        "results": results,
+        "products": results,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def typesense_suggestions_view(request):
+    """
+    Ultra-fast autocomplete suggestions endpoint for search input debouncing.
+    Endpoint: GET /api/search/suggestions/?q=ser&limit=6
+    """
+    from AdminApp.typesense_service import (
+        is_typesense_available,
+        get_typesense_client,
+        get_collection_name,
+    )
+
+    q = (request.GET.get("q") or request.GET.get("query") or "").strip()
+    try:
+        limit = int(request.GET.get("limit", 6))
+    except (ValueError, TypeError):
+        limit = 6
+    limit = max(1, min(limit, 20))
+
+    if len(q) < 2:
+        return Response({"success": True, "suggestions": []}, status=status.HTTP_200_OK)
+
+    is_healthy, _ = is_typesense_available()
+    if is_healthy:
+        try:
+            client = get_typesense_client()
+            coll_name = get_collection_name()
+
+            resp = client.collections[coll_name].documents.search({
+                "q": q,
+                "query_by": "title,product_name,brand,category,model_no",
+                "prefix": "true",
+                "per_page": limit,
+                "filter_by": "is_active:=true && enquiry_status:=[APPROVED, approved]",
+            })
+
+            suggestions = []
+            for hit in resp.get("hits", []):
+                doc = hit.get("document", {})
+                suggestions.append({
+                    "id": doc.get("db_id"),
+                    "title": doc.get("title", ""),
+                    "item_type": doc.get("item_type", "product"),
+                    "is_lot": doc.get("is_lot", False),
+                    "category": doc.get("category", ""),
+                    "brand": doc.get("brand", ""),
+                    "price": doc.get("price", 0.0),
+                    "currency": doc.get("currency", "USD"),
+                    "image": doc.get("image", ""),
+                    "url": doc.get("listing_url", ""),
+                })
+
+            return Response({
+                "success": True,
+                "engine": "typesense",
+                "query": q,
+                "suggestions": suggestions,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.warning(f"Typesense suggestions failed: {e}. Falling back to PostgreSQL.")
+
+    # PostgreSQL suggestions fallback
+    from AdminApp.models import Product, Lot
+    from django.db.models import Q
+
+    suggestions = []
+    p_qs = Product.objects.filter(
+        is_active=True, enquiry_status__iexact="APPROVED"
+    ).filter(
+        Q(product_name__icontains=q) | Q(brand_name__icontains=q)
+    ).prefetch_related("images")[:limit]
+
+    for p in p_qs:
+        all_imgs = [img.url for img in p.images.all() if getattr(img, "url", None)]
+        main_img = all_imgs[0] if all_imgs else ""
+        suggestions.append({
+            "id": p.id,
+            "title": p.product_name,
+            "item_type": "product",
+            "is_lot": False,
+            "category": p.category.name if p.category else "",
+            "brand": p.brand_name or "",
+            "price": float(p.liquidating_price or p.current_price or 0.0),
+            "currency": p.currency or "USD",
+            "image": main_img,
+            "url": f"/product/{p.product_id or p.id}",
+        })
+
+    if len(suggestions) < limit:
+        remaining = limit - len(suggestions)
+        l_qs = Lot.objects.filter(
+            is_active=True, enquiry_status__iexact="approved"
+        ).filter(
+            Q(title__icontains=q) | Q(key_brands_included__icontains=q)
+        )[:remaining]
+
+        for lot in l_qs:
+            imgs = [str(x) for x in lot.warehouse_images] if isinstance(lot.warehouse_images, list) else []
+            main_img = imgs[0] if imgs else ""
+            suggestions.append({
+                "id": lot.id,
+                "title": lot.title or f"Lot #{lot.lot_number}",
+                "item_type": "lot",
+                "is_lot": True,
+                "category": "Wholesale Lots",
+                "brand": lot.key_brands_included or "",
+                "price": float(lot.ask_price_surplus_payout or 0.0),
+                "currency": lot.currency or "USD",
+                "image": main_img,
+                "url": f"/lots/{lot.lot_number or lot.id}",
+            })
+
+    return Response({
+        "success": True,
+        "engine": "postgresql_fallback",
+        "query": q,
+        "suggestions": suggestions,
+    }, status=status.HTTP_200_OK)
+
+
+# Backwards compatibility alias
+semantic_search_products = typesense_search_view
 
 
 

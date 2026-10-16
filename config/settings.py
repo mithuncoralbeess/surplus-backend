@@ -260,4 +260,12 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Surplus Market <noreply@su
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "noreply@surplusmarket.com")
 ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL", "contact@surplusmarket.com")
 
+# Typesense Intelligent Search Configuration
+TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "localhost")
+TYPESENSE_PORT = int(os.getenv("TYPESENSE_PORT", "8108"))
+TYPESENSE_PROTOCOL = os.getenv("TYPESENSE_PROTOCOL", "http")
+TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "surplus_typesense_dev_key_123")
+TYPESENSE_COLLECTION_NAME = os.getenv("TYPESENSE_COLLECTION_NAME", "surplus_listings")
+TYPESENSE_TIMEOUT = float(os.getenv("TYPESENSE_TIMEOUT", "3.0"))
+
 

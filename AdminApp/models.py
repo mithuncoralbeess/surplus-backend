@@ -2393,3 +2393,40 @@ class WhatsAppApiConfig(models.Model):
         cfg, _ = cls.objects.get_or_create(id=1)
         return cfg
 
+
+class TypesenseSyncQueue(models.Model):
+    """
+    Outbox pattern queue for resilient, non-blocking Typesense synchronization.
+    If Typesense is temporarily unreachable, updates are saved here and retried
+    by the sync_typesense_outbox command without blocking PostgreSQL database transactions.
+    """
+    ENTITY_TYPE_CHOICES = (
+        ("product", "Product"),
+        ("lot", "Lot"),
+    )
+    ACTION_CHOICES = (
+        ("upsert", "Upsert"),
+        ("delete", "Delete"),
+    )
+    entity_type = models.CharField(max_length=20, choices=ENTITY_TYPE_CHOICES, db_index=True)
+    entity_id = models.PositiveIntegerField(db_index=True)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES, default="upsert")
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True, default="")
+    processed = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Typesense Sync Queue Item"
+        verbose_name_plural = "Typesense Sync Queue Items"
+        db_table = "typesense_sync_queue"
+        indexes = [
+            models.Index(fields=["processed", "created_at"], name="idx_ts_queue_proc_date"),
+            models.Index(fields=["entity_type", "entity_id"], name="idx_ts_queue_entity"),
+        ]
+
+    def __str__(self):
+        status = "Done" if self.processed else f"Pending ({self.attempts} retries)"
+        return f"{self.entity_type} #{self.entity_id} [{self.action}] - {status}"
+

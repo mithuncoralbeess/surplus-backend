@@ -37,6 +37,8 @@ from .views import (
     get_public_products_list,
     get_homepage_collections,
     semantic_search_products,
+    typesense_search_view,
+    typesense_suggestions_view,
 )
 
 router = DefaultRouter()
@@ -50,11 +52,14 @@ urlpatterns = [
     # Public Products & Showcase Collections REST API
     path("products/", get_public_products_list, name="public_products_list"),
     path("products/collections/", get_homepage_collections, name="public_homepage_collections"),
-    path("products/semantic-search/", semantic_search_products, name="public_products_semantic_search"),
-    path("products/search/semantic/", semantic_search_products, name="public_products_semantic_search_alias"),
-    path("lots/semantic-search/", semantic_search_products, name="public_lots_semantic_search"),
-    path("search/semantic/", semantic_search_products, name="public_search_semantic"),
-    path("search/", semantic_search_products, name="public_search_direct"),
+
+    # Typesense Intelligent Search & Suggestions API (with PostgreSQL Fallback)
+    path("search/", typesense_search_view, name="public_search_direct"),
+    path("search/suggestions/", typesense_suggestions_view, name="public_search_suggestions"),
+    path("search/semantic/", typesense_search_view, name="public_search_semantic"),
+    path("products/semantic-search/", typesense_search_view, name="public_products_semantic_search"),
+    path("products/search/semantic/", typesense_search_view, name="public_products_semantic_search_alias"),
+    path("lots/semantic-search/", typesense_search_view, name="public_lots_semantic_search"),
 
     # Public Category & Subcategory REST API
     path("categories/", get_public_categories, name="public_categories_list"),
