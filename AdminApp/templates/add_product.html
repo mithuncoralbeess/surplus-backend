@@ -782,25 +782,30 @@
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Hidden File Inputs -->
-                        <!-- 1. Dedicated Picker Input (handles file browsing without corrupting form state) -->
-                        <input type="file" id="imagePicker" multiple
-                            accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif" class="d-none">
-
-                        <!-- 2. Actual Form Submission File Input (synced via DataTransfer) -->
+                        <!-- Hidden Form Submission File Input (synced via DataTransfer) -->
                         <input type="file" name="images" id="imageInput" multiple
-                            accept="image/*" class="d-none">
+                            accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif"
+                            style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
 
-                        <!-- Enhanced Dropzone Box -->
-                        <div class="dropzone-enhanced w-100" id="dropzoneBox" role="button" tabindex="0">
-                            <div class="mb-2 text-primary">
-                                <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
+                        <!-- Enhanced Dropzone Box with Native File Input Overlay -->
+                        <div class="dropzone-enhanced w-100 position-relative overflow-hidden" id="dropzoneBox">
+                            <!-- 1. Dedicated Native File Picker Input overlay covering the entire dropzone -->
+                            <input type="file" id="imagePicker" multiple
+                                accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif"
+                                class="position-absolute top-0 start-0 w-100 h-100"
+                                style="opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto !important;"
+                                title="Click to browse or drop product images">
+
+                            <div class="dropzone-inner py-3 pe-none">
+                                <div class="mb-2 text-primary">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
+                                </div>
+                                <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
+                                <div class="text-muted small mb-3">PNG, JPG, JPEG, WEBP, GIF (up to 15MB each). First uploaded file is set as cover.</div>
+                                <span class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill pe-none" id="btnChooseFiles">
+                                    <i class="bi bi-folder2-open me-1"></i> Choose Files
+                                </span>
                             </div>
-                            <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
-                            <div class="text-muted small mb-3">PNG, JPG, JPEG, WEBP, GIF (up to 15MB each). First uploaded file is set as cover.</div>
-                            <button type="button" class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill" id="btnChooseFiles">
-                                <i class="bi bi-folder2-open me-1"></i> Choose Files
-                            </button>
                         </div>
 
                         <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-3 small d-none rounded-3">
@@ -1049,6 +1054,7 @@
 
     /* Dropzone Enhanced */
     .dropzone-enhanced {
+        position: relative;
         border: 2px dashed #93c5fd;
         background: rgba(239, 246, 255, 0.45);
         border-radius: 1rem;
@@ -1058,13 +1064,21 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .dropzone-enhanced * {
-        pointer-events: none;
+    .dropzone-enhanced input[type="file"] {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        z-index: 10 !important;
+        pointer-events: auto !important;
     }
 
-    .dropzone-enhanced button,
-    .dropzone-enhanced .btn {
-        pointer-events: auto;
+    .dropzone-enhanced .dropzone-inner,
+    .dropzone-enhanced .dropzone-inner * {
+        pointer-events: none !important;
     }
 
     .dropzone-enhanced:hover,
@@ -1735,11 +1749,56 @@
         // EVENT LISTENERS BINDING
         // =============================================================
 
-        // 1. Dropzone Box & Choose Files Button
+        // 1. Dropzone Box & Native File Picker Binding
+        if (imagePicker) {
+            ["dragenter", "dragover"].forEach(eventName => {
+                imagePicker.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dropzoneBox) dropzoneBox.classList.add("dragover");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                imagePicker.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dropzoneBox) dropzoneBox.classList.remove("dragover");
+                });
+            });
+
+            imagePicker.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+                this.value = "";
+            });
+        }
+
         if (dropzoneBox) {
-            dropzoneBox.addEventListener("click", function (e) {
-                if (e.target !== imagePicker && e.target !== imageInput) {
-                    triggerFilePicker();
+            ["dragenter", "dragover"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.add("dragover");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.remove("dragover");
+                });
+            });
+
+            dropzoneBox.addEventListener("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzoneBox.classList.remove("dragover");
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length) {
+                    handleNewFiles(dt.files);
                 }
             });
 
@@ -1748,48 +1807,6 @@
                     e.preventDefault();
                     triggerFilePicker();
                 }
-            });
-
-            ["dragenter", "dragover"].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.classList.add("dragover");
-                }, false);
-            });
-
-            ["dragleave", "drop"].forEach(eventName => {
-                dropzoneBox.addEventListener(eventName, function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropzoneBox.classList.remove("dragover");
-                }, false);
-            });
-
-            dropzoneBox.addEventListener("drop", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const dt = e.dataTransfer;
-                if (dt && dt.files && dt.files.length) {
-                    handleNewFiles(dt.files);
-                }
-            });
-        }
-
-        if (btnChooseFiles) {
-            btnChooseFiles.addEventListener("click", function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                triggerFilePicker();
-            });
-        }
-
-        if (imagePicker) {
-            imagePicker.addEventListener("change", function () {
-                if (this.files && this.files.length) {
-                    handleNewFiles(this.files);
-                }
-                this.value = "";
             });
         }
 
