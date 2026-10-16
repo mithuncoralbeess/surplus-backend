@@ -235,6 +235,7 @@ if USE_R2:
     AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "604800"))
 
     STORAGES = {
         "default": {

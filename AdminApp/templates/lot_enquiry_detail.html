@@ -590,9 +590,9 @@
                                          onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
                                     <div class="d-none p-4 text-center text-muted bg-white border rounded">
                                         <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
-                                        <p class="small fw-semibold mb-1 text-dark">{{ img.name|default:'Image unavailable' }}</p>
-                                        <p class="text-muted" style="font-size: 11px;">Image file was not found on server storage.</p>
-                                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                        <p class="small fw-semibold mb-1 text-dark text-truncate" title="{{ img.name }}">{{ img.name|default:'Warehouse Image' }}</p>
+                                        <p class="text-muted small mb-2" style="font-size: 11px;">Image file preview unavailable or expired.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
                                             <i class="bi bi-upload me-1"></i>Upload / Replace Image
                                         </button>
                                     </div>

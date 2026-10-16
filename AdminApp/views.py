@@ -2594,13 +2594,19 @@ def lot_enquiry_detail_view(request, enquiry_id):
                     name = c.get("category") or c.get("category_name")
                     # Allocation can be under 'percentage', 'allocation', or misspelled 'alocation'
                     pct = c.get("percentage") or c.get("allocation") or c.get("alocation")
-                    cats.append(f"{name} ({pct}%)" if pct else name)
+                    if pct:
+                        pct_clean = str(pct).strip().rstrip("%").strip()
+                        cats.append(f"{name} ({pct_clean}%)")
+                    else:
+                        cats.append(name)
                 elif isinstance(c, str):
-                    cats.append(c)
+                    cats.append(c.replace("%%", "%"))
             if cats:
                 cat_val = ", ".join(cats)
     if not cat_val:
         cat_val = combined_raw.get("category_breakdown") or combined_raw.get("primary_category") or combined_raw.get("category_allocations") or combined_raw.get("category") or combined_raw.get("subcategory")
+    if cat_val and isinstance(cat_val, str):
+        cat_val = cat_val.replace("%%", "%")
 
     # Distinct SKUs & Total Units
     skus_val = enquiry.number_of_distinct_skus if enquiry.number_of_distinct_skus else (combined_raw.get("number_of_distinct_skus") or combined_raw.get("distinct_skus") or combined_raw.get("skus"))
@@ -2702,14 +2708,30 @@ def lot_enquiry_detail_view(request, enquiry_id):
         img_str = str(img).strip()
         if not img_str:
             continue
-        if img_str.startswith("http://") or img_str.startswith("https://") or img_str.startswith("//"):
-            full_url = img_str
-        elif img_str.startswith("/"):
-            full_url = img_str
-        else:
-            full_url = f"{settings.MEDIA_URL}{img_str.lstrip('/')}"
         
-        filename = img_str.replace("\\", "/").split("/")[-1]
+        # Clean path and friendly filename (never show AWS presigned query parameters)
+        clean_path = img_str.split("?")[0]
+        filename = clean_path.replace("\\", "/").split("/")[-1]
+        
+        full_url = img_str
+        # If it's an expired or presigned S3 URL, try to refresh or use direct storage URL
+        if ("X-Amz-Algorithm" in img_str or "X-Amz-Credential" in img_str) and filename:
+            for rel_candidate in (filename, f"enquiries/lots/{filename}", f"products/{filename}"):
+                try:
+                    if default_storage.exists(rel_candidate):
+                        full_url = default_storage.url(rel_candidate)
+                        break
+                except Exception:
+                    pass
+        elif not img_str.startswith("http://") and not img_str.startswith("https://") and not img_str.startswith("//"):
+            try:
+                rel = img_str.lstrip("/")
+                if rel.startswith("media/"):
+                    rel = rel[6:]
+                full_url = default_storage.url(rel)
+            except Exception:
+                full_url = f"{settings.MEDIA_URL}{img_str.lstrip('/')}"
+        
         normalized_warehouse_images.append({
             "url": full_url,
             "name": filename,
