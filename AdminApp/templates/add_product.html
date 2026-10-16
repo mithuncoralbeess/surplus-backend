@@ -782,9 +782,14 @@
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Hidden File Input -->
+                        <!-- Hidden File Inputs -->
+                        <!-- 1. Dedicated Picker Input (handles file browsing without corrupting form state) -->
+                        <input type="file" id="imagePicker" multiple
+                            accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif" class="d-none">
+
+                        <!-- 2. Actual Form Submission File Input (synced via DataTransfer) -->
                         <input type="file" name="images" id="imageInput" multiple
-                            accept="image/*, .png, .jpg, .jpeg, .webp, .avif, .gif" class="d-none">
+                            accept="image/*" class="d-none">
 
                         <!-- Enhanced Dropzone Box -->
                         <div class="dropzone-enhanced w-100" id="dropzoneBox" role="button" tabindex="0">
@@ -793,9 +798,9 @@
                             </div>
                             <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
                             <div class="text-muted small mb-3">PNG, JPG, JPEG, WEBP, GIF (up to 15MB each). First uploaded file is set as cover.</div>
-                            <span class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill" id="btnChooseFiles">
+                            <button type="button" class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill" id="btnChooseFiles">
                                 <i class="bi bi-folder2-open me-1"></i> Choose Files
-                            </span>
+                            </button>
                         </div>
 
                         <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-3 small d-none rounded-3">
@@ -1503,7 +1508,9 @@
         // 6. Product Image Dropzone & Multi-File Previews
         // -------------------------------------------------------------
         const dropzoneBox = document.getElementById("dropzoneBox");
+        const imagePicker = document.getElementById("imagePicker");
         const imageInput = document.getElementById("imageInput");
+        const btnChooseFiles = document.getElementById("btnChooseFiles");
         const imagePreviewGrid = document.getElementById("imagePreviewGrid");
         const imageCountBadge = document.getElementById("imageCountBadge");
         const imageValidationAlert = document.getElementById("imageValidationAlert");
@@ -1518,20 +1525,26 @@
             return /\.(jpe?g|png|webp|gif|bmp|svg|avif|heic|heif|jfif)$/i.test(file.name || "");
         }
 
-        if (dropzoneBox && imageInput) {
-            dropzoneBox.addEventListener("click", () => {
+        function triggerFilePicker() {
+            if (imagePicker) {
+                imagePicker.click();
+            } else if (imageInput) {
                 imageInput.click();
+            }
+        }
+
+        if (dropzoneBox) {
+            dropzoneBox.addEventListener("click", (e) => {
+                if (e.target !== imagePicker && e.target !== imageInput) {
+                    triggerFilePicker();
+                }
             });
 
             dropzoneBox.addEventListener("keydown", (e) => {
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    imageInput.click();
+                    triggerFilePicker();
                 }
-            });
-
-            imageInput.addEventListener("click", function () {
-                this.value = "";
             });
 
             ["dragenter", "dragover"].forEach(eventName => {
@@ -1558,7 +1571,24 @@
                     handleNewFiles(dt.files);
                 }
             });
+        }
 
+        if (btnChooseFiles) {
+            btnChooseFiles.addEventListener("click", (e) => {
+                e.stopPropagation();
+                triggerFilePicker();
+            });
+        }
+
+        if (imagePicker) {
+            imagePicker.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+                // Safely reset picker value so re-selecting the exact same file will always fire change
+                this.value = "";
+            });
+        } else if (imageInput) {
             imageInput.addEventListener("change", function () {
                 if (this.files && this.files.length) {
                     handleNewFiles(this.files);

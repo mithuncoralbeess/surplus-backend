@@ -4584,6 +4584,13 @@ def add_product_view(request):
                     if f.name not in seen_names:
                         seen_names.add(f.name)
                         image_files.append(f)
+        for key in request.FILES:
+            if key not in ["images", "image", "gallery_images", "product_images", "photos", "files"]:
+                if any(sub in key.lower() for sub in ["image", "photo", "pic", "file"]):
+                    for f in request.FILES.getlist(key):
+                        if f.name not in seen_names:
+                            seen_names.add(f.name)
+                            image_files.append(f)
 
         # Validation of Mandatory Fields matching SimpleListingModal
         errors = []
@@ -4740,11 +4747,17 @@ def add_product_view(request):
 
         # 7. Save Product Images
         for img_file in image_files:
-            ProductImage.objects.create(
+            pi = ProductImage.objects.create(
                 product=product,
                 image=img_file,
                 is_real_photo=True
             )
+            if pi.image and not pi.image_url:
+                try:
+                    pi.image_url = pi.image.url
+                    pi.save(update_fields=["image_url"])
+                except Exception:
+                    pass
 
         vendor_info_str = f" for seller '{vendor.full_name}' ({vendor.vendor_id}) via {intake_channel}" if vendor else ""
         messages.success(
