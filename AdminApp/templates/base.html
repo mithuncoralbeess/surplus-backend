@@ -22,9 +22,63 @@
         })();
     </script>
     <style>
+        /* Global Layout Viewport & Overflow Containment */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        .dashboard-wrapper {
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .main-layout {
+            min-width: 0 !important;
+            width: calc(100% - 260px) !important;
+            max-width: calc(100% - 260px) !important;
+        }
+
+        @media (max-width: 991.98px) {
+            .main-layout {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .dashboard-main-content {
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
         /* Global sizing per user request */
         .btn, .form-select {
             font-size: 14px !important;
+        }
+
+        /* Global Admin Header Uniformity (Page title & paragraph under breadcrumbs) */
+        .header-title,
+        .dashboard-header-title h1,
+        .brand-header-title,
+        .editor-main-heading {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: var(--bs-body-color, #0f172a) !important;
+            line-height: 1.25 !important;
+            margin-bottom: 0.25rem !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        .header-subtitle,
+        .dashboard-header-title p,
+        .brand-header-subtitle {
+            font-size: 0.875rem !important;
+            font-weight: 400 !important;
+            color: var(--bs-secondary-color, #64748b) !important;
+            line-height: 1.4 !important;
+            margin-bottom: 0 !important;
         }
 
         /* Common Unified Custom Breadcrumb Component Style */
@@ -258,6 +312,50 @@
                 }
             });
         })();
+
+        // Global Submit Button Spinner / Loading Indicator Handler
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form) return;
+
+            let submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (document.activeElement && document.activeElement.form === form && (document.activeElement.tagName === 'BUTTON' || document.activeElement.tagName === 'INPUT')) {
+                submitBtn = document.activeElement;
+            }
+
+            if (submitBtn && !submitBtn.dataset.noLoading) {
+                if (submitBtn.classList.contains('submitting-loading')) return;
+
+                const currentWidth = submitBtn.offsetWidth;
+                if (currentWidth > 0) {
+                    submitBtn.style.minWidth = currentWidth + 'px';
+                }
+
+                const rawText = (submitBtn.innerText || submitBtn.value || 'Save Changes').trim();
+                let loadingText = 'Saving...';
+                if (/save changes/i.test(rawText)) {
+                    loadingText = 'Saving Changes...';
+                } else if (/create/i.test(rawText)) {
+                    loadingText = 'Creating...';
+                } else if (/save/i.test(rawText)) {
+                    loadingText = 'Saving...';
+                } else if (/update/i.test(rawText)) {
+                    loadingText = 'Updating...';
+                } else if (/delete/i.test(rawText)) {
+                    loadingText = 'Deleting...';
+                } else {
+                    loadingText = rawText + '...';
+                }
+
+                submitBtn.classList.add('submitting-loading');
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2 align-middle" role="status" aria-hidden="true"></span><span>${loadingText}</span>`;
+                submitBtn.style.pointerEvents = 'none';
+
+                setTimeout(function () {
+                    submitBtn.disabled = true;
+                }, 10);
+            }
+        });
     </script>
     {% block extra_js %}{% endblock %}
 </body>

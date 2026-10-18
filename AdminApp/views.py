@@ -2,8 +2,13 @@ import uuid
 import hashlib
 import random
 import secrets
+import json
+from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.contrib import messages
+from django.core.files.storage import default_storage
+from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from django.contrib.auth import authenticate
@@ -20,9 +25,12 @@ from .models import (
     VendorDetails,
     AdminPasswordResetOTP,
     ContentPage,
+    BlogPost,
     SellerProductEnquiry,
     LotBatchEnquiry,
     PartnershipEnquiry,
+    ContactUsEnquiry,
+    PageViewLog,
     MainCategory,
     SubCategory,
     Lot,
@@ -47,26 +55,43 @@ from .serializers import (
 def _get_authenticated_admin(request):
     """
     Helper to check session version validity against database & cache.
+    Optimized with short-term cache lookup to avoid redundant DB queries per request.
     """
     admin_id = request.session.get("adminid")
     session_version = request.session.get("session_version")
 
     if not admin_id or session_version is None:
+        if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            return request.user
         return None
 
-    try:
-        admin_user = AdminDetails.objects.get(id=admin_id, status=True)
-        cached_version = cache.get(f"admin_version_{admin_user.id}")
-        current_version = (
-            cached_version
-            if cached_version is not None
-            else admin_user.session_version
-        )
-        if session_version != current_version:
+    cache_key = f"admin_obj_{admin_id}"
+    admin_user = cache.get(cache_key)
+
+    if not admin_user:
+        try:
+            admin_user = AdminDetails.objects.get(id=admin_id, status=True)
+            cache.set(cache_key, admin_user, 60)
+        except AdminDetails.DoesNotExist:
+            if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+                return request.user
             return None
-        return admin_user
-    except AdminDetails.DoesNotExist:
+
+    cached_version = cache.get(f"admin_version_{admin_user.id}")
+    current_version = (
+        cached_version
+        if cached_version is not None
+        else admin_user.session_version
+    )
+    if session_version != current_version:
+        cache.delete(cache_key)
+        if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            return request.user
         return None
+    return admin_user
+
+
+from .utils import resolve_media_url
 
 
 def admin_login_page(request):
@@ -87,30 +112,130 @@ def admin_login_page(request):
     return render(request, "login.html")
 
 
+def admin_signup_view(request):
+    """
+    Renders Admin Sign Up screen or processes sign up form submission.
+    Admin accounts require SuperAdmin approval before login access is granted.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if admin_user:
+        return redirect("adminDashBoard")
+
+    if request.method == "POST":
+        req_data = {}
+        if request.content_type == "application/json" and request.body:
+            try:
+                req_data = json.loads(request.body.decode("utf-8"))
+            except Exception:
+                req_data = {}
+        elif request.POST:
+            req_data = request.POST.dict() if hasattr(request.POST, "dict") else dict(request.POST)
+        elif hasattr(request, "data"):
+            req_data = dict(request.data or {})
+
+        serializer = AdminRegisterSerializer(data=req_data)
+        if not serializer.is_valid():
+            if request.content_type == "application/json" or request.headers.get("x-requested-with") == "XMLHttpRequest":
+                first_err = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid data provided."
+                return JsonResponse({"success": False, "message": str(first_err), "errors": serializer.errors}, status=400)
+            return render(request, "signup.html", {
+                "errors": serializer.errors,
+                "form_data": req_data
+            })
+
+        data = serializer.validated_data
+        username = data["resolved_username"]
+        full_name = data.get("resolved_full_name", "").strip()
+        email = data["email"].strip().lower()
+        confirm_pass = data["resolved_password"]
+
+        # Salted SHA-256 Password Hashing: <hash>:<salt>
+        salt = uuid.uuid4().hex
+        enc_pass = (
+            hashlib.sha256(salt.encode() + confirm_pass.encode()).hexdigest()
+            + ":"
+            + salt
+        )
+
+        is_super = (email == "super@gmail.com")
+        account_type = "SuperAdmin" if is_super else "Admin"
+        status_bool = True if is_super else False
+
+        admin_obj = AdminDetails.objects.create(
+            username=username,
+            full_name=full_name,
+            email=email,
+            pass_word=enc_pass,
+            account_type=account_type,
+            status=status_bool,
+            session_version=1,
+            web_is_active="live",
+        )
+
+        if not status_bool:
+            try:
+                from .services import create_admin_notification
+                create_admin_notification(
+                    title="New Admin Registration",
+                    message=f"'{full_name or username}' ({email}) registered for an admin account and requires SuperAdmin approval.",
+                    notification_type="ADMIN_REGISTRATION",
+                    action_url="/admin/admins/?status=pending",
+                    for_superadmins_only=True,
+                )
+            except Exception:
+                pass
+
+        msg = (
+            "Admin registration successful. Please proceed to login."
+            if status_bool
+            else "Admin registration successful! Your account is pending SuperAdmin approval. You will be able to log in once approved by SuperAdmin."
+        )
+
+        if request.content_type == "application/json" or request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "success": True,
+                "message": msg,
+                "pending_approval": not status_bool,
+                "redirect_url": "/admin/login/?pending=1" if not status_bool else "/admin/login/",
+                "data": AdminDetailsSerializer(admin_obj).data,
+            }, status=201)
+
+        return render(request, "signup.html", {
+            "success": True,
+            "message": msg,
+            "pending_approval": not status_bool
+        })
+
+    return render(request, "signup.html")
+
+
 @api_view(["POST", "GET"])
 @permission_classes([AllowAny])
 def admin_register(request):
     """
     Admin Registration Flow (API & form handler):
-    - Checks for existing username and email
+    - Supports full_name, email, password, confirm_password (and optional username)
     - Salted SHA-256 password hashing
     - Role assignment (SuperAdmin for super@gmail.com, XLSXAdmin for xlsxsurplusadmin@gmail.com, Admin otherwise)
+    - Standard admin accounts require SuperAdmin approval (status=False initially)
     """
     if request.method == "GET":
         return Response(
-            {"message": "Submit POST with username, email, firstname, lastname, confirm_password to register."},
+            {"message": "Submit POST with full_name, email, password, confirm_password to register."},
             status=status.HTTP_200_OK,
         )
 
     serializer = AdminRegisterSerializer(data=request.data)
     if not serializer.is_valid():
+        first_err = next(iter(serializer.errors.values()))[0] if serializer.errors else "Invalid registration details."
         return Response(
-            {"success": False, "errors": serializer.errors},
+            {"success": False, "message": str(first_err), "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     data = serializer.validated_data
-    username = data["username"]
+    username = data["resolved_username"]
+    full_name = data.get("resolved_full_name", "").strip()
     email = data["email"].strip().lower()
     confirm_pass = data["resolved_password"]
 
@@ -122,32 +247,56 @@ def admin_register(request):
         + salt
     )
 
-    # Role Assignment:
+    # Role Assignment & Approval Status:
     if email == "super@gmail.com":
         account_type = "SuperAdmin"
+        status_bool = True
         web_is_active = "live"
     elif email == "xlsxsurplusadmin@gmail.com":
         account_type = "XLSXAdmin"
+        status_bool = True
         web_is_active = "live"
     else:
         account_type = "Admin"
+        status_bool = False  # SuperAdmin needs to approve so admin can log in
         web_is_active = "live"
 
     admin_user = AdminDetails.objects.create(
         username=username,
+        full_name=full_name,
         email=email,
         pass_word=enc_pass,
         account_type=account_type,
-        status=True,
+        status=status_bool,
         session_version=1,
         web_is_active=web_is_active,
+    )
+
+    if not status_bool:
+        try:
+            from .services import create_admin_notification
+            create_admin_notification(
+                title="New Admin Registration",
+                message=f"'{full_name or username}' ({email}) registered for an admin account and requires SuperAdmin approval.",
+                notification_type="ADMIN_REGISTRATION",
+                action_url="/admin/admins/?status=pending",
+                for_superadmins_only=True,
+            )
+        except Exception:
+            pass
+
+    msg = (
+        "Admin registration successful. Please proceed to login."
+        if status_bool
+        else "Admin account registered successfully! Your account is currently pending SuperAdmin approval. You will be able to log in once approved by SuperAdmin."
     )
 
     return Response(
         {
             "success": True,
-            "message": "Admin registration successful. Please proceed to login.",
-            "redirect_url": "/admin/login/",
+            "message": msg,
+            "pending_approval": not status_bool,
+            "redirect_url": "/admin/login/?pending=1" if not status_bool else "/admin/login/",
             "data": AdminDetailsSerializer(admin_user).data,
         },
         status=status.HTTP_201_CREATED,
@@ -197,22 +346,37 @@ def admin_login(request):
         email__iexact=identifier
     ) | AdminDetails.objects.filter(username__iexact=identifier)
 
+    if not admin_qs.exists() and identifier.upper().startswith("ADM-"):
+        adm_id_clean = identifier[4:].strip()
+        if adm_id_clean.isdigit():
+            admin_qs = AdminDetails.objects.filter(id=int(adm_id_clean))
+
     if admin_qs.exists():
         candidate = admin_qs.first()
-        if not candidate.status:
-            return Response(
-                {"success": False, "message": "Account is inactive. Contact SuperAdmin."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        is_pass_valid = False
         try:
-            stored_hash, salt = candidate.pass_word.split(":")
-            computed_hash = hashlib.sha256(
-                salt.encode() + user_pass.encode()
-            ).hexdigest()
-            if computed_hash == stored_hash:
-                admin_user = candidate
+            if ":" in candidate.pass_word:
+                stored_hash, salt = candidate.pass_word.split(":", 1)
+                computed_hash = hashlib.sha256(
+                    salt.encode() + user_pass.encode()
+                ).hexdigest()
+                if computed_hash == stored_hash:
+                    is_pass_valid = True
+            else:
+                is_pass_valid = candidate.check_password(user_pass)
         except (ValueError, AttributeError):
             pass
+
+        if is_pass_valid:
+            if not candidate.status:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Your account is pending SuperAdmin approval. Please wait for SuperAdmin to approve your account before logging in.",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            admin_user = candidate
 
     # Fallback Auth: Standard Django authenticate for superusers
     if not admin_user:
@@ -417,14 +581,14 @@ def adminDashBoard(request):
 
     # Real DB computations
     pending_prod_sales = Product.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("current_price"))["s"] or 0
-    pending_lot_sales = Lot.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("total_price"))["s"] or 0
+    pending_lot_sales = Lot.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
     total_sales_due = float(pending_prod_sales + pending_lot_sales)
 
     appr_prod_sales = Product.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("current_price"))["s"] or 0
-    appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("total_price"))["s"] or 0
+    appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
     total_sales_amount = float(appr_prod_sales + appr_lot_sales)
 
-    active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("stock_quantity"))["s"] or 0
+    active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("quantity"))["s"] or 0
     if not active_products_stock:
         active_products_stock = Product.objects.filter(is_active=True).count()
 
@@ -432,26 +596,32 @@ def adminDashBoard(request):
     if companies_count == 0:
         companies_count = VendorDetails.objects.exclude(company_name="").count()
 
+    pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
+
     context = {
         "admin": admin_user,
         "is_super_admin": is_super,
         "staff_list": staff_list,
+        "pending_admins_count": pending_admins,
         "stats": {
+            "currency": "USD",
             "total_admins": AdminDetails.objects.count(),
             "active_admins": AdminDetails.objects.filter(status=True).count(),
+            "pending_admins": pending_admins,
             "total_sales_due": f"{total_sales_due:.2f}",
             "total_sales_amount": f"{total_sales_amount:.2f}",
             "active_products_qty": active_products_stock,
             "custom_landing_users": ContentPage.objects.filter(category="Custom").count(),
             "companies": companies_count,
-            "purchase_invoices": LotBatchEnquiry.objects.count(),
-            "sales_invoices": SellerProductEnquiry.objects.count(),
+            "purchase_invoices": Lot.objects.count(),
+            "sales_invoices": Product.objects.count(),
             "products": Product.objects.count(),
             "categories": SubCategory.objects.count(),
-            "spin_wheel": 0,
+            "total_page_views": PageViewLog.objects.count(),
             "registered_users": VendorDetails.objects.count(),
         },
     }
+
 
     if request.headers.get("Accept", "").find("application/json") != -1:
         return Response({
@@ -463,6 +633,8 @@ def adminDashBoard(request):
         })
 
     return render(request, "dashboard.html", context)
+
+
 
 
 def xlsxDashBoard(request):
@@ -878,27 +1050,26 @@ def content_pages_api(request, page_id=None):
 
 def _seed_sample_blogs_if_empty():
     from .models import BlogPost
-    if BlogPost.objects.exists():
-        return
     import json
     from pathlib import Path
     from django.conf import settings
 
     sample_dir = settings.BASE_DIR / "sample-blog"
-    json_file = sample_dir / "all_blogs.json"
+    json_file = sample_dir / "blogs.json"
     if not json_file.exists():
-        json_file = sample_dir / "blogs.json"
+        json_file = sample_dir / "all_blogs.json"
 
     if json_file.exists():
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 blogs_data = json.load(f)
-                if isinstance(blogs_data, list):
+                if isinstance(blogs_data, list) and len(blogs_data) > BlogPost.objects.count():
                     objs = []
                     for item in blogs_data:
                         title = item.get("title", "Untitled Blog")
-                        slug = item.get("slug") or title.lower().replace(" ", "-")
-                        blog_code = item.get("blog_code") or f"BLOG-{item.get('id', 1):03d}"
+                        raw_slug = item.get("slug") or f"blog-{item.get('id', 1)}"
+                        slug = raw_slug.strip().lower()
+                        blog_code = item.get("blog_code") or f"BLOG-{item.get('id', 1):06d}"
                         content = item.get("content") or ""
                         excerpt = item.get("excerpt") or ""
                         author = item.get("author") or "Admin"
@@ -917,6 +1088,7 @@ def _seed_sample_blogs_if_empty():
                         read_t = int(item.get("read_time") or 3)
                         total_r = int(item.get("total_reads") or 0)
                         is_pub = item.get("is_published", True)
+                        is_active = not item.get("is_del", False)
 
                         objs.append(BlogPost(
                             title=title,
@@ -927,11 +1099,12 @@ def _seed_sample_blogs_if_empty():
                             excerpt=excerpt,
                             content=content,
                             featured_image_url=img,
-                            meta_title=meta_t,
+                            meta_title=meta_t[:255],
                             meta_description=meta_d,
                             read_time=read_t,
                             total_reads=total_r,
-                            status="published" if is_pub else "draft"
+                            status="published" if is_pub else "draft",
+                            is_active=is_active
                         ))
                     BlogPost.objects.bulk_create(objs, ignore_conflicts=True)
         except Exception as e:
@@ -1121,7 +1294,7 @@ def seller_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Product.objects.all().order_by("-created_at")
+    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1186,7 +1359,7 @@ def lot_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Lot.objects.all().order_by("-created_at")
+    qs = Lot.objects.all().select_related("vendor", "admin").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1234,11 +1407,14 @@ def lot_enquiries_view(request, status_filter=None):
 
 
 @api_view(["POST", "PUT", "DELETE"])
+@permission_classes([AllowAny])
 def seller_enquiry_status_api(request, enquiry_id):
     """
     Admin API to update status (pending, approved, declined) or delete a SellerProductEnquiry.
     """
     admin_user = _get_authenticated_admin(request)
+    if not admin_user and getattr(request, "user", None) and request.user.is_authenticated:
+        admin_user = request.user
     if not admin_user:
         return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1254,32 +1430,102 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
 
+    target_status = enquiry.enquiry_status
+    if "status" in request.data:
+        s_val = str(request.data.get("status", "")).upper()
+        if s_val in ("PENDING", "APPROVED", "DECLINED"):
+            target_status = s_val
+
     if "active_status" in request.data:
         act_val = str(request.data.get("active_status")).lower()
         if act_val in ("active", "true", "1"):
+            if target_status != "APPROVED":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             enquiry.is_active = True
         elif act_val in ("inactive", "false", "0"):
             enquiry.is_active = False
 
     if "is_active" in request.data:
-        enquiry.is_active = bool(request.data.get("is_active"))
+        is_act = bool(request.data.get("is_active"))
+        if is_act and target_status != "APPROVED":
+            return Response({
+                "success": False,
+                "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        enquiry.is_active = is_act
 
+    vendor_profile_info = None
     if "status" in request.data:
         new_status = request.data.get("status", "").upper()
         if new_status.lower() in ("pending", "approved", "declined"):
             enquiry.enquiry_status = new_status
-            if not has_explicit_active:
-                enquiry.is_active = (new_status.lower() == "approved")
+
+            # Resolve vendor to check profile completion if approving
+            target_vendor = enquiry.vendor
+            if not target_vendor and enquiry.vendor_id:
+                from .models import VendorDetails
+                target_vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
+            if not target_vendor and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+                raw_vid = enquiry.raw_data.get('vendor_id') or enquiry.raw_data.get('user_id')
+                if raw_vid:
+                    v_clean = str(raw_vid).strip()
+                    if v_clean.upper().startswith("USR-"):
+                        v_clean = v_clean[4:].strip()
+                    from .models import VendorDetails
+                    if v_clean.isdigit():
+                        target_vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+                    if not target_vendor:
+                        target_vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+
+            if enquiry.admin or (target_vendor and AdminDetails.objects.filter(email__iexact=target_vendor.email).exists()):
+                vendor_profile_info = {
+                    "is_complete": True,
+                    "percentage": 100,
+                    "missing_fields_labels": [],
+                }
+            elif target_vendor:
+                vendor_profile_info = target_vendor.get_profile_completion_details()
+
+            if new_status.lower() == "approved":
+                if vendor_profile_info and not vendor_profile_info["is_complete"]:
+                    enquiry.is_active = False
+                elif not has_explicit_active:
+                    enquiry.is_active = True
+            elif new_status.lower() in ("declined", "pending"):
+                enquiry.is_active = False
+
+            if "reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+            elif "rejection_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+            elif "note" in request.data or "notes" in request.data:
+                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
 
+    msg = "Product status updated."
+    if enquiry.enquiry_status == "APPROVED":
+        if vendor_profile_info and not vendor_profile_info["is_complete"]:
+            msg = (
+                f"Product approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
+                f"To list product publicly, vendor must complete all profile details."
+            )
+        else:
+            msg = "Product approved and published to marketplace."
+    elif enquiry.enquiry_status == "DECLINED":
+        msg = "Product listing declined."
+
     return Response({
         "success": True,
-        "message": f"Product status updated.",
-        "product_id": enquiry.product_id or enquiry.sku,
+        "message": msg,
+        "product_id": enquiry.product_id or getattr(enquiry, "sku", f"PRO-{enquiry.id:05d}"),
         "status": enquiry.enquiry_status,
         "is_active": enquiry.is_active,
-        "active_status": enquiry.active_status
+        "active_status": enquiry.active_status,
+        "vendor_profile": vendor_profile_info,
     })
 
 
@@ -1331,6 +1577,15 @@ def seller_enquiry_edit_api(request, enquiry_id):
         except (ValueError, TypeError):
             pass
 
+    if "offer" in data:
+        if data["offer"] not in (None, ""):
+            try:
+                product.offer = Decimal(str(data["offer"]).strip())
+            except Exception:
+                pass
+        else:
+            product.offer = Decimal("0.00")
+
     if "stock_quantity" in data and data["stock_quantity"] not in (None, ""):
         try:
             product.stock_quantity = int(data["stock_quantity"])
@@ -1355,13 +1610,6 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 product.category = sub_cat.main_category
         except (SubCategory.DoesNotExist, ValueError):
             pass
-    elif "category_name" in data and str(data["category_name"]).strip():
-        cat_str = str(data["category_name"]).strip()
-        sub_cat = SubCategory.objects.filter(name__iexact=cat_str).first()
-        if sub_cat:
-            product.subcategory = sub_cat
-            if sub_cat.main_category and not product.category:
-                product.category = sub_cat.main_category
 
     if "is_available_for_offers" in data:
         product.is_available_for_offers = bool(data["is_available_for_offers"])
@@ -1391,54 +1639,61 @@ def seller_enquiry_edit_api(request, enquiry_id):
         status_val = str(data["enquiry_status"]).upper()
         if status_val in ("PENDING", "APPROVED", "DECLINED"):
             product.enquiry_status = status_val
+            if status_val != "APPROVED":
+                product.is_active = False
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
+            if str(product.enquiry_status).upper() != "APPROVED":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             product.is_active = True
         elif act_val in ("inactive", "false", "0"):
             product.is_active = False
     elif "is_active" in data:
-        product.is_active = bool(data["is_active"])
+        is_act = bool(data["is_active"])
+        if is_act and str(product.enquiry_status).upper() != "APPROVED":
+            return Response({
+                "success": False,
+                "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        product.is_active = is_act
+    if "warranty_attachment" in data:
+        product.warranty_attachment = str(data["warranty_attachment"]).strip()
+    if "third_party_certificate" in data:
+        cert_val = data["third_party_certificate"]
+        product.third_party_certificate = cert_val in (True, "true", "1", 1, "yes")
+    if "third_party_documents" in data:
+        product.third_party_documents = str(data["third_party_documents"]).strip()
 
-    if not isinstance(product.raw_data, dict):
-        product.raw_data = {}
+    # Collection showcases: Featured Deals, Best Selling, New Arrivals
+    if "is_featured" in data:
+        f_val = data["is_featured"]
+        product.is_featured = f_val in (True, "true", "1", 1, "on")
+    if "is_best_selling" in data:
+        b_val = data["is_best_selling"]
+        product.is_best_selling = b_val in (True, "true", "1", 1, "on")
+    if "is_new_arrival" in data:
+        n_val = data["is_new_arrival"]
+        product.is_new_arrival = n_val in (True, "true", "1", 1, "on")
 
-    if "model_no" in data and data["model_no"]:
-        product.model_no = str(data["model_no"]).strip()
-    elif "model_part_no" in data and data["model_part_no"]:
-        product.model_no = str(data["model_part_no"]).strip()
-    elif "sku" in data and data["sku"]:
-        product.model_no = str(data["sku"]).strip()
-
-    if title:
-        product.raw_data["product_name"] = product.product_name
-        product.raw_data["title"] = product.product_name
-    product.raw_data["liquidating_price"] = float(product.liquidating_price)
-    product.raw_data["current_price"] = float(product.current_price)
-    product.raw_data["price"] = float(product.current_price)
-    if product.previous_price is not None:
-        product.raw_data["previous_price"] = float(product.previous_price)
-        product.raw_data["original_price"] = float(product.previous_price)
-    if "brand" in data:
-        product.raw_data["brand_name"] = product.brand
-    if product.subcategory:
-        product.raw_data["product_category"] = product.subcategory.name
-    if "stock_quantity" in data:
-        product.raw_data["quantity"] = product.stock_quantity
-    if "manufacturing_country" in data:
-        product.raw_data["manufacturing_country"] = product.manufacturing_country
-    if "manufacturing_year" in data:
-        product.raw_data["manufacturing_year"] = product.manufacturing_year
-    if "dimensions" in data:
-        product.raw_data["dimensions"] = product.dimensions
-    if "warranty" in data:
-        product.raw_data["warranty"] = product.warranty
-    if "reason_to_sell" in data:
-        product.raw_data["reason_to_sell"] = product.reason_to_sell
-    if "description" in data:
-        product.raw_data["description"] = product.description
-    if "model_no" in data:
-        product.raw_data["model_no"] = str(data["model_no"]).strip()
+    if "featured_order" in data and data["featured_order"] not in (None, ""):
+        try:
+            product.featured_order = max(0, int(data["featured_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "best_selling_order" in data and data["best_selling_order"] not in (None, ""):
+        try:
+            product.best_selling_order = max(0, int(data["best_selling_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "new_arrival_order" in data and data["new_arrival_order"] not in (None, ""):
+        try:
+            product.new_arrival_order = max(0, int(data["new_arrival_order"]))
+        except (ValueError, TypeError):
+            pass
 
     product.save()
 
@@ -1460,21 +1715,131 @@ def seller_enquiry_detail_view(request, enquiry_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=enquiry_id) | Q(product_id=str(enquiry_id))
-    enquiry = Product.objects.filter(lookup).first()
+    enquiry = Product.objects.select_related("admin", "vendor", "category", "subcategory__main_category").filter(lookup).first()
     if not enquiry:
-        enquiry = Product.objects.first()
+        enquiry = Product.objects.select_related("admin", "vendor", "category", "subcategory__main_category").first()
     if not enquiry:
         return redirect("seller_enquiries")
 
-    user_data = {
-        "user_id": enquiry.vendor.id if enquiry.vendor else None,
-        "full_name": enquiry.vendor.username if enquiry.vendor else None,
-        "phone_no": enquiry.vendor.mobile_number if enquiry.vendor else None,
-        "email": enquiry.vendor.email if enquiry.vendor else None,
-        "company": (enquiry.vendor.company_name or enquiry.vendor.username) if enquiry.vendor else None,
-        "business_location": (enquiry.vendor.business_location or enquiry.inventory_location) if enquiry.vendor else enquiry.inventory_location,
-        "industry": None,
-    }
+    vendor = enquiry.vendor
+    if not vendor and enquiry.vendor_id:
+        from .models import VendorDetails
+        vendor = VendorDetails.objects.filter(id=enquiry.vendor_id).first()
+    if not vendor and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_vid = enquiry.raw_data.get('vendor_id') or enquiry.raw_data.get('user_id')
+        if raw_vid:
+            v_clean = str(raw_vid).strip()
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor:
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+            if vendor:
+                enquiry.vendor = vendor
+                enquiry.save(update_fields=["vendor"])
+
+    # Resolve admin details if submitted by an Admin
+    admin_obj = enquiry.admin
+    if not admin_obj and vendor and vendor.email:
+        admin_obj = AdminDetails.objects.filter(email__iexact=vendor.email).first()
+    if not admin_obj and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_aid = enquiry.raw_data.get('admin_id') or enquiry.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = ""
+    if hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        intake_channel = enquiry.raw_data.get("intake_channel", "")
+
+    assisted_by_admin = admin_obj if (admin_obj and vendor) else None
+
+    if vendor:
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
+        full_name_val = vendor.full_name or "N/A"
+        phone_val = vendor.mobile_number or "N/A"
+        email_val = vendor.email or "N/A"
+        business_location_val = vendor.business_location or "N/A"
+        industry_val = "N/A"
+        if vendor.category_interested:
+            if isinstance(vendor.category_interested, list):
+                industry_val = ", ".join(vendor.category_interested)
+            else:
+                industry_val = str(vendor.category_interested)
+        elif vendor.business_type:
+            industry_val = vendor.business_type
+        elif vendor.user_type:
+            industry_val = vendor.user_type
+
+        vendor_display_id = vendor.vendor_id
+        user_data = {
+            "vendor_id": vendor_display_id,
+            "user_id": vendor_display_id,
+            "admin_id": f"ADM-{admin_obj.id:04d}" if admin_obj else None,
+            "raw_vendor_id": vendor.id,
+            "raw_user_id": vendor.id,
+            "is_admin": False,
+            "is_assisted": bool(admin_obj),
+            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.username})" if admin_obj else None,
+            "intake_channel": intake_channel,
+            "name": full_name_val,
+            "full_name": full_name_val,
+            "phone_no": phone_val,
+            "email": email_val,
+            "company": company_val,
+            "business_location": business_location_val,
+            "industry": industry_val,
+        }
+        vendor_profile = vendor.get_profile_completion_details()
+    elif admin_obj:
+        admin_display_id = f"ADM-{admin_obj.id:04d}"
+        user_data = {
+            "vendor_id": admin_display_id,
+            "user_id": admin_display_id,
+            "admin_id": admin_display_id,
+            "raw_admin_id": admin_obj.id,
+            "is_admin": True,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": admin_obj.full_name or admin_obj.username,
+            "full_name": admin_obj.full_name or admin_obj.username,
+            "email": admin_obj.email,
+            "company": "N/A",
+            "phone_no": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+        vendor_profile = {
+            "is_complete": True,
+            "percentage": 100,
+            "missing_fields_labels": [],
+            "status_label": f"Verified Admin (ID {admin_display_id})",
+        }
+    else:
+        user_data = {
+            "vendor_id": "N/A",
+            "user_id": "N/A",
+            "admin_id": None,
+            "raw_vendor_id": None,
+            "raw_user_id": None,
+            "is_admin": False,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": "N/A",
+            "full_name": "N/A",
+            "phone_no": "N/A",
+            "email": "N/A",
+            "company": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+        vendor_profile = None
 
     product_data = {}
     processed_raw_keys = set()
@@ -1485,6 +1850,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         ("brand_name", "Brand Name", False, ["brand_name", "brand name", "brand"]),
         ("model_no", "Model No. / Part Number", False, ["model no. / part number", "model no", "part number", "model number"]),
         ("manufacturing_country", "Manufacturing Country", True, ["select manufacturing country", "manufacturing country", "country"]),
+        ("inventory_location", "Inventory Location", False, ["inventory_location", "inventory location", "location", "warehouse location"]),
         ("manufacturing_year", "Manufacturing Year", False, ["manufacturing year", "year"]),
         ("dimensions", "Dimensions", False, ["dimensions", "dimension"]),
         ("expiry_date", "Expiry Date", False, ["expiry date", "expiry"]),
@@ -1534,6 +1900,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "brand_name": enquiry.brand,
         "model_no": enquiry.model_no,
         "manufacturing_country": enquiry.manufacturing_country,
+        "inventory_location": enquiry.inventory_location,
         "manufacturing_year": enquiry.manufacturing_year,
         "dimensions": enquiry.dimensions,
         "expiry_date": enquiry.expiry_date.strftime("%Y-%m-%d") if enquiry.expiry_date else None,
@@ -1547,19 +1914,23 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "is_available_for_offers": enquiry.is_available_for_offers,
         "date_approved": enquiry.date_approved.strftime("%Y-%m-%d %H:%M") if enquiry.date_approved else None,
         "description": enquiry.description,
-        "reason_to_sell": enquiry.reason_to_sell,
+
         "warranty": enquiry.warranty,
-        "certificate": enquiry.third_party_certificate.url if enquiry.third_party_certificate else None,
+        "warranty_document": enquiry.warranty_attachment,
+        "certificate": enquiry.third_party_documents if enquiry.third_party_documents else ("Yes" if enquiry.third_party_certificate else None),
+        "offer": str(enquiry.offer) if enquiry.offer is not None else None,
     }
 
     for k, v in model_fields_dict.items():
         if v is not None and v != "":
             product_data[k] = v
 
-    # Append any remaining unknown keys (excluding image, certificate, documents, and user fields)
+    # Append any remaining unknown keys (excluding image, certificate, documents, warranty, and user fields)
     excluded_raw_keys = {
         "featured_image_url", "third_party_certificate", "documents",
         "image", "product_image", "certificate", "3rd_party_certificate",
+        "certificate_document", "third_party_documents", "warranty_attachment",
+        "warranty_document", "warrantyattachment", "warrantydocument",
         "seller_email", "email", "full_name", "name", "phone", "phone_no",
         "company", "company_name", "business_location", "location", "industry"
     }
@@ -1576,9 +1947,12 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "enquiry": enquiry,
         "user_data": user_data,
+        "vendor_profile": vendor_profile,
         "product_data": product_data,
         "required_product_keys": required_product_keys,
         "categories": categories,
+        "assisted_by_admin": assisted_by_admin,
+        "intake_channel": intake_channel,
     }
     return render(request, "seller_enquiry_detail.html", context)
 
@@ -1586,71 +1960,182 @@ def seller_enquiry_detail_view(request, enquiry_id):
 @api_view(["POST", "PUT"])
 def lot_enquiry_edit_api(request, enquiry_id):
     """
-    Admin API to update Lot batch details from detail view.
+    Admin API to update Lot batch details, vendor information, specifications, and optional manifest file upload.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    from .models import Lot, SubCategory
+    from .models import Lot, SubCategory, VendorDetails
     try:
         lot = Lot.objects.get(id=enquiry_id)
     except Lot.DoesNotExist:
         return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    data = request.data
+    data = request.data or request.POST
+
+    # File upload check in edit form
+    file_obj = request.FILES.get("file") or request.FILES.get("excel_file") or request.FILES.get("manifest")
+    if file_obj:
+        lot.file = file_obj
+        try:
+            from lots.importer import parse_spreadsheet
+            file_obj.seek(0)
+            parse_res = parse_spreadsheet(file_obj)
+            parsed_items = parse_res.get("all_items", [])
+            if parsed_items:
+                if not isinstance(lot.raw_data, dict):
+                    lot.raw_data = {}
+                lot.raw_data["products"] = parsed_items
+                lot.raw_data["is_saved_to_db"] = False
+                lot.number_of_distinct_skus = len(parsed_items)
+                tot_u = sum(int(p.get("quantity") or p.get("available_quantity") or 0) for p in parsed_items if str(p.get("quantity") or p.get("available_quantity") or "0").isdigit())
+                if tot_u > 0:
+                    lot.total_units_quantity = tot_u
+        except Exception as e:
+            print(f"Error re-parsing uploaded lot spreadsheet: {e}")
+
+    # Warehouse images upload check in edit form
+    from django.core.files.storage import default_storage
+    new_wh_images = []
+    for img_key in ("warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos"):
+        if img_key in request.FILES:
+            for img_file in request.FILES.getlist(img_key):
+                if hasattr(img_file, "name"):
+                    import uuid
+                    safe_wh_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
+                    saved_path = default_storage.save(f"lots/images/{safe_wh_name}", img_file)
+                    new_wh_images.append(default_storage.url(saved_path))
+    if new_wh_images:
+        existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
+        lot.warehouse_images = existing_wh + new_wh_images
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        lot.raw_data["warehouse_images"] = lot.warehouse_images
+
+    # Basic info
     if "title" in data and str(data["title"]).strip():
         lot.title = str(data["title"]).strip()
-    if "total_price" in data and data["total_price"] not in (None, ""):
+    if "msrp" in data and data["msrp"] not in (None, ""):
         try:
-            lot.total_price = float(data["total_price"])
+            lot.total_est_retail_value_msrp = float(data["msrp"])
         except (ValueError, TypeError):
             pass
-    if "currency" in data:
+    if "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
+        try:
+            lot.ask_price_surplus_payout = float(data["liquidation_price"])
+        except (ValueError, TypeError):
+            pass
+    if "currency" in data and str(data["currency"]).strip():
         lot.currency = str(data["currency"]).strip()
+    if "inventory_country" in data:
+        lot.inventory_country = str(data["inventory_country"]).strip()
+    if "inventory_city" in data:
+        lot.inventory_city = str(data["inventory_city"]).strip()
     if "inventory_location" in data:
         lot.inventory_location = str(data["inventory_location"]).strip()
-    if "subcategory_id" in data and data["subcategory_id"]:
-        try:
-            sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
-            lot.category = sub_cat
-            lot.category_name = sub_cat.name
-        except (SubCategory.DoesNotExist, ValueError):
-            pass
-    elif "category_name" in data and str(data["category_name"]).strip():
-        lot.category_name = str(data["category_name"]).strip()
 
-    if "reason_to_sell" in data:
-        lot.reason_to_sell = str(data["reason_to_sell"]).strip()
+    # Specifications & Logistics
+    if "condition" in data:
+        lot.condition = str(data["condition"]).strip()
+    if "inventory_stock_age" in data:
+        lot.inventory_stock_age = str(data["inventory_stock_age"]).strip()
+    if "key_brands" in data or "key_brands_included" in data:
+        lot.key_brands_included = str(data.get("key_brands") or data.get("key_brands_included")).strip()
+    if "distinct_skus" in data or "number_of_distinct_skus" in data:
+        try:
+            val = data.get("distinct_skus") or data.get("number_of_distinct_skus")
+            if val not in (None, ""):
+                lot.number_of_distinct_skus = int(val)
+        except (ValueError, TypeError):
+            pass
+    if "total_units" in data or "total_units_quantity" in data:
+        try:
+            val = data.get("total_units") or data.get("total_units_quantity")
+            if val not in (None, ""):
+                lot.total_units_quantity = int(val)
+        except (ValueError, TypeError):
+            pass
+    if "shipping_size" in data:
+        lot.shipping_size = str(data["shipping_size"]).strip()
+    if "shipping_terms" in data:
+        lot.shipping_terms = str(data["shipping_terms"]).strip()
+    if "total_weight" in data:
+        lot.total_weight = str(data["total_weight"]).strip()
+    if "load_type" in data:
+        lot.load_type = str(data["load_type"]).strip()
+    if "offer" in data:
+        lot.offer = str(data["offer"]).strip()
+    if "open_to_offer" in data or "allow_counter_offers" in data:
+        val = data.get("open_to_offer") or data.get("allow_counter_offers")
+        if str(val).lower() in ("true", "1", "yes", "on"):
+            lot.offer = "Open to Offer"
+
+    # Notes & Description
     if "description" in data:
         lot.description = str(data["description"]).strip()
     if "enquiry_status" in data:
         status_val = str(data["enquiry_status"]).lower()
         if status_val in ("pending", "approved", "declined"):
             lot.enquiry_status = status_val
+            if status_val != "approved":
+                lot.is_active = False
+                lot.active_status = "inactive"
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
+            if str(lot.enquiry_status).lower() != "approved":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             lot.active_status = "active"
             lot.is_active = True
         elif act_val in ("inactive", "false", "0"):
             lot.active_status = "inactive"
             lot.is_active = False
     elif "is_active" in data:
-        lot.is_active = bool(data["is_active"])
+        is_act = bool(data["is_active"])
+        if is_act and str(lot.enquiry_status).lower() != "approved":
+            return Response({
+                "success": False,
+                "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        lot.is_active = is_act
         lot.active_status = "active" if lot.is_active else "inactive"
+
+    # Vendor Details
+    if lot.vendor:
+        v_updated = False
+        if "company" in data and str(data["company"]).strip():
+            lot.vendor.company_name = str(data["company"]).strip()
+            v_updated = True
+        if "full_name" in data or "contact_person" in data:
+            val = str(data.get("full_name") or data.get("contact_person")).strip()
+            if val:
+                lot.vendor.full_name = val
+                v_updated = True
+        if "phone_no" in data or "phone" in data:
+            val = str(data.get("phone_no") or data.get("phone")).strip()
+            if val:
+                lot.vendor.mobile_number = val
+                v_updated = True
+        if "email" in data and str(data["email"]).strip():
+            lot.vendor.email = str(data["email"]).strip()
+            v_updated = True
+        if "business_location" in data and str(data["business_location"]).strip():
+            lot.vendor.business_location = str(data["business_location"]).strip()
+            v_updated = True
+        if v_updated:
+            lot.vendor.save()
 
     if not isinstance(lot.raw_data, dict):
         lot.raw_data = {}
 
-    if "title" in data:
-        lot.raw_data["title"] = lot.title
-    if "total_price" in data:
-        lot.raw_data["liquidation_price"] = lot.total_price
-    if "reason_to_sell" in data:
-        lot.raw_data["notes"] = lot.reason_to_sell
-    if "description" in data:
-        lot.raw_data["description"] = lot.description
+    lot.raw_data["title"] = lot.title
+    lot.raw_data["liquidation_price"] = lot.ask_price_surplus_payout
+
+    lot.raw_data["description"] = lot.description
 
     lot.save()
 
@@ -1659,6 +2144,130 @@ def lot_enquiry_edit_api(request, enquiry_id):
         "message": "Lot batch details updated successfully.",
         "batch_id": lot.lot_number
     })
+
+
+@api_view(["POST"])
+def upload_lot_manifest_api(request, enquiry_id):
+    """
+    Admin API to upload or re-upload an Excel/CSV manifest file for a Lot enquiry batch.
+    Saves file to enquiry.file and auto-parses extracted products.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Lot, LotProduct
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    file_obj = (
+        request.FILES.get("file")
+        or request.FILES.get("excel_file")
+        or request.FILES.get("manifest")
+        or request.FILES.get("spreadsheet")
+    )
+    if not file_obj:
+        return Response({"success": False, "message": "No manifest file was selected."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Save file to lot model
+    lot.file = file_obj
+    lot.save(update_fields=["file"])
+
+    parsed_items = []
+    try:
+        from lots.importer import parse_spreadsheet
+        file_obj.seek(0)
+        parse_res = parse_spreadsheet(file_obj)
+        if not parse_res.get("is_valid", False):
+            err_msg = "; ".join(parse_res.get("header_errors", [])) or "Manifest format validation failed. Must follow Surplus structure."
+            return Response({"success": False, "message": err_msg, "header_errors": parse_res.get("header_errors", [])}, status=status.HTTP_400_BAD_REQUEST)
+        parsed_items = parse_res.get("all_items", [])
+    except Exception as e:
+        return Response({"success": False, "message": f"Error parsing uploaded excel manifest: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not isinstance(lot.raw_data, dict):
+        lot.raw_data = {}
+
+    if parsed_items:
+        lot.raw_data["products"] = parsed_items
+        lot.raw_data["is_saved_to_db"] = False
+        lot.number_of_distinct_skus = len(parsed_items)
+
+        tot_units = 0
+        for p in parsed_items:
+            try:
+                tot_units += int(p.get("quantity") or p.get("available_quantity") or 0)
+            except (ValueError, TypeError):
+                pass
+        if tot_units > 0:
+            lot.total_units_quantity = tot_units
+
+        lot.save(update_fields=["raw_data", "number_of_distinct_skus", "total_units_quantity"])
+
+    return Response({
+        "success": True,
+        "message": f"Manifest uploaded successfully! Extracted {len(parsed_items)} product rows.",
+        "products_extracted": len(parsed_items)
+    })
+
+from lots.importer import clean_lot_product_item as _clean_lot_product_item
+
+
+@api_view(["POST", "GET"])
+@permission_classes([AllowAny])
+def parse_lot_spreadsheet_api(request, enquiry_id):
+    """
+    On-Demand API to parse spreadsheet data from the Inventory tab of an attached lot file,
+    listing products for preview WITHOUT saving them to the database.
+    """
+    from .models import Lot
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    file_obj = request.FILES.get("file") or request.FILES.get("excel_file") or request.FILES.get("manifest")
+    if not file_obj and lot.file:
+        file_obj = lot.file
+
+    if not file_obj:
+        return Response({"success": False, "message": "No spreadsheet file available to parse."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from lots.importer import parse_spreadsheet
+        if hasattr(file_obj, "seek"):
+            file_obj.seek(0)
+        parse_res = parse_spreadsheet(file_obj)
+        if not parse_res.get("is_valid", False):
+            err_msg = "; ".join(parse_res.get("header_errors", [])) or "Manifest format validation failed. Must follow Surplus structure."
+            return Response({"success": False, "message": err_msg, "header_errors": parse_res.get("header_errors", [])}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        parsed_items = parse_res.get("all_items", [])
+    except Exception as e:
+        return Response({"success": False, "message": f"Failed to parse spreadsheet: {str(e)}"}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+    cleaned_products = []
+    if isinstance(parsed_items, list):
+        row_counter = 1
+        for item in parsed_items:
+            p_clean = _clean_lot_product_item(item, row_counter)
+            if p_clean is not None:
+                cleaned_products.append(p_clean)
+                row_counter += 1
+
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(lot, items_override=cleaned_products)
+
+    return Response({
+        "success": True,
+        "message": f"Successfully parsed {len(cleaned_products)} products from Inventory tab.",
+        "is_saved_to_db": False,
+        "count": len(cleaned_products),
+        "products": cleaned_products,
+        "explorer_data": explorer_data,
+        "summary": parse_res.get("summary", {})
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(["POST", "PUT", "DELETE"])
@@ -1682,9 +2291,20 @@ def lot_enquiry_status_api(request, enquiry_id):
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
 
+    target_status = enquiry.enquiry_status
+    if "status" in request.data:
+        s_val = str(request.data.get("status", "")).lower()
+        if s_val in ("pending", "approved", "declined"):
+            target_status = s_val
+
     if "active_status" in request.data:
         act_val = str(request.data.get("active_status")).lower()
         if act_val in ("active", "true", "1"):
+            if target_status != "approved":
+                return Response({
+                    "success": False,
+                    "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+                }, status=status.HTTP_400_BAD_REQUEST)
             enquiry.active_status = "active"
             enquiry.is_active = True
         elif act_val in ("inactive", "false", "0"):
@@ -1692,24 +2312,64 @@ def lot_enquiry_status_api(request, enquiry_id):
             enquiry.is_active = False
 
     if "is_active" in request.data:
-        enquiry.is_active = bool(request.data.get("is_active"))
-        enquiry.active_status = "active" if enquiry.is_active else "inactive"
+        is_act = bool(request.data.get("is_active"))
+        if is_act and target_status != "approved":
+            return Response({
+                "success": False,
+                "message": "Cannot activate lot: Lot enquiry must be approved before it can be marked active."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        enquiry.is_active = is_act
+        enquiry.active_status = "active" if is_act else "inactive"
+
+    new_status = enquiry.enquiry_status
+    vendor_profile_info = None
+    target_vendor = enquiry.vendor
+    if target_vendor:
+        vendor_profile_info = target_vendor.get_profile_completion_details()
 
     if "status" in request.data:
         new_status = str(request.data.get("status")).lower()
         if new_status in ("pending", "approved", "declined"):
             enquiry.enquiry_status = new_status
-            if not has_explicit_active:
-                enquiry.active_status = "active" if new_status == "approved" else "inactive"
-                enquiry.is_active = (new_status == "approved")
+            if new_status == "approved":
+                if vendor_profile_info and not vendor_profile_info["is_complete"]:
+                    enquiry.is_active = False
+                    enquiry.active_status = "inactive"
+                elif not has_explicit_active:
+                    enquiry.active_status = "active"
+                    enquiry.is_active = True
+            elif new_status in ("declined", "pending"):
+                enquiry.active_status = "inactive"
+                enquiry.is_active = False
+
+            if "reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+            elif "rejection_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+            elif "note" in request.data or "notes" in request.data:
+                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
 
+    msg = f"Lot status updated to {new_status}."
+    if enquiry.enquiry_status == "approved":
+        if vendor_profile_info and not vendor_profile_info["is_complete"]:
+            msg = (
+                f"Lot approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
+                f"To list lot publicly, vendor must complete all profile details."
+            )
+        else:
+            msg = "Lot approved and published to marketplace."
+    elif enquiry.enquiry_status == "declined":
+        msg = "Lot listing declined."
+
     return Response({
         "success": True,
-        "message": f"Lot status updated to {new_status}.",
+        "message": msg,
         "batch_id": enquiry.lot_number,
-        "status": enquiry.enquiry_status
+        "status": enquiry.enquiry_status,
+        "is_active": enquiry.is_active,
+        "active_status": enquiry.active_status
     })
 
 
@@ -1717,151 +2377,463 @@ def lot_enquiry_detail_view(request, enquiry_id):
     """
     Admin HTML view to show the details of a single Lot, including its extracted products.
     """
-    from django.shortcuts import get_object_or_404
+    import json
+    from django.shortcuts import get_object_or_404, redirect
+    from .models import Lot, MainCategory, LotProduct, VendorDetails
+
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    from .models import Lot
     enquiry = get_object_or_404(Lot, id=enquiry_id)
+
+    # Helper function to sanitize raw values (lists, stringified JSON, tuples, strings)
+    def _clean_val(v):
+        if v is None:
+            return None
+        if isinstance(v, (list, tuple)):
+            if not v:
+                return None
+            if len(v) == 1:
+                return _clean_val(v[0])
+            cleaned_list = []
+            for item in v:
+                item_clean = _clean_val(item)
+                if item_clean is not None and not isinstance(item_clean, (dict, list)):
+                    cleaned_list.append(str(item_clean))
+            return ", ".join(cleaned_list) if cleaned_list else None
+        if isinstance(v, dict):
+            return None
+        if isinstance(v, str):
+            v_str = v.strip()
+            if not v_str or v_str.upper() in ("N/A", "NONE", "NULL", "[]", "{}"):
+                return None
+            if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                try:
+                    parsed = json.loads(v_str)
+                    return _clean_val(parsed)
+                except Exception:
+                    pass
+            return v_str
+        return str(v)
+
+    def _extract_media_url(v):
+        if not v:
+            return None
+        if isinstance(v, list):
+            for item in v:
+                url = _extract_media_url(item)
+                if url:
+                    return url
+            return None
+        if isinstance(v, dict):
+            return v.get("url") or v.get("src") or v.get("image") or v.get("file_url")
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("http://") or v_str.startswith("https://") or v_str.startswith("/media/"):
+                return v_str
+            if (v_str.startswith("{") and v_str.endswith("}")) or (v_str.startswith("[") and v_str.endswith("]")):
+                try:
+                    parsed = json.loads(v_str)
+                    return _extract_media_url(parsed)
+                except Exception:
+                    pass
+        return None
+
+    # Merge raw_data and nested lot_details dicts
+    combined_raw = {}
+    if isinstance(enquiry.raw_data, dict):
+        for k, v in enquiry.raw_data.items():
+            combined_raw[k] = v
+
+    lot_details_raw = combined_raw.get("lot_details") or combined_raw.get("details")
+    if lot_details_raw:
+        if isinstance(lot_details_raw, list) and len(lot_details_raw) > 0:
+            lot_details_raw = lot_details_raw[0]
+        if isinstance(lot_details_raw, str):
+            try:
+                lot_details_dict = json.loads(lot_details_raw)
+                if isinstance(lot_details_dict, dict):
+                    for k, v in lot_details_dict.items():
+                        if k not in combined_raw or not combined_raw[k]:
+                            combined_raw[k] = v
+            except Exception:
+                pass
+        elif isinstance(lot_details_raw, dict):
+            for k, v in lot_details_raw.items():
+                if k not in combined_raw or not combined_raw[k]:
+                    combined_raw[k] = v
+
+    # Populate basic attributes if empty on model
+    if not enquiry.title:
+        clean_t = _clean_val(combined_raw.get("title") or combined_raw.get("lot_title") or combined_raw.get("name"))
+        if clean_t:
+            enquiry.title = clean_t
+    if not enquiry.description:
+        clean_d = _clean_val(combined_raw.get("description") or combined_raw.get("notes"))
+        if clean_d:
+            enquiry.description = clean_d
+    if not enquiry.inventory_location:
+        clean_l = _clean_val(combined_raw.get("inventory_location") or combined_raw.get("location"))
+        if clean_l:
+            enquiry.inventory_location = clean_l
 
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "enquiry": enquiry,
-    }
-    
-    user_data = {
-        "full_name": None,
-        "phone_no": None,
-        "email": None,
-        "company": None,
-        "business_location": None,
-        "industry": None
-    }
-    batch_data = {
-        "category_breakdown": None,
-        "shipping_size": None,
-        "stock_condition": None,
-        "inventory_age": None,
-        "distinct_skus": None,
-        "total_units": None,
-        "key_brands": None,
-        "notes": None,
-        "msrp": None,
-        "currency": "AED",
-        "liquidation_price": None,
-        "open_to_offer": None,
-        "media": None
+        "categories": MainCategory.objects.prefetch_related("subcategories").all(),
     }
 
-    processed_raw_keys = set()
-    for k, v in enquiry.raw_data.items():
-        k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
-        
-        # User Data
-        if k_norm in ("full_name", "name", "contact_person"):
-            user_data["full_name"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("phone_no", "phone", "phone_number", "contact_number"):
-            user_data["phone_no"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("email", "e_mail", "email_address"):
-            user_data["email"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("company", "company_name"):
-            user_data["company"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("business_location", "location", "inventory_location"):
-            user_data["business_location"] = v
-            processed_raw_keys.add(k)
-        elif k_norm == "industry":
-            user_data["industry"] = v
-            processed_raw_keys.add(k)
-            
-        # Batch Data
-        elif "category" in k_norm or "breakdown" in k_norm:
-            batch_data["category_breakdown"] = v
-            processed_raw_keys.add(k)
-        elif "shipping" in k_norm or "size" in k_norm:
-            batch_data["shipping_size"] = v
-            processed_raw_keys.add(k)
-        elif "condition" in k_norm:
-            batch_data["stock_condition"] = v
-            processed_raw_keys.add(k)
-        elif "age" in k_norm:
-            batch_data["inventory_age"] = v
-            processed_raw_keys.add(k)
-        elif "sku" in k_norm or "distinct" in k_norm:
-            batch_data["distinct_skus"] = v
-            processed_raw_keys.add(k)
-        elif "unit" in k_norm or "quantity" in k_norm or "total" in k_norm:
-            batch_data["total_units"] = v
-            processed_raw_keys.add(k)
-        elif "brand" in k_norm:
-            batch_data["key_brands"] = v
-            processed_raw_keys.add(k)
-        elif "note" in k_norm or "packaging" in k_norm:
-            batch_data["notes"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("msrp", "retail_price"):
-            batch_data["msrp"] = v
-            processed_raw_keys.add(k)
-        elif k_norm == "currency":
-            batch_data["currency"] = v
-            processed_raw_keys.add(k)
-        elif "liquidation" in k_norm or "target_price" in k_norm:
-            batch_data["liquidation_price"] = v
-            processed_raw_keys.add(k)
-        elif "offer" in k_norm or "open_to" in k_norm:
-            batch_data["open_to_offer"] = v
-            processed_raw_keys.add(k)
-        elif k_norm in ("media", "image", "images", "video", "videos", "product_image", "warehouse_image"):
-            batch_data["media"] = v
-            processed_raw_keys.add(k)
-            
-    if enquiry.vendor:
-        user_data["full_name"] = user_data["full_name"] or enquiry.vendor.username
-        user_data["phone_no"] = user_data["phone_no"] or enquiry.vendor.mobile_number
-        user_data["email"] = user_data["email"] or enquiry.vendor.email
-        user_data["company"] = user_data["company"] or enquiry.vendor.company_name
-        user_data["business_location"] = user_data["business_location"] or enquiry.vendor.business_location
-
-    context["user_data"] = user_data
-    context["batch_data"] = batch_data
-    
-    from .models import LotProduct
+    # Extract Products list (Only load saved products from DB; un-saved file data requires clicking "Parse Spreadsheet Data")
     db_products = list(LotProduct.objects.filter(lot=enquiry).order_by("id"))
     is_saved_to_db = len(db_products) > 0 or bool(enquiry.raw_data.get("is_saved_to_db"))
 
     products_list = []
     if db_products:
         for p in db_products:
-            p_dict = dict(p.raw_data or {})
-            p_dict["product_id"] = p.product_id
-            p_dict["product_name"] = p.product_name or p_dict.get("product_name") or p_dict.get("title") or "-"
-            p_dict["quantity"] = p.quantity or p_dict.get("available_quantity") or p_dict.get("quantity") or 0
-            p_dict["condition"] = p.condition or p_dict.get("product_condition") or "Surplus"
-            products_list.append(p_dict)
+            products_list.append(p.raw_data or {})
     elif enquiry.raw_data.get("is_saved_to_db") and enquiry.raw_data.get("products"):
         products_list = enquiry.raw_data.get("products", [])
-    elif enquiry.file:
+
+    cleaned_products = []
+    if isinstance(products_list, list):
+        row_counter = 1
+        for item in products_list:
+            p_clean = _clean_lot_product_item(item, row_counter)
+            if p_clean is not None:
+                cleaned_products.append(p_clean)
+                row_counter += 1
+
+    context["products"] = cleaned_products
+    context["is_saved_to_db"] = len(cleaned_products) > 0 and is_saved_to_db
+
+    # User / Vendor Data
+    vendor = enquiry.vendor
+    if not vendor:
+        raw_vid = combined_raw.get("vendor_id") or combined_raw.get("user_id") or enquiry.raw_data.get("vendor_id")
+        if raw_vid:
+            v_clean = _clean_val(raw_vid) or ""
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor and raw_vid:
+                vendor = VendorDetails.objects.filter(email__iexact=str(_clean_val(raw_vid)).strip()).first()
+            if vendor and hasattr(enquiry, 'vendor'):
+                enquiry.vendor = vendor
+                enquiry.save(update_fields=["vendor"])
+
+    user_data = {
+        "vendor_id": "N/A",
+        "raw_vendor_id": None,
+        "user_id": "N/A",
+        "raw_user_id": None,
+        "full_name": "N/A",
+        "phone_no": "N/A",
+        "email": "N/A",
+        "company": "N/A",
+        "business_location": "N/A",
+        "industry": "N/A"
+    }
+
+    if vendor:
+        user_data["vendor_id"] = vendor.user_id
+        user_data["raw_vendor_id"] = vendor.id
+        user_data["user_id"] = vendor.user_id
+        user_data["raw_user_id"] = vendor.id
+        user_data["full_name"] = vendor.full_name or "N/A"
+        user_data["phone_no"] = vendor.mobile_number or "N/A"
+        user_data["email"] = vendor.email or "N/A"
+        user_data["company"] = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
+        user_data["business_location"] = vendor.business_location or vendor.business_address or "N/A"
+        if vendor.category_interested:
+            user_data["industry"] = ", ".join(vendor.category_interested) if isinstance(vendor.category_interested, list) else str(vendor.category_interested)
+        elif vendor.business_type:
+            user_data["industry"] = vendor.business_type
+        else:
+            user_data["industry"] = "N/A"
+    else:
+        raw_vid = combined_raw.get("vendor_id") or combined_raw.get("user_id") or enquiry.raw_data.get("vendor_id")
+        if raw_vid:
+            user_data["vendor_id"] = _clean_val(raw_vid) or "N/A"
+            user_data["user_id"] = user_data["vendor_id"]
+        if combined_raw.get("seller_name"):
+            user_data["full_name"] = combined_raw.get("seller_name")
+        elif combined_raw.get("contact_person"):
+            user_data["full_name"] = combined_raw.get("contact_person")
+        if combined_raw.get("seller_phone"):
+            user_data["phone_no"] = combined_raw.get("seller_phone")
+        if combined_raw.get("seller_email"):
+            user_data["email"] = combined_raw.get("seller_email")
+        if combined_raw.get("seller_company"):
+            user_data["company"] = combined_raw.get("seller_company")
+        if combined_raw.get("seller_location"):
+            user_data["business_location"] = combined_raw.get("seller_location")
+
+    admin_obj = getattr(enquiry, 'admin', None)
+    if not admin_obj and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        raw_aid = enquiry.raw_data.get('admin_id') or enquiry.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = getattr(enquiry, 'intake_channel', '')
+    if not intake_channel and hasattr(enquiry, 'raw_data') and isinstance(enquiry.raw_data, dict):
+        intake_channel = enquiry.raw_data.get("intake_channel", "")
+
+    context["user_data"] = user_data
+    context["assisted_by_admin"] = admin_obj
+    context["intake_channel"] = intake_channel
+
+    # Batch Data Construction
+    # Category Breakdown
+    cat_val = None
+    if enquiry.category_allocations:
+        if isinstance(enquiry.category_allocations, list):
+            cats = []
+            for c in enquiry.category_allocations:
+                if isinstance(c, dict) and (c.get("category") or c.get("category_name")):
+                    # Prefer 'category' key, fallback to 'category_name'
+                    name = c.get("category") or c.get("category_name")
+                    # Allocation can be under 'percentage', 'allocation', or misspelled 'alocation'
+                    pct = c.get("percentage") or c.get("allocation") or c.get("alocation")
+                    if pct:
+                        pct_clean = str(pct).strip().rstrip("%").strip()
+                        cats.append(f"{name} ({pct_clean}%)")
+                    else:
+                        cats.append(name)
+                elif isinstance(c, str):
+                    cats.append(c.replace("%%", "%"))
+            if cats:
+                cat_val = ", ".join(cats)
+    if not cat_val:
+        cat_val = combined_raw.get("category_breakdown") or combined_raw.get("primary_category") or combined_raw.get("category_allocations") or combined_raw.get("category") or combined_raw.get("subcategory")
+    if cat_val and isinstance(cat_val, str):
+        cat_val = cat_val.replace("%%", "%")
+
+    # Distinct SKUs & Total Units
+    skus_val = enquiry.number_of_distinct_skus if enquiry.number_of_distinct_skus else (combined_raw.get("number_of_distinct_skus") or combined_raw.get("distinct_skus") or combined_raw.get("skus"))
+    units_val = enquiry.total_units_quantity if enquiry.total_units_quantity else (combined_raw.get("total_units_quantity") or combined_raw.get("total_units") or combined_raw.get("total_quantity") or combined_raw.get("quantity") or combined_raw.get("units"))
+
+    skus_clean = _clean_val(skus_val)
+    if (not skus_clean or skus_clean == "0") and products_list:
+        skus_clean = str(len(products_list))
+
+    units_clean = _clean_val(units_val)
+    if (not units_clean or units_clean == "0") and products_list:
+        tot_q = 0
+        for p in products_list:
+            try:
+                tot_q += int(p.get("quantity") or p.get("available_quantity") or 0)
+            except (ValueError, TypeError):
+                pass
+        if tot_q > 0:
+            units_clean = str(tot_q)
+
+    # MSRP & Liquidation Price
+    msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price"))
+    liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price"))
+
+    # Offer directly from frontend lot submission / database record (no dynamic calculation)
+    offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
+
+    # Open to offers detection: only true if explicitly flagged to accept counter/open offers
+    is_open_to_offer = False
+    if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "accepting offer", "make an offer")):
+        is_open_to_offer = True
+    elif str(combined_raw.get("open_to_offer", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+    elif str(combined_raw.get("allow_counter_offers", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+
+    # Media URL
+    raw_media = combined_raw.get("media") or combined_raw.get("media_files") or combined_raw.get("images") or combined_raw.get("image") or combined_raw.get("product_and_warehouse_images_or_videos")
+    media_url = _extract_media_url(raw_media)
+    if media_url:
+        media_url = resolve_media_url(media_url)
+
+    batch_data = {
+        "category_breakdown": _clean_val(cat_val),
+        "shipping_size": _clean_val(enquiry.shipping_size or enquiry.lot_size or combined_raw.get("shipping_size") or combined_raw.get("lot_size") or combined_raw.get("load_type") or combined_raw.get("pallet_count")),
+        "stock_condition": _clean_val(enquiry.condition or combined_raw.get("stock_condition") or combined_raw.get("condition") or combined_raw.get("product_condition")),
+        "inventory_age": _clean_val(enquiry.inventory_stock_age or combined_raw.get("inventory_stock_age") or combined_raw.get("inventory_age") or combined_raw.get("stock_age") or combined_raw.get("age")),
+        "distinct_skus": skus_clean,
+        "total_units": units_clean,
+        "key_brands": _clean_val(enquiry.key_brands_included or combined_raw.get("key_brands_included") or combined_raw.get("key_brands") or combined_raw.get("brands") or combined_raw.get("brand")),
+        "notes": _clean_val(enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
+        "msrp": _clean_val(msrp_val),
+        "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
+        "liquidation_price": _clean_val(liq_val),
+        "offer": offer_val,
+        "open_to_offer": is_open_to_offer,
+        "media": media_url,
+        "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
+        "load_type": _clean_val(enquiry.load_type or combined_raw.get("load_type")),
+        "total_weight": _clean_val(enquiry.total_weight or combined_raw.get("total_weight")),
+        "pallet_count": _clean_val(enquiry.pallet_count or combined_raw.get("pallet_count")),
+        "source_type": _clean_val(enquiry.source_type or combined_raw.get("source_type")),
+        "primary_unit_type": _clean_val(enquiry.primary_unit_type),
+        "inventory_location": _clean_val(enquiry.inventory_location),
+        "sale_method": _clean_val(enquiry.sale_method),
+        "third_party_cert": bool(enquiry.third_party_certificate_available),
+        "third_party_docs": enquiry.third_party_documents if isinstance(enquiry.third_party_documents, list) else [],
+        "excluded_countries": enquiry.excluded_export_countries if isinstance(enquiry.excluded_export_countries, list) else [],
+    }
+
+    context["batch_data"] = batch_data
+
+    # Normalize and resolve warehouse images URLs
+    from django.conf import settings
+    raw_wh_imgs = enquiry.warehouse_images
+    if isinstance(raw_wh_imgs, str):
         try:
-            from lots.importer import parse_spreadsheet
-            enquiry.file.open('rb')
-            parse_res = parse_spreadsheet(enquiry.file)
-            parsed_items = parse_res.get("all_items", [])
-            if parsed_items:
-                products_list = parsed_items
-        except Exception as e:
-            print(f"Error parsing attached excel file: {e}")
+            raw_wh_imgs = json.loads(raw_wh_imgs)
+        except Exception:
+            raw_wh_imgs = [raw_wh_imgs] if raw_wh_imgs.strip() else []
+    if not isinstance(raw_wh_imgs, list):
+        raw_wh_imgs = []
 
-    if not isinstance(products_list, list):
-        products_list = []
+    expanded_imgs = []
+    for item in raw_wh_imgs:
+        if isinstance(item, str) and item.strip().startswith("[") and item.strip().endswith("]"):
+            try:
+                parsed = json.loads(item)
+                if isinstance(parsed, list):
+                    expanded_imgs.extend(parsed)
+                else:
+                    expanded_imgs.append(parsed)
+            except Exception:
+                expanded_imgs.append(item)
+        elif item:
+            expanded_imgs.append(item)
 
-    context["products"] = products_list
-    context["is_saved_to_db"] = is_saved_to_db
-    context["extra_data"] = {k: v for k, v in enquiry.raw_data.items() if k not in processed_raw_keys and k not in ("products", "manifest_items")}
+    normalized_warehouse_images = []
+    for img in expanded_imgs:
+        if not img:
+            continue
+        img_str = str(img).strip()
+        if not img_str:
+            continue
+        
+        # Clean path and friendly filename (never show AWS presigned query parameters)
+        clean_path = img_str.split("?")[0]
+        filename = clean_path.replace("\\", "/").split("/")[-1]
+        
+        full_url = resolve_media_url(img_str)
+        
+        normalized_warehouse_images.append({
+            "url": full_url,
+            "name": filename,
+            "raw": img_str
+        })
+
+    context["warehouse_images"] = normalized_warehouse_images
+
+    # Every field on the Lot model, rendered generically for the detail page
+    all_lot_fields = []
+    for f in enquiry._meta.fields:
+        raw_val = getattr(enquiry, f.name, None)
+        if f.name == "vendor":
+            display = (raw_val.company_name or raw_val.full_name or raw_val.email) if raw_val else None
+            kind = "text"
+        elif f.choices:
+            display = enquiry._get_FIELD_display(f)
+            kind = "text"
+        elif isinstance(raw_val, bool):
+            display = raw_val
+            kind = "bool"
+        elif isinstance(raw_val, (list, dict)):
+            if f.name == "raw_data":
+                display = json.dumps(raw_val, indent=2, default=str)
+                kind = "json"
+            elif f.name in ("warehouse_images", "third_party_documents"):
+                display = raw_val
+                kind = "links"
+            elif f.name == "category_allocations":
+                display = [
+                    f"{(c.get('category_name') or c.get('category') or '')} - {(c.get('alocation') or c.get('allocation') or c.get('percentage') or '')}"
+                    for c in raw_val if isinstance(c, dict)
+                ] or [str(c) for c in raw_val]
+                kind = "list"
+            else:
+                display = [str(x) for x in raw_val] if isinstance(raw_val, list) else json.dumps(raw_val, default=str)
+                kind = "list" if isinstance(raw_val, list) else "json"
+        elif f.name == "file":
+            display = raw_val.url if raw_val else None
+            kind = "link"
+        elif raw_val in (None, ""):
+            display = None
+            kind = "text"
+        else:
+            display = str(raw_val)
+            kind = "text"
+        all_lot_fields.append({
+            "name": f.name,
+            "label": str(f.verbose_name).replace("_", " ").title(),
+            "value": display,
+            "kind": kind,
+        })
+    context["all_lot_fields"] = all_lot_fields
+
+    # Extra Data dynamic fields (strictly exclude vendor/seller details already presented in the top Vendor card)
+    ignore_keys = {
+        "products", "manifest_items", "manifest_file", "lot_details", "details",
+        "is_saved_to_db", "parse_summary", "is_valid", "row_errors", "missing_mandatory_columns",
+        "file_url", "file", "document", "excel_file", "media_files", "product_and_warehouse_images_or_videos",
+        "warehouse_images", "warehouse_image", "warehouse_imgs", "wh_images", "photos",
+        "product_and_warehouse_images", "product_images", "product_image",
+        "intake_admin_name", "intake_admin_email", "intake_admin_id", "intake_admin",
+        "admin_name", "admin_email", "admin_id", "admin_user", "admin_username", "assigned_admin", "assigned_admin_name", "assigned_admin_id", "intake_channel",
+        "category_allocations", "excluded_export_countries", "third_party_documents",
+        "full_name", "name", "contact_person", "phone", "phone_no", "phone_number", "email", "e_mail",
+        "company", "company_name", "vendor_id", "user_id", "location", "inventory_location", "business_location", "industry",
+        "seller_name", "seller_company", "seller_phone", "seller_email", "seller_location", "seller_contact",
+        "seller_city", "seller_country", "seller_address", "seller_notes", "seller_id",
+        "vendor_name", "vendor_company", "vendor_phone", "vendor_email", "vendor_location", "vendor_id", "user_id",
+        "admin_username", "admin_name", "admin_email", "admin_id", "intake_channel", "intake_notes",
+        "inventory_city", "inventory_country",
+        "title", "lot_title", "description", "notes", "category", "primary_category",
+        "category_breakdown", "stock_condition", "condition", "inventory_age", "inventory_stock_age", "age",
+        "distinct_skus", "number_of_distinct_skus", "total_units", "total_units_quantity", "quantity", "units",
+        "key_brands", "key_brands_included", "brands", "brand", "shipping_size", "lot_size", "load_type", "pallet_count",
+        "msrp", "total_est_retail_value_msrp", "retail_price", "liquidation_price", "ask_price_surplus_payout", "target_price",
+        "asking_price", "open_to_offer", "allow_counter_offers", "currency", "media", "images", "image", "raw_vendor_id", "raw_user_id"
+    }
+
+    extra_data = {}
+    for k, v in combined_raw.items():
+        k_norm = str(k).lower().replace(" ", "_").replace("-", "_")
+        if k_norm in ignore_keys or str(k) in ignore_keys:
+            continue
+        # Exclude internal admin keys, seller/vendor contact details (already shown in top Vendor card), image fields, and credentials
+        if any(term in k_norm for term in (
+            "warehouse_image", "intake_admin", "admin_name", "admin_email", "admin_id", "admin_username", "admin_user",
+            "seller_", "vendor_", "intake_", "assigned_admin",
+            "password", "token", "secret", "credential"
+        )):
+            continue
+
+        v_cleaned = _clean_val(v)
+        if v_cleaned is not None and not isinstance(v_cleaned, (dict, list)):
+            v_str = str(v_cleaned).strip()
+            # Do not display raw URLs, presigned S3/R2 links, or media filenames as text specs
+            if (
+                v_str.startswith(("http://", "https://", "/media/")) or
+                "X-Amz-" in v_str or
+                any(v_str.lower().endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".pdf", ".xlsx", ".csv"))
+            ):
+                continue
+            display_label = str(k).replace("_", " ").replace("-", " ").strip().title()
+            extra_data[display_label] = v_cleaned
+
+    context["extra_data"] = extra_data
+
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(enquiry, items_override=cleaned_products if cleaned_products else None)
+    context["explorer_data"] = explorer_data
+    context["explorer_json"] = json.dumps(explorer_data)
 
     return render(request, "lot_enquiry_detail.html", context)
 
@@ -1914,221 +2886,68 @@ def save_lot_products_api(request, enquiry_id):
     # Save to database
     LotProduct.objects.filter(lot=enquiry).delete()
     saved_count = 0
+    clean_saved_products = []
 
     for item in products_data:
-        p_name = item.get("product_name") or item.get("title") or item.get("name") or f"Product #{saved_count + 1}"
-        p_qty = item.get("available_quantity") or item.get("quantity") or 1
+        p_clean = _clean_lot_product_item(item, saved_count + 1)
+        if not p_clean:
+            continue
+        p_name = p_clean.get("product_name") or "-"
+        p_qty = p_clean.get("available_quantity") or 1
         try:
             p_qty = int(p_qty)
         except (ValueError, TypeError):
             p_qty = 1
-
-        p_cond = item.get("product_condition") or item.get("condition") or "New / Surplus"
+        p_cond = p_clean.get("product_condition") or "Surplus"
 
         LotProduct.objects.create(
             lot=enquiry,
             product_name=str(p_name)[:255],
             quantity=p_qty,
             condition=str(p_cond)[:255],
-            raw_data=item,
+            raw_data=p_clean,
         )
+        clean_saved_products.append(p_clean)
         saved_count += 1
 
     if not isinstance(enquiry.raw_data, dict):
         enquiry.raw_data = {}
 
-    enquiry.raw_data["products"] = products_data
+    enquiry.raw_data["products"] = clean_saved_products
     enquiry.raw_data["is_saved_to_db"] = True
     enquiry.save()
+
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
+    explorer_data = get_lot_warehouse_explorer_data(enquiry)
 
     return Response({
         "success": True,
         "message": f"Successfully saved {saved_count} products to database.",
-        "saved_count": saved_count
+        "saved_count": saved_count,
+        "explorer_data": explorer_data,
+        "is_saved_to_db": True,
     })
 
 
-def sellers_buyers_view(request):
+@api_view(["GET"])
+def lot_warehouse_explorer_admin_api(request, enquiry_id):
     """
-    View for the Sellers & Buyers page. 
-    Aggregates real data from VendorDetails, SellerProductEnquiry, and LotBatchEnquiry.
-    Computes all metrics dynamically from actual database records.
+    Admin API endpoint to retrieve full Virtual Warehouse Explorer data and metrics for a Lot.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
-        return redirect("admin_login_page")
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    from AdminApp.models import VendorDetails, SellerProductEnquiry, Lot
-    
-    seller_enquiries = SellerProductEnquiry.objects.all().order_by("-created_at")
-    lot_enquiries = Lot.objects.all().order_by("-created_at")
-    vendors = VendorDetails.objects.all().order_by("-created_at")
+    from .models import Lot
+    from .warehouse_explorer import get_lot_warehouse_explorer_data
 
-    search_query = request.GET.get("q", "").strip()
-    type_filter = request.GET.get("type", "").strip()
-    status_filter = request.GET.get("status", "").strip()
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    users_dict = {}
-
-    def extract_user_info(raw_data):
-        return {
-            "name": raw_data.get("full_name") or raw_data.get("name") or "Unknown",
-            "email": raw_data.get("email") or raw_data.get("e_mail") or "Unknown",
-            "company": raw_data.get("company") or raw_data.get("company_name") or "-",
-            "phone": raw_data.get("phone_no") or raw_data.get("phone") or raw_data.get("contact_number") or "-",
-            "country": raw_data.get("country") or "-",
-        }
-
-    # Process Seller Product Enquiries (Sell Requests)
-    for enq in seller_enquiries:
-        if not enq.raw_data: continue
-        info = extract_user_info(enq.raw_data)
-        email = str(info["email"]).lower().strip()
-        if not email or email == "unknown": continue
-        
-        if email not in users_dict:
-            users_dict[email] = info
-            users_dict[email]["is_seller"] = True
-            users_dict[email]["is_buyer"] = False
-            users_dict[email]["joined"] = enq.created_at
-            users_dict[email]["last_active"] = enq.created_at
-            users_dict[email]["products_count"] = 1
-            users_dict[email]["registered"] = False
-        else:
-            users_dict[email]["is_seller"] = True
-            users_dict[email]["products_count"] += 1
-            if enq.created_at < users_dict[email]["joined"]:
-                users_dict[email]["joined"] = enq.created_at
-            if enq.created_at > users_dict[email]["last_active"]:
-                users_dict[email]["last_active"] = enq.created_at
-
-    # Process Lot Batch Enquiries (Lot Requests)
-    for enq in lot_enquiries:
-        if not enq.raw_data: continue
-        info = extract_user_info(enq.raw_data)
-        email = str(info["email"]).lower().strip()
-        if not email or email == "unknown": continue
-        
-        products_in_batch = enq.products.count()
-
-        if email not in users_dict:
-            users_dict[email] = info
-            users_dict[email]["is_seller"] = True
-            users_dict[email]["is_buyer"] = False
-            users_dict[email]["joined"] = enq.created_at
-            users_dict[email]["last_active"] = enq.created_at
-            users_dict[email]["products_count"] = products_in_batch
-            users_dict[email]["registered"] = False
-        else:
-            users_dict[email]["is_seller"] = True
-            users_dict[email]["products_count"] += products_in_batch
-            if enq.created_at < users_dict[email]["joined"]:
-                users_dict[email]["joined"] = enq.created_at
-            if enq.created_at > users_dict[email]["last_active"]:
-                users_dict[email]["last_active"] = enq.created_at
-
-    # Process VendorDetails (Real registered users)
-    for vendor in vendors:
-        email = str(vendor.email).lower().strip()
-        if not email: continue
-
-        v_name = vendor.username
-
-        if email not in users_dict:
-            users_dict[email] = {
-                "name": v_name,
-                "email": vendor.email,
-                "company": vendor.company_name or "-",
-                "phone": vendor.mobile_number or "-",
-                "country": vendor.business_location or "-",
-                "is_seller": vendor.user_type in ["SELLER", "BOTH"],
-                "is_buyer": vendor.user_type in ["BUYER", "BOTH"],
-                "joined": getattr(vendor, "created_at", timezone.now()),
-                "last_active": getattr(vendor, "created_at", timezone.now()),
-                "products_count": 0,
-                "registered": True,
-                "has_password": bool(vendor.pass_word)
-            }
-        else:
-            users_dict[email]["registered"] = True
-            users_dict[email]["name"] = v_name
-            users_dict[email]["has_password"] = bool(vendor.pass_word)
-            users_dict[email]["is_seller"] = users_dict[email].get("is_seller", False) or vendor.user_type in ["SELLER", "BOTH"]
-            users_dict[email]["is_buyer"] = users_dict[email].get("is_buyer", False) or vendor.user_type in ["BUYER", "BOTH"]
-            
-            created_at = getattr(vendor, "created_at", None)
-            if created_at:
-                if created_at < users_dict[email]["joined"]:
-                    users_dict[email]["joined"] = created_at
-                if created_at > users_dict[email]["last_active"]:
-                    users_dict[email]["last_active"] = created_at
-
-    all_users = []
-    for email, data in users_dict.items():
-        u_type = "Seller"
-        if data.get("is_seller") and data.get("is_buyer"):
-            u_type = "Both"
-        elif data.get("is_buyer"):
-            u_type = "Buyer"
-
-        all_users.append({
-            "name": data["name"],
-            "email": data["email"],
-            "type": u_type,
-            "company": data["company"],
-            "country": data["country"],
-            "phone": data["phone"],
-            "status": "Active" if data.get("registered") else "Non-registered",
-            "signup": "Email" if data.get("has_password", True) else "Google",
-            "joined": data["joined"],
-            "last_active": data["last_active"],
-            "products": data["products_count"],
-            "rfqs": 0
-        })
-
-    # Calculate real dynamic stats
-    total_registered = vendors.count()
-    sellers_only_cnt = sum(1 for u in all_users if u["type"] == "Seller" and u["status"] == "Active")
-    buyers_only_cnt = sum(1 for u in all_users if u["type"] == "Buyer" and u["status"] == "Active")
-    both_cnt = sum(1 for u in all_users if u["type"] == "Both" and u["status"] == "Active")
-    listing_only_sellers_cnt = sum(1 for u in all_users if u["status"] == "Non-registered")
-    google_signups_cnt = sum(1 for u in all_users if u["signup"] == "Google")
-
-    # Apply search & filter to filtered_users list for rendering
-    filtered_users = all_users
-    if search_query:
-        sq = search_query.lower()
-        filtered_users = [
-            u for u in filtered_users
-            if sq in u["name"].lower() or sq in u["email"].lower() or sq in u["company"].lower() or sq in u["phone"].lower()
-        ]
-
-    if type_filter and type_filter.lower() != "all":
-        filtered_users = [u for u in filtered_users if u["type"].lower() == type_filter.lower()]
-
-    if status_filter and status_filter.lower() != "any":
-        filtered_users = [u for u in filtered_users if u["status"].lower() == status_filter.lower()]
-
-    # Sort by last active descending
-    filtered_users.sort(key=lambda x: x["last_active"], reverse=True)
-
-    context = {
-        "admin": admin_user,
-        "users": filtered_users,
-        "search_query": search_query,
-        "type_filter": type_filter,
-        "status_filter": status_filter,
-        "stats": {
-            "registered_users": total_registered,
-            "sellers_only": sellers_only_cnt,
-            "buyers_only": buyers_only_cnt,
-            "both": both_cnt,
-            "listing_only_sellers": listing_only_sellers_cnt,
-            "google_signups": google_signups_cnt
-        }
-    }
-    return render(request, "sellers_buyers.html", context)
-
+    data = get_lot_warehouse_explorer_data(lot)
+    return Response(data, status=status.HTTP_200_OK)
 
 
 def manage_users_view(request):
@@ -2174,7 +2993,7 @@ def manage_users_view(request):
         else:
             inactive_count += 1
 
-        name = vendor.username
+        name = vendor.full_name or vendor.email or "-"
         email = vendor.email or ""
         company = vendor.company_name or "-"
         phone = vendor.mobile_number or "-"
@@ -2184,7 +3003,7 @@ def manage_users_view(request):
         # Filter logic
         if search_query:
             sq = search_query.lower()
-            if not (sq in name.lower() or sq in email.lower() or sq in company.lower() or sq in phone.lower()):
+            if not (sq in name.lower() or sq in email.lower() or sq in company.lower() or sq in phone.lower() or sq in vendor.user_id.lower()):
                 continue
 
         if type_filter and type_filter.lower() != "all":
@@ -2199,6 +3018,9 @@ def manage_users_view(request):
 
         users_list.append({
             "id": vendor.id,
+            "vendor_id": vendor.vendor_id,
+            "user_id": vendor.vendor_id,
+            "formatted_id": vendor.vendor_id,
             "username": vendor.username,
             "name": name,
             "email": email,
@@ -2207,6 +3029,9 @@ def manage_users_view(request):
             "country": country,
             "phone": phone,
             "entity_type": entity_type,
+            "business_type": vendor.business_type or "-",
+            "business_address": vendor.business_address or "-",
+            "tax_registration_number": vendor.tax_registration_number or "-",
             "category_interested": vendor.category_interested or "-",
             "status": "Active" if is_active else "Inactive",
             "joined": vendor.created_at,
@@ -2270,104 +3095,1169 @@ def delete_user_api(request, user_id):
         return redirect("manage_users")
 
 
-def contact_enquiries_view(request):
+def manage_admins_view(request):
     """
-    View for the Contact Us (General Enquiries) page.
-    Currently uses mock data matching the UI design.
+    SuperAdmin interface to review, approve, activate, or deactivate admin accounts.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    dummy_contacts = [
-        {
-            "id": 1,
-            "name": "David Coryell",
-            "phone": "8608430742",
-            "email": "david.coryell@redhatinc.com",
-            "date": "Sept. 11, 2026",
-            "time": "10:04 p.m.",
-            "type": "Selling Surplus",
-            "message": "Hello, We are currently conducting an overhaul stock of our computing IT equipment. We have a range..."
-        },
-        {
-            "id": 2,
-            "name": "Emad",
-            "phone": "0560008329",
-            "email": "emad.khardali@hotmail.com",
-            "date": "Aug. 30, 2026",
-            "time": "3:17 p.m.",
-            "type": "Selling Surplus",
-            "message": "Hello, We have approximately 6,000 commercial sofa beds currently located in Makkah, Saudi Arabia...."
-        },
-        {
-            "id": 3,
-            "name": "Ahmed",
-            "phone": "0545763609",
-            "email": "sabukdr@gmail.com",
-            "date": "Aug. 27, 2026",
-            "time": "2:30 p.m.",
-            "type": "Selling Surplus",
-            "message": "test surplus"
-        },
-        {
-            "id": 4,
-            "name": "Noah Thornton",
-            "phone": "9709778393",
-            "email": "noaht@randhmechanical.com",
-            "date": "Aug. 13, 2026",
-            "time": "10:32 p.m.",
-            "type": "Query",
-            "message": "I am from R&H Mechanical; we are looking for a company to buy some of our overstock. We look forwa..."
-        }
-    ]
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        messages.error(request, "Access restricted to SuperAdmin accounts only.")
+        return redirect("adminDashBoard")
+
+    admin_qs = AdminDetails.objects.all().order_by("-created_at")
+    q = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip().lower()
+
+    if q:
+        admin_qs = admin_qs.filter(
+            Q(username__icontains=q) |
+            Q(email__icontains=q) |
+            Q(full_name__icontains=q)
+        )
+
+    if status_filter == "pending":
+        admin_qs = admin_qs.filter(status=False)
+    elif status_filter == "active":
+        admin_qs = admin_qs.filter(status=True)
+    elif status_filter == "inactive":
+        admin_qs = admin_qs.filter(status=False)
+
+    total_admins = AdminDetails.objects.count()
+    pending_admins = AdminDetails.objects.filter(status=False).count()
+    active_admins = AdminDetails.objects.filter(status=True).count()
 
     context = {
         "admin": admin_user,
-        "contacts": dummy_contacts,
+        "is_super_admin": True,
+        "admins": admin_qs,
+        "search_query": q,
+        "status_filter": status_filter,
+        "pending_admins_count": pending_admins,
+        "stats": {
+            "total_admins": total_admins,
+            "pending_admins": pending_admins,
+            "active_admins": active_admins,
+        }
+    }
+    return render(request, "manage_admins.html", context)
+
+
+@api_view(["POST"])
+def toggle_admin_status_api(request, admin_id):
+    """
+    Allows SuperAdmin to approve / activate or deactivate an admin account.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        return Response({"success": False, "message": "SuperAdmin authorization required."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        target_admin = AdminDetails.objects.get(id=admin_id)
+        if target_admin.id == getattr(admin_user, "id", None):
+            return Response({"success": False, "message": "You cannot change your own SuperAdmin status."}, status=status.HTTP_400_BAD_REQUEST)
+
+        action = request.data.get("action", "").lower()
+        if action in ("approve", "activate"):
+            target_admin.status = True
+        elif action in ("deactivate", "reject"):
+            target_admin.status = False
+        else:
+            target_admin.status = not target_admin.status
+
+        target_admin.session_version = (target_admin.session_version or 1) + 1
+        target_admin.save(update_fields=["status", "session_version", "updated_at"])
+
+        try:
+            from .services import create_admin_notification
+            if target_admin.status:
+                create_admin_notification(
+                    title="Account Approved",
+                    message=f"Admin account for '{target_admin.full_name or target_admin.username}' has been approved and activated.",
+                    notification_type="APPROVAL",
+                    action_url="/admin/dashboard/",
+                    target_admin=target_admin,
+                )
+            else:
+                create_admin_notification(
+                    title="Account Deactivated",
+                    message=f"Admin account for '{target_admin.full_name or target_admin.username}' has been deactivated.",
+                    notification_type="SYSTEM",
+                    action_url="/admin/login/",
+                    target_admin=target_admin,
+                )
+        except Exception:
+            pass
+
+        status_text = "Approved & Active" if target_admin.status else "Pending Approval / Inactive"
+        return Response({
+            "success": True,
+            "message": f"Admin '{target_admin.full_name or target_admin.username}' is now {status_text}.",
+            "new_status": target_admin.status
+        }, status=status.HTTP_200_OK)
+    except AdminDetails.DoesNotExist:
+        return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+def _get_admin_notifications_qs(admin_user):
+    from .models import AdminNotification
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if is_super:
+        return AdminNotification.objects.filter(
+            Q(admin=admin_user) | Q(for_superadmins_only=True) | Q(admin__isnull=True)
+        )
+    else:
+        return AdminNotification.objects.filter(
+            Q(admin=admin_user) | (Q(admin__isnull=True) & Q(for_superadmins_only=False))
+        )
+
+
+def admin_notifications_page(request):
+    """
+    Renders notifications management center for admins.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    base_qs = _get_admin_notifications_qs(admin_user)
+    total_count = base_qs.count()
+    unread_count = base_qs.filter(is_read=False).count()
+    listing_count = base_qs.filter(Q(notification_type="LISTING") | Q(title__icontains="Lot")).count()
+    rfq_count = base_qs.filter(Q(notification_type="RFQ") | Q(title__icontains="RFQ")).count()
+    enquiry_count = base_qs.filter(Q(notification_type="ENQUIRY") | Q(title__icontains="Product")).count()
+
+    filter_type = request.GET.get("filter", "all").lower()
+    search_q = request.GET.get("q", "").strip()
+
+    notif_qs = base_qs
+    if search_q:
+        notif_qs = notif_qs.filter(Q(title__icontains=search_q) | Q(message__icontains=search_q))
+
+    if filter_type == "unread":
+        notif_qs = notif_qs.filter(is_read=False)
+    elif filter_type == "listing":
+        notif_qs = notif_qs.filter(Q(notification_type="LISTING") | Q(title__icontains="Lot"))
+    elif filter_type == "rfq":
+        notif_qs = notif_qs.filter(Q(notification_type="RFQ") | Q(title__icontains="RFQ"))
+    elif filter_type == "enquiry":
+        notif_qs = notif_qs.filter(Q(notification_type="ENQUIRY") | Q(title__icontains="Product"))
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": is_super,
+        "notifications": notif_qs[:100],
+        "filter_type": filter_type,
+        "search_q": search_q,
+        "total_count": total_count,
+        "unread_count": unread_count,
+        "listing_count": listing_count,
+        "rfq_count": rfq_count,
+        "enquiry_count": enquiry_count,
+    }
+    return render(request, "notifications.html", context)
+
+
+@api_view(["GET"])
+def admin_notifications_api(request):
+    """
+    Returns unread count, total count, and latest notifications list for the top navbar bell dropdown.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    unread_count = notif_qs.filter(is_read=False).count()
+    total_count = notif_qs.count()
+
+    filter_mode = request.GET.get("filter", "all").lower()
+    if filter_mode == "unread":
+        recent_notifs = notif_qs.filter(is_read=False)[:25]
+    else:
+        recent_notifs = notif_qs[:25]
+
+    from .serializers import AdminNotificationSerializer
+    return Response({
+        "success": True,
+        "unread_count": unread_count,
+        "total_count": total_count,
+        "notifications": AdminNotificationSerializer(recent_notifs, many=True).data,
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def admin_mark_notification_read_api(request, notification_id):
+    """
+    Marks a single notification as read or toggles read state.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import AdminNotification
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    try:
+        notif = notif_qs.get(id=notification_id)
+        if request.data and "is_read" in request.data:
+            notif.is_read = bool(request.data.get("is_read"))
+        else:
+            notif.is_read = True
+        notif.save(update_fields=["is_read"])
+        unread_count = notif_qs.filter(is_read=False).count()
+        return Response({"success": True, "is_read": notif.is_read, "unread_count": unread_count}, status=status.HTTP_200_OK)
+    except AdminNotification.DoesNotExist:
+        return Response({"success": False, "message": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+def admin_mark_all_notifications_read_api(request):
+    """
+    Marks all notifications for current admin as read.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    updated_count = notif_qs.filter(is_read=False).update(is_read=True)
+    return Response({
+        "success": True,
+        "message": f"Marked {updated_count} notification(s) as read.",
+        "unread_count": 0
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(["POST", "DELETE"])
+def admin_delete_notification_api(request, notification_id):
+    """
+    Deletes an admin notification.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import AdminNotification
+    notif_qs = _get_admin_notifications_qs(admin_user)
+    try:
+        notif = notif_qs.get(id=notification_id)
+        notif.delete()
+        unread_count = notif_qs.filter(is_read=False).count()
+        return Response({"success": True, "message": "Notification deleted.", "unread_count": unread_count}, status=status.HTTP_200_OK)
+    except AdminNotification.DoesNotExist:
+        return Response({"success": False, "message": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST", "DELETE"])
+def delete_admin_api(request, admin_id):
+    """
+    Allows SuperAdmin to delete an admin account.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+    if not is_super:
+        return Response({"success": False, "message": "SuperAdmin authorization required."}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        target_admin = AdminDetails.objects.get(id=admin_id)
+        if target_admin.id == getattr(admin_user, "id", None) or target_admin.email == "super@gmail.com":
+            return Response({"success": False, "message": "Cannot delete primary SuperAdmin account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        name = target_admin.full_name or target_admin.username
+        target_admin.delete()
+        return Response({"success": True, "message": f"Admin account '{name}' has been deleted."}, status=status.HTTP_200_OK)
+    except AdminDetails.DoesNotExist:
+        return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+def contact_enquiries_view(request):
+    """
+    View for the Contact Us (General Enquiries) page in Admin Portal.
+    Fetches real submissions from ContactUsEnquiry database table.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    # Handle POST Actions (Delete / Block / Bulk)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        selected_ids = request.POST.getlist("selected_ids") or request.POST.getlist("contact_id")
+        
+        if action == "delete" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).delete()
+        elif action == "block" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=True, status="BLOCKED")
+        elif action == "unblock" and selected_ids:
+            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=False, status="PENDING")
+
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    
+    db_contacts = ContactUsEnquiry.objects.all().order_by("-created_at")
+    
+    if search_query:
+        db_contacts = db_contacts.filter(
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(enquiry_type__icontains=search_query) |
+            Q(message__icontains=search_query)
+        )
+
+    contacts_list = []
+    for item in db_contacts:
+        contacts_list.append({
+            "id": item.id,
+            "name": item.full_name,
+            "full_name": item.full_name,
+            "phone": item.phone,
+            "email": item.email,
+            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
+            "type": item.enquiry_type or "General Enquiry",
+            "enquiry_type": item.enquiry_type or "General Enquiry",
+            "message": item.message,
+            "status": item.status,
+            "is_blocked": item.is_blocked,
+            "created_at": item.created_at,
+        })
+
+    context = {
+        "admin": admin_user,
+        "contacts": contacts_list,
+        "search_query": search_query,
         "page_title": "Contact Us",
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
 
 
-def whatsapp_enquiries_view(request):
+def page_views_analytics_view(request):
     """
-    View for the WhatsApp Enquiries page.
+    Dedicated view for Page Visits, Traffic Analytics, and Dwell-Time / Stuck User Intelligence in the Admin Portal.
+    Displays page-by-page view counts, average dwell time, where users spend the most time,
+    stuck-user analysis, KPI cards, and detailed view logs.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    dummy_whatsapp = [
-        {
-            "id": 1,
-            "name": "Jane Doe",
-            "phone": "+19876543210",
-            "email": "jane@example.com",
-            "date": "Sept. 14, 2026",
-            "time": "11:30 a.m.",
-            "type": "WhatsApp",
-            "message": "Hi, I have a quick question about listing my products via WhatsApp..."
-        },
+    from django.db.models import Avg, Count, Max, Sum, Q
+
+    entity_type_filter = request.GET.get("entity_type", "").strip().lower()
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    active_tab = request.GET.get("tab", "pages").strip().lower()
+
+    logs = PageViewLog.objects.all().order_by("-created_at")
+
+    if entity_type_filter:
+        logs = logs.filter(entity_type=entity_type_filter)
+
+    if search_query:
+        logs = logs.filter(
+            Q(path__icontains=search_query) |
+            Q(entity_slug__icontains=search_query) |
+            Q(ip_address__icontains=search_query) |
+            Q(user_agent__icontains=search_query) |
+            Q(referrer__icontains=search_query)
+        )
+
+    # Core Counts
+    total_views = PageViewLog.objects.count()
+    today_views = PageViewLog.objects.filter(created_at__date=timezone.now().date()).count()
+    unique_visitors = PageViewLog.objects.exclude(ip_address__isnull=True).values("ip_address").distinct().count()
+    total_stuck_sessions = PageViewLog.objects.filter(is_stuck=True).count()
+
+    # Average Platform Dwell Time
+    avg_dwell_res = PageViewLog.objects.filter(duration_seconds__gt=0).aggregate(avg_sec=Avg("duration_seconds"))
+    platform_avg_seconds = round(avg_dwell_res.get("avg_sec") or 0)
+
+    # 1. Page-by-Page Aggregation (Number of views for each page + dwell time)
+    page_stats_qs = (
+        PageViewLog.objects.exclude(path="")
+        .values("path", "entity_type")
+        .annotate(
+            view_count=Count("id"),
+            unique_count=Count("ip_address", distinct=True),
+            avg_duration=Avg("duration_seconds"),
+            max_duration=Max("duration_seconds"),
+            stuck_count=Count("id", filter=Q(is_stuck=True))
+        )
+    )
+
+    if search_query:
+        page_stats_qs = page_stats_qs.filter(path__icontains=search_query)
+    if entity_type_filter:
+        page_stats_qs = page_stats_qs.filter(entity_type=entity_type_filter)
+
+    def _fmt(sec):
+        if not sec or sec <= 0:
+            return "< 5s"
+        if sec < 60:
+            return f"{sec}s"
+        m = sec // 60
+        s = sec % 60
+        return f"{m}m {s}s" if s > 0 else f"{m}m"
+
+    page_stats_list = []
+    for item in page_stats_qs.order_by("-view_count")[:150]:
+        avg_sec = round(item.get("avg_duration") or 0)
+        max_sec = item.get("max_duration") or 0
+        v_count = item.get("view_count") or 1
+        s_count = item.get("stuck_count") or 0
+        stuck_pct = round((s_count / v_count) * 100, 1)
+
+        page_stats_list.append({
+            "path": item["path"],
+            "entity_type": item["entity_type"],
+            "view_count": v_count,
+            "unique_count": item.get("unique_count") or 0,
+            "avg_seconds": avg_sec,
+            "avg_duration_fmt": _fmt(avg_sec),
+            "max_duration_fmt": _fmt(max_sec),
+            "stuck_count": s_count,
+            "stuck_pct": stuck_pct,
+            "is_high_dwell": avg_sec >= 120,
+        })
+
+    # 2. "Where Users Stayed More" Leaderboard (Ranked by highest dwell time)
+    most_stayed_pages = sorted(
+        [p for p in page_stats_list if p["avg_seconds"] > 0],
+        key=lambda x: x["avg_seconds"],
+        reverse=True
+    )[:8]
+
+    # 3. Stuck Pages Analysis (Pages with highest stuck rate / friction)
+    stuck_pages_analysis = sorted(
+        [p for p in page_stats_list if p["stuck_count"] > 0],
+        key=lambda x: (x["stuck_count"], x["stuck_pct"]),
+        reverse=True
+    )[:8]
+
+    # Top entity breakdown
+    top_blogs = BlogPost.objects.all().order_by("-views_count")[:5]
+    top_products = Product.objects.all().order_by("-views_count")[:5]
+    top_lots = Lot.objects.all().order_by("-views_count")[:5]
+
+    # Format logs for live table with human readable duration
+    formatted_logs = []
+    for log in logs[:100]:
+        sec = log.duration_seconds or 0
+        formatted_logs.append({
+            "log": log,
+            "duration_fmt": _fmt(sec),
+            "is_stuck": log.is_stuck or (sec >= 180)
+        })
+
+    context = {
+        "admin": admin_user,
+        "logs": logs[:100],
+        "formatted_logs": formatted_logs,
+        "total_views": total_views,
+        "today_views": today_views,
+        "unique_visitors": unique_visitors,
+        "total_stuck_sessions": total_stuck_sessions,
+        "platform_avg_duration": _fmt(platform_avg_seconds),
+        "page_stats_list": page_stats_list,
+        "most_stayed_pages": most_stayed_pages,
+        "stuck_pages_analysis": stuck_pages_analysis,
+        "top_blogs": top_blogs,
+        "top_products": top_products,
+        "top_lots": top_lots,
+        "search_query": search_query,
+        "selected_entity_type": entity_type_filter,
+        "active_tab": active_tab,
+        "page_title": "Page Visits & User Dwell-Time Analytics",
+        "page_subtitle": "Real-time Traffic Tracking, Per-Page Views, Dwell Time & Stuck User Friction Analysis"
+    }
+    return render(request, "page_views_analytics.html", context)
+
+
+
+# -------------------------------------------------------------
+# WhatsApp Inbound & Outbound Liquidation Alerts Engine
+# -------------------------------------------------------------
+
+def whatsapp_command_center_view(request):
+    """
+    Unified WhatsApp Command Center:
+    - Outbound Liquidation Deal Broadcasts (with interactive smartphone preview)
+    - Inbound Seller/Buyer Intake Queue (with 1-click Convert to Lot)
+    - Subscribers Directory (Categories, location, min discount filters)
+    - Meta Cloud API / Webhook Settings & Built-in Simulator
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import (
+        WhatsAppAlertSubscriber,
+        WhatsAppBroadcast,
+        WhatsAppInboundMessage,
+        WhatsAppApiConfig,
+        Lot,
+        Product,
+    )
+    from .whatsapp_service import format_lot_liquidation_alert, generate_whatsapp_web_link
+
+    active_tab = request.GET.get("tab", "broadcast").strip().lower()
+    preselected_lot_id = request.GET.get("lot_id", "").strip()
+
+    # Active Lots available for broadcast
+    active_lots = Lot.objects.filter(is_active=True).order_by("-created_at")[:50]
+
+    # Pre-select lot or default to first
+    selected_lot = None
+    if preselected_lot_id:
+        if preselected_lot_id.isdigit():
+            selected_lot = Lot.objects.filter(id=int(preselected_lot_id)).first()
+        else:
+            selected_lot = Lot.objects.filter(lot_number=preselected_lot_id).first()
+    if not selected_lot and active_lots.exists():
+        selected_lot = active_lots.first()
+
+    initial_broadcast_text = ""
+    initial_preview_links = {}
+    selected_lot_details = None
+    if selected_lot:
+        initial_broadcast_text = format_lot_liquidation_alert(selected_lot)
+        initial_preview_links = generate_whatsapp_web_link("", initial_broadcast_text)
+        ask_p = float(selected_lot.ask_price_surplus_payout or 0.0)
+        msrp_p = float(selected_lot.total_est_retail_value_msrp or 0.0)
+        disc_p = round(((msrp_p - ask_p) / msrp_p) * 100) if (msrp_p > 0 and ask_p > 0) else 0
+        img_url = ""
+        if isinstance(selected_lot.warehouse_images, list) and len(selected_lot.warehouse_images) > 0:
+            first_img = selected_lot.warehouse_images[0]
+            img_url = resolve_media_url(first_img.get("url") if isinstance(first_img, dict) else str(first_img))
+        selected_lot_details = {
+            "id": selected_lot.id,
+            "lot_number": selected_lot.lot_number,
+            "title": selected_lot.title,
+            "currency": selected_lot.currency or "USD",
+            "ask_price": ask_p,
+            "msrp": msrp_p,
+            "discount_pct": disc_p,
+            "total_units": selected_lot.total_units_quantity or 0,
+            "image_url": img_url,
+            "location": selected_lot.inventory_location or "Verified Warehouse",
+            "condition": selected_lot.condition or "Surplus Stock",
+        }
+
+    # Subscribers
+    subscribers_qs = WhatsAppAlertSubscriber.objects.all().order_by("-created_at")
+    sub_search = request.GET.get("sub_q", "").strip()
+    if sub_search:
+        subscribers_qs = subscribers_qs.filter(
+            Q(name__icontains=sub_search) |
+            Q(phone__icontains=sub_search) |
+            Q(company_name__icontains=sub_search)
+        )
+
+    # Inbound messages
+    inbound_qs = WhatsAppInboundMessage.objects.all().order_by("-created_at")[:60]
+
+    # Recent broadcasts
+    recent_broadcasts = WhatsAppBroadcast.objects.all().order_by("-created_at")[:30]
+
+    # API Configuration
+    config = WhatsAppApiConfig.get_config()
+
+    # Standard Categories list
+    standard_categories = [
+        "All",
+        "Electronics",
+        "Industrial Hardware",
+        "Electricals",
+        "Apparel",
+        "Automotive & Spare Parts",
+        "Home & Living",
+        "Tools & Machinery",
+        "Medical & Health",
+        "General Surplus",
+        "Other"
     ]
 
     context = {
         "admin": admin_user,
-        "contacts": dummy_whatsapp,
-        "page_title": "WhatsApp Enquiries",
-        "page_subtitle": "All WhatsApp Enquiries"
+        "active_tab": active_tab,
+        "active_lots": active_lots,
+        "selected_lot": selected_lot,
+        "selected_lot_details": selected_lot_details,
+        "initial_broadcast_text": initial_broadcast_text,
+        "initial_preview_links": initial_preview_links,
+        "subscribers": subscribers_qs,
+        "inbound_messages": inbound_qs,
+        "recent_broadcasts": recent_broadcasts,
+        "config": config,
+        "standard_categories": standard_categories,
+        "stats": {
+            "total_subscribers": WhatsAppAlertSubscriber.objects.count(),
+            "active_subscribers": WhatsAppAlertSubscriber.objects.filter(is_active=True).count(),
+            "total_broadcasts": WhatsAppBroadcast.objects.count(),
+            "pending_inbound": WhatsAppInboundMessage.objects.filter(status="NEW").count(),
+        },
+        "page_title": "WhatsApp Liquidation Command Center",
+        "page_subtitle": "Two-Way Deal Broadcasts, Assisted Seller Intake & Buyer Alert Dispatcher",
     }
-    return render(request, "contact_us.html", context)
+    return render(request, "whatsapp_command_center.html", context)
+
+
+@api_view(["POST", "GET"])
+def whatsapp_preview_api(request):
+    """
+    Returns live preview of formatted WhatsApp message & eligible subscriber count.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    lot_id = request.data.get("lot_id") or request.GET.get("lot_id")
+    custom_notes = request.data.get("custom_notes") or request.GET.get("custom_notes", "")
+    target_category = request.data.get("target_category") or request.GET.get("target_category", "All")
+    target_location = request.data.get("target_location") or request.GET.get("target_location", "All")
+    min_discount = request.data.get("min_discount") or request.GET.get("min_discount", 0)
+
+    from .models import Lot, WhatsAppAlertSubscriber
+    from .whatsapp_service import format_lot_liquidation_alert, get_eligible_subscribers, generate_whatsapp_web_link
+
+    lot = None
+    if lot_id:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.filter(id=int(lot_id)).first()
+        else:
+            lot = Lot.objects.filter(lot_number=str(lot_id)).first()
+
+    if not lot:
+        return JsonResponse({"success": False, "error": "Lot not found"}, status=404)
+
+    msg_text = format_lot_liquidation_alert(lot, custom_notes=custom_notes)
+    links = generate_whatsapp_web_link("", msg_text)
+
+    try:
+        min_disc_val = int(min_discount)
+    except Exception:
+        min_disc_val = 0
+
+    eligible_subs = get_eligible_subscribers(
+        category=target_category,
+        location=target_location,
+        min_discount_pct=min_disc_val
+    )
+
+    ask_p = float(lot.ask_price_surplus_payout or 0.0)
+    msrp_p = float(lot.total_est_retail_value_msrp or 0.0)
+    disc_p = round(((msrp_p - ask_p) / msrp_p) * 100) if (msrp_p > 0 and ask_p > 0) else 0
+    img_url = ""
+    if isinstance(lot.warehouse_images, list) and len(lot.warehouse_images) > 0:
+        first_img = lot.warehouse_images[0]
+        img_url = resolve_media_url(first_img.get("url") if isinstance(first_img, dict) else str(first_img))
+
+    total_active_subs = WhatsAppAlertSubscriber.objects.filter(is_active=True).count()
+
+    return JsonResponse({
+        "success": True,
+        "lot_id": lot.id,
+        "lot_number": lot.lot_number or f"LOT-{lot.id}",
+        "lot_title": lot.title,
+        "currency": lot.currency or "USD",
+        "ask_price": ask_p,
+        "msrp": msrp_p,
+        "discount_pct": disc_p,
+        "total_units": lot.total_units_quantity or 0,
+        "image_url": img_url,
+        "location": lot.inventory_location or "Verified Warehouse",
+        "condition": lot.condition or "Surplus Stock",
+        "message_body": msg_text,
+        "links": links,
+        "eligible_count": len(eligible_subs),
+        "total_subscribers": total_active_subs,
+        "eligible_subscribers": [
+            {"id": s.id, "name": s.name, "phone": s.phone, "company": s.company_name}
+            for s in eligible_subs[:10]
+        ]
+    })
+
+
+@api_view(["POST"])
+def whatsapp_send_broadcast_api(request):
+    """
+    Executes a WhatsApp deal broadcast:
+    - Logs WhatsAppBroadcast record
+    - Finds matching subscribers
+    - Prepares 1-Click WhatsApp Web batch dispatch links (Free Mode)
+    - If Cloud API enabled, attempts direct API dispatch
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    import uuid
+    from django.utils import timezone
+    from .models import Lot, WhatsAppBroadcast, WhatsAppAlertSubscriber, WhatsAppApiConfig
+    from .whatsapp_service import (
+        format_lot_liquidation_alert,
+        get_eligible_subscribers,
+        generate_whatsapp_web_link,
+        send_cloud_api_message
+    )
+
+    data = request.data
+    lot_id = data.get("lot_id")
+    custom_notes = data.get("custom_notes", "").strip()
+    target_category = data.get("target_category", "All").strip()
+    target_location = data.get("target_location", "All").strip()
+    min_discount = int(data.get("min_discount", 0) or 0)
+    send_mode = data.get("send_mode", "WHATSAPP_WEB").strip()
+    custom_message = data.get("custom_message", "").strip()
+
+    lot = None
+    if lot_id:
+        if str(lot_id).isdigit():
+            lot = Lot.objects.filter(id=int(lot_id)).first()
+        else:
+            lot = Lot.objects.filter(lot_number=str(lot_id)).first()
+
+    message_body = custom_message or (format_lot_liquidation_alert(lot, custom_notes=custom_notes) if lot else "")
+    if not message_body:
+        return JsonResponse({"success": False, "error": "No broadcast message text generated."}, status=400)
+
+    broadcast_title = (lot.title if lot else "Liquidation Alert")[:250]
+    broadcast_code = f"WAB-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
+
+    subscribers = get_eligible_subscribers(
+        category=target_category,
+        location=target_location,
+        min_discount_pct=min_discount
+    )
+
+    # Cloud API dispatch if requested and configured
+    api_results = []
+    if send_mode == "CLOUD_API":
+        for sub in subscribers:
+            res = send_cloud_api_message(sub.phone, message_body)
+            api_results.append({"phone": sub.phone, "name": sub.name, "result": res})
+            if res.get("success"):
+                sub.last_alert_sent_at = timezone.now()
+                sub.save(update_fields=["last_alert_sent_at"])
+
+    # Create Broadcast log record
+    broadcast_obj = WhatsAppBroadcast.objects.create(
+        broadcast_id=broadcast_code,
+        lot=lot,
+        title=broadcast_title,
+        message_body=message_body,
+        target_category=target_category,
+        target_location=target_location,
+        min_discount_filter=min_discount,
+        recipients_count=len(subscribers),
+        status="SENT",
+        send_mode=send_mode,
+        sent_by=admin_user,
+        sent_at=timezone.now()
+    )
+
+    # Build direct click-to-chat links for each subscriber (100% Free WhatsApp Web mode)
+    sub_links = []
+    for sub in subscribers:
+        links = generate_whatsapp_web_link(sub.phone, message_body)
+        sub_links.append({
+            "id": sub.id,
+            "name": sub.name,
+            "phone": sub.phone,
+            "company": sub.company_name,
+            "wa_me": links["wa_me_link"],
+            "web_link": links["whatsapp_web_link"],
+        })
+
+    # Master link for general WhatsApp sharing
+    master_links = generate_whatsapp_web_link("", message_body)
+
+    return JsonResponse({
+        "success": True,
+        "broadcast_id": broadcast_obj.broadcast_id,
+        "title": broadcast_obj.title,
+        "recipients_count": len(subscribers),
+        "send_mode": send_mode,
+        "message_body": message_body,
+        "master_share_link": master_links["wa_me_link"],
+        "master_web_link": master_links["whatsapp_web_link"],
+        "subscribers": sub_links,
+        "api_results": api_results,
+    })
+
+
+@api_view(["GET", "POST"])
+def whatsapp_subscriber_api(request):
+    """
+    CRUD management for WhatsApp Alert Subscribers.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    from .whatsapp_service import clean_phone_number
+
+    if request.method == "POST":
+        data = request.data
+        phone = data.get("phone", "").strip()
+        name = data.get("name", "").strip()
+        company = data.get("company_name", "").strip()
+        email = data.get("email", "").strip()
+        categories = data.get("categories", [])
+        if isinstance(categories, str):
+            categories = [c.strip() for c in categories.split(",") if c.strip()]
+        location = data.get("preferred_location", "Worldwide").strip() or "Worldwide"
+        min_disc = int(data.get("min_discount_pct", 50) or 50)
+
+        if not phone or not name:
+            return JsonResponse({"success": False, "error": "Phone number and Name are required."}, status=400)
+
+        clean_p = clean_phone_number(phone)
+        formatted_phone = f"+{clean_p}" if clean_p else phone
+
+        sub_obj, created = WhatsAppAlertSubscriber.objects.update_or_create(
+            phone=formatted_phone,
+            defaults={
+                "name": name,
+                "company_name": company,
+                "email": email,
+                "categories": categories,
+                "preferred_location": location,
+                "min_discount_pct": min_disc,
+                "is_active": True,
+            }
+        )
+
+        return JsonResponse({
+            "success": True,
+            "created": created,
+            "subscriber": {
+                "id": sub_obj.id,
+                "name": sub_obj.name,
+                "phone": sub_obj.phone,
+                "company": sub_obj.company_name,
+                "categories": sub_obj.categories,
+                "location": sub_obj.preferred_location,
+                "min_discount": sub_obj.min_discount_pct,
+                "is_active": sub_obj.is_active,
+            }
+        })
+
+    # GET list
+    subs = WhatsAppAlertSubscriber.objects.all().order_by("-created_at")
+    return JsonResponse({
+        "success": True,
+        "count": subs.count(),
+        "subscribers": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "phone": s.phone,
+                "company": s.company_name,
+                "email": s.email,
+                "categories": s.categories,
+                "location": s.preferred_location,
+                "min_discount": s.min_discount_pct,
+                "is_active": s.is_active,
+                "created_at": s.created_at.strftime("%b %d, %Y"),
+            }
+            for s in subs
+        ]
+    })
+
+
+@api_view(["POST"])
+def whatsapp_subscriber_toggle_api(request, sub_id):
+    """Toggles active/paused status of a subscriber."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    sub = get_object_or_404(WhatsAppAlertSubscriber, id=sub_id)
+    sub.is_active = not sub.is_active
+    sub.save(update_fields=["is_active", "updated_at"])
+    return JsonResponse({"success": True, "is_active": sub.is_active})
+
+
+@api_view(["POST", "DELETE"])
+def whatsapp_subscriber_delete_api(request, sub_id):
+    """Deletes a subscriber."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppAlertSubscriber
+    sub = get_object_or_404(WhatsAppAlertSubscriber, id=sub_id)
+    sub.delete()
+    return JsonResponse({"success": True, "message": "Subscriber removed."})
+
+
+@api_view(["POST"])
+def whatsapp_inbound_action_api(request, msg_id):
+    """
+    Handles actions on Inbound WhatsApp messages:
+    - mark_reviewed
+    - convert_to_lot (pre-populates lot intake redirect)
+    - convert_to_enquiry
+    - archive
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppInboundMessage, ContactUsEnquiry
+    msg = get_object_or_404(WhatsAppInboundMessage, id=msg_id)
+    action = request.data.get("action", "").strip().lower()
+
+    if action == "mark_reviewed":
+        msg.status = "REVIEWED"
+        msg.save(update_fields=["status"])
+        return JsonResponse({"success": True, "status": msg.status})
+
+    elif action == "archive":
+        msg.status = "ARCHIVED"
+        msg.save(update_fields=["status"])
+        return JsonResponse({"success": True, "status": msg.status})
+
+    elif action == "convert_to_enquiry":
+        enquiry = ContactUsEnquiry.objects.create(
+            full_name=msg.sender_name or f"WhatsApp {msg.sender_phone}",
+            phone=msg.sender_phone,
+            enquiry_type="WhatsApp Inquiry",
+            message=msg.message_text,
+            status="Pending"
+        )
+        msg.status = "CONVERTED_TO_ENQUIRY"
+        msg.converted_enquiry = enquiry
+        msg.save(update_fields=["status", "converted_enquiry"])
+        return JsonResponse({
+            "success": True,
+            "status": msg.status,
+            "enquiry_id": enquiry.id,
+            "redirect_url": f"/admin/enquiries/contact-us/?search={msg.sender_phone}"
+        })
+
+    elif action == "convert_to_lot":
+        msg.status = "CONVERTED_TO_LOT"
+        msg.save(update_fields=["status"])
+        import urllib.parse
+        params = urllib.parse.urlencode({
+            "intake_channel": "WhatsApp",
+            "seller_name": msg.sender_name or "",
+            "seller_phone": msg.sender_phone or "",
+            "intake_notes": f"Received via WhatsApp: {msg.message_text[:200]}",
+        })
+        return JsonResponse({
+            "success": True,
+            "status": msg.status,
+            "redirect_url": f"/admin/lots/add/?{params}"
+        })
+
+    return JsonResponse({"success": False, "error": "Unknown action"}, status=400)
+
+
+@api_view(["POST"])
+def whatsapp_config_update_api(request):
+    """
+    Updates WhatsApp Meta Cloud API or Business phone configuration.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .models import WhatsAppApiConfig
+    cfg = WhatsAppApiConfig.get_config()
+
+    data = request.data
+    cfg.is_cloud_api_enabled = bool(data.get("is_cloud_api_enabled", False))
+    cfg.phone_number_id = data.get("phone_number_id", "").strip()
+    cfg.waba_id = data.get("waba_id", "").strip()
+    if data.get("access_token"):
+        cfg.access_token = data.get("access_token", "").strip()
+    cfg.webhook_verify_token = data.get("webhook_verify_token", "").strip() or cfg.webhook_verify_token
+    cfg.default_business_phone = data.get("default_business_phone", "").strip() or cfg.default_business_phone
+    cfg.save()
+
+    return JsonResponse({
+        "success": True,
+        "is_cloud_api_enabled": cfg.is_cloud_api_enabled,
+        "default_business_phone": cfg.default_business_phone,
+        "phone_number_id": cfg.phone_number_id,
+        "waba_id": cfg.waba_id,
+        "webhook_verify_token": cfg.webhook_verify_token,
+    })
+
+
+@csrf_exempt
+def whatsapp_webhook_view(request):
+    """
+    Meta WhatsApp Cloud API Webhook:
+    - GET: Hub challenge verification
+    - POST: Message payload ingestion
+    """
+    from .models import WhatsAppApiConfig
+    from .whatsapp_service import process_inbound_message
+
+    config = WhatsAppApiConfig.get_config()
+
+    # GET: Verification Challenge from Meta
+    if request.method == "GET":
+        mode = request.GET.get("hub.mode")
+        token = request.GET.get("hub.verify_token")
+        challenge = request.GET.get("hub.challenge")
+
+        if mode == "subscribe" and token == config.webhook_verify_token:
+            return HttpResponse(challenge, content_type="text/plain", status=200)
+        return HttpResponse("Verification token mismatch", status=403)
+
+    # POST: Incoming webhook events
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            entries = payload.get("entry", [])
+            for entry in entries:
+                changes = entry.get("changes", [])
+                for ch in changes:
+                    value = ch.get("value", {})
+                    messages = value.get("messages", [])
+                    contacts = value.get("contacts", [])
+                    contact_map = {c.get("wa_id"): c.get("profile", {}).get("name", "") for c in contacts}
+
+                    for m in messages:
+                        from_number = m.get("from")
+                        sender_name = contact_map.get(from_number, "")
+                        msg_type = m.get("type")
+                        text_body = ""
+                        media_url = ""
+
+                        if msg_type == "text":
+                            text_body = m.get("text", {}).get("body", "")
+                        elif msg_type in ("image", "document", "video"):
+                            media_url = m.get(msg_type, {}).get("id", "")
+                            text_body = m.get(msg_type, {}).get("caption", f"[{msg_type.upper()} Attachment]")
+
+                        if text_body or media_url:
+                            process_inbound_message(
+                                sender_phone=from_number,
+                                message_text=text_body,
+                                sender_name=sender_name,
+                                media_url=media_url,
+                                media_type=msg_type
+                            )
+
+            return JsonResponse({"status": "received"}, status=200)
+        except Exception as e:
+            logger.error(f"Error handling WhatsApp webhook: {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+@api_view(["POST"])
+def whatsapp_simulate_inbound_api(request):
+    """
+    Interactive Inbound Simulator:
+    Allows admin to test an incoming message or seller liquidation lead right from the UI.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
+
+    from .whatsapp_service import process_inbound_message
+
+    data = request.data
+    phone = data.get("sender_phone", "+971509998877").strip()
+    name = data.get("sender_name", "Test Seller").strip()
+    text = data.get("message_text", "Hi, I have 10 pallets of Cisco routers to liquidate.").strip()
+
+    res = process_inbound_message(
+        sender_phone=phone,
+        message_text=text,
+        sender_name=name
+    )
+    return JsonResponse(res)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def whatsapp_public_subscribe_api(request):
+    """
+    Public API endpoint for marketplace buyers to subscribe their WhatsApp
+    for flash liquidation deal alerts in their preferred categories.
+    """
+    from .models import WhatsAppAlertSubscriber
+    from .whatsapp_service import clean_phone_number
+
+    data = request.data
+    phone = data.get("phone", "").strip()
+    name = data.get("name", "Marketplace Buyer").strip()
+    company = data.get("company_name", "").strip()
+    email = data.get("email", "").strip()
+    categories = data.get("categories", ["All"])
+    if isinstance(categories, str):
+        categories = [c.strip() for c in categories.split(",") if c.strip()]
+    location = data.get("preferred_location", "Worldwide").strip()
+    min_disc = int(data.get("min_discount_pct", 50) or 50)
+
+    clean_p = clean_phone_number(phone)
+    if not clean_p or len(clean_p) < 7:
+        return Response({"success": False, "message": "Please provide a valid WhatsApp phone number with country code."}, status=status.HTTP_400_BAD_REQUEST)
+
+    formatted_phone = f"+{clean_p}"
+    sub, created = WhatsAppAlertSubscriber.objects.update_or_create(
+        phone=formatted_phone,
+        defaults={
+            "name": name,
+            "company_name": company,
+            "email": email,
+            "categories": categories,
+            "preferred_location": location,
+            "min_discount_pct": min_disc,
+            "is_active": True,
+        }
+    )
+
+    msg = "You have been successfully subscribed to Surplus WhatsApp Liquidation Alerts!" if created else "Your WhatsApp alert preferences have been updated!"
+    return Response({"success": True, "message": msg, "created": created})
 
 
 def partnership_enquiries_view(request):
     """
-    View for the Partnership Enquiries page.
+    View for the Partnership Enquiries page with AJAX status updates & bulk actions.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
+
+    # Handle POST Actions (Status Update / Delete / Bulk)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        enquiry_id = request.POST.get("enquiry_id")
+        new_status = request.POST.get("status")
+        selected_ids = request.POST.getlist("selected_ids") or ( [enquiry_id] if enquiry_id else [] )
+
+        if action == "update_status" and enquiry_id and new_status:
+            PartnershipEnquiry.objects.filter(id=enquiry_id).update(status=new_status.upper())
+            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": f"Status updated to {new_status.upper()}"})
+            return redirect("partnership_enquiries")
+
+        elif action == "delete" and selected_ids:
+            PartnershipEnquiry.objects.filter(id__in=selected_ids).delete()
+            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": "Selected enquiry deleted successfully"})
+            return redirect("partnership_enquiries")
 
     db_enquiries = PartnershipEnquiry.objects.all().order_by("-created_at")
     
@@ -2391,8 +4281,8 @@ def partnership_enquiries_view(request):
             "subject": item.subject or "Strategic Proposal",
             "collaboration_details": item.collaboration_details.strip() if item.collaboration_details else "",
 
-            "date": item.created_at.strftime("%b. %d, %Y"),
-            "time": item.created_at.strftime("%I:%M %p").lower(),
+            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
             "status": item.status,
         })
 
@@ -2411,7 +4301,7 @@ def partnership_enquiries_view(request):
 def main_categories_view(request):
     """
     Unified view for Categories Management.
-    Handles listing Main Categories (with their Sub Categories) and creating both via modals.
+    Handles listing, creating, editing, and deleting Main Categories and Subcategories.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -2425,10 +4315,27 @@ def main_categories_view(request):
             description = request.POST.get("description", "")
             is_active = request.POST.get("is_active") == "on"
             image = request.FILES.get("image")
-            # create
             MainCategory.objects.create(
                 name=name, slug=slug, description=description, is_active=is_active, image=image
             )
+            return redirect("main_categories")
+
+        elif action == "edit_main_category":
+            cat_id = request.POST.get("main_category_id")
+            cat = MainCategory.objects.filter(id=cat_id).first()
+            if cat:
+                cat.name = request.POST.get("name", cat.name)
+                cat.slug = request.POST.get("slug", cat.slug)
+                cat.description = request.POST.get("description", "")
+                cat.is_active = request.POST.get("is_active") == "on"
+                if request.FILES.get("image"):
+                    cat.image = request.FILES.get("image")
+                cat.save()
+            return redirect("main_categories")
+
+        elif action == "delete_main_category":
+            cat_id = request.POST.get("main_category_id")
+            MainCategory.objects.filter(id=cat_id).delete()
             return redirect("main_categories")
         
         elif action == "add_sub_category":
@@ -2437,12 +4344,26 @@ def main_categories_view(request):
             slug = request.POST.get("slug")
             description = request.POST.get("description", "")
             is_active = request.POST.get("is_active") == "on"
-            image = request.FILES.get("image")
-            # create
             parent = MainCategory.objects.get(id=parent_id)
             SubCategory.objects.create(
-                main_category=parent, name=name, slug=slug, description=description, is_active=is_active, image=image
+                main_category=parent, name=name, slug=slug, description=description, is_active=is_active
             )
+            return redirect("main_categories")
+
+        elif action == "edit_sub_category":
+            sub_id = request.POST.get("sub_category_id")
+            sub = SubCategory.objects.filter(id=sub_id).first()
+            if sub:
+                sub.name = request.POST.get("name", sub.name)
+                sub.slug = request.POST.get("slug", sub.slug)
+                sub.description = request.POST.get("description", "")
+                sub.is_active = request.POST.get("is_active") == "on"
+                sub.save()
+            return redirect("main_categories")
+
+        elif action == "delete_sub_category":
+            sub_id = request.POST.get("sub_category_id")
+            SubCategory.objects.filter(id=sub_id).delete()
             return redirect("main_categories")
 
     # Prefetch related subcategories to avoid N+1 queries in the template accordion
@@ -2477,7 +4398,7 @@ def all_products_view(request):
         selected_ids = request.POST.getlist("selected_products")
         if selected_ids and action:
             if action == "Mark Active":
-                Product.objects.filter(id__in=selected_ids).update(is_active=True)
+                Product.objects.filter(id__in=selected_ids, enquiry_status__iexact="APPROVED").update(is_active=True)
             elif action == "Mark Inactive":
                 Product.objects.filter(id__in=selected_ids).update(is_active=False)
             elif action == "Delete Selected":
@@ -2527,7 +4448,15 @@ def toggle_product_status_view(request, product_id):
 
     from django.shortcuts import get_object_or_404
     product = get_object_or_404(Product, id=product_id)
-    product.is_active = not product.is_active
+    if not product.is_active:
+        if str(product.enquiry_status).upper() != "APPROVED":
+            from django.contrib import messages
+            messages.error(request, "Cannot activate product: Product enquiry must be APPROVED before it can be marked active.")
+            next_url = request.META.get("HTTP_REFERER") or f"/admin/products/{product_id}/"
+            return redirect(next_url)
+        product.is_active = True
+    else:
+        product.is_active = False
     product.save()
 
     next_url = request.META.get("HTTP_REFERER") or f"/admin/products/{product_id}/"
@@ -2535,82 +4464,332 @@ def toggle_product_status_view(request, product_id):
 
 
 
+STANDARD_COUNTRIES = [
+    "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia",
+    "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium",
+    "Brazil", "Bulgaria", "Canada", "Chile", "China", "Colombia", "Croatia",
+    "Cyprus", "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland",
+    "France", "Georgia", "Germany", "Greece", "Hong Kong", "Hungary",
+    "Iceland", "India", "Indonesia", "Ireland", "Israel", "Italy", "Japan",
+    "Jordan", "Kazakhstan", "Kuwait", "Latvia", "Lebanon", "Lithuania",
+    "Luxembourg", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand",
+    "Norway", "Oman", "Pakistan", "Philippines", "Poland", "Portugal",
+    "Qatar", "Romania", "Saudi Arabia", "Singapore", "Slovakia", "Slovenia",
+    "South Africa", "South Korea", "Spain", "Sweden", "Switzerland", "Taiwan",
+    "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
+    "United States", "Vietnam"
+]
+
+STANDARD_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "INR", "CAD", "AUD", "SGD", "QAR", "KWD", "OMR", "BHD", "JPY", "CNY"]
+
+
 def add_product_view(request):
     """
-    Form view for adding a new product listing.
+    Form view for adding a new product listing by Admin.
+    Associates the product with the logged-in admin user (ADM-XXXX),
+    auto-populates Admin Name & Email, allows updating Contact Number, Industry,
+    and Business Location, and submits it to Seller Enquiries with status PENDING.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    categories = SubCategory.objects.select_related("main_category").all()
-    vendors = VendorDetails.objects.all()
+    admin_uid = f"ADM-{admin_user.id:04d}"
+
+    main_categories = MainCategory.objects.filter(is_active=True).order_by("name")
+    subcategories_qs = SubCategory.objects.filter(is_active=True).select_related("main_category").order_by("name")
+
+    # Group subcategories by main_category_id for fast client-side cascading dropdown
+    subcategories_map = {}
+    for sub in subcategories_qs:
+        if sub.main_category_id:
+            if sub.main_category_id not in subcategories_map:
+                subcategories_map[sub.main_category_id] = []
+            subcategories_map[sub.main_category_id].append({
+                "id": sub.id,
+                "name": sub.name,
+            })
+    subcategories_json = json.dumps(subcategories_map)
+
+    REASON_TO_SELL_OPTIONS = [
+        "Surplus Inventory",
+        "Overstock Clearance",
+        "Business Closure",
+        "Asset Liquidation",
+        "Canceled Project",
+    ]
 
     if request.method == "POST":
-        title = request.POST.get("title")
-        sku = request.POST.get("sku")
-        description = request.POST.get("description", "")
-        price = request.POST.get("price", "0.00")
-        discount_price = request.POST.get("discount_price") or None
-        stock_quantity = request.POST.get("stock_quantity", 0)
-        brand = request.POST.get("brand", "")
-        category_id = request.POST.get("category")
-        vendor_id = request.POST.get("vendor")
-        inventory_location = request.POST.get("inventory_location", "")
-        manufacturing_country = request.POST.get("manufacturing_country", "")
-        manufacturing_year = request.POST.get("manufacturing_year") or None
-        dimensions = request.POST.get("dimensions", "")
-        expiry_date = request.POST.get("expiry_date") or None
-        currency = request.POST.get("currency", "USD")
-        reason_to_sell = request.POST.get("reason_to_sell", "")
-        warranty = request.POST.get("warranty", "")
-        third_party_certificate = request.FILES.get("third_party_certificate")
-        image = request.FILES.get("image")
-        is_active = request.POST.get("is_active") == "on"
-        enquiry_status = request.POST.get("enquiry_status", "APPROVED")
+        # 0. Seller / Vendor Contact Information (Assisted Intake via WhatsApp / Email)
+        seller_name = request.POST.get("seller_name", "").strip()
+        seller_phone = request.POST.get("seller_phone", "").strip()
+        seller_email = request.POST.get("seller_email", "").strip()
+        seller_company = request.POST.get("seller_company", "").strip()
+        seller_location = request.POST.get("seller_location", "").strip()
+        intake_channel = request.POST.get("intake_channel", "WhatsApp").strip()
 
-        category = None
-        if category_id:
-            category = SubCategory.objects.filter(id=category_id).first()
+        # 1. Product Specifications (Strictly matching SimpleListingModal)
+        product_name = (request.POST.get("product_name") or request.POST.get("title") or "").strip()
+        category_id = request.POST.get("category_id") or request.POST.get("category")
+        subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
+        brand_name = (request.POST.get("brand_name") or request.POST.get("brand") or "").strip()
+        model_no = (request.POST.get("model_no") or request.POST.get("sku") or "").strip()
+        manufacturing_country = request.POST.get("manufacturing_country", "").strip()
 
+        manufacturing_year_str = request.POST.get("manufacturing_year", "").strip()
+        manufacturing_year = int(manufacturing_year_str) if (manufacturing_year_str and manufacturing_year_str.isdigit()) else None
+
+        dimensions = request.POST.get("dimensions", "").strip()
+
+        expiry_date_str = request.POST.get("expiry_date", "").strip()
+        expiry_date = parse_date(expiry_date_str) if expiry_date_str else None
+
+        quantity_str = request.POST.get("quantity", "1").strip()
+        try:
+            quantity = max(1, int(quantity_str))
+        except (ValueError, TypeError):
+            quantity = 1
+
+        currency = (request.POST.get("currency") or "USD").strip().upper()
+        if len(currency) > 3 and "-" in currency:
+            currency = currency.split("-")[0].strip()
+
+        msrp_str = request.POST.get("msrp", "0").strip()
+        try:
+            msrp = Decimal(msrp_str)
+        except Exception:
+            msrp = Decimal("0.00")
+
+        lp_str = request.POST.get("liquidating_price", "0").strip()
+        try:
+            liquidating_price = Decimal(lp_str)
+        except Exception:
+            liquidating_price = Decimal("0.00")
+
+        # Excluded export countries
+        excluded_countries_raw = request.POST.getlist("excluded_countries")
+        if not excluded_countries_raw:
+            raw_text = request.POST.get("excluded_countries_text", "")
+            excluded_countries = [c.strip() for c in raw_text.split(",") if c.strip()]
+        else:
+            excluded_countries = [str(c).strip() for c in excluded_countries_raw if str(c).strip()]
+
+        description = request.POST.get("description", "").strip()
+        reason_to_sell = (request.POST.get("reason_to_sell") or "Surplus Inventory").strip()
+
+        # Warranty terms & document
+        warranty_included = request.POST.get("warranty_included") in ("on", "true", "1", True)
+        warranty = request.POST.get("warranty", "").strip() if warranty_included else ""
+        warranty_attachment = ""
+        if warranty_included and "warranty_document" in request.FILES:
+            w_file = request.FILES["warranty_document"]
+            saved_path = default_storage.save(f"products/documents/{w_file.name}", w_file)
+            warranty_attachment = default_storage.url(saved_path)
+
+        # 3rd Party Certificate & document
+        third_party_cert = request.POST.get("third_party_certificate") in ("on", "true", "1", True)
+        third_party_documents = ""
+        if third_party_cert and "certificate_document" in request.FILES:
+            c_file = request.FILES["certificate_document"]
+            saved_path = default_storage.save(f"products/documents/{c_file.name}", c_file)
+            third_party_documents = default_storage.url(saved_path)
+
+        # Product Images Multi-Upload
+        image_files = []
+        seen_names = set()
+        for fkey in ["images", "image", "gallery_images", "product_images", "photos", "files"]:
+            if fkey in request.FILES:
+                for f in request.FILES.getlist(fkey):
+                    if f.name not in seen_names:
+                        seen_names.add(f.name)
+                        image_files.append(f)
+        for key in request.FILES:
+            if key not in ["images", "image", "gallery_images", "product_images", "photos", "files"]:
+                if any(sub in key.lower() for sub in ["image", "photo", "pic", "file"]):
+                    for f in request.FILES.getlist(key):
+                        if f.name not in seen_names:
+                            seen_names.add(f.name)
+                            image_files.append(f)
+
+        # Validation of Mandatory Fields matching SimpleListingModal
+        errors = []
+        if not seller_name:
+            errors.append("Seller Contact Name is required (record which vendor gave these product details).")
+        if not seller_phone:
+            errors.append("WhatsApp / Mobile Number is required for the seller.")
+        if not product_name:
+            errors.append("Product Title / Name is required.")
+        if not category_id:
+            errors.append("Product Category is required.")
+        if not subcategory_id:
+            errors.append("Subcategory is required.")
+        if not manufacturing_country:
+            errors.append("Manufacturing Country is required.")
+        if quantity < 1:
+            errors.append("Available Quantity must be at least 1.")
+        if msrp <= Decimal("0.00"):
+            errors.append("Original / Retail MSRP Price (Per Unit) must be greater than 0.")
+        if liquidating_price <= Decimal("0.00"):
+            errors.append("Liquidating / Surplus Price (Per Unit) must be greater than 0.")
+        if not description:
+            errors.append("Description & Technical Condition is required.")
+        if not reason_to_sell:
+            errors.append("Reason to Sell is required.")
+        if not image_files:
+            errors.append("At least one Product Image is required.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            context = {
+                "admin": admin_user,
+                "admin_uid": admin_uid,
+                "categories": main_categories,
+                "subcategories_json": subcategories_json,
+                "countries": STANDARD_COUNTRIES,
+                "currencies": STANDARD_CURRENCIES,
+                "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
+                "form_data": request.POST,
+                "page_title": "Add New Product",
+            }
+            return render(request, "add_product.html", context)
+
+        # 3. Resolve Categories
+        category_obj = MainCategory.objects.filter(id=int(category_id)).first()
+        subcategory_obj = SubCategory.objects.filter(id=int(subcategory_id)).first()
+        if subcategory_obj and not category_obj:
+            category_obj = subcategory_obj.main_category
+
+        # 4. Resolve or Auto-Register VendorDetails for this Seller (WhatsApp / Email Intake)
         vendor = None
-        if vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
+        import re, time
+        clean_mobile = re.sub(r"[^\d+]", "", seller_phone).strip() if seller_phone else ""
+        clean_email = seller_email.lower().strip() if seller_email else ""
 
+        if clean_email:
+            vendor = VendorDetails.objects.filter(email__iexact=clean_email).first()
+        if not vendor and clean_mobile:
+            vendor = VendorDetails.objects.filter(mobile_number__iexact=clean_mobile).first()
+
+        if not vendor and (seller_name or clean_mobile or clean_email):
+            if not clean_email:
+                phone_digits = re.sub(r"[^\d]", "", clean_mobile) if clean_mobile else str(int(time.time()))
+                clean_email = f"seller_{phone_digits}@vendor.surplus"
+
+            uname = clean_email.split("@")[0]
+            base_uname = uname
+            counter = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname}{counter}"
+                counter += 1
+
+            name_parts = seller_name.strip().split(" ", 1)
+            f_name = name_parts[0] if name_parts else uname
+
+            vendor = VendorDetails.objects.create(
+                username=uname,
+                email=clean_email,
+                full_name=seller_name.strip() or f_name,
+                mobile_number=clean_mobile,
+                company_name=seller_company.strip(),
+                business_location=seller_location.strip() or manufacturing_country,
+                category_interested=[category_obj.name] if category_obj else [],
+                business_type=category_obj.name if category_obj else "",
+                user_type="SELLER",
+                status=True
+            )
+        elif vendor:
+            updated = False
+            if seller_name and not vendor.full_name:
+                vendor.full_name = seller_name.strip()
+                updated = True
+            if seller_company and not vendor.company_name:
+                vendor.company_name = seller_company.strip()
+                updated = True
+            if clean_mobile and not vendor.mobile_number:
+                vendor.mobile_number = clean_mobile
+                updated = True
+            if seller_location and not vendor.business_location:
+                vendor.business_location = seller_location.strip()
+                updated = True
+            if updated:
+                vendor.save()
+
+        # 5. Calculate Discount / Offer Percentage
+        if msrp and msrp > 0 and liquidating_price and msrp > liquidating_price:
+            offer = (((msrp - liquidating_price) / msrp) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            offer = Decimal("0.00")
+
+        # 6. Save Product Record with PENDING Enquiry Status (linked to both Admin and Vendor)
+        raw_data_info = {
+            "intake_channel": intake_channel,
+            "intake_admin_id": admin_uid,
+            "intake_admin_name": admin_user.full_name or admin_user.username,
+            "intake_admin_email": admin_user.email,
+            "seller_name": seller_name,
+            "seller_phone": clean_mobile,
+        }
         product = Product.objects.create(
-            title=title,
-            sku=sku,
-            description=description,
-            price=price,
-            discount_price=discount_price,
-            stock_quantity=stock_quantity,
-            brand=brand,
-            category=category,
+            admin=admin_user,
             vendor=vendor,
-            inventory_location=inventory_location,
+            intake_channel=intake_channel,
+            raw_data=raw_data_info,
+            product_name=product_name,
+            category=category_obj,
+            subcategory=subcategory_obj,
+            brand_name=brand_name,
+            model_no=model_no,
             manufacturing_country=manufacturing_country,
-            manufacturing_year=manufacturing_year if manufacturing_year else None,
+            inventory_location=seller_location.strip() or manufacturing_country,
+            manufacturing_year=manufacturing_year,
             dimensions=dimensions,
-            expiry_date=expiry_date if expiry_date else None,
+            expiry_date=expiry_date,
+            excluded_countries=excluded_countries,
+            quantity=quantity,
             currency=currency,
+            liquidating_price=liquidating_price,
+            msrp=msrp,
+            offer=offer,
+            description=description,
             reason_to_sell=reason_to_sell,
             warranty=warranty,
-            third_party_certificate=third_party_certificate,
-            image=image,
-            enquiry_status=enquiry_status,
-            is_active=is_active,
+            warranty_attachment=warranty_attachment,
+            third_party_certificate=third_party_cert,
+            third_party_documents=third_party_documents,
+            enquiry_status="PENDING",
+            is_active=False,
         )
 
-        gallery_files = request.FILES.getlist("gallery_images")
-        for g_file in gallery_files:
-            ProductImage.objects.create(product=product, image=g_file)
+        # 7. Save Product Images
+        for img_file in image_files:
+            pi = ProductImage.objects.create(
+                product=product,
+                image=img_file,
+                is_real_photo=True
+            )
+            if pi.image and not pi.image_url:
+                try:
+                    pi.image_url = pi.image.url
+                    pi.save(update_fields=["image_url"])
+                except Exception:
+                    pass
 
-        return redirect("all_products")
+        vendor_info_str = f" for seller '{vendor.full_name}' ({vendor.vendor_id}) via {intake_channel}" if vendor else ""
+        messages.success(
+            request,
+            f"Product '{product.product_name}' ({product.product_id}) added successfully{vendor_info_str} by Admin {admin_uid} and submitted to Seller Enquiries."
+        )
+        return redirect("seller_enquiries")
 
     context = {
         "admin": admin_user,
-        "categories": categories,
-        "vendors": vendors,
+        "admin_uid": admin_uid,
+        "categories": main_categories,
+        "subcategories_json": subcategories_json,
+        "countries": STANDARD_COUNTRIES,
+        "currencies": STANDARD_CURRENCIES,
+        "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
         "page_title": "Add New Product",
     }
     return render(request, "add_product.html", context)
@@ -2619,201 +4798,455 @@ def add_product_view(request):
 def add_lot_view(request):
     """
     Form view for creating a new Lot batch package with full specs.
+    Strictly matches surplus-frontend LotImportModal specifications,
+    with Assisted Offline Seller Intake support for Admin.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    categories = SubCategory.objects.select_related("main_category").all()
-    vendors = VendorDetails.objects.all()
+    admin_uid = f"ADM-{admin_user.id:04d}"
 
-    if request.method == "POST":
-        title = request.POST.get("title")
-        description = request.POST.get("description", "")
-        category_id = request.POST.get("category")
-        vendor_id = request.POST.get("vendor")
-        user_full_name = request.POST.get("user_full_name", "")
-        user_email = request.POST.get("user_email", "")
-        user_mobile = request.POST.get("user_mobile", "")
-        user_company = request.POST.get("user_company", "")
-        user_industry = request.POST.get("user_industry", "")
-        business_location = request.POST.get("business_location", "")
-        inventory_location = request.POST.get("inventory_location", "") or business_location
-
-        total_price = request.POST.get("total_price", "0.00")
-        total_retail_value = request.POST.get("total_retail_value", "0.00")
-        currency = request.POST.get("currency", "USD")
-        allocation = request.POST.get("allocation", "100")
-        sale_method = request.POST.get("sale_method", "offer")
-        allow_counter_offers = request.POST.get("allow_counter_offers") == "on"
-
-        condition = request.POST.get("condition", "")
-        source_type = request.POST.get("source_type", "")
-        load_type = request.POST.get("load_type", "")
-        unit_type = request.POST.get("unit_type", "Pieces / Units")
-        lot_size = request.POST.get("lot_size", "")
-        pallet_count = request.POST.get("pallet_count", 1)
-        weight = request.POST.get("weight", "")
-        shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight")
-
-        reason_to_sell = request.POST.get("reason_to_sell", "")
-        is_active = request.POST.get("is_active") == "on"
-
-        category = None
-        if category_id:
-            category = SubCategory.objects.filter(id=category_id).first()
-
-        vendor = None
-        if user_email:
-            vendor = VendorDetails.objects.filter(email__iexact=user_email).first()
-            if not vendor:
-                # Auto-register new Seller user for this email
-                uname = user_email.split("@")[0]
-                base_uname = uname
-                counter = 1
-                while VendorDetails.objects.filter(username=uname).exists():
-                    uname = f"{base_uname}{counter}"
-                    counter += 1
-
-                name_parts = user_full_name.strip().split(" ", 1)
-                f_name = name_parts[0] if name_parts else uname
-                l_name = name_parts[1] if len(name_parts) > 1 else ""
-
-                vendor = VendorDetails.objects.create(
-                    username=uname,
-                    email=user_email,
-                    first_name=f_name,
-                    last_name=l_name,
-                    mobile_number=user_mobile,
-                    company_name=user_company,
-                    business_location=business_location,
-                    category_interested=user_industry,
-                    user_type="SELLER",
-                    status=True
-                )
-            else:
-                # Update missing seller profile fields if provided
-                updated = False
-                if user_company and not vendor.company_name:
-                    vendor.company_name = user_company
-                    updated = True
-                if user_mobile and not vendor.mobile_number:
-                    vendor.mobile_number = user_mobile
-                    updated = True
-                if business_location and not vendor.business_location:
-                    vendor.business_location = business_location
-                    updated = True
-                if user_industry and not vendor.category_interested:
-                    vendor.category_interested = user_industry
-                    updated = True
-                if updated:
-                    vendor.save()
-
-        if not vendor and vendor_id:
-            vendor = VendorDetails.objects.filter(id=vendor_id).first()
-
-        raw_data = {
-            "full_name": user_full_name or (vendor.username if vendor else ""),
-            "user_full_name": user_full_name or (vendor.username if vendor else ""),
-            "email": user_email or (vendor.email if vendor else ""),
-            "user_email": user_email or (vendor.email if vendor else ""),
-            "phone_no": user_mobile or (vendor.mobile_number if vendor else ""),
-            "user_mobile": user_mobile or (vendor.mobile_number if vendor else ""),
-            "company": user_company or (vendor.company_name if vendor else ""),
-            "industry": user_industry or (vendor.category_interested if vendor else ""),
-            "business_location": business_location or (vendor.business_location if vendor else ""),
-            "vendor_id": vendor.id if vendor else None,
-            "condition": condition,
-            "stock_condition": condition,
-            "source_type": source_type,
-            "load_type": load_type,
-            "unit_type": unit_type,
-            "lot_size": lot_size,
-            "pallet_count": pallet_count,
-            "weight": weight,
-            "shipping_terms": shipping_terms,
-            "msrp": total_retail_value,
-            "total_retail_value": total_retail_value,
-            "allocation": allocation,
-            "sale_method": sale_method,
-            "open_to_offer": "Yes" if allow_counter_offers else "No",
-            "allow_counter_offers": allow_counter_offers,
-        }
-
-        # Handle lot products if submitted via dynamic rows
-        products_list = []
-        item_skus = request.POST.getlist("item_sku[]")
-        item_names = request.POST.getlist("item_name[]")
-        item_categories = request.POST.getlist("item_category[]")
-        item_conditions = request.POST.getlist("item_condition[]")
-        item_quantities = request.POST.getlist("item_quantity[]")
-        item_msrps = request.POST.getlist("item_msrp[]")
-
-        for i in range(len(item_names)):
-            name = item_names[i].strip()
-            if name:
-                sku = item_skus[i].strip() if i < len(item_skus) else ""
-                cat = item_categories[i].strip() if i < len(item_categories) else ""
-                cond = item_conditions[i].strip() if i < len(item_conditions) else (condition or "New / Surplus")
-                qty = int(item_quantities[i]) if i < len(item_quantities) and item_quantities[i].isdigit() else 1
-                msrp = float(item_msrps[i]) if i < len(item_msrps) and item_msrps[i] else 0.0
-
-                products_list.append({
-                    "sku": sku,
-                    "product_name": name,
-                    "category": cat,
-                    "condition": cond,
-                    "quantity": qty,
-                    "msrp": msrp,
-                    "ext_msrp": qty * msrp
-                })
-
-        # Handle Excel file import if provided
-        excel_file = request.FILES.get("excel_file")
-        if excel_file:
-            try:
-                from lots.importer import parse_spreadsheet
-                excel_file.seek(0)
-                parse_res = parse_spreadsheet(excel_file)
-                parsed_prods = parse_res.get("all_items", [])
-                if parsed_prods:
-                    products_list.extend(parsed_prods)
-                raw_data["parse_summary"] = parse_res.get("summary")
-                raw_data["is_valid"] = parse_res.get("is_valid")
-                raw_data["row_errors"] = parse_res.get("row_errors")
-                raw_data["missing_mandatory_columns"] = parse_res.get("missing_mandatory_columns")
-            except Exception as e:
-                print(f"Error parsing admin excel file: {e}")
-
-        raw_data["products"] = products_list
-
-        # Create single unified Lot model
-        lot = Lot.objects.create(
-            title=title,
-            description=description,
-            category=category,
-            category_name=category.name if category else "",
-            vendor=vendor,
-            inventory_location=inventory_location,
-            total_price=total_price,
-            currency=currency,
-            reason_to_sell=reason_to_sell,
-            file=excel_file,
-            enquiry_status="pending",
-            active_status="active" if is_active else "inactive",
-            is_active=is_active,
-            raw_data=raw_data,
-        )
-
-        return redirect("/admin/enquiries/lots/pending/")
+    condition_options = ["New", "Like New", "Returns", "Used", "Salvage", "Mixed"]
+    source_type_options = ["Overstock", "Customer Returns", "Liquidation", "Closeout", "Surplus", "Other"]
+    stock_age_options = ["Current / < 6 Months", "6 - 12 Months", "1 - 2 Years", "Over 2 Years", "Mixed Ages"]
+    unit_type_options = ["Pieces / Units", "Pairs", "Kilograms (kg)", "Pounds (lbs)", "Mixed Types"]
+    load_type_options = ["Pallet", "LTL", "Truckload", "Container", "Other"]
+    shipping_size_options = [
+        "Small Parcel / Box",
+        "Single Pallet",
+        "Multi-Pallet / LTL",
+        "Full Truckload (FTL)",
+        "20ft / 40ft Container"
+    ]
+    shipping_terms_options = ["Buyer Arranges Freight", "Seller Arranges Freight", "Free Shipping"]
+    sale_method_options = [
+        {"value": "offer", "label": "Accept Offers"},
+        {"value": "fixed", "label": "Fixed Price"},
+        {"value": "auction", "label": "Auction"}
+    ]
+    currency_options = ["USD", "AED", "SAR", "EUR", "GBP"]
+    excluded_countries_options = ["Russia", "Iran", "North Korea", "Syria", "Cuba"]
+    standard_categories = [
+        "Electricals",
+        "Electronics",
+        "Apparel",
+        "Industrial Hardware",
+        "Automotive & Spare Parts",
+        "Home & Living",
+        "Tools & Machinery",
+        "Medical & Health",
+        "General Surplus",
+        "Other"
+    ]
 
     context = {
         "admin": admin_user,
-        "categories": categories,
-        "vendors": vendors,
-        "page_title": "Create New Lot Package",
+        "admin_uid": admin_uid,
+        "condition_options": condition_options,
+        "source_type_options": source_type_options,
+        "stock_age_options": stock_age_options,
+        "unit_type_options": unit_type_options,
+        "load_type_options": load_type_options,
+        "shipping_size_options": shipping_size_options,
+        "shipping_terms_options": shipping_terms_options,
+        "sale_method_options": sale_method_options,
+        "currency_options": currency_options,
+        "excluded_countries_options": excluded_countries_options,
+        "standard_categories": standard_categories,
+        "countries": STANDARD_COUNTRIES,
+        "page_title": "Add Lot Request (Assisted Offline Intake)",
     }
+
+    if request.method == "POST":
+        from django.core.files.storage import default_storage
+        from django.contrib import messages
+        import uuid
+        import re
+
+        # --- 0. Assisted Offline Seller Intake ---
+        intake_channel = request.POST.get("intake_channel", "WhatsApp").strip() or "WhatsApp"
+        seller_name = request.POST.get("seller_name", "").strip()
+        seller_phone = request.POST.get("seller_phone", "").strip()
+        seller_email = request.POST.get("seller_email", "").strip()
+        seller_company = request.POST.get("seller_company", "").strip()
+        seller_location = request.POST.get("seller_location", "").strip()
+        intake_notes = request.POST.get("intake_notes", "").strip()
+
+        # Lookup or auto-register VendorDetails
+        vendor = None
+        if seller_email:
+            vendor = VendorDetails.objects.filter(email__iexact=seller_email).first()
+        if not vendor and seller_phone:
+            vendor = VendorDetails.objects.filter(mobile_number=seller_phone).first()
+
+        if not vendor:
+            # Generate unique username
+            clean_seed = ""
+            if seller_email:
+                clean_seed = seller_email.split("@")[0]
+            elif seller_phone:
+                clean_phone = re.sub(r"[^0-9]", "", seller_phone)
+                clean_seed = f"seller_{clean_phone[-6:]}" if len(clean_phone) >= 6 else "seller"
+            elif seller_name:
+                clean_seed = re.sub(r"[^a-zA-Z0-9_]", "", seller_name.lower().replace(" ", "_"))
+            if not clean_seed:
+                clean_seed = f"seller_{uuid.uuid4().hex[:6]}"
+
+            base_uname = clean_seed[:20]
+            uname = base_uname
+            cnt = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname[:15]}{cnt}"
+                cnt += 1
+
+            # Auto-generate email if missing
+            auto_email = seller_email
+            if not auto_email:
+                phone_slug = re.sub(r"[^0-9]", "", seller_phone)[-8:] if seller_phone else uuid.uuid4().hex[:6]
+                auto_email = f"seller_{phone_slug}@offline.surplus.local"
+
+            vendor = VendorDetails.objects.create(
+                username=uname,
+                email=auto_email,
+                full_name=seller_name or uname,
+                mobile_number=seller_phone,
+                company_name=seller_company,
+                business_location=seller_location,
+                user_type="SELLER",
+                status=True
+            )
+        else:
+            # Update any missing profile fields
+            updated = False
+            if seller_company and not vendor.company_name:
+                vendor.company_name = seller_company
+                updated = True
+            if seller_phone and not vendor.mobile_number:
+                vendor.mobile_number = seller_phone
+                updated = True
+            if seller_location and not vendor.business_location:
+                vendor.business_location = seller_location
+                updated = True
+            if updated:
+                vendor.save()
+
+        # --- 1. Basic Lot Information ---
+        title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
+        key_brands_included = request.POST.get("key_brands_included", "").strip()
+
+        # --- 2. Category Allocations ---
+        category_allocations = []
+        cat_names = request.POST.getlist("category_name[]")
+        cat_allocs = request.POST.getlist("category_allocation[]")
+        for c_name, c_pct in zip(cat_names, cat_allocs):
+            c_name_clean = str(c_name).strip()
+            c_pct_clean = str(c_pct).strip().replace("%", "")
+            if c_name_clean and c_pct_clean:
+                category_allocations.append({
+                    "category_name": c_name_clean,
+                    "alocation": f"{c_pct_clean}%"
+                })
+        if not category_allocations:
+            raw_alloc_str = request.POST.get("category_allocations", "")
+            if raw_alloc_str:
+                try:
+                    parsed_alloc = json.loads(raw_alloc_str)
+                    if isinstance(parsed_alloc, list):
+                        category_allocations = parsed_alloc
+                except Exception:
+                    pass
+
+        # --- 3. Condition & Logistics Specs ---
+        condition = request.POST.get("condition", "New").strip()
+        source_type = request.POST.get("source_type", "Overstock").strip()
+        inventory_stock_age = request.POST.get("inventory_stock_age", "Current / < 6 Months").strip()
+        third_party_certificate_available = request.POST.get("third_party_certificate_available") in ("on", "true", "1")
+        inventory_country = request.POST.get("inventory_country", "").strip()
+        inventory_city = request.POST.get("inventory_city", "").strip()
+        inventory_location = request.POST.get("inventory_location", "").strip()
+        if not inventory_location and (inventory_city or inventory_country):
+            inventory_location = ", ".join([p for p in [inventory_city, inventory_country] if p])
+        if not inventory_location:
+            inventory_location = seller_location
+
+        try:
+            number_of_distinct_skus = int(request.POST.get("number_of_distinct_skus", 0) or 0)
+        except (ValueError, TypeError):
+            number_of_distinct_skus = 0
+
+        try:
+            total_units_quantity = int(request.POST.get("total_units_quantity", 0) or 0)
+        except (ValueError, TypeError):
+            total_units_quantity = 0
+
+        primary_unit_type = request.POST.get("primary_unit_type", "Pieces / Units").strip()
+        total_weight = request.POST.get("total_weight", "").strip()
+        load_type = request.POST.get("load_type", "Pallet").strip()
+        shipping_size = request.POST.get("shipping_size", "Single Pallet").strip()
+        lot_size = request.POST.get("lot_size", "").strip()
+
+        try:
+            pallet_count = int(request.POST.get("pallet_count", 1) or 1)
+        except (ValueError, TypeError):
+            pallet_count = 1
+
+        shipping_terms = request.POST.get("shipping_terms", "Buyer Arranges Freight").strip()
+
+        # --- 4. Pricing & Commercial Terms ---
+        currency = request.POST.get("currency", "USD").strip()
+        try:
+            total_est_retail_value_msrp = float(request.POST.get("total_est_retail_value_msrp", 0.0) or 0.0)
+        except (ValueError, TypeError):
+            total_est_retail_value_msrp = 0.0
+
+        try:
+            ask_price_surplus_payout = float(request.POST.get("ask_price_surplus_payout", 0.0) or 0.0)
+        except (ValueError, TypeError):
+            ask_price_surplus_payout = 0.0
+
+        sale_method = request.POST.get("sale_method", "offer").strip()
+        allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
+        excluded_export_countries = request.POST.getlist("excluded_export_countries")
+
+        discount_val = 0
+        if total_est_retail_value_msrp > 0 and ask_price_surplus_payout > 0:
+            discount_val = round(((total_est_retail_value_msrp - ask_price_surplus_payout) / total_est_retail_value_msrp) * 100)
+        offer_text = f"{discount_val}% Off MSRP" if discount_val > 0 else ("Open to Offer" if allow_counter_offers else "")
+
+        # --- 5. Media & Document Uploads ---
+        third_party_documents = []
+        if third_party_certificate_available:
+            for doc_key in ("certificate_document", "third_party_documents"):
+                if doc_key in request.FILES:
+                    c_file = request.FILES[doc_key]
+                    safe_doc_name = f"{uuid.uuid4().hex[:8]}_{c_file.name}"
+                    sp = default_storage.save(f"lots/documents/{safe_doc_name}", c_file)
+                    third_party_documents.append(default_storage.url(sp))
+
+        warehouse_images = []
+        for img_key in ("warehouse_images", "warehouse_image", "images", "media_files", "photos"):
+            if img_key in request.FILES:
+                for img_file in request.FILES.getlist(img_key):
+                    if hasattr(img_file, "name"):
+                        safe_img_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
+                        sp = default_storage.save(f"lots/images/{safe_img_name}", img_file)
+                        warehouse_images.append(default_storage.url(sp))
+
+        # --- 6. Manifest Spreadsheet & Products ---
+        manifest_file = request.FILES.get("manifest_file") or request.FILES.get("excel_file") or request.FILES.get("file")
+        parsed_items = []
+        parse_summary = {}
+
+        if manifest_file:
+            try:
+                from lots.importer import parse_spreadsheet
+                manifest_file.seek(0)
+                parse_res = parse_spreadsheet(manifest_file)
+                if not parse_res.get("is_valid", False):
+                    err_msgs = parse_res.get("header_errors", [])
+                    if not err_msgs and parse_res.get("row_errors"):
+                        err_msgs = [e.get("message") for e in parse_res["row_errors"][:3]]
+                    error_text = " ; ".join(err_msgs) if err_msgs else "Manifest file format is invalid. It must follow our Surplus Manifest structure."
+                    messages.error(request, f"Manifest Spreadsheet Error: {error_text}")
+                    return render(request, "add_lot.html", {
+                        **context,
+                        "form_data": request.POST,
+                        "manifest_error": error_text,
+                    })
+
+                parsed_items = parse_res.get("all_items", [])
+                parse_summary = parse_res.get("summary", {})
+
+                if not number_of_distinct_skus and parsed_items:
+                    number_of_distinct_skus = len(parsed_items)
+
+                if not total_units_quantity and parsed_items:
+                    tot_u = sum(
+                        int(p.get("quantity") or p.get("available_quantity") or 0)
+                        for p in parsed_items
+                        if str(p.get("quantity") or p.get("available_quantity") or "0").isdigit()
+                    )
+                    if tot_u > 0:
+                        total_units_quantity = tot_u
+
+                if not total_est_retail_value_msrp and parsed_items:
+                    tot_m = 0.0
+                    for p in parsed_items:
+                        qty = int(p.get("quantity") or p.get("available_quantity") or 1)
+                        m_val = float(p.get("msrp") or p.get("original_price") or 0.0)
+                        tot_m += qty * m_val
+                    if tot_m > 0:
+                        total_est_retail_value_msrp = tot_m
+            except Exception as e:
+                error_text = str(e)
+                messages.error(request, f"Manifest Spreadsheet Error: {error_text}")
+                return render(request, "add_lot.html", {
+                    **context,
+                    "form_data": request.POST,
+                    "manifest_error": error_text,
+                })
+
+        # Check dynamic manual rows if submitted
+        manual_skus = request.POST.getlist("item_sku[]")
+        manual_names = request.POST.getlist("item_name[]")
+        manual_cats = request.POST.getlist("item_category[]")
+        manual_conds = request.POST.getlist("item_condition[]")
+        manual_qtys = request.POST.getlist("item_quantity[]")
+        manual_msrps = request.POST.getlist("item_msrp[]")
+
+        for i in range(len(manual_names)):
+            m_name = manual_names[i].strip()
+            if m_name:
+                m_sku = manual_skus[i].strip() if i < len(manual_skus) else ""
+                m_cat = manual_cats[i].strip() if i < len(manual_cats) else ""
+                m_cond = manual_conds[i].strip() if i < len(manual_conds) else condition
+                try:
+                    m_qty = int(manual_qtys[i]) if i < len(manual_qtys) and manual_qtys[i].isdigit() else 1
+                except (ValueError, TypeError):
+                    m_qty = 1
+                try:
+                    m_msrp = float(manual_msrps[i]) if i < len(manual_msrps) and manual_msrps[i] else 0.0
+                except (ValueError, TypeError):
+                    m_msrp = 0.0
+
+                parsed_items.append({
+                    "sku": m_sku,
+                    "product_name": m_name,
+                    "category": m_cat,
+                    "condition": m_cond,
+                    "quantity": m_qty,
+                    "msrp": m_msrp,
+                    "ext_msrp": m_qty * m_msrp
+                })
+
+        if not number_of_distinct_skus and parsed_items:
+            number_of_distinct_skus = len(parsed_items)
+        if not total_units_quantity and parsed_items:
+            total_units_quantity = sum(int(p.get("quantity") or 1) for p in parsed_items)
+
+        # Status
+        is_active = request.POST.get("is_active") == "on"
+
+        raw_data = {
+            "admin_id": admin_uid,
+            "admin_username": admin_user.username,
+            "intake_channel": intake_channel,
+            "intake_admin_id": admin_uid,
+            "intake_admin_name": admin_user.full_name or admin_user.username,
+            "intake_admin_email": admin_user.email,
+            "intake_notes": intake_notes,
+            "seller_name": seller_name or (vendor.full_name if vendor else ""),
+            "seller_phone": seller_phone or (vendor.mobile_number if vendor else ""),
+            "seller_email": seller_email or (vendor.email if vendor else ""),
+            "seller_company": seller_company or (vendor.company_name if vendor else ""),
+            "seller_location": seller_location or (vendor.business_location if vendor else ""),
+            "inventory_country": inventory_country,
+            "inventory_city": inventory_city,
+            "inventory_location": inventory_location,
+            "warehouse_images": warehouse_images,
+            "third_party_documents": third_party_documents,
+            "allow_counter_offers": allow_counter_offers,
+            "open_to_offer": "Yes" if allow_counter_offers else "No",
+            "is_saved_to_db": True,
+            "parse_summary": parse_summary,
+            "products": parsed_items,
+        }
+
+        # --- 7. Save Lot Record ---
+        lot = Lot.objects.create(
+            title=title or f"Lot of {key_brands_included or 'Assorted Inventory'}",
+            description=description,
+            vendor=vendor,
+            admin=admin_user,
+            intake_channel=intake_channel,
+            key_brands_included=key_brands_included,
+            category_allocations=category_allocations,
+            condition=condition,
+            source_type=source_type,
+            inventory_stock_age=inventory_stock_age,
+            warehouse_images=warehouse_images,
+            third_party_certificate_available=third_party_certificate_available,
+            third_party_documents=third_party_documents,
+            inventory_country=inventory_country,
+            inventory_city=inventory_city,
+            inventory_location=inventory_location,
+            number_of_distinct_skus=number_of_distinct_skus,
+            total_units_quantity=total_units_quantity,
+            primary_unit_type=primary_unit_type,
+            total_weight=total_weight,
+            load_type=load_type,
+            shipping_size=shipping_size,
+            lot_size=lot_size,
+            pallet_count=pallet_count,
+            shipping_terms=shipping_terms,
+            currency=currency,
+            total_est_retail_value_msrp=total_est_retail_value_msrp,
+            ask_price_surplus_payout=ask_price_surplus_payout,
+            offer=offer_text,
+            excluded_export_countries=excluded_export_countries,
+            sale_method=sale_method,
+            file=manifest_file,
+            enquiry_status="pending",
+            active_status="inactive",
+            is_active=False,
+            raw_data=raw_data,
+        )
+
+        # Create LotProduct records for manifest items
+        for p_item in parsed_items:
+            p_name = p_item.get("product_name") or p_item.get("title") or "Lot Item"
+            try:
+                p_qty = int(p_item.get("quantity") or p_item.get("available_quantity") or 1)
+            except (ValueError, TypeError):
+                p_qty = 1
+            p_cond = p_item.get("condition") or condition
+            LotProduct.objects.create(
+                lot=lot,
+                product_name=p_name,
+                quantity=p_qty,
+                condition=p_cond,
+                raw_data=p_item
+            )
+
+        vendor_name_display = vendor.full_name or vendor.company_name or vendor.username or "Offline Seller"
+        messages.success(
+            request,
+            f"Lot listing '{lot.title or lot.lot_number}' ({lot.lot_number}) created successfully for seller '{vendor_name_display}' via {intake_channel} by Admin {admin_uid} and submitted to Lot Enquiries."
+        )
+        return redirect("/admin/enquiries/lots/pending/")
+
     return render(request, "add_lot.html", context)
+
+
+def download_lot_manifest_template_view(request):
+    """
+    Serves official Surplus Market manifest templates (XLSX and CSV) for download.
+    """
+    from django.http import FileResponse, Http404
+    from django.conf import settings
+    import os
+
+    fmt = request.GET.get("format", "xlsx").lower()
+    if fmt == "csv":
+        filename = "Sample_Lot_Manifest.csv"
+        content_type = "text/csv"
+    else:
+        filename = "Surplus Market XLSX Format.xlsx"
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    file_path = settings.BASE_DIR / "AdminApp" / "templates" / "static" / "templates" / filename
+    if not os.path.exists(file_path):
+        alt_path = settings.BASE_DIR.parent / "surplus-frontend" / "public" / filename
+        if os.path.exists(alt_path):
+            file_path = alt_path
+        else:
+            raise Http404("Template file not found.")
+
+    response = FileResponse(open(file_path, "rb"), content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 def price_control_view(request):
@@ -2830,7 +5263,7 @@ def price_control_view(request):
     categories = SubCategory.objects.all()
     
     # Get distinct brands from Brand model and Product table
-    product_brands = list(Product.objects.exclude(brand="").values_list("brand", flat=True).distinct())
+    product_brands = list(Product.objects.exclude(brand_name="").values_list("brand_name", flat=True).distinct())
     brand_model_names = list(Brand.objects.values_list("name", flat=True).distinct())
     all_brands = sorted(list(set(product_brands + brand_model_names)))
 
@@ -3088,21 +5521,123 @@ def product_detail_view(request, product_id):
     from django.db.models import Q
     from .models import Product
     lookup = Q(id=product_id) | Q(product_id=str(product_id))
-    product = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").filter(lookup).first()
+    product = Product.objects.select_related("admin", "category", "subcategory", "vendor").prefetch_related("images").filter(lookup).first()
     if not product:
-        product = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").first()
+        product = Product.objects.select_related("admin", "category", "subcategory", "vendor").prefetch_related("images").first()
     if not product:
         return redirect("all_products")
 
-    user_data = {
-        "user_id": product.vendor.id if product.vendor else None,
-        "full_name": product.vendor.username if product.vendor else (product.raw_data.get("full_name") or product.raw_data.get("name") or "N/A"),
-        "phone_no": product.vendor.mobile_number if product.vendor else (product.raw_data.get("phone_no") or product.raw_data.get("phone") or "N/A"),
-        "email": product.vendor.email if product.vendor else (product.raw_data.get("email") or "N/A"),
-        "company": (product.vendor.company_name or product.vendor.username) if product.vendor else (product.raw_data.get("company") or product.raw_data.get("company_name") or "N/A"),
-        "business_location": (product.vendor.business_location or product.inventory_location) if product.vendor else (product.inventory_location or product.raw_data.get("location") or "N/A"),
-        "industry": (", ".join(product.vendor.category_interested) if isinstance(product.vendor.category_interested, list) and product.vendor.category_interested else (product.vendor.category_interested or product.vendor.user_type)) if product.vendor else (product.raw_data.get("industry") or "N/A"),
-    }
+    vendor = product.vendor
+    if not vendor and product.vendor_id:
+        from .models import VendorDetails
+        vendor = VendorDetails.objects.filter(id=product.vendor_id).first()
+    if not vendor and hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        raw_vid = product.raw_data.get("vendor_id") or product.raw_data.get("user_id")
+        if raw_vid:
+            v_clean = str(raw_vid).strip()
+            if v_clean.upper().startswith("USR-"):
+                v_clean = v_clean[4:].strip()
+            if v_clean.isdigit():
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+            if not vendor:
+                from .models import VendorDetails
+                vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
+            if vendor:
+                product.vendor = vendor
+                product.save(update_fields=["vendor"])
+
+    # Resolve admin details if submitted by an Admin
+    admin_obj = product.admin
+    if not admin_obj and vendor and vendor.email:
+        admin_obj = AdminDetails.objects.filter(email__iexact=vendor.email).first()
+    if not admin_obj and hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        raw_aid = product.raw_data.get('admin_id') or product.raw_data.get('intake_admin_id')
+        if raw_aid:
+            raw_aid_clean = str(raw_aid).strip().replace("ADM-", "")
+            if raw_aid_clean.isdigit():
+                admin_obj = AdminDetails.objects.filter(id=int(raw_aid_clean)).first()
+
+    intake_channel = ""
+    if hasattr(product, 'raw_data') and isinstance(product.raw_data, dict):
+        intake_channel = product.raw_data.get("intake_channel", "")
+
+    assisted_by_admin = admin_obj if (admin_obj and vendor) else None
+
+    if vendor:
+        company_val = vendor.company_name or ("Individual Seller" if str(getattr(vendor, 'account_entity_type', '')).upper() == "INDIVIDUAL" else "N/A")
+        full_name_val = vendor.full_name or "N/A"
+        phone_val = vendor.mobile_number or "N/A"
+        email_val = vendor.email or "N/A"
+        business_location_val = vendor.business_location or "N/A"
+        industry_val = "N/A"
+        if vendor.category_interested:
+            if isinstance(vendor.category_interested, list):
+                industry_val = ", ".join(vendor.category_interested)
+            else:
+                industry_val = str(vendor.category_interested)
+        elif vendor.business_type:
+            industry_val = vendor.business_type
+        elif vendor.user_type:
+            industry_val = vendor.user_type
+
+        vendor_display_id = vendor.vendor_id
+        user_data = {
+            "vendor_id": vendor_display_id,
+            "user_id": vendor_display_id,
+            "admin_id": f"ADM-{admin_obj.id:04d}" if admin_obj else None,
+            "raw_vendor_id": vendor.id,
+            "raw_user_id": vendor.id,
+            "is_admin": False,
+            "is_assisted": bool(admin_obj),
+            "assisted_by": f"ADM-{admin_obj.id:04d} ({admin_obj.full_name or admin_obj.username})" if admin_obj else None,
+            "intake_channel": intake_channel,
+            "name": full_name_val,
+            "full_name": full_name_val,
+            "phone_no": phone_val,
+            "email": email_val,
+            "company": company_val,
+            "business_location": business_location_val,
+            "industry": industry_val,
+        }
+    elif admin_obj:
+        admin_display_id = f"ADM-{admin_obj.id:04d}"
+        user_data = {
+            "vendor_id": admin_display_id,
+            "user_id": admin_display_id,
+            "admin_id": admin_display_id,
+            "raw_admin_id": admin_obj.id,
+            "is_admin": True,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": admin_obj.full_name or admin_obj.username,
+            "full_name": admin_obj.full_name or admin_obj.username,
+            "email": admin_obj.email,
+            "company": "N/A",
+            "phone_no": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
+    else:
+        user_data = {
+            "vendor_id": "N/A",
+            "user_id": "N/A",
+            "admin_id": None,
+            "raw_vendor_id": None,
+            "raw_user_id": None,
+            "is_admin": False,
+            "is_assisted": False,
+            "assisted_by": None,
+            "intake_channel": "",
+            "name": "N/A",
+            "full_name": "N/A",
+            "phone_no": "N/A",
+            "email": "N/A",
+            "company": "N/A",
+            "business_location": "N/A",
+            "industry": "N/A",
+        }
 
     from .models import MainCategory
     categories = MainCategory.objects.prefetch_related("subcategories").all()
@@ -3112,6 +5647,8 @@ def product_detail_view(request, product_id):
         "product": product,
         "user_data": user_data,
         "categories": categories,
+        "assisted_by_admin": assisted_by_admin,
+        "intake_channel": intake_channel,
         "page_title": f"Product Details - {product.product_name}",
     }
     return render(request, "product_detail.html", context)
@@ -3276,90 +5813,13 @@ def get_current_vendor(request):
     }, status=status.HTTP_200_OK)
 
 
-def _seed_sample_brands_if_empty():
-    from .models import Brand
-    if Brand.objects.exists():
-        return
-    
-    sample_brands = [
-        {
-            "name": "Uken",
-            "alt_text": "uken",
-            "redirect_link": "https://surplusmarket.com/buy/uken/",
-            "description": "High performance industrial power tools and surplus hardware.",
-            "image_url": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Bosch",
-            "alt_text": "bosch power tools",
-            "redirect_link": "https://surplusmarket.com/buy/bosch/",
-            "description": "German engineering and precision power equipment.",
-            "image_url": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Makita",
-            "alt_text": "makita cordless tools",
-            "redirect_link": "https://surplusmarket.com/buy/makita/",
-            "description": "Professional cordless and pneumatic power tools.",
-            "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "DeWalt",
-            "alt_text": "dewalt tough system",
-            "redirect_link": "https://surplusmarket.com/buy/dewalt/",
-            "description": "Heavy-duty construction and woodworking tools.",
-            "image_url": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Stanley",
-            "alt_text": "stanley hand tools",
-            "redirect_link": "https://surplusmarket.com/buy/stanley/",
-            "description": "Hand tools, storage solutions and measuring instruments.",
-            "image_url": "https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Milwaukee",
-            "alt_text": "milwaukee M18 fuel",
-            "redirect_link": "https://surplusmarket.com/buy/milwaukee/",
-            "description": "Heavy-duty electric power tools and accessories.",
-            "image_url": "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "3M",
-            "alt_text": "3M safety equipment",
-            "redirect_link": "https://surplusmarket.com/buy/3m/",
-            "description": "Industrial safety gear, abrasives and tapes.",
-            "image_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80",
-        },
-        {
-            "name": "Black & Decker",
-            "alt_text": "black decker home appliances",
-            "redirect_link": "https://surplusmarket.com/buy/black-decker/",
-            "description": "Quality hardware and lawn equipment.",
-            "image_url": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=150&auto=format&fit=crop&q=80",
-        },
-    ]
-
-    for idx, item in enumerate(sample_brands, start=1):
-        Brand.objects.create(
-            name=item["name"],
-            alt_text=item["alt_text"],
-            redirect_link=item["redirect_link"],
-            description=item["description"],
-            image_url=item["image_url"],
-            order=idx
-        )
-
-
 def brands_management_view(request):
     """
-    Renders and processes Brand Management In Landing Page.
+    Renders and processes Brand Management In Landing Page using real database records.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
-
-    _seed_sample_brands_if_empty()
 
     from .models import Brand
     from django.db.models import Q
@@ -3564,6 +6024,640 @@ def popup_view(request):
         "popup": popup_setting,
     }
     return render(request, "popup_settings.html", context)
+
+
+# ==============================================================================
+# AUCTION MANAGEMENT ADMIN VIEWS (MODEL-AGNOSTIC ENGINE)
+# ==============================================================================
+
+def admin_auctions_view(request):
+    """
+    Renders Admin Auctions Management dashboard with live KPI counters, filters, and list.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction, AuctionBid, MainCategory
+    from django.core.paginator import Paginator
+
+    status_filter = request.GET.get("status", "all").lower()
+    search_query = request.GET.get("q", "").strip()
+
+    qs = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images").all()
+
+    if status_filter != "all":
+        qs = qs.filter(status=status_filter)
+
+    if search_query:
+        qs = qs.filter(
+            Q(title__icontains=search_query) |
+            Q(auction_id__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(item_reference_id__icontains=search_query)
+        )
+
+    # Sync temporal statuses for list display
+    for auc in qs[:50]:
+        auc.sync_status()
+
+    # KPI Statistics
+    now = timezone.now()
+    stats = {
+        "total_auctions": Auction.objects.count(),
+        "live_auctions": Auction.objects.filter(status="live").count(),
+        "scheduled_auctions": Auction.objects.filter(status="scheduled").count(),
+        "sold_auctions": Auction.objects.filter(status="sold").count(),
+        "total_bids": AuctionBid.objects.count(),
+    }
+
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "page_obj": page_obj,
+        "auctions": page_obj.object_list,
+        "stats": stats,
+        "status_filter": status_filter,
+        "search_query": search_query,
+    }
+    return render(request, "auctions_list.html", context)
+
+
+def admin_auction_create_view(request):
+    """
+    Renders creation form and handles new Auction listing setup.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction, AuctionImage, MainCategory
+    from django.contrib import messages
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        description = request.POST.get("description", "").strip()
+        item_type = request.POST.get("item_type", "custom")
+        item_reference_id = request.POST.get("item_reference_id", "").strip()
+        category_id = request.POST.get("category_id")
+
+        starting_bid = Decimal(request.POST.get("starting_bid", "0.00") or "0.00")
+        reserve_price = Decimal(request.POST.get("reserve_price", "0.00") or "0.00")
+        bid_increment = Decimal(request.POST.get("bid_increment", "25.00") or "25.00")
+        buy_now_raw = request.POST.get("buy_now_price", "").strip()
+        buy_now_price = Decimal(buy_now_raw) if buy_now_raw else None
+
+        start_time_str = request.POST.get("start_time")
+        end_time_str = request.POST.get("end_time")
+        auto_extend_minutes = int(request.POST.get("auto_extend_minutes", 3) or 3)
+
+        if not title or not start_time_str or not end_time_str:
+            messages.error(request, "Title, Start Time, and End Time are required fields.")
+            return redirect("admin_auction_create")
+
+        start_time = timezone.datetime.fromisoformat(start_time_str)
+        end_time = timezone.datetime.fromisoformat(end_time_str)
+        if timezone.is_naive(start_time):
+            start_time = timezone.make_aware(start_time)
+        if timezone.is_naive(end_time):
+            end_time = timezone.make_aware(end_time)
+
+        now = timezone.now()
+        initial_status = "live" if start_time <= now <= end_time else ("scheduled" if start_time > now else "ended")
+
+        category = MainCategory.objects.filter(id=category_id).first() if category_id else None
+
+        # Build snapshot metadata
+        item_metadata = {
+            "origin": "Admin Portal Creation",
+            "created_by": admin_user.username,
+            "reference_code": item_reference_id or None,
+            "notes": request.POST.get("manifest_notes", "").strip(),
+        }
+
+        auction = Auction.objects.create(
+            title=title,
+            description=description,
+            item_type=item_type,
+            item_reference_id=item_reference_id,
+            item_metadata=item_metadata,
+            category=category,
+            starting_bid=starting_bid,
+            current_bid=starting_bid,
+            reserve_price=reserve_price,
+            bid_increment=bid_increment,
+            buy_now_price=buy_now_price,
+            start_time=start_time,
+            end_time=end_time,
+            auto_extend_minutes=auto_extend_minutes,
+            status=initial_status,
+        )
+
+        # Handle uploaded images
+        images = request.FILES.getlist("images")
+        for idx, img in enumerate(images):
+            AuctionImage.objects.create(
+                auction=auction,
+                image=img,
+                is_primary=(idx == 0),
+                display_order=idx,
+            )
+
+        messages.success(request, f"Auction '{auction.title}' (#{auction.auction_id}) created successfully!")
+        return redirect("admin_auctions_view")
+
+    categories = MainCategory.objects.all().order_by("name")
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "categories": categories,
+    }
+    return render(request, "auction_create.html", context)
+
+
+def admin_auction_detail_view(request, auction_id):
+    """
+    Renders live auction monitoring dashboard, real-time bid history, and admin emergency controls.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Auction
+
+    try:
+        if str(auction_id).isdigit():
+            auction = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images", "bids").get(id=int(auction_id))
+        else:
+            auction = Auction.objects.select_related("category", "vendor", "winner").prefetch_related("images", "bids").get(auction_id=auction_id)
+    except Auction.DoesNotExist:
+        from django.http import Http404
+        raise Http404("Auction listing not found")
+
+    auction.sync_status()
+    bids = auction.bids.select_related("bidder").order_by("-created_at")
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+        "auction": auction,
+        "bids": bids,
+    }
+    return render(request, "auction_detail.html", context)
+
+
+def admin_auction_action_api(request, auction_id):
+    """
+    API for admin actions on an auction: extend time, close & evaluate, cancel, or activate live.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Admin authorization required."}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Method not allowed."}, status=405)
+
+    from .models import Auction
+    from .auction_engine import AuctionEngine
+    from datetime import timedelta
+
+    try:
+        auction = Auction.objects.get(auction_id=auction_id) if not str(auction_id).isdigit() else Auction.objects.get(id=int(auction_id))
+    except Auction.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Auction not found."}, status=404)
+
+    action = request.POST.get("action", "").lower()
+
+    if action == "extend":
+        mins = int(request.POST.get("minutes", 5))
+        auction.end_time += timedelta(minutes=mins)
+        auction.save(update_fields=["end_time", "updated_at"])
+        return JsonResponse({
+            "success": True,
+            "message": f"Auction extended by {mins} minutes. New end time: {auction.end_time.strftime('%Y-%m-%d %H:%M:%S UTC')}.",
+            "new_end_time": auction.end_time.isoformat(),
+        })
+
+    elif action == "close":
+        evaluated = AuctionEngine.evaluate_and_close(auction.id)
+        return JsonResponse({
+            "success": True,
+            "message": f"Auction closed. Final status: '{evaluated.status}'.",
+            "status": evaluated.status,
+            "winner": evaluated.winner.username if evaluated.winner else None,
+            "winning_amount": str(evaluated.winning_bid_amount) if evaluated.winning_bid_amount else None,
+        })
+
+    elif action == "cancel":
+        auction.status = "cancelled"
+        auction.save(update_fields=["status", "updated_at"])
+        return JsonResponse({"success": True, "message": "Auction cancelled.", "status": "cancelled"})
+
+    elif action == "go_live":
+        auction.status = "live"
+        auction.save(update_fields=["status", "updated_at"])
+        return JsonResponse({"success": True, "message": "Auction is now LIVE.", "status": "live"})
+
+    return JsonResponse({"success": False, "message": f"Unknown action '{action}'."}, status=400)
+
+
+def product_collections_view(request):
+    """
+    Admin View for Managing Best Selling, New Arrivals, and Featured Deals showcase collections,
+    including setting custom display sequence order.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import Product
+    from django.db.models import Case, When, Value, IntegerField, Q
+
+    featured_qs = Product.objects.filter(
+        is_featured=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(featured_order=0, then=Value(999999)),
+            default="featured_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    best_selling_qs = Product.objects.filter(
+        is_best_selling=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(best_selling_order=0, then=Value(999999)),
+            default="best_selling_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    new_arrivals_qs = Product.objects.filter(
+        is_new_arrival=True, 
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").annotate(
+        order_priority=Case(
+            When(new_arrival_order=0, then=Value(999999)),
+            default="new_arrival_order",
+            output_field=IntegerField()
+        )
+    ).order_by("order_priority", "-created_at")
+
+    all_catalog_qs = Product.objects.filter(
+        enquiry_status__iexact="APPROVED"
+    ).select_related("category", "vendor").prefetch_related("images").order_by("-created_at")[:100]
+
+    context = {
+        "admin": admin_user,
+        "page_title": "Product Collections & Badges",
+        "featured_products": featured_qs,
+        "best_selling_products": best_selling_qs,
+        "new_arrival_products": new_arrivals_qs,
+        "all_catalog_products": all_catalog_qs,
+        "featured_count": featured_qs.count(),
+        "best_selling_count": best_selling_qs.count(),
+        "new_arrivals_count": new_arrivals_qs.count(),
+        "total_approved_count": Product.objects.filter(enquiry_status__iexact="APPROVED").count(),
+    }
+    return render(request, "product_collections.html", context)
+
+
+@csrf_exempt
+@api_view(["POST"])
+def update_product_collection_api(request):
+    """
+    AJAX API for updating product collection badges and custom display sequence.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product
+    data = request.data
+
+    product_id = data.get("product_id")
+    if not product_id:
+        return Response({"success": False, "message": "product_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        product = Product.objects.get(id=int(product_id))
+    except (Product.DoesNotExist, ValueError):
+        return Response({"success": False, "message": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Toggle flags if present
+    if "is_featured" in data:
+        product.is_featured = bool(data["is_featured"])
+    if "is_best_selling" in data:
+        product.is_best_selling = bool(data["is_best_selling"])
+    if "is_new_arrival" in data:
+        product.is_new_arrival = bool(data["is_new_arrival"])
+
+    # Update sequence order if present
+    if "featured_order" in data:
+        try:
+            product.featured_order = max(0, int(data["featured_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "best_selling_order" in data:
+        try:
+            product.best_selling_order = max(0, int(data["best_selling_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "new_arrival_order" in data:
+        try:
+            product.new_arrival_order = max(0, int(data["new_arrival_order"]))
+        except (ValueError, TypeError):
+            pass
+    if "display_order" in data:
+        try:
+            product.display_order = max(0, int(data["display_order"]))
+        except (ValueError, TypeError):
+            pass
+
+    product.save(update_fields=[
+        "is_featured", "is_best_selling", "is_new_arrival",
+        "featured_order", "best_selling_order", "new_arrival_order", "display_order"
+    ])
+
+    return Response({
+        "success": True,
+        "message": f"Updated collection settings for '{product.product_name}'.",
+        "product": {
+            "id": product.id,
+            "is_featured": product.is_featured,
+            "is_best_selling": product.is_best_selling,
+            "is_new_arrival": product.is_new_arrival,
+            "featured_order": product.featured_order,
+            "best_selling_order": product.best_selling_order,
+            "new_arrival_order": product.new_arrival_order,
+            "display_order": product.display_order,
+        }
+    })
+
+
+@api_view(["GET"])
+def search_products_api(request):
+    """
+    Search endpoint for modal product selector.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product
+    from django.db.models import Q
+
+    query = request.GET.get("q", "").strip()
+    qs = Product.objects.filter(enquiry_status__iexact="APPROVED")
+    if query:
+        qs = qs.filter(
+            Q(product_name__icontains=query) |
+            Q(product_id__icontains=query) |
+            Q(model_no__icontains=query) |
+            Q(brand_name__icontains=query)
+        )
+
+    results = []
+    for p in qs[:25]:
+        img_url = p.images.first().url if p.images.exists() else ""
+        results.append({
+            "id": p.id,
+            "product_id": p.product_id,
+            "product_name": p.product_name,
+            "brand": p.brand_name,
+            "category": p.category.name if p.category else "",
+            "liquidating_price": str(p.liquidating_price),
+            "currency": p.currency,
+            "is_featured": p.is_featured,
+            "is_best_selling": p.is_best_selling,
+            "is_new_arrival": p.is_new_arrival,
+            "featured_order": p.featured_order,
+            "best_selling_order": p.best_selling_order,
+            "new_arrival_order": p.new_arrival_order,
+            "image": img_url,
+        })
+
+    return Response({"success": True, "results": results})
+
+
+def rfq_requests_view(request, status_filter=None):
+    """
+    Renders the Buyer RFQ Requests / Quotation Enquiries dashboard in the Admin Portal.
+    Lists consolidated RFQ basket submissions from frontend buyers with status, line item count,
+    target pricing, destination, and quick actions.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import RfqEnquiry
+    from django.db.models import Q, Sum
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+    current_status = (status_filter or request.GET.get("status", "all")).upper()
+    search = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    date_filter = request.GET.get("date_filter", "all")
+    page_num = request.GET.get("page", 1)
+
+    qs = RfqEnquiry.objects.prefetch_related("items").select_related("buyer").order_by("-created_at")
+
+    if date_filter == "today":
+        qs = qs.filter(created_at__date=timezone.now().date())
+    elif date_filter == "7days":
+        qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7))
+    elif date_filter == "30days":
+        qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
+
+    total_count = RfqEnquiry.objects.count()
+    pending_count = RfqEnquiry.objects.filter(status="PENDING").count()
+    quoted_count = RfqEnquiry.objects.filter(status="QUOTED").count()
+    accepted_count = RfqEnquiry.objects.filter(status="ACCEPTED").count()
+    declined_count = RfqEnquiry.objects.filter(status="DECLINED").count()
+    pipeline_val = RfqEnquiry.objects.aggregate(total_val=Sum("estimated_value"))["total_val"] or Decimal("0.00")
+
+    if current_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+        qs = qs.filter(status=current_status)
+
+    if search:
+        qs = qs.filter(
+            Q(reference__icontains=search) |
+            Q(company_name__icontains=search) |
+            Q(contact_person__icontains=search) |
+            Q(email__icontains=search) |
+            Q(phone__icontains=search) |
+            Q(destination_port__icontains=search)
+        )
+
+    paginator = Paginator(qs, 25)
+    try:
+        page_obj = paginator.page(page_num)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com",
+        "enquiries": page_obj,
+        "page_obj": page_obj,
+        "current_status": current_status.lower(),
+        "search": search,
+        "date_filter": date_filter,
+        "counts": {
+            "total": total_count,
+            "pending": pending_count,
+            "quoted": quoted_count,
+            "accepted": accepted_count,
+            "declined": declined_count,
+            "pipeline_value": pipeline_val,
+        }
+    }
+    return render(request, "rfq_requests.html", context)
+
+
+def rfq_request_detail_view(request, rfq_id):
+    """
+    Detailed RFQ Enquiry inspection page in the Admin Portal.
+    Displays buyer profile, logistics specifications, line items with target vs baseline prices,
+    and a commercial quotation response tool to issue proforma quotes and update status.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from .models import RfqEnquiry
+    from .services import create_vendor_notification
+    from decimal import Decimal, InvalidOperation
+
+    rfq = RfqEnquiry.objects.prefetch_related("items__product", "items__lot").select_related("buyer").filter(
+        Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))
+    ).first()
+
+    if not rfq:
+        messages.error(request, f"RFQ request #{rfq_id} was not found.")
+        return redirect("rfq_requests_list")
+
+    if request.method == "POST":
+        new_status = request.POST.get("status", "").strip().upper()
+        admin_notes = request.POST.get("admin_notes", "").strip()
+        proforma_raw = request.POST.get("proforma_amount", "").strip()
+
+        if new_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+            rfq.status = new_status
+
+        rfq.admin_notes = admin_notes
+
+        if proforma_raw:
+            try:
+                rfq.proforma_amount = Decimal(proforma_raw)
+                rfq.proforma_issued_at = timezone.now()
+            except (InvalidOperation, ValueError):
+                pass
+
+        rfq.save()
+        messages.success(request, f"RFQ '{rfq.reference}' has been updated to status {rfq.status}.")
+
+        if rfq.buyer:
+            try:
+                create_vendor_notification(
+                    vendor=rfq.buyer,
+                    title=f"Update on RFQ {rfq.reference}",
+                    message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
+                    notification_type="RFQ",
+                    action_url="/profile"
+                )
+            except Exception as e:
+                print(f"[rfq_request_detail_view] Vendor notification error: {e}")
+
+        return redirect("rfq_request_detail", rfq_id=rfq.id)
+
+    items = rfq.items.all()
+    total_target_val = Decimal("0.00")
+    for item in items:
+        if item.target_price:
+            total_target_val += (item.target_price * item.quantity)
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com",
+        "rfq": rfq,
+        "items": items,
+        "items_count": items.count(),
+        "total_target_val": total_target_val,
+    }
+    return render(request, "rfq_request_detail.html", context)
+
+
+@api_view(["POST", "PUT", "DELETE"])
+@permission_classes([AllowAny])
+def rfq_request_status_api(request, rfq_id):
+    """
+    AJAX endpoint to quickly update RFQ status, issue proforma quote amount, or delete.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user and getattr(request, "user", None) and request.user.is_authenticated:
+        admin_user = request.user
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import RfqEnquiry
+    from .services import create_vendor_notification
+    from decimal import Decimal, InvalidOperation
+
+    rfq = RfqEnquiry.objects.filter(Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))).first()
+    if not rfq:
+        return Response({"success": False, "message": "RFQ not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        ref = rfq.reference
+        rfq.delete()
+        return Response({"success": True, "message": f"RFQ '{ref}' deleted successfully."})
+
+    new_status = (request.data.get("status") or "").strip().upper()
+    if new_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+        rfq.status = new_status
+
+    if "admin_notes" in request.data:
+        rfq.admin_notes = str(request.data.get("admin_notes") or "").strip()
+
+    if "proforma_amount" in request.data:
+        p_raw = request.data.get("proforma_amount")
+        if p_raw:
+            try:
+                rfq.proforma_amount = Decimal(str(p_raw))
+                rfq.proforma_issued_at = timezone.now()
+            except (InvalidOperation, ValueError):
+                pass
+
+    rfq.save()
+
+    if rfq.buyer:
+        try:
+            create_vendor_notification(
+                vendor=rfq.buyer,
+                title=f"Update on RFQ {rfq.reference}",
+                message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
+                notification_type="RFQ",
+                action_url="/profile"
+            )
+        except Exception:
+            pass
+
+    return Response({
+        "success": True,
+        "message": f"RFQ '{rfq.reference}' updated successfully.",
+        "status": rfq.status,
+        "proforma_amount": float(rfq.proforma_amount) if rfq.proforma_amount else None
+    })
+
 
 
 

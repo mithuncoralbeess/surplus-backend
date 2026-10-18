@@ -1,0 +1,1288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Showcase Collections & Priority Ordering | Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+/* ==========================================================================
+   Showcase Collections & Priority Ordering - Premium SaaS Design System
+   ========================================================================== */
+
+:root {
+    --col-primary: #2563eb;
+    --col-primary-subtle: #eff6ff;
+    --col-featured: #f43f5e;
+    --col-featured-subtle: #fff1f2;
+    --col-featured-border: #fecdd3;
+    --col-best: #f59e0b;
+    --col-best-subtle: #fffbeb;
+    --col-best-border: #fde68a;
+    --col-new: #06b6d4;
+    --col-new-subtle: #ecfeff;
+    --col-new-border: #a5f3fc;
+    --col-catalog: #6366f1;
+    --col-catalog-subtle: #eef2ff;
+    --col-catalog-border: #c7d2fe;
+    
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --slate-50:  #f8fafc;
+}
+
+/* Page Header & Breadcrumb */
+.collections-header-wrapper {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 22px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.collections-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--slate-500);
+    margin-bottom: 10px;
+}
+
+.collections-breadcrumb a {
+    color: var(--slate-600);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.collections-breadcrumb a:hover {
+    color: var(--col-primary);
+}
+
+.collections-breadcrumb .separator {
+    color: var(--slate-400);
+    font-size: 0.7rem;
+}
+
+.collections-breadcrumb .current {
+    color: var(--col-primary);
+    font-weight: 600;
+    background: var(--col-primary-subtle);
+    padding: 2px 10px;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+}
+
+.collections-title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.collections-subtitle {
+    color: var(--slate-500);
+    font-size: 0.88rem;
+    margin-top: 4px;
+}
+
+.btn-add-collection-modal {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff !important;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 22px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-add-collection-modal:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+/* Executive KPI Stat Cards */
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.02);
+    height: 100%;
+}
+
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3.5px;
+    transition: height 0.2s ease;
+}
+
+.kpi-card-featured::before { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+.kpi-card-best::before     { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.kpi-card-new::before      { background: linear-gradient(90deg, #06b6d4, #38bdf8); }
+.kpi-card-total::before    { background: linear-gradient(90deg, #6366f1, #818cf8); }
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--slate-300);
+    box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+}
+
+.kpi-card:hover::before {
+    height: 4.5px;
+}
+
+.kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate-500);
+    margin-bottom: 6px;
+    display: block;
+}
+
+.kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--slate-900);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-feature-settings: "tnum";
+}
+
+.kpi-icon-pill {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.kpi-card-featured .kpi-icon-pill { background: var(--col-featured-subtle); color: var(--col-featured); border: 1px solid var(--col-featured-border); }
+.kpi-card-best .kpi-icon-pill     { background: var(--col-best-subtle); color: var(--col-best); border: 1px solid var(--col-best-border); }
+.kpi-card-new .kpi-icon-pill      { background: var(--col-new-subtle); color: var(--col-new); border: 1px solid var(--col-new-border); }
+.kpi-card-total .kpi-icon-pill    { background: var(--col-catalog-subtle); color: var(--col-catalog); border: 1px solid var(--col-catalog-border); }
+
+/* Main Card & Modern Segmented Tab Bar */
+.collections-main-card {
+    background: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+}
+
+.collections-nav-bar {
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--slate-200);
+    padding: 10px 14px;
+}
+
+.collections-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.collections-tabs .nav-link {
+    background: transparent;
+    color: var(--slate-600);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    cursor: pointer;
+}
+
+.collections-tabs .nav-link:hover {
+    background: #ffffff;
+    color: var(--slate-900);
+    border-color: var(--slate-200);
+}
+
+.collections-tabs .nav-link.active {
+    background: #ffffff !important;
+    color: var(--slate-900) !important;
+    border-color: var(--slate-300) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    font-weight: 700;
+}
+
+.tab-badge {
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tab-badge-featured { background: var(--col-featured-subtle); color: var(--col-featured); border: 1px solid var(--col-featured-border); }
+.tab-badge-best     { background: var(--col-best-subtle); color: var(--col-best); border: 1px solid var(--col-best-border); }
+.tab-badge-new      { background: var(--col-new-subtle); color: var(--col-new); border: 1px solid var(--col-new-border); }
+.tab-badge-catalog  { background: var(--col-catalog-subtle); color: var(--col-catalog); border: 1px solid var(--col-catalog-border); }
+
+/* Banner / Info Bar */
+.live-sync-banner {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-note-banner {
+    background: var(--col-primary-subtle);
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Table Styling */
+.table-collections {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.table-collections thead th {
+    background: var(--slate-50);
+    color: var(--slate-500);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--slate-200);
+    white-space: nowrap;
+}
+
+.table-collections tbody td {
+    padding: 14px 18px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--slate-700);
+    background: #ffffff;
+    transition: background-color 0.15s ease;
+}
+
+.table-collections tbody tr:hover td {
+    background-color: #f8fafc;
+}
+
+.table-collections tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Product Info Cell */
+.product-cell-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--slate-200);
+    background: var(--slate-50);
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+.product-cell-name {
+    font-weight: 600;
+    color: var(--slate-900);
+    font-size: 0.88rem;
+    line-height: 1.35;
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.15s ease;
+}
+
+.product-cell-name:hover {
+    color: var(--col-primary);
+}
+
+.sku-pill {
+    background: var(--slate-100);
+    color: var(--slate-600);
+    border: 1px solid var(--slate-200);
+    padding: 1.5px 7px;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.brand-label {
+    color: var(--slate-500);
+    font-size: 0.76rem;
+    font-weight: 500;
+}
+
+.category-tag {
+    color: var(--slate-600);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.price-main {
+    font-weight: 700;
+    color: var(--slate-900);
+    font-size: 0.92rem;
+}
+
+.discount-tag {
+    background: var(--col-featured-subtle);
+    color: var(--col-featured);
+    border: 1px solid var(--col-featured-border);
+    border-radius: 9999px;
+    padding: 1.5px 7px;
+    font-size: 0.70rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 2px;
+}
+
+/* Custom Color-Coded Toggle Switches */
+.switch-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.form-check-input.collection-toggle {
+    width: 2.75rem;
+    height: 1.5rem;
+    cursor: pointer;
+    background-color: var(--slate-300);
+    border-color: var(--slate-300);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-check-input.collection-toggle:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    border-color: var(--col-primary);
+}
+
+/* Specific Toggle Themes */
+.toggle-featured:checked {
+    background-color: var(--col-featured) !important;
+    border-color: var(--col-featured) !important;
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.35) !important;
+}
+
+.toggle-best:checked {
+    background-color: var(--col-best) !important;
+    border-color: var(--col-best) !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.35) !important;
+}
+
+.toggle-new:checked {
+    background-color: var(--col-new) !important;
+    border-color: var(--col-new) !important;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.35) !important;
+}
+
+/* Custom Order Stepper Input */
+.order-input-wrapper {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 8px;
+    padding: 2px 4px;
+    transition: all 0.2s ease;
+}
+
+.order-input-wrapper:focus-within {
+    border-color: var(--col-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.order-input-clean {
+    width: 58px;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--slate-900);
+    outline: none;
+    padding: 3px 0;
+    font-feature-settings: "tnum";
+}
+
+.btn-remove-collection {
+    color: #ef4444;
+    background: transparent;
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-remove-collection:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+/* Search Bar in Catalog Tab */
+.catalog-search-wrapper {
+    position: relative;
+    max-width: 340px;
+    width: 100%;
+}
+
+.catalog-search-input {
+    border: 1.5px solid var(--slate-200);
+    border-radius: 10px;
+    padding: 8px 14px 8px 38px;
+    font-size: 0.85rem;
+    background: #ffffff;
+    color: var(--slate-800);
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.catalog-search-input:focus {
+    border-color: var(--col-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    outline: none;
+}
+
+.catalog-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--slate-400);
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+/* Empty States */
+.empty-collection-state {
+    padding: 56px 24px;
+    text-align: center;
+}
+
+.empty-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.85rem;
+    margin-bottom: 16px;
+}
+</style>
+
+<div class="container-fluid py-3 px-lg-4">
+    
+    <!-- Breadcrumb & Page Header -->
+    <div class="collections-header-wrapper d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <div class="collections-breadcrumb">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
+                <span class="separator"><i class="bi bi-chevron-right"></i></span>
+                <a href="/admin/products/all/">Products</a>
+                <span class="separator"><i class="bi bi-chevron-right"></i></span>
+                <span class="current"><i class="bi bi-collection-play-fill me-1"></i>Showcase Collections</span>
+            </div>
+            <h1 class="collections-title">Showcase Collections & Priority Ordering</h1>
+            <p class="collections-subtitle mb-0">Curate homepage carousels and highlight top products across <strong>Featured Deals</strong>, <strong>Best Selling</strong>, and <strong>New Arrivals</strong>.</p>
+        </div>
+        <div>
+            <button type="button" class="btn-add-collection-modal" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection(null)">
+                <i class="bi bi-plus-circle-fill fs-6"></i>
+                <span>Add Product to Collection</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Executive KPI Stat Cards (Clickable Quick Switchers) -->
+    <div class="row g-3 mb-4">
+        <!-- 1: Featured Deals -->
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card kpi-card-featured" onclick="switchCollectionTab('featured-tab')">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="kpi-label">Featured Deals</span>
+                        <div class="kpi-value" id="statFeaturedCount">{{ featured_count }}</div>
+                    </div>
+                    <div class="kpi-icon-pill">
+                        <i class="bi bi-stars"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2: Best Selling -->
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card kpi-card-best" onclick="switchCollectionTab('bestselling-tab')">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="kpi-label">Best Selling</span>
+                        <div class="kpi-value" id="statBestCount">{{ best_selling_count }}</div>
+                    </div>
+                    <div class="kpi-icon-pill">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3: New Arrivals -->
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card kpi-card-new" onclick="switchCollectionTab('newarrivals-tab')">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="kpi-label">New Arrivals</span>
+                        <div class="kpi-value" id="statNewCount">{{ new_arrivals_count }}</div>
+                    </div>
+                    <div class="kpi-icon-pill">
+                        <i class="bi bi-rocket-takeoff-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4: Total Catalog -->
+        <div class="col-6 col-xl-3">
+            <div class="kpi-card kpi-card-total" onclick="switchCollectionTab('allcatalog-tab')">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="kpi-label">Total Catalog</span>
+                        <div class="kpi-value">{{ total_approved_count }}</div>
+                    </div>
+                    <div class="kpi-icon-pill">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Collections Tab Card -->
+    <div class="collections-main-card">
+        <!-- Segmented Tab Navigation -->
+        <div class="collections-nav-bar">
+            <ul class="collections-tabs" id="collectionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="featured-tab" data-bs-toggle="tab" data-bs-target="#featured-pane" type="button" role="tab">
+                        <i class="bi bi-stars text-danger"></i>
+                        <span>Featured Deals</span>
+                        <span class="tab-badge tab-badge-featured" id="badgeFeatured">{{ featured_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bestselling-tab" data-bs-toggle="tab" data-bs-target="#bestselling-pane" type="button" role="tab">
+                        <i class="bi bi-fire text-warning"></i>
+                        <span>Best Selling</span>
+                        <span class="tab-badge tab-badge-best" id="badgeBest">{{ best_selling_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="newarrivals-tab" data-bs-toggle="tab" data-bs-target="#newarrivals-pane" type="button" role="tab">
+                        <i class="bi bi-rocket-takeoff-fill text-info"></i>
+                        <span>New Arrivals</span>
+                        <span class="tab-badge tab-badge-new" id="badgeNew">{{ new_arrivals_count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="allcatalog-tab" data-bs-toggle="tab" data-bs-target="#allcatalog-pane" type="button" role="tab">
+                        <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+                        <span>All Products Catalog</span>
+                        <span class="tab-badge tab-badge-catalog">{{ total_approved_count }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Panes Content -->
+        <div class="p-3 p-lg-4">
+            <div class="tab-content" id="collectionTabContent">
+                
+                <!-- TAB 1: FEATURED DEALS -->
+                <div class="tab-pane fade show active" id="featured-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="order-note-banner">
+                            <i class="bi bi-info-circle-fill text-primary fs-6"></i>
+                            <span><strong>Sequence Priority:</strong> Products with lower numbers (e.g. <code>1</code>, <code>2</code>) appear first on the customer storefront.</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger fw-semibold px-3 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_featured')">
+                            <i class="bi bi-plus-lg"></i> Add to Featured Deals
+                        </button>
+                    </div>
+
+                    {% if featured_products %}
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table-collections align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;" class="text-center">Priority</th>
+                                    <th>Product Details</th>
+                                    <th>Category</th>
+                                    <th>Liquidating Price</th>
+                                    <th class="text-center" style="width: 140px;">Featured Badge</th>
+                                    <th class="text-end" style="width: 110px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in featured_products %}
+                                <tr id="row-featured-{{ p.id }}">
+                                    <td class="text-center">
+                                        <div class="order-input-wrapper">
+                                            <span class="text-muted small fw-bold ps-1">#</span>
+                                            <input type="number" min="0" class="order-input-clean order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="featured_order" 
+                                                   value="{{ p.featured_order }}" title="Set display priority (1 = highest)">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.url }}" alt="{{ p.product_name }}" class="product-cell-thumb" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&q=80';">
+                                            {% else %}
+                                            <div class="product-cell-thumb d-flex align-items-center justify-content-center text-muted">
+                                                <i class="bi bi-box fs-5"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="product-cell-name">{{ p.product_name }}</a>
+                                                <div class="d-flex align-items-center gap-2 mt-1">
+                                                    <span class="sku-pill">{{ p.product_id|default:p.model_no }}</span>
+                                                    {% if p.brand_name %}<span class="brand-label">• {{ p.brand_name }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="category-tag">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="price-main">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="discount-tag"><i class="bi bi-percent"></i>{{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-featured" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_featured" checked title="Toggle Featured Deal status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn-remove-collection" onclick="toggleCollection('{{ p.id }}', 'is_featured', false, 'row-featured-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-collection-state border rounded-3 bg-light">
+                        <div class="empty-icon-wrap" style="background: var(--col-featured-subtle); color: var(--col-featured);">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">No Featured Deals Selected Yet</h6>
+                        <p class="small text-muted mb-3" style="max-width: 420px; margin: 0 auto;">Select clearance or spotlight inventory from your approved catalog to highlight on the homepage.</p>
+                        <button type="button" class="btn btn-sm btn-danger px-3.5 py-2 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_featured')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Featured Product
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 2: BEST SELLING -->
+                <div class="tab-pane fade" id="bestselling-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="order-note-banner">
+                            <i class="bi bi-info-circle-fill text-primary fs-6"></i>
+                            <span><strong>Sequence Priority:</strong> Products with lower numbers (e.g. <code>1</code>, <code>2</code>) appear first on the customer storefront.</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold px-3 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_best_selling')">
+                            <i class="bi bi-plus-lg"></i> Add to Best Selling
+                        </button>
+                    </div>
+
+                    {% if best_selling_products %}
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table-collections align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;" class="text-center">Priority</th>
+                                    <th>Product Details</th>
+                                    <th>Category</th>
+                                    <th>Liquidating Price</th>
+                                    <th class="text-center" style="width: 140px;">Best Seller Badge</th>
+                                    <th class="text-end" style="width: 110px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in best_selling_products %}
+                                <tr id="row-best-{{ p.id }}">
+                                    <td class="text-center">
+                                        <div class="order-input-wrapper">
+                                            <span class="text-muted small fw-bold ps-1">#</span>
+                                            <input type="number" min="0" class="order-input-clean order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="best_selling_order" 
+                                                   value="{{ p.best_selling_order }}" title="Set display priority (1 = highest)">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.url }}" alt="{{ p.product_name }}" class="product-cell-thumb" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&q=80';">
+                                            {% else %}
+                                            <div class="product-cell-thumb d-flex align-items-center justify-content-center text-muted">
+                                                <i class="bi bi-box fs-5"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="product-cell-name">{{ p.product_name }}</a>
+                                                <div class="d-flex align-items-center gap-2 mt-1">
+                                                    <span class="sku-pill">{{ p.product_id|default:p.model_no }}</span>
+                                                    {% if p.brand_name %}<span class="brand-label">• {{ p.brand_name }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="category-tag">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="price-main">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="discount-tag"><i class="bi bi-percent"></i>{{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-best" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_best_selling" checked title="Toggle Best Selling status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn-remove-collection" onclick="toggleCollection('{{ p.id }}', 'is_best_selling', false, 'row-best-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-collection-state border rounded-3 bg-light">
+                        <div class="empty-icon-wrap" style="background: var(--col-best-subtle); color: var(--col-best);">
+                            <i class="bi bi-fire"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">No Best Selling Products Selected Yet</h6>
+                        <p class="small text-muted mb-3" style="max-width: 420px; margin: 0 auto;">Spotlight high-velocity or popular surplus products to boost conversions.</p>
+                        <button type="button" class="btn btn-sm btn-warning text-dark px-3.5 py-2 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_best_selling')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Best Seller
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 3: NEW ARRIVALS -->
+                <div class="tab-pane fade" id="newarrivals-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="order-note-banner">
+                            <i class="bi bi-info-circle-fill text-primary fs-6"></i>
+                            <span><strong>Sequence Priority:</strong> Products with lower numbers (e.g. <code>1</code>, <code>2</code>) appear first on the customer storefront.</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info fw-semibold px-3 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_new_arrival')">
+                            <i class="bi bi-plus-lg"></i> Add to New Arrivals
+                        </button>
+                    </div>
+
+                    {% if new_arrival_products %}
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table-collections align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 120px;" class="text-center">Priority</th>
+                                    <th>Product Details</th>
+                                    <th>Category</th>
+                                    <th>Liquidating Price</th>
+                                    <th class="text-center" style="width: 140px;">New Arrival Badge</th>
+                                    <th class="text-end" style="width: 110px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in new_arrival_products %}
+                                <tr id="row-new-{{ p.id }}">
+                                    <td class="text-center">
+                                        <div class="order-input-wrapper">
+                                            <span class="text-muted small fw-bold ps-1">#</span>
+                                            <input type="number" min="0" class="order-input-clean order-input" 
+                                                   data-id="{{ p.id }}" data-order-field="new_arrival_order" 
+                                                   value="{{ p.new_arrival_order }}" title="Set display priority (1 = highest)">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.url }}" alt="{{ p.product_name }}" class="product-cell-thumb" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&q=80';">
+                                            {% else %}
+                                            <div class="product-cell-thumb d-flex align-items-center justify-content-center text-muted">
+                                                <i class="bi bi-box fs-5"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="product-cell-name">{{ p.product_name }}</a>
+                                                <div class="d-flex align-items-center gap-2 mt-1">
+                                                    <span class="sku-pill">{{ p.product_id|default:p.model_no }}</span>
+                                                    {% if p.brand_name %}<span class="brand-label">• {{ p.brand_name }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="category-tag">{{ p.category.name|default:"Unassigned" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="price-main">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="discount-tag"><i class="bi bi-percent"></i>{{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-new" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_new_arrival" checked title="Toggle New Arrival status">
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn-remove-collection" onclick="toggleCollection('{{ p.id }}', 'is_new_arrival', false, 'row-new-{{ p.id }}')">
+                                            <i class="bi bi-trash3"></i> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-collection-state border rounded-3 bg-light">
+                        <div class="empty-icon-wrap" style="background: var(--col-new-subtle); color: var(--col-new);">
+                            <i class="bi bi-rocket-takeoff-fill"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">No New Arrivals Selected Yet</h6>
+                        <p class="small text-muted mb-3" style="max-width: 420px; margin: 0 auto;">Showcase newly intake inventory in the New Arrivals showcase reel.</p>
+                        <button type="button" class="btn btn-sm btn-info text-white px-3.5 py-2 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#addProductModal" onclick="presetModalCollection('is_new_arrival')">
+                            <i class="bi bi-plus-lg me-1"></i> Add First New Arrival
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- TAB 4: ALL PRODUCTS CATALOG (QUICK MANAGE MATRIX) -->
+                <div class="tab-pane fade" id="allcatalog-pane" role="tabpanel">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                        <div class="live-sync-banner">
+                            <i class="bi bi-lightning-charge-fill text-success fs-6"></i>
+                            <span><strong>Live Matrix:</strong> Toggle any showcase badge below to immediately add or remove a product from customer collections.</span>
+                        </div>
+                        <div class="catalog-search-wrapper">
+                            <i class="bi bi-search catalog-search-icon"></i>
+                            <input type="text" id="catalogSearchInput" class="catalog-search-input" placeholder="Search by name, SKU, or brand...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-3 border">
+                        <table class="table-collections align-middle" id="catalogTable">
+                            <thead>
+                                <tr>
+                                    <th>Product Details</th>
+                                    <th>Price</th>
+                                    <th class="text-center" style="width: 140px;">
+                                        <i class="bi bi-stars text-danger me-1"></i>Featured
+                                    </th>
+                                    <th class="text-center" style="width: 140px;">
+                                        <i class="bi bi-fire text-warning me-1"></i>Best Selling
+                                    </th>
+                                    <th class="text-center" style="width: 140px;">
+                                        <i class="bi bi-rocket-takeoff-fill text-info me-1"></i>New Arrival
+                                    </th>
+                                    <th class="text-center" style="width: 110px;">Gen. Order</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in all_catalog_products %}
+                                <tr class="catalog-row" data-search="{{ p.product_name|lower }} {{ p.product_id|lower }} {{ p.model_no|lower }} {{ p.brand_name|lower }}">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if p.images.exists %}
+                                            <img src="{{ p.images.first.url }}" alt="{{ p.product_name }}" class="product-cell-thumb" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&q=80';">
+                                            {% else %}
+                                            <div class="product-cell-thumb d-flex align-items-center justify-content-center text-muted">
+                                                <i class="bi bi-box fs-5"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <a href="/admin/products/{{ p.id }}/" class="product-cell-name">{{ p.product_name }}</a>
+                                                <div class="d-flex align-items-center gap-2 mt-1">
+                                                    <span class="sku-pill">{{ p.product_id|default:p.model_no }}</span>
+                                                    {% if p.brand_name %}<span class="brand-label">• {{ p.brand_name }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="price-main">{{ p.currency }} {{ p.liquidating_price }}</div>
+                                        {% if p.offer and p.offer > 0 %}
+                                        <span class="discount-tag">{{ p.offer }}% Off</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-featured" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_featured" {% if p.is_featured %}checked{% endif %}
+                                                   title="Toggle Featured Deal status">
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-best" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_best_selling" {% if p.is_best_selling %}checked{% endif %}
+                                                   title="Toggle Best Selling status">
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="switch-container">
+                                            <input class="form-check-input collection-toggle toggle-new" type="checkbox" role="switch"
+                                                   data-id="{{ p.id }}" data-flag="is_new_arrival" {% if p.is_new_arrival %}checked{% endif %}
+                                                   title="Toggle New Arrival status">
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="order-input-wrapper">
+                                            <input type="number" min="0" class="order-input-clean order-input" 
+                                                   style="width: 50px;" data-id="{{ p.id }}" data-order-field="display_order" 
+                                                   value="{{ p.display_order }}" title="General sequence priority">
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product to Collection Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-bottom p-4 bg-light">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2 mb-1" id="addProductModalLabel">
+                        <i class="bi bi-stars text-primary"></i> Add Products to Showcase
+                    </h5>
+                    <p class="text-muted small mb-0">Search active catalog items and toggle them into any collection showcase.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Search input -->
+                <div class="mb-4">
+                    <label class="form-label small fw-semibold text-dark">Search Approved Catalog</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="modalSearchQuery" class="form-control border-start-0 ps-0" placeholder="Type product name, SKU, brand, or model...">
+                        <button type="button" class="btn btn-primary px-4 fw-semibold" id="modalSearchBtn" onclick="searchModalProducts()">Search</button>
+                    </div>
+                </div>
+
+                <!-- Search Results Container -->
+                <div id="modalSearchResults" style="max-height: 420px; overflow-y: auto;">
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-search fs-2 opacity-50 d-block mb-2"></i>
+                        <span>Type a search query or click Search to browse catalog items</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top p-3 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-semibold" data-bs-dismiss="modal">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Toast Notification Feedback -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="saveToast" class="toast align-items-center text-white border-0 shadow-lg" style="background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(8px); border-radius: 12px;" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2 py-3 px-4" id="toastMessage">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <span class="fw-medium">Changes saved.</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentModalPreset = null;
+
+function switchCollectionTab(tabId) {
+    const triggerEl = document.getElementById(tabId);
+    if (triggerEl) {
+        const tab = new bootstrap.Tab(triggerEl);
+        tab.show();
+        // Smooth scroll to the main card
+        triggerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function presetModalCollection(flag) {
+    currentModalPreset = flag;
+    searchModalProducts();
+}
+
+function showToast(msg, isSuccess = true) {
+    const toastEl = document.getElementById('saveToast');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.innerHTML = isSuccess 
+        ? `<i class="bi bi-check-circle-fill text-success fs-5"></i> <span class="fw-medium">${msg}</span>`
+        : `<i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i> <span class="fw-medium">${msg}</span>`;
+    const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+    toast.show();
+}
+
+// Inline toggle handler
+document.addEventListener('DOMContentLoaded', () => {
+    // Attach listener for all collection switches
+    document.querySelectorAll('.collection-toggle').forEach(sw => {
+        sw.addEventListener('change', function () {
+            const id = this.dataset.id;
+            const flag = this.dataset.flag;
+            const val = this.checked;
+            updateProductSetting(id, { [flag]: val });
+        });
+    });
+
+    // Attach listener for order inputs
+    document.querySelectorAll('.order-input').forEach(inp => {
+        inp.addEventListener('change', function () {
+            const id = this.dataset.id;
+            const field = this.dataset.orderField;
+            const val = parseInt(this.value, 10) || 0;
+            updateProductSetting(id, { [field]: val });
+        });
+
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+            }
+        });
+    });
+
+    // Realtime filter for catalog tab
+    const catalogSearch = document.getElementById('catalogSearchInput');
+    if (catalogSearch) {
+        catalogSearch.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll('.catalog-row').forEach(row => {
+                const text = row.dataset.search || '';
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    // Modal Search on input Enter
+    const modalSearchInput = document.getElementById('modalSearchQuery');
+    if (modalSearchInput) {
+        modalSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchModalProducts();
+            }
+        });
+    }
+});
+
+async function updateProductSetting(productId, payload) {
+    payload.product_id = productId;
+    try {
+        const res = await fetch('/admin/api/products/collections/update/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.message || 'Saved successfully');
+            
+            // Optionally update live stats if returned
+            if (data.product) {
+                // If in one of the specific collection tabs and un-checked, visually refresh
+            }
+        } else {
+            showToast(data.message || 'Error updating product', false);
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('Connection error', false);
+    }
+}
+
+async function toggleCollection(productId, flag, state, rowIdToRemove = null) {
+    await updateProductSetting(productId, { [flag]: state });
+    if (rowIdToRemove && !state) {
+        const row = document.getElementById(rowIdToRemove);
+        if (row) {
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => { row.remove(); }, 300);
+        }
+    }
+}
+
+async function searchModalProducts() {
+    const q = (document.getElementById('modalSearchQuery')?.value || '').trim();
+    const container = document.getElementById('modalSearchResults');
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary spinner-border-sm" role="status"></div><span class="ms-2 text-muted fw-medium">Searching catalog...</span></div>`;
+
+    try {
+        const res = await fetch(`/admin/api/products/search/?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) {
+            container.innerHTML = `<div class="text-center py-5 text-muted"><i class="bi bi-box-seam fs-2 d-block mb-2 opacity-50"></i>No active catalog products found matching "${q}"</div>`;
+            return;
+        }
+
+        let html = '<div class="list-group list-group-flush border rounded-3 overflow-hidden">';
+        data.results.forEach(p => {
+            const imgHtml = p.image 
+                ? `<img src="${p.image}" class="rounded-3 border" style="width: 44px; height: 44px; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100&q=80';">`
+                : `<div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted" style="width: 44px; height: 44px;"><i class="bi bi-box fs-5"></i></div>`;
+
+            html += `
+                <div class="list-group-item d-flex flex-wrap align-items-center justify-content-between p-3 gap-2">
+                    <div class="d-flex align-items-center gap-3" style="max-width: 340px;">
+                        ${imgHtml}
+                        <div>
+                            <div class="fw-semibold text-dark text-truncate" style="max-width: 260px;">${p.product_name}</div>
+                            <div class="d-flex align-items-center gap-2 mt-0.5">
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace" style="font-size: 0.7rem;">${p.product_id}</span>
+                                <span class="text-muted small fw-medium">${p.currency} ${p.liquidating_price}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm ${p.is_featured ? 'btn-danger text-white' : 'btn-outline-danger'} px-2.5 py-1 rounded-pill fw-semibold" onclick="modalToggle(${p.id}, 'is_featured', this)">
+                            <i class="bi bi-stars me-1"></i>Featured
+                        </button>
+                        <button type="button" class="btn btn-sm ${p.is_best_selling ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} px-2.5 py-1 rounded-pill fw-semibold" onclick="modalToggle(${p.id}, 'is_best_selling', this)">
+                            <i class="bi bi-fire me-1"></i>Best Seller
+                        </button>
+                        <button type="button" class="btn btn-sm ${p.is_new_arrival ? 'btn-info text-white' : 'btn-outline-info'} px-2.5 py-1 rounded-pill fw-semibold" onclick="modalToggle(${p.id}, 'is_new_arrival', this)">
+                            <i class="bi bi-rocket-takeoff-fill me-1"></i>New
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="text-center py-5 text-danger">Failed to load catalog products.</div>`;
+    }
+}
+
+async function modalToggle(productId, flag, btn) {
+    const isCurrentlyActive = btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning') || btn.classList.contains('btn-info');
+    const newState = !isCurrentlyActive;
+    
+    // Optimistic UI toggle
+    if (flag === 'is_featured') {
+        btn.className = `btn btn-sm ${newState ? 'btn-danger text-white' : 'btn-outline-danger'} px-2.5 py-1 rounded-pill fw-semibold`;
+    } else if (flag === 'is_best_selling') {
+        btn.className = `btn btn-sm ${newState ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} px-2.5 py-1 rounded-pill fw-semibold`;
+    } else if (flag === 'is_new_arrival') {
+        btn.className = `btn btn-sm ${newState ? 'btn-info text-white' : 'btn-outline-info'} px-2.5 py-1 rounded-pill fw-semibold`;
+    }
+
+    await updateProductSetting(productId, { [flag]: newState });
+}
+</script>
+{% endblock %}

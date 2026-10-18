@@ -3,32 +3,70 @@ from .models import AdminDetails, VendorDetails
 
 
 class AdminRegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    fullname = serializers.CharField(max_length=255, required=False, allow_blank=True)
     email = serializers.EmailField()
     firstname = serializers.CharField(max_length=150, required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     lastname = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    confirm_password = serializers.CharField(write_only=True, required=False)
-    confirm_pass = serializers.CharField(write_only=True, required=False)
-    password = serializers.CharField(write_only=True, required=False)
+    confirm_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    confirm_pass = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate(self, attrs):
-        username = attrs.get("username")
-        email = attrs.get("email")
+        import re
+        email = attrs.get("email", "").strip().lower()
+        if not email:
+            raise serializers.ValidationError({"email": "Email is required."})
 
         # Resolve password
-        password = attrs.get("confirm_password") or attrs.get("confirm_pass") or attrs.get("password")
+        raw_password = attrs.get("password")
+        confirm_pass = attrs.get("confirm_password") or attrs.get("confirm_pass")
+        password = confirm_pass or raw_password
         if not password:
             raise serializers.ValidationError({"password": "Password is required."})
+
+        if raw_password and confirm_pass and raw_password != confirm_pass:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+
+        if len(password) < 6:
+            raise serializers.ValidationError({"password": "Password must be at least 6 characters."})
+
         attrs["resolved_password"] = password
 
-        # Resolve names
-        attrs["resolved_first_name"] = attrs.get("firstname") or attrs.get("first_name", "")
-        attrs["resolved_last_name"] = attrs.get("lastname") or attrs.get("last_name", "")
+        # Resolve full name
+        full_name = (
+            attrs.get("full_name") or
+            attrs.get("fullname") or
+            f"{attrs.get('firstname', '')} {attrs.get('lastname', '')}".strip() or
+            f"{attrs.get('first_name', '')} {attrs.get('last_name', '')}".strip()
+        )
+        attrs["resolved_full_name"] = full_name
 
-        if AdminDetails.objects.filter(username=username).exists():
+        # Resolve username
+        username = attrs.get("username", "").strip()
+        if not username:
+            base = ""
+            if full_name:
+                base = re.sub(r"[^a-zA-Z0-9_]", "", full_name.lower().replace(" ", "_"))
+            if not base and email:
+                base = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0].lower())
+            if not base:
+                base = "admin"
+            base = base[:20]
+            candidate_uname = base
+            counter = 1
+            while AdminDetails.objects.filter(username=candidate_uname).exists():
+                candidate_uname = f"{base[:15]}_{counter}"
+                counter += 1
+            username = candidate_uname
+        elif AdminDetails.objects.filter(username=username).exists():
             raise serializers.ValidationError({"username": "Username is already taken."})
+
+        attrs["resolved_username"] = username
+
         if AdminDetails.objects.filter(email=email).exists():
             raise serializers.ValidationError({"email": "Email is already registered."})
 
@@ -57,11 +95,17 @@ class AdminLoginSerializer(serializers.Serializer):
 
 
 class AdminDetailsSerializer(serializers.ModelSerializer):
+    admin_id = serializers.CharField(read_only=True)
+    formatted_id = serializers.CharField(read_only=True)
+
     class Meta:
         model = AdminDetails
         fields = [
             "id",
+            "admin_id",
+            "formatted_id",
             "username",
+            "full_name",
             "email",
             "account_type",
             "status",
@@ -70,7 +114,7 @@ class AdminDetailsSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "session_version", "created_at", "updated_at"]
+        read_only_fields = ["id", "admin_id", "formatted_id", "session_version", "created_at", "updated_at"]
 
 
 class VendorRegisterSerializer(serializers.Serializer):
@@ -102,18 +146,52 @@ class VendorRegisterSerializer(serializers.Serializer):
 
 
 class VendorDetailsSerializer(serializers.ModelSerializer):
+    vendor_id = serializers.CharField(read_only=True)
+    formatted_id = serializers.CharField(read_only=True)
+    first_name = serializers.CharField(read_only=True)
+    last_name = serializers.CharField(read_only=True)
+    profile_completion_percentage = serializers.IntegerField(read_only=True)
+    is_profile_complete = serializers.BooleanField(read_only=True)
+    missing_fields_labels = serializers.SerializerMethodField()
+
+    def get_missing_fields_labels(self, obj):
+        details = obj.get_profile_completion_details()
+        return details.get("missing_fields_labels", [])
+
     class Meta:
         model = VendorDetails
         fields = [
             "id",
+            "vendor_id",
+            "formatted_id",
             "username",
             "email",
+            "full_name",
+            "first_name",
+            "last_name",
+            "mobile_number",
+            "country",
+            "company_name",
+            "account_entity_type",
+            "business_location",
+            "business_address",
+            "tax_registration_number",
+            "business_type",
+            "category_interested",
+            "user_type",
             "status",
             "session_version",
+            "profile_completion_percentage",
+            "is_profile_complete",
+            "missing_fields_labels",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "session_version", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "vendor_id", "formatted_id", "first_name", "last_name", "session_version",
+            "profile_completion_percentage", "is_profile_complete",
+            "missing_fields_labels", "created_at", "updated_at"
+        ]
 
 
 
@@ -222,45 +300,384 @@ class LotSerializer(serializers.ModelSerializer):
     created_at_formatted = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
+    vendor_id = serializers.SerializerMethodField()
+    manifest_data = serializers.SerializerMethodField()
+    warehouse_images = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
+    lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
 
     class Meta:
         from .models import Lot
         model = Lot
         fields = [
             "id",
+            "vendor_id",
             "lot_number",
             "title",
+            "listing_title",
             "description",
-            "category_name",
+            "lot_description_and_notes",
+            "key_brands_included",
+            "category_allocations",
+            "condition",
+            "source_type",
+            "inventory_stock_age",
+            "third_party_certificate_available",
+            "third_party_documents",
             "inventory_location",
-            "total_price",
+            "inventory_country",
+            "inventory_city",
+            "number_of_distinct_skus",
+            "total_units_quantity",
+            "primary_unit_type",
+            "total_weight",
+            "load_type",
+            "shipping_size",
+            "lot_size",
+            "pallet_count",
+            "shipping_terms",
             "currency",
-            "reason_to_sell",
+            "total_est_retail_value_msrp",
+            "ask_price_surplus_payout",
+            "offer",
+            "excluded_export_countries",
+            "sale_method",
             "file",
             "file_url",
+            "warehouse_images",
+            "image",
             "products",
+            "manifest_data",
             "enquiry_status",
             "active_status",
             "is_active",
-            "raw_data",
+            "views_count",
             "created_at",
             "created_at_formatted",
             "updated_at",
         ]
-        read_only_fields = ["id", "lot_number", "file_url", "created_at", "created_at_formatted", "updated_at"]
+        read_only_fields = ["id", "lot_number", "file_url", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
+
+    def get_vendor_id(self, obj):
+        if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
+            return obj.formatted_vendor_id
+        if hasattr(obj, 'vendor') and obj.vendor:
+            return obj.vendor.user_id
+        return ""
 
     def get_products(self, obj):
+        from lots.importer import clean_lot_product_item
+        if hasattr(obj, 'products'):
+            try:
+                db_prods = list(obj.products.all())
+                if db_prods:
+                    prod_list = []
+                    for idx, p in enumerate(db_prods, 1):
+                        cleaned = clean_lot_product_item(p.raw_data or {}, row_counter=idx)
+                        if cleaned:
+                            prod_list.append(cleaned)
+                    return prod_list
+            except Exception:
+                pass
         if isinstance(obj.raw_data, dict):
-            return obj.raw_data.get("products", []) or obj.raw_data.get("manifest_items", [])
+            for key in ("products", "manifest_items", "preview_items", "parsed_items", "products_list"):
+                raw_prods = obj.raw_data.get(key)
+                if isinstance(raw_prods, list) and raw_prods:
+                    clean_list = []
+                    for idx, itm in enumerate(raw_prods, 1):
+                        cleaned = clean_lot_product_item(itm, row_counter=idx)
+                        if cleaned:
+                            clean_list.append(cleaned)
+                    return clean_list
         return []
+
+    def get_manifest_data(self, obj):
+        """Return the parsed Excel manifest rows stored in raw_data."""
+        from lots.importer import clean_lot_product_item
+        if not isinstance(obj.raw_data, dict):
+            return []
+        # Try all known keys where manifest rows may be stored
+        for key in ("manifest_items", "parsed_items", "preview_items", "products_list", "products"):
+            rows = obj.raw_data.get(key)
+            if rows and isinstance(rows, list):
+                clean_list = []
+                for idx, r in enumerate(rows, 1):
+                    cleaned = clean_lot_product_item(r, row_counter=idx)
+                    if cleaned:
+                        clean_list.append(cleaned)
+                return clean_list
+        return []
+
+    def get_warehouse_images(self, obj):
+        import json
+        raw_imgs = obj.warehouse_images
+        if isinstance(raw_imgs, str):
+            try:
+                raw_imgs = json.loads(raw_imgs)
+            except Exception:
+                raw_imgs = [raw_imgs]
+        if not isinstance(raw_imgs, list):
+            raw_imgs = [raw_imgs] if raw_imgs else []
+        
+        from .utils import resolve_media_url
+        request = self.context.get('request')
+        result = []
+        for img in raw_imgs:
+            if not img:
+                continue
+            res_url = resolve_media_url(img)
+            if not res_url:
+                continue
+            if res_url.startswith('/') and request:
+                result.append(request.build_absolute_uri(res_url))
+            else:
+                result.append(res_url)
+        return result
+
+    def get_image(self, obj):
+        imgs = self.get_warehouse_images(obj)
+        return imgs[0] if imgs else ""
 
     def get_created_at_formatted(self, obj):
         return obj.created_at.strftime("%b %d, %Y %H:%M") if obj.created_at else ""
 
     def get_file_url(self, obj):
-        if obj.file:
+        if hasattr(obj, 'file') and obj.file:
             return obj.file.url
         return None
+
+    def to_internal_value(self, data):
+        import json
+        import re
+        # Multipart payloads arrive as a QueryDict; DRF's JSONField treats QueryDict input as HTML form
+        # input and str()'s already-parsed lists into invalid JSON. Flatten to a plain dict first.
+        if hasattr(data, 'dict'):
+            data_copy = data.dict()
+        else:
+            data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+
+        def _parse_num(val):
+            if val is None or val == "":
+                return "0.00"
+            if isinstance(val, (int, float)):
+                return f"{val:.2f}"
+            if isinstance(val, str):
+                cleaned = re.sub(r'[^\d.-]', '', val.strip())
+                if cleaned and cleaned != '.':
+                    try:
+                        return f"{float(cleaned):.2f}"
+                    except Exception:
+                        pass
+            return "0.00"
+
+        def _parse_int(val):
+            if isinstance(val, int):
+                return val
+            if isinstance(val, float):
+                return int(val)
+            if isinstance(val, str):
+                cleaned = re.sub(r'[^\d-]', '', val.strip())
+                if cleaned:
+                    try:
+                        return int(cleaned)
+                    except Exception:
+                        pass
+            return 0
+
+        # Sanitize null/None values to safe default primitive types
+        str_fields = [
+            'title', 'description', 'listing_title', 'lot_description_and_notes',
+            'key_brands_included', 'condition', 'source_type', 'inventory_stock_age',
+            'primary_unit_type', 'total_weight', 'load_type', 'shipping_size',
+            'lot_size', 'shipping_terms', 'currency', 'offer', 'sale_method',
+            'inventory_location', 'inventory_country', 'inventory_city'
+        ]
+        for field in str_fields:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = ""
+
+        json_list_fields = [
+            'category_allocations',
+            'third_party_documents',
+            'excluded_export_countries',
+            'warehouse_images',
+        ]
+        for field in json_list_fields:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = []
+
+        for field in ['third_party_certificate_available']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = False
+
+        for field in ['number_of_distinct_skus', 'total_units_quantity', 'pallet_count']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = 0
+
+        for field in ['total_est_retail_value_msrp', 'ask_price_surplus_payout']:
+            if field in data_copy and data_copy[field] is None:
+                data_copy[field] = 0.0
+
+        # Map listing_title / aliases to title
+        for t_alias in ['listing_title', 'lot_title', 'name', 'title']:
+            if t_alias in data_copy and data_copy[t_alias] and ('title' not in data_copy or not data_copy.get('title')):
+                data_copy['title'] = str(data_copy[t_alias])
+
+        # Map lot_description_and_notes / aliases to description
+        for d_alias in ['lot_description_and_notes', 'notes', 'lot_notes']:
+            if d_alias in data_copy and data_copy[d_alias] and ('description' not in data_copy or not data_copy.get('description')):
+                data_copy['description'] = str(data_copy[d_alias])
+
+        # Clean file field: DRF FileField requires an actual UploadedFile object with .read()
+        if 'file' in data_copy:
+            f_val = data_copy['file']
+            if not hasattr(f_val, 'read'):
+                data_copy.pop('file', None)
+
+        # Clean vendor field: view handles vendor resolution via USR-001 string
+        if 'vendor' in data_copy:
+            v_val = data_copy['vendor']
+            if not isinstance(v_val, int) and not (isinstance(v_val, str) and v_val.isdigit()):
+                data_copy.pop('vendor', None)
+
+
+
+        # Fallback default title if still empty
+        if 'title' not in data_copy or not str(data_copy.get('title', '')).strip():
+            data_copy['title'] = "Surplus Lot Inventory Package"
+
+        # Clean and parse decimal fields with alias support
+        price_aliases = ['ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
+        parsed_payout = None
+        for alias in price_aliases:
+            if alias in data_copy and data_copy[alias] not in (None, ""):
+                parsed_payout = _parse_num(data_copy[alias])
+                break
+        data_copy['ask_price_surplus_payout'] = parsed_payout if parsed_payout is not None else "0.00"
+
+        msrp_aliases = ['total_est_retail_value_msrp', 'total_retail_value', 'retail_value', 'msrp']
+        parsed_msrp = None
+        for alias in msrp_aliases:
+            if alias in data_copy and data_copy[alias] not in (None, ""):
+                parsed_msrp = _parse_num(data_copy[alias])
+                break
+        data_copy['total_est_retail_value_msrp'] = parsed_msrp if parsed_msrp is not None else "0.00"
+
+
+
+        # Map quantity / SKUs / pallets aliases using robust integer cleaner
+        for q_alias in ['total_units_quantity', 'total_units', 'total_quantity', 'quantity']:
+            if q_alias in data_copy and data_copy[q_alias] is not None and data_copy[q_alias] != "":
+                data_copy['total_units_quantity'] = _parse_int(data_copy[q_alias])
+
+        for sku_alias in ['number_of_distinct_skus', 'distinct_skus', 'skus_count']:
+            if sku_alias in data_copy and data_copy[sku_alias] is not None and data_copy[sku_alias] != "":
+                data_copy['number_of_distinct_skus'] = _parse_int(data_copy[sku_alias])
+
+        for pal_alias in ['pallet_count', 'pallets', 'no_of_pallets']:
+            if pal_alias in data_copy and data_copy[pal_alias] is not None and data_copy[pal_alias] != "":
+                data_copy['pallet_count'] = _parse_int(data_copy[pal_alias])
+
+        # Parse stringified JSON fields if passed from FormData
+        for field in json_list_fields:
+            if field in data_copy and isinstance(data_copy[field], str):
+                val_str = data_copy[field].strip()
+                if val_str:
+                    try:
+                        data_copy[field] = json.loads(val_str)
+                    except Exception:
+                        if field == 'warehouse_images':
+                            data_copy[field] = [val_str]
+                        pass
+
+        # Handle raw UploadedFile objects, base64 images, or file lists for warehouse_images
+        if 'warehouse_images' in data_copy:
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            import uuid
+            import base64
+
+            raw_wh = data_copy['warehouse_images']
+            wh_items = []
+            def _flatten_wh_items(val):
+                if isinstance(val, (list, tuple)):
+                    for sub in val:
+                        _flatten_wh_items(sub)
+                elif val is not None:
+                    wh_items.append(val)
+            _flatten_wh_items(raw_wh)
+
+            processed_wh_urls = []
+            seen_names = set()
+
+            for item in wh_items:
+                if hasattr(item, 'read') and hasattr(item, 'name'):
+                    fname = getattr(item, 'name', 'image.png')
+                    if fname not in seen_names:
+                        seen_names.add(fname)
+                        safe_name = f"{uuid.uuid4().hex[:8]}_{fname}"
+                        saved_path = default_storage.save(f"lots/images/{safe_name}", item)
+                        processed_wh_urls.append(default_storage.url(saved_path))
+                elif isinstance(item, str):
+                    s = item.strip()
+                    if s.startswith("data:image/") and ";base64," in s:
+                        try:
+                            header, encoded = s.split(";base64,", 1)
+                            ext = header.split("/")[-1].split("+")[0] or "png"
+                            b_data = base64.b64decode(encoded)
+                            safe_name = f"{uuid.uuid4().hex[:12]}.{ext}"
+                            c_file = ContentFile(b_data, name=safe_name)
+                            saved_path = default_storage.save(f"lots/images/{safe_name}", c_file)
+                            processed_wh_urls.append(default_storage.url(saved_path))
+                        except Exception:
+                            pass
+                    elif s.startswith("http://") or s.startswith("https://") or s.startswith("//"):
+                        if s not in processed_wh_urls:
+                            processed_wh_urls.append(s)
+                    elif s.startswith("/media/") or s.startswith("/static/") or s.startswith("/"):
+                        if s not in processed_wh_urls:
+                            processed_wh_urls.append(s)
+                    elif s:
+                        url_cand = f"/media/{s.lstrip('/')}"
+                        if url_cand not in processed_wh_urls:
+                            processed_wh_urls.append(url_cand)
+
+            data_copy['warehouse_images'] = processed_wh_urls
+
+        # Parse boolean fields if passed as string "true"/"false"
+        for field in ['third_party_certificate_available']:
+            if field in data_copy:
+                val = data_copy[field]
+                if isinstance(val, str):
+                    data_copy[field] = val.lower() in ('true', '1', 'yes')
+
+        ret = super().to_internal_value(data_copy)
+        if 'warehouse_images' in data_copy and data_copy['warehouse_images']:
+            ret['warehouse_images'] = data_copy['warehouse_images']
+        return ret
+
+    def create(self, validated_data):
+        warehouse_images = validated_data.pop('warehouse_images', [])
+        lot = super().create(validated_data)
+        if warehouse_images:
+            lot.warehouse_images = warehouse_images
+            if not isinstance(lot.raw_data, dict):
+                lot.raw_data = {}
+            lot.raw_data['warehouse_images'] = warehouse_images
+            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        return lot
+
+    def update(self, instance, validated_data):
+        warehouse_images = validated_data.pop('warehouse_images', None)
+        lot = super().update(instance, validated_data)
+        if warehouse_images is not None:
+            lot.warehouse_images = warehouse_images
+            if not isinstance(lot.raw_data, dict):
+                lot.raw_data = {}
+            lot.raw_data['warehouse_images'] = warehouse_images
+            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        return lot
 
 
 class LotBatchEnquirySerializer(LotSerializer):
@@ -268,4 +685,56 @@ class LotBatchEnquirySerializer(LotSerializer):
     Alias serializer for backward compatibility.
     """
     pass
+
+
+class AdminNotificationSerializer(serializers.ModelSerializer):
+    created_at_formatted = serializers.SerializerMethodField()
+    admin_name = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import AdminNotification
+        model = AdminNotification
+        fields = [
+            "id",
+            "admin",
+            "admin_name",
+            "for_superadmins_only",
+            "title",
+            "message",
+            "notification_type",
+            "action_url",
+            "is_read",
+            "created_at",
+            "created_at_formatted",
+            "time_ago",
+        ]
+
+    def get_created_at_formatted(self, obj):
+        if not obj.created_at:
+            return ""
+        return obj.created_at.strftime("%b %d, %Y %I:%M %p")
+
+    def get_admin_name(self, obj):
+        if obj.admin:
+            return obj.admin.full_name or obj.admin.username
+        return "All SuperAdmins" if obj.for_superadmins_only else "All Staff"
+
+    def get_time_ago(self, obj):
+        if not obj.created_at:
+            return ""
+        from django.utils import timezone
+        diff = timezone.now() - obj.created_at
+        secs = diff.total_seconds()
+        if secs < 45:
+            return "Just now"
+        if secs < 3600:
+            mins = int(secs // 60)
+            return f"{mins}m ago"
+        if secs < 86400:
+            hrs = int(secs // 3600)
+            return f"{hrs}h ago"
+        return f"{int(secs // 86400)}d ago"
+
+
 

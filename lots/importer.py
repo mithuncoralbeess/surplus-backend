@@ -37,13 +37,13 @@ FIELD_SPECIFICATIONS = {
         'synonyms': ['available quantity*', 'available quantity', 'available qty', 'quantity', 'qty', 'units', 'count', 'total quantity', 'stock qty']
     },
     'moq': {
-        'label': 'MOQ*',
-        'mandatory': True,
+        'label': 'MOQ',
+        'mandatory': False,
         'synonyms': ['moq*', 'moq', 'minimum order quantity', 'min order qty', 'min order quantity', 'minimum quantity']
     },
     'product_condition': {
-        'label': 'Product Condition*',
-        'mandatory': True,
+        'label': 'Product Condition',
+        'mandatory': False,
         'synonyms': ['product condition*', 'product condition', 'condition', 'state', 'grade', 'item condition']
     },
 
@@ -235,6 +235,204 @@ FIELD_SPECIFICATIONS = {
     }
 }
 
+def clean_lot_product_item(item, row_counter=1):
+    """
+    Cleans and standardizes a single product item extracted from spreadsheet or LotProduct record,
+    strictly returning ONLY the 32 standard inventory fields requested by the user, with no extra or duplicate keys.
+    """
+    if not isinstance(item, dict):
+        return None
+
+    instruction_keywords = [
+        'reference directory', 'classification taxonomy', 'select a valid product category',
+        'total categories', 'ensure consistent reporting', 'master classification',
+        'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+    ]
+
+    p_name_check = str(item.get("product_name") or item.get("title") or item.get("name") or "").lower()
+    p_cat_check = str(item.get("product_category") or item.get("category") or "").lower()
+
+    if any(kw in p_name_check or kw in p_cat_check for kw in instruction_keywords):
+        return None
+    if p_name_check.strip() in ["product category", "total categories", "16", "s.no", "product name"]:
+        return None
+
+    def _val_str(v, default="-"):
+        if v is None:
+            return default
+        s = str(v).strip()
+        if not s or s.lower() in ["none", "null", "nan", "nil"]:
+            return default
+        return s
+
+    # 1. S.No*
+    s_val = item.get("s_no")
+    if s_val in [None, "", 0, "0", "None", "nan", "NIL"]:
+        s_val = row_counter
+    else:
+        try:
+            f_val = float(s_val)
+            if f_val.is_integer():
+                s_val = int(f_val)
+        except Exception:
+            pass
+
+    # 2. Product Name*
+    p_name = _val_str(item.get("product_name") or item.get("title") or item.get("name"))
+
+    # 3. Product Description*
+    p_desc = _val_str(item.get("product_description") or item.get("description"))
+
+    # 4. Product Category*
+    cat_val = _val_str(item.get("product_category") or item.get("category"))
+    if any(kw in cat_val.lower() for kw in instruction_keywords):
+        cat_val = "-"
+
+    # 5. Subcategory*
+    subcat_val = _val_str(item.get("subcategory") or item.get("sub_category"))
+    if any(kw in subcat_val.lower() for kw in instruction_keywords):
+        subcat_val = "-"
+
+    # 6. Brand / Manufacturer
+    brand_val = _val_str(item.get("brand") or item.get("manufacturer") or item.get("brand_manufacturer"))
+
+    # 7. Model / Part Number
+    model_val = _val_str(item.get("model_part_number") or item.get("model") or item.get("part_number") or item.get("sku"))
+
+    # 8. Available Quantity*
+    avail_qty = item.get("available_quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = item.get("quantity")
+    if avail_qty in [None, "", "None", "nan"]:
+        avail_qty = 1
+    else:
+        try:
+            f_qty = float(avail_qty)
+            if f_qty.is_integer():
+                avail_qty = int(f_qty)
+        except Exception:
+            pass
+
+    # 9. Original Price
+    orig_price = item.get("original_price")
+    if orig_price in [None, "", "None", "nan"]:
+        orig_price = item.get("msrp") or item.get("retail_price") or "-"
+    orig_price = _val_str(orig_price)
+
+    # 10. Asking Price
+    ask_price = item.get("asking_price")
+    if ask_price in [None, "", "None", "nan"]:
+        ask_price = item.get("price") or "-"
+    ask_price = _val_str(ask_price)
+
+    # 11. Country of Origin
+    origin_val = _val_str(item.get("country_of_origin") or item.get("origin") or item.get("country"))
+
+    # 12. Year of Manufacture
+    yom = item.get("year_of_manufacture") or item.get("year") or item.get("mfg_year")
+    try:
+        if isinstance(yom, float) and yom.is_integer():
+            yom = int(yom)
+    except Exception:
+        pass
+    yom = _val_str(yom)
+
+    # 13. Datasheet / Certificate Link
+    doc_link = _val_str(item.get("datasheet_certificate_link") or item.get("datasheet") or item.get("link") or item.get("certificate_link"))
+
+    # 14. Gross Weight per Unit
+    gross_wt = _val_str(item.get("gross_weight_per_unit") or item.get("gross_weight"))
+
+    # 15. Length
+    len_val = _val_str(item.get("length"))
+
+    # 16. Width
+    width_val = _val_str(item.get("width"))
+
+    # 17. Height
+    height_val = _val_str(item.get("height"))
+
+    # 18. Measurement Unit
+    uom_val = _val_str(item.get("measurement_unit") or item.get("uom") or item.get("dimension_unit"))
+
+    # 19. Stock Age
+    stock_age_val = _val_str(item.get("stock_age") or item.get("inventory_age"))
+
+    # 20. Tested and verified
+    tested_val = _val_str(item.get("tested_and_verified") or item.get("tested"))
+
+    # 21. Functional Status
+    func_status = _val_str(item.get("functional_status") or item.get("status"))
+
+    # 22. Visible Damage?
+    vis_damage = _val_str(item.get("visible_damage") or item.get("damage"))
+
+    # 23. Missing Parts?
+    missing_parts = _val_str(item.get("missing_parts"))
+
+    # 24. Warranty Available?
+    warranty_val = _val_str(item.get("warranty_available") or item.get("warranty"))
+
+    # 25. Safety Certificate Available?
+    safety_cert = _val_str(item.get("safety_certificate_available") or item.get("safety_certificate"))
+
+    # 26. Certificate Type
+    cert_type = _val_str(item.get("certificate_type"))
+
+    # 27. Regulatory Approval
+    reg_approval = _val_str(item.get("regulatory_approval") or item.get("approvals"))
+
+    # 28. Hazardous Material?
+    hazmat_val = _val_str(item.get("hazardous_material") or item.get("hazmat"))
+
+    # 29. Recyclable?
+    recyclable_val = _val_str(item.get("recyclable"))
+
+    # 30. Estimated Product Life Remaining
+    life_remaining = _val_str(item.get("estimated_product_life_remaining") or item.get("remaining_life"))
+
+    # 31. Seller Custom Field 1
+    custom_1 = _val_str(item.get("seller_custom_field_1") or item.get("custom_field_1"))
+
+    # 32. Seller Custom Field 2
+    custom_2 = _val_str(item.get("seller_custom_field_2") or item.get("custom_field_2"))
+
+    # Strictly return ONLY the 32 requested fields, with no unwanted keys like sku, title, moq, etc.
+    return {
+        "s_no": s_val,
+        "product_name": p_name,
+        "product_description": p_desc,
+        "product_category": cat_val,
+        "subcategory": subcat_val,
+        "brand": brand_val,
+        "model_part_number": model_val,
+        "available_quantity": avail_qty,
+        "original_price": orig_price,
+        "asking_price": ask_price,
+        "country_of_origin": origin_val,
+        "year_of_manufacture": yom,
+        "datasheet_certificate_link": doc_link,
+        "gross_weight_per_unit": gross_wt,
+        "length": len_val,
+        "width": width_val,
+        "height": height_val,
+        "measurement_unit": uom_val,
+        "stock_age": stock_age_val,
+        "tested_and_verified": tested_val,
+        "functional_status": func_status,
+        "visible_damage": vis_damage,
+        "missing_parts": missing_parts,
+        "warranty_available": warranty_val,
+        "safety_certificate_available": safety_cert,
+        "certificate_type": cert_type,
+        "regulatory_approval": reg_approval,
+        "hazardous_material": hazmat_val,
+        "recyclable": recyclable_val,
+        "estimated_product_life_remaining": life_remaining,
+        "seller_custom_field_1": custom_1,
+        "seller_custom_field_2": custom_2,
+    }
+
 
 def parse_spreadsheet(file_obj, manual_mapping=None):
     """
@@ -246,17 +444,50 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
 
     try:
         if filename.endswith('.csv'):
+            file_obj.seek(0)
             df_raw = pd.read_csv(file_obj, header=None, nrows=25)
+            df_raw_valid = df_raw.dropna(how='all')
+            if len(df_raw_valid) < 2:
+                raise ValueError("The sheet must contain a header row and at least 1 item data row.")
             header_row_idx = _find_header_row(df_raw)
             file_obj.seek(0)
             df = pd.read_csv(file_obj, header=header_row_idx)
         elif filename.endswith('.xlsx') or filename.endswith('.xls'):
-            df_raw = pd.read_excel(file_obj, header=None, nrows=25)
+            file_obj.seek(0)
+            target_sheet_name = None
+            try:
+                xl = pd.ExcelFile(file_obj)
+                sheet_names = xl.sheet_names
+
+                # 1. Target specifically the 'Inventory' tab (case-insensitive check matching surplus-frontend)
+                for sname in sheet_names:
+                    if str(sname).strip().lower() == 'inventory':
+                        target_sheet_name = sname
+                        break
+
+                if target_sheet_name is None:
+                    raise ValueError(
+                        f"Sheet Validation Failed: The uploaded Excel file must contain an 'Inventory' tab. "
+                        f"Found tabs: [{', '.join(sheet_names)}]. Please use the standard template."
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                raise ValueError(f"Could not read Excel file sheets: {str(e)}")
+
+            file_obj.seek(0)
+            df_raw = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=None, nrows=25)
+            df_raw_valid = df_raw.dropna(how='all')
+            if len(df_raw_valid) < 2:
+                raise ValueError("The 'Inventory' sheet must contain a header row and at least 1 item data row.")
+
             header_row_idx = _find_header_row(df_raw)
             file_obj.seek(0)
-            df = pd.read_excel(file_obj, header=header_row_idx)
+            df = pd.read_excel(file_obj, sheet_name=target_sheet_name, header=header_row_idx)
         else:
             raise ValueError("Unsupported file format. Please upload .csv or .xlsx")
+    except ValueError:
+        raise
     except Exception as e:
         raise ValueError(f"Error reading file: {str(e)}")
 
@@ -312,7 +543,21 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 'key': internal_col,
                 'label': spec['label']
             })
-            header_errors.append(f"Header Error: Mandatory column '{spec['label']}' is missing from the Excel sheet.")
+
+    if missing_mandatory_headers:
+        missing_labels_str = ", ".join([d['label'] for d in missing_mandatory_headers])
+        header_errors.append(
+            f"Header Validation Error: Missing mandatory column header(s) with * in manifest: [{missing_labels_str}]. "
+            f"Required mandatory headers: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*."
+        )
+
+    # Structure check: Check if other format sheet was added
+    matched_mandatory_count = len([k for k in ['s_no', 'product_name', 'product_description', 'product_category', 'subcategory', 'available_quantity'] if k in mapping])
+    if matched_mandatory_count == 0 or len(mapping) < 2:
+        header_errors.append(
+            "Invalid Sheet Structure: The uploaded spreadsheet does not match our Surplus Manifest template. "
+            "Please download and use the official Surplus Market XLSX Format template."
+        )
 
     # Filter out completely blank rows
     df = df.dropna(how='all')
@@ -323,7 +568,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
     for index, row in df.iterrows():
         row_num = len(parsed_items) + 1  # 1-indexed count of parsed product items
 
-        # Check for explicit summary / footer rows (e.g., "Grand Total", "Summary")
+        # Check for explicit summary / footer / instruction rows (e.g., "Grand Total", "Summary", Taxonomy guidelines)
         first_val = str(row.iloc[0]).strip().lower() if len(row) > 0 and pd.notna(row.iloc[0]) else ""
         if first_val in ['grand total', 'summary', 'totals']:
             continue
@@ -331,6 +576,16 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
             second_val = str(row.iloc[1]).strip().lower() if len(row) > 1 and pd.notna(row.iloc[1]) else ""
             if not second_val or second_val in ['units', 'value', 'items', '']:
                 continue
+
+        # Filter out spreadsheet template instruction & header rows
+        row_str_full = " ".join([str(v).lower() for v in row.values if pd.notna(v)])
+        instruction_keywords = [
+            'reference directory', 'classification taxonomy', 'select a valid product category',
+            'total categories', 'ensure consistent reporting', 'master classification',
+            'inventory tab', 'mapped subcategory', 'taxonomy for all inventory'
+        ]
+        if any(kw in row_str_full for kw in instruction_keywords):
+            continue
 
         item = {}
         missing_row_fields = []
@@ -359,7 +614,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 if val is not None:
                     val = _clean_numeric(val)
 
-            # Check mandatory vs optional field validation (Mandatory fields only)
+            # Check mandatory vs optional field validation
             if spec['mandatory']:
                 is_empty = (val is None or val == "") or (internal_col in ['available_quantity', 'moq'] and val == 0)
                 if is_empty:
@@ -368,9 +623,7 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 else:
                     item[internal_col] = val
             else:
-                if val is None or val == "":
-                    item[internal_col] = "NIL"
-                else:
+                if val is not None and val != "":
                     item[internal_col] = val
 
         # Calculate total asking value for row safely
@@ -398,11 +651,20 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
                 except (ValueError, TypeError):
                     pass
 
+        # Skip completely blank or placeholder product rows
+        p_name_val = str(item.get('product_name') or '').strip().lower()
+        p_desc_val = str(item.get('product_description') or '').strip().lower()
+        p_brand_val = str(item.get('brand') or '').strip().lower()
+        p_model_val = str(item.get('model_part_number') or '').strip().lower()
+        empty_placeholders = {'', '-', 'nil', 'none', 'null', 'nan', 'n/a'}
+        if (p_name_val in empty_placeholders) and (p_desc_val in empty_placeholders) and (p_brand_val in empty_placeholders) and (p_model_val in empty_placeholders):
+            continue
+
         if missing_row_fields:
             row_errors.append({
                 'row': row_num,
                 'missing_fields': missing_row_fields,
-                'message': f"Row {row_num}: Mandatory data missing for field(s): {', '.join(missing_row_fields)}"
+                'message': f"Row {row_num}: Missing [{', '.join(missing_row_fields)}]"
             })
 
         parsed_items.append(item)
@@ -421,7 +683,29 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
         'invalid_items_count': len(row_errors),
     }
 
-    is_valid = len(missing_mandatory_headers) == 0 and len(row_errors) == 0
+    if row_errors:
+        summary_text = (
+            f"{'; '.join(e['message'] for e in row_errors[:5])} ...and {len(row_errors) - 5} more row(s) with invalid data."
+            if len(row_errors) > 5 else "; ".join(e['message'] for e in row_errors)
+        )
+        header_errors.append(
+            f"Data Validation Failed in 'Inventory' sheet: {summary_text} All mandatory fields with * "
+            "(S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*) "
+            "must be filled in with valid data for every row."
+        )
+
+    clean_items = []
+    for idx, itm in enumerate(parsed_items, 1):
+        c = clean_lot_product_item(itm, row_counter=idx)
+        if c:
+            clean_items.append(c)
+
+    if len(clean_items) == 0:
+        header_errors.append(
+            "No valid inventory items found in 'Inventory' sheet. Please ensure your sheet contains at least 1 valid product row below the header."
+        )
+
+    is_valid = len(missing_mandatory_headers) == 0 and len(header_errors) == 0 and len(row_errors) == 0 and len(clean_items) > 0
 
     return {
         'is_valid': is_valid,
@@ -431,8 +715,8 @@ def parse_spreadsheet(file_obj, manual_mapping=None):
         'detected_columns': raw_columns,
         'mapping': mapping,
         'summary': summary,
-        'preview_items': parsed_items,
-        'all_items': parsed_items
+        'preview_items': clean_items,
+        'all_items': clean_items
     }
 
 

@@ -27,6 +27,37 @@
                 {% else %}
                 <span class="badge bg-secondary-subtle text-secondary ms-1 fs-6 rounded-pill" id="header-active-badge-{{ enquiry.id }}"><i class="bi bi-eye-slash me-1"></i>Inactive</span>
                 {% endif %}
+
+                <!-- Marketplace Collection Badges / Quick Toggles -->
+                <span class="d-inline-flex align-items-center gap-1.5 flex-wrap ms-lg-2" id="header-collections-group">
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_featured %}btn-danger text-white{% else %}btn-outline-danger{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ enquiry.id }}" data-flag="is_featured" data-active="{% if enquiry.is_featured %}true{% else %}false{% endif %}"
+                            title="Toggle Featured Deal status" style="font-size: 0.78rem;">
+                        <i class="bi bi-star-fill me-1"></i>Featured
+                        <span class="badge {% if enquiry.is_featured %}bg-white text-danger{% else %}bg-danger-subtle text-danger{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if enquiry.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ enquiry.id }}" data-flag="is_best_selling" data-active="{% if enquiry.is_best_selling %}true{% else %}false{% endif %}"
+                            title="Toggle Best Selling status" style="font-size: 0.78rem;">
+                        <i class="bi bi-fire me-1"></i>Best Seller
+                        <span class="badge {% if enquiry.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if enquiry.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ enquiry.id }}" data-flag="is_new_arrival" data-active="{% if enquiry.is_new_arrival %}true{% else %}false{% endif %}"
+                            title="Toggle New Arrival status" style="font-size: 0.78rem;">
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i>New Arrival
+                        <span class="badge {% if enquiry.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if enquiry.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                </span>
             </h4>
         </div>
         <div class="d-flex gap-2">
@@ -41,7 +72,7 @@
                 data-id="{{ enquiry.id }}" data-active="inactive">
                 <i class="bi bi-pause-circle"></i> Set Inactive
             </button>
-            {% else %}
+            {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
                 class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-action-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
@@ -80,9 +111,52 @@
         <div class="col-12">
             <div class="premium-card mb-4">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase text-muted mb-4"
-                        style="letter-spacing: 0.5px; font-size: 0.8rem;"><i
-                            class="bi bi-person-badge me-2 text-primary"></i>User Details</h6>
+                    <h6 class="fw-bold text-uppercase text-muted mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                        style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <span class="d-flex align-items-center flex-wrap gap-2">
+                            {% if user_data.is_admin %}
+                            <i class="bi bi-shield-check me-1 text-primary fs-6"></i><span class="text-dark fw-bold">Admin Details</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                <i class="bi bi-shield-fill-check me-1"></i>Internal Admin Submission &bull; 100% Verified
+                            </span>
+                            {% else %}
+                            <i class="bi bi-person-badge me-1 text-primary"></i><span>Vendor Details</span>
+                            {% if assisted_by_admin %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;" title="{{ assisted_by_admin.email }}">
+                                <i class="bi bi-shield-check me-1"></i>Assisted by ADM-{{ assisted_by_admin.id|stringformat:"04d" }} ({{ assisted_by_admin.full_name|default:assisted_by_admin.username }})
+                            </span>
+                            {% if intake_channel %}
+                            <span class="badge {% if intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                {% if intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1"></i>{% elif intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ intake_channel }} Intake
+                            </span>
+                            {% endif %}
+                            {% elif vendor_profile %}
+                            <span class="badge {% if vendor_profile.is_complete %}bg-success-subtle text-success border border-success-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %} px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                <i class="bi bi-person-check-fill me-1"></i>Profile {{ vendor_profile.percentage }}% Completed
+                            </span>
+                            {% endif %}
+                            {% endif %}
+                        </span>
+                        {% if user_data.vendor_id and user_data.vendor_id != 'N/A' %}
+                        <span class="badge {% if user_data.is_admin %}bg-primary text-white{% else %}bg-primary-subtle text-primary border border-primary-subtle{% endif %} px-2.5 py-1 fs-6 rounded-pill fw-bold font-monospace">
+                            {% if user_data.is_admin %}<i class="bi bi-shield-lock-fill me-1"></i>{% else %}<i class="bi bi-person-badge me-1"></i>{% endif %}{{ user_data.vendor_id }}
+                        </span>
+                        {% endif %}
+                    </h6>
+
+                    {% if not user_data.is_admin and vendor_profile and not vendor_profile.is_complete %}
+                    <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-start gap-2 border-warning-subtle" style="font-size: 0.85rem;">
+                        <i class="bi bi-exclamation-triangle-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong>Profile Incomplete ({{ vendor_profile.percentage }}%):</strong> 
+                            This vendor has not filled all mandatory details. 
+                            If you approve this product, it will remain unlisted from the public marketplace until the vendor completes their profile.
+                            {% if vendor_profile.missing_fields_labels %}
+                            <div class="mt-1 small text-muted"><strong>Missing:</strong> {{ vendor_profile.missing_fields_labels|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <div class="row g-3">
                         <div class="col-md-4 col-sm-6">
@@ -94,7 +168,7 @@
                         
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
-                                <span class="data-label">Contact Person</span>
+                                <span class="data-label">{% if user_data.is_admin %}Admin Name{% else %}Contact Person{% endif %}</span>
                                 <span class="data-value">{{ user_data.full_name|default:"N/A" }}</span>
                             </div>
                         </div>
@@ -109,13 +183,13 @@
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Email</span>
-                                <span class="data-value" style="color: #f59e0b; font-weight: 500;">{{ user_data.email|default:"N/A" }}</span>
+                                <span class="data-value" style="color: #2563eb; font-weight: 500;">{{ user_data.email|default:"N/A" }}</span>
                             </div>
                         </div>
                         
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
-                                <span class="data-label">Inventory Location</span>
+                                <span class="data-label">Business Location</span>
                                 <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
                             </div>
                         </div>
@@ -208,6 +282,23 @@
                                     <span class="fs-5 fw-medium text-dark">{{ product_data.previous_price|default:"N/A" }}</span>
                                 </div>
                             </div>
+                            <div class="inline-card border-left-danger py-2 px-3 bg-white shadow-sm rounded">
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-percent text-danger me-1"></i> Offer</span>
+                                <div class="d-flex align-items-center">
+                                    {% if enquiry.offer and enquiry.offer > 0 %}
+                                    <span class="badge bg-danger-subtle text-danger me-2"><i class="bi bi-tag-fill me-1"></i>Offer</span>
+                                    <span class="fs-5 fw-medium text-danger">{{ enquiry.offer|floatformat:2 }}%</span>
+                                    {% elif product_data.offer and product_data.offer != '0' and product_data.offer != '0.00' %}
+                                    <span class="badge bg-danger-subtle text-danger me-2"><i class="bi bi-tag-fill me-1"></i>Offer</span>
+                                    <span class="fs-5 fw-medium text-danger">{{ product_data.offer }}%</span>
+                                    {% elif enquiry.offer %}
+                                    <span class="fs-5 fw-medium text-dark">{{ enquiry.offer|floatformat:2 }}%</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary me-2">None</span>
+                                    <span class="fs-5 fw-medium text-muted">0%</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                             <div class="inline-card border-left-info py-2 px-3 bg-white shadow-sm rounded">
                                 <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-hand-thumbs-up-fill text-info me-1"></i> Available for Offers</span>
                                 <div class="d-flex align-items-center">
@@ -255,6 +346,12 @@
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
                                     <span class="text-dark fw-medium">{{ product_data.manufacturing_country|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
+                                    <span class="text-dark fw-medium"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ enquiry.inventory_location|default:product_data.inventory_location|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
@@ -313,7 +410,7 @@
                             
                             <!-- Extra Dynamic Fields -->
                             {% for key, val in product_data.items %}
-                                {% if key not in "product_name,product_category,brand_name,model_no,manufacturing_country,manufacturing_year,dimensions,expiry_date,excluded_countries,quantity,currency,liquidating_price,current_price,previous_price,description,reason_to_sell,warranty,certificate,title,condition,target_price,is_available_for_offers,date_approved,featured_image_url,third_party_certificate,documents,seller_email" %}
+                                {% if key not in "product_name,product_category,brand_name,model_no,manufacturing_country,manufacturing_year,dimensions,expiry_date,excluded_countries,quantity,currency,liquidating_price,current_price,previous_price,description,reason_to_sell,warranty,warranty_document,warranty_attachment,certificate,certificate_document,third_party_documents,title,condition,target_price,is_available_for_offers,date_approved,featured_image_url,third_party_certificate,documents,seller_email" %}
                                 <div class="col-md-6 col-lg-4">
                                     <div class="spec-item">
                                         <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key|title }}</span>
@@ -352,15 +449,17 @@
                         <h6 class="fw-bold text-uppercase text-muted mb-4 text-center" style="letter-spacing: 0.5px; font-size: 0.8rem;">
                             <i class="bi bi-image me-2 text-primary"></i>Product Media
                         </h6>
-                        <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
-                            {% if enquiry.image %}
-                            <img src="{{ enquiry.image.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                        <div class="text-center rounded-3 overflow-hidden bg-light p-3 border mb-3">
+                            {% if enquiry.images.first %}
+                            <img id="enquiry-main-image" src="{{ enquiry.images.first.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
+                            {% elif enquiry.image %}
+                            <img id="enquiry-main-image" src="{{ enquiry.image.url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                             {% elif enquiry.raw_data.featured_image_url %}
-                            <img src="{{ enquiry.raw_data.featured_image_url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.featured_image_url }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                             {% elif enquiry.raw_data.image %}
-                            <img src="{{ enquiry.raw_data.image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                             {% elif enquiry.raw_data.product_image %}
-                            <img src="{{ enquiry.raw_data.product_image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;">
+                            <img id="enquiry-main-image" src="{{ enquiry.raw_data.product_image }}" alt="Product Image" class="img-fluid rounded shadow-sm" style="max-height: 400px; object-fit: contain; width: 100%;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                             {% else %}
                             <div class="p-5 text-muted fst-italic">
                                 <i class="bi bi-image text-muted opacity-50 mb-3 d-block" style="font-size: 3rem;"></i>
@@ -368,6 +467,23 @@
                             </div>
                             {% endif %}
                         </div>
+
+                        <!-- Gallery Thumbnails -->
+                        {% if enquiry.images.all %}
+                        <div class="d-flex gap-2 flex-wrap justify-content-center pt-2 border-top">
+                            {% for img_obj in enquiry.images.all %}
+                            <div class="position-relative d-inline-block">
+                                <img src="{{ img_obj.url }}" 
+                                     onclick="document.getElementById('enquiry-main-image').src = this.src"
+                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200&q=80';"
+                                     class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75 {% if img_obj.is_real_photo %}border-success{% endif %}" 
+                                     style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                                     alt="Gallery Thumbnail"
+                                     title="Click to view full image">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -505,7 +621,83 @@
                     btn.textContent = 'Save Changes';
                 }
             });
+        const enqModalForm = document.getElementById('editSellerEnquiryForm');
+        if (enqModalForm) {
+            const enqSelect = enqModalForm.querySelector('select[name="enquiry_status"]');
+            const actSelect = enqModalForm.querySelector('select[name="active_status"]');
+            if (enqSelect && actSelect) {
+                const syncActiveState = () => {
+                    const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const activeOpt = actSelect.querySelector('option[value="active"]');
+                    if (activeOpt) {
+                        activeOpt.disabled = !isApproved;
+                    }
+                    if (!isApproved && actSelect.value === 'active') {
+                        actSelect.value = 'inactive';
+                    }
+                };
+                enqSelect.addEventListener('change', syncActiveState);
+                syncActiveState();
+            }
         }
+
+        // Quick Collection Toggle Handlers (Featured, Best Seller, New Arrival)
+        document.querySelectorAll('.btn-collection-toggle').forEach(btn => {
+            btn.addEventListener('click', async function (e) {
+                e.preventDefault();
+                const productId = this.dataset.id;
+                const flag = this.dataset.flag;
+                const isCurrentlyActive = this.dataset.active === 'true';
+                const nextState = !isCurrentlyActive;
+
+                this.disabled = true;
+                this.style.opacity = '0.6';
+
+                try {
+                    const res = await fetch('/admin/api/products/collections/update/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            product_id: productId,
+                            [flag]: nextState
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.dataset.active = nextState ? 'true' : 'false';
+                        
+                        // Update styles dynamically
+                        if (flag === 'is_featured') {
+                            this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-danger text-white' : 'btn-outline-danger'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                            const badgeSpan = this.querySelector('.badge');
+                            badgeSpan.className = `badge ${nextState ? 'bg-white text-danger' : 'bg-danger-subtle text-danger'} rounded-circle ms-1 p-0.5`;
+                            badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                        } else if (flag === 'is_best_selling') {
+                            this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                            const badgeSpan = this.querySelector('.badge');
+                            badgeSpan.className = `badge ${nextState ? 'bg-dark text-white' : 'bg-warning-subtle text-dark'} rounded-circle ms-1 p-0.5`;
+                            badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                        } else if (flag === 'is_new_arrival') {
+                            this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-info text-white' : 'btn-outline-info'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                            const badgeSpan = this.querySelector('.badge');
+                            badgeSpan.className = `badge ${nextState ? 'bg-white text-info' : 'bg-info-subtle text-info'} rounded-circle ms-1 p-0.5`;
+                            badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                        }
+                    } else {
+                        alert(data.message || 'Failed to update collection status.');
+                    }
+                } catch (err) {
+                    console.error('Error toggling collection:', err);
+                    alert('Network error while updating collection badge.');
+                } finally {
+                    this.disabled = false;
+                    this.style.opacity = '1';
+                }
+            });
+        });
     });
 </script>
 
@@ -558,15 +750,19 @@
                             <label class="form-label small fw-semibold text-dark">Brand Name</label>
                             <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Liquidating Price ({{ product_data.currency|default:'AED' }})</label>
                             <input type="number" step="0.01" class="form-control" name="price" value="{{ enquiry.price|default:product_data.liquidating_price|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Original / Previous Price</label>
                             <input type="number" step="0.01" class="form-control" name="original_price" value="{{ product_data.previous_price|default:'' }}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-dark">Offer (%)</label>
+                            <input type="number" step="0.01" class="form-control" name="offer" value="{{ enquiry.offer|default:product_data.offer|default:'0' }}">
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label small fw-semibold text-dark">Quantity</label>
                             <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
                         </div>
@@ -592,7 +788,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-dark">Inventory Location</label>
-                            <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:user_data.business_location|default:'' }}">
+                            <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
                         </div>
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
@@ -601,6 +797,35 @@
                         <div class="col-12">
                             <label class="form-label small fw-semibold text-dark">Description</label>
                             <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>
+                        </div>
+
+                        <!-- Marketplace Collections & Showcases in Edit Modal -->
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 bg-light border">
+                                <label class="form-label small fw-bold text-dark mb-2 d-block">
+                                    <i class="bi bi-tags-fill me-1 text-primary"></i> Marketplace Collections & Showcases
+                                </label>
+                                <div class="d-flex align-items-center gap-4 flex-wrap">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="is_featured" id="edit_is_featured" {% if enquiry.is_featured %}checked{% endif %}>
+                                        <label class="form-check-label small fw-semibold text-danger" for="edit_is_featured">
+                                            <i class="bi bi-star-fill me-1"></i> Featured Deal
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="is_best_selling" id="edit_is_best_selling" {% if enquiry.is_best_selling %}checked{% endif %}>
+                                        <label class="form-check-label small fw-semibold text-warning-emphasis" for="edit_is_best_selling">
+                                            <i class="bi bi-fire me-1"></i> Best Seller
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="is_new_arrival" id="edit_is_new_arrival" {% if enquiry.is_new_arrival %}checked{% endif %}>
+                                        <label class="form-check-label small fw-semibold text-info-emphasis" for="edit_is_new_arrival">
+                                            <i class="bi bi-rocket-takeoff-fill me-1"></i> New Arrival
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

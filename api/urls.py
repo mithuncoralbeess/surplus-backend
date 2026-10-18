@@ -1,8 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views_auction
+from AdminApp.views import whatsapp_public_subscribe_api
 from .views import (
     api_root,
     health_check,
+    get_maintenance_status,
     ItemViewSet,
     get_public_pages_list,
     get_public_page_detail,
@@ -12,6 +15,8 @@ from .views import (
     submit_seller_enquiry,
     submit_lot_enquiry,
     submit_partnership_enquiry,
+    submit_contact_us_enquiry,
+    submit_rfq_enquiry,
     send_registration_otp,
     verify_registration_otp,
     complete_profile,
@@ -19,6 +24,21 @@ from .views import (
     verify_login_otp,
     submit_product_request,
     submit_lot_request,
+    public_lot_detail_api,
+    lot_warehouse_explorer_api,
+    track_view_api,
+    get_public_categories,
+    get_vendor_notifications,
+    get_vendor_unread_count,
+    mark_notification_read,
+    mark_all_notifications_read,
+    delete_vendor_notification,
+    clear_all_vendor_notifications,
+    get_public_products_list,
+    get_homepage_collections,
+    semantic_search_products,
+    typesense_search_view,
+    typesense_suggestions_view,
 )
 
 router = DefaultRouter()
@@ -27,6 +47,27 @@ router.register(r"items", ItemViewSet, basename="item")
 urlpatterns = [
     path("", api_root, name="api-root"),
     path("health/", health_check, name="health-check"),
+    path("maintenance-status/", get_maintenance_status, name="public_maintenance_status"),
+    
+    # Public Products & Showcase Collections REST API
+    path("products/", get_public_products_list, name="public_products_list"),
+    path("products/collections/", get_homepage_collections, name="public_homepage_collections"),
+
+    # Typesense Intelligent Search & Suggestions API (with PostgreSQL Fallback)
+    path("search/", typesense_search_view, name="public_search_direct"),
+    path("search/suggestions/", typesense_suggestions_view, name="public_search_suggestions"),
+    path("search/semantic/", typesense_search_view, name="public_search_semantic"),
+    path("products/semantic-search/", typesense_search_view, name="public_products_semantic_search"),
+    path("products/search/semantic/", typesense_search_view, name="public_products_semantic_search_alias"),
+    path("lots/semantic-search/", typesense_search_view, name="public_lots_semantic_search"),
+
+    # Public Category & Subcategory REST API
+    path("categories/", get_public_categories, name="public_categories_list"),
+
+    # Analytics View Tracking
+    path("analytics/track-view/", track_view_api, name="track_view_api"),
+    path("track-view/", track_view_api, name="track_view_api_alt"),
+
     
     # Headless CMS Public REST APIs for Frontend Server
     path("pages/", get_public_pages_list, name="public_pages_list"),
@@ -40,7 +81,21 @@ urlpatterns = [
     # Public Enquiry Submissions
     path("enquiries/seller/", submit_seller_enquiry, name="public_seller_enquiry_submit"),
     path("enquiries/lots/", submit_lot_enquiry, name="public_lot_enquiry_submit"),
-    path("partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit"),
+    path("enquiries/contact-us/", submit_contact_us_enquiry, name="public_contact_us_enquiry_submit"),
+    path("enquiries/partnership/", submit_partnership_enquiry, name="public_partnership_enquiry_submit"),
+    path("enquiries/partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_alias"),
+    path("partnership-enquiry/", submit_partnership_enquiry, name="public_partnership_enquiry_submit_legacy"),
+    path("contact-us/", submit_contact_us_enquiry, name="public_contact_us_enquiry_submit_alt"),
+
+    # Public RFQ / Quotation Requests (Frontend Cart & RFQ Basket)
+    path("enquiries/rfq/", submit_rfq_enquiry, name="public_rfq_enquiry_submit"),
+    path("enquiries/rfqs/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alias"),
+    path("rfq-requests/", submit_rfq_enquiry, name="public_rfq_enquiry_submit_alt"),
+
+    # Public WhatsApp Liquidation Alert Subscription
+    path("whatsapp/subscribe/", whatsapp_public_subscribe_api, name="public_whatsapp_subscribe"),
+
+
 
     # Vendor Registration and Login OTP flows
     path("auth/register/send-otp/", send_registration_otp, name="send_registration_otp"),
@@ -49,9 +104,32 @@ urlpatterns = [
     path("auth/login/send-otp/", send_login_otp, name="send_login_otp"),
     path("auth/login/verify-otp/", verify_login_otp, name="verify_login_otp"),
 
-    # Submissions
+    # Submissions & Lot Management
+    path("lots/", submit_lot_request, name="public_lots_api"),
+    path("lots/create/", submit_lot_request, name="create_lot_api"),
+    path("lots/<str:lot_id>/", public_lot_detail_api, name="public_lot_detail_api"),
+    path("lots/<str:lot_id>/explorer/", lot_warehouse_explorer_api, name="lot_warehouse_explorer_api"),
     path("submit-product-request/", submit_product_request, name="submit_product_request"),
     path("submit-lot-request/", submit_lot_request, name="submit_lot_request"),
+
+    # Public Auction REST API (Model-Agnostic Engine)
+    path("auctions/", views_auction.list_auctions, name="public_auctions_list"),
+    path("auctions/my-bids/", views_auction.my_bids, name="public_auctions_my_bids"),
+    path("auctions/<str:auction_id>/", views_auction.auction_detail, name="public_auction_detail"),
+    path("auctions/<str:auction_id>/bid/", views_auction.place_bid, name="public_auction_place_bid"),
+    path("auctions/<str:auction_id>/live-feed/", views_auction.live_auction_feed, name="public_auction_live_feed"),
+    path("auctions/<str:auction_id>/buy-now/", views_auction.buy_now, name="public_auction_buy_now"),
+    path("auctions/<str:auction_id>/watchlist/", views_auction.toggle_watchlist, name="public_auction_toggle_watchlist"),
+
+    # Vendor In-App Notifications REST API
+    path("notifications/", get_vendor_notifications, name="vendor_notifications_list"),
+    path("notifications/unread-count/", get_vendor_unread_count, name="vendor_notifications_unread_count"),
+    path("notifications/<int:pk>/mark-read/", mark_notification_read, name="vendor_notification_mark_read"),
+    path("notifications/mark-all-read/", mark_all_notifications_read, name="vendor_notifications_mark_all_read"),
+    path("notifications/clear-all/", clear_all_vendor_notifications, name="vendor_notifications_clear_all"),
+    path("notifications/delete-all/", clear_all_vendor_notifications, name="vendor_notifications_delete_all"),
+    path("notifications/<int:pk>/", delete_vendor_notification, name="vendor_notification_delete_direct"),
+    path("notifications/<int:pk>/delete/", delete_vendor_notification, name="vendor_notification_delete"),
 
     # Additional user endpoints (Wishlist, RFQ) will be added here
     path("", include(router.urls)),

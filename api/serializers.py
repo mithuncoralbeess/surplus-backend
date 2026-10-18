@@ -20,11 +20,6 @@ class SendRegistrationOTPSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     mobile_number = serializers.CharField(max_length=20)
-    country_code = serializers.CharField(max_length=10, required=False, allow_blank=True)
-    company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    business_location = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    category_interested = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
 
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -32,28 +27,112 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 class CompleteProfileSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")))
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    mobile_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")), required=False)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    business_location = serializers.CharField(max_length=255, required=True)
-    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")))
+    business_location = serializers.CharField(max_length=255, required=True, allow_blank=False)
+    business_address = serializers.CharField(required=False, allow_blank=True)
+    tax_registration_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    business_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
     category_interested = serializers.JSONField(required=False, default=list)
 
 class SendLoginOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-from AdminApp.models import PartnershipEnquiry, Product, Lot
+from AdminApp.models import PartnershipEnquiry, ContactUsEnquiry, AnalyticsViewLog, PageViewLog, Product, Lot
+
+class PageViewLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PageViewLog
+        fields = [
+            'id',
+            'entity_type',
+            'entity_id',
+            'entity_slug',
+            'path',
+            'ip_address',
+            'user_agent',
+            'referrer',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+class AnalyticsViewLogSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AnalyticsViewLog
+        fields = [
+            'id',
+            'entity_type',
+            'entity_id',
+            'entity_slug',
+            'path',
+            'referrer',
+            'user_agent',
+            'ip_address',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+class ContactUsEnquirySerializer(serializers.ModelSerializer):
+
+    fullName = serializers.CharField(source='full_name', required=False)
+    enquiryType = serializers.CharField(source='enquiry_type', required=False)
+
+    class Meta:
+        model = ContactUsEnquiry
+        fields = [
+            'id',
+            'full_name',
+            'fullName',
+            'email',
+            'phone',
+            'enquiry_type',
+            'enquiryType',
+            'message',
+            'status',
+            'is_blocked',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 class PartnershipEnquirySerializer(serializers.ModelSerializer):
+    location = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    interest = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    message = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
     class Meta:
         model = PartnershipEnquiry
         fields = [
+            'id',
             'name', 
             'email', 
             'business_location', 
             'partnership_interest', 
             'subject', 
-            'collaboration_details'
+            'collaboration_details',
+            'location',
+            'interest',
+            'message',
+            'status',
+            'created_at'
         ]
+        read_only_fields = ['id', 'status', 'created_at']
+
+    def to_internal_value(self, data):
+        data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'location' in data_copy and 'business_location' not in data_copy:
+            data_copy['business_location'] = data_copy.get('location', '')
+        if 'interest' in data_copy and 'partnership_interest' not in data_copy:
+            data_copy['partnership_interest'] = data_copy.get('interest', '')
+        if 'message' in data_copy and 'collaboration_details' not in data_copy:
+            data_copy['collaboration_details'] = data_copy.get('message', '')
+        return super().to_internal_value(data_copy)
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -64,12 +143,124 @@ class ProductSerializer(serializers.ModelSerializer):
 class SellerProductEnquirySerializer(ProductSerializer):
     pass
 
-class LotSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lot
-        exclude = ['active_status', 'enquiry_status']
-        read_only_fields = ['lot_number', 'created_at', 'updated_at']
+from AdminApp.serializers import LotSerializer, LotBatchEnquirySerializer
 
-class LotBatchEnquirySerializer(LotSerializer):
-    pass
+
+from AdminApp.models import VendorNotification
+from django.utils.timesince import timesince
+
+class VendorNotificationSerializer(serializers.ModelSerializer):
+    vendor_id = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    time_ago = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VendorNotification
+        fields = [
+            "id",
+            "vendor_id",
+            "title",
+            "message",
+            "notification_type",
+            "action_url",
+            "is_read",
+            "created_at",
+            "created_at_formatted",
+            "time_ago",
+        ]
+        read_only_fields = ["id", "vendor_id", "created_at", "created_at_formatted", "time_ago"]
+
+    def get_vendor_id(self, obj):
+        if obj.vendor:
+            return obj.vendor.vendor_id or f"USR-{obj.vendor.id:04d}"
+        return ""
+
+    def get_created_at_formatted(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%b %d, %Y %I:%M %p")
+        return ""
+
+    def get_time_ago(self, obj):
+        if obj.created_at:
+            return f"{timesince(obj.created_at)} ago"
+        return ""
+
+
+from AdminApp.models import RfqEnquiry, RfqEnquiryItem
+
+class RfqEnquiryItemSerializer(serializers.ModelSerializer):
+    unitPrice = serializers.DecimalField(source='unit_price', max_digits=12, decimal_places=2, required=False)
+    targetPrice = serializers.DecimalField(source='target_price', max_digits=12, decimal_places=2, required=False, allow_null=True)
+    productId = serializers.IntegerField(source='product_id', required=False, allow_null=True)
+    lotId = serializers.IntegerField(source='lot_id', required=False, allow_null=True)
+
+    class Meta:
+        model = RfqEnquiryItem
+        fields = [
+            'id',
+            'product_id',
+            'productId',
+            'lot_id',
+            'lotId',
+            'item_type',
+            'title',
+            'sku',
+            'category',
+            'quantity',
+            'unit_price',
+            'unitPrice',
+            'target_price',
+            'targetPrice',
+            'notes',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
+class RfqEnquirySerializer(serializers.ModelSerializer):
+    items = RfqEnquiryItemSerializer(many=True, read_only=True)
+    contactPerson = serializers.CharField(source='contact_person', required=False)
+    companyName = serializers.CharField(source='company_name', required=False)
+    destinationPort = serializers.CharField(source='destination_port', required=False, allow_blank=True)
+    businessLocation = serializers.CharField(source='business_location', required=False, allow_blank=True)
+    paymentMethod = serializers.CharField(source='payment_method', required=False, allow_blank=True)
+    additionalNotes = serializers.CharField(source='additional_notes', required=False, allow_blank=True)
+    totalUnits = serializers.IntegerField(source='total_units', required=False)
+    estimatedValue = serializers.DecimalField(source='estimated_value', max_digits=14, decimal_places=2, required=False)
+
+    class Meta:
+        model = RfqEnquiry
+        fields = [
+            'id',
+            'reference',
+            'contact_person',
+            'contactPerson',
+            'company_name',
+            'companyName',
+            'email',
+            'phone',
+            'country',
+            'business_location',
+            'businessLocation',
+            'destination_port',
+            'destinationPort',
+            'incoterm',
+            'payment_method',
+            'paymentMethod',
+            'additional_notes',
+            'additionalNotes',
+            'total_units',
+            'totalUnits',
+            'estimated_value',
+            'estimatedValue',
+            'currency',
+            'status',
+            'proforma_amount',
+            'items',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
 

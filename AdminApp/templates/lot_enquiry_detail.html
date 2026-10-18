@@ -3,8 +3,177 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/enquiry_detail.css' %}">
+<style>
+    .shadow-xs {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .hover-shadow-sm {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .hover-shadow-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    #explorer-sku-table thead th {
+        background-color: #f8fafc !important;
+        border-bottom: 2px solid #e2e8f0;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+    }
+    /* Enterprise Intelligence Panel & Brand Distribution */
+    .intelligence-panel {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        position: relative;
+    }
+    [data-bs-theme="dark"] .intelligence-panel {
+        background: #1e293b;
+        border-bottom-color: #334155;
+    }
 
-<div class="container-fluid detail-page-wrapper">
+    .brand-progress-track {
+        height: 12px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: flex;
+    }
+    .brand-progress-track .progress-bar {
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+    }
+    .brand-progress-track .progress-bar:hover {
+        filter: brightness(1.12);
+        transform: scaleY(1.15);
+        z-index: 2;
+    }
+
+    /* Modern Brand Filter Chips */
+    .brand-chips-scroll-wrap {
+        max-height: 128px;
+        overflow-y: auto;
+        padding-right: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar {
+        width: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .brand-chip-modern {
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        user-select: none;
+    }
+    .brand-chip-modern:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+    }
+    .brand-chip-modern.active {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+    }
+    .brand-chip-modern.active .brand-pct-badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+    .brand-pct-badge {
+        font-size: 0.68rem;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    /* Profit Driver Executive Cards */
+    .profit-driver-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 12px 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .profit-driver-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.03);
+        border-color: #93c5fd;
+    }
+    .profit-driver-card:active {
+        transform: translateY(0);
+    }
+    .driver-rank-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        letter-spacing: 0.3px;
+    }
+    .rank-1 {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    .rank-2 {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .rank-3 {
+        background: #ffedd5;
+        color: #9a3412;
+        border: 1px solid #fed7aa;
+    }
+    .rank-4 {
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+
+<div class="container-fluid detail-page-wrapper p-0">
     <!-- Header -->
     <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
         <div>
@@ -28,7 +197,7 @@
                 data-id="{{ enquiry.id }}" data-active="inactive">
                 <i class="bi bi-pause-circle"></i> Set Inactive
             </button>
-            {% else %}
+            {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
                 class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-lot-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
@@ -59,21 +228,9 @@
                 <i class="bi bi-x-circle-fill"></i> Decline
             </button>
             {% endif %}
-            {% if enquiry.file %}
-            <a href="{{ enquiry.file.url }}" target="_blank" download
-                class="btn btn-success d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-semibold rounded-3 shadow-sm" title="Download the original uploaded Excel manifest file">
-                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest File
+            <a href="/admin/whatsapp/?lot_id={{ enquiry.id }}" class="btn btn-premium d-inline-flex align-items-center gap-2 text-white shadow-sm" style="background-color: #25D366; border-color: #25D366;" title="Launch WhatsApp Liquidation Alert">
+                <i class="bi bi-whatsapp"></i> Broadcast on WhatsApp
             </a>
-            {% elif enquiry.raw_data.file_url %}
-            <a href="{{ enquiry.raw_data.file_url }}" target="_blank" download
-                class="btn btn-success d-inline-flex align-items-center gap-2 px-3.5 py-2 fw-semibold rounded-3 shadow-sm" title="Download the original uploaded Excel manifest file">
-                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest File
-            </a>
-            {% else %}
-            <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3 disabled" disabled title="No Excel file was uploaded for this enquiry">
-                <i class="bi bi-file-earmark-excel text-muted"></i> No File Attached
-            </button>
-            {% endif %}
         </div>
     </div>
 
@@ -82,9 +239,27 @@
         <div class="col-12">
             <div class="premium-card mb-4">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase text-muted mb-4"
-                        style="letter-spacing: 0.5px; font-size: 0.8rem;"><i
-                            class="bi bi-person-badge me-2 text-primary"></i>User Details</h6>
+                    <h6 class="fw-bold text-uppercase text-muted mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                        style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <span class="d-flex align-items-center flex-wrap gap-2">
+                            <i class="bi bi-person-badge me-2 text-primary"></i>Vendor Details
+                            {% if assisted_by_admin %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem; text-transform: none;" title="{{ assisted_by_admin.email }}">
+                                <i class="bi bi-shield-check me-1"></i>Assisted by ADM-{{ assisted_by_admin.id|stringformat:"04d" }} ({{ assisted_by_admin.full_name|default:assisted_by_admin.username }})
+                            </span>
+                            {% if intake_channel %}
+                            <span class="badge {% if intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem; text-transform: none;">
+                                {% if intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1"></i>{% elif intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ intake_channel }} Intake
+                            </span>
+                            {% endif %}
+                            {% endif %}
+                        </span>
+                        {% if user_data.vendor_id and user_data.vendor_id != 'N/A' %}
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 fs-6 rounded-pill fw-bold">
+                            <i class="bi bi-person-badge me-1"></i>{{ user_data.vendor_id }}
+                        </span>
+                        {% endif %}
+                    </h6>
                     <div class="row g-3">
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
@@ -112,7 +287,7 @@
                         </div>
                         <div class="col-md-4 col-sm-6">
                             <div class="data-box">
-                                <span class="data-label">Inventory Location</span>
+                                <span class="data-label">Business Location</span>
                                 <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
                             </div>
                         </div>
@@ -133,28 +308,49 @@
         <div class="col-12">
             <div class="premium-card mb-4">
                 <div class="card-body p-4">
-                    <h6 class="fw-bold text-uppercase text-muted mb-4"
-                        style="letter-spacing: 0.5px; font-size: 0.8rem;"><i
-                            class="bi bi-info-circle me-2 text-primary"></i>Batch Info</h6>
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                            <i class="bi bi-info-circle me-2 text-primary"></i>Batch Info
+                        </h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadLotExcelModal" title="Upload or replace Excel manifest spreadsheet">
+                                <i class="bi bi-cloud-arrow-up-fill text-primary"></i> Upload Manifest (.xlsx)
+                            </button>
+                            {% if enquiry.file %}
+                            <a href="{{ enquiry.file.url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-semibold shadow-sm" title="Download original uploaded Excel manifest file">
+                                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest (.xlsx)
+                            </a>
+                            {% elif enquiry.raw_data.file_url %}
+                            <a href="{{ enquiry.raw_data.file_url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill fw-semibold shadow-sm" title="Download original uploaded Excel manifest file">
+                                <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Manifest
+                            </a>
+                            {% else %}
+                            <span class="badge bg-light text-muted border px-3 py-1.5 rounded-pill fw-normal" style="font-size: 0.78rem;">
+                                <i class="bi bi-file-earmark-excel text-muted me-1"></i> No Manifest Attached
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     <div class="row g-3">
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Batch ID</span>
-                                <span class="data-value font-monospace text-primary">{{ enquiry.lot_number }}</span>
+                                <span class="data-value font-monospace text-primary fw-bold fs-6">{{ enquiry.lot_number }}</span>
                             </div>
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Enquiry Status</span>
                                 {% if enquiry.enquiry_status|lower == 'approved' %}
-                                <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i
                                         class="bi bi-check-circle-fill me-1"></i>Approved</span>
                                 {% elif enquiry.enquiry_status|lower == 'declined' %}
-                                <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i class="bi bi-x-circle-fill me-1"></i>Declined</span>
                                 {% else %}
-                                <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill fw-medium"
+                                <span class="badge bg-warning-subtle text-warning px-3 py-1 rounded-pill fw-semibold"
                                     id="status-badge-{{ enquiry.id }}"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
                                 {% endif %}
                             </div>
@@ -163,10 +359,10 @@
                             <div class="data-box">
                                 <span class="data-label">Active Status</span>
                                 {% if enquiry.active_status == 'active' %}
-                                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-medium"><i
+                                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-semibold"><i
                                         class="bi bi-play-circle-fill me-1"></i>Active</span>
                                 {% else %}
-                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-medium"><i
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill fw-semibold"><i
                                         class="bi bi-pause-circle-fill me-1"></i>Inactive</span>
                                 {% endif %}
                             </div>
@@ -174,31 +370,9 @@
                         <div class="col-md-3 col-sm-6">
                             <div class="data-box">
                                 <span class="data-label">Submitted On</span>
-                                <span class="data-value">
-                                    {{ enquiry.created_at|date:"M d, Y" }} at {{ enquiry.created_at|date:"H:i" }}
+                                <span class="data-value fw-medium">
+                                    {{ enquiry.created_at|date:"M d, Y" }} <small class="text-muted ms-1">({{ enquiry.created_at|date:"H:i" }})</small>
                                 </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Uploaded Excel Manifest File Section -->
-                    <div class="row g-3 mt-1 pt-3 border-top">
-                        <div class="col-12">
-                            <div class="data-box">
-                                <span class="data-label d-block mb-1 text-uppercase small text-muted font-weight-bold">Original Uploaded Excel Manifest File</span>
-                                <div class="mt-1">
-                                    {% if enquiry.file %}
-                                    <a href="{{ enquiry.file.url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 shadow-sm">
-                                        <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Stored Manifest File (.xlsx / .csv)
-                                    </a>
-                                    {% elif enquiry.raw_data.file_url %}
-                                    <a href="{{ enquiry.raw_data.file_url }}" target="_blank" download class="btn btn-sm btn-success d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 shadow-sm">
-                                        <i class="bi bi-file-earmark-excel-fill text-white fs-6"></i> Download Stored Manifest File
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted small fst-italic"><i class="bi bi-exclamation-circle me-1"></i>No original Excel file was attached to this lot enquiry submission.</span>
-                                    {% endif %}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -254,15 +428,51 @@
                             <span class="text-dark fw-medium">{{ batch_data.key_brands|default:"N/A" }}</span>
                         </div>
                     </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Source Type</span>
+                            <span class="text-dark fw-medium">{{ batch_data.source_type|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Primary Unit Type</span>
+                            <span class="text-dark fw-medium">{{ batch_data.primary_unit_type|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Sale Method</span>
+                            <span class="text-dark fw-medium">{{ batch_data.sale_method|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
+                            <span class="text-dark fw-medium">{{ batch_data.inventory_location|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">3rd Party Certificate</span>
+                            {% if batch_data.third_party_cert %}
+                                <span class="badge bg-success px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i> Available</span>
+                            {% else %}
+                                <span class="badge bg-secondary px-2 py-1 rounded-pill"><i class="bi bi-x-circle me-1"></i> Not Available</span>
+                            {% endif %}
+                        </div>
+                    </div>
                     
                     <!-- Extra Dynamic Fields (if any) -->
                     {% for key, val in extra_data.items %}
+                        {% if "warehouse_image" not in key|lower and "intake_admin" not in key|lower %}
                         <div class="col-md-6 col-lg-4">
                             <div class="spec-item">
-                                <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key|slugify|title }}</span>
+                                <span class="d-block text-muted small text-uppercase fw-semibold mb-1">{{ key }}</span>
                                 <span class="text-dark fw-medium">{{ val|default:"N/A" }}</span>
                             </div>
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
@@ -301,6 +511,15 @@
                         </div>
                     </div>
                     {% endif %}
+                    {% if batch_data.offer or enquiry.offer %}
+                    <div class="inline-card border-left-warning py-2 px-3 bg-white shadow-sm rounded">
+                        <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-warning me-1"></i> Offer</span>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-warning-subtle text-warning me-2"><i class="bi bi-percent me-1"></i>Discount</span>
+                            <span class="fs-5 fw-medium text-warning">{{ batch_data.offer|default:enquiry.offer }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -312,10 +531,28 @@
                             <i class="bi bi-truck me-2 text-warning"></i>Logistics Details
                         </h6>
                         <div class="row g-3 mb-4">
-                            <div class="col-md-6 col-lg-4">
+                            <div class="col-md-6 col-lg-3">
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Shipping Size</span>
                                     <span class="text-dark fw-medium">{{ batch_data.shipping_size|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Shipping Terms</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.shipping_terms|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Load / Pallet Type</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.load_type|default:batch_data.pallet_count|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Total Weight</span>
+                                    <span class="text-dark fw-medium">{{ batch_data.total_weight|default:"N/A" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -334,16 +571,52 @@
         <!-- Right Column (Media) -->
         <div class="col-lg-4">
             <div class="premium-card p-4">
-                <h6 class="fw-bold text-uppercase text-muted mb-4 text-center" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                    <i class="bi bi-image me-2 text-primary"></i>Product Media
-                </h6>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <i class="bi bi-image me-2 text-primary"></i>Product Media
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal" style="font-size: 11px;">
+                        <i class="bi bi-upload me-1"></i>Upload / Change
+                    </button>
+                </div>
                 <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
-                    {% if batch_data.media %}
-                    <img src="{{ batch_data.media }}" alt="Batch Media" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;">
+                    {% if warehouse_images and warehouse_images|length > 0 %}
+                        <div class="d-flex flex-column gap-3">
+                            {% for img in warehouse_images %}
+                                <div class="position-relative media-image-container">
+                                    <img src="{{ img.url }}" alt="{{ img.name|default:'Warehouse Image' }}"
+                                         class="img-fluid rounded shadow-sm border"
+                                         style="max-height: 400px; object-fit: contain; width: 100%; background: #fff;"
+                                         onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
+                                    <div class="d-none p-4 text-center text-muted bg-white border rounded">
+                                        <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
+                                        <p class="small fw-semibold mb-1 text-dark text-truncate" title="{{ img.name }}">{{ img.name|default:'Warehouse Image' }}</p>
+                                        <p class="text-muted small mb-2" style="font-size: 11px;">Image file preview unavailable or expired.</p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                            <i class="bi bi-upload me-1"></i>Upload / Replace Image
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% elif batch_data.media %}
+                        <div class="position-relative media-image-container">
+                            <img src="{{ batch_data.media }}" alt="Batch Media" class="img-fluid rounded" style="max-height: 400px; object-fit: contain; width: 100%;"
+                                 onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('d-none');">
+                            <div class="d-none p-4 text-center text-muted bg-white border rounded">
+                                <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
+                                <p class="small fw-semibold mb-0 text-dark">Media preview not available</p>
+                            </div>
+                        </div>
                     {% else %}
                     <div class="p-5 text-muted fst-italic">
                         <i class="bi bi-image text-muted opacity-50 mb-3 d-block" style="font-size: 3rem;"></i>
                         No images or videos available
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                <i class="bi bi-plus-lg me-1"></i>Add Warehouse Images
+                            </button>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -351,107 +624,343 @@
         </div>
     </div>
 
+
+    <!-- ========================================== -->
+    <!-- INTERACTIVE VIRTUAL WAREHOUSE EXPLORER     -->
+    <!-- ========================================== -->
     <div class="row mb-4">
-        <!-- Main Products Table -->
         <div class="col-12">
-            <div class="premium-card h-100">
-                <div class="card-body p-4 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                            <i class="bi bi-table me-2 text-primary"></i>Extracted Products
-                            <span class="badge bg-primary rounded-pill ms-2">{{ products|length }}</span>
-                        </h6>
+            <div class="premium-card h-100 shadow-sm border-0 rounded-4 overflow-hidden" id="warehouseExplorerCard">
+                <!-- Header Toolbar -->
+                <div class="card-body p-4 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3 bg-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-2.5 bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <i class="bi bi-grid-3x3-gap-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="fw-bold text-dark mb-0">Virtual Warehouse Explorer</h5>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.72rem;">
+                                    LIVE SKU GRID
+                                </span>
+                                <span id="explorer-total-skus-badge" class="badge bg-dark rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.72rem;">
+                                    {{ explorer_data.summary.total_skus|default:0 }} SKUs
+                                </span>
+                            </div>
+                            <small class="text-secondary">Interactive wholesale lot explorer with instant search, brand allocation, condition filters & line economics</small>
+                        </div>
                     </div>
-                    <div>
-                        {% if is_saved_to_db %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.82rem;">
-                            <i class="bi bi-database-check me-1"></i> Saved to Database
-                        </span>
-                        {% else %}
-                        <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
-                            <i class="bi bi-database-add fs-6"></i> Save Products to Database
+
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        {% if enquiry.file %}
+                        <button type="button" id="btn-parse-spreadsheet-data" class="btn btn-outline-primary btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" data-id="{{ enquiry.id }}">
+                            <i class="bi bi-file-earmark-spreadsheet-fill fs-6 text-primary"></i> Parse Spreadsheet Data
                         </button>
                         {% endif %}
+
+                        <span id="db-status-container">
+                            {% if is_saved_to_db %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                                <i class="bi bi-database-check fs-6"></i> Saved to Database
+                            </span>
+                            {% else %}
+                            <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
+                                <i class="bi bi-database-add fs-6"></i> Save Products to Database
+                            </button>
+                            {% endif %}
+                        </span>
+
+                        <button type="button" id="btn-export-explorer-csv" class="btn btn-light border btn-sm px-3 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm text-secondary hover-dark" title="Export currently filtered SKU items to CSV">
+                            <i class="bi bi-cloud-arrow-down-fill text-success fs-6"></i> Export Filtered CSV
+                        </button>
                     </div>
                 </div>
 
-                {% if products and not is_saved_to_db %}
-                <div class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <!-- Preview Alert Container -->
+                <div id="preview-alert-container" class="alert alert-warning border-0 shadow-sm rounded-3 m-4 mb-0 {% if not explorer_data.items or is_saved_to_db %}d-none{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
                         <div class="p-2.5 bg-warning bg-opacity-25 text-warning-emphasis rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
                             <i class="bi bi-eye-fill fs-5"></i>
                         </div>
                         <div>
-                            <h6 class="fw-bold text-dark mb-0.5">Previewing Extracted Spreadsheet Data (Not Saved to DB Yet)</h6>
-                            <small class="text-secondary">{{ products|length }} product item{% if products|length != 1 %}s{% endif %} extracted from attached Excel file. Click "Save Products to Database" to commit these records.</small>
+                            <h6 class="fw-bold text-dark mb-0.5">Previewing Extracted Spreadsheet Data (Not Committed to Database)</h6>
+                            <small class="text-secondary" id="preview-alert-text">Inventory is running in live memory explorer. Click "Save Products to Database" to commit these SKUs.</small>
                         </div>
                     </div>
                     <button type="button" class="btn btn-success px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
-                        <i class="bi bi-database-add"></i> Save Products to Database
+                        <i class="bi bi-database-add"></i> Commit to Database
                     </button>
                 </div>
-                {% endif %}
 
-                <div class="card-body p-0">
-                    {% if products %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0 text-nowrap" style="font-size: 0.85rem;">
-                            <thead class="table-light">
-                                <tr class="text-secondary text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                                    <th class="ps-4 py-3 fw-semibold">S.No</th>
-                                    <th class="py-3 fw-semibold">Product Name</th>
-                                    <th class="py-3 fw-semibold">Category</th>
-                                    <th class="py-3 fw-semibold">Subcategory</th>
-                                    <th class="py-3 fw-semibold">Brand / Model</th>
-                                    <th class="py-3 fw-semibold">Condition</th>
-                                    <th class="py-3 fw-semibold">Qty</th>
-                                    <th class="py-3 fw-semibold">MOQ</th>
-                                    <th class="py-3 fw-semibold pe-4">Asking Price</th>
+                <!-- Executive Valuation & Volume KPI Stats Bar -->
+                <div class="p-4 bg-light bg-opacity-50 border-bottom" id="explorer-kpi-bar">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Distinct SKUs</small>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-distinct-skus">{{ explorer_data.summary.total_skus|default:0 }}</h4>
+                                    <small class="text-muted" style="font-size: 0.75rem;">lines</small>
+                                </div>
+                                <small class="text-primary mt-1" style="font-size: 0.72rem;"><i class="bi bi-diagram-3 me-1"></i>Catalog Diversity</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Units</small>
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-units">{{ explorer_data.summary.total_units|default:0 }}</h4>
+                                    <small class="text-muted" style="font-size: 0.75rem;">pcs</small>
+                                </div>
+                                <small class="text-secondary mt-1" style="font-size: 0.72rem;"><i class="bi bi-boxes me-1"></i>Physical Inventory</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Retail MSRP</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <span class="text-secondary fw-semibold">$</span>
+                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-msrp">{{ explorer_data.summary.total_msrp|floatformat:2|default:"0.00" }}</h4>
+                                </div>
+                                <small class="text-muted mt-1" style="font-size: 0.72rem;"><i class="bi bi-tag me-1"></i>Benchmark Value</small>
+                            </div>
+                        </div>
+
+                        <div class="col-6 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
+                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ask / Liquidation</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <span class="text-success fw-bold">$</span>
+                                    <h4 class="fw-bold text-success mb-0 font-monospace" id="kpi-total-ask">{{ explorer_data.summary.total_ask|floatformat:2|default:"0.00" }}</h4>
+                                </div>
+                                <small class="text-success mt-1" style="font-size: 0.72rem;"><i class="bi bi-cash-stack me-1"></i>Payout / Lot Price</small>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-4 col-xl col-lg-3">
+                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-gradient text-white" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                                <small class="text-white text-opacity-75 text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Blended Discount</small>
+                                <div class="d-flex align-items-baseline gap-1">
+                                    <h4 class="fw-bold text-white mb-0 font-monospace" id="kpi-discount-pct">{{ explorer_data.summary.blended_discount_pct|default:0 }}%</h4>
+                                    <small class="text-white text-opacity-90 fw-semibold ms-1" style="font-size: 0.75rem;">OFF MSRP</small>
+                                </div>
+                                <small class="text-white text-opacity-75 mt-1" style="font-size: 0.72rem;"><i class="bi bi-graph-down-arrow me-1"></i>Wholesale Margin Spread</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Intelligence: Brand Breakdown & Top Profit Drivers Spotlight -->
+                <div class="p-4 border-bottom intelligence-panel" id="explorer-intelligence-section">
+                    <div class="row g-4 align-items-stretch">
+                        <!-- Brand Value Distribution -->
+                        <div class="col-lg-6 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary p-1.5 rounded-2">
+                                            <i class="bi bi-pie-chart-fill fs-6"></i>
+                                        </span>
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                                Brand Allocation (% of Lot Value)
+                                            </h6>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Click any brand chip to isolate matching SKUs</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" id="explorer-brand-count-badge" style="font-size: 0.7rem;">
+                                        0 Brands
+                                    </span>
+                                </div>
+                                <!-- Multi-segment brand progress bar -->
+                                <div class="brand-progress-track mb-3" id="explorer-brand-progressbar">
+                                    <!-- Populated dynamically by JS -->
+                                </div>
+                            </div>
+                            <!-- Brand Chips Scroll Container -->
+                            <div class="brand-chips-scroll-wrap mt-auto" id="explorer-brand-chips">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Top Profit Drivers Spotlight -->
+                        <div class="col-lg-6 d-flex flex-column justify-content-between">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning bg-opacity-15 text-warning-emphasis p-1.5 rounded-2">
+                                        <i class="bi bi-lightning-charge-fill fs-6"></i>
+                                    </span>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                            Top Profit Drivers (High-Value SKUs)
+                                        </h6>
+                                        <small class="text-muted" style="font-size: 0.72rem;">Click card to isolate line item in table below</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.7rem;">
+                                    <i class="bi bi-star-fill me-1"></i>VALUE CORE
+                                </span>
+                            </div>
+                            <div class="row g-2.5 mt-auto" id="explorer-profit-drivers-container">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live SKU Filter & Search Toolbar -->
+                <div class="p-3 bg-light border-bottom" id="explorer-toolbar">
+                    <div class="row g-2 align-items-center">
+                        <!-- Live Search -->
+                        <div class="col-12 col-md-4 col-lg-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" id="explorer-search-input" class="form-control border-start-0 ps-0" placeholder="Search SKU, name, part #..." autocomplete="off">
+                                <button type="button" id="explorer-clear-search-btn" class="btn btn-outline-secondary border-start-0 d-none" title="Clear Search">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Brand Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-brand-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Brands</option>
+                            </select>
+                        </div>
+
+                        <!-- Category Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-category-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+
+                        <!-- Condition / Tested Filter Dropdown -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-condition-filter" class="form-select form-select-sm text-dark">
+                                <option value="all">All Conditions</option>
+                                <option value="tested_yes">Tested & Verified Only</option>
+                                <option value="tested_no">Untested Only</option>
+                                <option value="no_damage">No Visible Damage</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By Selector -->
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <select id="explorer-sort-select" class="form-select form-select-sm text-dark">
+                                <option value="line_msrp_desc">Sort: Line MSRP (High to Low)</option>
+                                <option value="line_msrp_asc">Sort: Line MSRP (Low to High)</option>
+                                <option value="unit_msrp_desc">Sort: Unit MSRP (High to Low)</option>
+                                <option value="qty_desc">Sort: Quantity (High to Low)</option>
+                                <option value="name_asc">Sort: Product Name (A-Z)</option>
+                                <option value="s_no_asc">Sort: Sheet Order (S.No)</option>
+                            </select>
+                        </div>
+
+                        <!-- Page Size Selector -->
+                        <div class="col-12 col-md-2 col-lg-1 d-flex justify-content-end align-items-center gap-1">
+                            <label class="small text-muted mb-0 d-none d-lg-inline" style="font-size: 0.72rem;">Show:</label>
+                            <select id="explorer-page-size-select" class="form-select form-select-sm" style="width: auto;">
+                                <option value="15">15</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Pill Bar -->
+                    <div id="explorer-active-filters-bar" class="d-none mt-2 pt-2 border-top d-flex align-items-center gap-2 flex-wrap">
+                        <small class="text-muted fw-semibold" style="font-size: 0.72rem;">Active Filters:</small>
+                        <div id="explorer-filter-pills" class="d-flex flex-wrap gap-1"></div>
+                        <button type="button" id="explorer-reset-filters-btn" class="btn btn-link btn-sm text-danger p-0 ms-auto text-decoration-none" style="font-size: 0.75rem;">
+                            <i class="bi bi-x-circle me-1"></i>Reset All Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Paginated Table Container -->
+                <div class="card-body p-0" id="extracted-products-container">
+                    <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
+                        <table class="table table-hover table-striped align-middle mb-0" id="explorer-sku-table" style="font-size: 0.83rem;">
+                            <thead class="table-light sticky-top shadow-xs" style="z-index: 5;">
+                                <tr class="text-secondary text-uppercase border-bottom" style="font-size: 11px; letter-spacing: 0.5px;">
+                                    <th class="ps-4 py-3 fw-semibold text-nowrap" style="min-width: 65px;">S.No*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 220px;">Product Name*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 200px;">Product Description*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Category*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Subcategory*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Brand / Mfr</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Model / Part #</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Available Qty*</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Unit MSRP</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Total Line MSRP</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Asking Price</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Country of Origin</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Mfg Year</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Datasheet / Cert</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Gross Weight</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Length</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Width</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 80px;">Height</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 100px;">UOM</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 110px;">Stock Age</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Tested & Verified</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Functional Status</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Visible Damage?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 120px;">Missing Parts?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Warranty?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 160px;">Safety Certificate?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Certificate Type</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 140px;">Regulatory Approval</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 130px;">Hazardous?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 100px;">Recyclable?</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 170px;">Estimated Remaining Life</th>
+                                    <th class="py-3 fw-semibold text-nowrap" style="min-width: 150px;">Custom Field 1</th>
+                                    <th class="py-3 fw-semibold text-nowrap pe-4" style="min-width: 150px;">Custom Field 2</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for prod in products %}
-                                <tr>
-                                    <td class="ps-4 fw-bold font-monospace text-dark">{{ prod.s_no|default:forloop.counter }}</td>
-                                    <td class="fw-bold text-dark">
-                                        <div>{{ prod.product_name|default:prod.title|default:prod.name|default:"-" }}</div>
-                                        {% if prod.product_description %}
-                                        <small class="text-muted d-block text-truncate" style="max-width: 260px;">{{ prod.product_description }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td><span class="badge bg-light text-dark border">{{ prod.product_category|default:prod.category|default:"-" }}</span></td>
-                                    <td><span class="badge bg-light text-dark border">{{ prod.subcategory|default:"-" }}</span></td>
-                                    <td>
-                                        <div class="fw-medium text-dark">{{ prod.brand|default:"-" }}</div>
-                                        <small class="text-muted font-monospace">{{ prod.model_part_number|default:prod.sku|default:"-" }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold">
-                                            {{ prod.product_condition|default:prod.condition|default:"Surplus" }}
-                                        </span>
-                                    </td>
-                                    <td class="fw-bold text-dark">{{ prod.available_quantity|default:prod.quantity|default:"1" }}</td>
-                                    <td class="fw-semibold text-secondary">{{ prod.moq|default:"1" }}</td>
-                                    <td class="fw-bold text-success pe-4">
-                                        {% if prod.asking_price or prod.price or prod.msrp %}
-                                            ${{ prod.asking_price|default:prod.price|default:prod.msrp }}
-                                        {% else %}
-                                            NIL
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                            <tbody id="explorer-grid-body">
+                                <!-- Populated dynamically by JS (Page slice) -->
                             </tbody>
                         </table>
                     </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-box-seam text-muted mb-3 d-block" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold text-dark mb-1">No Products Found</h5>
-                        <p class="text-muted small">We couldn't extract any product rows from the attached spreadsheet or form.
-                        </p>
+
+                    <!-- Empty State Container -->
+                    <div id="explorer-empty-state" class="text-center py-5 px-4 d-none">
+                        <i class="bi bi-search text-muted opacity-50 mb-3 d-block" style="font-size: 2.8rem;"></i>
+                        <h6 class="fw-bold text-dark mb-1">No SKUs Match Your Filters</h6>
+                        <p class="text-muted small mb-3">Try adjusting your search keywords, clearing brand filters, or resetting sorting.</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm px-3 rounded-3" onclick="document.getElementById('explorer-reset-filters-btn').click()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                        </button>
                     </div>
-                    {% endif %}
+
+                    <!-- Initial Empty Manifest State (if no products at all) -->
+                    <div id="explorer-initial-empty-state" class="text-center py-5 px-4 {% if explorer_data.items %}d-none{% endif %}">
+                        <i class="bi bi-file-earmark-spreadsheet text-primary opacity-75 mb-3 d-block" style="font-size: 3.2rem;"></i>
+                        <h5 class="fw-bold text-dark mb-1">Spreadsheet Manifest Attached</h5>
+                        <p class="text-muted small mb-3" style="max-width: 480px; margin: 0 auto;">Click the <strong>"Parse Spreadsheet Data"</strong> button to extract and preview products from the <code>Inventory</code> tab before saving to the database.</p>
+                        {% if enquiry.file %}
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-3 fw-bold shadow-sm" onclick="document.getElementById('btn-parse-spreadsheet-data').click()">
+                            <i class="bi bi-file-earmark-spreadsheet-fill me-2"></i> Parse Spreadsheet Data
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Pagination Footer -->
+                <div class="card-footer bg-white border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2" id="explorer-pagination-footer">
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted" id="explorer-pagination-info">Showing 0 to 0 of 0 SKUs</small>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-1" id="explorer-pagination-controls">
+                        <!-- Populated dynamically by JS -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -462,6 +971,817 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+        window.initialExplorerData = {{ explorer_json|safe }};
+        window.currentParsedProducts = (window.initialExplorerData && window.initialExplorerData.items) ? window.initialExplorerData.items : null;
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatYesNoBadge(val, isDanger) {
+            if (val === null || val === undefined || val === '' || val === '-' || val === 'None') return '-';
+            const s = String(val).trim().toLowerCase();
+            if (s === 'yes' || s === 'true' || s === '1') {
+                const badgeClass = isDanger ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-success-subtle text-success border border-success-subtle';
+                return `<span class="badge ${badgeClass} rounded-pill px-2">Yes</span>`;
+            }
+            if (s === 'no' || s === 'false' || s === '0') {
+                const badgeClass = isDanger ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle';
+                return `<span class="badge ${badgeClass} rounded-pill px-2">No</span>`;
+            }
+            return escapeHtml(val);
+        }
+
+        function formatPriceVal(val, isSuccess) {
+            if (val === null || val === undefined || val === '' || val === '-' || val === 'NIL' || val === '0' || val === 'None') return '-';
+            const s = String(val).trim().replace(/^\$/, '');
+            const num = parseFloat(s);
+            const formatted = !isNaN(num) ? num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : escapeHtml(s);
+            if (isSuccess) {
+                return `<span class="fw-bold text-success">$${formatted}</span>`;
+            }
+            return `<span class="text-secondary">$${formatted}</span>`;
+        }
+
+        function formatLinkVal(val) {
+            if (!val || val === '-' || val === 'None') return '-';
+            const s = String(val).trim();
+            if (s.startsWith('http://') || s.startsWith('https://')) {
+                return `<a href="${escapeHtml(s)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2 text-nowrap" style="font-size: 11px;"><i class="bi bi-box-arrow-up-right me-1"></i>View Link</a>`;
+            }
+            return escapeHtml(s);
+        }
+
+        const explorerState = {
+            data: window.initialExplorerData || { items: [], summary: {}, brand_breakdown: [], top_profit_drivers: [] },
+            filteredItems: [],
+            searchQuery: '',
+            selectedBrand: 'all',
+            selectedCategory: 'all',
+            selectedCondition: 'all',
+            sortBy: 'line_msrp_desc',
+            currentPage: 1,
+            pageSize: 25,
+        };
+
+        const BRAND_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#4f46e5', '#14b8a6', '#f97316', '#6366f1', '#0ea5e9', '#64748b'];
+
+        function initWarehouseExplorer(explorerData) {
+            if (!explorerData) return;
+            explorerState.data = explorerData;
+            window.currentParsedProducts = explorerData.items || [];
+
+            // Update badge counts
+            const totalItems = (explorerData.items || []).length;
+            const badgeEl = document.getElementById('explorer-total-skus-badge');
+            if (badgeEl) badgeEl.textContent = `${totalItems} SKUs`;
+
+            const legacyBadges = document.querySelectorAll('.extracted-products-badge');
+            legacyBadges.forEach(b => b.textContent = totalItems);
+
+            // Update Empty States
+            const initialEmpty = document.getElementById('explorer-initial-empty-state');
+            if (initialEmpty) {
+                if (totalItems > 0) initialEmpty.classList.add('d-none');
+                else initialEmpty.classList.remove('d-none');
+            }
+
+            renderExplorerKPIs();
+            renderBrandAllocation();
+            renderProfitDrivers();
+            populateFilterDropdowns();
+            applyFiltersAndSort();
+        }
+
+        function renderExplorerKPIs() {
+            const summary = (explorerState.data && explorerState.data.summary) || {};
+            const skusEl = document.getElementById('kpi-distinct-skus');
+            const unitsEl = document.getElementById('kpi-total-units');
+            const msrpEl = document.getElementById('kpi-total-msrp');
+            const askEl = document.getElementById('kpi-total-ask');
+            const discountEl = document.getElementById('kpi-discount-pct');
+
+            if (skusEl) skusEl.textContent = Number(summary.total_skus || 0).toLocaleString();
+            if (unitsEl) unitsEl.textContent = Number(summary.total_units || 0).toLocaleString();
+            if (msrpEl) msrpEl.textContent = Number(summary.total_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (askEl) askEl.textContent = Number(summary.total_ask || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (discountEl) discountEl.textContent = `${summary.blended_discount_pct || 0}%`;
+        }
+
+        function renderBrandAllocation() {
+            const brands = (explorerState.data && explorerState.data.brand_breakdown) || [];
+            const barContainer = document.getElementById('explorer-brand-progressbar');
+            const chipsContainer = document.getElementById('explorer-brand-chips');
+            const countBadge = document.getElementById('explorer-brand-count-badge');
+            if (!barContainer || !chipsContainer) return;
+
+            if (countBadge) {
+                countBadge.textContent = `${brands.length} Brand${brands.length === 1 ? '' : 's'}`;
+            }
+
+            if (brands.length === 0) {
+                barContainer.innerHTML = '<div class="progress-bar bg-secondary bg-opacity-25 w-100" style="height: 12px; border-radius: 999px;"></div>';
+                chipsContainer.innerHTML = '<small class="text-muted fst-italic py-2">No brand metadata available in this lot manifest.</small>';
+                return;
+            }
+
+            let barHtml = '';
+            const isAllSelected = !explorerState.selectedBrand || explorerState.selectedBrand === 'all';
+            let chipsHtml = `
+                <button type="button" class="brand-chip-modern ${isAllSelected ? 'active' : ''}" data-brand="all">
+                    <i class="bi bi-grid-fill ${isAllSelected ? 'text-white' : 'text-primary'}" style="font-size: 0.75rem;"></i>
+                    <span>All Brands</span>
+                </button>
+            `;
+
+            brands.forEach((b, idx) => {
+                const color = BRAND_COLORS[idx % BRAND_COLORS.length];
+                const pct = Math.max(0, b.pct_of_value || 0);
+                const valFormatted = Number(b.total_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if (pct > 0) {
+                    barHtml += `
+                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${valFormatted})"></div>
+                    `;
+                }
+                const isActive = !isAllSelected && explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
+                chipsHtml += `
+                    <button type="button" class="brand-chip-modern ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="${escapeHtml(b.brand)} &bull; $${valFormatted} (${pct}%)">
+                        <span class="d-inline-block rounded-circle flex-shrink-0" style="width: 8px; height: 8px; background-color: ${color}; box-shadow: 0 0 0 2px ${isActive ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.06)'};"></span>
+                        <span class="text-truncate" style="max-width: 140px;">${escapeHtml(b.brand)}</span>
+                        <span class="brand-pct-badge">${pct > 0 ? pct + '%' : b.skus + ' SKU'}</span>
+                    </button>
+                `;
+            });
+
+            barContainer.innerHTML = barHtml || '<div class="progress-bar bg-primary w-100"></div>';
+            chipsContainer.innerHTML = chipsHtml;
+
+            chipsContainer.querySelectorAll('.brand-chip-modern').forEach(chip => {
+                chip.addEventListener('click', function () {
+                    const brand = this.dataset.brand;
+                    explorerState.selectedBrand = brand;
+                    const brandSelect = document.getElementById('explorer-brand-filter');
+                    if (brandSelect) brandSelect.value = brand;
+                    explorerState.currentPage = 1;
+                    applyFiltersAndSort();
+                    renderBrandAllocation();
+                });
+            });
+        }
+
+        function renderProfitDrivers() {
+            const drivers = (explorerState.data && explorerState.data.top_profit_drivers) || [];
+            const container = document.getElementById('explorer-profit-drivers-container');
+            if (!container) return;
+
+            if (drivers.length === 0) {
+                container.innerHTML = '<div class="col-12 py-4 text-center text-muted small fst-italic">No high-value driver items identified in manifest.</div>';
+                return;
+            }
+
+            const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4'];
+            const rankIcons = ['bi-trophy-fill', 'bi-award-fill', 'bi-gem', 'bi-check2-circle'];
+
+            let html = '';
+            drivers.slice(0, 4).forEach((d, idx) => {
+                const lineMsrp = Number(d.line_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const unitMsrp = Number(d.orig_price_num || d.original_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const brand = d.brand && d.brand !== '-' ? d.brand : 'General';
+                const model = d.model_part_number && d.model_part_number !== '-' ? d.model_part_number : '';
+                const qty = d.available_quantity || d.qty_num || 1;
+                const rankClass = rankClasses[idx] || 'rank-4';
+                const rankIcon = rankIcons[idx] || 'bi-star';
+
+                html += `
+                    <div class="col-6">
+                        <div class="profit-driver-card" data-driver-name="${escapeHtml(d.product_name)}" data-driver-model="${escapeHtml(model)}" title="Click to filter table to this SKU">
+                            <div>
+                                <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                                    <div class="d-flex align-items-center gap-1.5">
+                                        <span class="driver-rank-badge ${rankClass}">
+                                            <i class="bi ${rankIcon}"></i>#${idx + 1}
+                                        </span>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill text-truncate" style="font-size: 0.68rem; max-width: 110px; font-weight: 600;">
+                                            ${escapeHtml(brand)}
+                                        </span>
+                                    </div>
+                                    <span class="fw-bold font-monospace text-success" style="font-size: 0.88rem; letter-spacing: -0.3px;">
+                                        $${lineMsrp}
+                                    </span>
+                                </div>
+                                <h6 class="fw-bold text-dark text-truncate mb-1" style="font-size: 0.81rem; line-height: 1.3;" title="${escapeHtml(d.product_name)}">
+                                    ${escapeHtml(d.product_name)}
+                                </h6>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light-subtle text-muted mt-1" style="font-size: 0.71rem;">
+                                <span class="font-monospace text-secondary text-truncate" style="max-width: 100px;">${escapeHtml(model || 'SKU Item')}</span>
+                                <span class="text-nowrap"><strong class="text-dark">${qty}</strong> pcs &times; $${unitMsrp}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            // Interactive Click to Filter table to this SKU
+            container.querySelectorAll('.profit-driver-card').forEach(card => {
+                card.addEventListener('click', function () {
+                    const searchTerm = this.dataset.driverModel || this.dataset.driverName;
+                    const searchInput = document.getElementById('explorer-search-input');
+                    const clearBtn = document.getElementById('explorer-clear-search-btn');
+                    if (searchInput && searchTerm) {
+                        searchInput.value = searchTerm;
+                        explorerState.searchQuery = searchTerm;
+                        if (clearBtn) clearBtn.classList.remove('d-none');
+                        explorerState.currentPage = 1;
+                        applyFiltersAndSort();
+
+                        // Smooth scroll to table
+                        const tableCard = document.getElementById('explorer-toolbar');
+                        if (tableCard) {
+                            tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }
+                });
+            });
+        }
+
+        function populateFilterDropdowns() {
+            const items = (explorerState.data && explorerState.data.items) || [];
+            const brandSelect = document.getElementById('explorer-brand-filter');
+            const catSelect = document.getElementById('explorer-category-filter');
+
+            if (brandSelect) {
+                const brandCounts = {};
+                items.forEach(itm => {
+                    const b = (itm.brand && itm.brand !== '-' && itm.brand.toLowerCase() !== 'none') ? itm.brand.trim() : 'General / Unbranded';
+                    brandCounts[b] = (brandCounts[b] || 0) + 1;
+                });
+                const sortedBrands = Object.keys(brandCounts).sort((a, b) => brandCounts[b] - brandCounts[a]);
+
+                let optHtml = '<option value="all">All Brands (' + items.length + ')</option>';
+                sortedBrands.forEach(b => {
+                    const sel = explorerState.selectedBrand.toLowerCase() === b.toLowerCase() ? 'selected' : '';
+                    optHtml += `<option value="${escapeHtml(b)}" ${sel}>${escapeHtml(b)} (${brandCounts[b]})</option>`;
+                });
+                brandSelect.innerHTML = optHtml;
+            }
+
+            if (catSelect) {
+                const catCounts = {};
+                items.forEach(itm => {
+                    const c = (itm.product_category && itm.product_category !== '-' && itm.product_category.toLowerCase() !== 'none') ? itm.product_category.trim() : 'General';
+                    catCounts[c] = (catCounts[c] || 0) + 1;
+                });
+                const sortedCats = Object.keys(catCounts).sort((a, b) => catCounts[b] - catCounts[a]);
+
+                let optHtml = '<option value="all">All Categories</option>';
+                sortedCats.forEach(c => {
+                    const sel = explorerState.selectedCategory.toLowerCase() === c.toLowerCase() ? 'selected' : '';
+                    optHtml += `<option value="${escapeHtml(c)}" ${sel}>${escapeHtml(c)} (${catCounts[c]})</option>`;
+                });
+                catSelect.innerHTML = optHtml;
+            }
+        }
+
+        function renderActiveFilterPills() {
+            const bar = document.getElementById('explorer-active-filters-bar');
+            const container = document.getElementById('explorer-filter-pills');
+            if (!bar || !container) return;
+
+            const pills = [];
+            if (explorerState.searchQuery) {
+                pills.push(`Keyword: "${escapeHtml(explorerState.searchQuery)}"`);
+            }
+            if (explorerState.selectedBrand !== 'all') {
+                pills.push(`Brand: ${escapeHtml(explorerState.selectedBrand)}`);
+            }
+            if (explorerState.selectedCategory !== 'all') {
+                pills.push(`Category: ${escapeHtml(explorerState.selectedCategory)}`);
+            }
+            if (explorerState.selectedCondition !== 'all') {
+                const label = explorerState.selectedCondition === 'tested_yes' ? 'Tested Only' : (explorerState.selectedCondition === 'tested_no' ? 'Untested Only' : 'No Damage');
+                pills.push(`Condition: ${label}`);
+            }
+
+            if (pills.length === 0) {
+                bar.classList.add('d-none');
+                container.innerHTML = '';
+            } else {
+                bar.classList.remove('d-none');
+                container.innerHTML = pills.map(p => `
+                    <span class="badge bg-white text-dark border shadow-xs py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                        ${p}
+                    </span>
+                `).join('');
+            }
+        }
+
+        function applyFiltersAndSort() {
+            const allItems = (explorerState.data && explorerState.data.items) || [];
+            const query = (explorerState.searchQuery || '').trim().toLowerCase();
+            const brandFilter = (explorerState.selectedBrand || 'all').toLowerCase();
+            const catFilter = (explorerState.selectedCategory || 'all').toLowerCase();
+            const condFilter = explorerState.selectedCondition || 'all';
+
+            const filtered = allItems.filter(itm => {
+                if (query) {
+                    const name = String(itm.product_name || '').toLowerCase();
+                    const model = String(itm.model_part_number || '').toLowerCase();
+                    const brand = String(itm.brand || '').toLowerCase();
+                    const desc = String(itm.product_description || '').toLowerCase();
+                    const cat = String(itm.product_category || '').toLowerCase();
+                    const subcat = String(itm.subcategory || '').toLowerCase();
+                    const origin = String(itm.country_of_origin || '').toLowerCase();
+                    if (!name.includes(query) && !model.includes(query) && !brand.includes(query) && !desc.includes(query) && !cat.includes(query) && !subcat.includes(query) && !origin.includes(query)) {
+                        return false;
+                    }
+                }
+
+                if (brandFilter !== 'all') {
+                    const itmBrand = String(itm.brand || '').trim().toLowerCase();
+                    if (brandFilter === 'general / unbranded') {
+                        if (itmBrand && itmBrand !== '-' && itmBrand !== 'none' && itmBrand !== 'general / unbranded') return false;
+                    } else if (itmBrand !== brandFilter) {
+                        return false;
+                    }
+                }
+
+                if (catFilter !== 'all') {
+                    const itmCat = String(itm.product_category || '').trim().toLowerCase();
+                    if (itmCat !== catFilter) return false;
+                }
+
+                if (condFilter === 'tested_yes') {
+                    const t = String(itm.tested_and_verified || '').toLowerCase();
+                    if (t !== 'yes' && t !== 'true' && t !== '1') return false;
+                } else if (condFilter === 'tested_no') {
+                    const t = String(itm.tested_and_verified || '').toLowerCase();
+                    if (t !== 'no' && t !== 'false' && t !== '0') return false;
+                } else if (condFilter === 'no_damage') {
+                    const d = String(itm.visible_damage || '').toLowerCase();
+                    if (d === 'yes' || d === 'true' || d === '1') return false;
+                }
+
+                return true;
+            });
+
+            const sortBy = explorerState.sortBy;
+            filtered.sort((a, b) => {
+                if (sortBy === 'line_msrp_desc') return (b.line_msrp || 0) - (a.line_msrp || 0);
+                if (sortBy === 'line_msrp_asc') return (a.line_msrp || 0) - (b.line_msrp || 0);
+                if (sortBy === 'unit_msrp_desc') return (b.orig_price_num || 0) - (a.orig_price_num || 0);
+                if (sortBy === 'qty_desc') return (b.qty_num || 0) - (a.qty_num || 0);
+                if (sortBy === 'name_asc') return String(a.product_name || '').localeCompare(String(b.product_name || ''));
+                if (sortBy === 's_no_asc') return (Number(a.s_no) || 0) - (Number(b.s_no) || 0);
+                return 0;
+            });
+
+            explorerState.filteredItems = filtered;
+
+            renderActiveFilterPills();
+
+            const tableEl = document.getElementById('explorer-sku-table');
+            const emptyEl = document.getElementById('explorer-empty-state');
+            const initialEmpty = document.getElementById('explorer-initial-empty-state');
+
+            if (allItems.length === 0) {
+                if (tableEl) tableEl.classList.add('d-none');
+                if (emptyEl) emptyEl.classList.add('d-none');
+                if (initialEmpty) initialEmpty.classList.remove('d-none');
+                return;
+            }
+
+            if (filtered.length === 0) {
+                if (tableEl) tableEl.classList.add('d-none');
+                if (emptyEl) emptyEl.classList.remove('d-none');
+            } else {
+                if (tableEl) tableEl.classList.remove('d-none');
+                if (emptyEl) emptyEl.classList.add('d-none');
+            }
+
+            renderGridPage();
+            renderPaginationControls();
+        }
+
+        function renderGridPage() {
+            const tbody = document.getElementById('explorer-grid-body');
+            if (!tbody) return;
+
+            const filtered = explorerState.filteredItems;
+            const pageSize = explorerState.pageSize === 'all' ? filtered.length : parseInt(explorerState.pageSize, 10);
+            const total = filtered.length;
+
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (explorerState.currentPage > totalPages) {
+                explorerState.currentPage = totalPages;
+            }
+
+            const startIdx = (explorerState.currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, total);
+            const pageItems = filtered.slice(startIdx, endIdx);
+
+            let rowsHtml = '';
+            pageItems.forEach((prod, idx) => {
+                const sNo = prod.s_no || (startIdx + idx + 1);
+                const name = prod.product_name || '-';
+                const desc = prod.product_description || '-';
+                const cat = prod.product_category || '-';
+                const subcat = prod.subcategory || '-';
+                const brand = prod.brand || '-';
+                const model = prod.model_part_number || '-';
+                const qty = prod.available_quantity ?? 1;
+                const origPrice = formatPriceVal(prod.original_price, false);
+                const askPrice = formatPriceVal(prod.asking_price, true);
+                const lineMsrp = (prod.line_msrp && prod.line_msrp > 0) ? `<span class="fw-bold font-monospace text-dark">$${Number(prod.line_msrp).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>` : '-';
+                const origin = prod.country_of_origin || '-';
+                const yom = prod.year_of_manufacture || '-';
+                const link = formatLinkVal(prod.datasheet_certificate_link);
+                const grossWeight = prod.gross_weight_per_unit || '-';
+                const length = (prod.length !== undefined && prod.length !== null && prod.length !== '') ? prod.length : '-';
+                const width = (prod.width !== undefined && prod.width !== null && prod.width !== '') ? prod.width : '-';
+                const height = (prod.height !== undefined && prod.height !== null && prod.height !== '') ? prod.height : '-';
+                const uom = prod.measurement_unit || '-';
+                const stockAge = prod.stock_age || '-';
+                const tested = formatYesNoBadge(prod.tested_and_verified, false);
+                const funcStatus = prod.functional_status || '-';
+                const damage = formatYesNoBadge(prod.visible_damage, true);
+                const missingParts = formatYesNoBadge(prod.missing_parts, true);
+                const warranty = formatYesNoBadge(prod.warranty_available, false);
+                const safetyCert = formatYesNoBadge(prod.safety_certificate_available, false);
+                const certType = prod.certificate_type || '-';
+                const regApproval = prod.regulatory_approval || '-';
+                const hazmat = formatYesNoBadge(prod.hazardous_material, true);
+                const recyclable = formatYesNoBadge(prod.recyclable, false);
+                const lifeRemaining = prod.estimated_product_life_remaining || '-';
+                const custom1 = prod.seller_custom_field_1 || '-';
+                const custom2 = prod.seller_custom_field_2 || '-';
+
+                rowsHtml += `
+                    <tr>
+                        <td class="ps-4 fw-bold font-monospace text-dark text-nowrap">${sNo}</td>
+                        <td class="fw-bold text-dark text-nowrap">${escapeHtml(name)}</td>
+                        <td>
+                            <div class="text-secondary text-truncate" style="max-width: 200px;" title="${escapeHtml(desc)}">${escapeHtml(desc)}</div>
+                        </td>
+                        <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(cat)}</span></td>
+                        <td class="text-nowrap"><span class="badge bg-light text-dark border">${escapeHtml(subcat)}</span></td>
+                        <td class="fw-medium text-dark text-nowrap">${escapeHtml(brand)}</td>
+                        <td class="font-monospace text-secondary text-nowrap">${escapeHtml(model)}</td>
+                        <td class="fw-bold text-dark text-nowrap">${qty}</td>
+                        <td class="text-secondary text-nowrap">${origPrice}</td>
+                        <td class="text-nowrap">${lineMsrp}</td>
+                        <td class="text-nowrap">${askPrice}</td>
+                        <td class="text-nowrap">${escapeHtml(origin)}</td>
+                        <td class="text-nowrap">${escapeHtml(yom)}</td>
+                        <td class="text-nowrap">${link}</td>
+                        <td class="text-nowrap">${escapeHtml(grossWeight)}</td>
+                        <td class="text-nowrap">${escapeHtml(length)}</td>
+                        <td class="text-nowrap">${escapeHtml(width)}</td>
+                        <td class="text-nowrap">${escapeHtml(height)}</td>
+                        <td class="text-nowrap">${escapeHtml(uom)}</td>
+                        <td class="text-nowrap">${escapeHtml(stockAge)}</td>
+                        <td class="text-nowrap">${tested}</td>
+                        <td class="text-nowrap">${escapeHtml(funcStatus)}</td>
+                        <td class="text-nowrap">${damage}</td>
+                        <td class="text-nowrap">${missingParts}</td>
+                        <td class="text-nowrap">${warranty}</td>
+                        <td class="text-nowrap">${safetyCert}</td>
+                        <td class="text-nowrap">${escapeHtml(certType)}</td>
+                        <td class="text-nowrap">${escapeHtml(regApproval)}</td>
+                        <td class="text-nowrap">${hazmat}</td>
+                        <td class="text-nowrap">${recyclable}</td>
+                        <td class="text-nowrap">${escapeHtml(lifeRemaining)}</td>
+                        <td class="text-nowrap">${escapeHtml(custom1)}</td>
+                        <td class="pe-4 text-nowrap">${escapeHtml(custom2)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rowsHtml;
+
+            const infoEl = document.getElementById('explorer-pagination-info');
+            if (infoEl) {
+                const allTotal = (explorerState.data && explorerState.data.items ? explorerState.data.items.length : 0);
+                if (total === 0) {
+                    infoEl.textContent = 'Showing 0 to 0 of 0 SKUs';
+                } else {
+                    infoEl.innerHTML = `Showing <strong class="text-dark">${startIdx + 1}</strong> to <strong class="text-dark">${endIdx}</strong> of <strong class="text-dark">${total}</strong> SKUs${total !== allTotal ? ' (Filtered from ' + allTotal + ' total)' : ''}`;
+                }
+            }
+        }
+
+        function renderPaginationControls() {
+            const container = document.getElementById('explorer-pagination-controls');
+            if (!container) return;
+
+            const total = explorerState.filteredItems.length;
+            const pageSize = explorerState.pageSize === 'all' ? total : parseInt(explorerState.pageSize, 10);
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const curr = explorerState.currentPage;
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="1" ${curr === 1 ? 'disabled' : ''} title="First Page">
+                    <i class="bi bi-chevron-double-left"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${curr - 1}" ${curr === 1 ? 'disabled' : ''} title="Previous Page">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            `;
+
+            let startPage = Math.max(1, curr - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                html += `
+                    <button type="button" class="btn btn-sm px-2.5 py-1 rounded-2 fw-semibold ${p === curr ? 'btn-primary' : 'btn-outline-secondary'}" data-page="${p}">
+                        ${p}
+                    </button>
+                `;
+            }
+
+            html += `
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${curr + 1}" ${curr === totalPages ? 'disabled' : ''} title="Next Page">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-2" data-page="${totalPages}" ${curr === totalPages ? 'disabled' : ''} title="Last Page">
+                    <i class="bi bi-chevron-double-right"></i>
+                </button>
+            `;
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('button[data-page]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const page = parseInt(this.dataset.page, 10);
+                    if (page >= 1 && page <= totalPages && page !== explorerState.currentPage) {
+                        explorerState.currentPage = page;
+                        renderGridPage();
+                        renderPaginationControls();
+                    }
+                });
+            });
+        }
+
+        function exportFilteredCSV() {
+            const items = explorerState.filteredItems;
+            if (!items || items.length === 0) {
+                alert('No SKU items available to export.');
+                return;
+            }
+
+            const headers = [
+                "S.No", "Product Name", "Product Description", "Product Category", "Subcategory",
+                "Brand / Manufacturer", "Model / Part Number", "Available Quantity", "Original Price",
+                "Asking Price", "Country of Origin", "Year of Manufacture", "Datasheet / Certificate Link",
+                "Gross Weight per Unit", "Length", "Width", "Height", "Measurement Unit",
+                "Stock Age", "Tested and verified", "Functional Status", "Visible Damage?",
+                "Missing Parts?", "Warranty Available?", "Safety Certificate Available?",
+                "Certificate Type", "Regulatory Approval", "Hazardous Material?", "Recyclable?",
+                "Estimated Product Life Remaining", "Seller Custom Field 1", "Seller Custom Field 2"
+            ];
+
+            const rows = [headers];
+
+            items.forEach((p, idx) => {
+                rows.push([
+                    p.s_no || (idx + 1),
+                    p.product_name || '',
+                    p.product_description || '',
+                    p.product_category || '',
+                    p.subcategory || '',
+                    p.brand || '',
+                    p.model_part_number || '',
+                    p.available_quantity || 1,
+                    p.original_price || '',
+                    p.asking_price || '',
+                    p.country_of_origin || '',
+                    p.year_of_manufacture || '',
+                    p.datasheet_certificate_link || '',
+                    p.gross_weight_per_unit || '',
+                    p.length || '',
+                    p.width || '',
+                    p.height || '',
+                    p.measurement_unit || '',
+                    p.stock_age || '',
+                    p.tested_and_verified || '',
+                    p.functional_status || '',
+                    p.visible_damage || '',
+                    p.missing_parts || '',
+                    p.warranty_available || '',
+                    p.safety_certificate_available || '',
+                    p.certificate_type || '',
+                    p.regulatory_approval || '',
+                    p.hazardous_material || '',
+                    p.recyclable || '',
+                    p.estimated_product_life_remaining || '',
+                    p.seller_custom_field_1 || '',
+                    p.seller_custom_field_2 || ''
+                ]);
+            });
+
+            const csvContent = "\uFEFF" + rows.map(r => r.map(cell => {
+                const s = String(cell ?? '').replace(/"/g, '""');
+                return `"${s}"`;
+            }).join(',')).join('\r\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const lotNum = '{{ enquiry.lot_number|default:"Lot" }}';
+            a.download = `${lotNum}_Warehouse_SKUs_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Toolbar Event Listeners
+        const searchInput = document.getElementById('explorer-search-input');
+        const clearSearchBtn = document.getElementById('explorer-clear-search-btn');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    explorerState.searchQuery = searchInput.value;
+                    if (clearSearchBtn) {
+                        if (searchInput.value) clearSearchBtn.classList.remove('d-none');
+                        else clearSearchBtn.classList.add('d-none');
+                    }
+                    explorerState.currentPage = 1;
+                    applyFiltersAndSort();
+                }, 150);
+            });
+        }
+
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function () {
+                if (searchInput) searchInput.value = '';
+                explorerState.searchQuery = '';
+                clearSearchBtn.classList.add('d-none');
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const brandFilterSelect = document.getElementById('explorer-brand-filter');
+        if (brandFilterSelect) {
+            brandFilterSelect.addEventListener('change', function () {
+                explorerState.selectedBrand = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+                renderBrandAllocation();
+            });
+        }
+
+        const catFilterSelect = document.getElementById('explorer-category-filter');
+        if (catFilterSelect) {
+            catFilterSelect.addEventListener('change', function () {
+                explorerState.selectedCategory = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const condFilterSelect = document.getElementById('explorer-condition-filter');
+        if (condFilterSelect) {
+            condFilterSelect.addEventListener('change', function () {
+                explorerState.selectedCondition = this.value;
+                explorerState.currentPage = 1;
+                applyFiltersAndSort();
+            });
+        }
+
+        const sortSelect = document.getElementById('explorer-sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function () {
+                explorerState.sortBy = this.value;
+                applyFiltersAndSort();
+            });
+        }
+
+        const pageSizeSelect = document.getElementById('explorer-page-size-select');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', function () {
+                explorerState.pageSize = this.value;
+                explorerState.currentPage = 1;
+                renderGridPage();
+                renderPaginationControls();
+            });
+        }
+
+        const resetFiltersBtn = document.getElementById('explorer-reset-filters-btn');
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function () {
+                explorerState.searchQuery = '';
+                explorerState.selectedBrand = 'all';
+                explorerState.selectedCategory = 'all';
+                explorerState.selectedCondition = 'all';
+                explorerState.sortBy = 'line_msrp_desc';
+                explorerState.currentPage = 1;
+
+                if (searchInput) searchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.classList.add('d-none');
+                if (brandFilterSelect) brandFilterSelect.value = 'all';
+                if (catFilterSelect) catFilterSelect.value = 'all';
+                if (condFilterSelect) condFilterSelect.value = 'all';
+                if (sortSelect) sortSelect.value = 'line_msrp_desc';
+
+                applyFiltersAndSort();
+                renderBrandAllocation();
+            });
+        }
+
+        const exportCsvBtn = document.getElementById('btn-export-explorer-csv');
+        if (exportCsvBtn) {
+            exportCsvBtn.addEventListener('click', exportFilteredCSV);
+        }
+
+        // Parse Spreadsheet Data Button Handler
+        const parseBtn = document.getElementById('btn-parse-spreadsheet-data');
+        if (parseBtn) {
+            parseBtn.addEventListener('click', async function () {
+                const id = this.dataset.id || '{{ enquiry.id }}';
+                const originalHtml = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Parsing Inventory Tab...';
+
+                try {
+                    const res = await fetch(`/admin/api/enquiries/lots/${id}/parse/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        if (data.explorer_data) {
+                            initWarehouseExplorer(data.explorer_data);
+                        } else if (data.products) {
+                            renderParsedProductsTable(data.products);
+                        }
+                        const previewAlert = document.getElementById('preview-alert-container');
+                        if (previewAlert) previewAlert.classList.remove('d-none');
+
+                        const dbStatusContainer = document.getElementById('db-status-container');
+                        if (dbStatusContainer) {
+                            dbStatusContainer.innerHTML = `
+                                <button type="button" class="btn btn-success btn-sm px-3.5 py-2 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm btn-save-products-db" data-id="{{ enquiry.id }}">
+                                    <i class="bi bi-database-add fs-6"></i> Save Products to Database
+                                </button>
+                            `;
+                        }
+                    } else {
+                        alert('Parsing Error: ' + (data.message || 'Failed to parse spreadsheet.'));
+                    }
+                } catch (err) {
+                    console.error('Parse error:', err);
+                    alert('An error occurred while parsing the spreadsheet.');
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        // Backward compatibility shim
+        function renderParsedProductsTable(items) {
+            window.currentParsedProducts = items;
+            const expData = {
+                items: items,
+                summary: {
+                    total_skus: items.length,
+                    total_units: items.reduce((acc, itm) => acc + (parseInt(itm.available_quantity, 10) || 1), 0),
+                    total_msrp: items.reduce((acc, itm) => acc + (parseFloat(String(itm.original_price || 0).replace(/[^0-9.]/g, '')) * (parseInt(itm.available_quantity, 10) || 1) || 0), 0),
+                    total_ask: items.reduce((acc, itm) => acc + (parseFloat(String(itm.asking_price || 0).replace(/[^0-9.]/g, '')) * (parseInt(itm.available_quantity, 10) || 1) || 0), 0),
+                    blended_discount_pct: 0
+                },
+                brand_breakdown: [],
+                top_profit_drivers: items.slice(0, 5)
+            };
+            initWarehouseExplorer(expData);
+        }
+
+        // Initialize Virtual Warehouse Explorer on Page Load
+        initWarehouseExplorer(window.initialExplorerData);
+
         // Status update handler
         document.querySelectorAll('.btn-lot-status').forEach(btn => {
             btn.addEventListener('click', function (e) {
@@ -525,27 +1845,42 @@
         // Edit Lot Form Submit Handler
         const editLotForm = document.getElementById('editLotEnquiryForm');
         if (editLotForm) {
+            const enqSelect = editLotForm.querySelector('select[name="enquiry_status"]');
+            const actSelect = editLotForm.querySelector('select[name="active_status"]');
+            if (enqSelect && actSelect) {
+                const syncLotActiveState = () => {
+                    const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const activeOpt = actSelect.querySelector('option[value="active"]');
+                    if (activeOpt) {
+                        activeOpt.disabled = !isApproved;
+                    }
+                    if (!isApproved && actSelect.value === 'active') {
+                        actSelect.value = 'inactive';
+                    }
+                };
+                enqSelect.addEventListener('change', syncLotActiveState);
+                syncLotActiveState();
+            }
+
             editLotForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('saveLotEditBtn');
                 btn.disabled = true;
-                btn.textContent = 'Saving...';
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Saving Changes...';
 
                 const formData = new FormData(editLotForm);
-                const payload = {};
-                formData.forEach((val, key) => { payload[key] = val; });
 
                 try {
                     const res = await fetch(`/admin/api/enquiries/lots/{{ enquiry.id }}/edit/`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}'
                         },
-                        body: JSON.stringify(payload)
+                        body: formData
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
+                        alert(data.message || 'Lot batch details updated successfully.');
                         location.reload();
                     } else {
                         alert(data.message || 'Failed to update lot details.');
@@ -560,115 +1895,323 @@
             });
         }
 
-        // Save Products to DB Handler
-        document.querySelectorAll('.btn-save-products-db').forEach(btn => {
-            btn.addEventListener('click', async function (e) {
+        // Upload Excel Manifest Submit Handler
+        const uploadExcelForm = document.getElementById('uploadLotExcelForm');
+        if (uploadExcelForm) {
+            uploadExcelForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const id = this.dataset.id || '{{ enquiry.id }}';
-                const originalHtml = this.innerHTML;
+                const btn = document.getElementById('submitExcelUploadBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Uploading...';
 
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving to DB...';
-
+                const formData = new FormData(uploadExcelForm);
                 try {
-                    const response = await fetch(`/admin/api/enquiries/lots/${id}/save-products/`, {
+                    const res = await fetch(`/admin/api/enquiries/lots/{{ enquiry.id }}/upload-manifest/`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
                             'X-CSRFToken': '{{ csrf_token }}'
-                        }
+                        },
+                        body: formData
                     });
-
-                    const data = await response.json();
-                    if (response.ok && data.success) {
-                        alert(data.message || 'Products successfully saved to database!');
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        alert(data.message || 'Excel manifest uploaded successfully!');
                         location.reload();
                     } else {
-                        alert('Error: ' + (data.message || 'Failed to save products to database.'));
-                        this.disabled = false;
-                        this.innerHTML = originalHtml;
+                        alert(data.message || 'Failed to upload manifest file.');
+                        btn.disabled = false;
+                        btn.textContent = 'Upload Manifest File';
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('An error occurred while saving products to database.');
-                    this.disabled = false;
-                    this.innerHTML = originalHtml;
+                } catch (err) {
+                    alert('Connection error while uploading manifest file.');
+                    btn.disabled = false;
+                    btn.textContent = 'Upload Manifest File';
                 }
             });
+        }
+
+        // Save Products to DB Handler (Delegated Event Listener)
+        document.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-save-products-db');
+            if (!btn) return;
+            e.preventDefault();
+
+            const id = btn.dataset.id || '{{ enquiry.id }}';
+            const originalHtml = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Saving to DB...';
+
+            try {
+                const payload = {};
+                if (window.currentParsedProducts && window.currentParsedProducts.length > 0) {
+                    payload.products = window.currentParsedProducts;
+                }
+
+                const response = await fetch(`/admin/api/enquiries/lots/${id}/save-products/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alert(data.message || 'Products successfully saved to database!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to save products to database.'));
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while saving products to database.');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         });
     });
 </script>
 
 <!-- Edit Lot Enquiry Modal -->
 <div class="modal fade" id="editLotEnquiryModal" tabindex="-1" aria-labelledby="editLotEnquiryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-bottom p-4">
                 <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="editLotEnquiryModalLabel">
-                    <i class="bi bi-pencil-square text-primary"></i> Edit Lot Batch Details ({{ enquiry.lot_number }})
+                    <i class="bi bi-pencil-square text-primary"></i> Edit Lot Batch & Vendor Details ({{ enquiry.lot_number }})
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editLotEnquiryForm">
-                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Lot Title / Batch Name</label>
-                            <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:'' }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
-                            <select class="form-select" name="enquiry_status">
-                                <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
-                                <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
-                                <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Active Status</label>
-                            <select class="form-select" name="active_status">
-                                <option value="active" {% if enquiry.active_status == 'active' %}selected{% endif %}>Active</option>
-                                <option value="inactive" {% if enquiry.active_status == 'inactive' %}selected{% endif %}>Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Category</label>
-                            <select class="form-select" name="subcategory_id">
-                                <option value="">-- Select Category --</option>
-                                {% for main in categories %}
-                                <optgroup label="{{ main.name }}">
-                                    {% for sub in main.subcategories.all %}
-                                    <option value="{{ sub.id }}" {% if enquiry.category_id == sub.id or enquiry.category_name == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+            <form id="editLotEnquiryForm" enctype="multipart/form-data">
+                <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                    
+                    <!-- Section 1: Basic Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-info-circle me-1"></i> Basic Batch Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Lot Title / Batch Name</label>
+                                <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:'' }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
+                                <select class="form-select" name="enquiry_status">
+                                    <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
+                                    <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Active Status</label>
+                                <select class="form-select" name="active_status">
+                                    <option value="active" {% if enquiry.active_status == 'active' %}selected{% endif %}>Active</option>
+                                    <option value="inactive" {% if enquiry.active_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Category</label>
+                                <select class="form-select" name="subcategory_id">
+                                    <option value="">-- Select Category --</option>
+                                    {% for main in categories %}
+                                    <optgroup label="{{ main.name }}">
+                                        {% for sub in main.subcategories.all %}
+                                        <option value="{{ sub.id }}" {% if enquiry.category_id == sub.id or enquiry.category_name == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
-                                </optgroup>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-dark">Total Price / Liquidation Value</label>
-                            <input type="number" step="0.01" class="form-control" name="total_price" value="{{ enquiry.total_price|default:batch_data.liquidation_price|default:'' }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-semibold text-dark">Currency</label>
-                            <input type="text" class="form-control" name="currency" value="{{ enquiry.currency|default:'AED' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Inventory Location</label>
-                            <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:user_data.business_location|default:'' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Packaging & Warehouse Notes / Reason to Sell</label>
-                            <textarea class="form-control" name="reason_to_sell" rows="3">{{ enquiry.reason_to_sell|default:batch_data.notes|default:'' }}</textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Description</label>
-                            <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:'' }}</textarea>
+                                </select>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Section 2: Vendor Details -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-person-badge me-1"></i> Vendor Details
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Company Name</label>
+                                <input type="text" class="form-control" name="company" value="{{ user_data.company|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Contact Person</label>
+                                <input type="text" class="form-control" name="full_name" value="{{ user_data.full_name|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Contact Number</label>
+                                <input type="text" class="form-control" name="phone_no" value="{{ user_data.phone_no|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Email Address</label>
+                                <input type="email" class="form-control" name="email" value="{{ user_data.email|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Business Location</label>
+                                <input type="text" class="form-control" name="business_location" value="{{ user_data.business_location|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Stock Specifications -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-list-check me-1"></i> Stock Specifications
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Stock Condition</label>
+                                <select class="form-select" name="condition">
+                                    <option value="New / Sealed" {% if batch_data.stock_condition == 'New / Sealed' %}selected{% endif %}>New / Sealed</option>
+                                    <option value="Surplus" {% if batch_data.stock_condition == 'Surplus' or not batch_data.stock_condition %}selected{% endif %}>Surplus</option>
+                                    <option value="Like New" {% if batch_data.stock_condition == 'Like New' %}selected{% endif %}>Like New</option>
+                                    <option value="Used" {% if batch_data.stock_condition == 'Used' %}selected{% endif %}>Used</option>
+                                    <option value="Uninspected Customer Returns" {% if batch_data.stock_condition == 'Uninspected Customer Returns' %}selected{% endif %}>Uninspected Customer Returns</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Inventory Age</label>
+                                <input type="text" class="form-control" name="inventory_stock_age" value="{{ batch_data.inventory_age|default:'' }}" placeholder="e.g. 0-3 Months">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Key Brands Included</label>
+                                <input type="text" class="form-control" name="key_brands" value="{{ batch_data.key_brands|default:'' }}" placeholder="e.g. Cisco, Dell, HP">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Distinct SKUs</label>
+                                <input type="number" class="form-control" name="distinct_skus" value="{{ batch_data.distinct_skus|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Total Units Quantity</label>
+                                <input type="number" class="form-control" name="total_units" value="{{ batch_data.total_units|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Pricing & Financials -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-currency-dollar me-1"></i> Pricing & Financials
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">Currency</label>
+                                <input type="text" class="form-control" name="currency" value="{{ enquiry.currency|default:'USD' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Total Est Retail Value (MSRP)</label>
+                                <input type="number" step="0.01" class="form-control" name="msrp" value="{{ batch_data.msrp|default:'' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Total Price / Liquidation Value</label>
+                                <input type="number" step="0.01" class="form-control" name="liquidation_price" value="{{ batch_data.liquidation_price|default:'' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">Offer / Discount</label>
+                                <input type="text" class="form-control" name="offer" value="{{ batch_data.offer|default:enquiry.offer|default:'' }}" placeholder="e.g. 47% Off MSRP">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">Open to Offers</label>
+                                <select class="form-select" name="allow_counter_offers">
+                                    <option value="true" {% if batch_data.open_to_offer %}selected{% endif %}>Yes</option>
+                                    <option value="false" {% if not batch_data.open_to_offer %}selected{% endif %}>No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Logistics Details -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-truck me-1"></i> Logistics Details
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Shipping Size</label>
+                                <input type="text" class="form-control" name="shipping_size" value="{{ batch_data.shipping_size|default:'' }}" placeholder="e.g. Full Pallet Load">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Shipping Terms</label>
+                                <input type="text" class="form-control" name="shipping_terms" value="{{ batch_data.shipping_terms|default:'' }}" placeholder="e.g. EXW / FOB">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Load / Pallet Type</label>
+                                <input type="text" class="form-control" name="load_type" value="{{ batch_data.load_type|default:batch_data.pallet_count|default:'' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Total Weight</label>
+                                <input type="text" class="form-control" name="total_weight" value="{{ batch_data.total_weight|default:'' }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Inventory Location</label>
+                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 6: Notes & Attachments -->
+                    <div class="mb-2">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-journal-text me-1"></i> Notes & Excel Attachment
+                        </h6>
+                        <div class="row g-3">
+
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Description</label>
+                                <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:'' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Upload / Replace Warehouse Images</label>
+                                <input type="file" class="form-control" name="warehouse_images" multiple accept="image/*">
+                                <small class="text-muted">Select warehouse or product photos (.png, .jpg, .webp). Uploaded images will be shown in the Product Media card.</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Upload / Replace Excel Manifest File (.xlsx / .csv)</label>
+                                <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv">
+                                <small class="text-muted">Uploading a new Excel file here will update the manifest file and re-extract product items.</small>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer border-top p-3">
                     <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary fw-semibold px-4" id="saveLotEditBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Dedicated Upload Excel Manifest Modal -->
+<div class="modal fade" id="uploadLotExcelModal" tabindex="-1" aria-labelledby="uploadLotExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="uploadLotExcelModalLabel">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary"></i> Upload Excel Manifest File
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadLotExcelForm" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Select a new Excel spreadsheet file (<code>.xlsx</code> or <code>.csv</code>) to attach to lot batch <strong>{{ enquiry.lot_number }}</strong> and extract product items.</p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Choose Spreadsheet File</label>
+                        <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success fw-semibold px-4 d-inline-flex align-items-center gap-2" id="submitExcelUploadBtn">
+                        <i class="bi bi-cloud-arrow-up-fill"></i> Upload Manifest File
+                    </button>
                 </div>
             </form>
         </div>

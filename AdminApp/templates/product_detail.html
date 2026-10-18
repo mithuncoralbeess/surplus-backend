@@ -51,21 +51,56 @@
                     <i class="bi bi-eye-slash me-1"></i> Inactive
                 </span>
                 {% endif %}
+
+                <!-- Marketplace Collection Badges / Quick Toggles -->
+                <span class="d-inline-flex align-items-center gap-1.5 flex-wrap ms-lg-2" id="catalog-collections-group">
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_featured %}btn-danger text-white{% else %}btn-outline-danger{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_featured" data-active="{% if product.is_featured %}true{% else %}false{% endif %}"
+                            title="Toggle Featured Deal status" style="font-size: 0.78rem;">
+                        <i class="bi bi-star-fill me-1"></i>Featured
+                        <span class="badge {% if product.is_featured %}bg-white text-danger{% else %}bg-danger-subtle text-danger{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_best_selling" data-active="{% if product.is_best_selling %}true{% else %}false{% endif %}"
+                            title="Toggle Best Selling status" style="font-size: 0.78rem;">
+                        <i class="bi bi-fire me-1"></i>Best Seller
+                        <span class="badge {% if product.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-collection-toggle {% if product.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
+                            data-id="{{ product.id }}" data-flag="is_new_arrival" data-active="{% if product.is_new_arrival %}true{% else %}false{% endif %}"
+                            title="Toggle New Arrival status" style="font-size: 0.78rem;">
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i>New Arrival
+                        <span class="badge {% if product.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
+                            <i class="bi {% if product.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                        </span>
+                    </button>
+                </span>
             </div>
             <p class="text-muted small mb-0">Master catalog entry & comprehensive product profile</p>
         </div>
 
         <!-- Header Actions -->
         <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if product.is_active %}
             <a href="/admin/products/{{ product.id }}/toggle-status/" 
-               class="btn btn-sm {% if product.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %} rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
+               class="btn btn-sm btn-outline-warning rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
                title="Toggle Active Listing Status">
-                {% if product.is_active %}
                 <i class="bi bi-toggle-on fs-6"></i> Set Inactive
-                {% else %}
-                <i class="bi bi-toggle-off fs-6"></i> Set Active
-                {% endif %}
             </a>
+            {% elif product.enquiry_status|lower == 'approved' %}
+            <a href="/admin/products/{{ product.id }}/toggle-status/" 
+               class="btn btn-sm btn-outline-success rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
+               title="Toggle Active Listing Status">
+                <i class="bi bi-toggle-off fs-6"></i> Set Active
+            </a>
+            {% endif %}
 
             <a href="/admin/products/all/" class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm">
                 <i class="bi bi-arrow-left"></i> Back to Catalog
@@ -122,8 +157,33 @@
     <!-- Seller / Vendor Details Banner Card -->
     <div class="premium-card mb-4">
         <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                <i class="bi bi-person-badge me-2 text-primary"></i> User Details
+            <h6 class="fw-bold text-uppercase text-muted mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
+                style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                <span class="d-flex align-items-center flex-wrap gap-2">
+                    {% if user_data.is_admin %}
+                    <span><i class="bi bi-shield-check me-2 text-primary"></i> Admin Details</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                        <i class="bi bi-shield-fill-check me-1"></i>Internal Admin Submission
+                    </span>
+                    {% else %}
+                    <span><i class="bi bi-person-badge me-2 text-primary"></i> Vendor Details</span>
+                    {% if assisted_by_admin %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;" title="{{ assisted_by_admin.email }}">
+                        <i class="bi bi-shield-check me-1"></i>Assisted by ADM-{{ assisted_by_admin.id|stringformat:"04d" }} ({{ assisted_by_admin.full_name|default:assisted_by_admin.username }})
+                    </span>
+                    {% if intake_channel %}
+                    <span class="badge {% if intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} px-2.5 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                        {% if intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1"></i>{% elif intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ intake_channel }} Intake
+                    </span>
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </span>
+                {% if user_data.vendor_id and user_data.vendor_id != 'N/A' %}
+                <span class="badge {% if user_data.is_admin %}bg-primary text-white{% else %}bg-primary-subtle text-primary border border-primary-subtle{% endif %} px-2.5 py-1 fs-6 rounded-pill fw-bold font-monospace">
+                    {% if user_data.is_admin %}<i class="bi bi-shield-lock-fill me-1"></i>{% else %}<i class="bi bi-person-badge me-1"></i>{% endif %}{{ user_data.vendor_id }}
+                </span>
+                {% endif %}
             </h6>
             
             <div class="row g-3">
@@ -136,7 +196,7 @@
                 
                 <div class="col-md-4 col-sm-6">
                     <div class="data-box">
-                        <span class="data-label">Contact Person</span>
+                        <span class="data-label">{% if user_data.is_admin %}Admin Name{% else %}Contact Person{% endif %}</span>
                         <span class="data-value">{{ user_data.full_name|default:"N/A" }}</span>
                     </div>
                 </div>
@@ -157,7 +217,7 @@
                 
                 <div class="col-md-4 col-sm-6">
                     <div class="data-box">
-                        <span class="data-label">Inventory Location</span>
+                        <span class="data-label">Business Location</span>
                         <span class="data-value"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ user_data.business_location|default:"N/A" }}</span>
                     </div>
                 </div>
@@ -182,7 +242,7 @@
             <div class="premium-card p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                        <i class="bi bi-currency-dollar me-2 text-success"></i> Pricing & Commercial Terms
+                        <i class="bi bi-currency-dollar me-2 text-success"></i> Pricing & Financials
                     </h6>
                     <span class="badge bg-secondary-subtle text-secondary font-monospace">Currency: {{ product.currency }}</span>
                 </div>
@@ -210,6 +270,20 @@
                             <span class="fs-4 fw-bold text-dark">{{ product.previous_price|floatformat:2 }}</span>
                             {% else %}
                             <span class="fs-5 fw-medium text-muted">N/A</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="inline-card border-left-danger flex-fill shadow-sm">
+                        <span class="inline-label"><i class="bi bi-percent text-danger"></i> Offer</span>
+                        <div class="d-flex align-items-center">
+                            {% if product.offer and product.offer > 0 %}
+                            <span class="badge bg-danger-subtle text-danger me-2 fs-6"><i class="bi bi-tag-fill me-1"></i>Offer</span>
+                            <span class="fs-4 fw-bold text-danger">{{ product.offer|floatformat:2 }}%</span>
+                            {% elif product.offer %}
+                            <span class="fs-4 fw-bold text-dark">{{ product.offer|floatformat:2 }}%</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary me-2 fs-6">None</span>
+                            <span class="fs-4 fw-bold text-muted">0%</span>
                             {% endif %}
                         </div>
                     </div>
@@ -285,6 +359,12 @@
                         <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
                             <span class="text-dark fw-medium">{{ product.manufacturing_country|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
+                            <span class="text-dark fw-bold"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ product.inventory_location|default:"N/A" }}</span>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">
@@ -397,8 +477,10 @@
                 </h6>
 
                 <div class="rounded-3 overflow-hidden bg-light p-3 border mb-3 d-flex align-items-center justify-content-center" style="min-height: 280px; background-color: #f8fafc !important;">
-                    {% if product.image %}
-                    <img id="main-showcase-image" src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;">
+                    {% if product.images.first %}
+                    <img id="main-showcase-image" src="{{ product.images.first.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
+                    {% elif product.image %}
+                    <img id="main-showcase-image" src="{{ product.image.url }}" alt="{{ product.product_name }}" class="img-fluid rounded shadow-sm" style="max-height: 320px; object-fit: contain;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&q=80';">
                     {% else %}
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 3rem;"></i>
@@ -411,19 +493,21 @@
                 <!-- Gallery Thumbnails -->
                 {% if product.images.all %}
                 <div class="d-flex gap-2 flex-wrap justify-content-center pt-2 border-top">
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" 
-                         onclick="document.getElementById('main-showcase-image').src = this.src"
-                         class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75" 
-                         style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
-                         alt="Main Thumbnail">
-                    {% endif %}
                     {% for img_obj in product.images.all %}
-                    <img src="{{ img_obj.image.url }}" 
-                         onclick="document.getElementById('main-showcase-image').src = this.src"
-                         class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75" 
-                         style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
-                         alt="Gallery Thumbnail">
+                    <div class="position-relative d-inline-block">
+                        <img src="{{ img_obj.url }}" 
+                             onclick="document.getElementById('main-showcase-image').src = this.src"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200&q=80';"
+                             class="rounded border p-1 bg-white shadow-sm gallery-thumb opacity-75 {% if img_obj.is_real_photo %}border-success{% endif %}" 
+                             style="width: 54px; height: 54px; object-fit: cover; cursor: pointer;" 
+                             alt="Gallery Thumbnail"
+                             title="{% if img_obj.is_real_photo %}Verified Real Photo{% else %}Catalog/Stock Image{% endif %}">
+                        {% if img_obj.is_real_photo %}
+                        <span class="position-absolute bottom-0 end-0 badge bg-success rounded-circle p-1" style="font-size: 0.5rem;" title="Real Photo">
+                            <i class="bi bi-camera-fill"></i>
+                        </span>
+                        {% endif %}
+                    </div>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -491,6 +575,63 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error('Error:', err);
                 alert('An error occurred while updating offer availability status.');
             });
+        });
+    });
+
+    // Quick Collection Toggle Handlers
+    document.querySelectorAll('.btn-collection-toggle').forEach(btn => {
+        btn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            const productId = this.dataset.id;
+            const flag = this.dataset.flag;
+            const isCurrentlyActive = this.dataset.active === 'true';
+            const nextState = !isCurrentlyActive;
+
+            this.disabled = true;
+            this.style.opacity = '0.6';
+
+            try {
+                const res = await fetch('/admin/api/products/collections/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        [flag]: nextState
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.dataset.active = nextState ? 'true' : 'false';
+                    
+                    if (flag === 'is_featured') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-danger text-white' : 'btn-outline-danger'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-white text-danger' : 'bg-danger-subtle text-danger'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    } else if (flag === 'is_best_selling') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-dark text-white' : 'bg-warning-subtle text-dark'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    } else if (flag === 'is_new_arrival') {
+                        this.className = `btn btn-sm btn-collection-toggle ${nextState ? 'btn-info text-white' : 'btn-outline-info'} rounded-pill px-2.5 py-1 fw-semibold shadow-sm`;
+                        const badgeSpan = this.querySelector('.badge');
+                        badgeSpan.className = `badge ${nextState ? 'bg-white text-info' : 'bg-info-subtle text-info'} rounded-circle ms-1 p-0.5`;
+                        badgeSpan.innerHTML = `<i class="bi ${nextState ? 'bi-check-lg' : 'bi-plus'}"></i>`;
+                    }
+                } else {
+                    alert(data.message || 'Failed to update collection status.');
+                }
+            } catch (err) {
+                console.error('Error toggling collection:', err);
+                alert('Network error while updating collection badge.');
+            } finally {
+                this.disabled = false;
+                this.style.opacity = '1';
+            }
         });
     });
 });

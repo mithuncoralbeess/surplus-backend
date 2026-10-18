@@ -32,21 +32,96 @@ class AdminAppAuthTests(TestCase):
 
     def test_standard_admin_registration(self):
         """
-        Standard user registration assigns Admin role.
+        Standard user registration assigns Admin role, full_name, and sets status=False (requires SuperAdmin approval).
         """
         payload = {
-            "username": "adminuser",
+            "full_name": "Standard Admin",
             "email": "admin@gmail.com",
-            "firstname": "Standard",
-            "lastname": "Admin",
             "confirm_password": "password123",
         }
         response = self.client.post("/admin/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data["pending_approval"])
 
         admin = AdminDetails.objects.get(email="admin@gmail.com")
         self.assertEqual(admin.account_type, "Admin")
-        self.assertTrue(admin.status)
+        self.assertEqual(admin.full_name, "Standard Admin")
+        self.assertFalse(admin.status)  # Pending SuperAdmin approval
+
+    def test_admin_signup_and_superadmin_approval_flow(self):
+        """
+        Tests the complete self-signup -> pending block -> SuperAdmin approval -> successful login workflow.
+        """
+        # 1. Access signup page (HTML)
+        signup_page_res = self.client.get("/admin/signup/")
+        self.assertEqual(signup_page_res.status_code, status.HTTP_200_OK)
+
+        # 2. Self-signup with full_name, email, password, confirm_password
+        signup_payload = {
+            "full_name": "Alex Mercer",
+            "email": "alex.mercer@surplus.com",
+            "password": "SecurePassword999",
+            "confirm_password": "SecurePassword999",
+        }
+        signup_res = self.client.post("/admin/signup/", signup_payload, format="json")
+        self.assertEqual(signup_res.status_code, status.HTTP_201_CREATED)
+        res_data = getattr(signup_res, "data", None) or signup_res.json()
+        self.assertTrue(res_data["pending_approval"])
+
+        new_admin = AdminDetails.objects.get(email="alex.mercer@surplus.com")
+        self.assertFalse(new_admin.status)
+        self.assertEqual(new_admin.full_name, "Alex Mercer")
+
+        # 3. Attempting to log in while pending approval MUST be blocked with 403 Forbidden
+        login_res_blocked = self.client.post(
+            "/admin/login/",
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            format="json",
+        )
+        self.assertEqual(login_res_blocked.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("pending SuperAdmin approval", login_res_blocked.data["message"])
+
+        # 4. SuperAdmin logs in and approves new_admin
+        superadmin = AdminDetails.objects.create(
+            username="super_master",
+            email="super@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = superadmin.id
+        session["session_version"] = 1
+        session.save()
+
+        # Check manage admins page
+        manage_page_res = self.client.get("/admin/admins/")
+        self.assertEqual(manage_page_res.status_code, status.HTTP_200_OK)
+
+        # SuperAdmin calls approval API
+        approval_res = self.client.post(
+            f"/admin/api/admins/{new_admin.id}/status/",
+            {"action": "approve"},
+            format="json",
+        )
+        self.assertEqual(approval_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(approval_res.data["new_status"])
+
+        new_admin.refresh_from_db()
+        self.assertTrue(new_admin.status)
+
+        # Clear SuperAdmin session to test new_admin login
+        session = self.client.session
+        session.flush()
+
+        # 5. Now approved admin can log in successfully!
+        login_res_success = self.client.post(
+            "/admin/login/",
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            format="json",
+        )
+        self.assertEqual(login_res_success.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res_success.data["success"])
 
     def test_duplicate_registration_validation(self):
         """
@@ -63,6 +138,67 @@ class AdminAppAuthTests(TestCase):
         response = self.client.post("/admin/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(response.data["success"])
+
+    def test_admin_notification_system_endpoints(self):
+        """
+        Tests the admin notification lifecycle: creation, listing, marking read, and deleting.
+        """
+        from .models import AdminNotification
+        from .services import create_admin_notification
+
+        superadmin = AdminDetails.objects.create(
+            username="super_notif_tester",
+            email="super@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = superadmin.id
+        session["session_version"] = 1
+        session.save()
+
+        # 1. Create notifications
+        notif1 = create_admin_notification(
+            title="System Alert 1",
+            message="Test alert message",
+            notification_type="SYSTEM",
+            for_superadmins_only=True,
+        )
+        notif2 = create_admin_notification(
+            title="Registration Notice",
+            message="Someone registered",
+            notification_type="ADMIN_REGISTRATION",
+            for_superadmins_only=True,
+        )
+
+        # 2. List notifications via API
+        list_res = self.client.get("/admin/api/notifications/")
+        self.assertEqual(list_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(list_res.data["success"])
+        self.assertGreaterEqual(list_res.data["unread_count"], 2)
+
+        # 3. View notification center HTML page
+        page_res = self.client.get("/admin/notifications/")
+        self.assertEqual(page_res.status_code, status.HTTP_200_OK)
+
+        # 4. Mark notif1 as read
+        read_res = self.client.post(f"/admin/api/notifications/{notif1.id}/read/")
+        self.assertEqual(read_res.status_code, status.HTTP_200_OK)
+        notif1.refresh_from_db()
+        self.assertTrue(notif1.is_read)
+
+        # 5. Mark all as read
+        read_all_res = self.client.post("/admin/api/notifications/read-all/")
+        self.assertEqual(read_all_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(read_all_res.data["unread_count"], 0)
+        notif2.refresh_from_db()
+        self.assertTrue(notif2.is_read)
+
+        # 6. Delete notification
+        del_res = self.client.post(f"/admin/api/notifications/{notif1.id}/delete/")
+        self.assertEqual(del_res.status_code, status.HTTP_200_OK)
+        self.assertFalse(AdminNotification.objects.filter(id=notif1.id).exists())
 
     def test_admin_login_and_session_setup(self):
         """
@@ -179,23 +315,22 @@ class AdminAppAuthTests(TestCase):
         import pandas as pd
         from lots.importer import parse_spreadsheet
 
-        # Case 1: Missing Mandatory Header (e.g. missing 'Product Condition*')
+        # Case 1: Missing Mandatory Header (e.g. missing 'Subcategory*')
         invalid_header_df = pd.DataFrame([{
             'S.No*': 1,
             'Product Name*': 'Test Widget',
             'Product Description*': 'Widget Description',
             'Product Category*': 'Electronics',
-            'Subcategory*': 'Gadgets',
             'Available Quantity*': 100,
-            'MOQ*': 10,
         }])
         buf_inv_h = io.BytesIO()
-        invalid_header_df.to_excel(buf_inv_h, index=False)
+        invalid_header_df.to_excel(buf_inv_h, sheet_name='Inventory', index=False)
+        buf_inv_h.name = 'test.xlsx'
         buf_inv_h.seek(0)
         res_inv_h = parse_spreadsheet(buf_inv_h)
         self.assertFalse(res_inv_h['is_valid'])
         self.assertTrue(len(res_inv_h['missing_mandatory_columns']) > 0)
-        self.assertTrue(any(c['key'] == 'product_condition' for c in res_inv_h['missing_mandatory_columns']))
+        self.assertTrue(any(c['key'] == 'subcategory' for c in res_inv_h['missing_mandatory_columns']))
 
         # Case 2: Missing Mandatory Data in Row (e.g. empty Product Description*)
         invalid_row_df = pd.DataFrame([{
@@ -205,11 +340,10 @@ class AdminAppAuthTests(TestCase):
             'Product Category*': 'Electronics',
             'Subcategory*': 'Gadgets',
             'Available Quantity*': 100,
-            'MOQ*': 10,
-            'Product Condition*': 'New',
         }])
         buf_inv_r = io.BytesIO()
-        invalid_row_df.to_excel(buf_inv_r, index=False)
+        invalid_row_df.to_excel(buf_inv_r, sheet_name='Inventory', index=False)
+        buf_inv_r.name = 'test.xlsx'
         buf_inv_r.seek(0)
         res_inv_r = parse_spreadsheet(buf_inv_r)
         self.assertFalse(res_inv_r['is_valid'])
@@ -224,16 +358,39 @@ class AdminAppAuthTests(TestCase):
             'Product Category*': 'Industrial',
             'Subcategory*': 'Tools',
             'Available Quantity*': 50,
-            'MOQ*': 5,
-            'Product Condition*': 'Brand New',
         }])
         buf_valid = io.BytesIO()
-        valid_df.to_excel(buf_valid, index=False)
+        valid_df.to_excel(buf_valid, sheet_name='Inventory', index=False)
+        buf_valid.name = 'test.xlsx'
         buf_valid.seek(0)
         res_valid = parse_spreadsheet(buf_valid)
         self.assertTrue(res_valid['is_valid'])
         self.assertEqual(len(res_valid['missing_mandatory_columns']), 0)
         self.assertEqual(len(res_valid['row_errors']), 0)
+
+        # Case 4: Missing 'Inventory' tab in Excel file
+        missing_tab_df = pd.DataFrame([{'Product Name*': 'Widget'}])
+        buf_missing_tab = io.BytesIO()
+        missing_tab_df.to_excel(buf_missing_tab, sheet_name='Sheet1', index=False)
+        buf_missing_tab.name = 'test.xlsx'
+        buf_missing_tab.seek(0)
+        with self.assertRaises(ValueError) as ctx:
+            parse_spreadsheet(buf_missing_tab)
+        self.assertIn("must contain an 'Inventory' tab", str(ctx.exception))
+
+        # Case 5: Unrelated other format sheet
+        other_format_df = pd.DataFrame([{
+            'EmpID': 101,
+            'Department': 'HR',
+            'Salary': 60000
+        }])
+        buf_other = io.BytesIO()
+        other_format_df.to_excel(buf_other, sheet_name='Inventory', index=False)
+        buf_other.name = 'test.xlsx'
+        buf_other.seek(0)
+        res_other = parse_spreadsheet(buf_other)
+        self.assertFalse(res_other['is_valid'])
+        self.assertTrue(any('Invalid Sheet Structure' in err for err in res_other['header_errors']))
 
     def test_save_lot_products_api(self):
         """

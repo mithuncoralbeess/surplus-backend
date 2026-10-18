@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer RFQ Requests - Surplus Admin{% endblock %}
+
+{% block content %}
+<!-- Page Header & Action -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+        <nav class="custom-breadcrumb" aria-label="breadcrumb">
+            <ol class="breadcrumb-list">
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item"><span>Enquiries</span></li>
+                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                <li class="breadcrumb-item active" aria-current="page"><span>Buyer RFQ Requests</span></li>
+            </ol>
+        </nav>
+        <h1 class="header-title">Buyer RFQ &amp; Quotation Requests</h1>
+        <p class="header-subtitle">Review, issue proforma quotes, and manage consolidated RFQs submitted by marketplace buyers</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/admin/rfq-requests/" class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+<div class="mb-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+        <div class="fw-medium">{{ message }}</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- KPI Metric Filter Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2 col-sm-6">
+        <a href="/admin/rfq-requests/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">All RFQs</span>
+                        <h3 class="stat-number text-dark">{{ counts.total|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-indigo">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-sm-6">
+        <a href="/admin/rfq-requests/pending/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Pending Quotes</span>
+                        <h3 class="stat-number text-warning">{{ counts.pending|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-amber">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-2 col-sm-6">
+        <a href="/admin/rfq-requests/quoted/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'quoted' %}border-info shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Proforma Issued</span>
+                        <h3 class="stat-number text-info">{{ counts.quoted|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-blue">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <a href="/admin/rfq-requests/accepted/" class="text-decoration-none">
+            <div class="content-stat-card {% if current_status == 'accepted' %}border-success shadow-sm{% endif %}">
+                <div class="stat-card-content">
+                    <div class="stat-meta">
+                        <span class="stat-label">Accepted Deals</span>
+                        <h3 class="stat-number text-success">{{ counts.accepted|default:"0" }}</h3>
+                    </div>
+                    <div class="stat-icon-wrapper icon-green">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="content-stat-card">
+            <div class="stat-card-content">
+                <div class="stat-meta">
+                    <span class="stat-label">Pipeline Value</span>
+                    <h3 class="stat-number text-primary">${{ counts.pipeline_value|floatformat:0 }}</h3>
+                </div>
+                <div class="stat-icon-wrapper icon-teal">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Table Card with Search & Filter Tabs -->
+<div class="content-table-card">
+    <!-- Card Toolbar -->
+    <div class="table-toolbar">
+        <form method="GET" action="/admin/rfq-requests/" class="d-flex flex-wrap gap-2 align-items-center w-100">
+            <div class="flex-grow-1" style="max-width: 450px;">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control rounded-end-0" placeholder="Search reference, company, email, destination..." value="{{ search }}">
+                    <button class="btn btn-primary rounded-start-0 px-3" type="submit">Search</button>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+                <select name="date_filter" onchange="this.form.submit()" class="form-select form-select-sm filter-select" style="width: 140px; font-size: 14px !important; height: 38px;">
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+                </select>
+
+                <div class="btn-group" role="group" aria-label="Status filter">
+                    <a href="/admin/rfq-requests/" class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">All</a>
+                    <a href="/admin/rfq-requests/pending/" class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Pending</a>
+                    <a href="/admin/rfq-requests/quoted/" class="btn btn-sm {% if current_status == 'quoted' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Quoted</a>
+                    <a href="/admin/rfq-requests/accepted/" class="btn btn-sm {% if current_status == 'accepted' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Accepted</a>
+                    <a href="/admin/rfq-requests/declined/" class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Declined</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- RFQs Data Table -->
+    <div class="table-responsive" style="min-height: 250px;">
+        <table class="table content-data-table align-middle mb-0" id="rfqTable">
+            <thead>
+                <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <th style="width: 180px; font-weight: 600;">RFQ Reference</th>
+                    <th style="width: 250px; font-weight: 600;">Buyer Details</th>
+                    <th style="width: 180px; font-weight: 600;">Basket Summary</th>
+                    <th style="width: 160px; font-weight: 600;">Est. Value / Quote</th>
+                    <th style="width: 150px; font-weight: 600;">Incoterm &amp; Port</th>
+                    <th style="width: 130px; font-weight: 600;">Status</th>
+                    <th style="width: 140px; font-weight: 600;">Date Submitted</th>
+                    <th class="text-end pe-4" style="width: 140px; font-weight: 600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in enquiries %}
+                <tr id="rfq-row-{{ item.id }}">
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
+                                <i class="bi bi-file-earmark-spreadsheet fs-6"></i>
+                            </div>
+                            <div>
+                                <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="fw-bold text-dark font-monospace text-decoration-none hover-underline" style="font-size: 0.90rem;">
+                                    {{ item.reference }}
+                                </a>
+                                {% if item.buyer %}
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace d-block py-0.5 px-1 mt-0.5" style="font-size: 0.68rem; width: fit-content;">
+                                    <i class="bi bi-person me-0.5"></i>{{ item.buyer.vendor_id|default:item.buyer.username }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:'Valued Buyer' }}">
+                            {{ item.contact_person|default:item.buyer.full_name|default:"Valued Buyer" }}
+                        </div>
+                        {% if item.company_name and item.company_name|lower != item.contact_person|lower and item.company_name != 'Individual Buyer' %}
+                        <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.company_name }}">
+                            <i class="bi bi-building me-1"></i>{{ item.company_name }}
+                        </div>
+                        {% endif %}
+                        <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.email }}">
+                            <i class="bi bi-envelope me-1"></i>{{ item.email }}
+                        </div>
+                        {% if item.phone %}
+                        <div class="text-muted small">
+                            <i class="bi bi-telephone me-1"></i>{{ item.phone }}
+                        </div>
+                        {% endif %}
+                        {% if item.business_location or item.country %}
+                        <div class="text-muted small">
+                            <i class="bi bi-geo-alt me-1"></i>{{ item.business_location|default:item.country }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.78rem;">
+                            {{ item.items.count }} item{{ item.items.count|pluralize }}
+                        </span>
+                        <div class="text-muted small mt-1">
+                            <strong>{{ item.total_units }}</strong> units total
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark" style="font-size: 0.92rem;">
+                            {{ item.currency }} {{ item.estimated_value|floatformat:2 }}
+                        </div>
+                        {% if item.proforma_amount %}
+                        <div class="text-success small fw-semibold">
+                            <i class="bi bi-check-circle me-0.5"></i>Quoted: ${{ item.proforma_amount|floatformat:2 }}
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">No proforma yet</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-0.5" style="font-size: 0.75rem;">
+                            {{ item.incoterm|default:"EXW" }}
+                        </span>
+                        <div class="text-muted small mt-1 text-truncate" style="max-width: 140px;" title="{{ item.destination_port }}">
+                            {{ item.destination_port|default:"Not specified" }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.status == 'PENDING' %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold">Pending</span>
+                        {% elif item.status == 'QUOTED' %}
+                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1 rounded-pill fw-semibold">Quoted</span>
+                        {% elif item.status == 'ACCEPTED' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold">Accepted</span>
+                        {% elif item.status == 'DECLINED' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill fw-semibold">Declined</span>
+                        {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1 rounded-pill fw-semibold">{{ item.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="text-dark small d-block">{{ item.created_at|date:"M d, Y" }}</span>
+                        <span class="text-muted small">{{ item.created_at|date:"h:i A" }}</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-inline-flex gap-1">
+                            <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn btn-sm btn-primary px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1" title="Review & Quote">
+                                <i class="bi bi-eye"></i> View Quote
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1 rounded-2" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            <h6 class="fw-bold text-secondary mb-1">No RFQ requests found</h6>
+                            <p class="small mb-0">Buyer enquiry baskets submitted from the frontend store will appear here in real time.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="text-muted small">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} quotation requests
+        </span>
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+                {% for p in page_obj.paginator.page_range %}
+                    {% if p == page_obj.number %}
+                    <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                    {% elif p >= page_obj.number|add:'-2' and p <= page_obj.number|add:'2' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function deleteRfq(id, ref) {
+    if (!confirm(`Are you sure you want to permanently delete RFQ request ${ref}?`)) {
+        return;
+    }
+    fetch(`/admin/api/rfq-requests/${id}/status/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById(`rfq-row-${id}`);
+            if (row) row.remove();
+        } else {
+            alert(data.message || 'Failed to delete RFQ.');
+        }
+    })
+    .catch(err => {
+        console.error('Delete error:', err);
+        alert('Network error while deleting RFQ.');
+    });
+}
+</script>
+{% endblock %}

@@ -20,6 +20,18 @@
     </div>
 </div>
 
+{% if messages %}
+<div class="mb-4">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+        <div class="fw-medium">{{ message }}</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <!-- KPI Metric Filter Cards -->
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-sm-6">
@@ -111,6 +123,10 @@
                 <i class="bi bi-arrow-clockwise"></i>
                 <span>Refresh</span>
             </button>
+            <a href="/admin/products/add/" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" style="font-size: 14px !important;">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Product</span>
+            </a>
         </div>
     </div>
 
@@ -135,9 +151,51 @@
                             </div>
                             <div>
                                 <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{ item.product_id }}</span>
-                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.raw_data.title|default:'Product Enquiry' }}">
-                                    {{ item.raw_data.title|default:'Product Enquiry' }}
+                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.product_name|default:item.raw_data.title|default:'Product Enquiry' }}">
+                                    {{ item.product_name|default:item.raw_data.title|default:'Product Enquiry' }}
                                 </span>
+                                {% if item.admin and item.vendor %}
+                                <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                                    <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;">
+                                        <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
+                                    </span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
+                                        <i class="bi bi-shield-check me-0.5"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
+                                    </span>
+                                    {% if item.raw_data and item.raw_data.intake_channel %}
+                                    <span class="badge {% if item.raw_data.intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} py-0.5 px-1.5" style="font-size: 0.68rem;">
+                                        {% if item.raw_data.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-0.5"></i>{% elif item.raw_data.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-0.5"></i>{% else %}<i class="bi bi-telephone me-0.5"></i>{% endif %}{{ item.raw_data.intake_channel }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% elif item.admin %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-2 mt-1 d-inline-block" style="font-size: 0.70rem;" title="{{ item.admin.email }}">
+                                    <i class="bi bi-shield-check me-1"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
+                                </span>
+                                {% elif item.vendor %}
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5 mt-1 d-inline-block" style="font-size: 0.70rem;">
+                                    <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
+                                </span>
+                                {% endif %}
+
+                                <!-- Marketplace Collection Badges -->
+                                <div class="mt-1 d-flex gap-1 flex-wrap align-items-center">
+                                    {% if item.is_featured %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="Featured Deal">
+                                        <i class="bi bi-star-fill me-0.5"></i>Featured
+                                    </span>
+                                    {% endif %}
+                                    {% if item.is_best_selling %}
+                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="Best Selling">
+                                        <i class="bi bi-fire me-0.5"></i>Best Seller
+                                    </span>
+                                    {% endif %}
+                                    {% if item.is_new_arrival %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="New Arrival">
+                                        <i class="bi bi-rocket-takeoff-fill me-0.5"></i>New Arrival
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </td>
@@ -192,7 +250,7 @@
                                     <li><hr class="dropdown-divider my-1"></li>
                                     {% if item.is_active %}
                                     <li><a class="dropdown-item py-1.5 text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive"><i class="bi bi-pause-circle me-2"></i> Mark as Inactive</a></li>
-                                    {% else %}
+                                    {% elif item.enquiry_status|lower == 'approved' %}
                                     <li><a class="dropdown-item py-1.5 text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active"><i class="bi bi-play-circle-fill me-2"></i> Mark as Active</a></li>
                                     {% endif %}
                                     <li><hr class="dropdown-divider my-1"></li>
@@ -200,6 +258,11 @@
                                     <li><a class="dropdown-item py-1.5 btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending"><i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending</a></li>
                                     <li><hr class="dropdown-divider my-1"></li>
                                     {% endif %}
+                                    <!-- Collections Toggles in Dropdown -->
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}"><i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}</a></li>
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_best_selling" data-active="{% if item.is_best_selling %}true{% else %}false{% endif %}"><i class="bi bi-fire text-warning me-2"></i> {% if item.is_best_selling %}Remove Best Seller{% else %}Mark as Best Seller{% endif %}</a></li>
+                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_new_arrival" data-active="{% if item.is_new_arrival %}true{% else %}false{% endif %}"><i class="bi bi-rocket-takeoff-fill text-info me-2"></i> {% if item.is_new_arrival %}Remove New Arrival{% else %}Mark as New Arrival{% endif %}</a></li>
+                                    <li><hr class="dropdown-divider my-1"></li>
                                     <li><a class="dropdown-item py-1.5 text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}"><i class="bi bi-trash3 me-2"></i> Delete Enquiry</a></li>
                                 </ul>
                             </div>
@@ -410,6 +473,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 } catch (err) {
                     alert("Error deleting enquiry.");
                 }
+            }
+        });
+    });
+    // Collection Toggle in Dropdown
+    document.querySelectorAll('.btn-action-collection').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const flag = btn.dataset.flag;
+            const isCurrentlyActive = btn.dataset.active === 'true';
+            const nextState = !isCurrentlyActive;
+
+            try {
+                const res = await fetch('/admin/api/products/collections/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        product_id: id,
+                        [flag]: nextState
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to update collection.');
+                }
+            } catch (err) {
+                alert('Network error while updating collection.');
             }
         });
     });

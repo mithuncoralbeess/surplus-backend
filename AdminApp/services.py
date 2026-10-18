@@ -20,7 +20,7 @@ class EmailService:
     API_KEY = os.getenv("ZEPTOMAIL_API_KEY", "")
     FROM_NAME = os.getenv("ZEPTOMAIL_FROM_NAME", "Surplus Market")
     FROM_ADDRESS = os.getenv("ZEPTOMAIL_FROM_EMAIL", "noreply@surplusmarket.com")
-    EMAIL_SEND_ENABLED = os.getenv("EMAIL_SEND_ENABLED", "False").lower() in ("true", "1", "t")
+    EMAIL_SEND_ENABLED = os.getenv("EMAIL_SEND_ENABLED", "True").lower() in ("true", "1", "t")
 
     @classmethod
     def get_headers(cls):
@@ -72,12 +72,16 @@ class EmailService:
             except Exception as e:
                 logger.error(f"ZeptoMail API request error: {e}")
 
-        # 2. Backup: Django standard SMTP
+        # 2. Backup: Django standard SMTP / Brevo HTTP Backend
         try:
+            import re
+            plain_body = re.sub(r'<[^>]+>', ' ', html_content or "")
+            plain_body = ' '.join(plain_body.split()).strip() or subject
+
             from_email_str = f"{cls.FROM_NAME} <{cls.FROM_ADDRESS}>"
             send_mail(
                 subject=subject,
-                message="",
+                message=plain_body,
                 html_message=html_content,
                 from_email=from_email_str,
                 recipient_list=[to_email],
@@ -183,23 +187,134 @@ class EmailService:
         )
 
     @classmethod
-    def notify_admin_rfq_submitted(cls, buyer_info: dict, items_list: list) -> bool:
+    def notify_admin_rfq_submitted(cls, buyer_info: dict, items_list: list = None, rfq=None) -> bool:
         """Notifies admin when a Request For Quote (RFQ) is submitted."""
-        rows_html = "".join([
-            f"<tr><td style='padding:8px; border:1px solid #ddd;'>{item.get('title')}</td>"
-            f"<td style='padding:8px; border:1px solid #ddd;'>{item.get('quantity')}</td></tr>"
-            for item in items_list
-        ])
-        html_content = (
-            f"<h2>New RFQ Quote Request Basket</h2>"
-            f"<p>Buyer: <strong>{buyer_info.get('name')}</strong> ({buyer_info.get('email')})</p>"
-            f"<table style='border-collapse: collapse; width: 100%;'>"
-            f"<thead><tr><th style='border:1px solid #ddd; padding:8px;'>Item</th><th style='border:1px solid #ddd; padding:8px;'>Quantity</th></tr></thead>"
-            f"<tbody>{rows_html}</tbody>"
-            f"</table>"
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        rfq_id = getattr(rfq, "id", None) or (rfq.get("id") if isinstance(rfq, dict) else "") or (buyer_info.get("id") if isinstance(buyer_info, dict) else "")
+        admin_review_url = f"{backend_base}/admin/rfq-requests/{rfq_id}/detail/" if rfq_id else f"{backend_base}/admin/rfq-requests/"
+
+        ref = getattr(rfq, "reference", None) or (rfq.get("reference") if isinstance(rfq, dict) else "") or buyer_info.get("reference", "RFQ-PENDING")
+        buyer_name = buyer_info.get("name") or buyer_info.get("contact_person") or getattr(rfq, "contact_person", "Valued Buyer")
+        buyer_email = buyer_info.get("email") or getattr(rfq, "email", "")
+        company_name = buyer_info.get("company_name") or getattr(rfq, "company_name", "")
+        total_units = getattr(rfq, "total_units", None) or buyer_info.get("total_units", 0)
+        estimated_value = getattr(rfq, "estimated_value", None) or buyer_info.get("estimated_value", "0.00")
+        currency = getattr(rfq, "currency", "USD") or buyer_info.get("currency", "USD")
+
+        resolved_items = items_list or (rfq.items.all() if hasattr(rfq, "items") else [])
+
+        context = {
+            "rfq": rfq,
+            "ref": ref,
+            "buyer_name": buyer_name,
+            "buyer_email": buyer_email,
+            "company_name": company_name,
+            "total_units": total_units,
+            "estimated_value": estimated_value,
+            "currency": currency,
+            "items_list": resolved_items,
+            "admin_review_url": admin_review_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_rfq_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin rfq alert, using fallback HTML: {e}")
+            items_html = "".join([
+                f"<tr><td style='padding:8px; border:1px solid #ddd;'>{getattr(it, 'title', it.get('title') if isinstance(it, dict) else str(it))}</td>"
+                f"<td style='padding:8px; border:1px solid #ddd;'>{getattr(it, 'quantity', it.get('quantity') if isinstance(it, dict) else '')}</td></tr>"
+                for it in resolved_items
+            ])
+            html_content = (
+                f"<h2>New RFQ Quote Request Basket</h2>"
+                f"<p>Reference: <strong>{ref}</strong></p>"
+                f"<p>Buyer: <strong>{buyer_name}</strong> ({buyer_email})</p>"
+                f"<p>Total Units: {total_units} | Value: {currency} {estimated_value}</p>"
+                f"<table style='border-collapse: collapse; width: 100%;'>"
+                f"<thead><tr><th style='border:1px solid #ddd; padding:8px;'>Item</th><th style='border:1px solid #ddd; padding:8px;'>Quantity</th></tr></thead>"
+                f"<tbody>{items_html}</tbody>"
+                f"</table>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = cls.get_admin_notification_email()
+        subject = f"New Buyer RFQ Received: {ref} - {buyer_name}"
+        return cls.send_email(admin_email, subject, html_content, "RFQAdminAlert", context=context)
+
+    @classmethod
+    def notify_admin_product_submitted(cls, seller_info: dict, product) -> bool:
+        """
+        Notifies admin when a seller submits a product listing / enquiry for review.
+        """
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        prod_id = getattr(product, "id", None) or (product.get("id") if isinstance(product, dict) else "")
+        admin_review_url = f"{backend_base}/admin/enquiries/seller/{prod_id}/detail/" if prod_id else f"{backend_base}/admin/enquiries/seller/"
+
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
         )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
-        return cls.send_email(admin_email, "New RFQ Quote Basket Submitted", html_content, "RFQ")
+        product_code = (
+            getattr(product, "product_id", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (f"PRO-{prod_id}" if prod_id else "PRO-PENDING")
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", str(product.category))
+        elif isinstance(product, dict):
+            category_name = product.get("category", "")
+
+        quantity = getattr(product, "quantity", None) or (product.get("quantity") if isinstance(product, dict) else 0)
+        currency = getattr(product, "currency", "USD") or "USD"
+        liquidating_price = getattr(product, "liquidating_price", None) or (product.get("liquidating_price") if isinstance(product, dict) else None)
+        msrp = getattr(product, "msrp", None) or (product.get("msrp") if isinstance(product, dict) else None)
+
+        seller_name = seller_info.get("name") or seller_info.get("full_name") or "Seller"
+        seller_email = seller_info.get("email") or ""
+        seller_phone = seller_info.get("phone") or ""
+
+        context = {
+            "seller_name": seller_name,
+            "seller_email": seller_email,
+            "seller_phone": seller_phone,
+            "product_name": product_name,
+            "product_code": product_code,
+            "category_name": category_name,
+            "quantity": quantity,
+            "currency": currency,
+            "liquidating_price": liquidating_price,
+            "msrp": msrp,
+            "admin_review_url": admin_review_url,
+            "product": product,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_admin_product_added.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin product alert: {e}")
+            html_content = (
+                f"<h2>New Product Submitted for Review</h2>"
+                f"<p>Product: <strong>{product_name}</strong> ({product_code})</p>"
+                f"<p>Seller: <strong>{seller_name}</strong> ({seller_email})</p>"
+                f"<p>Category: {category_name} | Qty: {quantity} | Price: {currency} {liquidating_price}</p>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = cls.get_admin_notification_email()
+        subject = f"New Product Submitted for Review: {product_name} [{product_code}]"
+        return cls.send_email(admin_email, subject, html_content, "AdminProductReview", context=context)
+
+    # Backwards-compatibility alias for existing code
+    notify_admin_enquiry_received = notify_admin_product_submitted
 
     @classmethod
     def notify_admin_multiple_products(cls, seller_info: dict, products_list: list) -> bool:
@@ -212,26 +327,635 @@ class EmailService:
                 "product_count": len(products_list),
             },
         )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
+        admin_email = cls.get_admin_notification_email()
         return cls.send_email(admin_email, "New Seller Products Submitted for Review", html_content, "ProductReview")
 
     @classmethod
+    def send_product_approved_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        action_url: str = "",
+        is_profile_complete: bool = True,
+        profile_completion_percentage: int = 100,
+        missing_fields_labels: list = None,
+        profile_url: str = "",
+    ) -> bool:
+        """
+        Sends an email notification to the user when their product listing is approved.
+        Includes profile completion percentage alert if vendor profile is incomplete.
+        """
+        if not to_email:
+            logger.warning("send_product_approved_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+        profile_link = profile_url or f"{frontend_base}/profile"
+
+        # Resolve product attributes safely from model instance or dict
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_id = (
+            getattr(product, "product_id", None)
+            or getattr(product, "sku", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or ""
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", "")
+        elif isinstance(product, dict):
+            category_name = product.get("category") or ""
+
+        brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
+        quantity = getattr(product, "quantity", None) or getattr(product, "stock_quantity", "") or (product.get("quantity") if isinstance(product, dict) else "")
+        price = getattr(product, "liquidating_price", None) or getattr(product, "current_price", None) or getattr(product, "price", "") or (product.get("liquidating_price") if isinstance(product, dict) else "")
+        currency = getattr(product, "currency", "USD") or "USD"
+        inventory_location = getattr(product, "inventory_location", "") or (product.get("inventory_location") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_id,
+            "category_name": category_name,
+            "brand": brand,
+            "model_no": model_no,
+            "quantity": quantity,
+            "price": price,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+            "profile_url": profile_link,
+            "is_profile_complete": is_profile_complete,
+            "profile_completion_percentage": profile_completion_percentage,
+            "missing_fields_labels": missing_fields_labels or [],
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_approved.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for approved email, using fallback HTML: {e}")
+            if not is_profile_complete:
+                missing_str = f"<p><strong>Missing details:</strong> {', '.join(missing_fields_labels or [])}</p>" if missing_fields_labels else ""
+                html_content = (
+                    f"<h2>Your Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved by admin review.</p>"
+                    f"<div style='background-color:#fffbeb;border:1px solid #fde68a;padding:12px;border-radius:6px;'>"
+                    f"<p style='color:#92400e;margin:0;'><strong>Action Required: Profile Incomplete ({profile_completion_percentage}%)</strong></p>"
+                    f"<p style='color:#b45309;'>To list your product for public visibility, you must complete all your user profile details.</p>"
+                    f"{missing_str}"
+                    f"<p><a href='{profile_link}' style='color:#d97706;font-weight:bold;'>Complete your profile to publish</a></p>"
+                    f"</div>"
+                )
+            else:
+                html_content = (
+                    f"<h2>Your Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your product <strong>{product_name}</strong> ({product_id}) has been approved and is now live on Surplus Market.</p>"
+                    f"<p><a href='{action_url or default_action_url}'>View your listing</a></p>"
+                )
+
+        if not is_profile_complete:
+            subject = f"Listing Approved: {product_name} - Action Required: Complete Profile to Publish"
+        else:
+            subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductApproved", context=context)
+
+    @classmethod
+    def send_product_declined_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the user when their product listing is declined.
+        """
+        if not to_email:
+            logger.warning("send_product_declined_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_id = (
+            getattr(product, "product_id", None)
+            or getattr(product, "sku", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or ""
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", "")
+        elif isinstance(product, dict):
+            category_name = product.get("category") or ""
+
+        brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_id,
+            "category_name": category_name,
+            "brand": brand,
+            "model_no": model_no,
+            "reason": reason or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_declined.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for declined email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Product Listing Review Notice</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your product listing <strong>{product_name}</strong> ({product_id}) could not be approved at this time.</p>"
+                f"<p>{reason or 'Please review your listing specifications and resubmit.'}</p>"
+                f"<p><a href='{action_url or default_action_url}'>Review your listing</a></p>"
+            )
+
+        subject = f"Listing Update: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductDeclined", context=context)
+
+    @classmethod
+    def send_lot_submitted_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email confirmation to the vendor when their bulk lot listing is submitted and under review.
+        """
+        if not to_email:
+            logger.warning("send_lot_submitted_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-PENDING"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_submitted.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for lot submitted email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Lot Listing Received</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Thank you for submitting your lot listing <strong>{lot_title}</strong> ({lot_number}). Our team is reviewing your inventory.</p>"
+                f"<p><a href='{action_url or default_action_url}'>View Your Listings</a></p>"
+            )
+
+        subject = f"Lot Listing Received: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotSubmitted", context=context)
+
+    @classmethod
+    def notify_admin_lot_submitted(cls, seller_info: dict, lot) -> bool:
+        """
+        Notifies admin when a seller submits a bulk lot listing for review.
+        """
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        lot_id = getattr(lot, "id", None) or (lot.get("id") if isinstance(lot, dict) else "")
+        admin_review_url = f"{backend_base}/admin/enquiries/lots/{lot_id}/detail/" if lot_id else f"{backend_base}/admin/enquiries/lots/"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-PENDING"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        seller_name = seller_info.get("name") or seller_info.get("full_name") or "Seller"
+        seller_email = seller_info.get("email") or ""
+
+        context = {
+            "seller_name": seller_name,
+            "seller_email": seller_email,
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "admin_review_url": admin_review_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_admin_lot_added.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin lot added email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>New Lot Submitted for Review</h2>"
+                f"<p>Seller: <strong>{seller_name}</strong> ({seller_email})</p>"
+                f"<p>Lot: <strong>{lot_title}</strong> ({lot_number})</p>"
+                f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_email = cls.get_admin_notification_email()
+        subject = f"New Lot Submitted for Review: {lot_title} [{lot_number}]"
+        return cls.send_email(admin_email, subject, html_content, "AdminLotReview", context=context)
+
+    @classmethod
+    def send_lot_approved_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        action_url: str = "",
+        is_profile_complete: bool = True,
+        profile_completion_percentage: int = 100,
+        missing_fields_labels: list = None,
+        profile_url: str = "",
+    ) -> bool:
+        """
+        Sends an email notification to the vendor when their lot listing is approved.
+        Includes profile completion alert if vendor profile is incomplete.
+        """
+        if not to_email:
+            logger.warning("send_lot_approved_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+        profile_link = profile_url or f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-APPROVED"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        ask_price = getattr(lot, "ask_price_surplus_payout", None) or (lot.get("ask_price_surplus_payout") if isinstance(lot, dict) else None)
+        msrp = getattr(lot, "total_est_retail_value_msrp", None) or (lot.get("total_est_retail_value_msrp") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+        inventory_location = getattr(lot, "inventory_location", "") or (lot.get("inventory_location") if isinstance(lot, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "ask_price": ask_price,
+            "msrp": msrp,
+            "currency": currency,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+            "profile_url": profile_link,
+            "is_profile_complete": is_profile_complete,
+            "profile_completion_percentage": profile_completion_percentage,
+            "missing_fields_labels": missing_fields_labels or [],
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_approved.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for approved lot email, using fallback HTML: {e}")
+            if not is_profile_complete:
+                missing_str = f"<p><strong>Missing details:</strong> {', '.join(missing_fields_labels or [])}</p>" if missing_fields_labels else ""
+                html_content = (
+                    f"<h2>Your Lot Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your bulk lot <strong>{lot_title}</strong> ({lot_number}) has been approved by admin review.</p>"
+                    f"<div style='background-color:#fffbeb;border:1px solid #fde68a;padding:12px;border-radius:6px;'>"
+                    f"<p style='color:#92400e;margin:0;'><strong>Action Required: Profile Incomplete ({profile_completion_percentage}%)</strong></p>"
+                    f"<p style='color:#b45309;'>To list your lot for public visibility, you must complete all your user profile details.</p>"
+                    f"{missing_str}"
+                    f"<p><a href='{profile_link}' style='color:#d97706;font-weight:bold;'>Complete your profile to publish</a></p>"
+                    f"</div>"
+                )
+            else:
+                html_content = (
+                    f"<h2>Your Lot Listing Has Been Approved!</h2>"
+                    f"<p>Hello {recipient_name},</p>"
+                    f"<p>Your bulk lot <strong>{lot_title}</strong> ({lot_number}) has been approved and is now live on Surplus Market.</p>"
+                    f"<p><a href='{action_url or default_action_url}'>View your lot listing</a></p>"
+                )
+
+        if not is_profile_complete:
+            subject = f"Lot Approved: {lot_title} [{lot_number}] - Action Required: Complete Profile to Publish"
+        else:
+            subject = f"Lot Approved: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotApproved", context=context)
+
+    @classmethod
+    def send_lot_declined_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the vendor when their lot listing is declined.
+        """
+        if not to_email:
+            logger.warning("send_lot_declined_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT-DECLINED"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "currency": currency,
+            "reason": reason or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_declined.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for declined lot email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Lot Listing Review Notice</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your bulk lot listing <strong>{lot_title}</strong> ({lot_number}) could not be approved at this time.</p>"
+                f"<p>{reason or 'Please review your lot manifest and resubmit.'}</p>"
+                f"<p><a href='{action_url or default_action_url}'>Review your listing</a></p>"
+            )
+
+        subject = f"Lot Listing Update: {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotDeclined", context=context)
+
+    @classmethod
     def email_linsting_confirm(cls, seller_email: str, product_title: str) -> bool:
-        """Notifies seller when their product listing is approved."""
-        html_content = f"<p>Your listing <strong>{product_title}</strong> has been approved and is now live on Surplus Market.</p>"
-        return cls.send_email(seller_email, f"Listing Approved: {product_title}", html_content, "ListingConfirm")
+        """Legacy helper for listing confirmation."""
+        return cls.send_product_approved_email(
+            to_email=seller_email,
+            product={"product_name": product_title},
+            recipient_name="Valued Seller"
+        )
+
+    @classmethod
+    def get_admin_notification_email(cls) -> str:
+        """Resolves target email for admin alerts with default fallback to contact@surplusmarket.com."""
+        env_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "")).strip()
+        if env_email:
+            return env_email
+        return "contact@surplusmarket.com"
+
+    @classmethod
+    def send_contact_us_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email and user confirmation email for a ContactUsEnquiry.
+        Accepts model instance or dictionary.
+        """
+        full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Customer"
+        email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        enquiry_type = getattr(enquiry, "enquiry_type", None) or (enquiry.get("enquiry_type") if isinstance(enquiry, dict) else "") or "General Inquiry"
+        message = getattr(enquiry, "message", None) or (enquiry.get("message") if isinstance(enquiry, dict) else "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/contact-us/"
+        admin_email = cls.get_admin_notification_email()
+
+        context = {
+            "enquiry": enquiry,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "enquiry_type": enquiry_type,
+            "message": message,
+            "enquiry_id": enquiry_id,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_contact_us_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for contact us admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Contact Enquiry Received</h2>"
+                f"<p><strong>Name:</strong> {full_name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Phone:</strong> {phone}</p>"
+                f"<p><strong>Type:</strong> {enquiry_type}</p>"
+                f"<p><strong>Message:</strong></p><blockquote>{message}</blockquote>"
+                f"<p><a href='{admin_url}'>View in Admin Dashboard</a></p>"
+            )
+
+        admin_subject = f"New Contact Enquiry from {full_name} [{enquiry_type}]"
+        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "ContactAdminAlert", context=context)
+
+        # 2. User Confirmation Email
+        if email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_contact_us_user_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for contact us user confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>Thank You for Contacting Surplus Market</h2>"
+                    f"<p>Hello {full_name},</p>"
+                    f"<p>We have received your enquiry regarding {enquiry_type}. Our support team will review it and reply within 24 to 48 business hours.</p>"
+                    f"<p><strong>Your Message:</strong></p><blockquote>{message}</blockquote>"
+                )
+
+            user_subject = f"We have received your enquiry - Surplus Market [Ref #{enquiry_id or 'General'}]"
+            results["user_email"] = cls.send_email(email, user_subject, user_html, "ContactUserConfirm", context=context)
+
+        return results
+
+    @classmethod
+    def send_partnership_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email and partner confirmation email for a PartnershipEnquiry.
+        Accepts model instance or dictionary.
+        """
+        name = getattr(enquiry, "name", None) or (enquiry.get("name") if isinstance(enquiry, dict) else "") or "Prospective Partner"
+        email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        business_location = getattr(enquiry, "business_location", None) or (enquiry.get("business_location") if isinstance(enquiry, dict) else "")
+        partnership_interest = getattr(enquiry, "partnership_interest", None) or (enquiry.get("partnership_interest") if isinstance(enquiry, dict) else "") or "Strategic Partnership"
+        subject_text = getattr(enquiry, "subject", None) or (enquiry.get("subject") if isinstance(enquiry, dict) else "")
+        collaboration_details = getattr(enquiry, "collaboration_details", None) or (enquiry.get("collaboration_details") if isinstance(enquiry, dict) else "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/partnership/"
+        admin_email = cls.get_admin_notification_email()
+
+        context = {
+            "enquiry": enquiry,
+            "name": name,
+            "email": email,
+            "business_location": business_location,
+            "partnership_interest": partnership_interest,
+            "subject": subject_text,
+            "collaboration_details": collaboration_details,
+            "enquiry_id": enquiry_id,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_partnership_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for partnership admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Partnership Proposal Received</h2>"
+                f"<p><strong>Partner Name:</strong> {name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Location:</strong> {business_location}</p>"
+                f"<p><strong>Interest:</strong> {partnership_interest}</p>"
+                f"<p><strong>Subject:</strong> {subject_text}</p>"
+                f"<p><strong>Collaboration Details:</strong></p><blockquote>{collaboration_details}</blockquote>"
+                f"<p><a href='{admin_url}'>Review in Admin Dashboard</a></p>"
+            )
+
+        admin_subject = f"New Partnership Proposal from {name} [{partnership_interest}]"
+        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "PartnershipAdminAlert", context=context)
+
+        # 2. Partner/User Confirmation Email
+        if email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_partnership_user_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for partnership user confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>Partnership Proposal Received</h2>"
+                    f"<p>Hello {name},</p>"
+                    f"<p>Thank you for reaching out regarding a partnership with Surplus Market. Our Business Development team is reviewing your proposal and will be in touch shortly.</p>"
+                )
+
+            user_subject = f"Partnership Proposal Received - Surplus Market [Ref #{enquiry_id or 'General'}]"
+            results["user_email"] = cls.send_email(email, user_subject, user_html, "PartnershipUserConfirm", context=context)
+
+        return results
 
     @classmethod
     def send_contact_form_email(cls, user_data: dict, form_type="query") -> bool:
         """Dispatches contact/partnership queries to admins."""
-        html_content = (
-            f"<h3>Contact Inquiry ({form_type.upper()})</h3>"
-            f"<p><strong>Name:</strong> {user_data.get('name')}</p>"
-            f"<p><strong>Email:</strong> {user_data.get('email')}</p>"
-            f"<p><strong>Message:</strong> {user_data.get('message')}</p>"
-        )
-        admin_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", "super@gmail.com")
-        return cls.send_email(admin_email, f"Contact Form Submission: {form_type}", html_content, "Contact")
+        if str(form_type).lower() in ("partnership", "partnership_enquiry"):
+            res = cls.send_partnership_emails(user_data)
+            return res.get("admin_email", False)
+        res = cls.send_contact_us_emails(user_data)
+        return res.get("admin_email", False)
 
     @classmethod
     def send_prize_email(cls, to_email: str, prize_name: str, certificate_path=None) -> bool:
@@ -241,3 +965,102 @@ class EmailService:
         return cls.send_email_with_attachments(
             to_email, f"Surplus Reward: You won {prize_name}!", html_content, file_paths=file_paths
         )
+
+
+# Backwards compatibility alias
+EmailNotificationService = EmailService
+
+
+def create_vendor_notification(vendor, title, message, notification_type="SYSTEM", action_url=""):
+    """
+    Creates a VendorNotification record for the vendor and logs the event.
+    Supports vendor instance, vendor_id ('USR-xxxx' or int), or email string.
+    """
+    from .models import VendorDetails, VendorNotification
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    target_vendor = None
+    if isinstance(vendor, VendorDetails):
+        target_vendor = vendor
+    elif vendor:
+        v_str = str(vendor).strip()
+        v_clean = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
+        if v_clean.isdigit():
+            target_vendor = VendorDetails.objects.filter(id=int(v_clean)).first()
+        if not target_vendor:
+            target_vendor = VendorDetails.objects.filter(email__iexact=v_str).first()
+        if not target_vendor:
+            target_vendor = VendorDetails.objects.filter(username__iexact=v_str).first()
+
+    if not target_vendor:
+        _logger.warning(f"create_vendor_notification skipped: could not resolve vendor for {vendor}")
+        return None
+
+    valid_types = ("LISTING", "RFQ", "AUCTION", "SYSTEM", "ORDER")
+    n_type = str(notification_type).upper()
+    if n_type not in valid_types:
+        n_type = "SYSTEM"
+
+    notification = VendorNotification.objects.create(
+        vendor=target_vendor,
+        title=title,
+        message=message,
+        notification_type=n_type,
+        action_url=action_url or "",
+        is_read=False
+    )
+    _logger.info(f"[VendorNotification] Created ID {notification.id} for {target_vendor.vendor_id}: {title}")
+    return notification
+
+
+def create_admin_notification(
+    title,
+    message,
+    notification_type="SYSTEM",
+    action_url="",
+    target_admin=None,
+    for_superadmins_only=False,
+):
+    """
+    Creates an AdminNotification record for admin staff or SuperAdmins.
+    - target_admin: Specific AdminDetails instance or None (broadcast)
+    - for_superadmins_only: Boolean flag to restrict visibility to SuperAdmins
+    - notification_type: ADMIN_REGISTRATION, APPROVAL, ENQUIRY, LISTING, SYSTEM
+    """
+    from .models import AdminDetails, AdminNotification
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    admin_obj = None
+    if isinstance(target_admin, AdminDetails):
+        admin_obj = target_admin
+    elif target_admin:
+        adm_str = str(target_admin).strip()
+        if adm_str.isdigit():
+            admin_obj = AdminDetails.objects.filter(id=int(adm_str)).first()
+        elif adm_str.upper().startswith("ADM-") and adm_str[4:].isdigit():
+            admin_obj = AdminDetails.objects.filter(id=int(adm_str[4:])).first()
+        if not admin_obj:
+            admin_obj = AdminDetails.objects.filter(email__iexact=adm_str).first()
+        if not admin_obj:
+            admin_obj = AdminDetails.objects.filter(username__iexact=adm_str).first()
+
+    valid_types = ("ADMIN_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "SYSTEM")
+    n_type = str(notification_type).upper()
+    if n_type not in valid_types:
+        n_type = "SYSTEM"
+
+    notification = AdminNotification.objects.create(
+        admin=admin_obj,
+        for_superadmins_only=for_superadmins_only,
+        title=title,
+        message=message,
+        notification_type=n_type,
+        action_url=action_url or "",
+        is_read=False,
+    )
+    _logger.info(f"[AdminNotification] Created ID {notification.id} ({n_type}): {title}")
+    return notification
+
+

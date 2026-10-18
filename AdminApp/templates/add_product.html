@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Add New Product Listing | Admin Panel{% endblock %}
+{% block title %}{{ page_title|default:"Add New Product Listing" }} | Admin Portal{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-4 py-3">
-    
+<div class="container-fluid pb-5">
+
     <!-- Page Header & Breadcrumb -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
         <div>
@@ -13,246 +13,860 @@
                 <ol class="breadcrumb-list">
                     <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item"><a href="/admin/products/all/">Products</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/enquiries/seller/">Seller Enquiries</a></li>
                     <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                     <li class="breadcrumb-item active" aria-current="page"><span>Add Product</span></li>
                 </ol>
             </nav>
-            <h2 class="fw-bold mb-0 fs-3">Add New Product Listing</h2>
-            <p class="text-muted small mb-0">Create a direct verified product item in the global inventory catalog</p>
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                <h1 class="header-title mb-0">Add New Product Listing</h1>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-box-seam me-1"></i>Single Item Listing
+                </span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-shield-check me-1"></i>Assisted Admin Intake
+                </span>
+            </div>
+            <p class="header-subtitle mt-1 mb-0">Create and verify a surplus item listing matching the Surplus Simple Inventory marketplace standards</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/products/all/" class="btn btn-outline-secondary px-3.5 py-1.5 rounded-3 d-inline-flex align-items-center gap-1.5">
+            <a href="/admin/enquiries/seller/"
+                class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
                 <i class="bi bi-arrow-left"></i> Cancel
             </a>
-            <button type="submit" form="addProductForm" class="btn btn-primary px-4 py-1.5 rounded-3 d-inline-flex align-items-center gap-2">
-                <i class="bi bi-check-lg fs-6"></i> Save Product Listing
+            <button type="submit" form="addProductForm" id="btnSubmitTop"
+                class="btn btn-primary px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm">
+                <i class="bi bi-check-circle-fill fs-6"></i> Submit to Seller Enquiries
             </button>
         </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" id="addProductForm">
+    <!-- Flash Error / Notification Messages -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3 p-3"
+            role="alert">
+            {% if message.tags == 'error' %}
+            <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+            {% else %}
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            {% endif %}
+            <div class="fw-medium">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Admin Submitter Status Strip -->
+    <div class="admin-verification-banner mb-4 p-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
+        <div class="d-flex align-items-center gap-3">
+            <div class="admin-avatar-pill d-flex align-items-center justify-content-center text-white flex-shrink-0">
+                <i class="bi bi-shield-fill-check fs-4"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Intake by Verified Admin:</span>
+                    <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
+                    <span class="text-secondary small fw-medium">
+                        ({% if admin.full_name %}{{ admin.full_name }} &bull; {% elif admin.username and admin.username != admin.email %}{{ admin.username }} &bull; {% endif %}{{ admin.email|default:admin.username }})
+                    </span>
+                    {% if admin.account_type %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-2" style="font-size: 0.72rem;">{{ admin.account_type }}</span>
+                    {% endif %}
+                </div>
+                <div class="text-secondary small mt-1">
+                    This inventory listing will be submitted to <strong>Seller Enquiries</strong> under <strong>Pending Review</strong> with full verified admin audit attribution.
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-hourglass-split me-1"></i>Initial Status: PENDING
+            </span>
+        </div>
+    </div>
+
+    <!-- MAIN FORM -->
+    <form method="POST" enctype="multipart/form-data" id="addProductForm" novalidate>
         {% csrf_token %}
-        
+
         <div class="row g-4">
-            
-            <!-- Left Main Form Column -->
+
+            <!-- LEFT COLUMN (Form Sections 0 to 4) -->
             <div class="col-lg-8">
-                
-                <!-- Section 1: Core Product Info -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i> Basic Information</h6>
+
+                <!-- 0. Seller / Vendor Information (Assisted Intake via WhatsApp / Email) -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-success bg-opacity-10 text-success">
+                                <i class="bi bi-person-lines-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Contact Information</h6>
+                                <div class="text-muted small">Record which vendor sent these product details (WhatsApp, Email, Offline Intake)</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-person-check-fill me-1"></i>Assisted Offline Intake
+                        </span>
                     </div>
                     <div class="card-body p-4">
-                        
+
+                        <!-- Intake Channel Quick-Select Cards -->
                         <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Product Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="title" placeholder="e.g. Industrial High-Torque Electric Motor 500W" required>
-                            <div class="form-text small">Enter clear, descriptive title of the surplus or inventory product.</div>
+                            <label class="form-label-custom">
+                                <span>Intake Submission Channel <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal">How the vendor submitted this listing</span>
+                            </label>
+                            <div class="row g-3 intake-channel-grid mt-1">
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="WhatsApp" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}checked{% endif %}>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-whatsapp fs-4 text-success d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">WhatsApp</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Email" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Email' %}checked{% endif %}>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-envelope-fill fs-4 text-primary d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Email</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Phone Call" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Phone Call' %}checked{% endif %}>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-telephone-fill fs-4 text-info d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Phone Call</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Direct / Walk-In" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Direct / Walk-In' %}checked{% endif %}>
+                                        <div class="channel-box text-center p-3 rounded-3 border">
+                                            <i class="bi bi-person-walking fs-4 text-secondary d-block mb-1"></i>
+                                            <span class="fw-semibold small d-block">Direct / Walk-In</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
+                        <!-- Seller Contact Details -->
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">SKU Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control font-monospace" name="sku" placeholder="SKU-2026-X890" required>
-                                <div class="form-text small">Unique inventory stock keeping unit ID.</div>
+                                <label class="form-label-custom">
+                                    <span>Seller Contact Name <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="seller_name" id="sellerNameInput"
+                                        value="{{ form_data.seller_name|default:'' }}"
+                                        placeholder="e.g. Rahul Sharma / John Doe" required>
+                                </div>
+                                <div class="form-text small mt-1">Individual or contact representative who provided details.</div>
                             </div>
+
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Brand / Manufacturer</label>
-                                <input type="text" class="form-control" name="brand" placeholder="e.g. Bosch, Siemens, TechCorp">
+                                <label class="form-label-custom">
+                                    <span>WhatsApp / Mobile Number <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-phone"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0 font-monospace" name="seller_phone" id="sellerPhoneInput"
+                                        value="{{ form_data.seller_phone|default:'' }}"
+                                        placeholder="e.g. +91 98765 43210" required>
+                                </div>
+                                <div class="form-text small mt-1">Used to automatically match or register the seller profile.</div>
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label-custom">
+                                    <span>Seller Email <span class="text-muted fw-normal">(Optional)</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control form-control-custom border-start-0" name="seller_email" id="sellerEmailInput"
+                                        value="{{ form_data.seller_email|default:'' }}"
+                                        placeholder="e.g. vendor@company.com">
+                                </div>
+                                <div class="form-text small mt-1">Auto-generated fallback if blank.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label-custom">
+                                    <span>Company / Shop Name <span class="text-muted fw-normal">(Optional)</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-building"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="seller_company" id="sellerCompanyInput"
+                                        value="{{ form_data.seller_company|default:'' }}"
+                                        placeholder="e.g. Apex Industrial Solutions">
+                                </div>
+                                <div class="form-text small mt-1">Registered trade or business entity.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label-custom">
+                                    <span>Stock / Business Location <span class="text-muted fw-normal">(Optional)</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="seller_location" id="sellerLocationInput"
+                                        value="{{ form_data.seller_location|default:'' }}"
+                                        placeholder="e.g. Mumbai, India or Dubai, UAE">
+                                </div>
+                                <div class="form-text small mt-1">Warehouse or inventory city.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 1. Product Details -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-box-seam-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">1. Product Identification &amp; Categorization</h6>
+                            <div class="text-muted small">Standard product title, brand taxonomy, and category hierarchy</div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Product Title / Name * -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Product Title / Name <span class="text-danger">*</span></span>
+                                <span class="text-muted fw-normal font-monospace" id="titleCharCount">0 characters</span>
+                            </label>
+                            <input type="text" class="form-control form-control-hero" name="product_name"
+                                id="productNameInput" value="{{ form_data.product_name|default:'' }}"
+                                placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU 1214C DC/DC/DC Module" required>
+                            <div class="form-text small mt-1">Include brand, primary model, and specification for high buyer searchability.</div>
+                        </div>
+
+                        <!-- Category & Subcategory Cascading Dropdowns -->
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Sub-Category</label>
-                                <select class="form-select" name="category">
-                                    <option value="" selected>-- Select Sub-Category --</option>
+                                <label class="form-label-custom">
+                                    <span>Main Category <span class="text-danger">*</span></span>
+                                </label>
+                                <select class="form-select form-select-custom" name="category_id" id="categorySelect" required>
+                                    <option value="" disabled {% if not form_data.category_id %}selected{% endif %}>-- Select Main Category --</option>
                                     {% for cat in categories %}
-                                    <option value="{{ cat.id }}">{{ cat.main_category.name }} &raquo; {{ cat.name }}</option>
+                                    <option value="{{ cat.id }}" {% if form_data.category_id|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ cat.name }}
+                                    </option>
                                     {% endfor %}
                                 </select>
                             </div>
+
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Linked Vendor / Seller</label>
-                                <select class="form-select" name="vendor">
-                                    <option value="" selected>-- Admin / Direct Platform Stock --</option>
-                                    {% for v in vendors %}
-                                    <option value="{{ v.id }}">{{ v.company_name|default:v.username }}</option>
-                                    {% endfor %}
+                                <label class="form-label-custom">
+                                    <span>Subcategory <span class="text-danger">*</span></span>
+                                </label>
+                                <select class="form-select form-select-custom" name="subcategory_id" id="subcategorySelect" required disabled>
+                                    <option value="" selected>-- Select Subcategory --</option>
                                 </select>
                             </div>
                         </div>
 
+                        <!-- Brand & Model No. / Part Number -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Brand / Manufacturer</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-tag-fill"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="brand_name" id="brandInput"
+                                        value="{{ form_data.brand_name|default:'' }}"
+                                        placeholder="e.g. Siemens, Dell, Bosch, Schneider">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Model No. / Part Number / MPN</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0 font-monospace"><i class="bi bi-upc-scan"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0 font-monospace"
+                                        name="model_no" id="modelNoInput" value="{{ form_data.model_no|default:'' }}"
+                                        placeholder="e.g. 6ES7214-1AG40-0XB0">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. Origin & Specifications -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge" style="background-color: #ede9fe; color: #7c3aed;">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
                         <div>
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Product Description</label>
-                            <textarea class="form-control" name="description" rows="5" placeholder="Detailed product specifications, condition, features, technical capabilities..."></textarea>
+                            <h6 class="fw-bold mb-0 text-dark">2. Origin &amp; Technical Specifications</h6>
+                            <div class="text-muted small">Origin country, manufacturing timeline, dimensions, and expiry details</div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Section 2: Pricing & Inventory -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-currency-exchange me-2 text-primary"></i> Pricing & Inventory Details</h6>
-                    </div>
                     <div class="card-body p-4">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Currency Code</label>
-                                <select class="form-select font-monospace" name="currency">
-                                    <option value="USD" selected>USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="AUD">AUD ($)</option>
-                                    <option value="CAD">CAD ($)</option>
-                                    <option value="INR">INR (₹)</option>
-                                    <option value="AED">AED (AED)</option>
+
+                        <div class="row g-4 mb-4">
+                            <!-- Manufacturing Country * -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Manufacturing Country <span class="text-danger">*</span></span>
+                                </label>
+                                <select class="form-select form-select-custom" name="manufacturing_country" id="countrySelect" required>
+                                    <option value="" disabled {% if not form_data.manufacturing_country %}selected{% endif %}>-- Select Manufacturing Country --</option>
+                                    {% for c in countries %}
+                                    <option value="{{ c }}" {% if form_data.manufacturing_country == c %}selected{% endif %}>{{ c }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Base Price <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="price" value="0.00" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Discount Price</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="discount_price" placeholder="Optional SALE price">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Stock Quantity <span class="text-danger">*</span></label>
-                                <input type="number" min="0" class="form-control" name="stock_quantity" value="1" required>
+
+                            <!-- Manufacturing Year -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Manufacturing Year</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar3"></i></span>
+                                    <input type="number" class="form-control form-control-custom border-start-0 font-monospace" name="manufacturing_year" min="1950"
+                                        max="2035" value="{{ form_data.manufacturing_year|default:'' }}"
+                                        placeholder="e.g. 2024">
+                                </div>
                             </div>
                         </div>
+
+                        <div class="row g-4">
+                            <!-- Dimensions (Optional) -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Package / Unit Dimensions <span class="text-muted fw-normal">(Optional)</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-arrows-angle-expand"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="dimensions"
+                                        value="{{ form_data.dimensions|default:'' }}" placeholder="e.g. 400 x 300 x 150 mm / 2.5 kg">
+                                </div>
+                            </div>
+
+                            <!-- Expiry Date (If applicable) -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Expiry Date <span class="text-muted fw-normal">(If applicable)</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" class="form-control form-control-custom border-start-0" name="expiry_date"
+                                        value="{{ form_data.expiry_date|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Section 3: Manufacturing & Logistics Specifications -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-truck me-2 text-primary"></i> Manufacturing & Logistics Specifications</h6>
+                <!-- 3. Pricing & Quantity (Interactive Liquidation Engine) -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-currency-dollar fs-5"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">3. Pricing, Discount Engine &amp; Liquidation Analysis</h6>
+                                <div class="text-muted small">Lot inventory count, currency, MSRP retail price, and minimum 60% liquidation rule</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1.5 rounded-pill fw-semibold small">
+                            <i class="bi bi-graph-down-arrow me-1"></i>60% Surplus Policy
+                        </span>
                     </div>
                     <div class="card-body p-4">
-                        <div class="row g-3 mb-3">
+
+                        <div class="row g-4 mb-4">
+                            <!-- Available Quantity * -->
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Country of Manufacture</label>
-                                <input type="text" class="form-control" name="manufacturing_country" placeholder="e.g. Germany, USA, Japan">
+                                <label class="form-label-custom">
+                                    <span>Available Inventory Quantity <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-stack"></i></span>
+                                    <input type="number" class="form-control form-control-custom border-start-0 font-monospace fs-6" name="quantity"
+                                        id="quantityInput" min="1" value="{{ form_data.quantity|default:'1' }}"
+                                        placeholder="e.g. 50" required>
+                                    <span class="input-group-text bg-light text-muted">Units</span>
+                                </div>
+                                <div class="form-text small mt-1">Total physical units ready in warehouse stock.</div>
                             </div>
+
+                            <!-- Currency * -->
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Manufacturing Year</label>
-                                <input type="number" min="1950" max="2099" class="form-control" name="manufacturing_year" placeholder="e.g. 2024">
+                                <label class="form-label-custom">
+                                    <span>Currency <span class="text-danger">*</span></span>
+                                </label>
+                                <select class="form-select form-select-custom font-monospace fw-semibold"
+                                    name="currency" id="currencySelect" required>
+                                    {% for curr in currencies %}
+                                    <option value="{{ curr }}" {% if form_data.currency|default:'USD' == curr %}selected{% endif %}>{{ curr }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text small mt-1">Transaction and listing payout denomination.</div>
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-3">
+                        <div class="row g-4 mb-4">
+                            <!-- Original / Retail MSRP Price (Per Unit) * -->
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Inventory / Warehouse Location</label>
-                                <input type="text" class="form-control" name="inventory_location" placeholder="e.g. Logistics Hub 4, Hamburg">
+                                <label class="form-label-custom">
+                                    <span>Original / Retail MSRP Price (Per Unit) <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text currency-symbol bg-light fw-bold text-secondary">$</span>
+                                    <input type="number" step="0.01" min="0.01"
+                                        class="form-control form-control-custom border-start-0 font-monospace fs-6" name="msrp" id="msrpInput"
+                                        value="{{ form_data.msrp|default:'' }}" placeholder="e.g. 350.00" required>
+                                </div>
+                                <div class="form-text small mt-1">Manufacturer standard catalog unit price.</div>
                             </div>
+
+                            <!-- Liquidating / Surplus Price (Per Unit) * -->
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Dimensions (L x W x H)</label>
-                                <input type="text" class="form-control" name="dimensions" placeholder="e.g. 120cm x 80cm x 45cm">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <label class="form-label-custom mb-0">
+                                        <span>Liquidating / Surplus Price (Per Unit) <span class="text-danger">*</span></span>
+                                    </label>
+                                    <button type="button" id="btnApplyMaxPrice"
+                                        class="btn btn-sm btn-outline-success py-1 px-2.5 fw-semibold d-none rounded-pill"
+                                        style="font-size: 0.75rem;"
+                                        title="Apply suggested maximum price (60% discount)">
+                                        <i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60%
+                                    </button>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text currency-symbol bg-light fw-bold text-success">$</span>
+                                    <input type="number" step="0.01" min="0.01"
+                                        class="form-control form-control-custom border-start-0 font-monospace fs-6 fw-bold text-success"
+                                        name="liquidating_price" id="liquidatingPriceInput"
+                                        value="{{ form_data.liquidating_price|default:'' }}" placeholder="e.g. 140.00"
+                                        required>
+                                </div>
+                                <div id="priceDiscountHint" class="form-text small text-muted mt-1">
+                                    Liquidating price must be below MSRP (minimum 60% discount recommended).
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Expiry / Best Before Date</label>
-                                <input type="date" class="form-control" name="expiry_date">
+                        <!-- Real-time Interactive Financial Terminal Card -->
+                        <div class="pricing-terminal p-4 rounded-4 mb-4" id="pricingCalcCard">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                                        <i class="bi bi-graph-up-arrow fs-6"></i>
+                                    </div>
+                                    <span class="fw-bold text-dark fs-6">Real-Time Deal Economics</span>
+                                </div>
+                                <span class="badge bg-secondary-subtle text-secondary border px-3 py-1 rounded-pill small" id="discountStatusText">
+                                    Waiting for pricing input...
+                                </span>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Warranty Terms</label>
-                                <input type="text" class="form-control" name="warranty" placeholder="e.g. 1 Year Manufacturer Warranty">
+
+                            <div class="row g-3 mb-3 text-center text-sm-start">
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Calculated Discount</div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill" id="discountBadge">0% OFF</span>
+                                        </div>
+                                        <div class="text-muted small mt-1" style="font-size: 0.75rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Target Policy: &ge; 60% Liquidation
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Buyer Price (+10%)</div>
+                                        <div class="fw-bold font-monospace fs-4 text-dark mb-1" id="buyerPricePreview">$0.00</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">
+                                            <i class="bi bi-shield-check me-1"></i>Platform markup included
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Total Seller Payout</div>
+                                        <div class="fw-bold font-monospace fs-4 text-success mb-1" id="totalLotPayout">$0.00</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">
+                                            <i class="bi bi-cash-stack me-1"></i>Unit Price &times; Available Qty
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Discount Bar Indicator -->
+                            <div class="pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
+                                    <span class="fw-semibold text-secondary"><i class="bi bi-speedometer2 me-1 text-primary"></i>Discount Rate Progress</span>
+                                    <span id="discountBarLabel" class="fw-bold text-dark font-monospace">0% (Policy: 60%+)</span>
+                                </div>
+                                <div class="progress" style="height: 10px; background-color: #e2e8f0; border-radius: 999px;">
+                                    <div class="progress-bar bg-success" id="discountProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Excluded Export Countries (Modern Tag / Pill Selector) -->
+                        <div class="mt-4 pt-2">
+                            <label class="form-label-custom mb-2">
+                                <span>Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span></span>
+                                <span class="text-muted fw-normal">Select destinations where export is prohibited</span>
+                            </label>
+
+                            <!-- Quick Sanctions / Embargo Clickable Badges -->
+                            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                <span class="small text-muted me-1 fw-semibold">Quick Embargo Presets:</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Russia">Russia</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Iran">Iran</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="North Korea">North Korea</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Syria">Syria</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Cuba">Cuba</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill small" id="btnClearExcluded">Clear All</button>
+                            </div>
+
+                            <!-- Modern Dropdown to add extra countries with Clear button -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-7">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
+                                        <select class="form-select form-select-custom border-start-0" id="addExcludedCountrySelect">
+                                            <option value="" selected>+ Add another destination to embargo list...</option>
+                                            {% for c in countries %}
+                                            <option value="{{ c }}">{{ c }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-outline-secondary" id="btnClearDropdown" title="Reset dropdown selector">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Country Tag Pills Display Box -->
+                            <div class="p-3 rounded-3 border bg-light">
+                                <div class="small fw-semibold text-secondary mb-2">Active Export Restrictions:</div>
+                                <div id="selectedCountriesBadges" class="d-flex flex-wrap gap-2">
+                                    <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                                        <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden Select synced with selections for standard Django POST -->
+                            <select name="excluded_countries" id="excludedCountriesSelect" multiple class="d-none">
+                                <option value="None (Worldwide)">None (Worldwide)</option>
+                                <option value="Russia">Russia</option>
+                                <option value="Iran">Iran</option>
+                                <option value="North Korea">North Korea</option>
+                                <option value="Syria">Syria</option>
+                                <option value="Cuba">Cuba</option>
+                                {% for c in countries %}
+                                <option value="{{ c }}">{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small mt-2">Products will not be offered to buyers located in the selected restricted jurisdictions.</div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Section 4: Surplus Notes & Documents -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-primary"></i> Surplus Information & Certificates</h6>
+                <!-- 4. Description & Commercial Terms -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
+                        <div class="section-icon-badge" style="background-color: #ccfbf1; color: #0d9488;">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">4. Description, Reason to Sell &amp; Warranty</h6>
+                            <div class="text-muted small">Technical narrative, liquidation motive, warranty guarantee, and test certificates</div>
+                        </div>
                     </div>
                     <div class="card-body p-4">
+
+                        <!-- Description & Technical Condition * -->
                         <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Reason for Surplus / Selling</label>
-                            <textarea class="form-control" name="reason_to_sell" rows="3" placeholder="e.g. Overstock clearance, project cancellation, end-of-line stock..."></textarea>
+                            <label class="form-label-custom">
+                                <span>Description &amp; Technical Condition <span class="text-danger">*</span></span>
+                            </label>
+                            <textarea class="form-control form-control-custom" name="description" id="descriptionInput" rows="4"
+                                placeholder="Describe the physical condition, original packaging (sealed box, OEM bag, bulk pallet), testing history, and operational parameters..."
+                                required>{{ form_data.description|default:'' }}</textarea>
+                            <div class="form-text small mt-1">Clear condition transparency accelerates buyer enquiry approval.</div>
                         </div>
-                        <div>
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Third-Party Quality Certificate (PDF / Document)</label>
-                            <input type="file" class="form-control" name="third_party_certificate" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
-                            <div class="form-text small">Upload inspection certificate, CE mark document, or lab test PDF if available.</div>
+
+                        <!-- Reason to Sell * -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span>Reason to Sell <span class="text-danger">*</span></span>
+                            </label>
+                            <select class="form-select form-select-custom" name="reason_to_sell" id="reasonToSellSelect" required>
+                                {% for r_opt in reason_to_sell_options %}
+                                <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus Inventory' == r_opt %}selected{% endif %}>
+                                    {{ r_opt }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text small mt-1">Select the liquidation context for buyer transparency.</div>
                         </div>
+
+                        <!-- Product Warranty Included Switch & Details -->
+                        <div class="option-toggle-box p-4 rounded-3 border mb-4 transition-all" id="warrantyToggleBox">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="p-2.5 rounded-2 bg-white text-success border shadow-2xs">
+                                        <i class="bi bi-shield-check fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0"
+                                            for="warrantyToggle">
+                                            Product Warranty Included
+                                        </label>
+                                        <div class="text-muted small">Enable if replacement guarantee or manufacturer warranty applies</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="warrantyToggle" name="warranty_included" {% if form_data.warranty_included %}checked{% endif %} style="width: 2.6em; height: 1.4em;">
+                                </div>
+                            </div>
+
+                            <div id="warrantyFields" class="mt-4 pt-3 border-top" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary">Warranty Period / Guarantee *</label>
+                                    <input type="text" class="form-control form-control-custom" id="warrantyInput" name="warranty"
+                                        value="{{ form_data.warranty|default:'' }}"
+                                        placeholder="e.g. 30 Days, 90 Days, 1 Year">
+                                </div>
+                                <!-- Preset Buttons -->
+                                <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                    <span class="small text-muted me-1 fw-semibold">Duration Presets:</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="30 Days">30 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="60 Days">60 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="90 Days">90 Days</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="6 Months">6 Months</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-preset-warranty px-3 py-1 rounded-pill" data-preset="1 Year">1 Year</button>
+                                </div>
+                                <div>
+                                    <label class="form-label small fw-semibold text-secondary">Upload Warranty Document <span class="text-muted fw-normal">(Optional, PDF/JPG/PNG max 10MB)</span></label>
+                                    <input type="file" class="form-control form-control-custom" name="warranty_document"
+                                        accept=".pdf,image/png,image/jpeg,image/webp">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3rd Party Certificate Available Switch & Details -->
+                        <div class="option-toggle-box p-4 rounded-3 border transition-all" id="certificateToggleBox">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="p-2.5 rounded-2 bg-white text-primary border shadow-2xs">
+                                        <i class="bi bi-patch-check-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <label class="form-check-label fw-bold cursor-pointer text-dark d-block mb-0"
+                                            for="certificateToggle">
+                                            3rd Party Certificate / Test Report Available
+                                        </label>
+                                        <div class="text-muted small">Check if material test reports or manufacturer calibration certs are available</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="certificateToggle" name="third_party_certificate" {% if form_data.third_party_certificate %}checked{% endif %}
+                                        style="width: 2.6em; height: 1.4em;">
+                                </div>
+                            </div>
+
+                            <div id="certificateFields" class="mt-4 pt-3 border-top" style="display: none;">
+                                <label class="form-label small fw-semibold text-secondary">Upload Certificate / Test Report Document * <span class="text-muted fw-normal">(PDF, JPG, PNG Max 10MB)</span></label>
+                                <input type="file" class="form-control form-control-custom" name="certificate_document"
+                                    accept=".pdf,image/png,image/jpeg,image/webp">
+                                <div class="form-text small mt-1">Calibration certificate, material test report, or compliance documentation.</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
             </div>
 
-            <!-- Right Sidebar Column -->
+            <!-- RIGHT COLUMN (Sticky Live Preview, Dropzone & Actions) -->
             <div class="col-lg-4">
-                
-                <!-- Section 5: Media Uploads -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-images me-2 text-primary"></i> Product Media</h6>
+
+                <!-- 1. Live Marketplace Preview Card -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
+                    <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                        <span class="small fw-bold text-uppercase tracking-wider text-muted d-flex align-items-center gap-2">
+                            <i class="bi bi-eye-fill text-primary"></i> Live Marketplace Preview
+                        </span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
+                            Live Sync
+                        </span>
                     </div>
-                    <div class="card-body p-4">
-                        
-                        <!-- Primary Image -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Primary Cover Image</label>
-                            <input type="file" class="form-control mb-2" name="image" accept="image/*">
-                            <div class="form-text small">Main thumbnail shown in catalog browsing pages.</div>
+
+                    <!-- Cover Photo Preview Box -->
+                    <div class="position-relative bg-light text-center" style="height: 190px; overflow: hidden;" id="previewImageWrapper">
+                        <img id="previewCoverImg" src="" alt="Cover" class="w-100 h-100 d-none" style="object-fit: cover;">
+                        <div id="previewCoverPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted p-3">
+                            <i class="bi bi-image fs-1 opacity-50 mb-1"></i>
+                            <span class="small fw-medium">Upload cover photo to preview</span>
                         </div>
+                        <span id="previewDiscountPill" class="position-absolute top-0 start-0 m-3 badge bg-success fw-bold px-3 py-1.5 shadow-sm d-none">
+                            0% OFF
+                        </span>
+                        <span class="position-absolute bottom-0 end-0 m-3 badge bg-dark bg-opacity-75 text-white font-monospace small px-2.5 py-1">
+                            <i class="bi bi-images me-1"></i><span id="previewPhotoCount">0</span> Photos
+                        </span>
+                    </div>
 
-                        <hr class="my-3">
-
-                        <!-- Gallery Multi-Upload -->
-                        <div>
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Additional Gallery Images</label>
-                            <input type="file" class="form-control mb-2" name="gallery_images" accept="image/*" multiple>
-                            <div class="form-text small">Select multiple photos for product showcase gallery.</div>
+                    <div class="p-4">
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 small" id="previewCategoryBadge">Category</span>
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2.5 py-1 small d-none" id="previewSubcatBadge">Subcategory</span>
+                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 small ms-auto" id="previewOriginBadge">Worldwide</span>
+                        </div>
+                        <h6 class="fw-bold mb-2 text-truncate-2" id="previewTitle" style="min-height: 2.6rem; line-height: 1.3;">
+                            Product Title Preview
+                        </h6>
+                        <div class="d-flex align-items-baseline gap-2 mb-3">
+                            <span class="fs-4 fw-bold text-success font-monospace" id="previewPrice">$0.00</span>
+                            <span class="text-decoration-line-through text-muted small font-monospace" id="previewMsrp">$0.00</span>
+                        </div>
+                        <div class="p-3 rounded-3 bg-light border small text-muted d-flex align-items-center justify-content-between">
+                            <span><i class="bi bi-box-seam me-1 text-primary"></i>Stock: <strong id="previewQty" class="text-dark">1</strong></span>
+                            <span>Est. Payout: <strong id="previewPayout" class="text-success font-monospace">$0.00</strong></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 6: Status & Controls -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header border-bottom py-3 px-4">
-                        <h6 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-primary"></i> Listing Status & Controls</h6>
+                <!-- 2. Product Images Dropzone Multi-Upload -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-images text-primary"></i>
+                            <span>Product Images <span class="text-danger">*</span></span>
+                        </h6>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill small" id="imageCountBadge">0 selected</span>
                     </div>
                     <div class="card-body p-4">
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Approval Status</label>
-                            <select class="form-select fw-semibold" name="enquiry_status">
-                                <option value="APPROVED" selected class="text-success">Approved (Verified Product)</option>
-                                <option value="PENDING" class="text-warning">Pending Review</option>
-                                <option value="DECLINED" class="text-danger">Declined</option>
-                            </select>
-                            <div class="form-text small">Direct admin listings are marked as 'Approved' by default.</div>
-                        </div>
 
-                        <div class="p-3 rounded-3 bg-surface-subtle border">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="isActiveSwitch" name="is_active" checked>
-                                <label class="form-check-label fw-semibold cursor-pointer ms-2" for="isActiveSwitch">
-                                    Active Listing
-                                </label>
+                        <!-- Hidden Form Submission File Input (synced via DataTransfer) -->
+                        <input type="file" name="images" id="imageInput" multiple
+                            accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif"
+                            style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
+
+                        <!-- Enhanced Dropzone Box with Native File Input Overlay -->
+                        <div class="dropzone-enhanced w-100 position-relative overflow-hidden" id="dropzoneBox">
+                            <!-- 1. Dedicated Native File Picker Input overlay covering the entire dropzone -->
+                            <input type="file" id="imagePicker" multiple
+                                accept="image/*,image/png,image/jpeg,image/webp,image/gif,image/avif"
+                                class="position-absolute top-0 start-0 w-100 h-100"
+                                style="opacity: 0; cursor: pointer; z-index: 10; pointer-events: auto !important;"
+                                title="Click to browse or drop product images">
+
+                            <div class="dropzone-inner py-3 pe-none">
+                                <div class="mb-2 text-primary">
+                                    <i class="bi bi-cloud-arrow-up-fill fs-1"></i>
+                                </div>
+                                <div class="fw-bold text-dark mb-1">Click to browse or drop images here</div>
+                                <div class="text-muted small mb-3">PNG, JPG, JPEG, WEBP, GIF (up to 15MB each). First uploaded file is set as cover.</div>
+                                <span class="btn btn-sm btn-outline-primary px-3.5 py-1.5 rounded-pill pe-none" id="btnChooseFiles">
+                                    <i class="bi bi-folder2-open me-1"></i> Choose Files
+                                </span>
                             </div>
-                            <div class="form-text small mt-1 ms-4">When enabled, this item will immediately be visible on the public buyer marketplace.</div>
                         </div>
+
+                        <div id="imageValidationAlert" class="alert alert-danger py-2 px-3 mt-3 small d-none rounded-3">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i> At least 1 product image is required.
+                        </div>
+
+                        <!-- Image Preview Grid -->
+                        <div class="row g-2 mt-3" id="imagePreviewGrid"></div>
 
                     </div>
                 </div>
 
-                <!-- Submit Button Block -->
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4 text-center">
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2">
-                            <i class="bi bi-check-circle-fill"></i> Save Product Listing
+                <!-- 3. Listing Readiness Checklist -->
+                <div class="card admin-form-card mb-4 border-0 shadow-sm p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle text-primary fs-6"></i> Listing Readiness
+                        </h6>
+                        <span class="fw-bold font-monospace text-primary small" id="checklistProgressPct">0%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 6px; border-radius: 999px;">
+                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
+                    </div>
+                    <div class="checklist-items d-flex flex-column gap-2.5 small text-secondary">
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkSeller">
+                            <i class="bi bi-circle text-muted"></i> <span>Seller Contact &amp; Intake Details</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkTitle">
+                            <i class="bi bi-circle text-muted"></i> <span>Product Title &amp; Category</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkCountry">
+                            <i class="bi bi-circle text-muted"></i> <span>Manufacturing Country</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkPricing">
+                            <i class="bi bi-circle text-muted"></i> <span>Valid Pricing (60%+ Discount)</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkDescription">
+                            <i class="bi bi-circle text-muted"></i> <span>Technical Condition Description</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkImages">
+                            <i class="bi bi-circle text-muted"></i> <span>At least 1 Product Photo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Sticky Submission Actions Card -->
+                <div class="card admin-form-card border-0 shadow-sm p-4 sticky-action-box">
+                    <div class="d-grid gap-3">
+                        <button type="submit" form="addProductForm" id="btnSubmitBottom"
+                            class="btn btn-primary btn-lg py-3 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
+                            <i class="bi bi-check-circle-fill"></i> Submit to Seller Enquiries
                         </button>
-                        <a href="/admin/products/all/" class="btn btn-link text-secondary text-decoration-none small">Cancel & Go Back</a>
+                        <a href="/admin/enquiries/seller/"
+                            class="btn btn-outline-secondary py-2.5 rounded-3 text-decoration-none text-center fw-medium">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel &amp; Return
+                        </a>
+                    </div>
+                    <div class="text-center text-muted small mt-3 pt-3 border-top">
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        Saved with verified Admin ID <strong>{{ admin_uid }}</strong>
+                        <span class="text-secondary small">({% if admin.full_name %}{{ admin.full_name }} &bull; {% elif admin.username and admin.username != admin.email %}{{ admin.username }} &bull; {% endif %}{{ admin.email|default:admin.username }})</span>
                     </div>
                 </div>
 
@@ -261,4 +875,1189 @@
         </div>
     </form>
 </div>
+
+<style>
+    /* -------------------------------------------------------------
+       Enhanced Professional Admin Portal Aesthetics & Spacing
+       ------------------------------------------------------------- */
+    .admin-verification-banner {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    [data-bs-theme="dark"] .admin-verification-banner {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+        border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .admin-avatar-pill {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Cards & Container Shells */
+    .admin-form-card {
+        border-radius: 1rem !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        background: var(--bs-card-bg, #ffffff) !important;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+        margin-bottom: 2rem !important;
+        overflow: hidden;
+    }
+
+    .admin-form-card .card-header {
+        padding: 1.25rem 1.75rem !important;
+        background-color: var(--bs-card-bg, #ffffff) !important;
+        border-bottom: 1px solid var(--bs-border-color, #e2e8f0) !important;
+    }
+
+    .admin-form-card .card-body {
+        padding: 2rem !important;
+    }
+
+    .section-icon-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    /* Typography & Custom Labels */
+    .form-label-custom {
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--bs-secondary-color, #64748b) !important;
+        margin-bottom: 0.55rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    .form-control-custom,
+    .form-select-custom {
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        border-radius: 0.65rem !important;
+        padding: 0.65rem 0.95rem !important;
+        font-size: 0.925rem !important;
+        transition: all 0.15s ease-in-out;
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
+    }
+
+    .form-control-custom:focus,
+    .form-select-custom:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+        outline: none;
+    }
+
+    .form-control-hero {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        padding: 0.85rem 1.1rem !important;
+        border-radius: 0.75rem !important;
+        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
+        background-color: var(--bs-body-bg, #ffffff) !important;
+        color: var(--bs-body-color, #0f172a) !important;
+    }
+
+    .form-control-hero:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+    }
+
+    /* Channel Selection Cards */
+    .channel-box {
+        background: var(--bs-body-bg, #ffffff) !important;
+        border-color: var(--bs-border-color, #e2e8f0) !important;
+        padding: 1.1rem 0.75rem !important;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .channel-radio-card input:checked + .channel-box {
+        background-color: rgba(37, 99, 235, 0.08) !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px #2563eb;
+    }
+
+    .channel-radio-card:hover .channel-box {
+        border-color: #94a3b8 !important;
+        transform: translateY(-2px);
+    }
+
+    /* Pricing Financial Terminal Box */
+    .pricing-terminal {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 1rem !important;
+        padding: 1.5rem !important;
+        margin-top: 0.5rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    [data-bs-theme="dark"] .pricing-terminal {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
+        border-color: #334155 !important;
+    }
+
+    .metric-kpi-tile {
+        background: var(--bs-body-bg, #ffffff) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.75rem !important;
+        padding: 1.25rem !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .metric-kpi-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    }
+
+    /* Option Toggle Boxes */
+    .option-toggle-box {
+        background-color: var(--bs-tertiary-bg, #f8fafc) !important;
+        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.85rem !important;
+        padding: 1.25rem 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .option-toggle-box.active-box {
+        border-color: #10b981 !important;
+        background-color: rgba(16, 185, 129, 0.04) !important;
+    }
+
+    /* Warranty Presets */
+    .btn-preset-warranty {
+        font-size: 0.8rem !important;
+        padding: 0.35rem 0.85rem !important;
+        border-radius: 20px !important;
+        transition: all 0.15s ease;
+    }
+
+    .btn-preset-warranty.active {
+        background-color: #0a5c48 !important;
+        color: #fff !important;
+        border-color: #0a5c48 !important;
+    }
+
+    /* Dropzone Enhanced */
+    .dropzone-enhanced {
+        position: relative;
+        border: 2px dashed #93c5fd;
+        background: rgba(239, 246, 255, 0.45);
+        border-radius: 1rem;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dropzone-enhanced input[type="file"] {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        z-index: 10 !important;
+        pointer-events: auto !important;
+    }
+
+    .dropzone-enhanced .dropzone-inner,
+    .dropzone-enhanced .dropzone-inner * {
+        pointer-events: none !important;
+    }
+
+    .dropzone-enhanced:hover,
+    .dropzone-enhanced.dragover {
+        border-color: #2563eb;
+        background: rgba(219, 234, 254, 0.65);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+    }
+
+    [data-bs-theme="dark"] .dropzone-enhanced {
+        border-color: #3b82f6;
+        background: rgba(30, 41, 59, 0.4);
+    }
+
+    [data-bs-theme="dark"] .dropzone-enhanced:hover,
+    [data-bs-theme="dark"] .dropzone-enhanced.dragover {
+        background: rgba(30, 58, 138, 0.3);
+    }
+
+    /* Image Preview Cards */
+    .image-preview-card {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--bs-border-color, #e5e7eb);
+        background: var(--bs-body-bg, #ffffff);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .image-preview-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .image-preview-card img {
+        width: 100%;
+        height: 95px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .image-preview-card .badge-cover {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(15, 23, 42, 0.88);
+        color: #fff;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+    }
+
+    .image-preview-card .btn-remove {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(220, 38, 38, 0.9);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.15s;
+    }
+
+    .image-preview-card .btn-remove:hover {
+        background: #b91c1c;
+        transform: scale(1.1);
+    }
+
+    /* Checklist Progress */
+    .checklist-item {
+        transition: color 0.15s ease;
+    }
+
+    .checklist-item.done i {
+        color: #10b981 !important;
+    }
+
+    .checklist-item.done {
+        color: var(--bs-body-color, #0f172a);
+        font-weight: 500;
+    }
+
+    .sticky-preview-card,
+    .sticky-action-box {
+        position: sticky;
+        top: 1.5rem;
+        z-index: 5;
+    }
+
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // =============================================================
+        // DOM ELEMENTS & GLOBAL STATE (Hoisted at top to prevent TDZ errors)
+        // =============================================================
+
+        // 1. Categories & Subcategories
+        const subcategoriesMap = JSON.parse('{{ subcategories_json|escapejs|default:"{}" }}');
+        const categorySelect = document.getElementById("categorySelect");
+        const subcategorySelect = document.getElementById("subcategorySelect");
+        const initialSubCatVal = "{{ form_data.subcategory_id|default:'' }}";
+
+        // 2. Intake Channel
+        const channelRadios = document.querySelectorAll(".intake-radio");
+
+        // 3. Warranty & Certificate Toggles
+        const warrantyToggle = document.getElementById("warrantyToggle");
+        const warrantyFields = document.getElementById("warrantyFields");
+        const warrantyInput = document.getElementById("warrantyInput");
+        const warrantyToggleBox = document.getElementById("warrantyToggleBox");
+        const presetButtons = document.querySelectorAll(".btn-preset-warranty");
+
+        const certificateToggle = document.getElementById("certificateToggle");
+        const certificateFields = document.getElementById("certificateFields");
+        const certificateToggleBox = document.getElementById("certificateToggleBox");
+
+        // 4. Pricing & Calculations
+        const msrpInput = document.getElementById("msrpInput");
+        const lpInput = document.getElementById("liquidatingPriceInput");
+        const quantityInput = document.getElementById("quantityInput");
+        const currencySelect = document.getElementById("currencySelect");
+        const discountBadge = document.getElementById("discountBadge");
+        const buyerPricePreview = document.getElementById("buyerPricePreview");
+        const totalLotPayout = document.getElementById("totalLotPayout");
+        const currencySymbols = document.querySelectorAll(".currency-symbol");
+        const btnApplyMaxPrice = document.getElementById("btnApplyMaxPrice");
+        const priceDiscountHint = document.getElementById("priceDiscountHint");
+        const discountStatusText = document.getElementById("discountStatusText");
+        const discountProgressBar = document.getElementById("discountProgressBar");
+        const discountBarLabel = document.getElementById("discountBarLabel");
+
+        // 5. Excluded Countries
+        const excludedSelect = document.getElementById("excludedCountriesSelect");
+        const addCountrySelect = document.getElementById("addExcludedCountrySelect");
+        const badgesContainer = document.getElementById("selectedCountriesBadges");
+        const quickEmbargoBtns = document.querySelectorAll(".btn-quick-embargo");
+        const btnClearExcluded = document.getElementById("btnClearExcluded");
+        const btnClearDropdown = document.getElementById("btnClearDropdown");
+        const selectedCountriesSet = new Set();
+
+        // 6. Product Image Dropzone & Multi-File Upload
+        const dropzoneBox = document.getElementById("dropzoneBox");
+        const imagePicker = document.getElementById("imagePicker");
+        const imageInput = document.getElementById("imageInput");
+        const btnChooseFiles = document.getElementById("btnChooseFiles");
+        const imagePreviewGrid = document.getElementById("imagePreviewGrid");
+        const imageCountBadge = document.getElementById("imageCountBadge");
+        const imageValidationAlert = document.getElementById("imageValidationAlert");
+        const previewPhotoCount = document.getElementById("previewPhotoCount");
+        const previewCoverImg = document.getElementById("previewCoverImg");
+        const previewCoverPlaceholder = document.getElementById("previewCoverPlaceholder");
+        let selectedFiles = [];
+
+        // 7. Product Details & Live Preview Elements
+        const productNameInput = document.getElementById("productNameInput");
+        const titleCharCount = document.getElementById("titleCharCount");
+        const previewTitle = document.getElementById("previewTitle");
+        const previewPrice = document.getElementById("previewPrice");
+        const previewMsrp = document.getElementById("previewMsrp");
+        const previewQty = document.getElementById("previewQty");
+        const previewPayout = document.getElementById("previewPayout");
+        const previewCategoryBadge = document.getElementById("previewCategoryBadge");
+        const previewSubcatBadge = document.getElementById("previewSubcatBadge");
+        const previewOriginBadge = document.getElementById("previewOriginBadge");
+        const countrySelect = document.getElementById("countrySelect");
+        const previewDiscountPill = document.getElementById("previewDiscountPill");
+
+        // 8. Seller Contact & Readiness Checklist
+        const sellerNameInput = document.getElementById("sellerNameInput");
+        const sellerPhoneInput = document.getElementById("sellerPhoneInput");
+        const descriptionInput = document.getElementById("descriptionInput");
+
+        const checkSeller = document.getElementById("checkSeller");
+        const checkTitle = document.getElementById("checkTitle");
+        const checkCountry = document.getElementById("checkCountry");
+        const checkPricing = document.getElementById("checkPricing");
+        const checkDescription = document.getElementById("checkDescription");
+        const checkImages = document.getElementById("checkImages");
+
+        const checklistProgressBar = document.getElementById("checklistProgressBar");
+        const checklistProgressPct = document.getElementById("checklistProgressPct");
+
+        // 9. Form Submission
+        const form = document.getElementById("addProductForm");
+        const btnTop = document.getElementById("btnSubmitTop");
+        const btnBottom = document.getElementById("btnSubmitBottom");
+
+        // =============================================================
+        // CORE HELPER FUNCTIONS
+        // =============================================================
+
+        function getCurrencySymbol(curr) {
+            if (!curr) return "$";
+            const c = curr.split("-")[0].trim().toUpperCase();
+            switch (c) {
+                case "EUR": return "€";
+                case "GBP": return "£";
+                case "INR": return "₹";
+                case "AED": return "AED ";
+                case "SAR": return "SAR ";
+                case "QAR": return "QAR ";
+                default: return "$";
+            }
+        }
+
+        function isImageFile(file) {
+            if (!file) return false;
+            if (file.type && file.type.startsWith("image/")) return true;
+            return /\.(jpe?g|png|webp|gif|bmp|svg|avif|heic|heif|jfif)$/i.test(file.name || "");
+        }
+
+        function triggerFilePicker() {
+            if (imagePicker) {
+                imagePicker.click();
+            } else if (imageInput) {
+                imageInput.click();
+            }
+        }
+
+        function handleNewFiles(fileList) {
+            if (!fileList || !fileList.length) return;
+            let addedCount = 0;
+            let skippedOversize = 0;
+            let skippedInvalid = 0;
+
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                if (isImageFile(file)) {
+                    if (file.size > 15 * 1024 * 1024) {
+                        skippedOversize++;
+                        continue;
+                    }
+                    const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                    if (!exists) {
+                        selectedFiles.push(file);
+                        addedCount++;
+                    }
+                } else {
+                    skippedInvalid++;
+                }
+            }
+
+            if (skippedOversize > 0) {
+                alert(`${skippedOversize} file(s) exceeded the 15MB size limit and were skipped.`);
+            }
+            if (skippedInvalid > 0) {
+                alert(`${skippedInvalid} file(s) were not recognized as valid images and were skipped.`);
+            }
+
+            syncFileInput();
+            renderPreviews();
+        }
+
+        function syncFileInput() {
+            if (imageInput) {
+                try {
+                    const dt = new DataTransfer();
+                    selectedFiles.forEach(f => dt.items.add(f));
+                    imageInput.files = dt.files;
+                } catch (err) {
+                    console.warn("DataTransfer sync warning:", err);
+                }
+            }
+
+            if (imageCountBadge) {
+                imageCountBadge.textContent = `${selectedFiles.length} selected`;
+            }
+            if (previewPhotoCount) {
+                previewPhotoCount.textContent = selectedFiles.length;
+            }
+            if (selectedFiles.length > 0 && imageValidationAlert) {
+                imageValidationAlert.classList.add("d-none");
+            }
+            updateLivePreview();
+            updateReadinessChecklist();
+        }
+
+        function renderPreviews() {
+            if (!imagePreviewGrid) return;
+            imagePreviewGrid.innerHTML = "";
+
+            selectedFiles.forEach((file, index) => {
+                const col = document.createElement("div");
+                col.className = "col-6 col-sm-4 col-md-3";
+
+                const card = document.createElement("div");
+                card.className = "image-preview-card";
+
+                const img = document.createElement("img");
+                try {
+                    img.src = URL.createObjectURL(file);
+                } catch (e) {
+                    img.src = "";
+                }
+
+                if (index === 0) {
+                    const coverBadge = document.createElement("span");
+                    coverBadge.className = "badge-cover";
+                    coverBadge.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>Cover';
+                    card.appendChild(coverBadge);
+                } else {
+                    const makeCoverBtn = document.createElement("button");
+                    makeCoverBtn.type = "button";
+                    makeCoverBtn.className = "badge bg-dark bg-opacity-75 text-white border-0 position-absolute bottom-0 start-0 m-1 px-1.5 py-0.5 rounded small";
+                    makeCoverBtn.style.fontSize = "0.68rem";
+                    makeCoverBtn.innerHTML = '<i class="bi bi-star me-0.5"></i>Set Cover';
+                    makeCoverBtn.title = "Make this the primary cover image";
+                    makeCoverBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const chosen = selectedFiles.splice(index, 1)[0];
+                        selectedFiles.unshift(chosen);
+                        syncFileInput();
+                        renderPreviews();
+                    });
+                    card.appendChild(makeCoverBtn);
+                }
+
+                const removeBtn = document.createElement("button");
+                removeBtn.type = "button";
+                removeBtn.className = "btn-remove";
+                removeBtn.title = "Remove image";
+                removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                removeBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectedFiles.splice(index, 1);
+                    syncFileInput();
+                    renderPreviews();
+                });
+
+                card.appendChild(img);
+                card.appendChild(removeBtn);
+                col.appendChild(card);
+                imagePreviewGrid.appendChild(col);
+            });
+        }
+
+        function setCheckItem(el, passed) {
+            if (!el) return;
+            el.classList.toggle("done", passed);
+            const icon = el.querySelector("i");
+            if (icon) {
+                if (passed) {
+                    icon.className = "bi bi-check-circle-fill text-success";
+                } else {
+                    icon.className = "bi bi-circle text-muted";
+                }
+            }
+        }
+
+        function updateReadinessChecklist() {
+            let total = 6;
+            let count = 0;
+
+            // 1. Seller
+            const sellerOk = Boolean(sellerNameInput && sellerPhoneInput && sellerNameInput.value.trim() && sellerPhoneInput.value.trim());
+            setCheckItem(checkSeller, sellerOk);
+            if (sellerOk) count++;
+
+            // 2. Title & Category
+            const titleOk = Boolean(productNameInput && categorySelect && subcategorySelect && productNameInput.value.trim() && categorySelect.value && subcategorySelect.value);
+            setCheckItem(checkTitle, titleOk);
+            if (titleOk) count++;
+
+            // 3. Country
+            const countryOk = Boolean(countrySelect && countrySelect.value);
+            setCheckItem(checkCountry, countryOk);
+            if (countryOk) count++;
+
+            // 4. Pricing
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            const pricingOk = Boolean(msrp > 0 && lp > 0 && lp < msrp);
+            setCheckItem(checkPricing, pricingOk);
+            if (pricingOk) count++;
+
+            // 5. Description
+            const descOk = Boolean(descriptionInput && descriptionInput.value.trim().length > 10);
+            setCheckItem(checkDescription, descOk);
+            if (descOk) count++;
+
+            // 6. Images
+            const imagesOk = Boolean(selectedFiles && selectedFiles.length > 0);
+            setCheckItem(checkImages, imagesOk);
+            if (imagesOk) count++;
+
+            const pct = Math.round((count / total) * 100);
+            if (checklistProgressBar) checklistProgressBar.style.width = `${pct}%`;
+            if (checklistProgressPct) checklistProgressPct.textContent = `${pct}%`;
+
+            if (checklistProgressBar) {
+                if (pct === 100) {
+                    checklistProgressBar.className = "progress-bar bg-success";
+                } else {
+                    checklistProgressBar.className = "progress-bar bg-primary";
+                }
+            }
+        }
+
+        function updateLivePreview() {
+            // Title & Char count
+            if (productNameInput) {
+                const rawTitle = productNameInput.value.trim();
+                if (titleCharCount) titleCharCount.textContent = `${rawTitle.length} characters`;
+                if (previewTitle) previewTitle.textContent = rawTitle || "Product Title Preview";
+            }
+
+            // Price & Currency
+            const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
+            const sym = getCurrencySymbol(curr);
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            const qty = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
+
+            if (previewPrice) previewPrice.textContent = `${sym}${lp.toFixed(2)}`;
+            if (previewMsrp) previewMsrp.textContent = msrp > 0 ? `${sym}${msrp.toFixed(2)}` : "";
+            if (previewQty) previewQty.textContent = `${qty} Units`;
+            if (previewPayout) previewPayout.textContent = `${sym}${(lp * qty).toFixed(2)}`;
+
+            // Discount pill
+            if (previewDiscountPill) {
+                if (msrp > 0 && lp > 0 && lp < msrp) {
+                    const discount = (((msrp - lp) / msrp) * 100).toFixed(0);
+                    previewDiscountPill.textContent = `${discount}% OFF`;
+                    previewDiscountPill.classList.remove("d-none");
+                } else {
+                    previewDiscountPill.classList.add("d-none");
+                }
+            }
+
+            // Category & Subcategory
+            if (previewCategoryBadge && categorySelect) {
+                if (categorySelect.selectedIndex > 0) {
+                    previewCategoryBadge.textContent = categorySelect.options[categorySelect.selectedIndex].text;
+                } else {
+                    previewCategoryBadge.textContent = "Category";
+                }
+            }
+
+            if (previewSubcatBadge && subcategorySelect) {
+                if (!subcategorySelect.disabled && subcategorySelect.selectedIndex > 0) {
+                    previewSubcatBadge.textContent = subcategorySelect.options[subcategorySelect.selectedIndex].text;
+                    previewSubcatBadge.classList.remove("d-none");
+                } else {
+                    previewSubcatBadge.classList.add("d-none");
+                }
+            }
+
+            // Origin country
+            if (previewOriginBadge && countrySelect) {
+                if (countrySelect.selectedIndex > 0) {
+                    previewOriginBadge.textContent = countrySelect.value;
+                } else {
+                    previewOriginBadge.textContent = "Worldwide";
+                }
+            }
+
+            // Cover Photo
+            if (previewCoverImg && previewCoverPlaceholder) {
+                if (selectedFiles && selectedFiles.length > 0) {
+                    try {
+                        previewCoverImg.src = URL.createObjectURL(selectedFiles[0]);
+                        previewCoverImg.classList.remove("d-none");
+                        previewCoverPlaceholder.classList.add("d-none");
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                } else {
+                    previewCoverImg.classList.add("d-none");
+                    previewCoverPlaceholder.classList.remove("d-none");
+                }
+            }
+        }
+
+        function updateCalculations() {
+            const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
+            const sym = getCurrencySymbol(curr);
+            if (currencySymbols) {
+                currencySymbols.forEach(el => el.textContent = sym);
+            }
+
+            const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            const qty = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
+
+            // Suggested max allowed price at 60% discount (MSRP * 0.40)
+            if (btnApplyMaxPrice) {
+                if (msrp > 0) {
+                    const maxAllowed = (msrp * 0.40).toFixed(2);
+                    btnApplyMaxPrice.classList.remove("d-none");
+                    btnApplyMaxPrice.innerHTML = `<i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60% (${sym}${maxAllowed})`;
+                    btnApplyMaxPrice.dataset.maxPrice = maxAllowed;
+                } else {
+                    btnApplyMaxPrice.classList.add("d-none");
+                }
+            }
+
+            if (msrp > 0 && lp > 0) {
+                const discount = (((msrp - lp) / msrp) * 100).toFixed(1);
+                const discountClamped = Math.max(0, Math.min(100, parseFloat(discount)));
+                if (discountProgressBar) discountProgressBar.style.width = `${discountClamped}%`;
+                if (discountBarLabel) discountBarLabel.textContent = `${discount}% (Policy: 60%+)`;
+
+                if (lp >= msrp) {
+                    if (discountBadge) {
+                        discountBadge.textContent = "Over MSRP";
+                        discountBadge.className = "badge bg-danger fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Liquidating price must be below MSRP.</span>';
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Over Retail Catalog MSRP</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-danger";
+                } else if (discount < 59.99) {
+                    if (discountBadge) {
+                        discountBadge.textContent = `${discount}% OFF`;
+                        discountBadge.className = "badge bg-warning text-dark fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    const maxAllowed = (msrp * 0.40).toFixed(2);
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = `<span class="text-warning-emphasis"><i class="bi bi-info-circle-fill me-1"></i>Min. 60% discount recommended (Max: ${sym}${maxAllowed}).</span>`;
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Target Policy</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-warning";
+                } else {
+                    if (discountBadge) {
+                        discountBadge.textContent = `${discount}% OFF`;
+                        discountBadge.className = "badge bg-success fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                    }
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Valid surplus liquidation discount (60%+ off).</span>';
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Verified Surplus Discount Rate</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-success progress-bar-striped";
+                }
+            } else {
+                if (discountBadge) {
+                    discountBadge.textContent = "0% OFF";
+                    discountBadge.className = "badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                }
+                if (priceDiscountHint) priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount recommended).";
+                if (discountStatusText) discountStatusText.textContent = "Waiting for pricing input...";
+                if (discountProgressBar) {
+                    discountProgressBar.style.width = "0%";
+                    discountProgressBar.className = "progress-bar bg-secondary";
+                }
+                if (discountBarLabel) discountBarLabel.textContent = "0% (Policy: 60%+)";
+            }
+
+            const buyerPrice = (lp * 1.10).toFixed(2);
+            if (buyerPricePreview) buyerPricePreview.textContent = `${sym}${buyerPrice}`;
+
+            const totalPayout = (lp * qty).toFixed(2);
+            if (totalLotPayout) totalLotPayout.textContent = `${sym}${totalPayout}`;
+
+            updateLivePreview();
+            updateReadinessChecklist();
+        }
+
+        function populateSubcategories(catId, selectedSubId = null) {
+            if (!subcategorySelect) return;
+            subcategorySelect.innerHTML = '<option value="" disabled selected>-- Select Subcategory --</option>';
+            if (!catId || !subcategoriesMap[catId] || subcategoriesMap[catId].length === 0) {
+                subcategorySelect.disabled = true;
+                subcategorySelect.innerHTML = '<option value="" selected>-- No Subcategories Available --</option>';
+                updateLivePreview();
+                updateReadinessChecklist();
+                return;
+            }
+
+            const subs = subcategoriesMap[catId];
+            subs.forEach(sub => {
+                const opt = document.createElement("option");
+                opt.value = sub.id;
+                opt.textContent = sub.name;
+                if (selectedSubId && String(sub.id) === String(selectedSubId)) {
+                    opt.selected = true;
+                }
+                subcategorySelect.appendChild(opt);
+            });
+            subcategorySelect.disabled = false;
+            updateLivePreview();
+            updateReadinessChecklist();
+        }
+
+        function syncWarrantyFields() {
+            if (!warrantyToggle || !warrantyFields) return;
+            const isChecked = warrantyToggle.checked;
+            warrantyFields.style.display = isChecked ? "block" : "none";
+            if (warrantyToggleBox) {
+                warrantyToggleBox.classList.toggle("active-box", isChecked);
+            }
+            if (isChecked && warrantyInput && !warrantyInput.value) {
+                warrantyInput.value = "30 Days";
+            }
+        }
+
+        function syncCertificateFields() {
+            if (!certificateToggle || !certificateFields) return;
+            const isChecked = certificateToggle.checked;
+            certificateFields.style.display = isChecked ? "block" : "none";
+            if (certificateToggleBox) {
+                certificateToggleBox.classList.toggle("active-box", isChecked);
+            }
+        }
+
+        function syncExcludedCountries() {
+            if (!excludedSelect || !badgesContainer) return;
+
+            // Sync hidden select options
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                const opt = excludedSelect.options[i];
+                if (opt.value === "None (Worldwide)") {
+                    opt.selected = (selectedCountriesSet.size === 0);
+                } else {
+                    opt.selected = selectedCountriesSet.has(opt.value);
+                }
+            }
+
+            // Render pill badges
+            badgesContainer.innerHTML = "";
+            if (selectedCountriesSet.size === 0) {
+                badgesContainer.innerHTML = '<span class="badge bg-light text-muted border px-3 py-2 rounded-pill"><i class="bi bi-globe me-1 text-primary"></i>None (Worldwide - No export restrictions)</span>';
+            } else {
+                selectedCountriesSet.forEach(country => {
+                    const badge = document.createElement("span");
+                    badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 small fw-semibold";
+                    badge.innerHTML = `<i class="bi bi-slash-circle"></i><span>${country}</span><button type="button" class="btn-close btn-close-sm" style="font-size: 0.65rem;" aria-label="Remove"></button>`;
+                    const closeBtn = badge.querySelector(".btn-close");
+                    if (closeBtn) {
+                        closeBtn.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectedCountriesSet.delete(country);
+                            syncExcludedCountries();
+                        });
+                    }
+                    badgesContainer.appendChild(badge);
+                });
+            }
+
+            // Sync preset buttons visual toggle
+            if (quickEmbargoBtns) {
+                quickEmbargoBtns.forEach(btn => {
+                    const c = btn.dataset.country;
+                    const isSelected = selectedCountriesSet.has(c);
+                    btn.classList.toggle("btn-danger", isSelected);
+                    btn.classList.toggle("text-white", isSelected);
+                    btn.classList.toggle("btn-outline-secondary", !isSelected);
+                });
+            }
+        }
+
+        // =============================================================
+        // EVENT LISTENERS BINDING
+        // =============================================================
+
+        // 1. Dropzone Box & Native File Picker Binding
+        if (imagePicker) {
+            ["dragenter", "dragover"].forEach(eventName => {
+                imagePicker.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dropzoneBox) dropzoneBox.classList.add("dragover");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                imagePicker.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (dropzoneBox) dropzoneBox.classList.remove("dragover");
+                });
+            });
+
+            imagePicker.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+                this.value = "";
+            });
+        }
+
+        if (dropzoneBox) {
+            ["dragenter", "dragover"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.add("dragover");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                dropzoneBox.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzoneBox.classList.remove("dragover");
+                });
+            });
+
+            dropzoneBox.addEventListener("drop", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzoneBox.classList.remove("dragover");
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length) {
+                    handleNewFiles(dt.files);
+                }
+            });
+
+            dropzoneBox.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    triggerFilePicker();
+                }
+            });
+        }
+
+        if (imageInput) {
+            imageInput.addEventListener("change", function () {
+                if (this.files && this.files.length) {
+                    handleNewFiles(this.files);
+                }
+            });
+        }
+
+        // 2. Pricing & Max Price Quick Apply
+        if (btnApplyMaxPrice) {
+            btnApplyMaxPrice.addEventListener("click", function () {
+                if (this.dataset.maxPrice && lpInput) {
+                    lpInput.value = this.dataset.maxPrice;
+                    updateCalculations();
+                }
+            });
+        }
+
+        if (msrpInput) msrpInput.addEventListener("input", updateCalculations);
+        if (lpInput) lpInput.addEventListener("input", updateCalculations);
+        if (quantityInput) quantityInput.addEventListener("input", updateCalculations);
+        if (currencySelect) currencySelect.addEventListener("change", updateCalculations);
+
+        // 3. Category & Subcategory Selects
+        if (categorySelect) {
+            categorySelect.addEventListener("change", function () {
+                populateSubcategories(this.value);
+            });
+        }
+
+        if (subcategorySelect) {
+            subcategorySelect.addEventListener("change", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        // 4. Intake Channel Radios
+        if (channelRadios) {
+            channelRadios.forEach(radio => {
+                radio.addEventListener("change", updateReadinessChecklist);
+            });
+        }
+
+        // 5. Warranty & Certificate Toggles
+        if (warrantyToggle) warrantyToggle.addEventListener("change", syncWarrantyFields);
+        if (presetButtons) {
+            presetButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    const val = this.getAttribute("data-preset");
+                    if (warrantyInput) warrantyInput.value = val;
+                    presetButtons.forEach(b => b.classList.remove("active"));
+                    this.classList.add("active");
+                });
+            });
+        }
+
+        if (certificateToggle) certificateToggle.addEventListener("change", syncCertificateFields);
+
+        // 6. Excluded Countries
+        if (excludedSelect) {
+            for (let i = 0; i < excludedSelect.options.length; i++) {
+                if (excludedSelect.options[i].selected && excludedSelect.options[i].value && excludedSelect.options[i].value !== "None (Worldwide)") {
+                    selectedCountriesSet.add(excludedSelect.options[i].value);
+                }
+            }
+        }
+
+        if (quickEmbargoBtns) {
+            quickEmbargoBtns.forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const c = this.dataset.country;
+                    if (selectedCountriesSet.has(c)) {
+                        selectedCountriesSet.delete(c);
+                    } else {
+                        selectedCountriesSet.add(c);
+                    }
+                    syncExcludedCountries();
+                });
+            });
+        }
+
+        if (btnClearExcluded) {
+            btnClearExcluded.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                selectedCountriesSet.clear();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
+                syncExcludedCountries();
+            });
+        }
+
+        if (btnClearDropdown) {
+            btnClearDropdown.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (addCountrySelect) {
+                    addCountrySelect.selectedIndex = 0;
+                    addCountrySelect.value = "";
+                }
+            });
+        }
+
+        if (addCountrySelect) {
+            addCountrySelect.addEventListener("change", function () {
+                const country = this.value;
+                if (country) {
+                    selectedCountriesSet.add(country);
+                    syncExcludedCountries();
+                }
+                this.selectedIndex = 0;
+                this.value = "";
+                setTimeout(() => {
+                    if (addCountrySelect) {
+                        addCountrySelect.selectedIndex = 0;
+                        addCountrySelect.value = "";
+                    }
+                }, 10);
+            });
+        }
+
+        // 7. Live Preview & Readiness Input Listeners
+        if (productNameInput) {
+            productNameInput.addEventListener("input", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        if (countrySelect) {
+            countrySelect.addEventListener("change", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        if (sellerNameInput) sellerNameInput.addEventListener("input", updateReadinessChecklist);
+        if (sellerPhoneInput) sellerPhoneInput.addEventListener("input", updateReadinessChecklist);
+        if (descriptionInput) descriptionInput.addEventListener("input", updateReadinessChecklist);
+
+        // 8. Client-Side Form Validation & Submit Button State
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                const sellerName = sellerNameInput ? sellerNameInput.value.trim() : "";
+                const sellerPhone = sellerPhoneInput ? sellerPhoneInput.value.trim() : "";
+
+                if (!sellerName) {
+                    e.preventDefault();
+                    alert("Please enter the Seller Contact Name (the vendor who provided these details).");
+                    if (sellerNameInput) sellerNameInput.focus();
+                    return false;
+                }
+
+                if (!sellerPhone) {
+                    e.preventDefault();
+                    alert("Please enter the WhatsApp / Mobile Number of the seller.");
+                    if (sellerPhoneInput) sellerPhoneInput.focus();
+                    return false;
+                }
+
+                if (!productNameInput || !productNameInput.value.trim()) {
+                    e.preventDefault();
+                    alert("Please enter the Product Title / Name.");
+                    if (productNameInput) productNameInput.focus();
+                    return false;
+                }
+
+                if (!categorySelect || !categorySelect.value) {
+                    e.preventDefault();
+                    alert("Please select a Product Category.");
+                    if (categorySelect) categorySelect.focus();
+                    return false;
+                }
+
+                if (!subcategorySelect || !subcategorySelect.value) {
+                    e.preventDefault();
+                    alert("Please select a Subcategory.");
+                    if (subcategorySelect) subcategorySelect.focus();
+                    return false;
+                }
+
+                if (!countrySelect || !countrySelect.value) {
+                    e.preventDefault();
+                    alert("Please select the Manufacturing Country.");
+                    if (countrySelect) countrySelect.focus();
+                    return false;
+                }
+
+                const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+                const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+                if (msrp <= 0 || lp <= 0) {
+                    e.preventDefault();
+                    alert("Please enter a valid MSRP and Liquidating Price greater than 0.");
+                    if (msrp <= 0 && msrpInput) msrpInput.focus();
+                    else if (lpInput) lpInput.focus();
+                    return false;
+                }
+
+                if (lp >= msrp) {
+                    e.preventDefault();
+                    alert("Liquidating price must be lower than the catalog MSRP price.");
+                    if (lpInput) lpInput.focus();
+                    return false;
+                }
+
+                syncFileInput();
+                if (selectedFiles.length === 0) {
+                    e.preventDefault();
+                    if (imageValidationAlert) imageValidationAlert.classList.remove("d-none");
+                    if (dropzoneBox) dropzoneBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+
+                setTimeout(() => {
+                    if (btnTop) {
+                        btnTop.disabled = true;
+                        btnTop.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                    }
+                    if (btnBottom) {
+                        btnBottom.disabled = true;
+                        btnBottom.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Submitting...';
+                    }
+                }, 10);
+            });
+        }
+
+        // =============================================================
+        // SAFE INITIAL EXECUTION ON LOAD
+        // =============================================================
+        try {
+            syncWarrantyFields();
+            syncCertificateFields();
+            syncExcludedCountries();
+            syncFileInput();
+            updateCalculations();
+            if (categorySelect && categorySelect.value) {
+                populateSubcategories(categorySelect.value, initialSubCatVal);
+            }
+            updateLivePreview();
+            updateReadinessChecklist();
+        } catch (initErr) {
+            console.error("Initialization error in add_product:", initErr);
+        }
+    });
+</script>
 {% endblock %}

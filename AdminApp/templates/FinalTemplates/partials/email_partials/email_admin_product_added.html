@@ -1,10 +1,207 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="font-family: sans-serif; padding: 20px;">
-    <h2>New Products Submitted for Review</h2>
-    <p>Seller: <strong>{{ seller_name }}</strong> ({{ seller_email }})</p>
-    <p>Count: {{ product_count }} product(s)</p>
-    <p>Please login to the Admin Dashboard to review.</p>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Product Submission Pending Review</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 32px 28px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .content {
+            padding: 28px 28px;
+        }
+        .greeting {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+        .message {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .meta-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .meta-grid td {
+            padding: 6px 0;
+            font-size: 13px;
+            vertical-align: top;
+        }
+        .meta-label {
+            color: #64748b;
+            width: 40%;
+            font-weight: 500;
+        }
+        .meta-val {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 24px 0 10px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+        }
+        .footer {
+            padding: 20px 24px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="badge">Action Required &bull; Admin</span>
+            <h1>New Product Listing Submitted</h1>
+            <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 13px;">Surplus Market Moderation Alert</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello <strong>Admin</strong>,</p>
+            <p class="message">
+                {% if product_count and product_count > 1 %}
+                A seller has submitted <strong>{{ product_count }} products</strong> for catalog review and approval.
+                {% else %}
+                A seller has submitted a new product listing to the marketplace for review. Please inspect the product details and pricing below to approve or decline the listing.
+                {% endif %}
+            </p>
+
+            <div class="card">
+                <div class="card-title">{{ product_name|default:"Product Listing" }}</div>
+                <table class="meta-grid">
+                    {% if product_code %}
+                    <tr>
+                        <td class="meta-label">Product ID:</td>
+                        <td class="meta-val" style="font-family: monospace;">{{ product_code }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="meta-label">Seller Name:</td>
+                        <td class="meta-val">{{ seller_name|default:"Seller" }}</td>
+                    </tr>
+                    {% if seller_email %}
+                    <tr>
+                        <td class="meta-label">Seller Email:</td>
+                        <td class="meta-val">{{ seller_email }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if seller_phone %}
+                    <tr>
+                        <td class="meta-label">Seller Phone:</td>
+                        <td class="meta-val">{{ seller_phone }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if category_name %}
+                    <tr>
+                        <td class="meta-label">Category:</td>
+                        <td class="meta-val">{{ category_name }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if quantity %}
+                    <tr>
+                        <td class="meta-label">Quantity Available:</td>
+                        <td class="meta-val">{{ quantity }} units</td>
+                    </tr>
+                    {% endif %}
+                    {% if liquidating_price %}
+                    <tr>
+                        <td class="meta-label">Liquidating Price:</td>
+                        <td class="meta-val" style="color: #16a34a;">{{ currency|default:"USD" }} {{ liquidating_price }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if msrp %}
+                    <tr>
+                        <td class="meta-label">Original MSRP:</td>
+                        <td class="meta-val" style="text-decoration: line-through; color: #94a3b8;">{{ currency|default:"USD" }} {{ msrp }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <div class="btn-wrapper">
+                <a href="{{ admin_review_url|default:'https://surplusmarket.com/admin/enquiries/seller/' }}" class="cta-btn">
+                    Review Listing in Admin Portal &rarr;
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            Surplus Market Automated Administration Alert<br>
+            Sent to {{ admin_email|default:"contact@surplusmarket.com" }}
+        </div>
+    </div>
 </body>
 </html>

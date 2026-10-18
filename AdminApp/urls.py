@@ -1,4 +1,5 @@
 from django.urls import path
+from django.shortcuts import redirect
 from .views import (
     vendor_login_page,
     vendor_register,
@@ -6,10 +7,19 @@ from .views import (
     vendor_logout_view,
     get_current_vendor,
     admin_login_page,
+    admin_signup_view,
     admin_register,
     admin_login,
     admin_logout_view,
     get_current_admin,
+    manage_admins_view,
+    toggle_admin_status_api,
+    delete_admin_api,
+    admin_notifications_page,
+    admin_notifications_api,
+    admin_mark_notification_read_api,
+    admin_mark_all_notifications_read_api,
+    admin_delete_notification_api,
     super_admin_password_reset,
     super_admin_verify_otp,
     adminDashBoard,
@@ -27,17 +37,35 @@ from .views import (
     lot_enquiries_view,
     lot_enquiry_detail_view,
     add_lot_view,
+    download_lot_manifest_template_view,
     seller_enquiry_status_api,
     seller_enquiry_edit_api,
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
+    upload_lot_manifest_api,
+    parse_lot_spreadsheet_api,
     save_lot_products_api,
-    sellers_buyers_view,
+    lot_warehouse_explorer_admin_api,
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
-    whatsapp_enquiries_view,
+    page_views_analytics_view,
+    whatsapp_command_center_view,
+    whatsapp_preview_api,
+    whatsapp_send_broadcast_api,
+    whatsapp_subscriber_api,
+    whatsapp_subscriber_toggle_api,
+    whatsapp_subscriber_delete_api,
+    whatsapp_inbound_action_api,
+    whatsapp_config_update_api,
+    whatsapp_webhook_view,
+    whatsapp_simulate_inbound_api,
+    whatsapp_public_subscribe_api,
     partnership_enquiries_view,
+    rfq_requests_view,
+    rfq_request_detail_view,
+    rfq_request_status_api,
+
     main_categories_view,
     all_products_view,
     toggle_product_status_view,
@@ -53,6 +81,13 @@ from .views import (
     price_control_rollback_api,
     toggle_maintenance_mode_api,
     popup_view,
+    admin_auctions_view,
+    admin_auction_create_view,
+    admin_auction_detail_view,
+    admin_auction_action_api,
+    product_collections_view,
+    update_product_collection_api,
+    search_products_api,
 )
 
 urlpatterns = [
@@ -64,6 +99,7 @@ urlpatterns = [
 
     # Admin Login Screen (HTML Page & POST handler)
     path("login/", admin_login, name="admin_login_page"),
+    path("signup/", admin_signup_view, name="admin_signup"),
     path("register/", admin_register, name="admin_register"),
     path("logout/", admin_logout_view, name="admin_logout"),
     path("me/", get_current_admin, name="admin_me"),
@@ -97,6 +133,7 @@ urlpatterns = [
 
     # Enquiries: Seller Product Enquiries (PRO-XXXXX)
     path("enquiries/seller/", seller_enquiries_view, name="seller_enquiries_list"),
+    path("enquiries/seller/", seller_enquiries_view, name="seller_enquiries"),
     path("enquiries/seller/<int:enquiry_id>/detail/", seller_enquiry_detail_view, name="seller_enquiry_detail"),
     path("enquiries/seller/<str:status_filter>/", seller_enquiries_view, name="seller_enquiries_filtered"),
     path("api/enquiries/seller/<int:enquiry_id>/status/", seller_enquiry_status_api, name="seller_enquiry_status_api"),
@@ -104,32 +141,79 @@ urlpatterns = [
 
     # Enquiries: Lot Batch Enquiries (BLK-XXXXX)
     path("lots/add/", add_lot_view, name="add_lot"),
+    path("lots/template/download/", download_lot_manifest_template_view, name="download_lot_template"),
     path("enquiries/lots/add/", add_lot_view, name="add_lot_alias"),
     path("enquiries/lots/", lot_enquiries_view, name="lot_enquiries_list"),
     path("enquiries/lots/<int:enquiry_id>/detail/", lot_enquiry_detail_view, name="lot_enquiry_detail"),
     path("enquiries/lots/<str:status_filter>/", lot_enquiries_view, name="lot_enquiries_filtered"),
     path("api/enquiries/lots/<int:enquiry_id>/status/", lot_enquiry_status_api, name="lot_enquiry_status_api"),
     path("api/enquiries/lots/<int:enquiry_id>/edit/", lot_enquiry_edit_api, name="lot_enquiry_edit_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/upload-manifest/", upload_lot_manifest_api, name="upload_lot_manifest_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/parse/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/parse-spreadsheet/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api_alt"),
     path("api/enquiries/lots/<int:enquiry_id>/save-products/", save_lot_products_api, name="save_lot_products_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/explorer/", lot_warehouse_explorer_admin_api, name="lot_warehouse_explorer_admin_api"),
     # User Management (Registered Users List without RFQs/Products)
     path("users/", manage_users_view, name="manage_users"),
     path("manage-users/", manage_users_view, name="manage_users_alias"),
     path("users/<int:user_id>/delete/", delete_user_api, name="delete_user"),
     path("api/users/<int:user_id>/delete/", delete_user_api, name="delete_user_api"),
 
-    # Sellers & Buyers Aggregation
-    path("sellers-buyers/", sellers_buyers_view, name="sellers_buyers"),
+    # Admin Staff Management & Approvals (SuperAdmin Only)
+    path("admins/", manage_admins_view, name="manage_admins"),
+    path("staff/", manage_admins_view, name="manage_admins_staff_alias"),
+    path("api/admins/<int:admin_id>/status/", toggle_admin_status_api, name="toggle_admin_status_api"),
+    path("api/admins/<int:admin_id>/delete/", delete_admin_api, name="delete_admin_api"),
+
+    # Admin Notifications System
+    path("notifications/", admin_notifications_page, name="admin_notifications"),
+    path("api/notifications/", admin_notifications_api, name="admin_notifications_api"),
+    path("api/notifications/<int:notification_id>/read/", admin_mark_notification_read_api, name="admin_mark_notification_read_api"),
+    path("api/notifications/read-all/", admin_mark_all_notifications_read_api, name="admin_mark_all_notifications_read_api"),
+    path("api/notifications/<int:notification_id>/delete/", admin_delete_notification_api, name="admin_delete_notification_api"),
+
+    # Redirect legacy sellers-buyers to manage users
+    path("sellers-buyers/", lambda request: redirect("manage_users")),
+
+    # Analytics & Traffic Tracking
+    path("analytics/page-views/", page_views_analytics_view, name="page_views_analytics"),
+    path("analytics/traffic/", page_views_analytics_view, name="page_views_analytics_alt"),
 
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),
-    path("enquiries/whatsapp/", whatsapp_enquiries_view, name="whatsapp_enquiries"),
+    path("contact-us/", contact_enquiries_view, name="contact_enquiries_alias"),
+
+    # WhatsApp Liquidation Command Center & Two-Way Pipeline
+    path("whatsapp/", whatsapp_command_center_view, name="whatsapp_command_center"),
+    path("enquiries/whatsapp/", whatsapp_command_center_view, name="whatsapp_enquiries"),
+    path("api/whatsapp/preview/", whatsapp_preview_api, name="whatsapp_preview_api"),
+    path("api/whatsapp/broadcast/", whatsapp_send_broadcast_api, name="whatsapp_send_broadcast_api"),
+    path("api/whatsapp/subscribers/", whatsapp_subscriber_api, name="whatsapp_subscriber_api"),
+    path("api/whatsapp/subscribers/<int:sub_id>/toggle/", whatsapp_subscriber_toggle_api, name="whatsapp_subscriber_toggle_api"),
+    path("api/whatsapp/subscribers/<int:sub_id>/delete/", whatsapp_subscriber_delete_api, name="whatsapp_subscriber_delete_api"),
+    path("api/whatsapp/inbound/<int:msg_id>/action/", whatsapp_inbound_action_api, name="whatsapp_inbound_action_api"),
+    path("api/whatsapp/config/", whatsapp_config_update_api, name="whatsapp_config_update_api"),
+    path("api/whatsapp/webhook/", whatsapp_webhook_view, name="whatsapp_webhook_view"),
+    path("api/whatsapp/simulate/", whatsapp_simulate_inbound_api, name="whatsapp_simulate_inbound_api"),
+    path("api/whatsapp/subscribe/", whatsapp_public_subscribe_api, name="whatsapp_public_subscribe_api"),
     path("enquiries/partnership/", partnership_enquiries_view, name="partnership_enquiries"),
+    path("partnership/", partnership_enquiries_view, name="partnership_enquiries_alias"),
+
+    # Buyer RFQ Requests / Quotations (Frontend Cart & RFQ Basket)
+    path("rfq-requests/", rfq_requests_view, name="rfq_requests_list"),
+    path("rfq-requests/<int:rfq_id>/detail/", rfq_request_detail_view, name="rfq_request_detail"),
+    path("rfq-requests/<str:status_filter>/", rfq_requests_view, name="rfq_requests_filtered"),
+    path("api/rfq-requests/<int:rfq_id>/status/", rfq_request_status_api, name="rfq_request_status_api"),
+    path("enquiries/rfq/", rfq_requests_view, name="enquiries_rfq_alias"),
 
     # Category Management
     path("categories/main/", main_categories_view, name="main_categories"),
 
     # Product Management
     path("products/all/", all_products_view, name="all_products"),
+    path("products/collections/", product_collections_view, name="product_collections"),
+    path("api/products/collections/update/", update_product_collection_api, name="update_product_collection_api"),
+    path("api/products/search/", search_products_api, name="admin_search_products_api"),
     path("products/<int:product_id>/toggle-status/", toggle_product_status_view, name="toggle_product_status"),
     path("products/add/", add_product_view, name="add_product"),
     path("products/price-control/", price_control_view, name="price_control"),
@@ -146,4 +230,10 @@ urlpatterns = [
 
     # Maintenance Mode Toggle API
     path("api/maintenance/toggle/", toggle_maintenance_mode_api, name="toggle_maintenance_mode_api"),
+
+    # Auctions Management (Model-Agnostic Engine)
+    path("auctions/", admin_auctions_view, name="admin_auctions_view"),
+    path("auctions/create/", admin_auction_create_view, name="admin_auction_create"),
+    path("auctions/<str:auction_id>/", admin_auction_detail_view, name="admin_auction_detail"),
+    path("api/auctions/<str:auction_id>/action/", admin_auction_action_api, name="admin_auction_action_api"),
 ]

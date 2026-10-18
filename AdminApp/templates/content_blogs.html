@@ -16,8 +16,15 @@
     
     .blog-table-container {
         border-radius: 1rem;
-        overflow: hidden;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         border: 1px solid #e2e8f0;
+        width: 100%;
+        max-width: 100%;
+    }
+    .blog-table {
+        width: 100%;
+        min-width: 860px;
     }
     .blog-table thead th {
         background-color: #f8fafc;
@@ -93,7 +100,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-right: 0.4rem;
         text-transform: uppercase;
     }
 
@@ -138,8 +144,8 @@
                     <i class="bi bi-journal-richtext fs-3"></i>
                 </div>
                 <div>
-                    <h2 class="fw-bold mb-0 text-dark">Blogs Management</h2>
-                    <p class="text-muted small mb-0">Publish, edit, and organize article blogs, insights, and SEO content</p>
+                    <h1 class="header-title">Blogs Management</h1>
+                    <p class="header-subtitle">Publish, edit, and organize article blogs, insights, and SEO content</p>
                 </div>
             </div>
         </div>
@@ -212,7 +218,7 @@
         <div class="card-body p-4">
             <!-- Toolbar Row -->
             <form method="GET" action="/admin/content/blogs/" class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
-                <div class="flex-grow-1" style="max-width: 480px;">
+                <div class="flex-grow-1" style="max-width: 480px; min-width: 220px;">
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
                         <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0 ps-0" placeholder="Search by blog title, code, author...">
@@ -250,17 +256,16 @@
             </form>
 
             <!-- Table Responsive View -->
-            <div class="blog-table-container">
+            <div class="table-responsive blog-table-container">
                 <table class="table blog-table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 42%;">Blog Article & Info</th>
-                            <th scope="col">Category</th>
-                            <th scope="col">Author</th>
-                            <th scope="col">Metrics</th>
-                            <th scope="col">Status</th>
-                            <th scope="col">Date</th>
-                            <th scope="col" class="text-end">Actions</th>
+                            <th scope="col" style="min-width: 260px;">Blog Article & Info</th>
+                            <th scope="col" style="min-width: 110px;">Category</th>
+                            <th scope="col" style="min-width: 80px;">Author</th>
+                            <th scope="col" style="min-width: 100px;">Status</th>
+                            <th scope="col" style="min-width: 105px;">Date</th>
+                            <th scope="col" class="text-end" style="min-width: 90px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -278,12 +283,12 @@
                                     </div>
                                     {% endif %}
                                     <div style="min-width: 0;">
-                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 440px;" title="{{ blog.title }}">
+                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 320px;" title="{{ blog.title }}">
                                             <a href="/admin/content/blogs/{{ blog.id }}/edit/" class="text-dark text-decoration-none hover-primary">{{ blog.title }}</a>
                                         </h6>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
                                             <span class="blog-code-badge">#{{ blog.blog_code|default:blog.slug }}</span>
-                                            <span class="text-secondary small text-truncate" style="max-width: 260px; font-size: 0.82rem;" title="/blog/{{ blog.slug }}/">/blog/{{ blog.slug }}/</span>
+                                            <span class="text-secondary small text-truncate" style="max-width: 200px; font-size: 0.82rem;" title="/blog/{{ blog.slug }}/">/blog/{{ blog.slug }}/</span>
                                         </div>
                                     </div>
                                 </div>
@@ -303,14 +308,7 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center" title="{{ blog.author|default:'Admin' }}">
-                                    <span class="author-avatar">{{ blog.author|default:'A'|slice:":1" }}</span>
-                                    <span class="text-dark small fw-medium text-truncate" style="max-width: 140px;">{{ blog.author|default:"Admin"|truncatechars:18 }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex flex-column gap-1">
-                                    <span class="small text-dark fw-semibold"><i class="bi bi-clock me-1 text-muted"></i>{{ blog.read_time }} min read</span>
-                                    <span class="small text-muted"><i class="bi bi-eye me-1 text-info"></i>{{ blog.total_reads }} reads</span>
+                                    <span class="author-avatar" title="{{ blog.author|default:'Admin' }}">{{ blog.author|default:'A'|slice:":1" }}</span>
                                 </div>
                             </td>
                             <td>
@@ -340,7 +338,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="6" class="text-center py-5 text-muted">
                                 <div class="py-4">
                                     <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-4 mb-3">
                                         <i class="bi bi-journal-x fs-1 text-muted"></i>

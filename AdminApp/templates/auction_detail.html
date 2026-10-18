@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Auction #{{ auction.auction_id }} - Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+    .pulse-dot-large {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #22c55e;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        animation: pulseLarge 1.5s infinite;
+    }
+    @keyframes pulseLarge {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    .bid-ledger-table thead th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #cbd5e1;
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Breadcrumb -->
+    <nav class="custom-breadcrumb mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item"><a href="/admin/auctions/">Auctions</a></li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item active" aria-current="page"><span>{{ auction.auction_id }}</span></li>
+        </ol>
+    </nav>
+
+    <!-- Top Action / Status Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-light text-dark border fw-bold">{{ auction.auction_id }}</span>
+                {% if auction.status == "live" %}
+                <span class="badge bg-success text-white rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5 fw-semibold">
+                    <span class="pulse-dot-large"></span> LIVE BIDDING IN PROGRESS
+                </span>
+                {% else %}
+                <span class="badge bg-secondary text-white rounded-pill px-3 py-1 fw-semibold text-uppercase">{{ auction.status }}</span>
+                {% endif %}
+            </div>
+            <h1 class="header-title">{{ auction.title }}</h1>
+            <p class="header-subtitle">Category: {{ auction.category.name|default:"General Surplus" }} &bull; Inventory Type: {{ auction.get_item_type_display }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary rounded-3 px-3 fw-semibold d-inline-flex align-items-center gap-1.5" onclick="triggerAuctionAction('extend', 5)">
+                <i class="bi bi-clock-history"></i> +5 Mins
+            </button>
+            <button class="btn btn-outline-primary rounded-3 px-3 fw-semibold d-inline-flex align-items-center gap-1.5" onclick="triggerAuctionAction('extend', 15)">
+                <i class="bi bi-clock-history"></i> +15 Mins
+            </button>
+            {% if auction.status == "live" or auction.status == "scheduled" %}
+            <button class="btn btn-warning rounded-3 px-3 fw-semibold d-inline-flex align-items-center gap-1.5 text-dark" onclick="triggerAuctionAction('close')">
+                <i class="bi bi-check-circle-fill"></i> Close & Evaluate Winner
+            </button>
+            <button class="btn btn-danger rounded-3 px-3 fw-semibold d-inline-flex align-items-center gap-1.5" onclick="triggerAuctionAction('cancel')">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Live Status KPI Grid -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Current Highest Bid</span>
+                <h3 class="fw-bold mb-0 text-success" id="liveCurrentBid">${{ auction.current_bid|floatformat:2 }}</h3>
+                <span class="text-muted small mt-1 d-block">Starting: ${{ auction.starting_bid|floatformat:2 }}</span>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Minimum Next Bid</span>
+                <h3 class="fw-bold mb-0 text-primary" id="liveMinNextBid">${{ auction.minimum_next_bid|floatformat:2 }}</h3>
+                <span class="text-muted small mt-1 d-block">+${{ auction.bid_increment|floatformat:2 }} increment</span>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Bids Placed</span>
+                <h3 class="fw-bold mb-0 text-dark" id="liveTotalBids">{{ auction.total_bids }}</h3>
+                <span class="text-muted small mt-1 d-block">{{ auction.views_count }} listing views</span>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Reserve Status</span>
+                {% if auction.reserve_price > 0 %}
+                    {% if auction.is_reserve_met %}
+                    <h3 class="fw-bold mb-0 text-success"><i class="bi bi-shield-check me-1"></i> Reserve Met</h3>
+                    <span class="text-muted small mt-1 d-block">Reserve is ${{ auction.reserve_price|floatformat:2 }}</span>
+                    {% else %}
+                    <h3 class="fw-bold mb-0 text-warning"><i class="bi bi-shield-exclamation me-1"></i> Under Reserve</h3>
+                    <span class="text-muted small mt-1 d-block">Hidden reserve: ${{ auction.reserve_price|floatformat:2 }}</span>
+                    {% endif %}
+                {% else %}
+                <h3 class="fw-bold mb-0 text-muted">No Reserve</h3>
+                <span class="text-muted small mt-1 d-block">Unreserved auction</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Countdown & End Time Info -->
+    <div class="card border-0 shadow-sm rounded-4 bg-light mb-4 p-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-stopwatch fs-4 text-primary"></i>
+                <div>
+                    <span class="text-muted small d-block">Ends On (UTC)</span>
+                    <strong class="text-dark" id="liveEndTimeDisplay">{{ auction.end_time|date:"Y-m-d H:i:s" }} UTC</strong>
+                </div>
+            </div>
+            <div>
+                <span class="badge bg-white text-dark border p-2.5 rounded-3 fw-bold fs-6" id="countdownTimer">
+                    Calculating...
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content: Bid Ledger & Details -->
+    <div class="row g-4">
+        <!-- Left: Bid Ledger -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold mb-0">Live Bid Ledger</h5>
+                        <p class="text-muted small mb-0">Complete audit trail of all bids placed on this auction</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table bid-ledger-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Bidder</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Timestamp</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bid in bids %}
+                                <tr {% if bid.is_winning %}class="table-success bg-opacity-25"{% endif %}>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 700; font-size: 0.75rem;">
+                                                {{ bid.bidder.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <strong class="text-dark d-block">{{ bid.bidder.username }}</strong>
+                                                <span class="text-muted small">{{ bid.bidder.company_name|default:bid.bidder.email }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold fs-6 text-dark">${{ bid.amount|floatformat:2 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border text-uppercase small">{{ bid.get_bid_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        {% if bid.is_winning %}
+                                        <span class="badge bg-success rounded-pill px-2.5 py-1 small fw-semibold">
+                                            <i class="bi bi-trophy-fill me-1"></i> Highest Bid
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-light text-muted border rounded-pill px-2 py-0.5 small">Outbid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small">{{ bid.created_at|date:"M d, Y H:i:s" }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small font-monospace">{{ bid.ip_address|default:"-" }}</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="bi bi-clock-history fs-3 d-block mb-2 text-muted"></i>
+                                        No bids have been placed yet. Bidding is open!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Specifications & Snapshot Payload -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold mb-1">Item Snapshot Payload</h5>
+                    <p class="text-muted small mb-0">Point-in-time specifications</p>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Item Type</span>
+                            <strong class="text-dark">{{ auction.get_item_type_display }}</strong>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Reference Code</span>
+                            <span class="font-monospace text-dark">{{ auction.item_reference_id|default:"None" }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Consignor / Vendor</span>
+                            <span class="text-dark">{{ auction.vendor.company_name|default:"Platform Liquidations" }}</span>
+                        </li>
+                        {% if auction.buy_now_price %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Instant Buy Now</span>
+                            <strong class="text-primary">${{ auction.buy_now_price|floatformat:2 }}</strong>
+                        </li>
+                        {% endif %}
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span class="text-muted">Anti-Sniping Soft Close</span>
+                            <span class="text-dark">+{{ auction.auto_extend_minutes }} mins</span>
+                        </li>
+                    </ul>
+
+                    {% if auction.item_metadata %}
+                    <div class="mt-3">
+                        <label class="form-label text-muted small fw-semibold text-uppercase mb-1">Metadata Snapshot</label>
+                        <pre class="bg-light p-2.5 rounded-3 font-monospace small mb-0" style="max-height: 200px; overflow-y: auto;">{{ auction.item_metadata|pprint }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Photos Gallery Preview -->
+            {% if auction.images.all %}
+            <div class="card border-0 shadow-sm rounded-4 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold mb-0">Attached Photos</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-2">
+                        {% for img in auction.images.all %}
+                        <div class="col-4">
+                            <img src="{{ img.url }}" class="img-fluid rounded-3 border" alt="Auction photo" style="aspect-ratio: 1; object-fit: cover;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const auctionEndTime = new Date("{{ auction.end_time|date:'c' }}").getTime();
+
+function updateCountdown() {
+    const now = new Date().getTime();
+    const diff = auctionEndTime - now;
+    const timerElem = document.getElementById("countdownTimer");
+    if (!timerElem) return;
+
+    if (diff <= 0) {
+        timerElem.innerHTML = "<span class='text-danger'>AUCTION ENDED</span>";
+        return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    let display = "";
+    if (days > 0) display += `${days}d `;
+    display += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    timerElem.innerHTML = `<span class='text-primary'><i class='bi bi-stopwatch me-1'></i> ${display} remaining</span>`;
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+async function triggerAuctionAction(action, minutes = 5) {
+    if (!confirm(`Are you sure you want to execute action "${action}" on this auction?`)) return;
+
+    const formData = new FormData();
+    formData.append("action", action);
+    if (minutes) formData.append("minutes", minutes);
+    formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+    try {
+        const res = await fetch("/admin/api/auctions/{{ auction.auction_id }}/action/", {
+            method: "POST",
+            body: formData,
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message || "Failed to execute action.");
+        }
+    } catch (err) {
+        alert("Server error occurred while executing action.");
+    }
+}
+</script>
+{% endblock %}

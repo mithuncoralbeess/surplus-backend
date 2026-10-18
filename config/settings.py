@@ -12,17 +12,19 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=True)
 
 # Security Settings
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-default-key-change-in-production"
 )
 
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
+DEBUG = True
 
-allowed_hosts_raw = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
+allowed_hosts_raw = os.getenv("ALLOWED_HOSTS", "*")
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_raw.split(",") if host.strip()]
+if "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
 
 # Application definition
@@ -33,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     # Third-party apps
     "rest_framework",
     "corsheaders",
@@ -42,9 +45,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # High-priority CORS handling (must be first)
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # High-priority CORS handling
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -76,7 +79,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database & Connection Pooling
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
@@ -84,29 +86,15 @@ if DATABASE_URL:
         "default": dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "False").lower() in ("true", "1", "t"),
+            ssl_require="sslmode=require" in DATABASE_URL.lower(),
         )
     }
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 else:
-    DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.postgresql")
-    DB_NAME = os.getenv("DB_NAME", "surplus_db")
-    DB_USER = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_PORT = os.getenv("DB_PORT", "5432")
-    DB_CONN_MAX_AGE = int(os.getenv("DB_CONN_MAX_AGE", "600"))
-
     DATABASES = {
         "default": {
-            "ENGINE": DB_ENGINE,
-            "NAME": DB_NAME,
-            "USER": DB_USER,
-            "PASSWORD": DB_PASSWORD,
-            "HOST": DB_HOST,
-            "PORT": DB_PORT,
-            "CONN_MAX_AGE": DB_CONN_MAX_AGE,
-            "CONN_HEALTH_CHECKS": True,
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 
@@ -143,7 +131,7 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() in ("true", "1", "t")
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -173,21 +161,30 @@ REST_FRAMEWORK = {
 }
 
 
-# CORS & CSRF Settings
-CORS_ALLOW_ALL_ORIGINS = (
-    os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() in ("true", "1", "t")
-)
-cors_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS", "")
-if cors_origins_raw:
-    CORS_ALLOWED_ORIGINS = [
-        origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()
-    ]
+# CORS & CSRF Settings (Allow All Origins Unconditionally)
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
-csrf_origins_raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
-if csrf_origins_raw:
-    CSRF_TRUSTED_ORIGINS = [
-        origin.strip() for origin in csrf_origins_raw.split(",") if origin.strip()
-    ]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "https://surplus-frontend-staging.vercel.app",
+    "https://surplus-backend-uhg0.onrender.com",
+]
+
 
 
 # Password validation
@@ -211,7 +208,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = os.getenv("TIME_ZONE", "Asia/Kolkata")
 USE_I18N = True
 USE_TZ = True
 
@@ -238,13 +235,30 @@ if USE_R2:
     AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "604800"))
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_CUSTOM_DOMAIN")
+
+    s3_options = {
+        "location": "media",
+        "querystring_expire": AWS_QUERYSTRING_EXPIRE,
+        "signature_version": AWS_S3_SIGNATURE_VERSION,
+        "file_overwrite": AWS_S3_FILE_OVERWRITE,
+    }
+    if AWS_ACCESS_KEY_ID:
+        s3_options["access_key"] = AWS_ACCESS_KEY_ID
+    if AWS_SECRET_ACCESS_KEY:
+        s3_options["secret_key"] = AWS_SECRET_ACCESS_KEY
+    if AWS_STORAGE_BUCKET_NAME:
+        s3_options["bucket_name"] = AWS_STORAGE_BUCKET_NAME
+    if AWS_S3_ENDPOINT_URL:
+        s3_options["endpoint_url"] = AWS_S3_ENDPOINT_URL
+    if AWS_S3_CUSTOM_DOMAIN:
+        s3_options["custom_domain"] = AWS_S3_CUSTOM_DOMAIN
 
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3.S3Storage",
-            "OPTIONS": {
-                "location": "media",
-            },
+            "OPTIONS": s3_options,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
@@ -254,12 +268,28 @@ if USE_R2:
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Email Configuration (Brevo SMTP / Standard SMTP)
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+# Email Configuration (Brevo HTTP API / SMTP)
+EMAIL_BACKEND = "config.backends.BrevoHTTPEmailBackend"
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+
+# Fallback SMTP Settings
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "t")
+EMAIL_TIMEOUT = 10
+
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Surplus Market <noreply@surplusmarket.com>")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "noreply@surplusmarket.com")
+ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL", "contact@surplusmarket.com")
+
+# Typesense Intelligent Search Configuration
+TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "localhost")
+TYPESENSE_PORT = int(os.getenv("TYPESENSE_PORT", "8108"))
+TYPESENSE_PROTOCOL = os.getenv("TYPESENSE_PROTOCOL", "http")
+TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "surplus_typesense_dev_key_123")
+TYPESENSE_COLLECTION_NAME = os.getenv("TYPESENSE_COLLECTION_NAME", "surplus_listings")
+TYPESENSE_TIMEOUT = float(os.getenv("TYPESENSE_TIMEOUT", "3.0"))
+
+
