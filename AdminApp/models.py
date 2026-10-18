@@ -112,6 +112,19 @@ class AdminDetails(models.Model):
     def formatted_id(self):
         return self.admin_id
 
+    @property
+    def first_name(self) -> str:
+        if self.full_name:
+            return self.full_name.strip().split()[0]
+        return self.username
+
+    @property
+    def last_name(self) -> str:
+        if self.full_name:
+            parts = self.full_name.strip().split(None, 1)
+            return parts[1] if len(parts) > 1 else ""
+        return ""
+
 
 class VendorDetails(models.Model):
     USER_TYPE_CHOICES = (
@@ -171,6 +184,19 @@ class VendorDetails(models.Model):
     @property
     def formatted_id(self):
         return self.vendor_id
+
+    @property
+    def first_name(self) -> str:
+        if self.full_name:
+            return self.full_name.strip().split()[0]
+        return self.username
+
+    @property
+    def last_name(self) -> str:
+        if self.full_name:
+            parts = self.full_name.strip().split(None, 1)
+            return parts[1] if len(parts) > 1 else ""
+        return ""
 
     def get_profile_completion_details(self) -> dict:
         """

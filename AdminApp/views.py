@@ -4685,14 +4685,11 @@ def add_product_view(request):
 
             name_parts = seller_name.strip().split(" ", 1)
             f_name = name_parts[0] if name_parts else uname
-            l_name = name_parts[1] if len(name_parts) > 1 else ""
 
             vendor = VendorDetails.objects.create(
                 username=uname,
                 email=clean_email,
                 full_name=seller_name.strip() or f_name,
-                first_name=f_name,
-                last_name=l_name,
                 mobile_number=clean_mobile,
                 company_name=seller_company.strip(),
                 business_location=seller_location.strip() or manufacturing_country,

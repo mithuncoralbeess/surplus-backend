@@ -148,6 +148,8 @@ class VendorRegisterSerializer(serializers.Serializer):
 class VendorDetailsSerializer(serializers.ModelSerializer):
     vendor_id = serializers.CharField(read_only=True)
     formatted_id = serializers.CharField(read_only=True)
+    first_name = serializers.CharField(read_only=True)
+    last_name = serializers.CharField(read_only=True)
     profile_completion_percentage = serializers.IntegerField(read_only=True)
     is_profile_complete = serializers.BooleanField(read_only=True)
     missing_fields_labels = serializers.SerializerMethodField()
@@ -165,6 +167,8 @@ class VendorDetailsSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "full_name",
+            "first_name",
+            "last_name",
             "mobile_number",
             "country",
             "company_name",
@@ -184,7 +188,7 @@ class VendorDetailsSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = [
-            "id", "vendor_id", "formatted_id", "session_version",
+            "id", "vendor_id", "formatted_id", "first_name", "last_name", "session_version",
             "profile_completion_percentage", "is_profile_complete",
             "missing_fields_labels", "created_at", "updated_at"
         ]
