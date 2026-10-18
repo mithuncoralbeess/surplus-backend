@@ -37,6 +37,7 @@ from .models import (
     LotProduct,
     Product,
     ProductImage,
+    RfqEnquiry,
     SystemSettings,
 )
 from .services import EmailService
@@ -592,9 +593,25 @@ def adminDashBoard(request):
     if not active_products_stock:
         active_products_stock = Product.objects.filter(is_active=True).count()
 
-    companies_count = VendorDetails.objects.filter(account_entity_type="COMPANY").count()
-    if companies_count == 0:
-        companies_count = VendorDetails.objects.exclude(company_name="").count()
+    companies_count = (
+        VendorDetails.objects
+        .exclude(company_name="")
+        .exclude(company_name__isnull=True)
+        .exclude(company_name__iexact="N/A")
+        .exclude(company_name__iexact="None")
+        .values("company_name")
+        .distinct()
+        .count()
+    )
+
+    buyers_count = VendorDetails.objects.filter(user_type__in=["BUYER", "BOTH"]).count()
+    sellers_count = VendorDetails.objects.filter(user_type__in=["SELLER", "BOTH"]).count()
+    lot_listings_count = Lot.objects.count()
+    rfq_requests_count = RfqEnquiry.objects.count()
+    products_count = Product.objects.count()
+    categories_count = SubCategory.objects.count()
+    total_page_views = PageViewLog.objects.count()
+    registered_users = VendorDetails.objects.count()
 
     pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
 
@@ -611,14 +628,19 @@ def adminDashBoard(request):
             "total_sales_due": f"{total_sales_due:.2f}",
             "total_sales_amount": f"{total_sales_amount:.2f}",
             "active_products_qty": active_products_stock,
-            "custom_landing_users": ContentPage.objects.filter(category="Custom").count(),
+            "buyers": buyers_count,
+            "sellers": sellers_count,
             "companies": companies_count,
-            "purchase_invoices": Lot.objects.count(),
-            "sales_invoices": Product.objects.count(),
-            "products": Product.objects.count(),
-            "categories": SubCategory.objects.count(),
-            "total_page_views": PageViewLog.objects.count(),
-            "registered_users": VendorDetails.objects.count(),
+            "lot_listings": lot_listings_count,
+            "rfq_requests": rfq_requests_count,
+            "products": products_count,
+            "categories": categories_count,
+            "total_page_views": total_page_views,
+            "registered_users": registered_users,
+            # Backward compatibility aliases
+            "custom_landing_users": buyers_count,
+            "purchase_invoices": lot_listings_count,
+            "sales_invoices": rfq_requests_count,
         },
     }
 

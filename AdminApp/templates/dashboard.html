@@ -61,56 +61,64 @@
 
 <!-- Row 2: Metric Banners (Orange, Cyan, Navy, Green) -->
 <section class="row g-3 mb-3">
-    <!-- Custom Landing Users -->
+    <!-- Buyers -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-orange">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.custom_landing_users|default:"0" }}</div>
-                <div class="banner-title">Custom Landing Users</div>
+        <a href="/admin/users/?type=BUYER" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-orange">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.buyers|default:"0" }}</div>
+                    <div class="banner-title">Buyers</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-person"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-person"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Companies -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-cyan">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.companies|default:"0" }}</div>
-                <div class="banner-title">Companies</div>
+        <a href="/admin/users/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-cyan">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.companies|default:"0" }}</div>
+                    <div class="banner-title">Companies</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-briefcase"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-briefcase"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
-    <!-- Purchase Invoice -->
+    <!-- Lot Listings -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-navy">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.purchase_invoices|default:"0" }}</div>
-                <div class="banner-title">Purchase Invoice</div>
+        <a href="/admin/enquiries/lots/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-navy">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.lot_listings|default:"0" }}</div>
+                    <div class="banner-title">Lot Listings</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-boxes"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-file-earmark-text"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
-    <!-- Sales Invoice -->
+    <!-- RFQ Requests -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-green">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.sales_invoices|default:"0" }}</div>
-                <div class="banner-title">Sales Invoice</div>
+        <a href="/admin/rfq-requests/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-green">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.rfq_requests|default:"0" }}</div>
+                    <div class="banner-title">RFQ Requests</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-file-earmark"></i>
-            </div>
-        </div>
+        </a>
     </div>
 </section>
 
@@ -118,28 +126,32 @@
 <section class="row g-3 mb-4">
     <!-- Products -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-navy">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.products|default:"0" }}</div>
-                <div class="banner-title">Products</div>
+        <a href="/admin/products/all/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-navy">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.products|default:"0" }}</div>
+                    <div class="banner-title">Products</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-box-seam"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-box-seam"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Categories -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-green">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.categories|default:"0" }}</div>
-                <div class="banner-title">Categories</div>
+        <a href="/admin/categories/main/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-green">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.categories|default:"0" }}</div>
+                    <div class="banner-title">Categories</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-folder2"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-folder2"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Page Views Analytics -->
@@ -159,15 +171,17 @@
 
     <!-- Registered Users -->
     <div class="col-xl-3 col-lg-6 col-md-6">
-        <div class="dashboard-metric-banner banner-cyan">
-            <div class="banner-text-content">
-                <div class="banner-number">{{ stats.registered_users|default:"0" }}</div>
-                <div class="banner-title">Registered Users</div>
+        <a href="/admin/users/" class="text-decoration-none">
+            <div class="dashboard-metric-banner banner-cyan">
+                <div class="banner-text-content">
+                    <div class="banner-number">{{ stats.registered_users|default:"0" }}</div>
+                    <div class="banner-title">Registered Users</div>
+                </div>
+                <div class="banner-icon-right">
+                    <i class="bi bi-people"></i>
+                </div>
             </div>
-            <div class="banner-icon-right">
-                <i class="bi bi-people"></i>
-            </div>
-        </div>
+        </a>
     </div>
 </section>
 {% endblock %}
