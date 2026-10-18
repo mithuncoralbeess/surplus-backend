@@ -16,7 +16,7 @@ import fnmatch
 FTP_HOST = os.getenv("FTP_HOST", "69.48.190.126")
 FTP_USER = os.getenv("FTP_USER", "mazin@dev.surplusmarket.com")
 FTP_PASS = os.getenv("FTP_PASS", os.getenv("FTP_PASSWORD", "MithuFtp@123"))
-FTP_BASE = os.getenv("FTP_BASE", "/public_html/surplus-backend").rstrip("/")
+FTP_BASE = os.getenv("FTP_BASE", "/public_html/surplusmui").rstrip("/")
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Patterns and directories to exclude from upload
@@ -68,12 +68,14 @@ def ensure_remote_dir(ftp: ftplib.FTP, remote_path: str):
         current += "/" + part
         try:
             ftp.cwd(current)
-        except ftplib.error_perm:
+        except Exception:
             try:
                 ftp.mkd(current)
-                print(f"[DIR CREATED] {current}")
-            except Exception as e:
-                # Directory might have been created concurrently or already exists
+            except Exception:
+                pass
+            try:
+                ftp.cwd(current)
+            except Exception:
                 pass
 
 
@@ -101,7 +103,11 @@ def upload_directory(ftp: ftplib.FTP, local_root: str, remote_root: str):
             curr_remote_dir = remote_root + "/" + rel_path.replace("\\", "/")
 
         ensure_remote_dir(ftp, curr_remote_dir)
-        ftp.cwd(curr_remote_dir)
+        try:
+            ftp.cwd(curr_remote_dir)
+        except Exception as e:
+            print(f"[!] Could not enter remote dir {curr_remote_dir}: {e}", file=sys.stderr)
+            continue
 
         for f in files:
             if should_exclude_file(f):
@@ -132,6 +138,25 @@ def restart_passenger(ftp: ftplib.FTP):
         print(f"[!] Warning: Could not touch /tmp/restart.txt: {e}")
 
 
+def ensure_passenger_htaccess(ftp: ftplib.FTP, app_dir: str):
+    """
+    Ensures .htaccess contains CloudLinux Passenger directives.
+    """
+    try:
+        ftp.cwd(app_dir)
+        lines = [
+            "# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN",
+            f"PassengerAppRoot /home/mazin{app_dir}",
+            "PassengerBaseURI /",
+            "PassengerPython /home/mazin/virtualenv/public_html/surplusmui/3.11/bin/python",
+            "# DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END\n"
+        ]
+        ftp.storbinary("STOR .htaccess", io.BytesIO("\n".join(lines).encode("utf-8")))
+        print("[+] Ensured CloudLinux Passenger .htaccess in app root.")
+    except Exception as e:
+        print(f"[!] Warning setting up .htaccess: {e}")
+
+
 def main():
     print("=" * 60)
     print("  Surplus Backend Production FTP Deployment")
@@ -153,6 +178,11 @@ def main():
     try:
         uploaded, skipped = upload_directory(ftp, PROJECT_ROOT, FTP_BASE)
         print("=" * 60)
+        print(f"[+] Upload complete! {uploaded} files uploaded, {skipped} files skipped.")
+
+        # Ensure .htaccess has Passenger configuration
+        ensure_passenger_htaccess(ftp, FTP_BASE)
+
         # Upload production .env if provided in environment/secrets
         prod_env = os.getenv("PRODUCTION_ENV", "").strip()
         if prod_env:
