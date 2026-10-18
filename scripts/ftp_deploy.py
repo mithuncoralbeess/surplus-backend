@@ -153,7 +153,12 @@ def main():
     try:
         uploaded, skipped = upload_directory(ftp, PROJECT_ROOT, FTP_BASE)
         print("=" * 60)
-        print(f"[+] Upload complete! {uploaded} files uploaded, {skipped} files skipped.")
+        # Upload production .env if provided in environment/secrets
+        prod_env = os.getenv("PRODUCTION_ENV", "").strip()
+        if prod_env:
+            ftp.cwd(FTP_BASE)
+            ftp.storbinary("STOR .env", io.BytesIO(prod_env.encode("utf-8")))
+            print("[+] Successfully uploaded production .env to server from environment secrets.")
 
         # Reload Passenger WSGI
         restart_passenger(ftp)
