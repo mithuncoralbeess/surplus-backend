@@ -1,0 +1,51 @@
+name: Production FTP Deployment (Main Branch)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-and-deploy:
+    name: Validate Code & Deploy to FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Project Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django Code Validation Check
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'production-ci-check-secret-key-98765' }}
+        run: |
+          python manage.py check
+
+      - name: Deploy Code to Production FTP Server
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST || '69.48.190.126' }}
+          FTP_USER: ${{ secrets.FTP_USER || 'mazin@dev.surplusmarket.com' }}
+          FTP_PASS: ${{ secrets.FTP_PASS || secrets.FTP_PASSWORD || 'MithuFtp@123' }}
+          FTP_BASE: ${{ secrets.FTP_BASE || '/public_html/surplusmui' }}
+        run: |
+          python scripts/ftp_deploy.py
+
+      - name: Deployment Summary Notification
+        run: |
+          echo "=========================================================="
+          echo " Production Deployment to FTP Server Completed!"
+          echo " Target Host: 69.48.190.126"
+          echo " Destination: /public_html/surplusmui"
+          echo " Passenger WSGI Reload Triggered via /tmp/restart.txt"
+          echo "=========================================================="
