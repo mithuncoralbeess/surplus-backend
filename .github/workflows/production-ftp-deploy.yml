@@ -37,7 +37,7 @@ jobs:
           FTP_HOST: ${{ secrets.FTP_HOST || '69.48.190.126' }}
           FTP_USER: ${{ secrets.FTP_USER || 'mazin@dev.surplusmarket.com' }}
           FTP_PASS: ${{ secrets.FTP_PASS || secrets.FTP_PASSWORD || 'MithuFtp@123' }}
-          FTP_BASE: ${{ secrets.FTP_BASE || '/public_html/surplusmui' }}
+          FTP_BASE: ${{ secrets.FTP_BASE || '/public_html/surplus-backend' }}
         run: |
           python scripts/ftp_deploy.py
 
@@ -46,6 +46,6 @@ jobs:
           echo "=========================================================="
           echo " Production Deployment to FTP Server Completed!"
           echo " Target Host: 69.48.190.126"
-          echo " Destination: /public_html/surplusmui"
+          echo " Destination: /public_html/surplus-backend"
           echo " Passenger WSGI Reload Triggered via /tmp/restart.txt"
           echo "=========================================================="

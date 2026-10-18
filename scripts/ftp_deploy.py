@@ -16,7 +16,7 @@ import fnmatch
 FTP_HOST = os.getenv("FTP_HOST", "69.48.190.126")
 FTP_USER = os.getenv("FTP_USER", "mazin@dev.surplusmarket.com")
 FTP_PASS = os.getenv("FTP_PASS", os.getenv("FTP_PASSWORD", "MithuFtp@123"))
-FTP_BASE = os.getenv("FTP_BASE", "/public_html/surplusmui").rstrip("/")
+FTP_BASE = os.getenv("FTP_BASE", "/public_html/surplus-backend").rstrip("/")
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Patterns and directories to exclude from upload
