@@ -466,6 +466,10 @@
   border-left: 3px solid #f59e0b;
 }
 
+.detail-page-wrapper .inline-card.border-left-info {
+  border-left: 3px solid #06b6d4;
+}
+
 .detail-page-wrapper .metric-card {
   background: #ffffff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;

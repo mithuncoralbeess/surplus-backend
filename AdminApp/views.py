@@ -2823,8 +2823,36 @@ def lot_enquiry_detail_view(request, enquiry_id):
     msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price"))
     liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price"))
 
+    def _fmt_currency(v):
+        if v is None or v == "" or v == "-":
+            return None
+        try:
+            f = float(str(v).replace(",", "").strip())
+            return f"{f:,.2f}"
+        except (ValueError, TypeError):
+            return str(v)
+
+    formatted_msrp = _fmt_currency(msrp_val)
+    formatted_liq = _fmt_currency(liq_val)
+
     # Offer directly from frontend lot submission / database record (no dynamic calculation)
     offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
+
+    # Implied target price calculation if open to offer and offer has % discount
+    implied_ask_str = None
+    try:
+        if msrp_val:
+            msrp_float = float(str(msrp_val).replace(",", "").strip())
+            if offer_val and "%" in str(offer_val):
+                import re
+                pct_match = re.search(r"(\d+(\.\d+)?)%", str(offer_val))
+                if pct_match:
+                    discount_pct_val = float(pct_match.group(1))
+                    if 0 < discount_pct_val < 100 and msrp_float > 0:
+                        implied_ask_float = msrp_float * (1.0 - (discount_pct_val / 100.0))
+                        implied_ask_str = f"{implied_ask_float:,.2f}"
+    except Exception:
+        pass
 
     # Open to offers detection: only true if explicitly flagged to accept counter/open offers
     is_open_to_offer = False
@@ -2851,9 +2879,12 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "key_brands": _clean_val(enquiry.key_brands_included or combined_raw.get("key_brands_included") or combined_raw.get("key_brands") or combined_raw.get("brands") or combined_raw.get("brand")),
         "notes": _clean_val(enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
         "msrp": _clean_val(msrp_val),
+        "formatted_msrp": formatted_msrp,
         "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
         "liquidation_price": _clean_val(liq_val),
+        "formatted_liquidation_price": formatted_liq,
         "offer": offer_val,
+        "implied_ask": implied_ask_str,
         "open_to_offer": is_open_to_offer,
         "media": media_url,
         "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
