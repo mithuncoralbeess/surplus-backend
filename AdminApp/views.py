@@ -587,7 +587,7 @@ def adminDashBoard(request):
         staff_list = cache.get(staff_list_key)
         if staff_list is None:
             staff_list = list(AdminDetails.objects.all().order_by("-created_at"))
-            cache.set(staff_list_key, staff_list, timeout=30)
+            cache.set(staff_list_key, staff_list, timeout=300)
 
     # Cached KPI metrics & stats (30s)
     stats_cache_key = "admin_dashboard_stats_v3"
@@ -678,7 +678,7 @@ def adminDashBoard(request):
             "purchase_invoices": lot_listings_count,
             "sales_invoices": rfq_requests_count,
         }
-        cache.set(stats_cache_key, stats, timeout=30)
+        cache.set(stats_cache_key, stats, timeout=300)
     else:
         pending_admins = stats.get("pending_admins", 0)
 
@@ -1119,9 +1119,16 @@ def content_pages_api(request, page_id=None):
 
 
 def _seed_sample_blogs_if_empty():
+    from django.core.cache import cache
+    if cache.get("blogs_already_seeded_v2"):
+        return
+
     from .models import BlogPost
+    if BlogPost.objects.exists():
+        cache.set("blogs_already_seeded_v2", True, timeout=86400 * 7)
+        return
+
     import json
-    from pathlib import Path
     from django.conf import settings
 
     sample_dir = settings.BASE_DIR / "sample-blog"
@@ -1133,7 +1140,7 @@ def _seed_sample_blogs_if_empty():
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 blogs_data = json.load(f)
-                if isinstance(blogs_data, list) and len(blogs_data) > BlogPost.objects.count():
+                if isinstance(blogs_data, list):
                     objs = []
                     for item in blogs_data:
                         title = item.get("title", "Untitled Blog")
@@ -1177,6 +1184,7 @@ def _seed_sample_blogs_if_empty():
                             is_active=is_active
                         ))
                     BlogPost.objects.bulk_create(objs, ignore_conflicts=True)
+                    cache.set("blogs_already_seeded_v2", True, timeout=86400 * 7)
         except Exception as e:
             print(f"Error seeding blogs: {e}")
 
@@ -1184,6 +1192,7 @@ def _seed_sample_blogs_if_empty():
 def content_blogs_view(request):
     """
     Renders the Blogs management list view in Content Manager section.
+    Consolidated query execution with caching for high performance.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -1192,7 +1201,7 @@ def content_blogs_view(request):
     _seed_sample_blogs_if_empty()
 
     from .models import BlogPost
-    from django.db.models import Q, Sum
+    from django.db.models import Q, Count, Sum
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
     search_query = request.GET.get("q", "").strip()
@@ -1202,10 +1211,23 @@ def content_blogs_view(request):
 
     blogs_qs = BlogPost.objects.all().order_by("-created_at")
 
-    total_count = blogs_qs.count()
-    published_count = blogs_qs.filter(status="published").count()
-    draft_count = blogs_qs.filter(status="draft").count()
-    total_reads_count = blogs_qs.aggregate(s=Sum("total_reads"))["s"] or 0
+    # Consolidated stats query cached for 30s
+    stats_cache_key = "admin_content_blogs_stats_v2"
+    stats_data = cache.get(stats_cache_key)
+    if stats_data is None:
+        aggs = BlogPost.objects.aggregate(
+            total=Count("id"),
+            published=Count("id", filter=Q(status="published")),
+            draft=Count("id", filter=Q(status="draft")),
+            total_reads=Sum("total_reads"),
+        )
+        stats_data = {
+            "total_blogs": aggs["total"] or 0,
+            "published_blogs": aggs["published"] or 0,
+            "draft_blogs": aggs["draft"] or 0,
+            "total_reads": aggs["total_reads"] or 0,
+        }
+        cache.set(stats_cache_key, stats_data, timeout=30)
 
     if status_filter in ("published", "draft"):
         blogs_qs = blogs_qs.filter(status=status_filter)
@@ -1218,7 +1240,12 @@ def content_blogs_view(request):
             Q(title__icontains=search_query) | Q(slug__icontains=search_query) | Q(blog_code__icontains=search_query) | Q(author__icontains=search_query)
         )
 
-    categories_list = BlogPost.objects.exclude(category_name="").values_list("category_name", flat=True).distinct()
+    # Categories list cached for 60s
+    categories_cache_key = "admin_content_blog_categories_v2"
+    categories_list = cache.get(categories_cache_key)
+    if categories_list is None:
+        categories_list = list(BlogPost.objects.exclude(category_name="").values_list("category_name", flat=True).distinct())
+        cache.set(categories_cache_key, categories_list, timeout=60)
 
     paginator = Paginator(blogs_qs, 10)
     try:
@@ -1237,12 +1264,7 @@ def content_blogs_view(request):
         "status_filter": status_filter,
         "category_filter": category_filter,
         "categories_list": categories_list,
-        "stats": {
-            "total_blogs": total_count,
-            "published_blogs": published_count,
-            "draft_blogs": draft_count,
-            "total_reads": total_reads_count,
-        },
+        "stats": stats_data,
     }
     return render(request, "content_blogs.html", context)
 
@@ -1456,11 +1478,17 @@ def seller_enquiries_view(request, status_filter=None):
     elif date_filter == "30days":
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
     
-    # Status Counts
-    total_count = Product.objects.count()
-    pending_count = Product.objects.filter(enquiry_status__iexact="pending").count()
-    approved_count = Product.objects.filter(enquiry_status__iexact="approved").count()
-    declined_count = Product.objects.filter(enquiry_status__iexact="declined").count()
+    # Consolidated Status Counts (1 query instead of 4)
+    counts_data = Product.objects.aggregate(
+        total=Count("id"),
+        pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
+        approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
+        declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+    )
+    total_count = counts_data["total"] or 0
+    pending_count = counts_data["pending"] or 0
+    approved_count = counts_data["approved"] or 0
+    declined_count = counts_data["declined"] or 0
 
     if current_status in ("pending", "approved", "declined"):
         qs = qs.filter(enquiry_status__iexact=current_status)
@@ -1521,11 +1549,17 @@ def lot_enquiries_view(request, status_filter=None):
     elif date_filter == "30days":
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
     
-    # Status Counts
-    total_count = Lot.objects.count()
-    pending_count = Lot.objects.filter(enquiry_status="pending").count()
-    approved_count = Lot.objects.filter(enquiry_status="approved").count()
-    declined_count = Lot.objects.filter(enquiry_status="declined").count()
+    # Consolidated Status Counts (1 query instead of 4)
+    lot_counts_data = Lot.objects.aggregate(
+        total=Count("id"),
+        pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
+        approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
+        declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+    )
+    total_count = lot_counts_data["total"] or 0
+    pending_count = lot_counts_data["pending"] or 0
+    approved_count = lot_counts_data["approved"] or 0
+    declined_count = lot_counts_data["declined"] or 0
 
     if current_status in ("pending", "approved", "declined"):
         qs = qs.filter(enquiry_status=current_status)

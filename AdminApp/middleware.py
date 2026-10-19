@@ -41,7 +41,7 @@ class MaintenanceModeMiddleware:
                     "is_active": sys_settings.is_maintenance_mode,
                     "message": sys_settings.maintenance_message or "Website is currently under maintenance. Please check back later."
                 }
-                cache.set("maint_middleware_status", maint_info, timeout=30)
+                cache.set("maint_middleware_status", maint_info, timeout=600)
 
             if maint_info.get("is_active"):
                 maint_msg = maint_info.get("message")
