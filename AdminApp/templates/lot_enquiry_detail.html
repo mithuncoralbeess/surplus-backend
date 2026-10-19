@@ -668,6 +668,15 @@
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Country</span>
+                            <span class="text-dark fw-medium d-inline-flex align-items-center gap-1.5">
+                                <i class="bi bi-geo-alt-fill text-danger"></i>
+                                {{ batch_data.inventory_country|default:"N/A" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">3rd Party Certificate</span>
                             {% if batch_data.third_party_cert %}
                                 <span class="badge bg-success px-2 py-1 rounded-pill"><i class="bi bi-check-circle me-1"></i> Available</span>
@@ -2584,9 +2593,13 @@
                                 <label class="form-label small fw-semibold text-dark">Total Weight</label>
                                 <input type="text" class="form-control" name="total_weight" value="{{ batch_data.total_weight|default:'' }}">
                             </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold text-dark">Inventory Location</label>
-                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-semibold text-dark">Inventory Location / City</label>
+                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}" placeholder="e.g. Dammam, Saudi Arabia">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-dark">Inventory Country</label>
+                                <input type="text" class="form-control" name="inventory_country" value="{{ batch_data.inventory_country|default:enquiry.inventory_country|default:'' }}" placeholder="e.g. Saudi Arabia">
                             </div>
                         </div>
                     </div>

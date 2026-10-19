@@ -2869,6 +2869,21 @@ def lot_enquiry_detail_view(request, enquiry_id):
     if media_url:
         media_url = resolve_media_url(media_url)
 
+    country_clean = (
+        _clean_val(enquiry.inventory_country)
+        or _clean_val(combined_raw.get("inventory_country"))
+        or _clean_val(combined_raw.get("country"))
+        or _clean_val(combined_raw.get("warehouse_country"))
+        or _clean_val(combined_raw.get("country_of_origin"))
+        or _clean_val(combined_raw.get("location_country"))
+    )
+    if not country_clean and enquiry.inventory_location:
+        loc_str = str(enquiry.inventory_location).strip()
+        if "," in loc_str:
+            parts = [p.strip() for p in loc_str.split(",") if p.strip()]
+            if len(parts) >= 2:
+                country_clean = parts[-1]
+
     batch_data = {
         "category_breakdown": _clean_val(cat_val),
         "shipping_size": _clean_val(enquiry.shipping_size or enquiry.lot_size or combined_raw.get("shipping_size") or combined_raw.get("lot_size") or combined_raw.get("load_type") or combined_raw.get("pallet_count")),
@@ -2893,7 +2908,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "pallet_count": _clean_val(enquiry.pallet_count or combined_raw.get("pallet_count")),
         "source_type": _clean_val(enquiry.source_type or combined_raw.get("source_type")),
         "primary_unit_type": _clean_val(enquiry.primary_unit_type),
-        "inventory_location": _clean_val(enquiry.inventory_location),
+        "inventory_location": _clean_val(enquiry.inventory_location) or _clean_val(combined_raw.get("inventory_location")),
+        "inventory_country": country_clean,
         "sale_method": _clean_val(enquiry.sale_method),
         "third_party_cert": bool(enquiry.third_party_certificate_available),
         "third_party_docs": enquiry.third_party_documents if isinstance(enquiry.third_party_documents, list) else [],
