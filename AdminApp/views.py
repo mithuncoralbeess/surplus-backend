@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from django.contrib.auth import authenticate
 from django.utils import timezone
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -578,53 +578,86 @@ def adminDashBoard(request):
         return redirect("admin_login_page")
 
     is_super = admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com"
-    staff_list = AdminDetails.objects.all().order_by("-created_at") if is_super else []
 
-    # Real DB computations
-    pending_prod_sales = Product.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("current_price"))["s"] or 0
-    pending_lot_sales = Lot.objects.filter(enquiry_status__iexact="pending").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
-    total_sales_due = float(pending_prod_sales + pending_lot_sales)
+    # Cached staff list for superadmin (30s)
+    staff_list = []
+    if is_super:
+        staff_list_key = "admin_dash_staff_list_v1"
+        staff_list = cache.get(staff_list_key)
+        if staff_list is None:
+            staff_list = list(AdminDetails.objects.all().order_by("-created_at"))
+            cache.set(staff_list_key, staff_list, timeout=30)
 
-    appr_prod_sales = Product.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("current_price"))["s"] or 0
-    appr_lot_sales = Lot.objects.filter(enquiry_status__iexact="approved").aggregate(s=Sum("ask_price_surplus_payout"))["s"] or 0
-    total_sales_amount = float(appr_prod_sales + appr_lot_sales)
+    # Cached KPI metrics & stats (30s)
+    stats_cache_key = "admin_dashboard_stats_v3"
+    stats = cache.get(stats_cache_key)
 
-    active_products_stock = Product.objects.filter(is_active=True).aggregate(s=Sum("quantity"))["s"] or 0
-    if not active_products_stock:
-        active_products_stock = Product.objects.filter(is_active=True).count()
+    if stats is None:
+        # Consolidated Query 1: Products (totals, pending/approved values, active stock)
+        prod_aggs = Product.objects.aggregate(
+            total=Count("id"),
+            pending_sales=Sum("current_price", filter=Q(enquiry_status__iexact="pending")),
+            approved_sales=Sum("current_price", filter=Q(enquiry_status__iexact="approved")),
+            active_stock=Sum("quantity", filter=Q(is_active=True)),
+            active_count=Count("id", filter=Q(is_active=True)),
+        )
+        pending_prod_sales = prod_aggs["pending_sales"] or 0
+        appr_prod_sales = prod_aggs["approved_sales"] or 0
+        active_products_stock = prod_aggs["active_stock"] or prod_aggs["active_count"] or 0
+        products_count = prod_aggs["total"] or 0
 
-    companies_count = (
-        VendorDetails.objects
-        .exclude(company_name="")
-        .exclude(company_name__isnull=True)
-        .exclude(company_name__iexact="N/A")
-        .exclude(company_name__iexact="None")
-        .values("company_name")
-        .distinct()
-        .count()
-    )
+        # Consolidated Query 2: Lots (totals, pending/approved payout values)
+        lot_aggs = Lot.objects.aggregate(
+            total=Count("id"),
+            pending_sales=Sum("ask_price_surplus_payout", filter=Q(enquiry_status__iexact="pending")),
+            approved_sales=Sum("ask_price_surplus_payout", filter=Q(enquiry_status__iexact="approved")),
+        )
+        pending_lot_sales = lot_aggs["pending_sales"] or 0
+        appr_lot_sales = lot_aggs["approved_sales"] or 0
+        lot_listings_count = lot_aggs["total"] or 0
 
-    buyers_count = VendorDetails.objects.filter(user_type__in=["BUYER", "BOTH"]).count()
-    sellers_count = VendorDetails.objects.filter(user_type__in=["SELLER", "BOTH"]).count()
-    lot_listings_count = Lot.objects.count()
-    rfq_requests_count = RfqEnquiry.objects.count()
-    products_count = Product.objects.count()
-    categories_count = MainCategory.objects.count()
-    subcategories_count = SubCategory.objects.count()
-    total_page_views = PageViewLog.objects.count()
-    registered_users = VendorDetails.objects.count()
+        total_sales_due = float(pending_prod_sales + pending_lot_sales)
+        total_sales_amount = float(appr_prod_sales + appr_lot_sales)
 
-    pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
+        # Consolidated Query 3: Vendors (buyers, sellers, total registered)
+        vendor_aggs = VendorDetails.objects.aggregate(
+            total=Count("id"),
+            buyers=Count("id", filter=Q(user_type__in=["BUYER", "BOTH"])),
+            sellers=Count("id", filter=Q(user_type__in=["SELLER", "BOTH"])),
+        )
+        buyers_count = vendor_aggs["buyers"] or 0
+        sellers_count = vendor_aggs["sellers"] or 0
+        registered_users = vendor_aggs["total"] or 0
 
-    context = {
-        "admin": admin_user,
-        "is_super_admin": is_super,
-        "staff_list": staff_list,
-        "pending_admins_count": pending_admins,
-        "stats": {
+        companies_count = (
+            VendorDetails.objects
+            .exclude(company_name="")
+            .exclude(company_name__isnull=True)
+            .exclude(company_name__iexact="N/A")
+            .exclude(company_name__iexact="None")
+            .values("company_name")
+            .distinct()
+            .count()
+        )
+
+        # Consolidated Query 4: Admin Accounts
+        admin_aggs = AdminDetails.objects.aggregate(
+            total=Count("id"),
+            active=Count("id", filter=Q(status=True)),
+            pending=Count("id", filter=Q(status=False)),
+        )
+
+        rfq_requests_count = RfqEnquiry.objects.count()
+        categories_count = MainCategory.objects.count()
+        subcategories_count = SubCategory.objects.count()
+        total_page_views = PageViewLog.objects.count()
+
+        pending_admins = admin_aggs["pending"] or 0
+
+        stats = {
             "currency": "USD",
-            "total_admins": AdminDetails.objects.count(),
-            "active_admins": AdminDetails.objects.filter(status=True).count(),
+            "total_admins": admin_aggs["total"] or 0,
+            "active_admins": admin_aggs["active"] or 0,
             "pending_admins": pending_admins,
             "total_sales_due": f"{total_sales_due:.2f}",
             "total_sales_amount": f"{total_sales_amount:.2f}",
@@ -643,7 +676,19 @@ def adminDashBoard(request):
             "custom_landing_users": buyers_count,
             "purchase_invoices": lot_listings_count,
             "sales_invoices": rfq_requests_count,
-        },
+        }
+        cache.set(stats_cache_key, stats, timeout=30)
+    else:
+        pending_admins = stats.get("pending_admins", 0)
+
+    pending_admins_display = pending_admins if is_super else 0
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": is_super,
+        "staff_list": staff_list,
+        "pending_admins_count": pending_admins_display,
+        "stats": stats,
     }
 
 
