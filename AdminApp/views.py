@@ -1271,6 +1271,34 @@ def content_blog_editor_view(request, blog_id=None):
     return render(request, "content_blog_form.html", context)
 
 
+def _sync_blog_image_to_frontends(file_rel_or_abs):
+    """
+    Syncs uploaded blog images from MEDIA_ROOT to frontend public directories
+    so local dev servers (surplus-frontend and SurplusReact) serve them immediately.
+    """
+    import shutil
+    try:
+        if not file_rel_or_abs:
+            return
+        clean_rel = str(file_rel_or_abs).lstrip("/")
+        if clean_rel.startswith("media/"):
+            clean_rel = clean_rel[6:]
+        src_path = os.path.join(settings.MEDIA_ROOT, clean_rel)
+        if not os.path.exists(src_path):
+            return
+        filename = os.path.basename(src_path)
+        for front_dir in [
+            r"d:\CORALBEES\surplus-frontend\public\media\blog_images",
+            r"d:\CORALBEES\SurplusReact\public\media\blog_images",
+        ]:
+            if os.path.exists(os.path.dirname(front_dir)):
+                os.makedirs(front_dir, exist_ok=True)
+                dest = os.path.join(front_dir, filename)
+                shutil.copy2(src_path, dest)
+    except Exception:
+        pass
+
+
 @api_view(["GET", "POST", "PUT", "DELETE"])
 @permission_classes([AllowAny])
 def content_blogs_api(request, blog_id=None):
@@ -1342,6 +1370,7 @@ def content_blogs_api(request, blog_id=None):
             if hasattr(blog.image, "url") and blog.image.url:
                 blog.featured_image_url = blog.image.url
                 blog.save(update_fields=["featured_image_url"])
+                _sync_blog_image_to_frontends(blog.image.name)
         else:
             featured_url = payload.get("featured_image_url", "").strip()
             if featured_url:
@@ -1385,6 +1414,7 @@ def blog_upload_image_api(request):
 
     saved_path = default_storage.save(f"blog_images/{safe_name}", image_file)
     file_url = default_storage.url(saved_path)
+    _sync_blog_image_to_frontends(saved_path)
 
     return Response({
         "success": True,

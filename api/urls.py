@@ -12,6 +12,7 @@ from .views import (
     get_public_navigation_menu,
     get_public_blogs_list,
     get_public_blog_detail,
+    get_public_blog_categories,
     submit_seller_enquiry,
     submit_lot_enquiry,
     submit_partnership_enquiry,
@@ -77,6 +78,7 @@ urlpatterns = [
     # Public Blog REST APIs
     path("blogs/", get_public_blogs_list, name="public_blogs_list"),
     path("blogs/<slug:slug>/", get_public_blog_detail, name="public_blog_detail"),
+    path("blog-categories/", get_public_blog_categories, name="public_blog_categories"),
 
     # Public Enquiry Submissions
     path("enquiries/seller/", submit_seller_enquiry, name="public_seller_enquiry_submit"),

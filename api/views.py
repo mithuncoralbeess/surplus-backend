@@ -279,6 +279,26 @@ def get_public_navigation_menu(request):
 # Public Blog REST APIs for Frontend Server
 # -------------------------------------------------------------
 
+def _resolve_blog_image_url(b, request=None):
+    """
+    Helper to resolve the best image URL for a blog post.
+    Prioritizes uploaded image file (b.image.url) if present, then falls back to featured_image_url.
+    Ensures valid path format.
+    """
+    img_url = ""
+    if b.image:
+        try:
+            img_url = b.image.url
+        except Exception:
+            img_url = ""
+    if not img_url and b.featured_image_url:
+        img_url = b.featured_image_url.strip()
+
+    if img_url and not img_url.startswith("http://") and not img_url.startswith("https://") and not img_url.startswith("/"):
+        img_url = f"/{img_url}"
+    return img_url or ""
+
+
 @api_view(["GET"])
 def get_public_blogs_list(request):
     """
@@ -309,9 +329,9 @@ def get_public_blogs_list(request):
 
     blogs_data = []
     for b in page_obj:
-        img_url = b.featured_image_url
-        if not img_url and b.image:
-            img_url = b.image.url
+        img_url = _resolve_blog_image_url(b, request)
+        abs_img_url = request.build_absolute_uri(img_url) if (img_url and request) else img_url
+
         blogs_data.append({
             "id": b.id,
             "title": b.title,
@@ -321,6 +341,12 @@ def get_public_blogs_list(request):
             "category": b.category_name,
             "excerpt": b.excerpt,
             "image": img_url,
+            "image_url": img_url,
+            "cover_image": img_url,
+            "coverImage": img_url,
+            "featured_image": img_url,
+            "featured_image_url": img_url,
+            "absolute_image_url": abs_img_url,
             "read_time": b.read_time,
             "total_reads": b.total_reads,
             "seo": {
@@ -338,6 +364,8 @@ def get_public_blogs_list(request):
         "total_pages": paginator.num_pages,
         "current_page": page_obj.number,
         "blogs": blogs_data,
+        "results": blogs_data,
+        "data": blogs_data,
     }, status=status.HTTP_200_OK)
 
 
@@ -358,9 +386,8 @@ def get_public_blog_detail(request, slug):
             "message": f"Blog post with slug '{slug}' not found or not published."
         }, status=status.HTTP_404_NOT_FOUND)
 
-    img_url = blog.featured_image_url
-    if not img_url and blog.image:
-        img_url = blog.image.url
+    img_url = _resolve_blog_image_url(blog, request)
+    abs_img_url = request.build_absolute_uri(img_url) if (img_url and request) else img_url
 
     payload = {
         "id": blog.id,
@@ -372,6 +399,12 @@ def get_public_blog_detail(request, slug):
         "excerpt": blog.excerpt,
         "content": blog.content,
         "image": img_url,
+        "image_url": img_url,
+        "cover_image": img_url,
+        "coverImage": img_url,
+        "featured_image": img_url,
+        "featured_image_url": img_url,
+        "absolute_image_url": abs_img_url,
         "read_time": blog.read_time,
         "total_reads": blog.total_reads,
         "seo": {
@@ -386,7 +419,39 @@ def get_public_blog_detail(request, slug):
     return Response({
         "success": True,
         "blog": payload,
+        "data": payload,
+        **payload,
     }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_public_blog_categories(request):
+    """
+    Public REST API to list distinct blog categories with post count.
+    Endpoint: GET /api/blog-categories/
+    """
+    from AdminApp.models import BlogPost
+    from django.db.models import Count
+    from django.utils.text import slugify
+
+    cats = (
+        BlogPost.objects.filter(status="published", is_active=True)
+        .exclude(category_name="")
+        .values("category_name")
+        .annotate(total_blogs=Count("id"))
+        .order_by("-total_blogs")
+    )
+    data = [
+        {
+            "id": idx + 1,
+            "name": c["category_name"],
+            "slug": slugify(c["category_name"]),
+            "description": f"Articles related to {c['category_name']}",
+            "total_blogs": c["total_blogs"],
+        }
+        for idx, c in enumerate(cats)
+    ]
+    return Response(data, status=status.HTTP_200_OK)
 
 
 # -------------------------------------------------------------
