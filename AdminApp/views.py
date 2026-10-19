@@ -4,9 +4,12 @@ import hashlib
 import random
 import secrets
 import json
+import logging
+import urllib.parse
 from decimal import Decimal, ROUND_HALF_UP
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse
+from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.utils.dateparse import parse_date
@@ -20,6 +23,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 # 11
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     AdminDetails,
@@ -590,35 +595,18 @@ def adminDashBoard(request):
             cache.set(staff_list_key, staff_list, timeout=300)
 
     # Cached KPI metrics & stats (30s)
-    stats_cache_key = "admin_dashboard_stats_v3"
+    stats_cache_key = "admin_dashboard_stats_v4"
     stats = cache.get(stats_cache_key)
 
     if stats is None:
-        # Consolidated Query 1: Products (totals, pending/approved values, active stock)
-        prod_aggs = Product.objects.aggregate(
-            total=Count("id"),
-            pending_sales=Sum("current_price", filter=Q(enquiry_status__iexact="pending")),
-            approved_sales=Sum("current_price", filter=Q(enquiry_status__iexact="approved")),
-            active_stock=Sum("quantity", filter=Q(is_active=True)),
-            active_count=Count("id", filter=Q(is_active=True)),
-        )
-        pending_prod_sales = prod_aggs["pending_sales"] or 0
-        appr_prod_sales = prod_aggs["approved_sales"] or 0
-        active_products_stock = prod_aggs["active_stock"] or prod_aggs["active_count"] or 0
-        products_count = prod_aggs["total"] or 0
+        # Products and Lots counts
+        products_count = Product.objects.count()
+        lot_listings_count = Lot.objects.count()
 
-        # Consolidated Query 2: Lots (totals, pending/approved payout values)
-        lot_aggs = Lot.objects.aggregate(
-            total=Count("id"),
-            pending_sales=Sum("ask_price_surplus_payout", filter=Q(enquiry_status__iexact="pending")),
-            approved_sales=Sum("ask_price_surplus_payout", filter=Q(enquiry_status__iexact="approved")),
-        )
-        pending_lot_sales = lot_aggs["pending_sales"] or 0
-        appr_lot_sales = lot_aggs["approved_sales"] or 0
-        lot_listings_count = lot_aggs["total"] or 0
-
-        total_sales_due = float(pending_prod_sales + pending_lot_sales)
-        total_sales_amount = float(appr_prod_sales + appr_lot_sales)
+        # Initially no need of sales/stock value calculation, set to 0
+        total_sales_due = 0.0
+        total_sales_amount = 0.0
+        active_products_stock = 0
 
         # Consolidated Query 3: Vendors (buyers, sellers, total registered)
         vendor_aggs = VendorDetails.objects.aggregate(
@@ -4318,7 +4306,6 @@ def whatsapp_inbound_action_api(request, msg_id):
     elif action == "convert_to_lot":
         msg.status = "CONVERTED_TO_LOT"
         msg.save(update_fields=["status"])
-        import urllib.parse
         params = urllib.parse.urlencode({
             "intake_channel": "WhatsApp",
             "seller_name": msg.sender_name or "",
