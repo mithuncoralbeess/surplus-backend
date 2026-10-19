@@ -32,6 +32,7 @@ from .views import (
     content_blogs_view,
     content_blog_editor_view,
     content_blogs_api,
+    blog_upload_image_api,
     seller_enquiries_view,
     seller_enquiry_detail_view,
     lot_enquiries_view,
@@ -130,6 +131,7 @@ urlpatterns = [
     path("content/blogs/<int:blog_id>/edit/", content_blog_editor_view, name="content_blog_edit"),
     path("api/content/blogs/", content_blogs_api, name="content_blogs_api_list"),
     path("api/content/blogs/<int:blog_id>/", content_blogs_api, name="content_blogs_api_detail"),
+    path("api/content/blogs/upload-image/", blog_upload_image_api, name="blog_upload_image_api"),
 
     # Enquiries: Seller Product Enquiries (PRO-XXXXX)
     path("enquiries/seller/", seller_enquiries_view, name="seller_enquiries_list"),

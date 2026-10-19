@@ -31,15 +31,29 @@ class EmailService:
         }
 
     @classmethod
-    def send_email(cls, to_email: str, subject: str, html_content: str, service_name=None, context=None) -> bool:
+    def send_email(cls, to_email, subject: str, html_content: str, service_name=None, context=None) -> bool:
         """
-        Dispatches email via ZeptoMail REST API with Django SMTP fallback.
+        Dispatches email via ZeptoMail REST API with Django SMTP / Brevo fallback.
+        Supports single email string, comma-separated string, or list/tuple of recipients.
         Respects EMAIL_SEND_ENABLED setting for safety during development/testing.
         """
+        if isinstance(to_email, (list, tuple, set)):
+            to_recipients = [str(e).strip() for e in to_email if str(e).strip()]
+        elif isinstance(to_email, str):
+            to_recipients = [e.strip() for e in to_email.split(",") if e.strip()]
+        else:
+            to_recipients = [str(to_email).strip()]
+
+        if not to_recipients:
+            logger.warning("[EmailService] No valid recipient email address provided.")
+            return False
+
+        to_str = ", ".join(to_recipients)
+
         if not cls.EMAIL_SEND_ENABLED:
             logger.info(
                 f"[EmailService - SAFE MODE (Dispatch Disabled)] "
-                f"To: {to_email} | Subject: {subject} | Service: {service_name or 'General'}"
+                f"To: {to_str} | Subject: {subject} | Service: {service_name or 'General'}"
             )
             return True
 
@@ -50,7 +64,7 @@ class EmailService:
                     "name": cls.FROM_NAME,
                     "address": cls.FROM_ADDRESS,
                 },
-                "to": [{"email_address": {"address": to_email}}],
+                "to": [{"email_address": {"address": addr}} for addr in to_recipients],
                 "subject": subject,
                 "htmlbody": html_content,
             }
@@ -63,7 +77,7 @@ class EmailService:
                     timeout=10,
                 )
                 if response.status_code in [200, 201]:
-                    logger.info(f"Email sent via ZeptoMail to {to_email}: {subject}")
+                    logger.info(f"Email sent via ZeptoMail to {to_str}: {subject}")
                     return True
                 else:
                     logger.warning(
@@ -84,13 +98,13 @@ class EmailService:
                 message=plain_body,
                 html_message=html_content,
                 from_email=from_email_str,
-                recipient_list=[to_email],
+                recipient_list=to_recipients,
                 fail_silently=False,
             )
-            logger.info(f"Email sent via Django SMTP fallback to {to_email}: {subject}")
+            logger.info(f"Email sent via Django SMTP fallback to {to_str}: {subject}")
             return True
         except Exception as e:
-            logger.error(f"Failed to send email via SMTP backup to {to_email}: {e}")
+            logger.error(f"Failed to send email via SMTP backup to {to_str}: {e}")
             return False
 
     @classmethod
@@ -795,12 +809,46 @@ class EmailService:
         )
 
     @classmethod
+    def get_admin_notification_emails(cls) -> list:
+        """
+        Resolves list of target email addresses for admin alerts:
+        1. Reads ADMIN_NOTIFICATION_EMAIL from env/settings (supports comma-separated list).
+        2. Includes active SuperAdmins and Admins from AdminDetails table.
+        3. Deduplicates and cleans addresses.
+        """
+        recipients = []
+        seen = set()
+
+        def _add(email_str):
+            clean = str(email_str or "").strip().strip("'\"")
+            if clean and "@" in clean and clean.lower() not in seen:
+                seen.add(clean.lower())
+                recipients.append(clean)
+
+        env_val = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "") or "")
+        if env_val:
+            for em in str(env_val).split(","):
+                _add(em)
+
+        try:
+            from .models import AdminDetails
+            for adm in AdminDetails.objects.filter(status=True).exclude(email="").values_list("email", flat=True):
+                clean_adm = str(adm).strip().strip("'\"")
+                if not clean_adm.endswith("@example.com"):
+                    _add(clean_adm)
+        except Exception:
+            pass
+
+        if not recipients:
+            recipients.append("contact@surplusmarket.com")
+
+        return recipients
+
+    @classmethod
     def get_admin_notification_email(cls) -> str:
-        """Resolves target email for admin alerts with default fallback to contact@surplusmarket.com."""
-        env_email = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "")).strip()
-        if env_email:
-            return env_email
-        return "contact@surplusmarket.com"
+        """Resolves primary target email for admin alerts."""
+        emails = cls.get_admin_notification_emails()
+        return emails[0] if emails else "contact@surplusmarket.com"
 
     @classmethod
     def send_contact_us_emails(cls, enquiry) -> dict:
@@ -966,6 +1014,81 @@ class EmailService:
             to_email, f"Surplus Reward: You won {prize_name}!", html_content, file_paths=file_paths
         )
 
+    @classmethod
+    def notify_admin_user_registered(cls, vendor) -> bool:
+        """
+        Notifies admin when a new user completes registration on the marketplace.
+        Accepts VendorDetails instance or dict.
+        """
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        vendor_id = getattr(vendor, "vendor_id", None) or (vendor.get("vendor_id") if isinstance(vendor, dict) else "")
+        raw_id = getattr(vendor, "id", None) or (vendor.get("id") if isinstance(vendor, dict) else "")
+        if not vendor_id and raw_id:
+            vendor_id = f"USR-{int(raw_id):04d}"
+
+        email = getattr(vendor, "email", None) or (vendor.get("email") if isinstance(vendor, dict) else "")
+        full_name = getattr(vendor, "full_name", None) or (vendor.get("full_name") if isinstance(vendor, dict) else "") or getattr(vendor, "username", "New User")
+        phone = getattr(vendor, "mobile_number", None) or (vendor.get("mobile_number") if isinstance(vendor, dict) else "")
+        user_type = getattr(vendor, "user_type", None) or (vendor.get("user_type") if isinstance(vendor, dict) else "BUYER")
+        account_entity_type = getattr(vendor, "account_entity_type", None) or (vendor.get("account_entity_type") if isinstance(vendor, dict) else "COMPANY")
+        company_name = getattr(vendor, "company_name", None) or (vendor.get("company_name") if isinstance(vendor, dict) else "")
+        country = getattr(vendor, "country", None) or (vendor.get("country") if isinstance(vendor, dict) else "United Arab Emirates")
+        business_location = getattr(vendor, "business_location", None) or (vendor.get("business_location") if isinstance(vendor, dict) else "")
+
+        cats = getattr(vendor, "category_interested_list", None) or []
+        if not cats and hasattr(vendor, "category_interested"):
+            cats = vendor.category_interested if isinstance(vendor.category_interested, list) else [str(vendor.category_interested)]
+        elif isinstance(vendor, dict):
+            cats = vendor.get("category_interested", [])
+            if isinstance(cats, str):
+                cats = [c.strip() for c in cats.split(",") if c.strip()]
+        categories_str = ", ".join(cats) if cats else ""
+
+        from django.utils import timezone
+        registered_at = getattr(vendor, "created_at", None)
+        if registered_at:
+            reg_time_str = registered_at.strftime("%b %d, %Y %I:%M %p UTC")
+        else:
+            reg_time_str = timezone.now().strftime("%b %d, %Y %I:%M %p UTC")
+
+        admin_url = f"{backend_base}/admin/users/?q={email}" if email else f"{backend_base}/admin/users/"
+        admin_emails = cls.get_admin_notification_emails()
+
+        context = {
+            "vendor": vendor,
+            "vendor_id": vendor_id,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "user_type": user_type,
+            "account_entity_type": account_entity_type,
+            "company_name": company_name,
+            "country": country,
+            "business_location": business_location,
+            "categories_str": categories_str,
+            "registered_at": reg_time_str,
+            "admin_url": admin_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_admin_user_registered.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for admin user registration alert: {e}")
+            html_content = (
+                f"<h2>New User Registered: {full_name}</h2>"
+                f"<p>User ID: <strong>{vendor_id}</strong></p>"
+                f"<p>Email: <strong>{email}</strong> | Phone: {phone}</p>"
+                f"<p>User Type: <strong>{user_type}</strong> | Entity: {account_entity_type}</p>"
+                f"<p>Company: {company_name} | Location: {country}</p>"
+                f"<p><a href='{admin_url}'>View User in Admin Portal</a></p>"
+            )
+
+        subject = f"New User Registration: {full_name} [{vendor_id}]"
+        return cls.send_email(admin_emails, subject, html_content, "AdminUserRegistered", context=context)
+
 
 # Backwards compatibility alias
 EmailNotificationService = EmailService
@@ -1046,7 +1169,7 @@ def create_admin_notification(
         if not admin_obj:
             admin_obj = AdminDetails.objects.filter(username__iexact=adm_str).first()
 
-    valid_types = ("ADMIN_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "SYSTEM")
+    valid_types = ("ADMIN_REGISTRATION", "USER_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "SYSTEM")
     n_type = str(notification_type).upper()
     if n_type not in valid_types:
         n_type = "SYSTEM"
@@ -1062,5 +1185,88 @@ def create_admin_notification(
     )
     _logger.info(f"[AdminNotification] Created ID {notification.id} ({n_type}): {title}")
     return notification
+
+
+def notify_new_user_registration(vendor):
+    """
+    Central handler triggered whenever a new user registers:
+    1. Creates in-app AdminNotification for SuperAdmins and admin staff.
+    2. Sends admin alert email to ADMIN_NOTIFICATION_EMAIL.
+    3. Sends welcome email to the newly registered user.
+    4. Creates in-app VendorNotification welcoming user.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    vendor_id = getattr(vendor, "vendor_id", "") or (f"USR-{vendor.id:04d}" if getattr(vendor, "id", None) else "")
+    full_name = getattr(vendor, "full_name", "").strip() or getattr(vendor, "username", "User")
+    user_type = getattr(vendor, "user_type", "BUYER")
+    email = getattr(vendor, "email", "")
+    country = getattr(vendor, "country", "") or "UAE"
+
+    # 1. In-app Admin Notification
+    try:
+        create_admin_notification(
+            title=f"New User Registration: {full_name}",
+            message=f"New {user_type} account ({vendor_id}) registered: {email} from {country}.",
+            notification_type="USER_REGISTRATION",
+            action_url=f"/admin/users/?q={email}" if email else "/admin/users/",
+            for_superadmins_only=False
+        )
+    except Exception as e:
+        logger.error(f"Failed to create AdminNotification for new user {getattr(vendor, 'id', '')}: {e}")
+
+    # 2. Admin Alert Email
+    try:
+        EmailService.notify_admin_user_registered(vendor)
+    except Exception as e:
+        logger.error(f"Failed to send admin email alert for new user {getattr(vendor, 'id', '')}: {e}")
+
+    # 3. User Welcome Email
+    try:
+        if email:
+            first_name = getattr(vendor, "first_name", "") or full_name
+            EmailService.send_signup_welcome(to_email=email, first_name=first_name)
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to user {email}: {e}")
+
+    # 4. In-app Vendor Notification
+    try:
+        create_vendor_notification(
+            vendor=vendor,
+            title="Welcome to Surplus Market!",
+            message=f"Your account {vendor_id} has been registered successfully. You can now explore surplus listings, RFQs, and auctions.",
+            notification_type="SYSTEM",
+            action_url="/profile"
+        )
+    except Exception as e:
+        logger.error(f"Failed to create VendorNotification for user {getattr(vendor, 'id', '')}: {e}")
+
+
+def align_vendor_sequence():
+    """
+    Ensures postgres vendor_details_id_seq matches the current state of VendorDetails:
+    - If 0 vendors exist, resets sequence to 1 with is_called=False (so next insert gets 1).
+    - If vendors exist, sets sequence to max(id) with is_called=True (so next insert gets max(id)+1).
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        from django.db import connection
+        from .models import VendorDetails
+        with connection.cursor() as cursor:
+            max_id = VendorDetails.objects.order_by("-id").values_list("id", flat=True).first()
+            if not max_id:
+                cursor.execute("SELECT setval('vendor_details_id_seq', 1, false);")
+                logger.info("[Sequence] vendor_details_id_seq reset to 1 (table empty).")
+                return 1
+            else:
+                cursor.execute("SELECT setval('vendor_details_id_seq', %s, true);", [max_id])
+                logger.info(f"[Sequence] vendor_details_id_seq aligned to {max_id}.")
+                return max_id
+    except Exception as e:
+        logger.error(f"Failed to align vendor_details_id_seq: {e}")
+        return None
+
 
 

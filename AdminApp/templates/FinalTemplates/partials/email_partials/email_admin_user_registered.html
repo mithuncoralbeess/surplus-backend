@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New User Registration Alert - Surplus Admin</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 30px 24px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .badge {
+            display: inline-block;
+            background: #0d9488;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+        .content {
+            padding: 28px 24px;
+        }
+        .intro {
+            font-size: 14.5px;
+            line-height: 1.5;
+            color: #334155;
+            margin-top: 0;
+            margin-bottom: 18px;
+        }
+        .card {
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .meta-table td {
+            padding: 7px 0;
+            font-size: 13.5px;
+            vertical-align: top;
+        }
+        .meta-label {
+            color: #64748b;
+            width: 38%;
+            font-weight: 500;
+        }
+        .meta-value {
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .cta-btn {
+            display: block;
+            text-align: center;
+            background: #0d9488;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="badge">New User Registration</span>
+            <h1>New User Joined Surplus Market</h1>
+            <p style="margin: 0; color: #94a3b8; font-size: 13px;">Immediate admin notification &bull; User Directory</p>
+        </div>
+        <div class="content">
+            <p class="intro">
+                A new user has successfully registered and verified their account on <strong>Surplus Market</strong>. Here are the account details:
+            </p>
+            <div class="card">
+                <div class="card-title">
+                    <span>Account Profile</span>
+                    <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px;">{{ vendor_id }}</span>
+                </div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Full Name:</td>
+                        <td class="meta-value">{{ full_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Vendor / User ID:</td>
+                        <td class="meta-value" style="font-family: monospace; color: #0d9488;">{{ vendor_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Email Address:</td>
+                        <td class="meta-value"><a href="mailto:{{ email }}" style="color: #2563eb; text-decoration: none;">{{ email }}</a></td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Mobile Number:</td>
+                        <td class="meta-value">{{ phone|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">User Type:</td>
+                        <td class="meta-value"><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">{{ user_type }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Entity Type:</td>
+                        <td class="meta-value">{{ account_entity_type|default:"Company" }}</td>
+                    </tr>
+                    {% if company_name %}
+                    <tr>
+                        <td class="meta-label">Company Name:</td>
+                        <td class="meta-value">{{ company_name }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="meta-label">Country / Location:</td>
+                        <td class="meta-value">{{ country|default:"UAE" }}{% if business_location and business_location != country %} ({{ business_location }}){% endif %}</td>
+                    </tr>
+                    {% if categories_str %}
+                    <tr>
+                        <td class="meta-label">Categories Interested:</td>
+                        <td class="meta-value">{{ categories_str }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="meta-label">Registered At:</td>
+                        <td class="meta-value">{{ registered_at }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <a href="{{ admin_url }}" class="cta-btn" target="_blank">
+                View User in Admin Portal &rarr;
+            </a>
+        </div>
+        <div class="footer">
+            &copy; Surplus Market Management System &bull; Automatic System Notification
+        </div>
+    </div>
+</body>
+</html>

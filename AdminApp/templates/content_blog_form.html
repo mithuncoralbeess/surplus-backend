@@ -260,22 +260,73 @@
 
                 <!-- Featured Image Card -->
                 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-image text-primary me-2"></i>Featured Banner Image</h6>
-                    
-                    <div class="mb-3">
-                        <label for="featuredImageUrlInput" class="form-label fw-semibold text-dark small">Featured Image URL</label>
-                        <input type="url" class="form-control form-control-sm" id="featuredImageUrlInput" placeholder="https://example.com/image.jpg" value="{{ blog.featured_image_url|default:'' }}">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-image text-primary me-2"></i>Featured Banner Image</h6>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small px-2 py-1">Banner</span>
                     </div>
 
-                    {% if blog.featured_image_url %}
-                    <div class="mt-3 p-2 bg-light rounded border text-center">
-                        <img src="{{ blog.featured_image_url }}" class="img-fluid rounded shadow-sm" style="max-height: 160px; object-fit: cover;">
+                    <!-- Upload Mode Toggle Buttons -->
+                    <div class="btn-group w-100 mb-3" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active fw-semibold" id="tabUploadFileBtn">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> Upload Image
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold" id="tabEnterUrlBtn">
+                            <i class="bi bi-link-45deg me-1"></i> Image URL
+                        </button>
                     </div>
-                    {% elif blog.image %}
-                    <div class="mt-3 p-2 bg-light rounded border text-center">
-                        <img src="{{ blog.image.url }}" class="img-fluid rounded shadow-sm" style="max-height: 160px; object-fit: cover;">
+
+                    <!-- 1. File Upload Dropzone -->
+                    <div id="fileUploadSection">
+                        <input type="file" id="blogImageFileInput" name="image" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" class="d-none">
+                        
+                        <div id="dropzoneArea" class="border border-2 border-dashed rounded-3 p-3 text-center bg-light" style="cursor: pointer; border-color: #cbd5e1 !important; transition: all 0.2s ease;">
+                            <div class="py-2">
+                                <div class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                                    <i class="bi bi-cloud-arrow-up fs-4"></i>
+                                </div>
+                                <div class="fw-semibold text-dark small mb-1">Click to browse or drag & drop</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">PNG, JPG, WEBP, GIF up to 10MB</div>
+                            </div>
+                        </div>
                     </div>
-                    {% endif %}
+
+                    <!-- 2. External Image URL Input (Alternative) -->
+                    <div id="urlInputSection" style="display: none;">
+                        <label for="featuredImageUrlInput" class="form-label fw-semibold text-dark small">External Image URL</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-globe"></i></span>
+                            <input type="text" class="form-control" id="featuredImageUrlInput" placeholder="https://example.com/banner.jpg" value="{{ blog.featured_image_url|default:'' }}">
+                        </div>
+                        <div class="form-text text-muted" style="font-size: 0.72rem;">Paste a direct link to an external banner image</div>
+                    </div>
+
+                    <!-- Hidden flag to track image removal -->
+                    <input type="hidden" id="clearImageInput" value="false">
+
+                    <!-- Live Image Preview Card -->
+                    <div id="imagePreviewContainer" class="mt-3 p-2 bg-light rounded-3 border position-relative" style="display: {% if blog.featured_image_url or blog.image %}block{% else %}none{% endif %};">
+                        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                            <span class="badge bg-secondary-subtle text-secondary small" id="previewBadge">
+                                {% if blog.image %}Uploaded File{% elif blog.featured_image_url %}Current Banner{% else %}Selected Image{% endif %}
+                            </span>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small fw-semibold" id="removeImageBtn" title="Remove Image">
+                                <i class="bi bi-trash3 me-1"></i>Remove
+                            </button>
+                        </div>
+                        
+                        <div class="text-center rounded overflow-hidden bg-white border" style="min-height: 100px; max-height: 180px;">
+                            <img id="imagePreviewElement" 
+                                 src="{% if blog.image %}{{ blog.image.url }}{% elif blog.featured_image_url %}{{ blog.featured_image_url }}{% endif %}" 
+                                 class="img-fluid w-100" 
+                                 style="max-height: 180px; object-fit: cover; display: block;"
+                                 alt="Blog Banner Preview">
+                            <div id="previewFallbackMsg" class="p-3 text-muted small text-center" style="display: none;">
+                                <i class="bi bi-image text-secondary fs-3 d-block mb-1 opacity-50"></i>
+                                Image file missing or URL unreachable.<br>Click above to upload a new banner image.
+                            </div>
+                        </div>
+                        <div id="fileInfoText" class="text-muted small mt-1 px-1 text-truncate" style="font-size: 0.72rem;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -356,6 +407,163 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // -------------------------------------------------------------
+    // Featured Banner Image: Upload, Preview, & Drag-and-Drop
+    // -------------------------------------------------------------
+    const tabUploadFileBtn = document.getElementById('tabUploadFileBtn');
+    const tabEnterUrlBtn = document.getElementById('tabEnterUrlBtn');
+    const fileUploadSection = document.getElementById('fileUploadSection');
+    const urlInputSection = document.getElementById('urlInputSection');
+    const dropzoneArea = document.getElementById('dropzoneArea');
+    const fileInput = document.getElementById('blogImageFileInput');
+    const urlInput = document.getElementById('featuredImageUrlInput');
+    const clearImageInput = document.getElementById('clearImageInput');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewElement = document.getElementById('imagePreviewElement');
+    const previewFallback = document.getElementById('previewFallbackMsg');
+    const previewBadge = document.getElementById('previewBadge');
+    const fileInfoText = document.getElementById('fileInfoText');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+
+    let selectedImageFile = null;
+
+    // Toggle between Upload File and Image URL
+    if (tabUploadFileBtn && tabEnterUrlBtn) {
+        tabUploadFileBtn.addEventListener('click', () => {
+            tabUploadFileBtn.classList.add('active', 'btn-outline-primary');
+            tabUploadFileBtn.classList.remove('btn-outline-secondary');
+            tabEnterUrlBtn.classList.remove('active', 'btn-outline-primary');
+            tabEnterUrlBtn.classList.add('btn-outline-secondary');
+            fileUploadSection.style.display = 'block';
+            urlInputSection.style.display = 'none';
+        });
+
+        tabEnterUrlBtn.addEventListener('click', () => {
+            tabEnterUrlBtn.classList.add('active', 'btn-outline-primary');
+            tabEnterUrlBtn.classList.remove('btn-outline-secondary');
+            tabUploadFileBtn.classList.remove('active', 'btn-outline-primary');
+            tabUploadFileBtn.classList.add('btn-outline-secondary');
+            urlInputSection.style.display = 'block';
+            fileUploadSection.style.display = 'none';
+        });
+    }
+
+    // Dropzone Click -> Trigger File Dialog
+    if (dropzoneArea && fileInput) {
+        dropzoneArea.addEventListener('click', () => fileInput.click());
+
+        // Drag & Drop events
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzoneArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzoneArea.style.borderColor = '#2563eb';
+                dropzoneArea.style.backgroundColor = '#eff6ff';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzoneArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzoneArea.style.borderColor = '#cbd5e1';
+                dropzoneArea.style.backgroundColor = '#f8fafc';
+            });
+        });
+
+        dropzoneArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleFileSelect(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file (PNG, JPG, WEBP, or GIF).');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Image file size exceeds 10MB limit. Please choose a smaller image.');
+            return;
+        }
+
+        selectedImageFile = file;
+        clearImageInput.value = 'false';
+
+        // Instant local preview
+        const objectUrl = URL.createObjectURL(file);
+        previewElement.src = objectUrl;
+        previewElement.style.display = 'block';
+        previewFallback.style.display = 'none';
+        previewContainer.style.display = 'block';
+        previewBadge.textContent = 'Ready to Upload';
+        previewBadge.className = 'badge bg-success-subtle text-success border border-success-subtle small';
+        fileInfoText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    }
+
+    // External URL Input Change Listener
+    if (urlInput) {
+        urlInput.addEventListener('input', () => {
+            const val = urlInput.value.trim();
+            if (val && !selectedImageFile) {
+                clearImageInput.value = 'false';
+                previewElement.src = val;
+                previewElement.style.display = 'block';
+                previewFallback.style.display = 'none';
+                previewContainer.style.display = 'block';
+                previewBadge.textContent = 'Remote URL';
+                previewBadge.className = 'badge bg-info-subtle text-info border border-info-subtle small';
+                fileInfoText.textContent = val;
+            } else if (!val && !selectedImageFile) {
+                previewContainer.style.display = 'none';
+                previewElement.src = '';
+            }
+        });
+    }
+
+    // Handle Image Error (Broken URL / Missing local file)
+    if (previewElement) {
+        previewElement.addEventListener('error', () => {
+            previewElement.style.display = 'none';
+            if (previewFallback) previewFallback.style.display = 'block';
+        });
+
+        previewElement.addEventListener('load', () => {
+            previewElement.style.display = 'block';
+            if (previewFallback) previewFallback.style.display = 'none';
+        });
+    }
+
+    // Remove Image Button
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', () => {
+            selectedImageFile = null;
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            clearImageInput.value = 'true';
+            previewContainer.style.display = 'none';
+            previewElement.src = '';
+            fileInfoText.textContent = '';
+        });
+    }
+
+    // Helper to extract CSRF Token
+    function getCsrfToken() {
+        const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenInput && tokenInput.value) return tokenInput.value;
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+    }
+
     // Submit handler
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -366,21 +574,25 @@ document.addEventListener('DOMContentLoaded', () => {
             // Obtain final HTML content depending on active view mode
             const finalContent = isCodeViewActive ? htmlSourceTextarea.value : quill.root.innerHTML;
 
-            const payload = {
-                title: document.getElementById('blogTitleInput').value,
-                slug: document.getElementById('blogSlugInput').value,
-                blog_code: document.getElementById('blogCodeInput').value,
-                author: document.getElementById('blogAuthorInput').value,
-                category_name: document.getElementById('blogCategoryInput').value,
-                excerpt: document.getElementById('blogExcerptInput').value,
-                content: finalContent,
-                featured_image_url: document.getElementById('featuredImageUrlInput').value,
-                meta_title: document.getElementById('metaTitleInput').value,
-                meta_description: document.getElementById('metaDescInput').value,
-                meta_keywords: document.getElementById('metaKeywordsInput').value,
-                read_time: document.getElementById('readTimeInput').value,
-                status: document.getElementById('blogStatusSelect').value,
-            };
+            const formData = new FormData();
+            formData.append('title', document.getElementById('blogTitleInput').value);
+            formData.append('slug', document.getElementById('blogSlugInput').value);
+            formData.append('blog_code', document.getElementById('blogCodeInput').value);
+            formData.append('author', document.getElementById('blogAuthorInput').value);
+            formData.append('category_name', document.getElementById('blogCategoryInput').value);
+            formData.append('excerpt', document.getElementById('blogExcerptInput').value);
+            formData.append('content', finalContent);
+            formData.append('featured_image_url', document.getElementById('featuredImageUrlInput').value);
+            formData.append('meta_title', document.getElementById('metaTitleInput').value);
+            formData.append('meta_description', document.getElementById('metaDescInput').value);
+            formData.append('meta_keywords', document.getElementById('metaKeywordsInput').value);
+            formData.append('read_time', document.getElementById('readTimeInput').value);
+            formData.append('status', document.getElementById('blogStatusSelect').value);
+            formData.append('clear_image', clearImageInput.value);
+
+            if (selectedImageFile) {
+                formData.append('image', selectedImageFile);
+            }
 
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
@@ -390,9 +602,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
                     },
-                    body: JSON.stringify(payload)
+                    body: formData
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {

@@ -2031,6 +2031,7 @@ class AdminNotification(models.Model):
     """
     NOTIFICATION_TYPE_CHOICES = (
         ("ADMIN_REGISTRATION", "Admin Registration"),
+        ("USER_REGISTRATION", "User Registration"),
         ("APPROVAL", "Approval"),
         ("ENQUIRY", "Enquiry"),
         ("LISTING", "Listing"),

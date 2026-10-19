@@ -1,3 +1,4 @@
+import os
 import uuid
 import hashlib
 import random
@@ -1324,10 +1325,28 @@ def content_blogs_api(request, blog_id=None):
         blog.read_time = int(payload.get("read_time", 3))
         blog.status = payload.get("status", "published").strip().lower()
 
+        # Handle clear_image request
+        if str(payload.get("clear_image", "")).lower() in ("true", "1", "yes"):
+            if blog.image:
+                try:
+                    blog.image.delete(save=False)
+                except Exception:
+                    pass
+            blog.image = None
+            blog.featured_image_url = ""
+
+        # Handle uploaded image file
         if "image" in request.FILES:
             blog.image = request.FILES["image"]
-
-        blog.save()
+            blog.save()
+            if hasattr(blog.image, "url") and blog.image.url:
+                blog.featured_image_url = blog.image.url
+                blog.save(update_fields=["featured_image_url"])
+        else:
+            featured_url = payload.get("featured_image_url", "").strip()
+            if featured_url:
+                blog.featured_image_url = featured_url
+            blog.save()
 
         return Response({
             "success": True,
@@ -1338,6 +1357,41 @@ def content_blogs_api(request, blog_id=None):
         }, status=status.HTTP_200_OK)
 
     return Response({"success": True, "message": "Blog API online."})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def blog_upload_image_api(request):
+    """
+    Dedicated API to instantly upload a blog image file and return its URL.
+    Used for instant dropzone uploads and Quill editor image attachments.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if "image" not in request.FILES:
+        return Response({"success": False, "message": "No image file provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+    image_file = request.FILES["image"]
+    from django.core.files.storage import default_storage
+    from django.utils.text import slugify
+    import secrets
+
+    base_name, ext = os.path.splitext(image_file.name)
+    ext = ext.lower() or ".jpg"
+    safe_slug = slugify(base_name)[:40] or "image"
+    safe_name = f"blog_{safe_slug}_{secrets.token_hex(4)}{ext}"
+
+    saved_path = default_storage.save(f"blog_images/{safe_name}", image_file)
+    file_url = default_storage.url(saved_path)
+
+    return Response({
+        "success": True,
+        "message": "Image uploaded successfully.",
+        "url": file_url,
+        "filename": safe_name
+    }, status=status.HTTP_201_CREATED)
 
 
 # =============================================================
@@ -3142,6 +3196,13 @@ def delete_user_api(request, user_id):
         vendor = VendorDetails.objects.get(id=user_id)
         user_name = vendor.username
         vendor.delete()
+        if not VendorDetails.objects.exists():
+            try:
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT setval('vendor_details_id_seq', 1, false);")
+            except Exception:
+                pass
         if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.content_type == "application/json" or request.method == "DELETE":
             return Response(
                 {"success": True, "message": f"User '{user_name}' deleted successfully."},
@@ -5791,6 +5852,12 @@ def vendor_register(request):
         status=True,
         session_version=1,
     )
+
+    try:
+        from AdminApp.services import notify_new_user_registration
+        notify_new_user_registration(vendor_user)
+    except Exception:
+        pass
 
     return Response(
         {

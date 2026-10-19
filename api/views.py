@@ -625,6 +625,13 @@ def verify_registration_otp(request):
         status=True
     )
     
+    # Trigger notifications: Admin in-app alert, Admin email, User welcome email, User in-app notification
+    try:
+        from AdminApp.services import notify_new_user_registration
+        notify_new_user_registration(vendor)
+    except Exception as notif_err:
+        logger.error(f"Error triggering registration notifications for vendor {vendor.id}: {notif_err}")
+    
     # We do NOT mark the OTP as used here because the frontend will immediately 
     # use this same OTP to call /api/auth/login/verify-otp/ to generate the auth session.
     # The login verify endpoint will mark it as used.
@@ -797,6 +804,18 @@ def complete_profile(request):
                 )
             except Exception:
                 pass
+
+        try:
+            from AdminApp.services import create_admin_notification
+            create_admin_notification(
+                title=f"User Profile Completed: {vendor.full_name or vendor.username}",
+                message=f"{vendor.full_name or vendor.username} ({vendor.vendor_id}) completed 100% of profile details.",
+                notification_type="USER_REGISTRATION",
+                action_url=f"/admin/users/?q={vendor.email}",
+                for_superadmins_only=False
+            )
+        except Exception:
+            pass
     
     return Response({
         "success": True, 
