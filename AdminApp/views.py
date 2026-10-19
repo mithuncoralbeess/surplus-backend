@@ -609,7 +609,8 @@ def adminDashBoard(request):
     lot_listings_count = Lot.objects.count()
     rfq_requests_count = RfqEnquiry.objects.count()
     products_count = Product.objects.count()
-    categories_count = SubCategory.objects.count()
+    categories_count = MainCategory.objects.count()
+    subcategories_count = SubCategory.objects.count()
     total_page_views = PageViewLog.objects.count()
     registered_users = VendorDetails.objects.count()
 
@@ -635,6 +636,7 @@ def adminDashBoard(request):
             "rfq_requests": rfq_requests_count,
             "products": products_count,
             "categories": categories_count,
+            "subcategories": subcategories_count,
             "total_page_views": total_page_views,
             "registered_users": registered_users,
             # Backward compatibility aliases
