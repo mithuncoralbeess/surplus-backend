@@ -22,9 +22,139 @@
         top: 0;
         z-index: 3;
     }
-    /* Enterprise Intelligence Panel & Brand Distribution */
-    .intelligence-panel {
+    /* Executive KPI Metrics Grid */
+    .explorer-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    @media (max-width: 1300px) {
+        .explorer-kpi-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 768px) {
+        .explorer-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 480px) {
+        .explorer-kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .explorer-kpi-card {
         background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.1rem 1.2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 126px;
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    .explorer-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+        border-color: #cbd5e1;
+    }
+
+    .explorer-kpi-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    .explorer-kpi-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin: 0;
+    }
+    .explorer-kpi-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+    .icon-blue {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+    }
+    .icon-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border: 1px solid #ede9fe;
+    }
+    .icon-slate {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .icon-emerald {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+    }
+    .icon-indigo {
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #e0e7ff;
+    }
+    .icon-amber {
+        background: #fffbeb;
+        color: #d97706;
+        border: 1px solid #fef3c7;
+    }
+
+    .explorer-kpi-value-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 0.35rem;
+        margin-bottom: 0.45rem;
+    }
+    .explorer-kpi-value {
+        font-size: 1.45rem;
+        font-weight: 800;
+        line-height: 1.15;
+        font-family: var(--bs-font-monospace);
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+    .explorer-kpi-unit {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+    .explorer-kpi-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .explorer-kpi-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Enterprise Intelligence Panel & Enclosure Cards */
+    .intelligence-panel {
+        background: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
         position: relative;
     }
@@ -32,7 +162,32 @@
         background: #1e293b;
         border-bottom-color: #334155;
     }
+    .intelligence-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+    .intelligence-card-header {
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+    }
+    .intelligence-card-body {
+        padding: 1.15rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
 
+    /* Brand Allocation Elements */
     .brand-progress-track {
         height: 12px;
         border-radius: 999px;
@@ -52,33 +207,92 @@
         z-index: 2;
     }
 
-    /* Modern Brand Filter Chips */
-    .brand-chips-scroll-wrap {
-        max-height: 128px;
+    .brand-breakdown-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        max-height: 175px;
         overflow-y: auto;
         padding-right: 4px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
     }
-    .brand-chips-scroll-wrap::-webkit-scrollbar {
+    .brand-breakdown-list::-webkit-scrollbar {
         width: 4px;
     }
-    .brand-chips-scroll-wrap::-webkit-scrollbar-track {
-        background: #f1f5f9;
+    .brand-breakdown-list::-webkit-scrollbar-track {
+        background: #f8fafc;
         border-radius: 4px;
     }
-    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb {
+    .brand-breakdown-list::-webkit-scrollbar-thumb {
         background: #cbd5e1;
         border-radius: 4px;
     }
-    .brand-chips-scroll-wrap::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+    .brand-breakdown-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .brand-breakdown-row:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateX(2px);
+    }
+    .brand-breakdown-row.active {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+    .brand-color-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .brand-name {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #1e293b;
+        max-width: 140px;
+    }
+    .brand-sku-count {
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 6px;
+    }
+
+    /* Brand Filter Chips */
+    .brand-chips-footer {
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px dashed #e2e8f0;
+    }
+    .brand-chips-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        max-height: 72px;
+        overflow-y: auto;
+        padding-right: 2px;
+    }
+    .brand-chips-wrap::-webkit-scrollbar {
+        width: 4px;
+    }
+    .brand-chips-wrap::-webkit-scrollbar-track {
+        background: #f8fafc;
+    }
+    .brand-chips-wrap::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
     }
 
     .brand-chip-modern {
         border-radius: 8px;
-        padding: 4px 10px;
+        padding: 3px 9px;
         font-size: 0.74rem;
         font-weight: 600;
         border: 1px solid #e2e8f0;
@@ -120,9 +334,9 @@
     /* Profit Driver Executive Cards */
     .profit-driver-card {
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 10px;
         background: #ffffff;
-        padding: 12px 14px;
+        padding: 10px 12px;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         position: relative;
@@ -135,15 +349,15 @@
     }
     .profit-driver-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px -3px rgba(37, 99, 235, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.03);
-        border-color: #93c5fd;
+        box-shadow: 0 8px 18px -2px rgba(37, 99, 235, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.04);
+        border-color: #3b82f6;
     }
     .profit-driver-card:active {
         transform: translateY(0);
     }
     .driver-rank-badge {
         font-size: 0.65rem;
-        font-weight: 700;
+        font-weight: 800;
         padding: 2px 7px;
         border-radius: 6px;
         display: inline-flex;
@@ -152,23 +366,23 @@
         letter-spacing: 0.3px;
     }
     .rank-1 {
-        background: #fef3c7;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         color: #92400e;
-        border: 1px solid #fde68a;
+        border: 1px solid #fcd34d;
     }
     .rank-2 {
-        background: #f1f5f9;
-        color: #475569;
-        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        color: #334155;
+        border: 1px solid #cbd5e1;
     }
     .rank-3 {
-        background: #ffedd5;
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
         color: #9a3412;
-        border: 1px solid #fed7aa;
+        border: 1px solid #fdba74;
     }
     .rank-4 {
         background: #f8fafc;
-        color: #64748b;
+        color: #475569;
         border: 1px solid #e2e8f0;
     }
 </style>
@@ -694,59 +908,99 @@
 
                 <!-- Executive Valuation & Volume KPI Stats Bar -->
                 <div class="p-4 bg-light bg-opacity-50 border-bottom" id="explorer-kpi-bar">
-                    <div class="row g-3">
-                        <div class="col-6 col-md-4 col-xl col-lg-3">
-                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
-                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Distinct SKUs</small>
-                                <div class="d-flex align-items-baseline gap-2">
-                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-distinct-skus">{{ explorer_data.summary.total_skus|default:0 }}</h4>
-                                    <small class="text-muted" style="font-size: 0.75rem;">lines</small>
+                    <div class="explorer-kpi-grid">
+                        <!-- Card 1: Distinct SKUs -->
+                        <div class="explorer-kpi-card">
+                            <div class="explorer-kpi-header">
+                                <span class="explorer-kpi-label">Distinct SKUs</span>
+                                <div class="explorer-kpi-icon icon-blue">
+                                    <i class="bi bi-diagram-3-fill"></i>
                                 </div>
-                                <small class="text-primary mt-1" style="font-size: 0.72rem;"><i class="bi bi-diagram-3 me-1"></i>Catalog Diversity</small>
+                            </div>
+                            <div class="explorer-kpi-value-wrap">
+                                <span class="explorer-kpi-value text-dark" id="kpi-distinct-skus">{{ explorer_data.summary.total_skus|default:0 }}</span>
+                                <span class="explorer-kpi-unit">lines</span>
+                            </div>
+                            <div class="explorer-kpi-footer">
+                                <span class="explorer-kpi-badge badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                                    <i class="bi bi-diagram-3 me-1"></i>Catalog Diversity
+                                </span>
                             </div>
                         </div>
 
-                        <div class="col-6 col-md-4 col-xl col-lg-3">
-                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
-                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Units</small>
-                                <div class="d-flex align-items-baseline gap-2">
-                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-units">{{ explorer_data.summary.total_units|default:0 }}</h4>
-                                    <small class="text-muted" style="font-size: 0.75rem;">pcs</small>
+                        <!-- Card 2: Total Units -->
+                        <div class="explorer-kpi-card">
+                            <div class="explorer-kpi-header">
+                                <span class="explorer-kpi-label">Total Units</span>
+                                <div class="explorer-kpi-icon icon-purple">
+                                    <i class="bi bi-boxes"></i>
                                 </div>
-                                <small class="text-secondary mt-1" style="font-size: 0.72rem;"><i class="bi bi-boxes me-1"></i>Physical Inventory</small>
+                            </div>
+                            <div class="explorer-kpi-value-wrap">
+                                <span class="explorer-kpi-value text-dark" id="kpi-total-units">{{ explorer_data.summary.total_units|default:0 }}</span>
+                                <span class="explorer-kpi-unit">pcs</span>
+                            </div>
+                            <div class="explorer-kpi-footer">
+                                <span class="explorer-kpi-badge badge rounded-pill" style="background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;">
+                                    <i class="bi bi-box-seam me-1"></i>Physical Inventory
+                                </span>
                             </div>
                         </div>
 
-                        <div class="col-6 col-md-4 col-xl col-lg-3">
-                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
-                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Total Retail MSRP</small>
-                                <div class="d-flex align-items-baseline gap-1">
-                                    <span class="text-secondary fw-semibold">$</span>
-                                    <h4 class="fw-bold text-dark mb-0 font-monospace" id="kpi-total-msrp">{{ explorer_data.summary.total_msrp|floatformat:2|default:"0.00" }}</h4>
+                        <!-- Card 3: Total Retail MSRP -->
+                        <div class="explorer-kpi-card">
+                            <div class="explorer-kpi-header">
+                                <span class="explorer-kpi-label">Total Retail MSRP</span>
+                                <div class="explorer-kpi-icon icon-slate">
+                                    <i class="bi bi-tag-fill"></i>
                                 </div>
-                                <small class="text-muted mt-1" style="font-size: 0.72rem;"><i class="bi bi-tag me-1"></i>Benchmark Value</small>
+                            </div>
+                            <div class="explorer-kpi-value-wrap">
+                                <span class="text-secondary fw-semibold fs-5">$</span>
+                                <span class="explorer-kpi-value text-dark" id="kpi-total-msrp">{{ explorer_data.summary.total_msrp|floatformat:2|default:"0.00" }}</span>
+                            </div>
+                            <div class="explorer-kpi-footer">
+                                <span class="explorer-kpi-badge badge bg-light text-muted border rounded-pill">
+                                    <i class="bi bi-calculator me-1"></i>Benchmark Value
+                                </span>
                             </div>
                         </div>
 
-                        <div class="col-6 col-md-4 col-xl col-lg-3">
-                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-white">
-                                <small class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ask / Liquidation</small>
-                                <div class="d-flex align-items-baseline gap-1">
-                                    <span class="text-success fw-bold">$</span>
-                                    <h4 class="fw-bold text-success mb-0 font-monospace" id="kpi-total-ask">{{ explorer_data.summary.total_ask|floatformat:2|default:"0.00" }}</h4>
+                        <!-- Card 4: Ask / Liquidation -->
+                        <div class="explorer-kpi-card">
+                            <div class="explorer-kpi-header">
+                                <span class="explorer-kpi-label">Ask / Liquidation</span>
+                                <div class="explorer-kpi-icon icon-emerald">
+                                    <i class="bi bi-cash-stack"></i>
                                 </div>
-                                <small class="text-success mt-1" style="font-size: 0.72rem;"><i class="bi bi-cash-stack me-1"></i>Payout / Lot Price</small>
+                            </div>
+                            <div class="explorer-kpi-value-wrap">
+                                <span class="text-success fw-bold fs-5">$</span>
+                                <span class="explorer-kpi-value text-success" id="kpi-total-ask">{{ explorer_data.summary.total_ask|floatformat:2|default:"0.00" }}</span>
+                            </div>
+                            <div class="explorer-kpi-footer">
+                                <span class="explorer-kpi-badge badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                    <i class="bi bi-wallet2 me-1"></i>Payout / Lot Price
+                                </span>
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4 col-xl col-lg-3">
-                            <div class="card h-100 border-0 shadow-xs rounded-3 p-3 bg-gradient text-white" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-                                <small class="text-white text-opacity-75 text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Blended Discount</small>
-                                <div class="d-flex align-items-baseline gap-1">
-                                    <h4 class="fw-bold text-white mb-0 font-monospace" id="kpi-discount-pct">{{ explorer_data.summary.blended_discount_pct|default:0 }}%</h4>
-                                    <small class="text-white text-opacity-90 fw-semibold ms-1" style="font-size: 0.75rem;">OFF MSRP</small>
+                        <!-- Card 5: Blended Discount -->
+                        <div class="explorer-kpi-card">
+                            <div class="explorer-kpi-header">
+                                <span class="explorer-kpi-label">Blended Discount</span>
+                                <div class="explorer-kpi-icon icon-indigo">
+                                    <i class="bi bi-graph-down-arrow"></i>
                                 </div>
-                                <small class="text-white text-opacity-75 mt-1" style="font-size: 0.72rem;"><i class="bi bi-graph-down-arrow me-1"></i>Wholesale Margin Spread</small>
+                            </div>
+                            <div class="explorer-kpi-value-wrap">
+                                <span class="explorer-kpi-value text-dark" id="kpi-discount-pct">{{ explorer_data.summary.blended_discount_pct|default:0 }}%</span>
+                                <span class="explorer-kpi-unit">OFF MSRP</span>
+                            </div>
+                            <div class="explorer-kpi-footer">
+                                <span class="explorer-kpi-badge badge rounded-pill" id="kpi-discount-badge" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe;">
+                                    <i class="bi bi-percent me-1"></i>Wholesale Spread
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -756,55 +1010,79 @@
                 <div class="p-4 border-bottom intelligence-panel" id="explorer-intelligence-section">
                     <div class="row g-4 align-items-stretch">
                         <!-- Brand Value Distribution -->
-                        <div class="col-lg-6 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-primary bg-opacity-10 text-primary p-1.5 rounded-2">
-                                            <i class="bi bi-pie-chart-fill fs-6"></i>
-                                        </span>
+                        <div class="col-lg-6">
+                            <div class="intelligence-card h-100">
+                                <div class="intelligence-card-header">
+                                    <div class="d-flex align-items-center gap-2.5">
+                                        <div class="explorer-kpi-icon icon-blue" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                            <i class="bi bi-pie-chart-fill"></i>
+                                        </div>
                                         <div>
                                             <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
-                                                Brand Allocation (% of Lot Value)
+                                                Brand Portfolio Allocation
                                             </h6>
-                                            <small class="text-muted" style="font-size: 0.72rem;">Click any brand chip to isolate matching SKUs</small>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Distribution of lot value across recognized brands</small>
                                         </div>
                                     </div>
-                                    <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" id="explorer-brand-count-badge" style="font-size: 0.7rem;">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold" id="explorer-brand-count-badge" style="font-size: 0.7rem;">
                                         0 Brands
                                     </span>
                                 </div>
-                                <!-- Multi-segment brand progress bar -->
-                                <div class="brand-progress-track mb-3" id="explorer-brand-progressbar">
-                                    <!-- Populated dynamically by JS -->
+                                <div class="intelligence-card-body">
+                                    <!-- Multi-segment brand progress bar -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1.5">
+                                            <small class="text-muted fw-semibold" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Portfolio Concentration</small>
+                                            <small class="text-muted" style="font-size: 0.7rem;">Hover segment for details</small>
+                                        </div>
+                                        <div class="brand-progress-track" id="explorer-brand-progressbar">
+                                            <!-- Populated dynamically by JS -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Structured Brand Breakdown List -->
+                                    <div class="brand-breakdown-list mb-3" id="explorer-brand-breakdown-list">
+                                        <!-- Populated dynamically by JS -->
+                                    </div>
+
+                                    <!-- Brand Chips Quick Filter -->
+                                    <div class="brand-chips-footer">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <small class="text-muted fw-semibold" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Quick Filter by Brand</small>
+                                            <small class="text-muted" style="font-size: 0.7rem;">Click to isolate SKUs</small>
+                                        </div>
+                                        <div class="brand-chips-wrap" id="explorer-brand-chips">
+                                            <!-- Populated dynamically by JS -->
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <!-- Brand Chips Scroll Container -->
-                            <div class="brand-chips-scroll-wrap mt-auto" id="explorer-brand-chips">
-                                <!-- Populated dynamically by JS -->
                             </div>
                         </div>
 
                         <!-- Top Profit Drivers Spotlight -->
-                        <div class="col-lg-6 d-flex flex-column justify-content-between">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-warning bg-opacity-15 text-warning-emphasis p-1.5 rounded-2">
-                                        <i class="bi bi-lightning-charge-fill fs-6"></i>
+                        <div class="col-lg-6">
+                            <div class="intelligence-card h-100">
+                                <div class="intelligence-card-header">
+                                    <div class="d-flex align-items-center gap-2.5">
+                                        <div class="explorer-kpi-icon icon-amber" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                            <i class="bi bi-lightning-charge-fill"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+                                                Top Profit Drivers (High-Value SKUs)
+                                            </h6>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Line items generating highest portfolio MSRP & liquidation value</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
+                                        <i class="bi bi-star-fill text-warning me-1"></i>VALUE CORE
                                     </span>
-                                    <div>
-                                        <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
-                                            Top Profit Drivers (High-Value SKUs)
-                                        </h6>
-                                        <small class="text-muted" style="font-size: 0.72rem;">Click card to isolate line item in table below</small>
+                                </div>
+                                <div class="intelligence-card-body">
+                                    <div class="row g-2.5 h-100 align-content-start" id="explorer-profit-drivers-container">
+                                        <!-- Populated dynamically by JS -->
                                     </div>
                                 </div>
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.7rem;">
-                                    <i class="bi bi-star-fill me-1"></i>VALUE CORE
-                                </span>
-                            </div>
-                            <div class="row g-2.5 mt-auto" id="explorer-profit-drivers-container">
-                                <!-- Populated dynamically by JS -->
                             </div>
                         </div>
                     </div>
@@ -1066,17 +1344,43 @@
             const msrpEl = document.getElementById('kpi-total-msrp');
             const askEl = document.getElementById('kpi-total-ask');
             const discountEl = document.getElementById('kpi-discount-pct');
+            const discountBadge = document.getElementById('kpi-discount-badge');
 
             if (skusEl) skusEl.textContent = Number(summary.total_skus || 0).toLocaleString();
-            if (unitsEl) unitsEl.textContent = Number(summary.total_units || 0).toLocaleString();
+            if (unitsEl) unitsEl.textContent = Math.round(Number(summary.total_units || 0)).toLocaleString();
             if (msrpEl) msrpEl.textContent = Number(summary.total_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             if (askEl) askEl.textContent = Number(summary.total_ask || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            if (discountEl) discountEl.textContent = `${summary.blended_discount_pct || 0}%`;
+            
+            const discountPct = Number(summary.blended_discount_pct || 0);
+            if (discountEl) {
+                discountEl.textContent = `${discountPct.toFixed(1)}%`;
+                if (discountPct > 0) {
+                    discountEl.className = 'explorer-kpi-value text-success';
+                } else {
+                    discountEl.className = 'explorer-kpi-value text-dark';
+                }
+            }
+            if (discountBadge) {
+                if (discountPct > 0) {
+                    discountBadge.innerHTML = '<i class="bi bi-graph-down-arrow me-1"></i>Wholesale Margin Spread';
+                    discountBadge.className = 'explorer-kpi-badge badge bg-success-subtle text-success border border-success-subtle rounded-pill';
+                    discountBadge.style.background = '';
+                    discountBadge.style.color = '';
+                    discountBadge.style.border = '';
+                } else {
+                    discountBadge.innerHTML = '<i class="bi bi-check2-circle me-1"></i>At MSRP Parity';
+                    discountBadge.className = 'explorer-kpi-badge badge bg-light text-muted border rounded-pill';
+                    discountBadge.style.background = '';
+                    discountBadge.style.color = '';
+                    discountBadge.style.border = '';
+                }
+            }
         }
 
         function renderBrandAllocation() {
             const brands = (explorerState.data && explorerState.data.brand_breakdown) || [];
             const barContainer = document.getElementById('explorer-brand-progressbar');
+            const breakdownContainer = document.getElementById('explorer-brand-breakdown-list');
             const chipsContainer = document.getElementById('explorer-brand-chips');
             const countBadge = document.getElementById('explorer-brand-count-badge');
             if (!barContainer || !chipsContainer) return;
@@ -1087,11 +1391,15 @@
 
             if (brands.length === 0) {
                 barContainer.innerHTML = '<div class="progress-bar bg-secondary bg-opacity-25 w-100" style="height: 12px; border-radius: 999px;"></div>';
-                chipsContainer.innerHTML = '<small class="text-muted fst-italic py-2">No brand metadata available in this lot manifest.</small>';
+                if (breakdownContainer) {
+                    breakdownContainer.innerHTML = '<div class="py-3 text-center text-muted small fst-italic">No brand metadata available in this manifest.</div>';
+                }
+                chipsContainer.innerHTML = '<small class="text-muted fst-italic py-1">No brands detected</small>';
                 return;
             }
 
             let barHtml = '';
+            let breakdownHtml = '';
             const isAllSelected = !explorerState.selectedBrand || explorerState.selectedBrand === 'all';
             let chipsHtml = `
                 <button type="button" class="brand-chip-modern ${isAllSelected ? 'active' : ''}" data-brand="all">
@@ -1104,12 +1412,35 @@
                 const color = BRAND_COLORS[idx % BRAND_COLORS.length];
                 const pct = Math.max(0, b.pct_of_value || 0);
                 const valFormatted = Number(b.total_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const skusFormatted = Number(b.skus || 0).toLocaleString();
+                const unitsFormatted = Math.round(Number(b.units || 0)).toLocaleString();
+                const isActive = !isAllSelected && explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
+
                 if (pct > 0) {
                     barHtml += `
                         <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${valFormatted})"></div>
                     `;
                 }
-                const isActive = !isAllSelected && explorerState.selectedBrand.toLowerCase() === b.brand.toLowerCase();
+
+                breakdownHtml += `
+                    <div class="brand-breakdown-row ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="Click to filter by ${escapeHtml(b.brand)}">
+                        <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+                            <span class="brand-color-dot" style="background-color: ${color};"></span>
+                            <span class="brand-name text-truncate">${escapeHtml(b.brand)}</span>
+                            <span class="badge bg-light text-muted border brand-sku-count">${skusFormatted} SKUs</span>
+                        </div>
+                        <div class="brand-bar-mini-wrap d-none d-sm-block me-3">
+                            <div class="progress" style="height: 6px; width: 70px; background: #e2e8f0; border-radius: 999px;">
+                                <div class="progress-bar" style="width: ${pct}%; background-color: ${color}; border-radius: 999px;"></div>
+                            </div>
+                        </div>
+                        <div class="text-end brand-val-wrap flex-shrink-0">
+                            <span class="fw-bold font-monospace text-dark d-block" style="font-size: 0.82rem; letter-spacing: -0.2px;">$${valFormatted}</span>
+                            <small class="text-muted" style="font-size: 0.7rem;">${pct}% &bull; ${unitsFormatted} pcs</small>
+                        </div>
+                    </div>
+                `;
+
                 chipsHtml += `
                     <button type="button" class="brand-chip-modern ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="${escapeHtml(b.brand)} &bull; $${valFormatted} (${pct}%)">
                         <span class="d-inline-block rounded-circle flex-shrink-0" style="width: 8px; height: 8px; background-color: ${color}; box-shadow: 0 0 0 2px ${isActive ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.06)'};"></span>
@@ -1120,19 +1451,39 @@
             });
 
             barContainer.innerHTML = barHtml || '<div class="progress-bar bg-primary w-100"></div>';
+            if (breakdownContainer) breakdownContainer.innerHTML = breakdownHtml;
             chipsContainer.innerHTML = chipsHtml;
 
+            // Wire up click event for brand rows
+            if (breakdownContainer) {
+                breakdownContainer.querySelectorAll('.brand-breakdown-row').forEach(row => {
+                    row.addEventListener('click', function () {
+                        const brand = this.dataset.brand;
+                        toggleBrandFilter(brand);
+                    });
+                });
+            }
+
+            // Wire up click event for chips
             chipsContainer.querySelectorAll('.brand-chip-modern').forEach(chip => {
                 chip.addEventListener('click', function () {
                     const brand = this.dataset.brand;
-                    explorerState.selectedBrand = brand;
-                    const brandSelect = document.getElementById('explorer-brand-filter');
-                    if (brandSelect) brandSelect.value = brand;
-                    explorerState.currentPage = 1;
-                    applyFiltersAndSort();
-                    renderBrandAllocation();
+                    toggleBrandFilter(brand);
                 });
             });
+        }
+
+        function toggleBrandFilter(brand) {
+            if (explorerState.selectedBrand === brand) {
+                explorerState.selectedBrand = 'all';
+            } else {
+                explorerState.selectedBrand = brand;
+            }
+            const brandSelect = document.getElementById('explorer-brand-filter');
+            if (brandSelect) brandSelect.value = explorerState.selectedBrand;
+            explorerState.currentPage = 1;
+            applyFiltersAndSort();
+            renderBrandAllocation();
         }
 
         function renderProfitDrivers() {
@@ -1141,12 +1492,12 @@
             if (!container) return;
 
             if (drivers.length === 0) {
-                container.innerHTML = '<div class="col-12 py-4 text-center text-muted small fst-italic">No high-value driver items identified in manifest.</div>';
+                container.innerHTML = '<div class="col-12 py-5 text-center text-muted small fst-italic">No high-value driver items identified in manifest.</div>';
                 return;
             }
 
             const rankClasses = ['rank-1', 'rank-2', 'rank-3', 'rank-4'];
-            const rankIcons = ['bi-trophy-fill', 'bi-award-fill', 'bi-gem', 'bi-check2-circle'];
+            const rankIcons = ['bi-trophy-fill', 'bi-award-fill', 'bi-gem', 'bi-star-fill'];
 
             let html = '';
             drivers.slice(0, 4).forEach((d, idx) => {
@@ -1154,20 +1505,24 @@
                 const unitMsrp = Number(d.orig_price_num || d.original_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const brand = d.brand && d.brand !== '-' ? d.brand : 'General';
                 const model = d.model_part_number && d.model_part_number !== '-' ? d.model_part_number : '';
-                const qty = d.available_quantity || d.qty_num || 1;
+                const rawQty = Number(d.qty_num || d.available_quantity || 1);
+                const qtyFormatted = Math.round(rawQty).toLocaleString();
                 const rankClass = rankClasses[idx] || 'rank-4';
                 const rankIcon = rankIcons[idx] || 'bi-star';
 
+                let displayName = (d.product_name && d.product_name !== '-') ? d.product_name : (model || `Line Item #${d.s_no || idx + 1}`);
+                let partDisplay = model ? `Part: ${model}` : (d.s_no ? `Item #${d.s_no}` : 'SKU Item');
+
                 html += `
-                    <div class="col-6">
-                        <div class="profit-driver-card" data-driver-name="${escapeHtml(d.product_name)}" data-driver-model="${escapeHtml(model)}" title="Click to filter table to this SKU">
+                    <div class="col-6 mb-2">
+                        <div class="profit-driver-card" data-driver-name="${escapeHtml(d.product_name || '')}" data-driver-model="${escapeHtml(model)}" title="Click to isolate SKU in table below">
                             <div>
-                                <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                                <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
                                     <div class="d-flex align-items-center gap-1.5">
                                         <span class="driver-rank-badge ${rankClass}">
                                             <i class="bi ${rankIcon}"></i>#${idx + 1}
                                         </span>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill text-truncate" style="font-size: 0.68rem; max-width: 110px; font-weight: 600;">
+                                        <span class="badge bg-light text-dark border rounded-pill text-truncate fw-semibold" style="font-size: 0.68rem; max-width: 90px;">
                                             ${escapeHtml(brand)}
                                         </span>
                                     </div>
@@ -1175,13 +1530,13 @@
                                         $${lineMsrp}
                                     </span>
                                 </div>
-                                <h6 class="fw-bold text-dark text-truncate mb-1" style="font-size: 0.81rem; line-height: 1.3;" title="${escapeHtml(d.product_name)}">
-                                    ${escapeHtml(d.product_name)}
+                                <h6 class="fw-bold text-dark text-truncate mb-1" style="font-size: 0.82rem; line-height: 1.3;" title="${escapeHtml(displayName)}">
+                                    ${escapeHtml(displayName)}
                                 </h6>
                             </div>
-                            <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light-subtle text-muted mt-1" style="font-size: 0.71rem;">
-                                <span class="font-monospace text-secondary text-truncate" style="max-width: 100px;">${escapeHtml(model || 'SKU Item')}</span>
-                                <span class="text-nowrap"><strong class="text-dark">${qty}</strong> pcs &times; $${unitMsrp}</span>
+                            <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light-subtle text-muted mt-2" style="font-size: 0.72rem;">
+                                <span class="font-monospace text-secondary text-truncate" style="max-width: 90px;" title="${escapeHtml(partDisplay)}">${escapeHtml(partDisplay)}</span>
+                                <span class="text-nowrap font-monospace"><strong class="text-dark">${qtyFormatted}</strong> pcs &times; $${unitMsrp}</span>
                             </div>
                         </div>
                     </div>
