@@ -254,9 +254,9 @@ class EmailService:
                 f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
             )
 
-        admin_email = cls.get_admin_notification_email()
+        admin_emails = cls.get_admin_notification_emails()
         subject = f"New Buyer RFQ Received: {ref} - {buyer_name}"
-        return cls.send_email(admin_email, subject, html_content, "RFQAdminAlert", context=context)
+        return cls.send_email(admin_emails, subject, html_content, "RFQAdminAlert", context=context)
 
     @classmethod
     def notify_admin_product_submitted(cls, seller_info: dict, product) -> bool:
@@ -323,9 +323,9 @@ class EmailService:
                 f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
             )
 
-        admin_email = cls.get_admin_notification_email()
+        admin_emails = cls.get_admin_notification_emails()
         subject = f"New Product Submitted for Review: {product_name} [{product_code}]"
-        return cls.send_email(admin_email, subject, html_content, "AdminProductReview", context=context)
+        return cls.send_email(admin_emails, subject, html_content, "AdminProductReview", context=context)
 
     # Backwards-compatibility alias for existing code
     notify_admin_enquiry_received = notify_admin_product_submitted
@@ -341,8 +341,131 @@ class EmailService:
                 "product_count": len(products_list),
             },
         )
-        admin_email = cls.get_admin_notification_email()
-        return cls.send_email(admin_email, "New Seller Products Submitted for Review", html_content, "ProductReview")
+        admin_emails = cls.get_admin_notification_emails()
+        return cls.send_email(admin_emails, "New Seller Products Submitted for Review", html_content, "ProductReview")
+
+    @classmethod
+    def send_product_submitted_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        action_url: str = "",
+    ) -> bool:
+        """
+        Sends an email confirmation to the seller when they submit a product listing.
+        """
+        if not to_email:
+            logger.warning("send_product_submitted_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        default_action_url = f"{frontend_base}/profile"
+
+        prod_id = getattr(product, "id", None) or (product.get("id") if isinstance(product, dict) else "")
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_code = (
+            getattr(product, "product_id", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (f"PRO-{prod_id}" if prod_id else "PRO-PENDING")
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", str(product.category))
+        elif isinstance(product, dict):
+            category_name = product.get("category", "")
+
+        brand = getattr(product, "brand_name", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", "") or (product.get("model_no") if isinstance(product, dict) else "")
+        brand_model = f"{brand} ({model_no})" if brand and model_no else (brand or model_no or "")
+
+        quantity = getattr(product, "quantity", None) or (product.get("quantity") if isinstance(product, dict) else None)
+        currency = getattr(product, "currency", "USD") or "USD"
+        liquidating_price = getattr(product, "liquidating_price", None) or (product.get("liquidating_price") if isinstance(product, dict) else None)
+        inventory_location = getattr(product, "inventory_location", "") or (product.get("inventory_location") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_code,
+            "category_name": category_name,
+            "brand_model": brand_model,
+            "quantity": quantity,
+            "currency": currency,
+            "liquidating_price": liquidating_price,
+            "inventory_location": inventory_location,
+            "action_url": action_url or default_action_url,
+            "product": product,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_submitted.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for product submitted email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Product Listing Received</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Thank you for submitting your product listing <strong>{product_name}</strong> ({product_code}). Our team is reviewing your inventory.</p>"
+                f"<p><a href='{action_url or default_action_url}'>View Your Listings</a></p>"
+            )
+
+        subject = f"Product Listing Received: {product_name} [{product_code}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductSubmitted", context=context)
+
+    @classmethod
+    def send_rfq_buyer_confirmation(
+        cls,
+        to_email: str,
+        rfq,
+        items_list=None,
+        recipient_name: str = "Valued Buyer",
+    ) -> bool:
+        """
+        Sends an official RFQ confirmation email to the buyer after submitting an RFQ basket.
+        """
+        if not to_email:
+            logger.warning("send_rfq_buyer_confirmation skipped: recipient email is missing.")
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        action_url = f"{frontend_base}/profile"
+
+        ref = getattr(rfq, "reference", "") or "RFQ-PENDING"
+        company_name = getattr(rfq, "company_name", "") or ""
+        resolved_items = items_list if items_list is not None else (rfq.items.all() if hasattr(rfq, "items") else [])
+
+        context = {
+            "rfq": rfq,
+            "items": resolved_items,
+            "contact_person": recipient_name or getattr(rfq, "contact_person", "Valued Buyer"),
+            "company_name": company_name,
+            "action_url": action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_rfq_buyer_confirmation.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for rfq buyer confirmation email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Surplus Market RFQ Confirmation</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your quotation request <strong>{ref}</strong> has been received. Our team will review your requirements.</p>"
+                f"<p><a href='{action_url}'>View Profile & RFQs</a></p>"
+            )
+
+        subject = f"Official RFQ Confirmation [{ref}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "RFQBuyerConfirm", context=context)
 
     @classmethod
     def send_product_approved_email(
@@ -639,9 +762,9 @@ class EmailService:
                 f"<p><a href='{admin_review_url}'>Review in Admin Dashboard</a></p>"
             )
 
-        admin_email = cls.get_admin_notification_email()
+        admin_emails = cls.get_admin_notification_emails()
         subject = f"New Lot Submitted for Review: {lot_title} [{lot_number}]"
-        return cls.send_email(admin_email, subject, html_content, "AdminLotReview", context=context)
+        return cls.send_email(admin_emails, subject, html_content, "AdminLotReview", context=context)
 
     @classmethod
     def send_lot_approved_email(
@@ -865,7 +988,7 @@ class EmailService:
 
         backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
         admin_url = f"{backend_base}/admin/enquiries/contact-us/"
-        admin_email = cls.get_admin_notification_email()
+        admin_emails = cls.get_admin_notification_emails()
 
         context = {
             "enquiry": enquiry,
@@ -880,7 +1003,7 @@ class EmailService:
 
         results = {"admin_email": False, "user_email": False}
 
-        # 1. Admin Alert Email
+        # 1. Admin Alert Email (sent to all active admins)
         try:
             admin_html = render_to_string(
                 "FinalTemplates/partials/email_partials/email_contact_us_admin_alert.html",
@@ -899,7 +1022,7 @@ class EmailService:
             )
 
         admin_subject = f"New Contact Enquiry from {full_name} [{enquiry_type}]"
-        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "ContactAdminAlert", context=context)
+        results["admin_email"] = cls.send_email(admin_emails, admin_subject, admin_html, "ContactAdminAlert", context=context)
 
         # 2. User Confirmation Email
         if email:
@@ -938,7 +1061,7 @@ class EmailService:
 
         backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
         admin_url = f"{backend_base}/admin/enquiries/partnership/"
-        admin_email = cls.get_admin_notification_email()
+        admin_emails = cls.get_admin_notification_emails()
 
         context = {
             "enquiry": enquiry,
@@ -954,7 +1077,7 @@ class EmailService:
 
         results = {"admin_email": False, "user_email": False}
 
-        # 1. Admin Alert Email
+        # 1. Admin Alert Email (sent to all active admins)
         try:
             admin_html = render_to_string(
                 "FinalTemplates/partials/email_partials/email_partnership_admin_alert.html",
@@ -974,7 +1097,7 @@ class EmailService:
             )
 
         admin_subject = f"New Partnership Proposal from {name} [{partnership_interest}]"
-        results["admin_email"] = cls.send_email(admin_email, admin_subject, admin_html, "PartnershipAdminAlert", context=context)
+        results["admin_email"] = cls.send_email(admin_emails, admin_subject, admin_html, "PartnershipAdminAlert", context=context)
 
         # 2. Partner/User Confirmation Email
         if email:
@@ -1169,7 +1292,7 @@ def create_admin_notification(
         if not admin_obj:
             admin_obj = AdminDetails.objects.filter(username__iexact=adm_str).first()
 
-    valid_types = ("ADMIN_REGISTRATION", "USER_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "SYSTEM")
+    valid_types = ("ADMIN_REGISTRATION", "USER_REGISTRATION", "APPROVAL", "ENQUIRY", "LISTING", "RFQ", "SYSTEM")
     n_type = str(notification_type).upper()
     if n_type not in valid_types:
         n_type = "SYSTEM"

@@ -2035,6 +2035,7 @@ class AdminNotification(models.Model):
         ("APPROVAL", "Approval"),
         ("ENQUIRY", "Enquiry"),
         ("LISTING", "Listing"),
+        ("RFQ", "RFQ"),
         ("SYSTEM", "System"),
     )
 

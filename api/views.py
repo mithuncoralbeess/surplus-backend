@@ -526,31 +526,43 @@ def submit_lot_enquiry(request):
     vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id")
     if vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
-        if vendor_obj:
-            lot.vendor = vendor_obj
-            lot.save(update_fields=["vendor"])
-            try:
-                from AdminApp.services import create_vendor_notification, EmailService
-                create_vendor_notification(
-                    vendor=vendor_obj,
-                    title="Lot Manifest Uploaded",
-                    message=f"Batch '{lot.lot_number}' is processing.",
-                    notification_type="LISTING",
-                    action_url="/profile"
-                )
-                EmailService.send_lot_submitted_email(
-                    to_email=vendor_obj.email,
-                    lot=lot,
-                    recipient_name=vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username or "Valued Seller"
-                )
-            except Exception as e:
-                print(f"Error creating vendor lot notification/emails: {e}")
+
+    s_email = (vendor_obj.email if vendor_obj else (request.data.get("email") or request.data.get("user_email") or request.data.get("seller_email") or "")).strip()
+    if not vendor_obj and s_email:
+        vendor_obj = VendorDetails.objects.filter(email__iexact=s_email).first()
+
+    if vendor_obj:
+        lot.vendor = vendor_obj
+        lot.save(update_fields=["vendor"])
+        try:
+            from AdminApp.services import create_vendor_notification
+            create_vendor_notification(
+                vendor=vendor_obj,
+                title="Lot Manifest Uploaded",
+                message=f"Batch '{lot.lot_number}' has been received and is pending admin review.",
+                notification_type="LISTING",
+                action_url="/profile"
+            )
+        except Exception as e:
+            print(f"Error creating vendor lot notification: {e}")
+
+    s_name = (vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username) if vendor_obj else (request.data.get("name") or request.data.get("full_name") or "Valued Seller")
+
+    # Send confirmation email to seller
+    if s_email:
+        try:
+            from AdminApp.services import EmailService
+            EmailService.send_lot_submitted_email(
+                to_email=s_email,
+                lot=lot,
+                recipient_name=s_name
+            )
+        except Exception as e:
+            print(f"Error sending seller lot submitted email: {e}")
 
     # Always notify admin via in-app alert and email
     try:
         from AdminApp.services import create_admin_notification, EmailService
-        s_name = (vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username) if vendor_obj else (request.data.get("name") or request.data.get("full_name") or "Seller")
-        s_email = (vendor_obj.email if vendor_obj else (request.data.get("email") or request.data.get("user_email") or ""))
         EmailService.notify_admin_lot_submitted(
             seller_info={
                 "name": s_name,
@@ -1040,6 +1052,21 @@ def submit_partnership_enquiry(request):
         except Exception as e:
             logger.error(f"[submit_partnership_enquiry] Admin notification error: {e}")
 
+        # In-app Vendor Notification (if registered vendor)
+        try:
+            vendor_match = VendorDetails.objects.filter(email__iexact=enquiry.email).first()
+            if vendor_match:
+                from AdminApp.services import create_vendor_notification
+                create_vendor_notification(
+                    vendor=vendor_match,
+                    title="Partnership Proposal Received",
+                    message=f"Thank you for submitting your partnership proposal ({enquiry.partnership_interest or 'Strategic Partnership'}). Our team is reviewing it.",
+                    notification_type="SYSTEM",
+                    action_url="/profile"
+                )
+        except Exception as e:
+            logger.error(f"[submit_partnership_enquiry] Vendor notification error: {e}")
+
         # Email Notifications (Admin Alert + Partner Confirmation)
         try:
             from AdminApp.services import EmailService
@@ -1099,6 +1126,21 @@ def submit_contact_us_enquiry(request):
             )
         except Exception as e:
             logger.error(f"[submit_contact_us_enquiry] Admin notification error: {e}")
+
+        # In-app Vendor Notification (if registered vendor)
+        try:
+            vendor_match = VendorDetails.objects.filter(email__iexact=enquiry.email).first()
+            if vendor_match:
+                from AdminApp.services import create_vendor_notification
+                create_vendor_notification(
+                    vendor=vendor_match,
+                    title="Enquiry Received",
+                    message=f"Thank you for contacting us regarding {enquiry.enquiry_type or 'General Inquiry'}. Our support team will review your message shortly.",
+                    notification_type="SYSTEM",
+                    action_url="/profile"
+                )
+        except Exception as e:
+            logger.error(f"[submit_contact_us_enquiry] Vendor notification error: {e}")
 
         # Email Notifications (Admin Alert + User Confirmation)
         try:
@@ -1380,36 +1422,17 @@ def submit_rfq_enquiry(request):
         except Exception as e:
             print(f"[submit_rfq_enquiry] Vendor notification error: {e}")
 
+    # 3. Buyer Confirmation Email
     try:
-        from django.template.loader import render_to_string
-        from django.core.mail import send_mail
-        from django.conf import settings
-
-        subject = f"Official RFQ Confirmation [{rfq.reference}] - Surplus Market"
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Surplus Market <inquiry@surplusmarket.com>')
-        context = {
-            "rfq": rfq,
-            "items": rfq.items.all(),
-            "contact_person": contact_person,
-            "company_name": company_name,
-        }
-        try:
-            html_message = render_to_string("FinalTemplates/partials/email_partials/email_rfq_buyer_confirmation.html", context)
-        except Exception:
-            html_message = f"<h2>Surplus Market RFQ Confirmation</h2><p>Reference: <strong>{rfq.reference}</strong></p><p>Total Units: {rfq.total_units}</p><p>Estimated Value: {rfq.currency} {rfq.estimated_value}</p>"
-
-        plain_message = f"Hello {contact_person},\n\nYour quotation request {rfq.reference} has been received. Our verification team will review your requirements and provide an official proforma quotation.\n\nThank you,\nSurplus Market Team"
-
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            html_message=html_message,
-            from_email=from_email,
-            recipient_list=[email],
-            fail_silently=True,
+        from AdminApp.services import EmailService
+        EmailService.send_rfq_buyer_confirmation(
+            to_email=email,
+            rfq=rfq,
+            items_list=rfq.items.all(),
+            recipient_name=contact_person
         )
     except Exception as e:
-        print(f"[submit_rfq_enquiry] Email delivery error: {e}")
+        print(f"[submit_rfq_enquiry] Buyer email delivery error: {e}")
 
     return Response({
         "success": True,
@@ -1813,25 +1836,39 @@ def submit_product_request(request):
         }
     }, status=status.HTTP_201_CREATED)
 
+    seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else (data.get("name") or data.get("full_name") or "Guest Seller")
+    seller_email = (product.vendor.email if product.vendor else (data.get("email") or data.get("user_email") or data.get("seller_email") or ""))
+    seller_phone = (product.vendor.phone if product.vendor else (data.get("phone") or data.get("mobile") or ""))
+
+    # 1. Vendor In-App Notification
     if product.vendor:
         try:
             from AdminApp.services import create_vendor_notification
             create_vendor_notification(
                 vendor=product.vendor,
                 title="Product Under Review",
-                message=f"Your listing for '{product.product_name}' was received.",
+                message=f"Your listing for '{product.product_name}' ({product.product_id}) was received and is pending admin review.",
                 notification_type="LISTING",
                 action_url="/profile"
             )
         except Exception as e:
             print(f"Error creating product submit notification: {e}")
 
+    # 2. Seller Confirmation Email
+    if seller_email:
+        try:
+            from AdminApp.services import EmailService
+            EmailService.send_product_submitted_email(
+                to_email=seller_email,
+                product=product,
+                recipient_name=seller_label
+            )
+        except Exception as e:
+            print(f"Error sending seller product confirmation email: {e}")
+
+    # 3. Admin In-App Alert and Admin Email
     try:
         from AdminApp.services import create_admin_notification, EmailService
-        seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else (data.get("name") or data.get("full_name") or "Guest Seller")
-        seller_email = (product.vendor.email if product.vendor else (data.get("email") or data.get("user_email") or ""))
-        seller_phone = (product.vendor.phone if product.vendor else (data.get("phone") or data.get("mobile") or ""))
-
         create_admin_notification(
             title=f"New Product Enquiry: {product.product_id} - {product.product_name}",
             message=f"New listing '{product.product_name}' ({product.product_id}) submitted by {seller_label} and is pending review.",
