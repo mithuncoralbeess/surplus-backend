@@ -262,24 +262,24 @@
                         </h6>
                         <div class="d-flex flex-wrap gap-3">
                             <div class="inline-card border-left-success py-2 px-3 bg-white shadow-sm rounded">
-                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-success me-1"></i> Current Price</span>
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-success me-1"></i> Price</span>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
-                                    <span class="fs-5 fw-medium text-dark">{{ product_data.current_price|default:"N/A" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{{ product_data.current_price|default:product_data.liquidating_price|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="inline-card border-left-primary py-2 px-3 bg-white shadow-sm rounded">
-                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-cash me-1 text-primary"></i> Liquidating Price</span>
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-cash me-1 text-primary"></i> Liquidation Price</span>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
                                     <span class="fs-5 fw-medium text-dark">{{ product_data.liquidating_price|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="inline-card border-left-warning py-2 px-3 bg-white shadow-sm rounded">
-                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-clock-history text-warning me-1"></i> Previous Price</span>
+                                <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-receipt text-warning me-1"></i> MSRP</span>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
-                                    <span class="fs-5 fw-medium text-dark">{{ product_data.previous_price|default:"N/A" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{{ product_data.msrp|default:product_data.previous_price|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="inline-card border-left-danger py-2 px-3 bg-white shadow-sm rounded">
@@ -346,6 +346,12 @@
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
                                     <span class="text-dark fw-medium">{{ product_data.manufacturing_country|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Country</span>
+                                    <span class="text-dark fw-bold"><i class="bi bi-globe text-primary me-1"></i> {{ enquiry.inventory_country|default:product_data.inventory_country|default:"N/A" }}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
@@ -786,7 +792,11 @@
                             <label class="form-label small fw-semibold text-dark">Warranty</label>
                             <input type="text" class="form-control" name="warranty" value="{{ enquiry.warranty|default:product_data.warranty|default:'' }}">
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-dark">Inventory Country</label>
+                            <input type="text" class="form-control" name="inventory_country" value="{{ enquiry.inventory_country|default:product_data.inventory_country|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label small fw-semibold text-dark">Inventory Location</label>
                             <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
                         </div>

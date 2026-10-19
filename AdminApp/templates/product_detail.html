@@ -249,25 +249,25 @@
                 
                 <div class="d-flex flex-wrap gap-3">
                     <div class="inline-card border-left-success flex-fill shadow-sm">
-                        <span class="inline-label"><i class="bi bi-tag-fill text-success"></i> Current Price</span>
+                        <span class="inline-label"><i class="bi bi-tag-fill text-success"></i> Price</span>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-success-subtle text-success me-2 fs-6">{{ product.currency }}</span>
-                            <span class="fs-4 fw-bold text-dark">{{ product.current_price|floatformat:2 }}</span>
+                            <span class="fs-4 fw-bold text-dark">{{ product.current_price|default:product.liquidating_price|floatformat:2 }}</span>
                         </div>
                     </div>
                     <div class="inline-card border-left-primary flex-fill shadow-sm">
-                        <span class="inline-label"><i class="bi bi-cash text-primary"></i> Liquidating Price</span>
+                        <span class="inline-label"><i class="bi bi-cash text-primary"></i> Liquidation Price</span>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-primary-subtle text-primary me-2 fs-6">{{ product.currency }}</span>
                             <span class="fs-4 fw-bold text-dark">{{ product.liquidating_price|floatformat:2 }}</span>
                         </div>
                     </div>
                     <div class="inline-card border-left-warning flex-fill shadow-sm">
-                        <span class="inline-label"><i class="bi bi-clock-history text-warning"></i> Previous / Market Price</span>
+                        <span class="inline-label"><i class="bi bi-receipt text-warning"></i> MSRP</span>
                         <div class="d-flex align-items-center">
-                            {% if product.previous_price %}
+                            {% if product.msrp or product.previous_price %}
                             <span class="badge bg-warning-subtle text-warning me-2 fs-6">{{ product.currency }}</span>
-                            <span class="fs-4 fw-bold text-dark">{{ product.previous_price|floatformat:2 }}</span>
+                            <span class="fs-4 fw-bold text-dark">{{ product.msrp|default:product.previous_price|floatformat:2 }}</span>
                             {% else %}
                             <span class="fs-5 fw-medium text-muted">N/A</span>
                             {% endif %}
@@ -359,6 +359,12 @@
                         <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Manufacturing Country</span>
                             <span class="text-dark fw-medium">{{ product.manufacturing_country|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Country</span>
+                            <span class="text-dark fw-bold"><i class="bi bi-globe text-primary me-1"></i> {{ product.inventory_country|default:"N/A" }}</span>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">

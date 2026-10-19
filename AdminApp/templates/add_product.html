@@ -331,6 +331,36 @@
                     </div>
                     <div class="card-body p-4">
 
+                        <!-- Inventory Country & Inventory Location -->
+                        <div class="row g-4 mb-4">
+                            <!-- Inventory Country * -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Inventory Country <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Physical warehouse country</span>
+                                </label>
+                                <select class="form-select form-select-custom" name="inventory_country" id="inventoryCountrySelect" required>
+                                    <option value="" disabled {% if not form_data.inventory_country %}selected{% endif %}>-- Select Inventory Country --</option>
+                                    {% for c in countries %}
+                                    <option value="{{ c }}" {% if form_data.inventory_country == c or not form_data.inventory_country and c == 'United Arab Emirates' %}selected{% endif %}>{{ c }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Inventory Location * -->
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span>Inventory Location <span class="text-danger">*</span></span>
+                                    <span class="text-muted fw-normal">Warehouse / Facility / Area / City</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-geo-alt-fill text-danger opacity-75"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0" name="inventory_location" id="inventoryLocationInput"
+                                        value="{{ form_data.inventory_location|default:'' }}" placeholder="e.g. Warehouse 4B, Jebel Ali Free Zone, Dubai" required>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row g-4 mb-4">
                             <!-- Manufacturing Country * -->
                             <div class="col-md-6">
@@ -441,7 +471,7 @@
                             <!-- Original / Retail MSRP Price (Per Unit) * -->
                             <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Original / Retail MSRP Price (Per Unit) <span class="text-danger">*</span></span>
+                                    <span>MSRP <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol bg-light fw-bold text-secondary">$</span>
@@ -452,11 +482,11 @@
                                 <div class="form-text small mt-1">Manufacturer standard catalog unit price.</div>
                             </div>
 
-                            <!-- Liquidating / Surplus Price (Per Unit) * -->
+                            <!-- Liquidation Price (Per Unit) * -->
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <label class="form-label-custom mb-0">
-                                        <span>Liquidating / Surplus Price (Per Unit) <span class="text-danger">*</span></span>
+                                        <span>Liquidation Price (Per Unit) <span class="text-danger">*</span></span>
                                     </label>
                                     <button type="button" id="btnApplyMaxPrice"
                                         class="btn btn-sm btn-outline-success py-1 px-2.5 fw-semibold d-none rounded-pill"
@@ -508,7 +538,7 @@
 
                                 <div class="col-sm-4">
                                     <div class="metric-kpi-tile p-3 rounded-3 border bg-white shadow-xs">
-                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Buyer Price (+10%)</div>
+                                        <div class="text-muted small fw-bold text-uppercase tracking-wider mb-2">Price (Buyer Price / +10%)</div>
                                         <div class="fw-bold font-monospace fs-4 text-dark mb-1" id="buyerPricePreview">$0.00</div>
                                         <div class="text-muted small" style="font-size: 0.75rem;">
                                             <i class="bi bi-shield-check me-1"></i>Platform markup included
@@ -837,7 +867,7 @@
                             <i class="bi bi-circle text-muted"></i> <span>Product Title &amp; Category</span>
                         </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkCountry">
-                            <i class="bi bi-circle text-muted"></i> <span>Manufacturing Country</span>
+                            <i class="bi bi-circle text-muted"></i> <span>Inventory Country &amp; Location</span>
                         </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkPricing">
                             <i class="bi bi-circle text-muted"></i> <span>Valid Pricing (60%+ Discount)</span>
@@ -1261,6 +1291,8 @@
         const previewCategoryBadge = document.getElementById("previewCategoryBadge");
         const previewSubcatBadge = document.getElementById("previewSubcatBadge");
         const previewOriginBadge = document.getElementById("previewOriginBadge");
+        const inventoryCountrySelect = document.getElementById("inventoryCountrySelect");
+        const inventoryLocationInput = document.getElementById("inventoryLocationInput");
         const countrySelect = document.getElementById("countrySelect");
         const previewDiscountPill = document.getElementById("previewDiscountPill");
 
@@ -1462,8 +1494,8 @@
             setCheckItem(checkTitle, titleOk);
             if (titleOk) count++;
 
-            // 3. Country
-            const countryOk = Boolean(countrySelect && countrySelect.value);
+            // 3. Inventory Country & Location
+            const countryOk = Boolean(inventoryCountrySelect && inventoryCountrySelect.value && inventoryLocationInput && inventoryLocationInput.value.trim() && countrySelect && countrySelect.value);
             setCheckItem(checkCountry, countryOk);
             if (countryOk) count++;
 
@@ -1951,6 +1983,21 @@
             });
         }
 
+        if (inventoryCountrySelect) {
+            inventoryCountrySelect.addEventListener("change", function () {
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
+        if (inventoryLocationInput) {
+            inventoryLocationInput.addEventListener("input", function () {
+                this.classList.remove("is-invalid");
+                updateLivePreview();
+                updateReadinessChecklist();
+            });
+        }
+
         if (sellerNameInput) sellerNameInput.addEventListener("input", updateReadinessChecklist);
         if (sellerPhoneInput) sellerPhoneInput.addEventListener("input", updateReadinessChecklist);
         if (descriptionInput) descriptionInput.addEventListener("input", updateReadinessChecklist);
@@ -1993,6 +2040,20 @@
                     e.preventDefault();
                     alert("Please select a Subcategory.");
                     if (subcategorySelect) subcategorySelect.focus();
+                    return false;
+                }
+
+                if (!inventoryCountrySelect || !inventoryCountrySelect.value) {
+                    e.preventDefault();
+                    alert("Please select the Inventory Country.");
+                    if (inventoryCountrySelect) inventoryCountrySelect.focus();
+                    return false;
+                }
+
+                if (!inventoryLocationInput || !inventoryLocationInput.value.trim()) {
+                    e.preventDefault();
+                    alert("Please enter the Inventory Location.");
+                    if (inventoryLocationInput) inventoryLocationInput.focus();
                     return false;
                 }
 

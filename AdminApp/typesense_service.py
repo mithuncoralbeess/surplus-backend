@@ -132,8 +132,11 @@ def get_collection_schema() -> Dict[str, Any]:
             {"name": "model_no", "type": "string", "optional": True},
             {"name": "condition", "type": "string", "facet": True, "optional": True},
             {"name": "country", "type": "string", "facet": True, "optional": True},
+            {"name": "inventory_country", "type": "string", "facet": True, "optional": True},
+            {"name": "manufacturing_country", "type": "string", "facet": True, "optional": True},
             {"name": "city", "type": "string", "facet": True, "optional": True},
             {"name": "location", "type": "string", "facet": True, "optional": True},
+            {"name": "inventory_location", "type": "string", "optional": True},
             {"name": "currency", "type": "string", "facet": True},
             {"name": "price", "type": "float"},
             {"name": "price_usd", "type": "float", "facet": True, "sort": True},
@@ -229,10 +232,8 @@ def product_to_document(product) -> Optional[Dict[str, Any]]:
 
     # Locations
     loc = product.inventory_location or ""
-    country = product.manufacturing_country or ""
-    city = ""
-    if loc and not country:
-        country = loc
+    inv_country = getattr(product, "inventory_country", "") or ""
+    mfg_country = product.manufacturing_country or ""
 
     return {
         "id": f"product_{product.id}",
@@ -249,9 +250,12 @@ def product_to_document(product) -> Optional[Dict[str, Any]]:
         "brand": product.brand_name or "",
         "model_no": product.model_no or "",
         "condition": "Surplus",
-        "country": country,
-        "city": city,
-        "location": loc or country,
+        "country": inv_country,
+        "city": "",
+        "location": loc,
+        "inventory_location": loc,
+        "inventory_country": inv_country,
+        "manufacturing_country": mfg_country,
         "currency": curr,
         "price": price_f,
         "price_usd": price_usd_f,
@@ -320,9 +324,8 @@ def lot_to_document(lot) -> Optional[Dict[str, Any]]:
         created_epoch = int(datetime.now(timezone.utc).timestamp())
 
     # Location details
-    country = getattr(lot, "inventory_country", None) or lot.inventory_location or ""
-    city = getattr(lot, "inventory_city", None) or ""
-    loc_combined = f"{city}, {country}".strip(" ,") if city else country
+    inv_country = getattr(lot, "inventory_country", "") or ""
+    inv_location = lot.inventory_location or ""
 
     # Units and pallets
     total_units = int(lot.total_units_quantity or 0)
@@ -344,9 +347,11 @@ def lot_to_document(lot) -> Optional[Dict[str, Any]]:
         "brand": lot.key_brands_included or "",
         "model_no": "",
         "condition": lot.condition or "Liquidation Lot",
-        "country": country,
-        "city": city,
-        "location": loc_combined,
+        "location": inv_location,
+        "inventory_location": inv_location,
+        "inventory_country": inv_country,
+        "country": inv_country,
+        "city": "",
         "currency": curr,
         "price": price_f,
         "price_usd": price_usd_f,

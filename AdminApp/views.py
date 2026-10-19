@@ -1742,25 +1742,35 @@ def seller_enquiry_edit_api(request, enquiry_id):
             product.liquidating_price = float(data["liquidating_price"])
         except (ValueError, TypeError):
             pass
+    elif "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
+        try:
+            product.liquidating_price = float(data["liquidation_price"])
+        except (ValueError, TypeError):
+            pass
     elif "price" in data and data["price"] not in (None, ""):
         try:
             product.liquidating_price = float(data["price"])
         except (ValueError, TypeError):
             pass
 
-    if "previous_price" in data and data["previous_price"] not in (None, ""):
+    if "msrp" in data and data["msrp"] not in (None, ""):
         try:
-            product.previous_price = float(data["previous_price"])
+            product.msrp = float(data["msrp"])
+        except (ValueError, TypeError):
+            pass
+    elif "previous_price" in data and data["previous_price"] not in (None, ""):
+        try:
+            product.msrp = float(data["previous_price"])
         except (ValueError, TypeError):
             pass
     elif "original_price" in data and data["original_price"] not in (None, ""):
         try:
-            product.previous_price = float(data["original_price"])
+            product.msrp = float(data["original_price"])
         except (ValueError, TypeError):
             pass
     elif "discount_price" in data and data["discount_price"] not in (None, ""):
         try:
-            product.previous_price = float(data["discount_price"])
+            product.msrp = float(data["discount_price"])
         except (ValueError, TypeError):
             pass
 
@@ -1807,6 +1817,8 @@ def seller_enquiry_edit_api(request, enquiry_id):
 
     if "inventory_location" in data:
         product.inventory_location = str(data["inventory_location"]).strip()
+    if "inventory_country" in data:
+        product.inventory_country = str(data["inventory_country"]).strip()
     if "manufacturing_country" in data:
         product.manufacturing_country = str(data["manufacturing_country"]).strip()
     if "manufacturing_year" in data and data["manufacturing_year"] not in (None, ""):
@@ -2036,7 +2048,8 @@ def seller_enquiry_detail_view(request, enquiry_id):
         ("product_category", "Product Category", True, ["select product category", "product category", "category"]),
         ("brand_name", "Brand Name", False, ["brand_name", "brand name", "brand"]),
         ("model_no", "Model No. / Part Number", False, ["model no. / part number", "model no", "part number", "model number"]),
-        ("manufacturing_country", "Manufacturing Country", True, ["select manufacturing country", "manufacturing country", "country"]),
+        ("manufacturing_country", "Manufacturing Country", True, ["select manufacturing country", "manufacturing country"]),
+        ("inventory_country", "Inventory Country", False, ["inventory_country", "inventory country", "stock country", "country"]),
         ("inventory_location", "Inventory Location", False, ["inventory_location", "inventory location", "location", "warehouse location"]),
         ("manufacturing_year", "Manufacturing Year", False, ["manufacturing year", "year"]),
         ("dimensions", "Dimensions", False, ["dimensions", "dimension"]),
@@ -2087,6 +2100,7 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "brand_name": enquiry.brand,
         "model_no": enquiry.model_no,
         "manufacturing_country": enquiry.manufacturing_country,
+        "inventory_country": getattr(enquiry, "inventory_country", "") or "",
         "inventory_location": enquiry.inventory_location,
         "manufacturing_year": enquiry.manufacturing_year,
         "dimensions": enquiry.dimensions,
@@ -2211,6 +2225,16 @@ def lot_enquiry_edit_api(request, enquiry_id):
     if "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
         try:
             lot.ask_price_surplus_payout = float(data["liquidation_price"])
+        except (ValueError, TypeError):
+            pass
+    elif "liquidating_price" in data and data["liquidating_price"] not in (None, ""):
+        try:
+            lot.ask_price_surplus_payout = float(data["liquidating_price"])
+        except (ValueError, TypeError):
+            pass
+    elif "price" in data and data["price"] not in (None, ""):
+        try:
+            lot.ask_price_surplus_payout = float(data["price"])
         except (ValueError, TypeError):
             pass
     if "currency" in data and str(data["currency"]).strip():
@@ -4775,7 +4799,11 @@ def add_product_view(request):
         subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
         brand_name = (request.POST.get("brand_name") or request.POST.get("brand") or "").strip()
         model_no = (request.POST.get("model_no") or request.POST.get("sku") or "").strip()
+        inventory_country = request.POST.get("inventory_country", "").strip()
+        inventory_location = request.POST.get("inventory_location", "").strip()
         manufacturing_country = request.POST.get("manufacturing_country", "").strip()
+        if not inventory_location:
+            inventory_location = seller_location.strip()
 
         manufacturing_year_str = request.POST.get("manufacturing_year", "").strip()
         manufacturing_year = int(manufacturing_year_str) if (manufacturing_year_str and manufacturing_year_str.isdigit()) else None
@@ -4795,13 +4823,13 @@ def add_product_view(request):
         if len(currency) > 3 and "-" in currency:
             currency = currency.split("-")[0].strip()
 
-        msrp_str = request.POST.get("msrp", "0").strip()
+        msrp_str = (request.POST.get("msrp") or "0").strip()
         try:
             msrp = Decimal(msrp_str)
         except Exception:
             msrp = Decimal("0.00")
 
-        lp_str = request.POST.get("liquidating_price", "0").strip()
+        lp_str = (request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price") or "0").strip()
         try:
             liquidating_price = Decimal(lp_str)
         except Exception:
@@ -4933,7 +4961,7 @@ def add_product_view(request):
                 full_name=seller_name.strip() or f_name,
                 mobile_number=clean_mobile,
                 company_name=seller_company.strip(),
-                business_location=seller_location.strip() or manufacturing_country,
+                business_location=seller_location.strip(),
                 category_interested=[category_obj.name] if category_obj else [],
                 business_type=category_obj.name if category_obj else "",
                 user_type="SELLER",
@@ -4970,6 +4998,8 @@ def add_product_view(request):
             "intake_admin_email": admin_user.email,
             "seller_name": seller_name,
             "seller_phone": clean_mobile,
+            "inventory_country": inventory_country,
+            "inventory_location": inventory_location,
         }
         product = Product.objects.create(
             admin=admin_user,
@@ -4982,7 +5012,8 @@ def add_product_view(request):
             brand_name=brand_name,
             model_no=model_no,
             manufacturing_country=manufacturing_country,
-            inventory_location=seller_location.strip() or manufacturing_country,
+            inventory_country=inventory_country,
+            inventory_location=inventory_location,
             manufacturing_year=manufacturing_year,
             dimensions=dimensions,
             expiry_date=expiry_date,
@@ -5205,12 +5236,9 @@ def add_lot_view(request):
         inventory_stock_age = request.POST.get("inventory_stock_age", "Current / < 6 Months").strip()
         third_party_certificate_available = request.POST.get("third_party_certificate_available") in ("on", "true", "1")
         inventory_country = request.POST.get("inventory_country", "").strip()
-        inventory_city = request.POST.get("inventory_city", "").strip()
         inventory_location = request.POST.get("inventory_location", "").strip()
-        if not inventory_location and (inventory_city or inventory_country):
-            inventory_location = ", ".join([p for p in [inventory_city, inventory_country] if p])
         if not inventory_location:
-            inventory_location = seller_location
+            inventory_location = seller_location.strip()
 
         try:
             number_of_distinct_skus = int(request.POST.get("number_of_distinct_skus", 0) or 0)
@@ -5238,12 +5266,12 @@ def add_lot_view(request):
         # --- 4. Pricing & Commercial Terms ---
         currency = request.POST.get("currency", "USD").strip()
         try:
-            total_est_retail_value_msrp = float(request.POST.get("total_est_retail_value_msrp", 0.0) or 0.0)
+            total_est_retail_value_msrp = float(request.POST.get("total_est_retail_value_msrp") or request.POST.get("msrp") or 0.0)
         except (ValueError, TypeError):
             total_est_retail_value_msrp = 0.0
 
         try:
-            ask_price_surplus_payout = float(request.POST.get("ask_price_surplus_payout", 0.0) or 0.0)
+            ask_price_surplus_payout = float(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price") or 0.0)
         except (ValueError, TypeError):
             ask_price_surplus_payout = 0.0
 
@@ -5384,7 +5412,6 @@ def add_lot_view(request):
             "seller_company": seller_company or (vendor.company_name if vendor else ""),
             "seller_location": seller_location or (vendor.business_location if vendor else ""),
             "inventory_country": inventory_country,
-            "inventory_city": inventory_city,
             "inventory_location": inventory_location,
             "warehouse_images": warehouse_images,
             "third_party_documents": third_party_documents,
@@ -5411,7 +5438,6 @@ def add_lot_view(request):
             third_party_certificate_available=third_party_certificate_available,
             third_party_documents=third_party_documents,
             inventory_country=inventory_country,
-            inventory_city=inventory_city,
             inventory_location=inventory_location,
             number_of_distinct_skus=number_of_distinct_skus,
             total_units_quantity=total_units_quantity,

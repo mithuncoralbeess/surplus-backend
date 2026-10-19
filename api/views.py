@@ -1597,9 +1597,24 @@ def submit_product_request(request):
         data.get('sku') or ''
     ).strip()
 
-    # 5. Manufacturing Country & Inventory Location
-    manufacturing_country = (data.get('country') or data.get('manufacturing_country') or data.get('manufacturingCountry') or '').strip()
-    inventory_location = (data.get('inventory_location') or data.get('inventoryLocation') or data.get('location') or data.get('warehouse_location') or data.get('stock_location') or '').strip()
+    # 5. Manufacturing Country, Inventory Country & Inventory Location
+    inventory_country = (
+        data.get('inventory_country') or 
+        data.get('inventoryCountry') or 
+        data.get('country') or ''
+    ).strip()
+    manufacturing_country = (
+        data.get('manufacturing_country') or 
+        data.get('manufacturingCountry') or ''
+    ).strip()
+
+    inventory_location = (
+        data.get('inventory_location') or 
+        data.get('inventoryLocation') or 
+        data.get('location') or 
+        data.get('warehouse_location') or 
+        data.get('stock_location') or ''
+    ).strip()
 
     # 6. Manufacturing Year
     manufacturing_year = None
@@ -1641,7 +1656,13 @@ def submit_product_request(request):
 
     currency = str(data.get('currency') or 'USD').strip().upper()
 
-    lp_val = data.get('liquidating_price') or data.get('liquidatingPrice') or data.get('price') or 0
+    lp_val = (
+        data.get('liquidating_price') or 
+        data.get('liquidation_price') or 
+        data.get('liquidatingPrice') or 
+        data.get('liquidationPrice') or 
+        data.get('price') or 0
+    )
     try:
         liquidating_price = Decimal(str(lp_val).strip())
     except Exception:
@@ -1720,6 +1741,7 @@ def submit_product_request(request):
         brand_name=brand_name,
         model_no=model_no,
         manufacturing_country=manufacturing_country,
+        inventory_country=inventory_country,
         inventory_location=inventory_location,
         manufacturing_year=manufacturing_year,
         dimensions=dimensions,
@@ -1811,16 +1833,18 @@ def submit_product_request(request):
             "subcategory_id": product.subcategory_id,
             "brand_name": product.brand_name,
             "model_no": product.model_no,
-            "country": product.manufacturing_country,
+            "inventory_country": product.inventory_country,
             "inventory_location": product.inventory_location,
+            "location": product.inventory_location,
+            "manufacturing_country": product.manufacturing_country,
             "manufacturing_year": product.manufacturing_year,
             "dimensions": product.dimensions,
             "expiry": product.expiry_date.isoformat() if product.expiry_date else None,
             "quantity": product.quantity,
             "currency": product.currency,
             "msrp": str(product.msrp) if product.msrp is not None else None,
-            "liquidating_price": str(product.liquidating_price),
-            "current_price": str(product.current_price),
+            "liquidation_price": str(product.liquidating_price),
+            "price": str(product.current_price or product.liquidating_price),
             "offer": str(product.offer),
             "excluded_countries": product.excluded_countries,
             "description": product.description,
@@ -1963,8 +1987,8 @@ def submit_lot_request(request):
                     data['description'] = lot_details.get('description', '')
                 if 'inventory_country' not in data and 'inventory_country' in lot_details:
                     data['inventory_country'] = lot_details.get('inventory_country', '')
-                if 'inventory_city' not in data and 'inventory_city' in lot_details:
-                    data['inventory_city'] = lot_details.get('inventory_city', '')
+                if 'inventory_location' not in data and ('inventory_location' in lot_details or 'location' in lot_details):
+                    data['inventory_location'] = lot_details.get('inventory_location') or lot_details.get('location', '')
 
 
         user_info = {}
@@ -2655,18 +2679,19 @@ def _serialize_product_summary(p):
             "name": p.subcategory.name,
             "slug": p.subcategory.slug,
         } if p.subcategory else None,
-        "manufacturing_country": p.manufacturing_country,
-        "inventory_location": p.inventory_location,
+        "manufacturing_country": p.manufacturing_country or "",
+        "inventory_country": getattr(p, "inventory_country", "") or "",
+        "inventory_location": p.inventory_location or "",
+        "location": p.inventory_location,
         "manufacturing_year": p.manufacturing_year,
         "dimensions": p.dimensions or "",
         "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
         "excluded_countries": p.excluded_countries or [],
         "quantity": p.quantity,
         "currency": p.currency,
-        "liquidating_price": str(p.liquidating_price),
+        "price": str(p.current_price or p.liquidating_price or "0.00"),
+        "liquidation_price": str(p.liquidating_price),
         "msrp": str(p.msrp) if p.msrp is not None else None,
-        "current_price": str(p.current_price),
-        "previous_price": str(p.msrp) if p.msrp is not None else (str(p.previous_price) if hasattr(p, "previous_price") and p.previous_price is not None else None),
         "offer": str(p.offer),
         "description": p.description or "",
         "reason_to_sell": p.reason_to_sell or "",
@@ -2809,18 +2834,15 @@ def _format_typesense_hit(hit):
     category = doc.get("category", "")
     subcategory = doc.get("subcategory", "")
     condition = doc.get("condition", "")
-    location = doc.get("location", "")
-    country = doc.get("country", "")
-    city = doc.get("city", "")
+    location = doc.get("inventory_location") or doc.get("location", "")
+    inventory_country = doc.get("inventory_country", "")
     price = doc.get("price", 0.0)
-    price_usd = doc.get("price_usd", 0.0)
     msrp = doc.get("msrp", 0.0)
     currency = doc.get("currency", "USD")
     image = doc.get("image", "")
     images = doc.get("images", [])
     listing_url = doc.get("listing_url", "")
     quantity = doc.get("quantity", 1)
-    sku = doc.get("sku", "")
 
     highlights = hit.get("highlights", [])
     highlight_text = ""
@@ -2844,15 +2866,12 @@ def _format_typesense_hit(hit):
         "subcategory": subcategory,
         "condition": condition,
         "location": location,
-        "country": country,
-        "city": city,
         "inventory_location": location,
+        "inventory_country": inventory_country,
+        "manufacturing_country": doc.get("manufacturing_country", ""),
         "price": price,
-        "current_price": price,
-        "liquidating_price": price,
-        "price_usd": price_usd,
+        "liquidation_price": doc.get("liquidation_price") or doc.get("liquidating_price") or price,
         "msrp": msrp,
-        "original_price": msrp,
         "currency": currency,
         "quantity": quantity,
         "estQty": quantity,
@@ -2864,7 +2883,6 @@ def _format_typesense_hit(hit):
         "image": image,
         "images": images,
         "listing_url": listing_url,
-        "sku": sku,
         "is_featured": doc.get("is_featured", False),
         "is_best_selling": doc.get("is_best_selling", False),
         "is_new_arrival": doc.get("is_new_arrival", False),
@@ -2900,7 +2918,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
         if brand:
             p_qs = p_qs.filter(brand_name__icontains=brand)
         if country:
-            p_qs = p_qs.filter(Q(manufacturing_country__icontains=country) | Q(inventory_location__icontains=country))
+            p_qs = p_qs.filter(Q(inventory_country__icontains=country) | Q(inventory_location__icontains=country))
         if min_usd is not None:
             p_qs = p_qs.filter(liquidating_price__gte=min_usd)
         if max_usd is not None:
@@ -2921,15 +2939,12 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "model_no": p.model_no or "",
                 "category": p.category.name if p.category else "",
                 "subcategory": p.subcategory.name if p.subcategory else "",
-                "condition": "Surplus",
-                "location": p.inventory_location or p.manufacturing_country or "",
-                "country": p.manufacturing_country or "",
-                "city": "",
+                "location": p.inventory_location or "",
                 "inventory_location": p.inventory_location or "",
-                "price": float(p.liquidating_price or p.current_price or 0.0),
-                "current_price": float(p.liquidating_price or p.current_price or 0.0),
-                "liquidating_price": float(p.liquidating_price or 0.0),
-                "price_usd": float(p.liquidating_price or 0.0),
+                "inventory_country": getattr(p, "inventory_country", "") or "",
+                "manufacturing_country": p.manufacturing_country or "",
+                "price": float(p.current_price or p.liquidating_price or 0.0),
+                "liquidation_price": float(p.liquidating_price or 0.0),
                 "msrp": float(p.msrp or 0.0),
                 "currency": p.currency or "USD",
                 "quantity": p.quantity or 1,
@@ -2942,7 +2957,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "image": main_img,
                 "images": all_imgs,
                 "listing_url": f"/product/{p.product_id or p.id}",
-                "sku": p.product_id or "",
+                "product_id": p.product_id or "",
                 "is_featured": bool(p.is_featured),
                 "is_best_selling": bool(p.is_best_selling),
                 "is_new_arrival": bool(p.is_new_arrival),
@@ -2983,14 +2998,11 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "category": "Wholesale Lots",
                 "subcategory": "",
                 "condition": lot.condition or "Liquidation Lot",
-                "location": lot.inventory_location or getattr(lot, "inventory_country", "") or "",
-                "country": getattr(lot, "inventory_country", "") or lot.inventory_location or "",
-                "city": getattr(lot, "inventory_city", "") or "",
+                "location": lot.inventory_location or "",
                 "inventory_location": lot.inventory_location or "",
+                "inventory_country": getattr(lot, "inventory_country", "") or "",
                 "price": float(lot.ask_price_surplus_payout or 0.0),
-                "current_price": float(lot.ask_price_surplus_payout or 0.0),
-                "liquidating_price": float(lot.ask_price_surplus_payout or 0.0),
-                "price_usd": float(lot.ask_price_surplus_payout or 0.0),
+                "liquidation_price": float(lot.ask_price_surplus_payout or 0.0),
                 "msrp": float(lot.total_est_retail_value_msrp or 0.0),
                 "currency": lot.currency or "USD",
                 "quantity": int(lot.total_units_quantity or 0),
@@ -3003,7 +3015,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "image": main_img,
                 "images": imgs,
                 "listing_url": f"/lots/{lot.lot_number or lot.id}",
-                "sku": lot.lot_number or "",
+                "lot_number": lot.lot_number or "",
                 "is_featured": False,
                 "is_best_selling": False,
                 "is_new_arrival": False,

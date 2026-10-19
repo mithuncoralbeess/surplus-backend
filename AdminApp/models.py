@@ -883,10 +883,6 @@ class Lot(models.Model):
         if not self.lot_number:
             max_id = Lot.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.lot_number = f"LOT-{(max_id + 1):05d}"
-
-        if self.inventory_city or self.inventory_country:
-            loc_parts = [p.strip() for p in [self.inventory_city, self.inventory_country] if p and p.strip()]
-            self.inventory_location = ", ".join(loc_parts)
             
         # Enforce rule: Lot can ONLY be active if its enquiry_status is 'approved'
         if str(self.enquiry_status).lower() != 'approved':
@@ -1130,6 +1126,8 @@ class Product(models.Model):
     model_no = models.CharField(max_length=255, blank=True, default="", db_index=True, help_text="Model No. / Part Number")
     
     manufacturing_country = models.CharField(max_length=100, blank=True, default="")
+    inventory_country = models.CharField(max_length=100, blank=True, default="", db_index=True, help_text="Warehouse / stock inventory country")
+    inventory_city = models.CharField(max_length=100, blank=True, default="", db_index=True, help_text="Warehouse / stock inventory city")
     inventory_location = models.CharField(max_length=255, blank=True, default="", help_text="Warehouse / stock location")
     intake_channel = models.CharField(max_length=50, blank=True, default="", help_text="Intake channel for assisted product submission (WhatsApp, Email, etc.)")
     manufacturing_year = models.PositiveIntegerField(null=True, blank=True)
@@ -1427,6 +1425,10 @@ class Product(models.Model):
             "featured_image_url": first_url,
             "product_image": first_url,
             "intake_channel": getattr(self, "intake_channel", "") or "",
+            "manufacturing_country": getattr(self, "manufacturing_country", "") or "",
+            "inventory_country": getattr(self, "inventory_country", "") or "",
+            "inventory_city": getattr(self, "inventory_city", "") or "",
+            "inventory_location": getattr(self, "inventory_location", "") or "",
         }
         if hasattr(self, '_extra_raw_data') and isinstance(self._extra_raw_data, dict):
             data.update(self._extra_raw_data)
