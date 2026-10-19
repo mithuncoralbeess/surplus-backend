@@ -1986,11 +1986,12 @@ def submit_lot_request(request):
 
 
 
-        # Map file fields from request.FILES
-        if "manifest_file" in request.FILES:
-            data["file"] = request.FILES["manifest_file"]
-        elif "file" in request.FILES:
-            data["file"] = request.FILES["file"]
+        # Map file fields from request.FILES (supports all Excel file aliases)
+        file_candidates = ["manifest_file", "file", "excel_file", "spreadsheet", "manifest", "lot_file", "excel"]
+        for fkey in file_candidates:
+            if fkey in request.FILES:
+                data["file"] = request.FILES[fkey]
+                break
 
         # Collect raw image files passed for warehouse_images / media
         wh_file_keys = ["warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos", "row_image", "raw_image"]
@@ -2015,6 +2016,21 @@ def submit_lot_request(request):
                 return str(val.name)
             return str(val)
 
+        # Extract parsed manifest items if provided from frontend
+        parsed_manifest_items = None
+        for m_key in ['manifest_items', 'preview_items', 'parsed_items', 'products_list', 'products']:
+            if m_key in data and data[m_key]:
+                m_val = data[m_key]
+                if isinstance(m_val, str):
+                    try:
+                        parsed_manifest_items = json.loads(m_val)
+                    except Exception:
+                        parsed_manifest_items = None
+                elif isinstance(m_val, list):
+                    parsed_manifest_items = m_val
+                if parsed_manifest_items:
+                    break
+
         # Build clean raw_payload copy for audit storage
         raw_payload = _clean_json_val(dict(data))
         for key in ['manifest_items', 'preview_items', 'parsed_items', 'lot_details', 'products_list', 'products']:
@@ -2032,13 +2048,32 @@ def submit_lot_request(request):
                     lot.vendor = vendor_obj
                     lot.save(update_fields=["vendor"])
 
-            # Store complete raw payload safely
+            # Store complete raw payload with manifest items safely
             if isinstance(raw_payload, dict):
                 raw_payload["is_saved_to_db"] = True
                 if lot.warehouse_images:
                     raw_payload["warehouse_images"] = lot.warehouse_images
+                if parsed_manifest_items:
+                    raw_payload["manifest_items"] = parsed_manifest_items
+                    raw_payload["products"] = parsed_manifest_items
             lot.raw_data = raw_payload
             lot.save(update_fields=["raw_data"])
+
+            # Auto-parse spreadsheet if manifest items were not sent directly as JSON
+            if not parsed_manifest_items and lot.file:
+                try:
+                    from lots.importer import parse_spreadsheet
+                    lot.file.seek(0)
+                    parse_res = parse_spreadsheet(lot.file)
+                    extracted = parse_res.get("all_items", [])
+                    if extracted:
+                        raw_payload["products"] = extracted
+                        raw_payload["manifest_items"] = extracted
+                        raw_payload["parse_summary"] = parse_res.get("summary")
+                        lot.raw_data = raw_payload
+                        lot.save(update_fields=["raw_data"])
+                except Exception as e:
+                    print(f"[submit_lot_request] Auto-parse spreadsheet error: {e}")
 
             # Dispatch vendor in-app notification and email alerts
             seller_email = None

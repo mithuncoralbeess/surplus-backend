@@ -231,26 +231,58 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ---------------------------------------------------------------------------
+# Allow large manifest uploads and bulk lot submissions (No size limit for images or excel)
+# ---------------------------------------------------------------------------
+# Disable maximum memory and field count limits so large manifests (7,000+ SKUs)
+# and multiple warehouse images upload without "RequestDataTooBig" exceptions.
+_env_mem_size = os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE")
+if _env_mem_size and _env_mem_size.strip().lower() not in ("none", "null", "unlimited", "0", ""):
+    DATA_UPLOAD_MAX_MEMORY_SIZE = int(_env_mem_size)
+else:
+    DATA_UPLOAD_MAX_MEMORY_SIZE = None  # None = no limit (allows 15MB+ manifest payloads and massive files)
+
+_env_file_size = os.getenv("FILE_UPLOAD_MAX_MEMORY_SIZE")
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(_env_file_size) if _env_file_size and _env_file_size.isdigit() else 104857600  # 100 MB stream threshold before disk spooling
+
+_env_num_fields = os.getenv("DATA_UPLOAD_MAX_NUMBER_FIELDS")
+if _env_num_fields and _env_num_fields.strip().lower() not in ("none", "null", "unlimited", "0", ""):
+    DATA_UPLOAD_MAX_NUMBER_FIELDS = int(_env_num_fields)
+else:
+    DATA_UPLOAD_MAX_NUMBER_FIELDS = None  # None = no limit on field count
+
 # Cloudflare R2 / AWS S3 Media Storage Configuration
 USE_R2 = os.getenv("USE_R2", "False").lower() in ("true", "1", "t")
-if USE_R2:
+USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "1", "t") or bool(os.getenv("AWS_STORAGE_BUCKET_NAME"))
+
+# Resolve AWS / R2 Credentials from environment
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("R2_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY") or os.getenv("R2_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = (
+    os.getenv("AWS_STORAGE_BUCKET_NAME")
+    or os.getenv("AWS_S3_BUCKET_NAME")
+    or os.getenv("R2_BUCKET_NAME")
+    or "app-staging-media"
+)
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME") or os.getenv("AWS_REGION")
+AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or os.getenv("R2_ENDPOINT_URL")
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN") or os.getenv("R2_CUSTOM_DOMAIN")
+AWS_S3_SIGNATURE_VERSION = os.getenv("AWS_S3_SIGNATURE_VERSION", "s3v4")
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "604800"))
+AWS_DEFAULT_ACL = None
+
+# Activate S3/R2 storage backend if USE_S3 or USE_R2 is enabled
+if USE_R2 or USE_S3:
     if "storages" not in INSTALLED_APPS:
         INSTALLED_APPS.append("storages")
-
-    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "app-staging-media")
-    AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
-    AWS_S3_SIGNATURE_VERSION = "s3v4"
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_QUERYSTRING_EXPIRE = int(os.getenv("AWS_QUERYSTRING_EXPIRE", "604800"))
-    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_CUSTOM_DOMAIN")
 
     s3_options = {
         "location": "media",
         "querystring_expire": AWS_QUERYSTRING_EXPIRE,
         "signature_version": AWS_S3_SIGNATURE_VERSION,
         "file_overwrite": AWS_S3_FILE_OVERWRITE,
+        "default_acl": AWS_DEFAULT_ACL,
     }
     if AWS_ACCESS_KEY_ID:
         s3_options["access_key"] = AWS_ACCESS_KEY_ID
@@ -258,6 +290,8 @@ if USE_R2:
         s3_options["secret_key"] = AWS_SECRET_ACCESS_KEY
     if AWS_STORAGE_BUCKET_NAME:
         s3_options["bucket_name"] = AWS_STORAGE_BUCKET_NAME
+    if AWS_S3_REGION_NAME:
+        s3_options["region_name"] = AWS_S3_REGION_NAME
     if AWS_S3_ENDPOINT_URL:
         s3_options["endpoint_url"] = AWS_S3_ENDPOINT_URL
     if AWS_S3_CUSTOM_DOMAIN:
