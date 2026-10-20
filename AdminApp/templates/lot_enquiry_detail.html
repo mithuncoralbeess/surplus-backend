@@ -389,61 +389,75 @@
 
 <div class="container-fluid detail-page-wrapper p-0">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+    <div class="detail-header-card d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
         <div>
-            <a href="{% url 'lot_enquiries_list' %}"
-                class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2 fw-medium">
-                <i class="bi bi-arrow-left"></i> Back to Lot Enquiries
+            <a href="{% url 'lot_enquiries_list' %}" class="detail-back-link">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Lot Enquiries</span>
             </a>
-            <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-box-seam text-primary"></i> {{ enquiry.lot_number }} Details
-            </h4>
+            <div class="detail-title-row">
+                <h4 class="detail-product-title">
+                    <span class="detail-icon-box">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </span>
+                    <span>{{ enquiry.lot_number }} Details</span>
+                </h4>
+            </div>
         </div>
-        <div class="d-flex gap-2">
+        <div class="detail-header-actions">
             <button type="button"
-                class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3"
+                class="detail-action-btn btn-action-edit"
                 data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
-                <i class="bi bi-pencil-square"></i> Edit Details
+                <i class="bi bi-pencil-square"></i>
+                <span>Edit Details</span>
             </button>
             {% if enquiry.active_status == 'active' %}
             <button type="button"
-                class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 btn-lot-active-status"
+                class="detail-action-btn btn-action-inactive btn-lot-active-status"
                 data-id="{{ enquiry.id }}" data-active="inactive">
-                <i class="bi bi-pause-circle"></i> Set Inactive
+                <i class="bi bi-pause-circle"></i>
+                <span>Set Inactive</span>
             </button>
             {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
-                class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-lot-active-status"
+                class="detail-action-btn btn-action-active btn-lot-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
-                <i class="bi bi-play-circle-fill"></i> Set Active
+                <i class="bi bi-play-circle-fill"></i>
+                <span>Set Active</span>
             </button>
             {% endif %}
+
             {% if enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
-                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-lot-status"
+                class="detail-action-btn btn-action-decline btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
-                <i class="bi bi-x-circle-fill"></i> Decline
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Decline</span>
             </button>
             {% elif enquiry.enquiry_status|lower == 'declined' %}
             <button type="button"
-                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-lot-status"
+                class="detail-action-btn btn-action-approve btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
-                <i class="bi bi-check-circle-fill"></i> Approve
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Approve</span>
             </button>
             {% else %}
             <button type="button"
-                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-lot-status"
+                class="detail-action-btn btn-action-approve btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
-                <i class="bi bi-check-circle-fill"></i> Approve
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Approve</span>
             </button>
             <button type="button"
-                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-lot-status"
+                class="detail-action-btn btn-action-decline btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
-                <i class="bi bi-x-circle-fill"></i> Decline
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Decline</span>
             </button>
             {% endif %}
-            <a href="/admin/whatsapp/?lot_id={{ enquiry.id }}" class="btn btn-premium d-inline-flex align-items-center gap-2 text-white shadow-sm" style="background-color: #25D366; border-color: #25D366;" title="Launch WhatsApp Liquidation Alert">
-                <i class="bi bi-whatsapp"></i> Broadcast on WhatsApp
+            <a href="/admin/whatsapp/?lot_id={{ enquiry.id }}" class="detail-action-btn text-white shadow-sm" style="background-color: #25D366; border: 1px solid #22c55e;" title="Launch WhatsApp Liquidation Alert">
+                <i class="bi bi-whatsapp"></i>
+                <span>Broadcast on WhatsApp</span>
             </a>
         </div>
     </div>

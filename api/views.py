@@ -797,26 +797,33 @@ def complete_profile(request):
     if "user_type" in data:
         vendor.user_type = data["user_type"]
 
-    vendor.country = str(request.data.get("country", "")).strip()
+    country_val = str(
+        data.get("country")
+        or request.data.get("country")
+        or request.data.get("countryName")
+        or request.data.get("country_name")
+        or ""
+    ).strip()
+    if country_val:
+        vendor.country = country_val
+    elif not getattr(vendor, "country", None):
+        vendor.country = "United Arab Emirates"
 
     if "account_entity_type" in data:
         vendor.account_entity_type = data["account_entity_type"]
-        if vendor.account_entity_type == "COMPANY":
-            if vendor.user_type != "BUYER" and not data.get("company_name"):
-                return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
-            vendor.company_name = data.get("company_name", "")
-        else:
-            vendor.company_name = ""
-    elif "company_name" in data:
-        if vendor.account_entity_type == "COMPANY" and vendor.user_type != "BUYER" and not data.get("company_name"):
-            return Response({"success": False, "message": "Company name is required for Company/Business accounts."}, status=status.HTTP_400_BAD_REQUEST)
-        vendor.company_name = data.get("company_name", "")
+        vendor.company_name = str(data.get("company_name") or request.data.get("company_name") or "").strip()
+    elif "company_name" in data or "company_name" in request.data:
+        vendor.company_name = str(data.get("company_name") or request.data.get("company_name") or "").strip()
         
-    if "business_location" in data:
-        loc_str = str(data["business_location"]).strip()
-        if not loc_str:
-            return Response({"success": False, "message": "Business location is required."}, status=status.HTTP_400_BAD_REQUEST)
-        vendor.business_location = loc_str
+    loc_val = str(
+        data.get("business_location")
+        or request.data.get("business_location")
+        or request.data.get("businessLocation")
+        or request.data.get("location")
+        or ""
+    ).strip()
+    if loc_val:
+        vendor.business_location = loc_val
     
     if "business_address" in data:
         vendor.business_address = data["business_address"]

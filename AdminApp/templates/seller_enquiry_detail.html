@@ -6,101 +6,137 @@
 
 <div class="container-fluid detail-page-wrapper">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+    <div class="detail-header-card d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
         <div>
-            <a href="{% url 'seller_enquiries_list' %}"
-                class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2 fw-medium">
-                <i class="bi bi-arrow-left"></i> Back to Seller Enquiries
+            <a href="{% url 'seller_enquiries_list' %}" class="detail-back-link">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Seller Enquiries</span>
             </a>
-            <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2 flex-wrap">
-                <i class="bi bi-box-seam text-primary"></i> {{ enquiry.product_id }} Details
-                {% if enquiry.enquiry_status|lower == 'approved' %}
-                <span class="badge bg-success-subtle text-success ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
-                {% elif enquiry.enquiry_status|lower == 'declined' %}
-                <span class="badge bg-danger-subtle text-danger ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-x-circle-fill me-1"></i>Declined</span>
-                {% else %}
-                <span class="badge bg-warning-subtle text-warning ms-2 fs-6 rounded-pill" id="header-status-badge-{{ enquiry.id }}"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
-                {% endif %}
 
-                {% if enquiry.is_active %}
-                <span class="badge bg-info-subtle text-info ms-1 fs-6 rounded-pill" id="header-active-badge-{{ enquiry.id }}"><i class="bi bi-broadcast me-1"></i>Active</span>
-                {% else %}
-                <span class="badge bg-secondary-subtle text-secondary ms-1 fs-6 rounded-pill" id="header-active-badge-{{ enquiry.id }}"><i class="bi bi-eye-slash me-1"></i>Inactive</span>
-                {% endif %}
+            <!-- Title & Status Badges Row -->
+            <div class="detail-title-row">
+                <h4 class="detail-product-title">
+                    <span class="detail-icon-box">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </span>
+                    <span>{{ enquiry.product_id }} Details</span>
+                </h4>
 
-                <!-- Marketplace Collection Badges / Quick Toggles -->
-                <span class="d-inline-flex align-items-center gap-1.5 flex-wrap ms-lg-2" id="header-collections-group">
-                    <button type="button" 
-                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_featured %}btn-danger text-white{% else %}btn-outline-danger{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
-                            data-id="{{ enquiry.id }}" data-flag="is_featured" data-active="{% if enquiry.is_featured %}true{% else %}false{% endif %}"
-                            title="Toggle Featured Deal status" style="font-size: 0.78rem;">
-                        <i class="bi bi-star-fill me-1"></i>Featured
-                        <span class="badge {% if enquiry.is_featured %}bg-white text-danger{% else %}bg-danger-subtle text-danger{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
-                            <i class="bi {% if enquiry.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
-                        </span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
-                            data-id="{{ enquiry.id }}" data-flag="is_best_selling" data-active="{% if enquiry.is_best_selling %}true{% else %}false{% endif %}"
-                            title="Toggle Best Selling status" style="font-size: 0.78rem;">
-                        <i class="bi bi-fire me-1"></i>Best Seller
-                        <span class="badge {% if enquiry.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
-                            <i class="bi {% if enquiry.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
-                        </span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-sm btn-collection-toggle {% if enquiry.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
-                            data-id="{{ enquiry.id }}" data-flag="is_new_arrival" data-active="{% if enquiry.is_new_arrival %}true{% else %}false{% endif %}"
-                            title="Toggle New Arrival status" style="font-size: 0.78rem;">
-                        <i class="bi bi-rocket-takeoff-fill me-1"></i>New Arrival
-                        <span class="badge {% if enquiry.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
-                            <i class="bi {% if enquiry.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
-                        </span>
-                    </button>
+                <div class="detail-badge-group">
+                    {% if enquiry.enquiry_status|lower == 'approved' %}
+                    <span class="detail-status-pill bg-success-subtle text-success border border-success-subtle shadow-2xs" id="header-status-badge-{{ enquiry.id }}">
+                        <i class="bi bi-check-circle-fill text-success"></i> Approved
+                    </span>
+                    {% elif enquiry.enquiry_status|lower == 'declined' %}
+                    <span class="detail-status-pill bg-danger-subtle text-danger border border-danger-subtle shadow-2xs" id="header-status-badge-{{ enquiry.id }}">
+                        <i class="bi bi-x-circle-fill text-danger"></i> Declined
+                    </span>
+                    {% else %}
+                    <span class="detail-status-pill bg-warning-subtle text-warning border border-warning-subtle shadow-2xs" id="header-status-badge-{{ enquiry.id }}">
+                        <i class="bi bi-hourglass-split text-warning"></i> Pending
+                    </span>
+                    {% endif %}
+
+                    {% if enquiry.is_active %}
+                    <span class="detail-status-pill bg-info-subtle text-info border border-info-subtle shadow-2xs" id="header-active-badge-{{ enquiry.id }}">
+                        <i class="bi bi-broadcast text-info"></i> Active
+                    </span>
+                    {% else %}
+                    <span class="detail-status-pill bg-secondary-subtle text-secondary border border-secondary-subtle shadow-2xs" id="header-active-badge-{{ enquiry.id }}">
+                        <i class="bi bi-eye-slash text-secondary"></i> Inactive
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Marketplace Collection Badges / Quick Toggles -->
+            <div class="detail-collections-bar" id="header-collections-group">
+                <span class="detail-collections-label">
+                    <i class="bi bi-tags-fill"></i> Collections:
                 </span>
-            </h4>
+                <button type="button" 
+                        class="btn btn-sm btn-collection-toggle {% if enquiry.is_featured %}btn-danger text-white{% else %}btn-outline-danger{% endif %}"
+                        data-id="{{ enquiry.id }}" data-flag="is_featured" data-active="{% if enquiry.is_featured %}true{% else %}false{% endif %}"
+                        title="Toggle Featured Deal status">
+                    <i class="bi bi-star-fill"></i>
+                    <span>Featured</span>
+                    <span class="badge {% if enquiry.is_featured %}bg-white text-danger{% else %}bg-danger-subtle text-danger{% endif %}">
+                        <i class="bi {% if enquiry.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                    </span>
+                </button>
+                <button type="button" 
+                        class="btn btn-sm btn-collection-toggle {% if enquiry.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %}"
+                        data-id="{{ enquiry.id }}" data-flag="is_best_selling" data-active="{% if enquiry.is_best_selling %}true{% else %}false{% endif %}"
+                        title="Toggle Best Selling status">
+                    <i class="bi bi-fire"></i>
+                    <span>Best Seller</span>
+                    <span class="badge {% if enquiry.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %}">
+                        <i class="bi {% if enquiry.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                    </span>
+                </button>
+                <button type="button" 
+                        class="btn btn-sm btn-collection-toggle {% if enquiry.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %}"
+                        data-id="{{ enquiry.id }}" data-flag="is_new_arrival" data-active="{% if enquiry.is_new_arrival %}true{% else %}false{% endif %}"
+                        title="Toggle New Arrival status">
+                    <i class="bi bi-rocket-takeoff-fill"></i>
+                    <span>New Arrival</span>
+                    <span class="badge {% if enquiry.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %}">
+                        <i class="bi {% if enquiry.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
+                    </span>
+                </button>
+            </div>
         </div>
-        <div class="d-flex gap-2">
+
+        <!-- Action Buttons -->
+        <div class="detail-header-actions">
             <button type="button"
-                class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3"
+                class="detail-action-btn btn-action-edit"
                 data-bs-toggle="modal" data-bs-target="#editSellerEnquiryModal">
-                <i class="bi bi-pencil-square"></i> Edit Details
+                <i class="bi bi-pencil-square"></i>
+                <span>Edit Details</span>
             </button>
             {% if enquiry.is_active %}
             <button type="button"
-                class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 btn-action-active-status"
+                class="detail-action-btn btn-action-inactive btn-action-active-status"
                 data-id="{{ enquiry.id }}" data-active="inactive">
-                <i class="bi bi-pause-circle"></i> Set Inactive
+                <i class="bi bi-pause-circle"></i>
+                <span>Set Inactive</span>
             </button>
             {% elif enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
-                class="btn btn-outline-success d-inline-flex align-items-center gap-2 btn-action-active-status"
+                class="detail-action-btn btn-action-active btn-action-active-status"
                 data-id="{{ enquiry.id }}" data-active="active">
-                <i class="bi bi-play-circle-fill"></i> Set Active
+                <i class="bi bi-play-circle-fill"></i>
+                <span>Set Active</span>
             </button>
             {% endif %}
+
             {% if enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
-                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-action-status"
+                class="detail-action-btn btn-action-decline btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
-                <i class="bi bi-x-circle-fill"></i> Decline
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Decline</span>
             </button>
             {% elif enquiry.enquiry_status|lower == 'declined' %}
             <button type="button"
-                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-action-status"
+                class="detail-action-btn btn-action-approve btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
-                <i class="bi bi-check-circle-fill"></i> Approve
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Approve</span>
             </button>
             {% else %}
             <button type="button"
-                class="btn btn-premium btn-premium-success d-inline-flex align-items-center gap-2 btn-action-status"
+                class="detail-action-btn btn-action-approve btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
-                <i class="bi bi-check-circle-fill"></i> Approve
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Approve</span>
             </button>
             <button type="button"
-                class="btn btn-premium btn-premium-danger d-inline-flex align-items-center gap-2 btn-action-status"
+                class="detail-action-btn btn-action-decline btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
-                <i class="bi bi-x-circle-fill"></i> Decline
+                <i class="bi bi-x-circle-fill"></i>
+                <span>Decline</span>
             </button>
             {% endif %}
         </div>

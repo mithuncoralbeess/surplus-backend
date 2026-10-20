@@ -1457,7 +1457,7 @@ def seller_enquiries_view(request, status_filter=None):
     date_filter = request.GET.get("date_filter", "all")
     page_num = request.GET.get("page", 1)
 
-    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").order_by("-created_at")
+    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").prefetch_related("images").order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -4949,8 +4949,8 @@ def add_product_view(request):
                 mobile_number=clean_mobile,
                 company_name=seller_company.strip(),
                 business_location=seller_location.strip(),
-                category_interested=[category_obj.name] if category_obj else [],
-                business_type=category_obj.name if category_obj else "",
+                category_interested=[],
+                business_type="",
                 user_type="SELLER",
                 status=True
             )

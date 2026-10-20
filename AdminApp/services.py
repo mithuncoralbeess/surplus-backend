@@ -944,8 +944,15 @@ class EmailService:
 
         def _add(email_str):
             clean = str(email_str or "").strip().strip("'\"")
-            if clean and "@" in clean and clean.lower() not in seen:
-                seen.add(clean.lower())
+            clean_lower = clean.lower()
+            # Explicitly exclude mithun.coralbees from admin alerts per user directive
+            if (
+                clean
+                and "@" in clean
+                and "mithun.coralbees" not in clean_lower
+                and clean_lower not in seen
+            ):
+                seen.add(clean_lower)
                 recipients.append(clean)
 
         env_val = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "") or "")
@@ -1211,6 +1218,109 @@ class EmailService:
 
         subject = f"New User Registration: {full_name} [{vendor_id}]"
         return cls.send_email(admin_emails, subject, html_content, "AdminUserRegistered", context=context)
+
+    @classmethod
+    def send_profile_completion_reminder_email(cls, vendor) -> bool:
+        """
+        Sends an email reminder to a vendor with an incomplete profile (low completion score)
+        instructing them to complete missing details so their products can be listed live.
+        """
+        email = getattr(vendor, "email", "")
+        if not email or email.endswith(".local"):
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://dev.surplusmarket.com").rstrip("/")
+        profile_url = f"{frontend_base}/profile"
+        user_name = getattr(vendor, "full_name", "") or getattr(vendor, "company_name", "") or "Valued Seller"
+        company_name = getattr(vendor, "company_name", "")
+
+        details = vendor.get_profile_completion_details() if hasattr(vendor, "get_profile_completion_details") else {}
+        percentage = details.get("percentage", 65)
+        raw_missing = details.get("missing_fields_labels", [])
+        excluded_labels = {
+            "tax / gst registration number", "tax registration number", "tax registration number (trn)", "trn",
+            "interested categories", "category interested",
+            "company name"
+        }
+        missing_fields_labels = [
+            lbl for lbl in raw_missing
+            if lbl.strip().lower() not in excluded_labels
+        ]
+
+        context = {
+            "user_name": user_name,
+            "company_name": company_name,
+            "profile_completion_percentage": percentage,
+            "missing_fields_labels": missing_fields_labels,
+            "profile_url": profile_url,
+            "support_email": "contact@surplusmarket.com",
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_vendor_profile_completion_reminder.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for profile completion reminder email, using fallback: {e}")
+            missing_html = "".join([f"<li>{f}</li>" for f in missing_fields_labels])
+            html_content = (
+                f"<h2>Action Required: Complete Your Vendor Profile</h2>"
+                f"<p>Hello {user_name},</p>"
+                f"<p>Your profile is currently {percentage}% complete. In order to list and publish your inventory for corporate buyers on Surplus Market, please complete the following details:</p>"
+                f"<ul>{missing_html}</ul>"
+                f"<p><a href='{profile_url}' style='background:#2563eb;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;'>Complete My Profile</a></p>"
+            )
+
+        subject = "Action Required: Complete Your Vendor Profile to List Your Products - Surplus Market"
+        return cls.send_email(email, subject, html_content, "ProfileCompletionReminder", context=context)
+
+    @classmethod
+    def send_product_info_incomplete_email(cls, vendor, incomplete_products: list, total_count: int = 0) -> bool:
+        """
+        Sends an email notice to a vendor indicating their products have missing/incomplete specifications
+        (such as Model Number, Brand, Dimensions, Origin Country).
+        """
+        email = getattr(vendor, "email", "")
+        if not email or email.endswith(".local") or not incomplete_products:
+            return False
+
+        frontend_base = os.getenv("FRONTEND_URL", "https://dev.surplusmarket.com").rstrip("/")
+        action_url = f"{frontend_base}/profile"
+        user_name = getattr(vendor, "full_name", "") or getattr(vendor, "company_name", "") or "Valued Seller"
+        company_name = getattr(vendor, "company_name", "")
+
+        context = {
+            "user_name": user_name,
+            "company_name": company_name,
+            "incomplete_products": incomplete_products,
+            "total_incomplete_count": len(incomplete_products),
+            "total_products_count": total_count or len(incomplete_products),
+            "action_url": action_url,
+            "support_email": "contact@surplusmarket.com",
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_vendor_product_info_incomplete.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for product info incomplete email, using fallback: {e}")
+            items_html = "".join([
+                f"<li><strong>{p.get('product_name')}</strong> ({p.get('product_id')}) - Missing: {', '.join(p.get('missing_fields', []))}</li>"
+                for p in incomplete_products[:8]
+            ])
+            html_content = (
+                f"<h2>Action Needed: Complete Missing Product Specifications</h2>"
+                f"<p>Hello {user_name},</p>"
+                f"<p>We noticed that {len(incomplete_products)} of your product listings are missing essential technical specifications:</p>"
+                f"<ul>{items_html}</ul>"
+                f"<p><a href='{action_url}' style='background:#0f766e;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;'>Update Product Specifications</a></p>"
+            )
+
+        subject = "Action Needed: Complete Missing Product Information for Your Listings - Surplus Market"
+        return cls.send_email(email, subject, html_content, "ProductInfoIncomplete", context=context)
 
 
 # Backwards compatibility alias

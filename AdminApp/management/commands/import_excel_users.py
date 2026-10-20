@@ -177,12 +177,6 @@ class Command(BaseCommand):
                 if not existing_vendor.mobile_number and phone:
                     existing_vendor.mobile_number = phone
                     modified = True
-                if categories:
-                    cur_cats = existing_vendor.category_interested_list
-                    merged_cats = sorted(list(set(cur_cats + categories)))
-                    if merged_cats != cur_cats:
-                        existing_vendor.category_interested = merged_cats
-                        modified = True
 
                 if modified and not dry_run:
                     existing_vendor.save()
@@ -234,8 +228,8 @@ class Command(BaseCommand):
                 account_entity_type=account_entity_type,
                 company_name=clean_company_name,
                 business_location=country,
-                business_type=categories[0] if categories else "",
-                category_interested=categories,
+                business_type="",
+                category_interested=[],
                 user_type="SELLER",
                 pass_word=VendorDetails.hash_password("Surplus@2026"),
                 status=True,

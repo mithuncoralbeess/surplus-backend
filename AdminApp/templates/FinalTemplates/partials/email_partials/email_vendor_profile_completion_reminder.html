@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Required: Complete Your Vendor Profile - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+        .header {
+            background: linear-gradient(135deg, #0a5c48 0%, #0f766e 100%);
+            padding: 36px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 12px 0 6px 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.25;
+        }
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(254, 240, 138, 0.28);
+            color: #fef08a;
+            border: 1px solid rgba(254, 240, 138, 0.45);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .content {
+            padding: 32px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+        /* Progress Bar Card */
+        .progress-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .progress-bar-bg {
+            background: #e2e8f0;
+            border-radius: 8px;
+            height: 10px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #f59e0b, #10b981);
+            height: 100%;
+            border-radius: 8px;
+        }
+        /* Missing Fields Alert */
+        .alert-box {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .alert-title {
+            color: #92400e;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .alert-desc {
+            margin: 0 0 14px 0;
+            font-size: 14px;
+            color: #b45309;
+            line-height: 1.55;
+        }
+        .missing-list {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px dashed #fde68a;
+            margin: 0;
+            list-style: none;
+        }
+        .missing-item {
+            padding: 6px 0;
+            font-size: 13.5px;
+            color: #78350f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #fef3c7;
+        }
+        .missing-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .missing-item:first-child {
+            padding-top: 0;
+        }
+        .field-icon {
+            color: #d97706;
+            font-weight: bold;
+        }
+        /* Steps Section */
+        .step-row {
+            margin: 24px 0;
+            padding: 16px 20px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.5;
+        }
+        .step-row strong {
+            color: #0f172a;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 32px 0 16px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #0a5c48;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 14px 36px;
+            border-radius: 8px;
+            box-shadow: 0 4px 14px rgba(10, 92, 72, 0.3);
+            letter-spacing: 0.2px;
+        }
+        .footer {
+            padding: 24px 30px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            line-height: 1.55;
+        }
+        .footer a {
+            color: #64748b;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <span class="badge">Action Required &bull; Profile Incomplete</span>
+            <h1>Complete Your Profile to List Products</h1>
+            <p>Surplus Market B2B Liquidation Platform</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Hello <strong>{{ user_name|default:"Valued Seller" }}</strong>,</p>
+
+            <p class="message">
+                Thank you for being part of the <strong>Surplus Market</strong> ecosystem. We are preparing your seller portal and verified inventory catalog. However, your vendor profile is currently incomplete.
+            </p>
+
+            <!-- Progress Card -->
+            <div class="progress-card">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+                    <tr>
+                        <td style="font-size: 13px; font-weight: 600; color: #334155; text-align: left;">
+                            Current Profile Completion
+                        </td>
+                        <td style="font-size: 13px; font-weight: 700; color: #0a5c48; text-align: right;">
+                            {{ profile_completion_percentage|default:65 }}% Complete
+                        </td>
+                    </tr>
+                </table>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: {{ profile_completion_percentage|default:65 }}%;"></div>
+                </div>
+            </div>
+
+            <!-- Action Alert Box -->
+            <div class="alert-box">
+                <div class="alert-title">
+                    ⚠️ Mandatory Action to Activate Product Listings
+                </div>
+                <p class="alert-desc">
+                    In compliance with our B2B marketplace standards and verified buyer security policies, 
+                    <strong>your product listings will only be published live for verified buyers once your vendor profile reaches 100% completion.</strong>
+                </p>
+
+                {% if missing_fields_labels %}
+                <ul class="missing-list">
+                    {% for field in missing_fields_labels %}
+                    <li class="missing-item">
+                        <span class="field-icon">&bull;</span>
+                        <span>Pending: <strong>{{ field }}</strong></span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <ul class="missing-list">
+                    <li class="missing-item"><span class="field-icon">&bull;</span> Pending: <strong>Business Type</strong> (e.g. Manufacturer, Distributor, Trader)</li>
+                    <li class="missing-item"><span class="field-icon">&bull;</span> Pending: <strong>Business Address & Operations Location</strong></li>
+                </ul>
+                {% endif %}
+            </div>
+
+            <!-- Benefit Section -->
+            <div class="step-row">
+                <strong>Why complete your profile now?</strong><br>
+                Once your profile is completed, your listings will automatically syndicate across our global liquidation network, matching with thousands of qualified corporate buyers and receiving purchase bids directly.
+            </div>
+
+            <!-- CTA -->
+            <div class="btn-wrapper">
+                <a href="{{ profile_url|default:'https://dev.surplusmarket.com' }}" class="cta-btn" target="_blank">
+                    Complete My Profile Now &rarr;
+                </a>
+            </div>
+
+            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: 24px; line-height: 1.5;">
+                Need help or have questions? Simply reply to this email or contact our support desk at <a href="mailto:{{ support_email|default:'contact@surplusmarket.com' }}" style="color: #0a5c48; text-decoration: none;">{{ support_email|default:'contact@surplusmarket.com' }}</a>.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            &copy; 2026 Surplus Market. All rights reserved.<br>
+            Surplus Market FZ LLC &bull; 15th Floor, Trans World 1, Doha, Qatar.<br>
+            The trusted B2B platform for commercial surplus inventory liquidation.
+        </div>
+    </div>
+</body>
+</html>

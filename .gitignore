@@ -47,3 +47,6 @@ Thumbs.db
 
 # Scratch directory
 scratch/
+
+# Local media / product images
+product_images/

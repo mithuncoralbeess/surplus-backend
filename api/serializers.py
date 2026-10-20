@@ -32,12 +32,31 @@ class CompleteProfileSerializer(serializers.Serializer):
     country = serializers.CharField(max_length=100, required=False, allow_blank=True)
     account_entity_type = serializers.ChoiceField(choices=(("INDIVIDUAL", "Individual"), ("COMPANY", "Company/Business")), required=False)
     company_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    business_location = serializers.CharField(max_length=255, required=True, allow_blank=False)
+    business_location = serializers.CharField(max_length=255, required=False, allow_blank=True)
     business_address = serializers.CharField(required=False, allow_blank=True)
     tax_registration_number = serializers.CharField(max_length=100, required=False, allow_blank=True)
     business_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
     user_type = serializers.ChoiceField(choices=(("BUYER", "Buyer"), ("SELLER", "Seller"), ("BOTH", "Both")), required=False)
     category_interested = serializers.JSONField(required=False, default=list)
+
+    def to_internal_value(self, data):
+        # Support aliases from frontend (e.g., businessLocation, location, countryName)
+        if hasattr(data, "copy"):
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = dict(data)
+
+        if "businessLocation" in data and "business_location" not in data:
+            data["business_location"] = data["businessLocation"]
+        elif "location" in data and "business_location" not in data:
+            data["business_location"] = data["location"]
+
+        if "countryName" in data and "country" not in data:
+            data["country"] = data["countryName"]
+        elif "country_name" in data and "country" not in data:
+            data["country"] = data["country_name"]
+
+        return super().to_internal_value(data)
 
 class SendLoginOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()

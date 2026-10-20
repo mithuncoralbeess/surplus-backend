@@ -204,7 +204,6 @@ class VendorDetails(models.Model):
         All required profile fields must be filled for 100% completion.
         """
         is_buyer = str(self.user_type).upper() == "BUYER"
-        is_company = str(self.account_entity_type).upper() == "COMPANY"
 
         required_fields = [
             ("full_name", "Full Name", bool(self.full_name and self.full_name.strip())),
@@ -213,22 +212,15 @@ class VendorDetails(models.Model):
             ("country", "Country", bool(getattr(self, "country", None) and str(self.country).strip())),
             ("account_entity_type", "Account Entity Type", bool(self.account_entity_type and self.account_entity_type.strip())),
             ("business_location", "Business Location", bool(self.business_location and self.business_location.strip())),
-            ("category_interested", "Interested Categories", bool(self.category_interested_list and len(self.category_interested_list) > 0)),
             ("user_type", "User Type", bool(self.user_type and self.user_type.strip())),
         ]
 
-        # For non-buyer accounts (Seller/Both), business and tax details are required
+        # For non-buyer accounts (Seller/Both), core business operation details are required
         if not is_buyer:
             required_fields.extend([
                 ("business_address", "Business Address", bool(self.business_address and self.business_address.strip())),
-                ("tax_registration_number", "Tax / GST Registration Number", bool(self.tax_registration_number and self.tax_registration_number.strip())),
                 ("business_type", "Business Type", bool(self.business_type and self.business_type.strip())),
             ])
-            # For COMPANY accounts, company_name is mandatory
-            if is_company:
-                required_fields.append(
-                    ("company_name", "Company Name", bool(self.company_name and self.company_name.strip()))
-                )
 
         total_fields = len(required_fields)
         completed = [item for item in required_fields if item[2]]
@@ -1402,12 +1394,20 @@ class Product(models.Model):
 
     @property
     def image(self):
+        if hasattr(self, "_prefetched_objects_cache") and "images" in self._prefetched_objects_cache:
+            images = self._prefetched_objects_cache["images"]
+            return images[0] if images else None
         first_img = self.images.first()
         return first_img if first_img else None
 
     @property
     def raw_data(self):
-        first_url = self.images.first().url if self.images.exists() else ""
+        if hasattr(self, "_prefetched_objects_cache") and "images" in self._prefetched_objects_cache:
+            images = self._prefetched_objects_cache["images"]
+            first_url = images[0].url if images else ""
+        else:
+            first_img = self.images.first()
+            first_url = first_img.url if first_img else ""
         data = {
             "product_name": self.product_name,
             "title": self.product_name,

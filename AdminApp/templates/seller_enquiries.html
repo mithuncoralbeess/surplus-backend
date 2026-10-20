@@ -151,8 +151,8 @@
                             </div>
                             <div>
                                 <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{ item.product_id }}</span>
-                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.product_name|default:item.raw_data.title|default:'Product Enquiry' }}">
-                                    {{ item.product_name|default:item.raw_data.title|default:'Product Enquiry' }}
+                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.product_name|default:'Product Enquiry' }}">
+                                    {{ item.product_name|default:'Product Enquiry' }}
                                 </span>
                                 {% if item.admin and item.vendor %}
                                 <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
@@ -162,9 +162,9 @@
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
                                         <i class="bi bi-shield-check me-0.5"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
                                     </span>
-                                    {% if item.raw_data and item.raw_data.intake_channel %}
-                                    <span class="badge {% if item.raw_data.intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} py-0.5 px-1.5" style="font-size: 0.68rem;">
-                                        {% if item.raw_data.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-0.5"></i>{% elif item.raw_data.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-0.5"></i>{% else %}<i class="bi bi-telephone me-0.5"></i>{% endif %}{{ item.raw_data.intake_channel }}
+                                    {% if item.intake_channel %}
+                                    <span class="badge {% if item.intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} py-0.5 px-1.5" style="font-size: 0.68rem;">
+                                        {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-0.5"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-0.5"></i>{% else %}<i class="bi bi-telephone me-0.5"></i>{% endif %}{{ item.intake_channel }}
                                     </span>
                                     {% endif %}
                                 </div>

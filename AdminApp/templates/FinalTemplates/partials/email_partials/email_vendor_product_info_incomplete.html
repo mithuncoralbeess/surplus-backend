@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Needed: Complete Missing Product Information - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+        .header {
+            background: linear-gradient(135deg, #0a5c48 0%, #0f766e 100%);
+            padding: 36px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 12px 0 6px 0;
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.25;
+        }
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(254, 240, 138, 0.28);
+            color: #fef08a;
+            border: 1px solid rgba(254, 240, 138, 0.45);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .content {
+            padding: 32px 30px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+        /* Summary Highlight Card */
+        .summary-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+        }
+        .summary-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-grid td {
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .summary-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .summary-val {
+            color: #0f172a;
+            font-weight: 700;
+            text-align: right;
+        }
+        /* Product Item Card */
+        .product-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .product-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+        .product-meta {
+            font-size: 12.5px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+        .missing-tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .missing-tag {
+            display: inline-block;
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+        /* Alert Box */
+        .alert-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 24px 0;
+            font-size: 14px;
+            color: #166534;
+            line-height: 1.55;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 32px 0 16px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #0a5c48;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 14px 36px;
+            border-radius: 8px;
+            box-shadow: 0 4px 14px rgba(10, 92, 72, 0.3);
+            letter-spacing: 0.2px;
+        }
+        .footer {
+            padding: 24px 30px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            line-height: 1.55;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <span class="badge">Action Required &bull; Incomplete Specifications</span>
+            <h1>Update Missing Product Details</h1>
+            <p>Surplus Market Catalog Verification</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p class="greeting">Hello <strong>{{ user_name|default:"Valued Seller" }}</strong>,</p>
+
+            <p class="message">
+                Our inventory onboarding team is preparing your products for corporate buyer discovery. During our catalog audit, we identified that one or more of your product listings are missing critical technical specifications (such as Model Number, Brand Name, Dimensions, or Origin Country).
+            </p>
+
+            <!-- Summary Card -->
+            <div class="summary-card">
+                <table class="summary-grid">
+                    <tr>
+                        <td class="summary-label">Company / Seller:</td>
+                        <td class="summary-val">{{ company_name|default:user_name }}</td>
+                    </tr>
+                    {% if total_products_count %}
+                    <tr>
+                        <td class="summary-label">Total Listings in Catalog:</td>
+                        <td class="summary-val">{{ total_products_count }} Products</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="summary-label">Listings Requiring Details:</td>
+                        <td class="summary-val" style="color: #d97706;">{{ total_incomplete_count|default:"Multiple" }} Listings</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Incomplete Products Preview -->
+            <div style="font-weight: 700; font-size: 14px; color: #0f172a; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Items Requiring Complete Specifications:
+            </div>
+
+            {% for item in incomplete_products|slice:":8" %}
+            <div class="product-item">
+                <div class="product-name">{{ item.product_name|default:"Product Listing" }}</div>
+                <div class="product-meta">SKU / ID: {{ item.product_id }}</div>
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Missing fields to provide:</div>
+                <div class="missing-tag-group">
+                    {% for field in item.missing_fields %}
+                    <span class="missing-tag">⚠️ {{ field }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if incomplete_products|length > 8 %}
+            <p style="font-size: 13px; color: #64748b; font-style: italic; margin-top: 8px;">
+                + {{ incomplete_products|length|add:"-8" }} additional products require specification updates.
+            </p>
+            {% endif %}
+
+            <!-- Explanation Box -->
+            <div class="alert-box">
+                <strong>Why are complete specifications important?</strong><br>
+                Corporate buyers and wholesale liquidators filter specifically by model numbers, brands, and dimensions. Complete specifications increase buyer trust, boost listing views, and help liquidate your inventory up to 3x faster.
+            </div>
+
+            <!-- CTA -->
+            <div class="btn-wrapper">
+                <a href="{{ action_url|default:'https://dev.surplusmarket.com' }}" class="cta-btn" target="_blank">
+                    Review & Complete Product Details &rarr;
+                </a>
+            </div>
+
+            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: 24px; line-height: 1.5;">
+                Have an updated Excel spreadsheet or manifest? You can also reply directly with your updated sheet, and our team will synchronize it for you.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            &copy; 2026 Surplus Market. All rights reserved.<br>
+            Surplus Market FZ LLC &bull; 15th Floor, Trans World 1, Doha, Qatar.<br>
+            The trusted B2B platform for commercial surplus inventory liquidation.
+        </div>
+    </div>
+</body>
+</html>

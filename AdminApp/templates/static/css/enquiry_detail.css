@@ -643,3 +643,323 @@
 [data-bs-theme="dark"] .detail-page-wrapper .spec-item:hover {
   background: #1e293b;
 }
+
+/* ==========================================================================
+   Detail Page Header Styling (Back Link, Title, Badges, Collections, Actions)
+   ========================================================================== */
+
+.detail-header-card {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Back Link */
+.detail-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-bottom: 0.625rem;
+  line-height: 1.4;
+}
+
+.detail-back-link:hover {
+  color: #2563eb;
+  transform: translateX(-3px);
+}
+
+.detail-back-link i {
+  font-size: 0.875rem;
+  transition: transform 0.2s ease;
+}
+
+.detail-back-link:hover i {
+  transform: translateX(-2px);
+}
+
+/* Title & Icon */
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.detail-product-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.detail-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  border: 1px solid #dbeafe;
+}
+
+/* Status Badges */
+.detail-badge-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detail-status-pill {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* Marketplace Collection Toggles Bar */
+.detail-collections-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+  padding-top: 0.15rem;
+}
+
+.detail-collections-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-collection-toggle {
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  padding: 0.32rem 0.85rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  white-space: nowrap !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  line-height: 1.3 !important;
+}
+
+.btn-collection-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-collection-toggle .badge {
+  width: 17px !important;
+  height: 17px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  font-size: 0.65rem !important;
+  margin-left: 0.25rem !important;
+  line-height: 1 !important;
+}
+
+/* Header Action Buttons (Right Side) */
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 991.98px) {
+  .detail-header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+.detail-action-btn {
+  height: 38px !important;
+  padding: 0 1.15rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  white-space: nowrap !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  cursor: pointer;
+  line-height: 1 !important;
+  text-decoration: none !important;
+}
+
+.detail-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.12) !important;
+}
+
+.detail-action-btn i {
+  font-size: 0.95rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Primary Outline Button (Edit Details) */
+.btn-action-edit {
+  border: 1.5px solid #3b82f6 !important;
+  color: #2563eb !important;
+  background-color: #ffffff !important;
+}
+
+.btn-action-edit:hover {
+  background-color: #eff6ff !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+}
+
+/* Secondary Outline Button (Set Inactive) */
+.btn-action-inactive {
+  border: 1.5px solid #cbd5e1 !important;
+  color: #475569 !important;
+  background-color: #ffffff !important;
+}
+
+.btn-action-inactive:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #1e293b !important;
+}
+
+/* Success Outline Button (Set Active) */
+.btn-action-active {
+  border: 1.5px solid #86efac !important;
+  color: #15803d !important;
+  background-color: #ffffff !important;
+}
+
+.btn-action-active:hover {
+  background-color: #f0fdf4 !important;
+  border-color: #22c55e !important;
+  color: #166534 !important;
+}
+
+/* Decline Button */
+.btn-action-decline {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #dc2626 !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25) !important;
+}
+
+.btn-action-decline:hover {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+  border-color: #b91c1c !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.35) !important;
+}
+
+/* Approve Button */
+.btn-action-approve {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #059669 !important;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.25) !important;
+}
+
+.btn-action-approve:hover {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.35) !important;
+}
+
+/* Dark Theme Support for Header */
+[data-bs-theme="dark"] .detail-header-card {
+  border-bottom-color: #334155;
+}
+
+[data-bs-theme="dark"] .detail-back-link {
+  color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .detail-back-link:hover {
+  color: #60a5fa;
+}
+
+[data-bs-theme="dark"] .detail-product-title {
+  color: #f1f5f9;
+}
+
+[data-bs-theme="dark"] .detail-icon-box {
+  background: #1e293b;
+  color: #60a5fa;
+  border-color: #334155;
+}
+
+[data-bs-theme="dark"] .detail-collections-label {
+  color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .btn-action-edit {
+  background-color: #1e293b !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+[data-bs-theme="dark"] .btn-action-edit:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-action-inactive {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .btn-action-inactive:hover {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .btn-action-active {
+  background-color: #1e293b !important;
+  border-color: #22c55e !important;
+  color: #4ade80 !important;
+}
+
+[data-bs-theme="dark"] .btn-action-active:hover {
+  background-color: #166534 !important;
+  color: #ffffff !important;
+}
