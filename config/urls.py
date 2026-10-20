@@ -21,7 +21,11 @@ urlpatterns = [
     # Staff / Admin Portal & Login Screen
     path("admin/", include("AdminApp.urls")),
 
-    # Root redirect to admin login
+    # Root redirect & aliases to admin / vendor login
+    path("admin_login/", lambda request: redirect("admin_login_page")),
+    path("admin-login/", lambda request: redirect("admin_login_page")),
+    path("vendor_login/", lambda request: redirect("vendor_login_page")),
+    path("vendor-login/", lambda request: redirect("vendor_login_page")),
     path("login/", lambda request: redirect("admin_login_page")),
     path("", lambda request: redirect("admin_login_page")),
 

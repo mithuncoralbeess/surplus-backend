@@ -94,12 +94,15 @@ from .views import (
 urlpatterns = [
     # Vendor Login Screen (HTML Page & POST handler)
     path('vendor-login/', vendor_login, name='vendor_login_page'),
+    path('vendor_login/', lambda request: redirect('vendor_login_page')),
     path('vendor-register/', vendor_register, name='vendor_register'),
     path('vendor-logout/', vendor_logout_view, name='vendor_logout'),
     path('vendor-me/', get_current_vendor, name='vendor_me'),
 
     # Admin Login Screen (HTML Page & POST handler)
     path("login/", admin_login, name="admin_login_page"),
+    path("admin_login/", lambda request: redirect("admin_login_page")),
+    path("admin-login/", lambda request: redirect("admin_login_page")),
     path("signup/", admin_signup_view, name="admin_signup"),
     path("register/", admin_register, name="admin_register"),
     path("logout/", admin_logout_view, name="admin_logout"),
