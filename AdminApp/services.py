@@ -563,10 +563,7 @@ class EmailService:
                     f"<p><a href='{action_url or default_action_url}'>View your listing</a></p>"
                 )
 
-        if not is_profile_complete:
-            subject = f"Listing Approved: {product_name} - Action Required: Complete Profile to Publish"
-        else:
-            subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        subject = f"Listing Approved: {product_name} [{product_id or 'PRO'}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "ProductApproved", context=context)
 
     @classmethod
@@ -853,10 +850,7 @@ class EmailService:
                     f"<p><a href='{action_url or default_action_url}'>View your lot listing</a></p>"
                 )
 
-        if not is_profile_complete:
-            subject = f"Lot Approved: {lot_title} [{lot_number}] - Action Required: Complete Profile to Publish"
-        else:
-            subject = f"Lot Approved: {lot_title} [{lot_number}] - Surplus Market"
+        subject = f"Lot Approved: {lot_title} [{lot_number}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "LotApproved", context=context)
 
     @classmethod

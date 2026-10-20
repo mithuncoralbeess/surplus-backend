@@ -1478,7 +1478,21 @@ def submit_product_request(request):
 
     data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
 
-    # 1. Vendor resolution directly from user_id / vendor_id (supports USR-xxxx, integer, email, username)
+    # 1. User & Vendor resolution from payload (supports direct fields or nested user_information)
+    import re
+    user_info = {}
+    for ukey in ('user_information', 'user_info', 'userInfo', 'user_data', 'userData', 'raw_data'):
+        if ukey in data and data[ukey]:
+            uval = data[ukey]
+            if isinstance(uval, str):
+                try:
+                    uval = json.loads(uval)
+                except Exception:
+                    uval = {}
+            if isinstance(uval, dict):
+                user_info = uval
+                break
+
     vendor = None
     vendor_id = (
         data.get('user_id') or 
@@ -1489,29 +1503,13 @@ def submit_product_request(request):
         data.get('user') or 
         data.get('seller_id') or 
         data.get('sellerId') or 
-        data.get('seller')
+        data.get('seller') or
+        user_info.get('vendor_id') or
+        user_info.get('vendorId') or
+        user_info.get('user_id') or
+        user_info.get('userId') or
+        user_info.get('id')
     )
-
-    if not vendor_id:
-        for ukey in ('user_information', 'user_info', 'userInfo', 'user_data', 'userData', 'raw_data'):
-            if ukey in data:
-                uval = data[ukey]
-                if isinstance(uval, str):
-                    try:
-                        uval = json.loads(uval)
-                    except Exception:
-                        uval = {}
-                if isinstance(uval, dict):
-                    vendor_id = (
-                        uval.get('vendor_id') or 
-                        uval.get('vendorId') or 
-                        uval.get('user_id') or 
-                        uval.get('userId') or 
-                        uval.get('id') or 
-                        uval.get('email')
-                    )
-                    if vendor_id:
-                        break
 
     if not vendor_id:
         vendor_id = (
@@ -1527,8 +1525,20 @@ def submit_product_request(request):
     if not vendor_id and getattr(request, 'user', None) and request.user.is_authenticated:
         vendor_id = request.user.email
 
-    if not vendor_id:
-        vendor_id = data.get('email') or data.get('user_email') or data.get('vendor_email')
+    user_email = (
+        data.get('email') or 
+        data.get('user_email') or 
+        data.get('vendor_email') or 
+        data.get('seller_email') or
+        user_info.get('email') or
+        user_info.get('user_email') or
+        ""
+    )
+    if isinstance(user_email, str):
+        user_email = user_email.strip().lower()
+
+    if not vendor_id and user_email:
+        vendor_id = user_email
 
     if vendor_id is not None and str(vendor_id).strip() != "":
         vid_str = str(vendor_id).strip()
@@ -1546,7 +1556,99 @@ def submit_product_request(request):
         if not vendor:
             vendor = VendorDetails.objects.filter(username__iexact=vid_str).first()
 
-    # Never fall back to arbitrary vendors; if no vendor matched, vendor remains None
+    # Extract user details passed through API
+    full_name = str(
+        data.get('full_name') or 
+        data.get('name') or 
+        data.get('contact_person') or 
+        data.get('seller_name') or 
+        user_info.get('full_name') or 
+        user_info.get('name') or 
+        user_info.get('contact_person') or ""
+    ).strip()
+
+    mobile_number = str(
+        data.get('mobile_number') or 
+        data.get('phone') or 
+        data.get('phone_no') or 
+        data.get('contact_number') or 
+        data.get('mobile') or 
+        user_info.get('mobile_number') or 
+        user_info.get('phone') or 
+        user_info.get('phone_no') or ""
+    ).strip()
+
+    company_name = str(
+        data.get('company_name') or 
+        data.get('company') or 
+        data.get('business_name') or 
+        user_info.get('company_name') or 
+        user_info.get('company') or ""
+    ).strip()
+
+    business_location = str(
+        data.get('business_location') or 
+        data.get('location') or 
+        data.get('city') or 
+        data.get('inventory_location') or 
+        user_info.get('business_location') or 
+        user_info.get('location') or ""
+    ).strip()
+
+    country = str(
+        data.get('country') or 
+        data.get('inventory_country') or 
+        user_info.get('country') or "United Arab Emirates"
+    ).strip()
+
+    business_address = str(
+        data.get('business_address') or 
+        data.get('address') or 
+        user_info.get('business_address') or 
+        user_info.get('address') or ""
+    ).strip()
+
+    # If vendor does not exist yet, auto-create VendorDetails from user details passed through API
+    if not vendor and user_email:
+        base_username = user_email.split('@')[0]
+        base_username = re.sub(r'[^a-zA-Z0-9_]', '_', base_username)[:140]
+        cand_username = base_username or "user"
+        cnt = 1
+        while VendorDetails.objects.filter(username__iexact=cand_username).exists():
+            cand_username = f"{base_username}_{cnt}"
+            cnt += 1
+        vendor = VendorDetails.objects.create(
+            username=cand_username,
+            email=user_email,
+            full_name=full_name,
+            company_name=company_name or full_name,
+            mobile_number=mobile_number,
+            business_location=business_location,
+            country=country or "United Arab Emirates",
+            business_address=business_address,
+            user_type="SELLER",
+            account_entity_type="COMPANY" if company_name else "INDIVIDUAL"
+        )
+    elif vendor:
+        # Update any blank vendor fields with details passed through API
+        v_updated = False
+        if full_name and not vendor.full_name:
+            vendor.full_name = full_name
+            v_updated = True
+        if company_name and not vendor.company_name:
+            vendor.company_name = company_name
+            v_updated = True
+        if mobile_number and not vendor.mobile_number:
+            vendor.mobile_number = mobile_number
+            v_updated = True
+        if business_location and not vendor.business_location:
+            vendor.business_location = business_location
+            v_updated = True
+        if business_address and not vendor.business_address:
+            vendor.business_address = business_address
+            v_updated = True
+        if v_updated:
+            vendor.save()
 
     # 2. Product Name
     product_name = (data.get('product_name') or data.get('title') or '').strip()

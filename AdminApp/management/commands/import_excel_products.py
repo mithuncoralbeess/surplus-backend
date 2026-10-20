@@ -4,6 +4,8 @@ import re
 import datetime
 from decimal import Decimal, InvalidOperation
 import openpyxl
+import urllib.parse
+from django.core.files import File
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from AdminApp.models import Product, ProductImage, VendorDetails, MainCategory, SubCategory
@@ -134,6 +136,17 @@ class Command(BaseCommand):
             help="Simulate import without creating products in the database",
         )
         parser.add_argument(
+            "--images-dir",
+            type=str,
+            default="product_images",
+            help="Directory containing the product images (default: product_images)",
+        )
+        parser.add_argument(
+            "--update-images",
+            action="store_true",
+            help="If product already exists, check and upload/attach missing image files",
+        )
+        parser.add_argument(
             "--limit",
             type=int,
             default=None,
@@ -192,15 +205,67 @@ class Command(BaseCommand):
         post_save.disconnect(product_post_save_sync, sender=Product)
         post_save.disconnect(product_image_post_save_sync, sender=ProductImage)
 
+        images_dir = options.get("images_dir", "product_images")
+        update_images = options.get("update_images", False)
+
+        exact_map = {}
+        lower_map = {}
+        if os.path.exists(images_dir):
+            for fname in os.listdir(images_dir):
+                full_p = os.path.join(images_dir, fname)
+                if os.path.isfile(full_p):
+                    exact_map[fname] = full_p
+                    lower_map[fname.lower()] = full_p
+            self.stdout.write(f"Indexed {len(exact_map)} images from '{images_dir}'.")
+        else:
+            self.stdout.write(self.style.WARNING(f"Images directory '{images_dir}' not found."))
+
+        secondary_dirs = [
+            "media/product_images",
+            "media/email_enq_images",
+            "media/uploaded_images",
+            "d:/CORALBEES/surplusmui/surplusmui/media/product_images",
+            "d:/CORALBEES/surplusmui/surplusmui/media/email_enq_images",
+            "d:/CORALBEES/surplusmui/surplusmui/media/uploaded_images",
+        ]
+
+        def resolve_image_file(raw_url):
+            if not raw_url:
+                return None, None
+            decoded = urllib.parse.unquote(str(raw_url).strip())
+            fname = os.path.basename(decoded)
+            if not fname:
+                return None, None
+
+            if fname in exact_map:
+                return exact_map[fname], fname
+            if fname.lower() in lower_map:
+                return lower_map[fname.lower()], fname
+
+            direct_cand = decoded.lstrip("/")
+            if os.path.exists(direct_cand) and os.path.isfile(direct_cand):
+                return direct_cand, fname
+
+            for sdir in secondary_dirs:
+                if os.path.exists(sdir) and os.path.isdir(sdir):
+                    cand = os.path.join(sdir, fname)
+                    if os.path.exists(cand) and os.path.isfile(cand):
+                        return cand, fname
+                    cand_lower = os.path.join(sdir, fname.lower())
+                    if os.path.exists(cand_lower) and os.path.isfile(cand_lower):
+                        return cand_lower, fname
+
+            return None, fname
+
         try:
-            self._execute_import(sheet, col_idx, vendors_by_email, cats_by_name, subcats_cache, dry_run, limit)
+            self._execute_import(sheet, col_idx, vendors_by_email, cats_by_name, subcats_cache, resolve_image_file, update_images, dry_run, limit)
         finally:
             if orig_sync_emb:
                 sem_search.sync_product_embedding = orig_sync_emb
             post_save.connect(product_post_save_sync, sender=Product)
             post_save.connect(product_image_post_save_sync, sender=ProductImage)
 
-    def _execute_import(self, sheet, col_idx, vendors_by_email, cats_by_name, subcats_cache, dry_run, limit):
+    def _execute_import(self, sheet, col_idx, vendors_by_email, cats_by_name, subcats_cache, resolve_image_file, update_images, dry_run, limit):
         created_count = 0
         skipped_count = 0
         error_count = 0
@@ -317,6 +382,38 @@ class Command(BaseCommand):
             inventory_location = vendor.business_location or vendor.country or ""
             inventory_city = ""
 
+            # Collect all image URLs from this row
+            feat_img_url = str(get_col("Featured Image URL", "")).strip()
+            all_imgs_raw = str(get_col("All Image URLs", "")).strip()
+            row_image_urls = []
+            if feat_img_url and feat_img_url.lower() not in ["none", "nil", "n/a"]:
+                row_image_urls.append(feat_img_url)
+            if all_imgs_raw and all_imgs_raw.lower() not in ["none", "nil", "n/a"]:
+                for u in all_imgs_raw.split(","):
+                    u_clean = u.strip()
+                    if u_clean and u_clean not in row_image_urls and u_clean.lower() not in ["none", "nil", "n/a"]:
+                        row_image_urls.append(u_clean)
+
+            def attach_image_to_product(target_prod, u_val):
+                local_path, fname = resolve_image_file(u_val)
+                if local_path:
+                    try:
+                        with open(local_path, "rb") as f_obj:
+                            django_file = File(f_obj, name=fname)
+                            pi = ProductImage(product=target_prod, is_real_photo=True)
+                            pi.image.save(fname, django_file, save=False)
+                            pi.image_url = pi.image.url
+                            pi.save()
+                            return pi
+                    except Exception as e:
+                        pass
+                # Fallback to saving image_url
+                return ProductImage.objects.create(
+                    product=target_prod,
+                    image_url=u_val,
+                    is_real_photo=True,
+                )
+
             # Check if product already exists (idempotency check)
             existing_prod = Product.objects.filter(
                 vendor=vendor,
@@ -325,6 +422,26 @@ class Command(BaseCommand):
             ).first()
 
             if existing_prod:
+                if update_images:
+                    existing_imgs = list(existing_prod.images.all())
+                    for u in row_image_urls:
+                        local_path, fname = resolve_image_file(u)
+                        fname_lower = fname.lower() if fname else ""
+                        already_present = any(
+                            fname_lower in (img.image.name or "").lower() or fname_lower in (img.image_url or "").lower()
+                            for img in existing_imgs
+                        )
+                        if not already_present and local_path:
+                            try:
+                                with open(local_path, "rb") as f_obj:
+                                    django_file = File(f_obj, name=fname)
+                                    pi = ProductImage(product=existing_prod, is_real_photo=True)
+                                    pi.image.save(fname, django_file, save=False)
+                                    pi.image_url = pi.image.url
+                                    pi.save()
+                                    existing_imgs.append(pi)
+                            except Exception:
+                                pass
                 skipped_count += 1
                 continue
 
@@ -371,28 +488,13 @@ class Command(BaseCommand):
             )
 
             # Images creation
-            feat_img_url = str(get_col("Featured Image URL", "")).strip()
-            all_imgs_raw = str(get_col("All Image URLs", "")).strip()
-
-            created_image_urls = set()
-            if feat_img_url and feat_img_url.lower() not in ["none", "nil", "n/a"]:
-                ProductImage.objects.create(
-                    product=product,
-                    image_url=feat_img_url,
-                    is_real_photo=True,
-                )
-                created_image_urls.add(feat_img_url)
-
-            if all_imgs_raw and all_imgs_raw.lower() not in ["none", "nil", "n/a"]:
-                urls = [u.strip() for u in all_imgs_raw.split(",") if u.strip()]
-                for u in urls:
-                    if u not in created_image_urls:
-                        ProductImage.objects.create(
-                            product=product,
-                            image_url=u,
-                            is_real_photo=True,
-                        )
-                        created_image_urls.add(u)
+            created_image_keys = set()
+            for u in row_image_urls:
+                local_path, fname = resolve_image_file(u)
+                key = fname.lower() if fname else u.lower()
+                if key not in created_image_keys:
+                    attach_image_to_product(product, u)
+                    created_image_keys.add(key)
 
             created_count += 1
             if created_count % 25 == 0 or created_count == 221:

@@ -185,8 +185,7 @@
                         <i class="bi bi-exclamation-triangle-fill text-warning fs-5 flex-shrink-0 mt-0.5"></i>
                         <div>
                             <strong>Profile Incomplete ({{ vendor_profile.percentage }}%):</strong> 
-                            This vendor has not filled all mandatory details. 
-                            If you approve this product, it will remain unlisted from the public marketplace until the vendor completes their profile.
+                            This vendor has not filled all mandatory profile details.
                             {% if vendor_profile.missing_fields_labels %}
                             <div class="mt-1 small text-muted"><strong>Missing:</strong> {{ vendor_profile.missing_fields_labels|join:", " }}</div>
                             {% endif %}

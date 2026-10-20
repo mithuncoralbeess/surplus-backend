@@ -1665,9 +1665,7 @@ def seller_enquiry_status_api(request, enquiry_id):
                 vendor_profile_info = target_vendor.get_profile_completion_details()
 
             if new_status.lower() == "approved":
-                if vendor_profile_info and not vendor_profile_info["is_complete"]:
-                    enquiry.is_active = False
-                elif not has_explicit_active:
+                if not has_explicit_active:
                     enquiry.is_active = True
             elif new_status.lower() in ("declined", "pending"):
                 enquiry.is_active = False
@@ -1683,13 +1681,7 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     msg = "Product status updated."
     if enquiry.enquiry_status == "APPROVED":
-        if vendor_profile_info and not vendor_profile_info["is_complete"]:
-            msg = (
-                f"Product approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
-                f"To list product publicly, vendor must complete all profile details."
-            )
-        else:
-            msg = "Product approved and published to marketplace."
+        msg = "Product approved and published to marketplace."
     elif enquiry.enquiry_status == "DECLINED":
         msg = "Product listing declined."
 
@@ -2531,10 +2523,7 @@ def lot_enquiry_status_api(request, enquiry_id):
         if new_status in ("pending", "approved", "declined"):
             enquiry.enquiry_status = new_status
             if new_status == "approved":
-                if vendor_profile_info and not vendor_profile_info["is_complete"]:
-                    enquiry.is_active = False
-                    enquiry.active_status = "inactive"
-                elif not has_explicit_active:
+                if not has_explicit_active:
                     enquiry.active_status = "active"
                     enquiry.is_active = True
             elif new_status in ("declined", "pending"):
@@ -2552,13 +2541,7 @@ def lot_enquiry_status_api(request, enquiry_id):
 
     msg = f"Lot status updated to {new_status}."
     if enquiry.enquiry_status == "approved":
-        if vendor_profile_info and not vendor_profile_info["is_complete"]:
-            msg = (
-                f"Lot approved. Notice: Vendor profile is {vendor_profile_info['percentage']}% complete. "
-                f"To list lot publicly, vendor must complete all profile details."
-            )
-        else:
-            msg = "Lot approved and published to marketplace."
+        msg = "Lot approved and published to marketplace."
     elif enquiry.enquiry_status == "declined":
         msg = "Lot listing declined."
 

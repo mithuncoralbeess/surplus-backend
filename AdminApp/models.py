@@ -556,40 +556,17 @@ class SellerProductEnquiry(models.Model):
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
-                        if not is_prof_complete:
-                            notif_title = "Listing Approved - Please Complete Your Profile"
-                            notif_msg = (
-                                f"Your product '{prod_title}' has been approved! However, your profile is only {pct}% complete. "
-                                f"To make your listing publicly visible to buyers, please complete your profile details."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
-                            missing_str = ", ".join(missing_labels) if missing_labels else "required business fields"
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title="Action Required: Complete Your Profile",
-                                message=f"Your profile is {pct}% complete. Please complete your missing profile fields ({missing_str}) so '{prod_title}' can be published for buyers.",
-                                notification_type="SYSTEM",
-                                action_url="/profile"
-                            )
-                        else:
-                            notif_title = "Listing Approved"
-                            notif_msg = (
-                                f"Your product '{prod_title}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer enquiries and quote requests."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
+                        notif_title = "Listing Approved"
+                        notif_msg = (
+                            f"Your product '{prod_title}' has been approved and published to the marketplace."
+                        )
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title=notif_title,
+                            message=notif_msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
                     except Exception:
                         pass
 
@@ -929,40 +906,17 @@ class Lot(models.Model):
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
-                        if not is_prof_complete:
-                            notif_title = "Lot Approved - Please Complete Your Profile"
-                            notif_msg = (
-                                f"Your lot '{lot_name}' has been approved! However, your profile is only {pct}% complete. "
-                                f"To make your lot publicly visible to buyers, please complete your profile details."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
-                            missing_str = ", ".join(missing_labels) if missing_labels else "required business fields"
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title="Action Required: Complete Your Profile",
-                                message=f"Your profile is {pct}% complete. Please complete your missing profile fields ({missing_str}) so '{lot_name}' can be published for buyers.",
-                                notification_type="SYSTEM",
-                                action_url="/profile"
-                            )
-                        else:
-                            notif_title = "Lot Listing Approved"
-                            notif_msg = (
-                                f"Your lot '{lot_name}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer bids and enquiries."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
+                        notif_title = "Lot Listing Approved"
+                        notif_msg = (
+                            f"Your lot '{lot_name}' has been approved and published to the marketplace."
+                        )
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title=notif_title,
+                            message=notif_msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
                     except Exception:
                         pass
 
@@ -1265,40 +1219,17 @@ class Product(models.Model):
                 if target_vendor and not self.admin:
                     try:
                         from .services import create_vendor_notification
-                        if not is_prof_complete:
-                            notif_title = "Listing Approved - Please Complete Your Profile"
-                            notif_msg = (
-                                f"Your product '{self.product_name}' has been approved! However, your profile is only {pct}% complete. "
-                                f"To make your listing publicly visible to buyers, please complete your profile details."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
-                            missing_str = ", ".join(missing_labels) if missing_labels else "required business fields"
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title="Action Required: Complete Your Profile",
-                                message=f"Your profile is {pct}% complete. Please complete your missing profile fields ({missing_str}) so '{self.product_name}' can be published for buyers.",
-                                notification_type="SYSTEM",
-                                action_url="/profile"
-                            )
-                        else:
-                            notif_title = "Listing Approved"
-                            notif_msg = (
-                                f"Your product '{self.product_name}' has been approved and published to the marketplace. "
-                                f"Ensure your profile remains complete to receive buyer enquiries and quote requests."
-                            )
-                            create_vendor_notification(
-                                vendor=target_vendor,
-                                title=notif_title,
-                                message=notif_msg,
-                                notification_type="LISTING",
-                                action_url="/profile"
-                            )
+                        notif_title = "Listing Approved"
+                        notif_msg = (
+                            f"Your product '{self.product_name}' has been approved and published to the marketplace."
+                        )
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title=notif_title,
+                            message=notif_msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
                     except Exception:
                         pass
 
