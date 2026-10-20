@@ -1096,19 +1096,32 @@
 {% block extra_js %}
 <script>
 let currentModalPreset = null;
+let hasModalChanges = false;
+let hasCatalogChanges = false;
 
 function switchCollectionTab(tabId) {
     const triggerEl = document.getElementById(tabId);
     if (triggerEl) {
+        sessionStorage.setItem('active_collection_tab', tabId);
+        if (hasCatalogChanges) {
+            window.location.reload();
+            return;
+        }
         const tab = new bootstrap.Tab(triggerEl);
         tab.show();
-        // Smooth scroll to the main card
         triggerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
 
 function presetModalCollection(flag) {
     currentModalPreset = flag;
+    if (flag === 'is_best_selling') {
+        sessionStorage.setItem('active_collection_tab', 'bestselling-tab');
+    } else if (flag === 'is_new_arrival') {
+        sessionStorage.setItem('active_collection_tab', 'newarrivals-tab');
+    } else if (flag === 'is_featured') {
+        sessionStorage.setItem('active_collection_tab', 'featured-tab');
+    }
     searchModalProducts();
 }
 
@@ -1122,14 +1135,59 @@ function showToast(msg, isSuccess = true) {
     toast.show();
 }
 
+function updateLiveCounts(counts) {
+    if (!counts) return;
+    const statFeat = document.getElementById('statFeaturedCount');
+    const statBest = document.getElementById('statBestCount');
+    const statNew = document.getElementById('statNewCount');
+    const badgeFeat = document.getElementById('badgeFeatured');
+    const badgeBest = document.getElementById('badgeBest');
+    const badgeNew = document.getElementById('badgeNew');
+
+    if (statFeat) statFeat.textContent = counts.featured_count;
+    if (statBest) statBest.textContent = counts.best_selling_count;
+    if (statNew) statNew.textContent = counts.new_arrivals_count;
+    if (badgeFeat) badgeFeat.textContent = counts.featured_count;
+    if (badgeBest) badgeBest.textContent = counts.best_selling_count;
+    if (badgeNew) badgeNew.textContent = counts.new_arrivals_count;
+}
+
 // Inline toggle handler
 document.addEventListener('DOMContentLoaded', () => {
+    // Restore active tab from sessionStorage if available
+    const savedTabId = sessionStorage.getItem('active_collection_tab');
+    if (savedTabId) {
+        const triggerEl = document.getElementById(savedTabId);
+        if (triggerEl) {
+            const tab = new bootstrap.Tab(triggerEl);
+            tab.show();
+        }
+    }
+
+    // Save active tab on change
+    document.querySelectorAll('#collectionTabs button[data-bs-toggle="tab"]').forEach(tabBtn => {
+        tabBtn.addEventListener('shown.bs.tab', (e) => {
+            sessionStorage.setItem('active_collection_tab', e.target.id);
+        });
+    });
+
+    // Auto-reload on modal close if changes were made
+    const addProductModalEl = document.getElementById('addProductModal');
+    if (addProductModalEl) {
+        addProductModalEl.addEventListener('hidden.bs.modal', () => {
+            if (hasModalChanges) {
+                window.location.reload();
+            }
+        });
+    }
+
     // Attach listener for all collection switches
     document.querySelectorAll('.collection-toggle').forEach(sw => {
         sw.addEventListener('change', function () {
             const id = this.dataset.id;
             const flag = this.dataset.flag;
             const val = this.checked;
+            hasCatalogChanges = true;
             updateProductSetting(id, { [flag]: val });
         });
     });
@@ -1189,10 +1247,8 @@ async function updateProductSetting(productId, payload) {
         const data = await res.json();
         if (data.success) {
             showToast(data.message || 'Saved successfully');
-            
-            // Optionally update live stats if returned
-            if (data.product) {
-                // If in one of the specific collection tabs and un-checked, visually refresh
+            if (data.counts) {
+                updateLiveCounts(data.counts);
             }
         } else {
             showToast(data.message || 'Error updating product', false);
@@ -1211,7 +1267,9 @@ async function toggleCollection(productId, flag, state, rowIdToRemove = null) {
             row.style.transition = 'all 0.3s ease';
             row.style.opacity = '0';
             row.style.transform = 'translateX(20px)';
-            setTimeout(() => { row.remove(); }, 300);
+            setTimeout(() => { 
+                row.remove();
+            }, 300);
         }
     }
 }
@@ -1272,6 +1330,7 @@ async function searchModalProducts() {
 async function modalToggle(productId, flag, btn) {
     const isCurrentlyActive = btn.classList.contains('btn-danger') || btn.classList.contains('btn-warning') || btn.classList.contains('btn-info');
     const newState = !isCurrentlyActive;
+    hasModalChanges = true;
     
     // Optimistic UI toggle
     if (flag === 'is_featured') {

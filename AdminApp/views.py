@@ -6626,12 +6626,24 @@ def update_product_collection_api(request):
 
     product.save(update_fields=[
         "is_featured", "is_best_selling", "is_new_arrival",
-        "featured_order", "best_selling_order", "new_arrival_order", "display_order"
+        "featured_order", "best_selling_order", "new_arrival_order", "display_order",
+        "updated_at"
     ])
+
+    featured_count = Product.objects.filter(is_featured=True, enquiry_status__iexact="APPROVED").count()
+    best_selling_count = Product.objects.filter(is_best_selling=True, enquiry_status__iexact="APPROVED").count()
+    new_arrivals_count = Product.objects.filter(is_new_arrival=True, enquiry_status__iexact="APPROVED").count()
+    total_approved_count = Product.objects.filter(enquiry_status__iexact="APPROVED").count()
 
     return Response({
         "success": True,
         "message": f"Updated collection settings for '{product.product_name}'.",
+        "counts": {
+            "featured_count": featured_count,
+            "best_selling_count": best_selling_count,
+            "new_arrivals_count": new_arrivals_count,
+            "total_approved_count": total_approved_count,
+        },
         "product": {
             "id": product.id,
             "is_featured": product.is_featured,
