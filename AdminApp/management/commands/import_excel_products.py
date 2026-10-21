@@ -366,6 +366,14 @@ class Command(BaseCommand):
                 excluded_countries = [c.strip() for c in str(excluded_countries_val).split(",") if c.strip()]
 
             liquidating_price = parse_clean_decimal(raw_liq, Decimal("0.00"))
+            if liquidating_price <= Decimal("0.00"):
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Row {row_num}: Liquidation Price is 0 or invalid! Skipping '{product_name}'."
+                    )
+                )
+                skipped_count += 1
+                continue
             msrp = parse_clean_decimal(raw_msrp, None) if raw_msrp is not None else None
 
             # Calculate offer discount percentage if MSRP > liquidating_price

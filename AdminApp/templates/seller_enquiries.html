@@ -102,8 +102,8 @@
     <div class="table-toolbar">
         <div class="flex-grow-1" style="max-width: 480px;">
             <div class="input-group">
-                <input type="text" id="enquirySearch" class="form-control rounded-end-0" placeholder="Search by Product ID (e.g. PRO-00001)..." value="{{ search }}">
-                <button class="btn btn-primary rounded-start-0 px-3" type="button">Search</button>
+                <input type="text" id="enquirySearch" class="form-control rounded-end-0" placeholder="Search by Product ID, Name, Model, or User Email..." value="{{ search }}">
+                <button class="btn btn-primary rounded-start-0 px-3" type="button" id="enquirySearchBtn">Search</button>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -156,7 +156,7 @@
                                 </span>
                                 {% if item.admin and item.vendor %}
                                 <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                    <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;">
+                                    <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="User: {{ item.vendor.email|default:'N/A' }}">
                                         <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
                                     </span>
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
@@ -173,7 +173,7 @@
                                     <i class="bi bi-shield-check me-1"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
                                 </span>
                                 {% elif item.vendor %}
-                                <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5 mt-1 d-inline-block" style="font-size: 0.70rem;">
+                                <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5 mt-1 d-inline-block" style="font-size: 0.70rem;" title="User: {{ item.vendor.email|default:'N/A' }}">
                                     <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
                                 </span>
                                 {% endif %}
@@ -355,21 +355,42 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Search input handler
     const searchInput = document.getElementById('enquirySearch');
+    const searchBtn = document.getElementById('enquirySearchBtn');
+
+    function triggerSearch() {
+        const query = searchInput ? searchInput.value.trim() : '';
+        const url = new URL(window.location.href);
+        url.searchParams.delete('page');
+        if (query) {
+            url.searchParams.set('search', query);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.location.href = url.toString();
+    }
+
     if (searchInput) {
         let debounceTimer;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                const query = e.target.value.trim();
-                const url = new URL(window.location.href);
-                url.searchParams.delete('page');
-                if (query) {
-                    url.searchParams.set('search', query);
-                } else {
-                    url.searchParams.delete('search');
-                }
-                window.location.href = url.toString();
+                triggerSearch();
             }, 500);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(debounceTimer);
+                triggerSearch();
+            }
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            triggerSearch();
         });
     }
 

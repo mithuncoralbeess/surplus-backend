@@ -1482,7 +1482,25 @@ def seller_enquiries_view(request, status_filter=None):
         qs = qs.filter(enquiry_status__iexact=current_status)
 
     if search:
-        qs = qs.filter(Q(product_id__icontains=search) | Q(model_no__icontains=search) | Q(product_name__icontains=search))
+        search_filter = (
+            Q(product_id__icontains=search) |
+            Q(model_no__icontains=search) |
+            Q(product_name__icontains=search) |
+            Q(brand_name__icontains=search) |
+            Q(vendor__email__icontains=search) |
+            Q(vendor__username__icontains=search) |
+            Q(vendor__full_name__icontains=search) |
+            Q(vendor__company_name__icontains=search) |
+            Q(admin__email__icontains=search) |
+            Q(admin__username__icontains=search)
+        )
+        if search.upper().startswith("USR-"):
+            try:
+                vid = int(search[4:].strip())
+                search_filter |= Q(vendor__id=vid)
+            except ValueError:
+                pass
+        qs = qs.filter(search_filter)
 
     paginator = Paginator(qs, 50)
     try:
@@ -4650,9 +4668,23 @@ def all_products_view(request):
     approved_enquiries = SellerProductEnquiry.objects.filter(enquiry_status="approved")
 
     if search_query:
-        products_qs = products_qs.filter(
-            Q(product_name__icontains=search_query) | Q(product_id__icontains=search_query) | Q(model_no__icontains=search_query) | Q(brand__icontains=search_query)
+        prod_filter = (
+            Q(product_name__icontains=search_query) |
+            Q(product_id__icontains=search_query) |
+            Q(model_no__icontains=search_query) |
+            Q(brand_name__icontains=search_query) |
+            Q(vendor__email__icontains=search_query) |
+            Q(vendor__username__icontains=search_query) |
+            Q(vendor__full_name__icontains=search_query) |
+            Q(vendor__company_name__icontains=search_query)
         )
+        if search_query.upper().startswith("USR-"):
+            try:
+                vid = int(search_query[4:].strip())
+                prod_filter |= Q(vendor__id=vid)
+            except ValueError:
+                pass
+        products_qs = products_qs.filter(prod_filter)
 
     paginator = Paginator(products_qs, 50)
     try:
