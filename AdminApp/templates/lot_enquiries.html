@@ -95,32 +95,59 @@
 <div class="content-table-card">
     <!-- Card Toolbar -->
     <div class="table-toolbar">
-        <div class="flex-grow-1" style="max-width: 480px;">
+        <div class="flex-grow-1" style="max-width: 320px;">
             <div class="input-group">
                 <input type="text" id="lotSearch" class="form-control rounded-end-0"
-                    placeholder="Search by Batch ID (e.g. BAT-00001)..." value="{{ search }}">
-                <button class="btn btn-primary rounded-start-0 px-3" type="button">Search</button>
+                    placeholder="Search by Batch ID or Title..." value="{{ search }}">
+                <button class="btn btn-primary rounded-start-0 px-3" id="btnLotSearch" type="button">Search</button>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Category Filter -->
+            <select class="form-select form-select-sm filter-select" id="categoryFilter"
+                style="min-width: 170px; max-width: 220px; font-size: 14px !important; height: 38px;">
+                <option value="all">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Country Filter -->
+            <select class="form-select form-select-sm filter-select" id="countryFilter"
+                style="min-width: 160px; max-width: 200px; font-size: 14px !important; height: 38px;">
+                <option value="all">All Countries</option>
+                {% for c in countries %}
+                <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Date Filter -->
             <select class="form-select form-select-sm filter-select" id="dateFilter"
-                style="width: 140px; font-size: 14px !important; height: 38px;">
+                style="width: 130px; font-size: 14px !important; height: 38px;">
                 <option value="all">All Time</option>
                 <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
                 <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
                 <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
             </select>
+
             <div class="btn-group" role="group" aria-label="Status filter">
-                <a href="/admin/enquiries/lots/pending/"
+                <a href="/admin/enquiries/lots/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
                     class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}"
                     style="font-size: 14px !important;">Pending</a>
-                <a href="/admin/enquiries/lots/approved/"
+                <a href="/admin/enquiries/lots/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
                     class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}"
                     style="font-size: 14px !important;">Approved</a>
-                <a href="/admin/enquiries/lots/declined/"
+                <a href="/admin/enquiries/lots/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
                     class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}"
                     style="font-size: 14px !important;">Declined</a>
             </div>
+
+            {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
+            <a href="/admin/enquiries/lots/" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 px-2.5 py-1.5" title="Clear All Filters" style="font-size: 14px !important;">
+                <i class="bi bi-x-lg"></i>
+                <span>Clear</span>
+            </a>
+            {% endif %}
             <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5"
                 onclick="window.location.reload()" title="Refresh Table" style="font-size: 14px !important;">
                 <i class="bi bi-arrow-clockwise"></i>
@@ -157,18 +184,28 @@
                                     title="{{ item.title|default:'Lot Inventory Package' }}">
                                     {{ item.title|default:'Lot Inventory Package' }}
                                 </span>
-                                {% if item.admin %}
-                                <div class="mt-0.5 d-flex align-items-center gap-1 flex-wrap">
+                                <div class="mt-1 d-flex align-items-center gap-1 flex-wrap">
+                                    {% if item.primary_category %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;">
+                                        <i class="bi bi-tag-fill me-0.5"></i>{{ item.primary_category }}
+                                    </span>
+                                    {% endif %}
+                                    {% if item.inventory_country %}
+                                    <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded-pill" style="font-size: 0.68rem;" title="{{ item.inventory_location }}">
+                                        <i class="bi bi-geo-alt-fill text-danger me-0.5"></i>{{ item.inventory_country }}
+                                    </span>
+                                    {% endif %}
+                                    {% if item.admin %}
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
                                         <i class="bi bi-shield-check me-0.5"></i>Assisted ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
                                     </span>
+                                    {% endif %}
                                     {% if item.intake_channel %}
                                     <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-1.5 py-0.5 rounded-pill" style="font-size: 0.65rem;">
                                         {{ item.intake_channel }}
                                     </span>
                                     {% endif %}
                                 </div>
-                                {% endif %}
                             </div>
                         </div>
                     </td>
@@ -326,14 +363,14 @@
                 {% if page_obj.has_previous %}
                 <li class="page-item">
                     <a class="page-link rounded-circle px-2 py-1"
-                        href="?page=1{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}"
+                        href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}"
                         title="First Page">
                         <i class="bi bi-chevron-double-left"></i>
                     </a>
                 </li>
                 <li class="page-item">
                     <a class="page-link rounded-pill px-3 py-1"
-                        href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">
+                        href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                         Previous
                     </a>
                 </li>
@@ -352,7 +389,7 @@
                     {% else %}
                     <li class="page-item">
                         <a class="page-link rounded-circle px-3 py-1"
-                            href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a>
+                            href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
                     </li>
                     {% endif %}
                 {% endif %}
@@ -361,13 +398,13 @@
                     {% if page_obj.has_next %}
                     <li class="page-item">
                         <a class="page-link rounded-pill px-3 py-1"
-                            href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}">
+                            href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                             Next
                         </a>
                     </li>
                     <li class="page-item">
                         <a class="page-link rounded-circle px-2 py-1"
-                            href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter }}{% endif %}"
+                            href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}"
                             title="Last Page">
                             <i class="bi bi-chevron-double-right"></i>
                         </a>
@@ -389,21 +426,70 @@
     document.addEventListener("DOMContentLoaded", () => {
         // Search input handler
         const searchInput = document.getElementById('lotSearch');
+        const btnLotSearch = document.getElementById('btnLotSearch');
+
+        const doSearch = (query) => {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('page');
+            if (query) {
+                url.searchParams.set('search', query);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.location.href = url.toString();
+        };
+
         if (searchInput) {
             let debounceTimer;
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
-                    const query = e.target.value.trim();
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete('page');
-                    if (query) {
-                        url.searchParams.set('search', query);
-                    } else {
-                        url.searchParams.delete('search');
-                    }
-                    window.location.href = url.toString();
+                    doSearch(e.target.value.trim());
                 }, 500);
+            });
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(debounceTimer);
+                    doSearch(searchInput.value.trim());
+                }
+            });
+        }
+
+        if (btnLotSearch && searchInput) {
+            btnLotSearch.addEventListener('click', () => {
+                doSearch(searchInput.value.trim());
+            });
+        }
+
+        // Category filter handler
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => {
+                const val = e.target.value;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('page');
+                if (val && val !== 'all') {
+                    url.searchParams.set('category', val);
+                } else {
+                    url.searchParams.delete('category');
+                }
+                window.location.href = url.toString();
+            });
+        }
+
+        // Country filter handler
+        const countryFilter = document.getElementById('countryFilter');
+        if (countryFilter) {
+            countryFilter.addEventListener('change', (e) => {
+                const val = e.target.value;
+                const url = new URL(window.location.href);
+                url.searchParams.delete('page');
+                if (val && val !== 'all') {
+                    url.searchParams.set('country', val);
+                } else {
+                    url.searchParams.delete('country');
+                }
+                window.location.href = url.toString();
             });
         }
 

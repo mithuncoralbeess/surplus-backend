@@ -1448,14 +1448,45 @@ def seller_enquiries_view(request, status_filter=None):
     if not admin_user:
         return redirect("admin_login_page")
 
-    from .models import Product
-    from django.db.models import Q
+    from .models import Product, MainCategory
+    from django.db.models import Q, Count
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     
     current_status = status_filter or request.GET.get("status", "all").lower()
     search = request.GET.get("search", "").strip()
     date_filter = request.GET.get("date_filter", "all")
+    category_filter = request.GET.get("category", "").strip()
+    country_filter = request.GET.get("country", "").strip()
     page_num = request.GET.get("page", 1)
+
+    # Categories list: all active MainCategory names + categories assigned in products
+    mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
+    prod_cats = list(Product.objects.filter(category__isnull=False).values_list("category__name", flat=True).distinct())
+    all_categories = sorted(list(set(mc_names) | set(prod_cats)))
+
+    ALL_COUNTRIES = [
+        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia",
+        "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
+        "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+        "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia",
+        "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica",
+        "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini",
+        "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada",
+        "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia",
+        "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
+        "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania",
+        "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
+        "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique",
+        "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+        "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea",
+        "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+        "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia",
+        "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
+        "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+        "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago",
+        "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom",
+        "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ]
 
     qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").prefetch_related("images").order_by("-created_at")
 
@@ -1465,6 +1496,22 @@ def seller_enquiries_view(request, status_filter=None):
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7))
     elif date_filter == "30days":
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
+
+    if category_filter and category_filter != "all":
+        qs = qs.filter(
+            Q(category__name__iexact=category_filter) |
+            Q(category__name__icontains=category_filter) |
+            Q(subcategory__name__icontains=category_filter)
+        )
+
+    if country_filter and country_filter != "all":
+        qs = qs.filter(
+            Q(inventory_country__iexact=country_filter) |
+            Q(inventory_location__icontains=country_filter) |
+            Q(inventory_country__icontains=country_filter) |
+            Q(manufacturing_country__iexact=country_filter) |
+            Q(vendor__business_location__icontains=country_filter)
+        )
     
     # Consolidated Status Counts (1 query instead of 4)
     counts_data = Product.objects.aggregate(
@@ -1518,6 +1565,10 @@ def seller_enquiries_view(request, status_filter=None):
         "current_status": current_status,
         "search": search,
         "date_filter": date_filter,
+        "category_filter": category_filter,
+        "country_filter": country_filter,
+        "categories": all_categories,
+        "countries": ALL_COUNTRIES,
         "counts": {
             "total": total_count,
             "pending": pending_count,
@@ -1531,20 +1582,56 @@ def seller_enquiries_view(request, status_filter=None):
 def lot_enquiries_view(request, status_filter=None):
     """
     Renders the Lot Batch Enquiries (.xlsx / .csv) dashboard table.
-    Filters: all, pending, approved, declined.
+    Filters: all, pending, approved, declined, category, country, search, date_filter.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    from .models import Lot
-    from django.db.models import Q
+    from .models import Lot, MainCategory
+    from django.db.models import Q, Count
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     
     current_status = status_filter or request.GET.get("status", "all").lower()
     search = request.GET.get("search", "").strip()
     date_filter = request.GET.get("date_filter", "all")
+    category_filter = request.GET.get("category", "").strip()
+    country_filter = request.GET.get("country", "").strip()
     page_num = request.GET.get("page", 1)
+
+    # Categories list: all active MainCategory names + categories assigned in lots
+    mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
+    assigned_cats = set()
+    for raw_alloc in Lot.objects.exclude(category_allocations=[]).values_list("category_allocations", flat=True):
+        if isinstance(raw_alloc, list):
+            for c in raw_alloc:
+                if isinstance(c, dict) and c.get("category_name"):
+                    assigned_cats.add(c["category_name"].strip())
+    all_categories = sorted(list(set(mc_names) | assigned_cats))
+
+    ALL_COUNTRIES = [
+        "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia",
+        "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin",
+        "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+        "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia",
+        "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica",
+        "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini",
+        "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada",
+        "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia",
+        "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati",
+        "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania",
+        "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
+        "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique",
+        "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria",
+        "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea",
+        "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis",
+        "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia",
+        "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia",
+        "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+        "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago",
+        "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom",
+        "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+    ]
 
     qs = Lot.objects.all().select_related("vendor", "admin").order_by("-created_at")
 
@@ -1554,7 +1641,20 @@ def lot_enquiries_view(request, status_filter=None):
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7))
     elif date_filter == "30days":
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
-    
+
+    if category_filter and category_filter != "all":
+        qs = qs.filter(
+            Q(category_allocations__icontains=category_filter) |
+            Q(raw_data__icontains=category_filter)
+        )
+
+    if country_filter and country_filter != "all":
+        qs = qs.filter(
+            Q(inventory_country__iexact=country_filter) |
+            Q(inventory_location__icontains=country_filter) |
+            Q(inventory_country__icontains=country_filter)
+        )
+
     # Consolidated Status Counts (1 query instead of 4)
     lot_counts_data = Lot.objects.aggregate(
         total=Count("id"),
@@ -1589,6 +1689,10 @@ def lot_enquiries_view(request, status_filter=None):
         "current_status": current_status,
         "search": search,
         "date_filter": date_filter,
+        "category_filter": category_filter,
+        "country_filter": country_filter,
+        "categories": all_categories,
+        "countries": ALL_COUNTRIES,
         "counts": {
             "total": total_count,
             "pending": pending_count,

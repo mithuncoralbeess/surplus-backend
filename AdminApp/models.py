@@ -988,6 +988,16 @@ class Lot(models.Model):
         return self.lot_number
 
     @property
+    def primary_category(self):
+        if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
+            first = self.category_allocations[0]
+            if isinstance(first, dict):
+                return first.get("category_name", "")
+        if isinstance(self.raw_data, dict):
+            return self.raw_data.get("category", "")
+        return ""
+
+    @property
     def formatted_vendor_id(self):
         if self.vendor:
             return self.vendor.user_id
