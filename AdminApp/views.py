@@ -2218,26 +2218,35 @@ def lot_enquiry_edit_api(request, enquiry_id):
     # Basic info
     if "title" in data and str(data["title"]).strip():
         lot.title = str(data["title"]).strip()
+    import re
+    def _to_clean_float(val):
+        if val is None or val == "":
+            return None
+        c = re.sub(r'[^\d.-]', '', str(val).strip())
+        if c and c not in ('.', '-', '-.'):
+            try:
+                return float(c)
+            except (ValueError, TypeError):
+                pass
+        return None
+
     if "msrp" in data and data["msrp"] not in (None, ""):
-        try:
-            lot.total_est_retail_value_msrp = float(data["msrp"])
-        except (ValueError, TypeError):
-            pass
+        parsed_msrp = _to_clean_float(data["msrp"])
+        if parsed_msrp is not None:
+            lot.total_est_retail_value_msrp = parsed_msrp
     if "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
-        try:
-            lot.ask_price_surplus_payout = float(data["liquidation_price"])
-        except (ValueError, TypeError):
-            pass
+        parsed_liq = _to_clean_float(data["liquidation_price"])
+        if parsed_liq is not None:
+            lot.ask_price_surplus_payout = parsed_liq
     elif "liquidating_price" in data and data["liquidating_price"] not in (None, ""):
-        try:
-            lot.ask_price_surplus_payout = float(data["liquidating_price"])
-        except (ValueError, TypeError):
-            pass
+        parsed_liq = _to_clean_float(data["liquidating_price"])
+        if parsed_liq is not None:
+            lot.ask_price_surplus_payout = parsed_liq
     elif "price" in data and data["price"] not in (None, ""):
-        try:
-            lot.ask_price_surplus_payout = float(data["price"])
-        except (ValueError, TypeError):
-            pass
+        parsed_p = _to_clean_float(data["price"])
+        if parsed_p is not None:
+            lot.ask_price_surplus_payout = parsed_p
+
     if "currency" in data and str(data["currency"]).strip():
         lot.currency = str(data["currency"]).strip()
     if "inventory_country" in data:
@@ -2840,71 +2849,88 @@ def lot_enquiry_detail_view(request, enquiry_id):
         if tot_q > 0:
             units_clean = str(tot_q)
 
-    # MSRP & Liquidation Price
-    msrp_val = enquiry.total_est_retail_value_msrp if (enquiry.total_est_retail_value_msrp and enquiry.total_est_retail_value_msrp > 0) else (combined_raw.get("total_est_retail_value_msrp") or combined_raw.get("msrp") or combined_raw.get("retail_price") or combined_raw.get("total_price"))
-    liq_val = enquiry.ask_price_surplus_payout if (enquiry.ask_price_surplus_payout and enquiry.ask_price_surplus_payout > 0) else (combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("target_price") or combined_raw.get("asking_price"))
+    # Robust float extractor for any currency/numeric string (handles $, USD, commas, spaces)
+    def _clean_num(v):
+        if v is None:
+            return 0.0
+        import re
+        c = re.sub(r'[^\d.-]', '', str(v).strip())
+        if c and c not in ('.', '-', '-.'):
+            try:
+                return float(c)
+            except (ValueError, TypeError):
+                pass
+        return 0.0
 
-    def _fmt_currency(v):
-        if v is None or v == "" or v == "-":
-            return None
-        try:
-            f = float(str(v).replace(",", "").strip())
-            return f"{f:,.2f}"
-        except (ValueError, TypeError):
-            return str(v)
+    # Extract MSRP
+    msrp_num = 0.0
+    if enquiry.total_est_retail_value_msrp and float(enquiry.total_est_retail_value_msrp) > 0:
+        msrp_num = float(enquiry.total_est_retail_value_msrp)
+    else:
+        for k in ("total_est_retail_value_msrp", "total_retail", "msrp", "retail_price", "total_price"):
+            n = _clean_num(combined_raw.get(k))
+            if n > 0:
+                msrp_num = n
+                break
 
-    formatted_msrp = _fmt_currency(msrp_val)
-    formatted_liq = _fmt_currency(liq_val)
+    # Extract Liquidation Price (payout to seller)
+    liq_num = 0.0
+    if enquiry.ask_price_surplus_payout and float(enquiry.ask_price_surplus_payout) > 0:
+        liq_num = float(enquiry.ask_price_surplus_payout)
+    else:
+        for k in ("ask_price_surplus_payout", "liquidation_price", "liquidating_price", "asking_price", "target_price"):
+            n = _clean_num(combined_raw.get(k))
+            if n > 0:
+                liq_num = n
+                break
 
-    # Offer directly from frontend lot submission / database record (no dynamic calculation)
-    offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
+    raw_offer_str = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer")) or ""
 
-    # Implied target price calculation if open to offer and offer has % discount
-    implied_ask_str = None
-    try:
-        if msrp_val:
-            msrp_float = float(str(msrp_val).replace(",", "").strip())
-            if enquiry.offer and "%" in str(enquiry.offer):
-                import re
-                pct_match = re.search(r"(\d+(\.\d+)?)%", str(enquiry.offer))
-                if pct_match:
-                    discount_pct_val = float(pct_match.group(1))
-                    if 0 < discount_pct_val < 100 and msrp_float > 0:
-                        implied_ask_float = msrp_float * (1.0 - (discount_pct_val / 100.0))
-                        implied_ask_str = f"{implied_ask_float:,.2f}"
-    except Exception:
-        pass
+    # If liquidation price is missing but we have MSRP and Offer % (e.g. 60% Off MSRP)
+    if liq_num <= 0 and msrp_num > 0 and raw_offer_str and "%" in raw_offer_str:
+        import re
+        pct_match = re.search(r"(\d+(\.\d+)?)%", raw_offer_str)
+        if pct_match:
+            try:
+                discount_pct_val = float(pct_match.group(1))
+                if 0 < discount_pct_val < 100:
+                    liq_num = round(msrp_num * (1.0 - (discount_pct_val / 100.0)), 2)
+            except Exception:
+                pass
 
-    if (not liq_val or str(liq_val) in ("0", "0.0", "0.00")) and implied_ask_str:
-        liq_val = implied_ask_str
-        formatted_liq = implied_ask_str
+    # If liquidation price is STILL missing but combined_raw has "price"
+    if liq_num <= 0:
+        n = _clean_num(combined_raw.get("price") or combined_raw.get("current_price"))
+        if n > 0:
+            liq_num = n
 
-    # Offer dynamically calculated by MSRP and liquidation price (min 60% off policy)
-    msrp_num = None
-    liq_num = None
-    try:
-        if msrp_val:
-            msrp_num = float(str(msrp_val).replace(",", "").strip())
-    except Exception:
-        pass
-    try:
-        if liq_val:
-            liq_num = float(str(liq_val).replace(",", "").strip())
-    except Exception:
-        pass
-
-    offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
-    if msrp_num and msrp_num > 0 and liq_num and liq_num > 0 and msrp_num > liq_num:
+    # Offer dynamically calculated by MSRP and liquidation price (min 60% off policy, NO 10% in offer)
+    if msrp_num > 0 and liq_num > 0 and msrp_num > liq_num:
         calc_discount = round(((msrp_num - liq_num) / msrp_num) * 100)
         offer_val = f"{calc_discount}% Off MSRP"
-    elif not offer_val:
+    elif raw_offer_str:
+        offer_val = raw_offer_str
+    else:
         offer_val = "60% Off MSRP"
 
-    if liq_num and liq_num > 0:
-        price_val = round(liq_num * 1.10, 2)
+    # Price = Liquidation Price * 1.10 (our platform markup is strictly in price, NEVER in offer)
+    if liq_num > 0:
+        price_num = round(liq_num * 1.10, 2)
+    elif msrp_num > 0:
+        liq_num = round(msrp_num * 0.40, 2)
+        price_num = round(liq_num * 1.10, 2)
     else:
-        price_val = combined_raw.get("price") or combined_raw.get("current_price") or liq_val
-    formatted_price = _fmt_currency(price_val)
+        price_num = 0.0
+
+    msrp_val = msrp_num if msrp_num > 0 else None
+    liq_val = liq_num if liq_num > 0 else None
+    price_val = price_num if price_num > 0 else None
+
+    formatted_msrp = f"{msrp_num:,.2f}" if msrp_num > 0 else None
+    formatted_liq = f"{liq_num:,.2f}" if liq_num > 0 else None
+    formatted_price = f"{price_num:,.2f}" if price_num > 0 else None
+    implied_ask_str = formatted_liq
+
 
     # Open to offers detection: only true if explicitly flagged to accept counter/open offers
     is_open_to_offer = False
@@ -5333,15 +5359,21 @@ def add_lot_view(request):
 
         # --- 4. Pricing & Commercial Terms ---
         currency = request.POST.get("currency", "USD").strip()
-        try:
-            total_est_retail_value_msrp = float(request.POST.get("total_est_retail_value_msrp") or request.POST.get("msrp") or 0.0)
-        except (ValueError, TypeError):
-            total_est_retail_value_msrp = 0.0
+        import re
+        def _parse_form_num(v):
+            if not v:
+                return 0.0
+            c = re.sub(r'[^\d.-]', '', str(v).strip())
+            if c and c not in ('.', '-', '-.'):
+                try:
+                    return float(c)
+                except (ValueError, TypeError):
+                    pass
+            return 0.0
 
-        try:
-            ask_price_surplus_payout = float(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price") or 0.0)
-        except (ValueError, TypeError):
-            ask_price_surplus_payout = 0.0
+        total_est_retail_value_msrp = _parse_form_num(request.POST.get("total_est_retail_value_msrp") or request.POST.get("msrp"))
+        ask_price_surplus_payout = _parse_form_num(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price"))
+
 
         sale_method = request.POST.get("sale_method", "offer").strip()
         allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
