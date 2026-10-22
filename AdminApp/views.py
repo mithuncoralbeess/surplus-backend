@@ -3052,8 +3052,9 @@ def lot_enquiry_detail_view(request, enquiry_id):
         if not img_str:
             continue
         
-        # Clean path and friendly filename (never show AWS presigned query parameters)
-        clean_path = img_str.split("?")[0]
+        # Clean path and friendly filename (never show AWS presigned query parameters, and unquote for display)
+        import urllib.parse
+        clean_path = urllib.parse.unquote(img_str.split("?")[0])
         filename = clean_path.replace("\\", "/").split("/")[-1]
         
         full_url = resolve_media_url(img_str)
@@ -3063,6 +3064,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
             "name": filename,
             "raw": img_str
         })
+
 
     context["warehouse_images"] = normalized_warehouse_images
 

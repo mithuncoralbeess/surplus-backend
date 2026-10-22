@@ -46,12 +46,38 @@ urlpatterns = [
     path("", include("lots.urls")),
 ]
 
+import urllib.parse
 from django.views.static import serve
 from django.urls import re_path
+from django.http import Http404
+
+def robust_media_serve(request, path, document_root=None, show_indexes=False):
+    """
+    Serves media files while gracefully handling differences in URL encoding
+    (e.g., spaces vs %20 vs %2520).
+    """
+    candidates = [path]
+    unquoted = urllib.parse.unquote(path)
+    if unquoted not in candidates:
+        candidates.append(unquoted)
+    double_unquoted = urllib.parse.unquote(unquoted)
+    if double_unquoted not in candidates:
+        candidates.append(double_unquoted)
+    quoted = urllib.parse.quote(unquoted)
+    if quoted not in candidates:
+        candidates.append(quoted)
+
+    for cand in candidates:
+        try:
+            return serve(request, cand, document_root=document_root, show_indexes=show_indexes)
+        except Http404:
+            continue
+    raise Http404("Media file not found")
 
 urlpatterns += [
-    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    re_path(r"^media/(?P<path>.*)$", robust_media_serve, {"document_root": settings.MEDIA_ROOT}),
 ]
+
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

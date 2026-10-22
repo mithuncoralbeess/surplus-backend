@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from django.conf import settings
 from django.core.files.storage import default_storage
 
@@ -10,6 +11,7 @@ def resolve_media_url(img_val):
     - Cloudflare R2 / AWS S3 presigned URLs with expired or temporary tokens (?X-Amz-Algorithm=...).
     - Relative paths (e.g. 'lots/images/xyz.png' or '/media/lots/images/xyz.png').
     - Standard third-party image URLs.
+    - Prevents double URL-encoding (%20 -> %2520) for filenames with spaces.
     """
     if not img_val:
         return ""
@@ -20,7 +22,9 @@ def resolve_media_url(img_val):
     if not s:
         return ""
 
-    clean_path = s.split("?")[0]
+    # Always unquote clean path first to avoid double-encoding (%20 -> %2520)
+    clean_path_raw = s.split("?")[0]
+    clean_path = urllib.parse.unquote(clean_path_raw)
     filename = clean_path.replace("\\", "/").split("/")[-1]
 
     is_s3_presigned = any(k in s for k in ("X-Amz-Algorithm", "X-Amz-Credential", "r2.cloudflarestorage.com", "amazonaws.com"))
@@ -41,7 +45,7 @@ def resolve_media_url(img_val):
 
     if not rel_key:
         if not s.startswith("http://") and not s.startswith("https://") and not s.startswith("//"):
-            rel = s.lstrip("/")
+            rel = clean_path.lstrip("/")
             if rel.startswith("media/"):
                 rel = rel[6:]
             rel_key = rel
@@ -57,9 +61,12 @@ def resolve_media_url(img_val):
     if filename:
         for cand in (f"lots/images/{filename}", f"enquiries/lots/{filename}", f"products/{filename}", filename):
             try:
-                return default_storage.url(cand)
+                if default_storage.exists(cand):
+                    return default_storage.url(cand)
             except Exception:
                 pass
 
     fallback_rel = rel_key or filename or ""
-    return f"{settings.MEDIA_URL}{fallback_rel.lstrip('/')}"
+    from django.utils.encoding import filepath_to_uri
+    return f"{settings.MEDIA_URL}{filepath_to_uri(fallback_rel.lstrip('/'))}"
+
