@@ -24,7 +24,7 @@ def resolve_media_url(img_val):
 
     # Always unquote clean path first to avoid double-encoding (%20 -> %2520)
     clean_path_raw = s.split("?")[0]
-    clean_path = urllib.parse.unquote(clean_path_raw)
+    clean_path = urllib.parse.unquote(urllib.parse.unquote(clean_path_raw))
     filename = clean_path.replace("\\", "/").split("/")[-1]
 
     is_s3_presigned = any(k in s for k in ("X-Amz-Algorithm", "X-Amz-Credential", "r2.cloudflarestorage.com", "amazonaws.com"))

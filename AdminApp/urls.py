@@ -43,6 +43,7 @@ from .views import (
     seller_enquiry_edit_api,
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
+    remove_lot_image_api,
     upload_lot_manifest_api,
     parse_lot_spreadsheet_api,
     save_lot_products_api,
@@ -92,6 +93,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path("", lambda request: redirect("adminDashBoard"), name="admin_root"),
+
     # Vendor Login Screen (HTML Page & POST handler)
     path('vendor-login/', vendor_login, name='vendor_login_page'),
     path('vendor_login/', lambda request: redirect('vendor_login_page')),
@@ -153,6 +156,7 @@ urlpatterns = [
     path("enquiries/lots/<str:status_filter>/", lot_enquiries_view, name="lot_enquiries_filtered"),
     path("api/enquiries/lots/<int:enquiry_id>/status/", lot_enquiry_status_api, name="lot_enquiry_status_api"),
     path("api/enquiries/lots/<int:enquiry_id>/edit/", lot_enquiry_edit_api, name="lot_enquiry_edit_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/remove-image/", remove_lot_image_api, name="remove_lot_image_api"),
     path("api/enquiries/lots/<int:enquiry_id>/upload-manifest/", upload_lot_manifest_api, name="upload_lot_manifest_api"),
     path("api/enquiries/lots/<int:enquiry_id>/parse/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api"),
     path("api/enquiries/lots/<int:enquiry_id>/parse-spreadsheet/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api_alt"),

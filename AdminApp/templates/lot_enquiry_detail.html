@@ -878,7 +878,13 @@
                     {% if warehouse_images and warehouse_images|length > 0 %}
                         <div class="d-flex flex-column gap-3">
                             {% for img in warehouse_images %}
-                                <div class="position-relative media-image-container">
+                                <div class="position-relative media-image-container border rounded bg-white overflow-hidden shadow-xs">
+                                    <div class="position-absolute top-0 end-0 m-2" style="z-index: 5;">
+                                        <button type="button" class="btn btn-sm btn-light border text-danger shadow-xs btn-remove-image px-2 py-1 rounded-2"
+                                                title="Remove this image" data-index="{{ forloop.counter0 }}" data-url="{{ img.raw }}">
+                                            <i class="bi bi-trash" style="font-size: 13px;"></i>
+                                        </button>
+                                    </div>
                                     <img src="{{ img.url }}" alt="{{ img.name|default:'Warehouse Image' }}"
                                          class="img-fluid rounded shadow-sm border"
                                          style="max-height: 400px; object-fit: contain; width: 100%; background: #fff;"
@@ -886,10 +892,15 @@
                                     <div class="d-none p-4 text-center text-muted bg-white border rounded">
                                         <i class="bi bi-image text-muted opacity-50 mb-2 d-block" style="font-size: 2.5rem;"></i>
                                         <p class="small fw-semibold mb-1 text-dark text-truncate" title="{{ img.name }}">{{ img.name|default:'Warehouse Image' }}</p>
-                                        <p class="text-muted small mb-2" style="font-size: 11px;">Image file preview unavailable or expired.</p>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
-                                            <i class="bi bi-upload me-1"></i>Upload / Replace Image
-                                        </button>
+                                        <p class="text-muted small mb-3" style="font-size: 11px;">Image file preview unavailable or expired.</p>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
+                                                <i class="bi bi-upload me-1"></i>Upload / Replace Image
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-image" data-index="{{ forloop.counter0 }}" data-url="{{ img.raw }}">
+                                                <i class="bi bi-trash me-1"></i>Remove
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -2352,6 +2363,49 @@
                 btn.innerHTML = originalHtml;
             }
         });
+
+        // Remove Warehouse Image Handler
+        document.addEventListener('click', async function(e) {
+            const btn = e.target.closest('.btn-remove-image');
+            if (!btn) return;
+            e.preventDefault();
+
+            if (!confirm('Are you sure you want to remove this image from the lot?')) {
+                return;
+            }
+
+            const index = btn.dataset.index;
+            const url = btn.dataset.url;
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+
+            try {
+                const formData = new FormData();
+                if (index !== undefined) formData.append('index', index);
+                if (url) formData.append('image_val', url);
+
+                const res = await fetch(`/admin/api/enquiries/lots/{{ enquiry.id }}/remove-image/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to remove image.');
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            } catch (err) {
+                alert('Connection error while removing image.');
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        });
     });
 </script>
 
@@ -2552,7 +2606,13 @@
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Upload / Replace Warehouse Images</label>
                                 <input type="file" class="form-control" name="warehouse_images" multiple accept="image/*">
-                                <small class="text-muted">Select warehouse or product photos (.png, .jpg, .webp). Uploaded images will be shown in the Product Media card.</small>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" name="replace_all_images" id="replaceAllImages">
+                                    <label class="form-check-label small text-muted" for="replaceAllImages">
+                                        Replace existing images (check this to remove broken/old images and keep only the new upload)
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">Select warehouse or product photos (.png, .jpg, .webp). Uploaded images will be shown in the Product Media card.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Upload / Replace Excel Manifest File (.xlsx / .csv)</label>

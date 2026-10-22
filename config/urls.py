@@ -20,6 +20,7 @@ urlpatterns = [
 
     # Staff / Admin Portal & Login Screen
     path("admin/", include("AdminApp.urls")),
+    path("admin", lambda request: redirect("admin_root")),
 
     # Root redirect & aliases to admin / vendor login
     path("admin_login/", lambda request: redirect("admin_login_page")),
@@ -46,6 +47,7 @@ urlpatterns = [
     path("", include("lots.urls")),
 ]
 
+import os
 import urllib.parse
 from django.views.static import serve
 from django.urls import re_path
@@ -53,8 +55,11 @@ from django.http import Http404
 
 def robust_media_serve(request, path, document_root=None, show_indexes=False):
     """
-    Serves media files while gracefully handling differences in URL encoding
-    (e.g., spaces vs %20 vs %2520).
+    Serves media files while gracefully handling differences in:
+    - URL encoding (spaces vs %20 vs %2520)
+    - Spaces vs underscores (WhatsApp Image vs WhatsApp_Image)
+    - File extension and case differences on Linux servers (e.g. .jpeg vs .jpg, PM vs pm)
+    - Prefix matches for generated upload hashes (e.g. 406086f3_*)
     """
     candidates = [path]
     unquoted = urllib.parse.unquote(path)
@@ -67,11 +72,42 @@ def robust_media_serve(request, path, document_root=None, show_indexes=False):
     if quoted not in candidates:
         candidates.append(quoted)
 
+    for base in [unquoted, double_unquoted]:
+        alt_under = base.replace(" ", "_")
+        if alt_under not in candidates:
+            candidates.append(alt_under)
+        alt_space = base.replace("_", " ")
+        if alt_space not in candidates:
+            candidates.append(alt_space)
+
     for cand in candidates:
         try:
             return serve(request, cand, document_root=document_root, show_indexes=show_indexes)
         except Http404:
             continue
+
+    # Fallback: scan target directory under document_root for case-insensitive or hash prefix match
+    if document_root and os.path.isdir(str(document_root)):
+        clean_target = unquoted.replace("\\", "/").strip("/")
+        dir_part = os.path.dirname(clean_target)
+        file_part = os.path.basename(clean_target)
+        target_dir = os.path.join(str(document_root), dir_part)
+
+        if os.path.isdir(target_dir):
+            file_lower = file_part.lower()
+            prefix = file_part[:9].lower() if len(file_part) > 9 and file_part[8] == "_" else None
+            try:
+                for entry in os.listdir(target_dir):
+                    entry_lower = entry.lower()
+                    if entry_lower == file_lower or entry_lower.replace(" ", "_") == file_lower.replace(" ", "_"):
+                        rel = os.path.join(dir_part, entry).replace("\\", "/")
+                        return serve(request, rel, document_root=document_root, show_indexes=show_indexes)
+                    if prefix and entry_lower.startswith(prefix):
+                        rel = os.path.join(dir_part, entry).replace("\\", "/")
+                        return serve(request, rel, document_root=document_root, show_indexes=show_indexes)
+            except Exception:
+                pass
+
     raise Http404("Media file not found")
 
 urlpatterns += [

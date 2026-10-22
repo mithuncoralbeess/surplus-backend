@@ -2208,9 +2208,13 @@ def lot_enquiry_edit_api(request, enquiry_id):
                     safe_wh_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
                     saved_path = default_storage.save(f"lots/images/{safe_wh_name}", img_file)
                     new_wh_images.append(default_storage.url(saved_path))
+    replace_all = str(data.get("replace_all_images", "")).lower() in ("true", "1", "on")
     if new_wh_images:
-        existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
-        lot.warehouse_images = existing_wh + new_wh_images
+        if replace_all:
+            lot.warehouse_images = new_wh_images
+        else:
+            existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
+            lot.warehouse_images = existing_wh + new_wh_images
         if not isinstance(lot.raw_data, dict):
             lot.raw_data = {}
         lot.raw_data["warehouse_images"] = lot.warehouse_images
@@ -2370,6 +2374,55 @@ def lot_enquiry_edit_api(request, enquiry_id):
         "message": "Lot batch details updated successfully.",
         "batch_id": lot.lot_number
     })
+
+
+@api_view(["POST"])
+def remove_lot_image_api(request, enquiry_id):
+    """
+    Admin API to remove a single warehouse image from a lot by index or raw URL/path.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Lot
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    raw_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
+    data = request.data or request.POST
+    idx = data.get("index")
+    img_val = data.get("image_val") or data.get("url")
+
+    removed = False
+    if idx is not None and str(idx).isdigit():
+        i = int(idx)
+        if 0 <= i < len(raw_wh):
+            raw_wh.pop(i)
+            removed = True
+    elif img_val:
+        import urllib.parse
+        target_unquoted = urllib.parse.unquote(str(img_val).strip())
+        new_list = [
+            x for x in raw_wh
+            if str(x).strip() != str(img_val).strip()
+            and urllib.parse.unquote(str(x).strip()) != target_unquoted
+        ]
+        if len(new_list) < len(raw_wh):
+            raw_wh = new_list
+            removed = True
+
+    if removed:
+        lot.warehouse_images = raw_wh
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        lot.raw_data["warehouse_images"] = raw_wh
+        lot.save(update_fields=["warehouse_images", "raw_data"])
+        return Response({"success": True, "message": "Image removed successfully."})
+
+    return Response({"success": False, "message": "Target image not found."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -3054,7 +3107,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         
         # Clean path and friendly filename (never show AWS presigned query parameters, and unquote for display)
         import urllib.parse
-        clean_path = urllib.parse.unquote(img_str.split("?")[0])
+        clean_path = urllib.parse.unquote(urllib.parse.unquote(img_str.split("?")[0]))
         filename = clean_path.replace("\\", "/").split("/")[-1]
         
         full_url = resolve_media_url(img_str)
