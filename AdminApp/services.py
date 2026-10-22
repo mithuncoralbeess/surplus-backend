@@ -23,6 +23,11 @@ class EmailService:
     EMAIL_SEND_ENABLED = os.getenv("EMAIL_SEND_ENABLED", "True").lower() in ("true", "1", "t")
 
     @classmethod
+    def get_frontend_url(cls) -> str:
+        """Resolves the production frontend URL from environment or settings."""
+        return os.getenv("FRONTEND_URL", getattr(settings, "FRONTEND_URL", "https://surplusmarket.com")).rstrip("/")
+
+    @classmethod
     def get_headers(cls):
         return {
             "Accept": "application/json",
@@ -359,7 +364,7 @@ class EmailService:
             logger.warning("send_product_submitted_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
 
         prod_id = getattr(product, "id", None) or (product.get("id") if isinstance(product, dict) else "")
@@ -435,7 +440,7 @@ class EmailService:
             logger.warning("send_rfq_buyer_confirmation skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         action_url = f"{frontend_base}/profile"
 
         ref = getattr(rfq, "reference", "") or "RFQ-PENDING"
@@ -487,7 +492,7 @@ class EmailService:
             logger.warning("send_product_approved_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
         profile_link = profile_url or f"{frontend_base}/profile"
 
@@ -582,7 +587,7 @@ class EmailService:
             logger.warning("send_product_declined_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
 
         product_name = (
@@ -650,7 +655,7 @@ class EmailService:
             logger.warning("send_lot_submitted_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
 
         lot_title = (
@@ -783,7 +788,7 @@ class EmailService:
             logger.warning("send_lot_approved_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
         profile_link = profile_url or f"{frontend_base}/profile"
 
@@ -869,7 +874,7 @@ class EmailService:
             logger.warning("send_lot_declined_email skipped: recipient email is missing.")
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://surplus-frontend-staging.vercel.app").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         default_action_url = f"{frontend_base}/profile"
 
         lot_title = (
@@ -1223,7 +1228,7 @@ class EmailService:
         if not email or email.endswith(".local"):
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://dev.surplusmarket.com").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         profile_url = f"{frontend_base}/profile"
         user_name = getattr(vendor, "full_name", "") or getattr(vendor, "company_name", "") or "Valued Seller"
         company_name = getattr(vendor, "company_name", "")
@@ -1279,7 +1284,7 @@ class EmailService:
         if not email or email.endswith(".local") or not incomplete_products:
             return False
 
-        frontend_base = os.getenv("FRONTEND_URL", "https://dev.surplusmarket.com").rstrip("/")
+        frontend_base = cls.get_frontend_url()
         action_url = f"{frontend_base}/profile"
         user_name = getattr(vendor, "full_name", "") or getattr(vendor, "company_name", "") or "Valued Seller"
         company_name = getattr(vendor, "company_name", "")

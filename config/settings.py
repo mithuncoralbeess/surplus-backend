@@ -189,6 +189,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    "https://surplusmarket.com",
+    "https://www.surplusmarket.com",
     "https://surplus-frontend-staging.vercel.app",
     "https://surplus-backend-uhg0.onrender.com",
 ]
@@ -325,6 +327,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Surplus Market <noreply@surplusmarket.com>")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "noreply@surplusmarket.com")
 ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL", "contact@surplusmarket.com")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://surplusmarket.com").rstrip("/")
 
 # Typesense Intelligent Search Configuration
 TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "localhost")

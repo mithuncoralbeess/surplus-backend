@@ -211,7 +211,7 @@ def get_public_page_detail(request, slug):
             "meta_title": page.meta_title or page.title or "",
             "meta_description": page.meta_description or "",
             "meta_keywords": page.meta_keywords or "",
-            "canonical_url": page.canonical_url or f"https://surplus.com/{page.slug}/",
+            "canonical_url": page.canonical_url or f"https://surplusmarket.com/{page.slug}/",
             "robots_index": page.robots_index or "index",
             "robots_follow": page.robots_follow or "follow",
             "robots_advanced": page.robots_advanced or "",
