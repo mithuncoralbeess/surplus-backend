@@ -716,126 +716,90 @@
 
             <!-- Pricing Section -->
             <div class="premium-card p-4 mb-4">
-                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="p-2 bg-success bg-opacity-10 text-success rounded-3 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                            <i class="bi bi-wallet2 fs-6"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.9rem; letter-spacing: 0.2px;">
-                                Pricing & Financial Valuation
-                            </h6>
-                            <small class="text-muted" style="font-size: 0.72rem;">Lot liquidation parameters, retail valuation & discount guidelines</small>
-                        </div>
-                    </div>
-                    {% if batch_data.open_to_offer %}
-                        <span class="badge bg-info-subtle text-info px-3 py-1.5 rounded-pill fw-semibold border border-info-subtle d-inline-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
-                            <i class="bi bi-megaphone-fill"></i> Open to Offers & Negotiation
-                        </span>
-                    {% else %}
-                        <span class="badge bg-success-subtle text-success px-3 py-1.5 rounded-pill fw-semibold border border-success-subtle d-inline-flex align-items-center gap-1.5" style="font-size: 0.74rem;">
-                            <i class="bi bi-tag-fill"></i> Fixed Liquidation Price
-                        </span>
-                    {% endif %}
-                </div>
+                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                    <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
+                </h6>
 
                 <div class="row g-3">
-                    <!-- Card 1: Total Retail MSRP -->
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100 d-flex flex-column justify-content-between" style="border-left: 4px solid #8b5cf6 !important;">
+                    <!-- Price -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100" style="border-left: 4px solid #10b981 !important;">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-tag-fill me-1" style="color: #8b5cf6;"></i> Total Retail MSRP
-                                </span>
-                                <span class="badge rounded-pill fw-semibold" style="background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; font-size: 0.7rem;">
-                                    {{ batch_data.currency|default:"USD" }}
-                                </span>
-                            </div>
-                            <div class="d-flex align-items-baseline gap-1 my-1">
-                                <span class="fs-4 fw-bold font-monospace text-dark">
-                                    {% if batch_data.formatted_msrp %}${{ batch_data.formatted_msrp }}{% elif batch_data.msrp %}${{ batch_data.msrp }}{% else %}N/A{% endif %}
-                                </span>
-                            </div>
-                            <small class="text-muted mt-1 d-block" style="font-size: 0.72rem;">
-                                <i class="bi bi-calculator me-1"></i>Combined Catalog Benchmark MSRP
-                            </small>
-                        </div>
-                    </div>
-
-                    <!-- Card 2: Liquidation Price -->
-                    <div class="col-12 col-md-4">
-                        {% if not batch_data.open_to_offer %}
-                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100 d-flex flex-column justify-content-between" style="border-left: 4px solid #10b981 !important;">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-cash-stack text-success me-1"></i> Liquidation Asking Price
+                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-tag-fill text-success me-1"></i> Price
                                 </span>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
                                     {{ batch_data.currency|default:"USD" }}
                                 </span>
                             </div>
                             <div class="d-flex align-items-baseline gap-1 my-1">
-                                <span class="fs-4 fw-bold font-monospace text-success">
-                                    {% if batch_data.formatted_liquidation_price %}${{ batch_data.formatted_liquidation_price }}{% elif batch_data.liquidation_price %}${{ batch_data.liquidation_price }}{% else %}N/A{% endif %}
+                                <span class="fs-4 fw-bold font-monospace text-dark">
+                                    {% if batch_data.formatted_price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.formatted_price }}{% elif batch_data.price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.price }}{% elif batch_data.formatted_liquidation_price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.formatted_liquidation_price }}{% elif batch_data.liquidation_price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.liquidation_price }}{% else %}N/A{% endif %}
                                 </span>
                             </div>
-                            <small class="text-success mt-1 d-block" style="font-size: 0.72rem;">
-                                <i class="bi bi-wallet2 me-1"></i>Seller Target Payout
-                            </small>
                         </div>
-                        {% else %}
-                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100 d-flex flex-column justify-content-between" style="border-left: 4px solid #06b6d4 !important;">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-megaphone-fill text-info me-1"></i> Liquidation Pricing
-                                </span>
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
-                                    NEGOTIABLE
-                                </span>
-                            </div>
-                            <div class="my-1">
-                                <span class="fs-5 fw-bold text-info d-inline-flex align-items-center gap-1.5">
-                                    <i class="bi bi-chat-left-dots-fill"></i> Open for Offers
-                                </span>
-                            </div>
-                            {% if batch_data.implied_ask %}
-                            <small class="text-success mt-1 d-block fw-semibold font-monospace" style="font-size: 0.72rem;">
-                                <i class="bi bi-lightning-fill text-warning me-1"></i>Implied Target: ~${{ batch_data.implied_ask }}
-                            </small>
-                            {% else %}
-                            <small class="text-muted mt-1 d-block" style="font-size: 0.72rem;">
-                                <i class="bi bi-info-circle me-1"></i>Seller accepting buyer bids
-                            </small>
-                            {% endif %}
-                        </div>
-                        {% endif %}
                     </div>
 
-                    <!-- Card 3: Target Discount / Guideline -->
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100 d-flex flex-column justify-content-between" style="border-left: 4px solid #f59e0b !important;">
+                    <!-- Liquidation Price -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100" style="border-left: 4px solid #3b82f6 !important;">
                             <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
-                                    <i class="bi bi-percent text-warning me-1"></i> Target Discount Guideline
+                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-cash text-primary me-1"></i> Liquidation Price
                                 </span>
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
-                                    GUIDELINE
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
+                                    {{ batch_data.currency|default:"USD" }}
                                 </span>
                             </div>
-                            <div class="my-1">
-                                {% if batch_data.offer or enquiry.offer %}
-                                <span class="fs-5 fw-bold font-monospace text-warning-emphasis">
-                                    {{ batch_data.offer|default:enquiry.offer }}
+                            <div class="d-flex align-items-baseline gap-1 my-1">
+                                <span class="fs-4 fw-bold font-monospace text-dark">
+                                    {% if batch_data.formatted_liquidation_price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.formatted_liquidation_price }}{% elif batch_data.liquidation_price %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.liquidation_price }}{% else %}N/A{% endif %}
                                 </span>
-                                {% else %}
-                                <span class="fs-5 fw-medium text-muted fst-italic" style="font-size: 0.95rem;">
-                                    No discount guideline specified
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MSRP -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100" style="border-left: 4px solid #f59e0b !important;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-receipt text-warning me-1"></i> MSRP
+                                </span>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
+                                    {{ batch_data.currency|default:"USD" }}
+                                </span>
+                            </div>
+                            <div class="d-flex align-items-baseline gap-1 my-1">
+                                <span class="fs-4 fw-bold font-monospace text-dark">
+                                    {% if batch_data.formatted_msrp %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.formatted_msrp }}{% elif batch_data.msrp %}{% if batch_data.currency == 'USD' or not batch_data.currency %}${% endif %}{{ batch_data.msrp }}{% else %}N/A{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Offer -->
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="p-3 bg-white border border-light-subtle rounded-3 shadow-xs h-100" style="border-left: 4px solid #ef4444 !important;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-percent text-danger me-1"></i> Offer
+                                </span>
+                                {% if batch_data.offer or enquiry.offer %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fw-semibold" style="font-size: 0.7rem;">
+                                    OFFER
                                 </span>
                                 {% endif %}
                             </div>
-                            <small class="text-muted mt-1 d-block" style="font-size: 0.72rem;">
-                                <i class="bi bi-shield-check me-1"></i>Seller expected wholesale concession
-                            </small>
+                            <div class="d-flex align-items-baseline gap-1 my-1">
+                                <span class="fs-4 fw-bold font-monospace text-danger">
+                                    {% if batch_data.offer or enquiry.offer %}
+                                        {{ batch_data.offer|default:enquiry.offer }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>

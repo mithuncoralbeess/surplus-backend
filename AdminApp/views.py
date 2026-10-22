@@ -2867,6 +2867,13 @@ def lot_enquiry_detail_view(request, enquiry_id):
     except Exception:
         pass
 
+    if (not liq_val or str(liq_val) in ("0", "0.0", "0.00")) and implied_ask_str:
+        liq_val = implied_ask_str
+        formatted_liq = implied_ask_str
+
+    price_val = combined_raw.get("price") or combined_raw.get("current_price") or liq_val
+    formatted_price = _fmt_currency(price_val)
+
     # Open to offers detection: only true if explicitly flagged to accept counter/open offers
     is_open_to_offer = False
     if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "accepting offer", "make an offer")):
@@ -2908,9 +2915,11 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "notes": _clean_val(enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
         "msrp": _clean_val(msrp_val),
         "formatted_msrp": formatted_msrp,
-        "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "AED",
+        "currency": _clean_val(enquiry.currency) or _clean_val(combined_raw.get("currency")) or "USD",
         "liquidation_price": _clean_val(liq_val),
         "formatted_liquidation_price": formatted_liq,
+        "price": _clean_val(price_val),
+        "formatted_price": formatted_price,
         "offer": offer_val,
         "implied_ask": implied_ask_str,
         "open_to_offer": is_open_to_offer,
