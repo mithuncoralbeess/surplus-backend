@@ -198,12 +198,12 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
     else:
         blended_discount = 0.0
 
-    # 5. Formatted Brand breakdown sorted by value descending
+    # 5. Formatted Brand breakdown sorted by volume descending
     brand_list = list(brand_counts.values())
-    brand_list.sort(key=lambda b: (b["total_value"], b["skus"]), reverse=True)
+    brand_list.sort(key=lambda b: (b["units"], b["skus"]), reverse=True)
     for b in brand_list:
         b["total_value"] = round(b["total_value"], 2)
-        b["pct_of_value"] = round((b["total_value"] / effective_msrp * 100), 1) if effective_msrp > 0 else 0.0
+        b["pct_of_value"] = round((b["units"] / total_units * 100), 1) if total_units > 0 else 0.0
         b["pct_of_units"] = round((b["units"] / total_units * 100), 1) if total_units > 0 else 0.0
 
     # Condition breakdown list
@@ -212,19 +212,15 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
 
     # Category breakdown list
     category_list = list(category_counts.values())
-    category_list.sort(key=lambda c: c["total_value"], reverse=True)
+    category_list.sort(key=lambda c: (c["units"], c["skus"]), reverse=True)
     for c in category_list:
         c["total_value"] = round(c["total_value"], 2)
-        c["pct_of_value"] = round((c["total_value"] / effective_msrp * 100), 1) if effective_msrp > 0 else 0.0
+        c["pct_of_value"] = round((c["units"] / total_units * 100), 1) if total_units > 0 else 0.0
 
-    # 6. Top Profit Drivers Spotlight (Ranked by Total Line MSRP, then by unit MSRP)
-    profit_candidates = [itm for itm in items if itm["line_msrp"] > 0 or itm["orig_price_num"] > 0]
-    if profit_candidates:
-        profit_candidates.sort(key=lambda itm: (itm["line_msrp"], itm["orig_price_num"], itm["qty_num"]), reverse=True)
-        top_profit_drivers = profit_candidates[:6]
-    else:
-        # Fallback to first few items if no prices
-        top_profit_drivers = items[:6]
+    # 6. Top Inventory SKUs Spotlight (Ranked by available unit volume)
+    top_candidates = sorted(items, key=lambda itm: itm.get("qty_num", 0), reverse=True)
+    top_profit_drivers = top_candidates[:6] if top_candidates else items[:6]
+
 
     return {
         "success": True,

@@ -22,27 +22,18 @@
         top: 0;
         z-index: 3;
     }
-    /* Executive KPI Metrics Grid */
+    /* Inventory KPI Metrics Grid */
     .explorer-kpi-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
     }
-    @media (max-width: 1300px) {
-        .explorer-kpi-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-    @media (max-width: 768px) {
-        .explorer-kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-    @media (max-width: 480px) {
+    @media (max-width: 576px) {
         .explorer-kpi-grid {
             grid-template-columns: 1fr;
         }
     }
+
 
     .explorer-kpi-card {
         background: #ffffff;
@@ -1036,65 +1027,9 @@
                                 </span>
                             </div>
                         </div>
-
-                        <!-- Card 3: Total Retail MSRP -->
-                        <div class="explorer-kpi-card">
-                            <div class="explorer-kpi-header">
-                                <span class="explorer-kpi-label">Total Retail MSRP</span>
-                                <div class="explorer-kpi-icon icon-slate">
-                                    <i class="bi bi-tag-fill"></i>
-                                </div>
-                            </div>
-                            <div class="explorer-kpi-value-wrap">
-                                <span class="text-secondary fw-semibold fs-5">$</span>
-                                <span class="explorer-kpi-value text-dark" id="kpi-total-msrp">{{ explorer_data.summary.total_msrp|floatformat:2|default:"0.00" }}</span>
-                            </div>
-                            <div class="explorer-kpi-footer">
-                                <span class="explorer-kpi-badge badge bg-light text-muted border rounded-pill">
-                                    <i class="bi bi-calculator me-1"></i>Benchmark Value
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Card 4: Ask / Liquidation -->
-                        <div class="explorer-kpi-card">
-                            <div class="explorer-kpi-header">
-                                <span class="explorer-kpi-label">Ask / Liquidation</span>
-                                <div class="explorer-kpi-icon icon-emerald">
-                                    <i class="bi bi-cash-stack"></i>
-                                </div>
-                            </div>
-                            <div class="explorer-kpi-value-wrap">
-                                <span class="text-success fw-bold fs-5">$</span>
-                                <span class="explorer-kpi-value text-success" id="kpi-total-ask">{{ explorer_data.summary.total_ask|floatformat:2|default:"0.00" }}</span>
-                            </div>
-                            <div class="explorer-kpi-footer">
-                                <span class="explorer-kpi-badge badge bg-success-subtle text-success border border-success-subtle rounded-pill">
-                                    <i class="bi bi-wallet2 me-1"></i>Payout / Lot Price
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Card 5: Blended Discount -->
-                        <div class="explorer-kpi-card">
-                            <div class="explorer-kpi-header">
-                                <span class="explorer-kpi-label">Blended Discount</span>
-                                <div class="explorer-kpi-icon icon-indigo">
-                                    <i class="bi bi-graph-down-arrow"></i>
-                                </div>
-                            </div>
-                            <div class="explorer-kpi-value-wrap">
-                                <span class="explorer-kpi-value text-dark" id="kpi-discount-pct">{{ explorer_data.summary.blended_discount_pct|default:0 }}%</span>
-                                <span class="explorer-kpi-unit">OFF MSRP</span>
-                            </div>
-                            <div class="explorer-kpi-footer">
-                                <span class="explorer-kpi-badge badge rounded-pill" id="kpi-discount-badge" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe;">
-                                    <i class="bi bi-percent me-1"></i>Wholesale Spread
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </div>
+
 
                 <!-- Visual Intelligence: Brand Breakdown & Top Profit Drivers Spotlight -->
                 <div class="p-4 border-bottom intelligence-panel" id="explorer-intelligence-section">
@@ -1111,7 +1046,7 @@
                                             <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
                                                 Brand Portfolio Allocation
                                             </h6>
-                                            <small class="text-muted" style="font-size: 0.72rem;">Distribution of lot value across recognized brands</small>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Distribution of lot inventory across recognized brands</small>
                                         </div>
                                     </div>
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-bold" id="explorer-brand-count-badge" style="font-size: 0.7rem;">
@@ -1149,23 +1084,23 @@
                             </div>
                         </div>
 
-                        <!-- Top Profit Drivers Spotlight -->
+                        <!-- Top Inventory SKUs Spotlight -->
                         <div class="col-lg-6">
                             <div class="intelligence-card h-100">
                                 <div class="intelligence-card-header">
                                     <div class="d-flex align-items-center gap-2.5">
                                         <div class="explorer-kpi-icon icon-amber" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                                            <i class="bi bi-lightning-charge-fill"></i>
+                                            <i class="bi bi-box-seam-fill"></i>
                                         </div>
                                         <div>
                                             <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
-                                                Top Profit Drivers (High-Value SKUs)
+                                                Key Inventory SKUs (High-Volume Lines)
                                             </h6>
-                                            <small class="text-muted" style="font-size: 0.72rem;">Line items generating highest portfolio MSRP & liquidation value</small>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Top product lines ranked by available unit volume</small>
                                         </div>
                                     </div>
                                     <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-bold" style="font-size: 0.7rem;">
-                                        <i class="bi bi-star-fill text-warning me-1"></i>VALUE CORE
+                                        <i class="bi bi-box-seam text-warning me-1"></i>VOLUME CORE
                                     </span>
                                 </div>
                                 <div class="intelligence-card-body">
@@ -1508,7 +1443,7 @@
 
                 if (pct > 0) {
                     barHtml += `
-                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% ($${valFormatted})"></div>
+                        <div class="progress-bar" role="progressbar" style="width: ${pct}%; background-color: ${color};" title="${escapeHtml(b.brand)}: ${pct}% (${unitsFormatted} pcs)"></div>
                     `;
                 }
 
@@ -1525,14 +1460,14 @@
                             </div>
                         </div>
                         <div class="text-end brand-val-wrap flex-shrink-0">
-                            <span class="fw-bold font-monospace text-dark d-block" style="font-size: 0.82rem; letter-spacing: -0.2px;">$${valFormatted}</span>
-                            <small class="text-muted" style="font-size: 0.7rem;">${pct}% &bull; ${unitsFormatted} pcs</small>
+                            <span class="fw-bold font-monospace text-dark d-block" style="font-size: 0.82rem; letter-spacing: -0.2px;">${unitsFormatted} pcs</span>
+                            <small class="text-muted" style="font-size: 0.7rem;">${pct}% &bull; ${skusFormatted} SKUs</small>
                         </div>
                     </div>
                 `;
 
                 chipsHtml += `
-                    <button type="button" class="brand-chip-modern ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="${escapeHtml(b.brand)} &bull; $${valFormatted} (${pct}%)">
+                    <button type="button" class="brand-chip-modern ${isActive ? 'active' : ''}" data-brand="${escapeHtml(b.brand)}" title="${escapeHtml(b.brand)} &bull; ${unitsFormatted} pcs (${pct}%)">
                         <span class="d-inline-block rounded-circle flex-shrink-0" style="width: 8px; height: 8px; background-color: ${color}; box-shadow: 0 0 0 2px ${isActive ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.06)'};"></span>
                         <span class="text-truncate" style="max-width: 140px;">${escapeHtml(b.brand)}</span>
                         <span class="brand-pct-badge">${pct > 0 ? pct + '%' : b.skus + ' SKU'}</span>
@@ -1582,7 +1517,7 @@
             if (!container) return;
 
             if (drivers.length === 0) {
-                container.innerHTML = '<div class="col-12 py-5 text-center text-muted small fst-italic">No high-value driver items identified in manifest.</div>';
+                container.innerHTML = '<div class="col-12 py-5 text-center text-muted small fst-italic">No high-volume items identified in manifest.</div>';
                 return;
             }
 
@@ -1591,8 +1526,6 @@
 
             let html = '';
             drivers.slice(0, 4).forEach((d, idx) => {
-                const lineMsrp = Number(d.line_msrp || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const unitMsrp = Number(d.orig_price_num || d.original_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const brand = d.brand && d.brand !== '-' ? d.brand : 'General';
                 const model = d.model_part_number && d.model_part_number !== '-' ? d.model_part_number : '';
                 const rawQty = Number(d.qty_num || d.available_quantity || 1);
@@ -1616,8 +1549,8 @@
                                             ${escapeHtml(brand)}
                                         </span>
                                     </div>
-                                    <span class="fw-bold font-monospace text-success" style="font-size: 0.88rem; letter-spacing: -0.3px;">
-                                        $${lineMsrp}
+                                    <span class="fw-bold font-monospace text-primary" style="font-size: 0.88rem; letter-spacing: -0.3px;">
+                                        ${qtyFormatted} pcs
                                     </span>
                                 </div>
                                 <h6 class="fw-bold text-dark text-truncate mb-1" style="font-size: 0.82rem; line-height: 1.3;" title="${escapeHtml(displayName)}">
@@ -1625,14 +1558,15 @@
                                 </h6>
                             </div>
                             <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light-subtle text-muted mt-2" style="font-size: 0.72rem;">
-                                <span class="font-monospace text-secondary text-truncate" style="max-width: 90px;" title="${escapeHtml(partDisplay)}">${escapeHtml(partDisplay)}</span>
-                                <span class="text-nowrap font-monospace"><strong class="text-dark">${qtyFormatted}</strong> pcs &times; $${unitMsrp}</span>
+                                <span class="font-monospace text-secondary text-truncate" style="max-width: 120px;" title="${escapeHtml(partDisplay)}">${escapeHtml(partDisplay)}</span>
+                                <span class="text-nowrap font-monospace text-muted"><strong class="text-dark">${qtyFormatted}</strong> available units</span>
                             </div>
                         </div>
                     </div>
                 `;
             });
             container.innerHTML = html;
+
 
             // Interactive Click to Filter table to this SKU
             container.querySelectorAll('.profit-driver-card').forEach(card => {
