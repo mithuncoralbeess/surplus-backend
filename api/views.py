@@ -1786,19 +1786,22 @@ def submit_product_request(request):
             msrp = None
 
     offer = Decimal("0.00")
-    offer_val = (
-        data.get('offer') or 
-        data.get('offer_percentage') or 
-        data.get('offerPercentage') or 
-        data.get('discount') or 
-        data.get('discount_percentage') or 
-        data.get('discountPercentage')
-    )
-    if offer_val is not None and str(offer_val).strip() != "":
-        try:
-            offer = Decimal(str(offer_val).strip())
-        except Exception:
-            offer = Decimal("0.00")
+    if msrp and msrp > Decimal("0.00") and liquidating_price and msrp > liquidating_price:
+        offer = (((msrp - liquidating_price) / msrp) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    else:
+        offer_val = (
+            data.get('offer') or 
+            data.get('offer_percentage') or 
+            data.get('offerPercentage') or 
+            data.get('discount') or 
+            data.get('discount_percentage') or 
+            data.get('discountPercentage')
+        )
+        if offer_val is not None and str(offer_val).strip() != "":
+            try:
+                offer = Decimal(str(offer_val).strip())
+            except Exception:
+                offer = Decimal("0.00")
 
     # 11. Description & Reason to Sell
     description = str(data.get('description') or '').strip()
@@ -3110,9 +3113,10 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "location": lot.inventory_location or "",
                 "inventory_location": lot.inventory_location or "",
                 "inventory_country": getattr(lot, "inventory_country", "") or "",
-                "price": float(lot.ask_price_surplus_payout or 0.0),
+                "price": round(float(lot.ask_price_surplus_payout or 0.0) * 1.10, 2),
                 "liquidation_price": float(lot.ask_price_surplus_payout or 0.0),
                 "msrp": float(lot.total_est_retail_value_msrp or 0.0),
+                "offer": str(lot.offer or ""),
                 "currency": lot.currency or "USD",
                 "quantity": int(lot.total_units_quantity or 0),
                 "estQty": int(lot.total_units_quantity or 0),
@@ -3489,7 +3493,8 @@ def typesense_suggestions_view(request):
                 "is_lot": True,
                 "category": "Wholesale Lots",
                 "brand": lot.key_brands_included or "",
-                "price": float(lot.ask_price_surplus_payout or 0.0),
+                "price": round(float(lot.ask_price_surplus_payout or 0.0) * 1.10, 2),
+                "liquidation_price": float(lot.ask_price_surplus_payout or 0.0),
                 "currency": lot.currency or "USD",
                 "image": main_img,
                 "url": f"/lots/{lot.lot_number or lot.id}",

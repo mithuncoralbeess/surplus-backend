@@ -1781,6 +1781,9 @@ def seller_enquiry_edit_api(request, enquiry_id):
         else:
             product.offer = Decimal("0.00")
 
+    if product.msrp and product.liquidating_price and product.msrp > product.liquidating_price and product.msrp > 0:
+        product.offer = (((Decimal(str(product.msrp)) - Decimal(str(product.liquidating_price))) / Decimal(str(product.msrp))) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
     if "stock_quantity" in data and data["stock_quantity"] not in (None, ""):
         try:
             product.stock_quantity = int(data["stock_quantity"])
@@ -2279,6 +2282,11 @@ def lot_enquiry_edit_api(request, enquiry_id):
         val = data.get("open_to_offer") or data.get("allow_counter_offers")
         if str(val).lower() in ("true", "1", "yes", "on"):
             lot.offer = "Open to Offer"
+    if lot.total_est_retail_value_msrp and lot.ask_price_surplus_payout and lot.total_est_retail_value_msrp > 0:
+        if not (lot.offer and "open to offer" in str(lot.offer).lower()):
+            disc = round(((lot.total_est_retail_value_msrp - lot.ask_price_surplus_payout) / lot.total_est_retail_value_msrp) * 100)
+            if disc > 0:
+                lot.offer = f"{disc}% Off MSRP"
 
     # Notes & Description
     if "description" in data:
@@ -2856,9 +2864,9 @@ def lot_enquiry_detail_view(request, enquiry_id):
     try:
         if msrp_val:
             msrp_float = float(str(msrp_val).replace(",", "").strip())
-            if offer_val and "%" in str(offer_val):
+            if enquiry.offer and "%" in str(enquiry.offer):
                 import re
-                pct_match = re.search(r"(\d+(\.\d+)?)%", str(offer_val))
+                pct_match = re.search(r"(\d+(\.\d+)?)%", str(enquiry.offer))
                 if pct_match:
                     discount_pct_val = float(pct_match.group(1))
                     if 0 < discount_pct_val < 100 and msrp_float > 0:
@@ -2871,7 +2879,31 @@ def lot_enquiry_detail_view(request, enquiry_id):
         liq_val = implied_ask_str
         formatted_liq = implied_ask_str
 
-    price_val = combined_raw.get("price") or combined_raw.get("current_price") or liq_val
+    # Offer dynamically calculated by MSRP and liquidation price (min 60% off policy)
+    msrp_num = None
+    liq_num = None
+    try:
+        if msrp_val:
+            msrp_num = float(str(msrp_val).replace(",", "").strip())
+    except Exception:
+        pass
+    try:
+        if liq_val:
+            liq_num = float(str(liq_val).replace(",", "").strip())
+    except Exception:
+        pass
+
+    offer_val = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer"))
+    if msrp_num and msrp_num > 0 and liq_num and liq_num > 0 and msrp_num > liq_num:
+        calc_discount = round(((msrp_num - liq_num) / msrp_num) * 100)
+        offer_val = f"{calc_discount}% Off MSRP"
+    elif not offer_val:
+        offer_val = "60% Off MSRP"
+
+    if liq_num and liq_num > 0:
+        price_val = round(liq_num * 1.10, 2)
+    else:
+        price_val = combined_raw.get("price") or combined_raw.get("current_price") or liq_val
     formatted_price = _fmt_currency(price_val)
 
     # Open to offers detection: only true if explicitly flagged to accept counter/open offers
@@ -2904,14 +2936,35 @@ def lot_enquiry_detail_view(request, enquiry_id):
             if len(parts) >= 2:
                 country_clean = parts[-1]
 
+    listing_title_clean = (
+        _clean_val(enquiry.title)
+        or _clean_val(combined_raw.get("listing_title"))
+        or _clean_val(combined_raw.get("title"))
+        or _clean_val(combined_raw.get("lot_title"))
+        or _clean_val(combined_raw.get("name"))
+        or ""
+    )
+
+    key_brands_clean = (
+        _clean_val(enquiry.key_brands_included)
+        or _clean_val(combined_raw.get("key_brands_included"))
+        or _clean_val(combined_raw.get("key_brands"))
+        or _clean_val(combined_raw.get("brands"))
+        or _clean_val(combined_raw.get("brand"))
+        or ""
+    )
+
     batch_data = {
+        "title": listing_title_clean,
+        "listing_title": listing_title_clean,
+        "key_brands": key_brands_clean,
+        "key_brands_included": key_brands_clean,
         "category_breakdown": _clean_val(cat_val),
         "shipping_size": _clean_val(enquiry.shipping_size or enquiry.lot_size or combined_raw.get("shipping_size") or combined_raw.get("lot_size") or combined_raw.get("load_type") or combined_raw.get("pallet_count")),
         "stock_condition": _clean_val(enquiry.condition or combined_raw.get("stock_condition") or combined_raw.get("condition") or combined_raw.get("product_condition")),
         "inventory_age": _clean_val(enquiry.inventory_stock_age or combined_raw.get("inventory_stock_age") or combined_raw.get("inventory_age") or combined_raw.get("stock_age") or combined_raw.get("age")),
         "distinct_skus": skus_clean,
         "total_units": units_clean,
-        "key_brands": _clean_val(enquiry.key_brands_included or combined_raw.get("key_brands_included") or combined_raw.get("key_brands") or combined_raw.get("brands") or combined_raw.get("brand")),
         "notes": _clean_val(enquiry.description or combined_raw.get("reason_to_sell") or combined_raw.get("notes") or combined_raw.get("description") or combined_raw.get("packaging_notes")),
         "msrp": _clean_val(msrp_val),
         "formatted_msrp": formatted_msrp,
@@ -4911,6 +4964,10 @@ def add_product_view(request):
             errors.append("Original / Retail MSRP Price (Per Unit) must be greater than 0.")
         if liquidating_price <= Decimal("0.00"):
             errors.append("Liquidating / Surplus Price (Per Unit) must be greater than 0.")
+        elif msrp > Decimal("0.00"):
+            max_allowed_lp = (msrp * Decimal("0.40")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if liquidating_price > max_allowed_lp:
+                errors.append(f"Minimum 60% discount required. Liquidation price cannot exceed 40% of MSRP ({currency} {max_allowed_lp}).")
         if not description:
             errors.append("Description & Technical Condition is required.")
         if not reason_to_sell:
@@ -5293,6 +5350,10 @@ def add_lot_view(request):
         discount_val = 0
         if total_est_retail_value_msrp > 0 and ask_price_surplus_payout > 0:
             discount_val = round(((total_est_retail_value_msrp - ask_price_surplus_payout) / total_est_retail_value_msrp) * 100)
+            if ask_price_surplus_payout > (total_est_retail_value_msrp * 0.40):
+                max_allowed = round(total_est_retail_value_msrp * 0.40, 2)
+                messages.error(request, f"Minimum 60% discount required in liquidation price. Maximum allowed payout is {currency} {max_allowed} (current discount is {discount_val}%).")
+                return render(request, "add_lot.html", {**context, "form_data": request.POST})
         offer_text = f"{discount_val}% Off MSRP" if discount_val > 0 else ("Open to Offer" if allow_counter_offers else "")
 
         # --- 5. Media & Document Uploads ---

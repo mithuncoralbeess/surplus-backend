@@ -469,7 +469,7 @@
 
                         <div class="row g-4 mb-4">
                             <!-- Original / Retail MSRP Price (Per Unit) * -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label-custom">
                                     <span>MSRP <span class="text-danger">*</span></span>
                                 </label>
@@ -483,14 +483,14 @@
                             </div>
 
                             <!-- Liquidation Price (Per Unit) * -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <label class="form-label-custom mb-0">
                                         <span>Liquidation Price (Per Unit) <span class="text-danger">*</span></span>
                                     </label>
                                     <button type="button" id="btnApplyMaxPrice"
-                                        class="btn btn-sm btn-outline-success py-1 px-2.5 fw-semibold d-none rounded-pill"
-                                        style="font-size: 0.75rem;"
+                                        class="btn btn-sm btn-outline-success py-1 px-2 rounded-pill"
+                                        style="font-size: 0.72rem;"
                                         title="Apply suggested maximum price (60% discount)">
                                         <i class="bi bi-lightning-charge-fill me-1"></i>Apply Max 60%
                                     </button>
@@ -504,8 +504,27 @@
                                         required>
                                 </div>
                                 <div id="priceDiscountHint" class="form-text small text-muted mt-1">
-                                    Liquidating price must be below MSRP (minimum 60% discount recommended).
+                                    Max 40% of MSRP (minimum 60% discount required).
                                 </div>
+                            </div>
+
+                            <!-- Offer (% Off MSRP) * -->
+                            <div class="col-md-4">
+                                <label class="form-label-custom">
+                                    <span>Offer (% Off MSRP) <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="1" min="60" max="99"
+                                        class="form-control form-control-custom font-monospace fs-6 fw-bold text-danger"
+                                        name="offer_pct" id="offerPctInput"
+                                        value="{{ form_data.offer_pct|default:'60' }}" placeholder="60"
+                                        required>
+                                    <span class="input-group-text bg-light font-monospace fw-bold text-danger">% OFF</span>
+                                </div>
+                                <div class="form-text small mt-1">
+                                    Calculated from MSRP &amp; Liquidation Price (min 60% off).
+                                </div>
+                                <input type="hidden" name="offer" id="offerInput" value="{{ form_data.offer|default:'60.00' }}">
                             </div>
                         </div>
 
@@ -1246,6 +1265,8 @@
         // 4. Pricing & Calculations
         const msrpInput = document.getElementById("msrpInput");
         const lpInput = document.getElementById("liquidatingPriceInput");
+        const offerPctInput = document.getElementById("offerPctInput");
+        const offerInput = document.getElementById("offerInput");
         const quantityInput = document.getElementById("quantityInput");
         const currencySelect = document.getElementById("currencySelect");
         const discountBadge = document.getElementById("discountBadge");
@@ -1604,7 +1625,7 @@
             }
         }
 
-        function updateCalculations() {
+        function updateCalculations(source) {
             const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
             const sym = getCurrencySymbol(curr);
             if (currencySymbols) {
@@ -1612,8 +1633,28 @@
             }
 
             const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
-            const lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            let lp = lpInput ? (parseFloat(lpInput.value) || 0) : 0;
+            let offerPct = offerPctInput ? (parseInt(offerPctInput.value) || 60) : 60;
             const qty = quantityInput ? (parseInt(quantityInput.value) || 1) : 1;
+
+            if (msrp > 0) {
+                // Two-way calculation:
+                // Offer is strictly calculated by MSRP and Liquidation Price (min 60% off)
+                // 10% is our price markup and NEVER added to offer.
+                if (source === 'offer') {
+                    if (offerPct < 60) offerPct = 60;
+                    lp = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                    if (lpInput) lpInput.value = lp.toFixed(2);
+                } else if (source === 'msrp' && (!lp || lp === 0)) {
+                    if (offerPct < 60) offerPct = 60;
+                    lp = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                    if (lpInput) lpInput.value = lp.toFixed(2);
+                } else if (source === 'lp' && lp > 0) {
+                    const calculatedOffer = Math.round(((msrp - lp) / msrp) * 100);
+                    if (offerPctInput) offerPctInput.value = calculatedOffer;
+                    offerPct = calculatedOffer;
+                }
+            }
 
             // Suggested max allowed price at 60% discount (MSRP * 0.40)
             if (btnApplyMaxPrice) {
@@ -1628,10 +1669,11 @@
             }
 
             if (msrp > 0 && lp > 0) {
-                const discount = (((msrp - lp) / msrp) * 100).toFixed(1);
-                const discountClamped = Math.max(0, Math.min(100, parseFloat(discount)));
+                const discount = Math.round(((msrp - lp) / msrp) * 100);
+                const discountClamped = Math.max(0, Math.min(100, discount));
                 if (discountProgressBar) discountProgressBar.style.width = `${discountClamped}%`;
                 if (discountBarLabel) discountBarLabel.textContent = `${discount}% (Policy: 60%+)`;
+                if (offerInput) offerInput.value = `${discount}.00`;
 
                 if (lp >= msrp) {
                     if (discountBadge) {
@@ -1641,15 +1683,15 @@
                     if (priceDiscountHint) priceDiscountHint.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Liquidating price must be below MSRP.</span>';
                     if (discountStatusText) discountStatusText.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i>Over Retail Catalog MSRP</span>';
                     if (discountProgressBar) discountProgressBar.className = "progress-bar bg-danger";
-                } else if (discount < 59.99) {
+                } else if (discount < 60) {
                     if (discountBadge) {
                         discountBadge.textContent = `${discount}% OFF`;
-                        discountBadge.className = "badge bg-warning text-dark fs-5 fw-bold px-3 py-1.5 rounded-pill";
+                        discountBadge.className = "badge bg-danger text-white fs-5 fw-bold px-3 py-1.5 rounded-pill";
                     }
                     const maxAllowed = (msrp * 0.40).toFixed(2);
-                    if (priceDiscountHint) priceDiscountHint.innerHTML = `<span class="text-warning-emphasis"><i class="bi bi-info-circle-fill me-1"></i>Min. 60% discount recommended (Max: ${sym}${maxAllowed}).</span>`;
-                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-warning-emphasis fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Target Policy</span>';
-                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-warning";
+                    if (priceDiscountHint) priceDiscountHint.innerHTML = `<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Minimum 60% discount required (Max Liquidation Price: ${sym}${maxAllowed}).</span>`;
+                    if (discountStatusText) discountStatusText.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-exclamation-circle-fill me-1"></i>Below 60% Policy Target</span>';
+                    if (discountProgressBar) discountProgressBar.className = "progress-bar bg-danger";
                 } else {
                     if (discountBadge) {
                         discountBadge.textContent = `${discount}% OFF`;
@@ -1664,13 +1706,14 @@
                     discountBadge.textContent = "0% OFF";
                     discountBadge.className = "badge bg-secondary fs-5 fw-bold px-3 py-1.5 rounded-pill";
                 }
-                if (priceDiscountHint) priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount recommended).";
+                if (priceDiscountHint) priceDiscountHint.textContent = "Liquidating price must be below MSRP (minimum 60% discount required).";
                 if (discountStatusText) discountStatusText.textContent = "Waiting for pricing input...";
                 if (discountProgressBar) {
                     discountProgressBar.style.width = "0%";
                     discountProgressBar.className = "progress-bar bg-secondary";
                 }
                 if (discountBarLabel) discountBarLabel.textContent = "0% (Policy: 60%+)";
+                if (offerInput) offerInput.value = "60.00";
             }
 
             const buyerPrice = (lp * 1.10).toFixed(2);
@@ -1855,15 +1898,16 @@
             btnApplyMaxPrice.addEventListener("click", function () {
                 if (this.dataset.maxPrice && lpInput) {
                     lpInput.value = this.dataset.maxPrice;
-                    updateCalculations();
+                    updateCalculations("lp");
                 }
             });
         }
 
-        if (msrpInput) msrpInput.addEventListener("input", updateCalculations);
-        if (lpInput) lpInput.addEventListener("input", updateCalculations);
-        if (quantityInput) quantityInput.addEventListener("input", updateCalculations);
-        if (currencySelect) currencySelect.addEventListener("change", updateCalculations);
+        if (msrpInput) msrpInput.addEventListener("input", () => updateCalculations("msrp"));
+        if (lpInput) lpInput.addEventListener("input", () => updateCalculations("lp"));
+        if (offerPctInput) offerPctInput.addEventListener("input", () => updateCalculations("offer"));
+        if (quantityInput) quantityInput.addEventListener("input", () => updateCalculations("qty"));
+        if (currencySelect) currencySelect.addEventListener("change", () => updateCalculations("currency"));
 
         // 3. Category & Subcategory Selects
         if (categorySelect) {
@@ -2077,6 +2121,17 @@
                 if (lp >= msrp) {
                     e.preventDefault();
                     alert("Liquidating price must be lower than the catalog MSRP price.");
+                    if (lpInput) lpInput.focus();
+                    return false;
+                }
+
+                const discountPct = Math.round(((msrp - lp) / msrp) * 100);
+                if (discountPct < 60) {
+                    e.preventDefault();
+                    const curr = currencySelect ? (currencySelect.value || "USD") : "USD";
+                    const sym = getCurrencySymbol(curr);
+                    const maxAllowed = (msrp * 0.40).toFixed(2);
+                    alert(`Minimum 60% discount required in liquidation price (maximum allowed liquidation price is ${sym}${maxAllowed}). Current discount is ${discountPct}%. Please use 60% or above.`);
                     if (lpInput) lpInput.focus();
                     return false;
                 }

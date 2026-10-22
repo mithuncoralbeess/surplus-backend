@@ -679,6 +679,24 @@ class LotSerializer(serializers.ModelSerializer):
             lot.save(update_fields=['warehouse_images', 'raw_data'])
         return lot
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        try:
+            ask = float(instance.ask_price_surplus_payout or 0.0)
+            msrp = float(instance.total_est_retail_value_msrp or 0.0)
+            ret["liquidation_price"] = ask
+            ret["price"] = round(ask * 1.10, 2)
+            ret["msrp"] = msrp
+            if msrp > 0 and ask > 0 and msrp > ask:
+                disc = round(((msrp - ask) / msrp) * 100)
+                if not (instance.offer and "open to offer" in str(instance.offer).lower()):
+                    ret["offer"] = f"{disc}% Off MSRP"
+            elif not ret.get("offer"):
+                ret["offer"] = "60% Off MSRP"
+        except Exception:
+            pass
+        return ret
+
 
 class LotBatchEnquirySerializer(LotSerializer):
     """

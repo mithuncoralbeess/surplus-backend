@@ -862,7 +862,17 @@ class Lot(models.Model):
             self.active_status = 'active'
         else:
             self.is_active = False
-            self.active_status = 'inactive'
+        # Offer is strictly calculated by MSRP and Liquidation Price (ask_price_surplus_payout), never adding 10% platform markup into offer
+        if self.total_est_retail_value_msrp and self.ask_price_surplus_payout:
+            try:
+                msrp_d = Decimal(str(self.total_est_retail_value_msrp))
+                ask_d = Decimal(str(self.ask_price_surplus_payout))
+                if msrp_d > Decimal("0.00") and ask_d > Decimal("0.00") and msrp_d > ask_d:
+                    if not (self.offer and "open to offer" in str(self.offer).lower()):
+                        discount_pct = int(round(((msrp_d - ask_d) / msrp_d) * Decimal("100")))
+                        self.offer = f"{discount_pct}% Off MSRP"
+            except Exception:
+                pass
 
         super().save(*args, **kwargs)
 
@@ -1159,12 +1169,16 @@ class Product(models.Model):
             max_id = Product.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
             self.product_id = f"PRO-{(max_id + 1):05d}"
             
-        # Calculate current_price = Liquidating Price * 1.10
+        # Calculate current_price = Liquidating Price * 1.10 (our platform markup)
         if self.liquidating_price:
             val = Decimal(str(self.liquidating_price)) * Decimal("1.10")
             self.current_price = val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         else:
             self.current_price = Decimal("0.00")
+
+        # Offer is strictly calculated by MSRP and Liquidation Price (never adding 10% platform markup into offer)
+        if self.msrp and Decimal(str(self.msrp)) > Decimal("0.00") and self.liquidating_price and Decimal(str(self.msrp)) > Decimal(str(self.liquidating_price)):
+            self.offer = (((Decimal(str(self.msrp)) - Decimal(str(self.liquidating_price))) / Decimal(str(self.msrp))) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         # Auto-set date_approved and enforce active rule
         if str(self.enquiry_status).upper() == 'APPROVED':

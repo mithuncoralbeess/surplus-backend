@@ -703,7 +703,7 @@
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Currency, MSRP, Ask Price -->
+                        <!-- Currency, MSRP, Liquidation Price, Offer -->
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
                                 <label class="form-label-custom">
@@ -716,7 +716,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label-custom">
                                     <span>MSRP (Total Est. Retail Value) <span class="text-danger">*</span></span>
                                 </label>
@@ -728,16 +728,29 @@
                                 <div class="form-text small">Original aggregate retail value.</div>
                             </div>
 
-                            <div class="col-md-5">
+                            <div class="col-md-3">
                                 <label class="form-label-custom">
                                     <span>Liquidation Price (Surplus Payout) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
-                                    <input type="number" step="0.01" min="1" class="form-control form-control-custom" name="ask_price_surplus_payout" id="askPriceInput"
+                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-custom" name="ask_price_surplus_payout" id="askPriceInput"
                                         placeholder="0.00" value="{{ form_data.ask_price_surplus_payout|default:'' }}" required>
                                 </div>
-                                <div class="form-text small">Target payout seller seeks for this lot.</div>
+                                <div class="form-text small" id="lpHintText">Max 40% of MSRP (min 60% off).</div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label-custom">
+                                    <span>Offer (% Off MSRP) <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="1" min="60" max="99" class="form-control form-control-custom font-monospace fw-bold text-danger" name="offer_pct" id="offerPctInput"
+                                        placeholder="60" value="60" required>
+                                    <span class="input-group-text font-monospace bg-light fw-bold">% OFF</span>
+                                </div>
+                                <div class="form-text small">Min 60% off (user can use 60%+).</div>
+                                <input type="hidden" name="offer" id="offerInput" value="60% Off MSRP">
                             </div>
                         </div>
 
@@ -1413,6 +1426,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // -------------------------------------------------------------
     const msrpInput = document.getElementById('msrpInput');
     const askPriceInput = document.getElementById('askPriceInput');
+    const offerPctInput = document.getElementById('offerPctInput');
+    const offerInput = document.getElementById('offerInput');
     const currencySelect = document.getElementById('currencySelect');
     const discountBadge = document.getElementById('discountBadge');
     const discountProgressBar = document.getElementById('discountProgressBar');
@@ -1421,9 +1436,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const maxPayoutText = document.getElementById('maxPayoutText');
     const liquidationWarningBanner = document.getElementById('liquidationWarningBanner');
 
-    function updatePricingCalculations() {
+    function updatePricingCalculations(source) {
         const msrp = parseFloat(msrpInput.value) || 0;
-        const ask = parseFloat(askPriceInput.value) || 0;
+        let ask = parseFloat(askPriceInput.value) || 0;
+        let offerPct = offerPctInput ? (parseInt(offerPctInput.value) || 60) : 60;
         const curr = currencySelect ? currencySelect.value : 'USD';
 
         // Update all currency symbols
@@ -1432,6 +1448,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (msrp > 0) {
             const maxPayout = msrp * 0.40;
             maxPayoutText.textContent = `${curr} ${maxPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // Two-way sync: calculate liquidation price from offer, or offer from liquidation price
+            if (source === 'offer') {
+                if (offerPct < 60) offerPct = 60;
+                ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                askPriceInput.value = ask.toFixed(2);
+            } else if (source === 'msrp' && (!ask || ask === 0)) {
+                if (offerPct < 60) offerPct = 60;
+                ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                askPriceInput.value = ask.toFixed(2);
+            } else if (source === 'ask' && ask > 0) {
+                const calculatedOffer = Math.round(((msrp - ask) / msrp) * 100);
+                if (offerPctInput) offerPctInput.value = calculatedOffer;
+                offerPct = calculatedOffer;
+            }
         } else {
             maxPayoutText.textContent = '-';
         }
@@ -1447,6 +1478,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const discountPct = Math.round(((msrp - ask) / msrp) * 100);
             discountBadge.textContent = `${discountPct}% Off MSRP`;
             discountProgressBarText.textContent = `${discountPct}% (Policy Target: >= 60%)`;
+            if (offerInput) offerInput.value = `${discountPct}% Off MSRP`;
 
             const barWidth = Math.max(0, Math.min(discountPct, 100));
             discountProgressBar.style.width = `${barWidth}%`;
@@ -1471,15 +1503,17 @@ document.addEventListener('DOMContentLoaded', function () {
             discountProgressBar.className = 'progress-bar bg-secondary';
             liquidationWarningBanner.classList.add('d-none');
             document.getElementById('previewDiscountPill').classList.add('d-none');
+            if (offerInput) offerInput.value = '60% Off MSRP';
         }
 
         updateLivePreview();
         updateReadinessChecklist();
     }
 
-    if (msrpInput) msrpInput.addEventListener('input', updatePricingCalculations);
-    if (askPriceInput) askPriceInput.addEventListener('input', updatePricingCalculations);
-    if (currencySelect) currencySelect.addEventListener('change', updatePricingCalculations);
+    if (msrpInput) msrpInput.addEventListener('input', () => updatePricingCalculations('msrp'));
+    if (askPriceInput) askPriceInput.addEventListener('input', () => updatePricingCalculations('ask'));
+    if (offerPctInput) offerPctInput.addEventListener('input', () => updatePricingCalculations('offer'));
+    if (currencySelect) currencySelect.addEventListener('change', () => updatePricingCalculations('currency'));
 
     // -------------------------------------------------------------
     // 3. Country & City Auto-Suggest Dropdown & Live Preview
@@ -2643,14 +2677,12 @@ document.addEventListener('DOMContentLoaded', function () {
             if (msrpVal > 0 && askVal > 0) {
                 const discount = ((msrpVal - askVal) / msrpVal) * 100;
                 if (discount < 59.9) {
-                    const confirmed = confirm(
-                        `Liquidation Warning: The ask price offers a ${Math.round(discount)}% discount off MSRP, which is below the recommended 60% liquidation discount.\n\nDo you want to proceed as an administrative override?`
-                    );
-                    if (!confirmed) {
-                        askPriceInput.focus();
-                        e.preventDefault();
-                        return;
-                    }
+                    const maxAllowed = (msrpVal * 0.40).toFixed(2);
+                    const curr = currencySelect ? currencySelect.value : 'USD';
+                    alert(`Minimum 60% discount required in liquidation price (maximum allowed payout is ${curr} ${maxAllowed}). Current discount is ${Math.round(discount)}%. Please use 60% or above.`);
+                    askPriceInput.focus();
+                    e.preventDefault();
+                    return;
                 }
             }
 
