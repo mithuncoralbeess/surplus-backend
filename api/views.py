@@ -2105,14 +2105,33 @@ def submit_lot_request(request):
         if not vendor_obj and vendor_param:
             vendor_obj = _resolve_vendor_from_param(vendor_param)
 
+        status_param = (request.GET.get("status") or "").strip()
+        active_param = request.GET.get("active") or request.GET.get("is_active")
+        available_only = request.GET.get("available") or request.GET.get("available_only")
+
+        is_submissions_route = "submit-lot-request" in request.path
+
         if vendor_obj:
             qs = qs.filter(vendor=vendor_obj)
+            if status_param and status_param.lower() != "all":
+                qs = qs.filter(enquiry_status__iexact=status_param)
+            elif not status_param and not is_submissions_route:
+                # Default for /api/lots/?vendor_id=... : return ONLY available data (active & approved), not removed/inactive items
+                qs = qs.filter(is_active=True, enquiry_status__iexact="approved")
         else:
-            status_param = request.GET.get("status")
-            if status_param:
+            if status_param and status_param.lower() != "all":
                 qs = qs.filter(enquiry_status__iexact=status_param)
             else:
-                qs = qs.filter(is_active=True, enquiry_status="approved")
+                qs = qs.filter(is_active=True, enquiry_status__iexact="approved")
+
+        if active_param is not None:
+            if str(active_param).lower() in ("true", "1", "yes", "active"):
+                qs = qs.filter(is_active=True)
+            elif str(active_param).lower() in ("false", "0", "no", "inactive"):
+                qs = qs.filter(is_active=False)
+
+        if available_only is not None and str(available_only).lower() in ("true", "1", "yes"):
+            qs = qs.filter(is_active=True, enquiry_status__iexact="approved")
 
         search = request.GET.get("search", "").strip()
         if search:
@@ -2618,6 +2637,13 @@ def _resolve_vendor_from_param(vendor_param, email_fallback=None):
         return None
 
     v_str = str(vendor_param).strip().strip("[]'\"")
+    if v_str.upper() in ("USR-DEMO", "USR-SYSTEM", "DEMO", "SYSTEM"):
+        demo_vendor = VendorDetails.objects.filter(username__in=["USR-DEMO", "USR-SYSTEM", "demo"]).first()
+        if not demo_vendor:
+            demo_vendor = VendorDetails.objects.filter(email__iexact="system.demo@surplusmarket.com").first()
+        if demo_vendor:
+            return demo_vendor
+
     v_clean = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
     vendor = None
     if v_clean.isdigit():
@@ -2937,14 +2963,28 @@ def get_public_products_list(request):
     from django.core.paginator import Paginator
 
     vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
+    status_param = (request.GET.get("status") or "").strip()
+    active_param = request.GET.get("active") or request.GET.get("is_active")
+
     if vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
         if vendor_obj:
             qs = Product.objects.filter(vendor=vendor_obj).select_related("category", "subcategory").prefetch_related("images")
+            if status_param and status_param.lower() != "all":
+                qs = qs.filter(enquiry_status__iexact=status_param)
+            elif not status_param:
+                # Default for /api/products/?vendor_id=... : return ONLY available data (active & approved), not removed/inactive items
+                qs = qs.filter(is_active=True, enquiry_status__iexact="APPROVED")
         else:
             qs = Product.objects.none()
     else:
         qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
+
+    if active_param is not None:
+        if str(active_param).lower() in ("true", "1", "yes", "active"):
+            qs = qs.filter(is_active=True)
+        elif str(active_param).lower() in ("false", "0", "no", "inactive"):
+            qs = qs.filter(is_active=False)
 
     collection = (request.GET.get("collection") or request.GET.get("badge") or "").lower()
     order_field = "display_order"
