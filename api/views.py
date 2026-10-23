@@ -1473,14 +1473,13 @@ def submit_rfq_enquiry(request):
     }, status=status.HTTP_201_CREATED)
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @permission_classes([AllowAny])
 def submit_product_request(request):
     """
-    Endpoint for frontend single product submissions.
-    Accepts direct vendor_id without requiring user session authentication.
-    Resolves category and sub_category strings to foreign keys, creates Product,
-    links gallery images, and sets enquiry_status='PENDING'.
+    Endpoint for frontend single product submissions and user submissions query.
+    GET /api/submit-product-request/ - List products for user by email / vendor_id
+    POST /api/submit-product-request/ - Submit a single product enquiry
     """
     import json
     from decimal import Decimal
@@ -1488,6 +1487,39 @@ def submit_product_request(request):
     from django.utils.text import slugify
     from django.core.files.storage import default_storage
     from AdminApp.models import Product, ProductImage, MainCategory, SubCategory, VendorDetails
+
+    if request.method == "GET":
+        email_param = (request.GET.get("email") or request.GET.get("user_email") or "").strip()
+        vendor_param = request.GET.get("vendor_id") or request.GET.get("user_id")
+        vendor_obj = None
+        if email_param:
+            vendor_obj = VendorDetails.objects.filter(email__iexact=email_param).first()
+        if not vendor_obj and vendor_param:
+            vendor_obj = _resolve_vendor_from_param(vendor_param)
+
+        if vendor_obj:
+            qs = Product.objects.filter(vendor=vendor_obj).order_by("-created_at")
+        else:
+            qs = Product.objects.none()
+
+        prods_data = []
+        for p in qs[:100]:
+            prods_data.append({
+                "id": p.id,
+                "reference": p.product_id or f"PRD-{p.id}",
+                "title": p.product_name,
+                "product_name": p.product_name,
+                "category": p.category.name if p.category else "",
+                "subCategory": p.subcategory.name if p.subcategory else "",
+                "brand": p.brand_name,
+                "model": p.model_no,
+                "price": float(p.liquidating_price or 0),
+                "msrp": float(p.msrp or 0),
+                "quantity": p.quantity,
+                "status": p.enquiry_status,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            })
+        return Response({"success": True, "data": prods_data}, status=status.HTTP_200_OK)
 
     data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
 
@@ -1550,10 +1582,11 @@ def submit_product_request(request):
     if isinstance(user_email, str):
         user_email = user_email.strip().lower()
 
-    if not vendor_id and user_email:
-        vendor_id = user_email
+    # Prioritize resolving vendor by verified user_email first to prevent stale vendor_id mismatches
+    if user_email:
+        vendor = VendorDetails.objects.filter(email__iexact=user_email).first()
 
-    if vendor_id is not None and str(vendor_id).strip() != "":
+    if not vendor and vendor_id is not None and str(vendor_id).strip() != "":
         vid_str = str(vendor_id).strip()
         clean_vid = vid_str[4:].strip() if vid_str.upper().startswith("USR-") else vid_str
         
@@ -2053,19 +2086,22 @@ def submit_lot_request(request):
 
     if request.method == "GET":
         qs = Lot.objects.all().order_by("-created_at")
+        email_param = (request.GET.get("email") or request.GET.get("user_email") or "").strip()
         vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
-        if vendor_param:
+        vendor_obj = None
+        if email_param:
+            vendor_obj = VendorDetails.objects.filter(email__iexact=email_param).first()
+        if not vendor_obj and vendor_param:
             vendor_obj = _resolve_vendor_from_param(vendor_param)
-            if vendor_obj:
-                qs = qs.filter(vendor=vendor_obj)
 
-
-
-        status_param = request.GET.get("status")
-        if status_param:
-            qs = qs.filter(enquiry_status__iexact=status_param)
-        elif not vendor_param:
-            qs = qs.filter(is_active=True, enquiry_status="approved")
+        if vendor_obj:
+            qs = qs.filter(vendor=vendor_obj)
+        else:
+            status_param = request.GET.get("status")
+            if status_param:
+                qs = qs.filter(enquiry_status__iexact=status_param)
+            else:
+                qs = qs.filter(is_active=True, enquiry_status="approved")
 
         search = request.GET.get("search", "").strip()
         if search:
