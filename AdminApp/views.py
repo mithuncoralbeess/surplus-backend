@@ -1822,12 +1822,14 @@ def seller_enquiry_status_api(request, enquiry_id):
 def seller_enquiry_edit_api(request, enquiry_id):
     """
     Admin API to update product enquiry / product details from detail views.
+    Only liquidation price and msrp are editable in pricing; price is auto-calculated as 10% above liquidation price.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    from .models import Product, SubCategory
+    from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+    from .models import Product, SubCategory, MainCategory
     try:
         product = Product.objects.get(id=enquiry_id)
     except Product.DoesNotExist:
@@ -1835,87 +1837,97 @@ def seller_enquiry_edit_api(request, enquiry_id):
 
     data = request.data
     
+    # 1. Basic Information
     title = data.get("product_name") or data.get("title")
     if title and str(title).strip():
         product.product_name = str(title).strip()
 
-    if "liquidating_price" in data and data["liquidating_price"] not in (None, ""):
-        try:
-            product.liquidating_price = float(data["liquidating_price"])
-        except (ValueError, TypeError):
-            pass
-    elif "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
-        try:
-            product.liquidating_price = float(data["liquidation_price"])
-        except (ValueError, TypeError):
-            pass
-    elif "price" in data and data["price"] not in (None, ""):
-        try:
-            product.liquidating_price = float(data["price"])
-        except (ValueError, TypeError):
-            pass
+    if "currency" in data and str(data["currency"]).strip():
+        product.currency = str(data["currency"]).strip().upper()
 
-    if "msrp" in data and data["msrp"] not in (None, ""):
-        try:
-            product.msrp = float(data["msrp"])
-        except (ValueError, TypeError):
-            pass
-    elif "previous_price" in data and data["previous_price"] not in (None, ""):
-        try:
-            product.msrp = float(data["previous_price"])
-        except (ValueError, TypeError):
-            pass
-    elif "original_price" in data and data["original_price"] not in (None, ""):
-        try:
-            product.msrp = float(data["original_price"])
-        except (ValueError, TypeError):
-            pass
-    elif "discount_price" in data and data["discount_price"] not in (None, ""):
-        try:
-            product.msrp = float(data["discount_price"])
-        except (ValueError, TypeError):
-            pass
+    if "brand" in data or "brand_name" in data:
+        product.brand_name = str(data.get("brand") or data.get("brand_name")).strip()
 
-    if "offer" in data:
-        if data["offer"] not in (None, ""):
-            try:
-                product.offer = Decimal(str(data["offer"]).strip())
-            except Exception:
-                pass
-        else:
-            product.offer = Decimal("0.00")
+    if "model_no" in data or "model_number" in data:
+        product.model_no = str(data.get("model_no") or data.get("model_number")).strip()
 
-    if product.msrp and product.liquidating_price and product.msrp > product.liquidating_price and product.msrp > 0:
-        product.offer = (((Decimal(str(product.msrp)) - Decimal(str(product.liquidating_price))) / Decimal(str(product.msrp))) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-    if "stock_quantity" in data and data["stock_quantity"] not in (None, ""):
-        try:
-            product.stock_quantity = int(data["stock_quantity"])
-        except (ValueError, TypeError):
-            pass
-
-    if "brand" in data:
-        product.brand = str(data["brand"]).strip()
-
-    if "main_category_id" in data and data["main_category_id"]:
-        try:
-            main_cat = MainCategory.objects.get(id=int(data["main_category_id"]))
-            product.category = main_cat
-        except (MainCategory.DoesNotExist, ValueError):
-            pass
-
+    # Category / Subcategory
     if "subcategory_id" in data and data["subcategory_id"]:
         try:
             sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
             product.subcategory = sub_cat
-            if sub_cat.main_category and not product.category:
+            if sub_cat.main_category:
                 product.category = sub_cat.main_category
         except (SubCategory.DoesNotExist, ValueError):
             pass
+    elif "category_id" in data and data["category_id"]:
+        try:
+            cat = MainCategory.objects.get(id=int(data["category_id"]))
+            product.category = cat
+        except (MainCategory.DoesNotExist, ValueError):
+            pass
+
+    # Quantity
+    for q_key in ("stock_quantity", "quantity", "stock", "units"):
+        if q_key in data and data[q_key] not in (None, ""):
+            try:
+                product.quantity = max(0, int(data[q_key]))
+                break
+            except (ValueError, TypeError):
+                pass
+
+    # 2. Pricing & Financials: ONLY liquidation_price and msrp are editable. Price is strictly auto-calculated.
+    if "liquidating_price" in data and data["liquidating_price"] not in (None, ""):
+        try:
+            product.liquidating_price = Decimal(str(data["liquidating_price"]).strip())
+        except (ValueError, TypeError, InvalidOperation):
+            pass
+    elif "liquidation_price" in data and data["liquidation_price"] not in (None, ""):
+        try:
+            product.liquidating_price = Decimal(str(data["liquidation_price"]).strip())
+        except (ValueError, TypeError, InvalidOperation):
+            pass
+
+    for msrp_key in ("msrp", "previous_price", "original_price", "discount_price"):
+        if msrp_key in data and data[msrp_key] not in (None, ""):
+            try:
+                product.msrp = Decimal(str(data[msrp_key]).strip())
+                break
+            except (ValueError, TypeError, InvalidOperation):
+                pass
+
+    # Auto-calculate buyer price = Liquidating Price * 1.10 (strict 10% platform markup)
+    if product.liquidating_price:
+        val = Decimal(str(product.liquidating_price)) * Decimal("1.10")
+        product.current_price = val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    else:
+        product.current_price = Decimal("0.00")
+
+    # Offer calculation from MSRP and Liquidation price
+    if product.msrp and product.liquidating_price and product.msrp > product.liquidating_price and product.msrp > Decimal("0.00"):
+        product.offer = (((Decimal(str(product.msrp)) - Decimal(str(product.liquidating_price))) / Decimal(str(product.msrp))) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    elif "offer" in data and data["offer"] not in (None, ""):
+        try:
+            import re
+            clean_off = re.sub(r'[^\d.]', '', str(data["offer"]))
+            if clean_off:
+                product.offer = Decimal(clean_off).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        except Exception:
+            pass
+
+    # Check 60% MSRP Warning
+    warning_msg = None
+    if product.liquidating_price and product.msrp and product.msrp > Decimal("0.00"):
+        threshold_60 = Decimal(str(product.msrp)) * Decimal("0.60")
+        if Decimal(str(product.liquidating_price)) < threshold_60:
+            liq_pct = round((float(product.liquidating_price) / float(product.msrp)) * 100, 1)
+            warning_msg = f"Warning: Liquidation price ({product.currency} {product.liquidating_price}) is below 60% of MSRP ({product.currency} {product.msrp}) - currently {liq_pct}% of MSRP."
 
     if "is_available_for_offers" in data:
-        product.is_available_for_offers = bool(data["is_available_for_offers"])
+        val = data["is_available_for_offers"]
+        product.is_available_for_offers = val in (True, "true", "True", "1", 1, "on", "yes")
 
+    # 3. Specifications & Logistics
     cond_val = data.get("condition") or data.get("product_condition") or data.get("stock_condition")
     if cond_val is not None:
         product.condition = str(cond_val).strip()
@@ -1935,16 +1947,24 @@ def seller_enquiry_edit_api(request, enquiry_id):
         product.dimensions = str(data["dimensions"]).strip()
     if "warranty" in data:
         product.warranty = str(data["warranty"]).strip()
+    if "expiry_date" in data and data["expiry_date"] not in (None, ""):
+        from django.utils.dateparse import parse_date
+        exp = parse_date(str(data["expiry_date"]).strip())
+        if exp:
+            product.expiry_date = exp
     if "reason_to_sell" in data:
         product.reason_to_sell = str(data["reason_to_sell"]).strip()
     if "description" in data:
         product.description = str(data["description"]).strip()
+
+    # 4. Status Controls
     if "enquiry_status" in data:
         status_val = str(data["enquiry_status"]).upper()
         if status_val in ("PENDING", "APPROVED", "DECLINED"):
             product.enquiry_status = status_val
             if status_val != "APPROVED":
                 product.is_active = False
+
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
@@ -1964,6 +1984,7 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 "message": "Cannot activate product: Product enquiry must be APPROVED before it can be marked active."
             }, status=status.HTTP_400_BAD_REQUEST)
         product.is_active = is_act
+
     if "warranty_attachment" in data:
         product.warranty_attachment = str(data["warranty_attachment"]).strip()
     if "third_party_certificate" in data:
@@ -1972,7 +1993,7 @@ def seller_enquiry_edit_api(request, enquiry_id):
     if "third_party_documents" in data:
         product.third_party_documents = str(data["third_party_documents"]).strip()
 
-    # Collection showcases: Featured Deals, Best Selling, New Arrivals
+    # 5. Collection showcases
     if "is_featured" in data:
         f_val = data["is_featured"]
         product.is_featured = f_val in (True, "true", "1", 1, "on")
@@ -1999,12 +2020,46 @@ def seller_enquiry_edit_api(request, enquiry_id):
         except (ValueError, TypeError):
             pass
 
+    # Synchronize raw_data JSON dictionary
+    if not isinstance(product.raw_data, dict):
+        product.raw_data = {}
+    product.raw_data["product_name"] = product.product_name
+    product.raw_data["title"] = product.product_name
+    product.raw_data["brand_name"] = product.brand_name
+    product.raw_data["model_no"] = product.model_no
+    product.raw_data["currency"] = product.currency
+    product.raw_data["liquidating_price"] = str(product.liquidating_price)
+    product.raw_data["current_price"] = str(product.current_price)
+    product.raw_data["price"] = str(product.current_price)
+    product.raw_data["msrp"] = str(product.msrp) if product.msrp is not None else ""
+    product.raw_data["previous_price"] = str(product.msrp) if product.msrp is not None else ""
+    product.raw_data["offer"] = str(product.offer) if product.offer is not None else "0"
+    product.raw_data["quantity"] = product.quantity
+    product.raw_data["condition"] = product.condition
+    product.raw_data["inventory_location"] = product.inventory_location
+    product.raw_data["inventory_country"] = product.inventory_country
+    product.raw_data["manufacturing_country"] = product.manufacturing_country
+    if product.manufacturing_year:
+        product.raw_data["manufacturing_year"] = product.manufacturing_year
+    if product.dimensions:
+        product.raw_data["dimensions"] = product.dimensions
+    if product.warranty:
+        product.raw_data["warranty"] = product.warranty
+    if product.reason_to_sell:
+        product.raw_data["reason_to_sell"] = product.reason_to_sell
+    if product.description:
+        product.raw_data["description"] = product.description
+
     product.save()
 
     return Response({
         "success": True,
         "message": "Product details updated successfully.",
-        "product_id": product.product_id or product.sku
+        "product_id": product.product_id or product.sku,
+        "price": float(product.current_price),
+        "liquidating_price": float(product.liquidating_price),
+        "msrp": float(product.msrp) if product.msrp else None,
+        "warning": warning_msg
     })
 
 
@@ -2350,13 +2405,41 @@ def lot_enquiry_edit_api(request, enquiry_id):
         parsed_liq = _to_clean_float(data["liquidating_price"])
         if parsed_liq is not None:
             lot.ask_price_surplus_payout = parsed_liq
-    elif "price" in data and data["price"] not in (None, ""):
-        parsed_p = _to_clean_float(data["price"])
-        if parsed_p is not None:
-            lot.ask_price_surplus_payout = parsed_p
+
+    # Calculate buyer price: strictly 10% platform markup above liquidation price (no manual price edit)
+    calculated_price = round(float(lot.ask_price_surplus_payout or 0.0) * 1.10, 2)
+
+    # Check 60% MSRP Warning
+    warning_msg = None
+    if lot.ask_price_surplus_payout and lot.total_est_retail_value_msrp and float(lot.total_est_retail_value_msrp) > 0:
+        threshold_60 = float(lot.total_est_retail_value_msrp) * 0.60
+        if float(lot.ask_price_surplus_payout) < threshold_60:
+            pct = round((float(lot.ask_price_surplus_payout) / float(lot.total_est_retail_value_msrp)) * 100, 1)
+            warning_msg = f"Warning: Liquidation price ({lot.currency or 'USD'} {lot.ask_price_surplus_payout}) is below 60% of MSRP ({lot.currency or 'USD'} {lot.total_est_retail_value_msrp}) - currently {pct}% of MSRP."
 
     if "currency" in data and str(data["currency"]).strip():
-        lot.currency = str(data["currency"]).strip()
+        lot.currency = str(data["currency"]).strip().upper()
+
+    # Category update from subcategory_id
+    if "subcategory_id" in data and data["subcategory_id"]:
+        try:
+            sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
+            lot.category_allocations = [{
+                "category_id": sub_cat.id,
+                "category_name": sub_cat.name,
+                "main_category_id": sub_cat.main_category_id,
+                "main_category_name": sub_cat.main_category.name if sub_cat.main_category else "",
+                "percentage": 100
+            }]
+            if not isinstance(lot.raw_data, dict):
+                lot.raw_data = {}
+            lot.raw_data["category"] = sub_cat.name
+            lot.raw_data["subcategory"] = sub_cat.name
+            if sub_cat.main_category:
+                lot.raw_data["main_category"] = sub_cat.main_category.name
+        except Exception:
+            pass
+
     if "inventory_country" in data:
         lot.inventory_country = str(data["inventory_country"]).strip()
     if "inventory_city" in data:
@@ -2467,16 +2550,34 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.raw_data = {}
 
     lot.raw_data["title"] = lot.title
-    lot.raw_data["liquidation_price"] = lot.ask_price_surplus_payout
-
+    lot.raw_data["currency"] = lot.currency
+    lot.raw_data["liquidation_price"] = float(lot.ask_price_surplus_payout or 0.0)
+    lot.raw_data["liquidating_price"] = float(lot.ask_price_surplus_payout or 0.0)
+    lot.raw_data["ask_price_surplus_payout"] = float(lot.ask_price_surplus_payout or 0.0)
+    lot.raw_data["price"] = calculated_price
+    lot.raw_data["current_price"] = calculated_price
+    lot.raw_data["msrp"] = float(lot.total_est_retail_value_msrp or 0.0)
+    lot.raw_data["total_est_retail_value_msrp"] = float(lot.total_est_retail_value_msrp or 0.0)
+    lot.raw_data["offer"] = lot.offer
     lot.raw_data["description"] = lot.description
+    lot.raw_data["condition"] = lot.condition
+    lot.raw_data["inventory_location"] = lot.inventory_location
+    lot.raw_data["inventory_country"] = lot.inventory_country
+    if lot.number_of_distinct_skus:
+        lot.raw_data["number_of_distinct_skus"] = lot.number_of_distinct_skus
+    if lot.total_units_quantity:
+        lot.raw_data["total_units_quantity"] = lot.total_units_quantity
 
     lot.save()
 
     return Response({
         "success": True,
         "message": "Lot batch details updated successfully.",
-        "batch_id": lot.lot_number
+        "batch_id": lot.lot_number,
+        "price": calculated_price,
+        "liquidation_price": float(lot.ask_price_surplus_payout or 0.0),
+        "msrp": float(lot.total_est_retail_value_msrp or 0.0),
+        "warning": warning_msg
     })
 
 

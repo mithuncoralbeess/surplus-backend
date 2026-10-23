@@ -729,9 +729,14 @@
 
             <!-- Pricing Section -->
             <div class="premium-card p-4 mb-4">
-                <h6 class="fw-bold text-uppercase text-muted mb-3" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                    <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
-                </h6>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2.5 rounded-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal" style="font-size: 12px;">
+                        <i class="bi bi-pencil-square"></i> Edit Pricing
+                    </button>
+                </div>
 
                 <div class="row g-3">
                     <!-- Price -->
@@ -2232,9 +2237,65 @@
             });
         });
 
-        // Edit Lot Form Submit Handler
+        // Edit Lot Form Submit Handler & Live Pricing Calculation
         const editLotForm = document.getElementById('editLotEnquiryForm');
         if (editLotForm) {
+            const lotMsrpInput = document.getElementById('lot_edit_msrp');
+            const lotLiqInput = document.getElementById('lot_edit_liquidation_price');
+            const lotPriceInput = document.getElementById('lot_edit_calc_price');
+            const lotOfferInput = document.getElementById('lot_edit_calc_offer');
+            const lotWarningBox = document.getElementById('lot_pricing_warning_box');
+            const lotWarningText = document.getElementById('lot_pricing_warning_text');
+            const lotCurrInput = document.getElementById('lot_edit_currency');
+
+            function updateLotPricingCalc() {
+                if (!lotMsrpInput || !lotLiqInput || !lotPriceInput) return;
+                const msrp = parseFloat(lotMsrpInput.value) || 0;
+                const liq = parseFloat(lotLiqInput.value) || 0;
+                const curr = (lotCurrInput ? lotCurrInput.value.trim() : '') || 'USD';
+
+                // Price is strictly 10% platform markup above liquidation price (no manual price edit)
+                if (liq > 0) {
+                    lotPriceInput.value = (liq * 1.10).toFixed(2);
+                } else {
+                    lotPriceInput.value = '';
+                }
+
+                // Offer is strictly calculated by MSRP and Liquidation Price
+                let discount = 0;
+                if (msrp > 0 && liq > 0) {
+                    discount = Math.round(((msrp - liq) / msrp) * 100);
+                    if (lotOfferInput) {
+                        lotOfferInput.value = `${discount}% Off MSRP`;
+                    }
+                } else if (lotOfferInput && !lotOfferInput.value) {
+                    lotOfferInput.value = '60% Off MSRP';
+                }
+
+                // Check: if liquidation price is below 60% of MSRP show warning
+                if (msrp > 0 && liq > 0) {
+                    const threshold60 = msrp * 0.60;
+                    const liqPctOfMsrp = Math.round((liq / msrp) * 100);
+
+                    if (liq < threshold60) {
+                        lotWarningBox.style.display = 'block';
+                        lotWarningText.innerHTML = `<strong>⚠️ Warning:</strong> Total Liquidation Price (<strong>${curr} ${liq.toFixed(2)}</strong>) is below <strong>60% of MSRP</strong> (${curr} ${threshold60.toFixed(2)}) &mdash; currently <strong>${liqPctOfMsrp}% of MSRP</strong> (${discount}% discount).`;
+                    } else if (discount < 60) {
+                        lotWarningBox.style.display = 'block';
+                        lotWarningText.innerHTML = `<strong>⚠️ Surplus Policy Note:</strong> Liquidation discount (<strong>${discount}%</strong>) is below the recommended 60% liquidation policy target (${liqPctOfMsrp}% of MSRP).`;
+                    } else {
+                        lotWarningBox.style.display = 'none';
+                    }
+                } else {
+                    lotWarningBox.style.display = 'none';
+                }
+            }
+
+            if (lotMsrpInput) lotMsrpInput.addEventListener('input', updateLotPricingCalc);
+            if (lotLiqInput) lotLiqInput.addEventListener('input', updateLotPricingCalc);
+            if (lotCurrInput) lotCurrInput.addEventListener('input', updateLotPricingCalc);
+            updateLotPricingCalc();
+
             const enqSelect = editLotForm.querySelector('select[name="enquiry_status"]');
             const actSelect = editLotForm.querySelector('select[name="active_status"]');
             if (enqSelect && actSelect) {
@@ -2270,7 +2331,11 @@
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
-                        alert(data.message || 'Lot batch details updated successfully.');
+                        if (data.warning) {
+                            alert(data.warning);
+                        } else {
+                            alert(data.message || 'Lot batch details updated successfully.');
+                        }
                         location.reload();
                     } else {
                         alert(data.message || 'Failed to update lot details.');
@@ -2283,6 +2348,15 @@
                     btn.textContent = 'Save Changes';
                 }
             });
+
+            // Auto-trigger edit modal if ?action=edit in URL
+            if (new URLSearchParams(window.location.search).get('action') === 'edit') {
+                const lotModalEl = document.getElementById('editLotEnquiryModal');
+                if (lotModalEl && typeof bootstrap !== 'undefined') {
+                    const modalInst = new bootstrap.Modal(lotModalEl);
+                    modalInst.show();
+                }
+            }
         }
 
         // Upload Excel Manifest Submit Handler
@@ -2529,31 +2603,52 @@
 
                     <!-- Section 4: Pricing & Financials -->
                     <div class="mb-4">
-                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
-                            <i class="bi bi-currency-dollar me-1"></i> Pricing & Financials
-                        </h6>
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <h6 class="fw-bold text-uppercase text-primary small mb-0">
+                                <i class="bi bi-currency-dollar me-1"></i> Pricing & Financials
+                            </h6>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                                Price = Liquidation Price + 10%
+                            </span>
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold text-dark">Currency</label>
-                                <input type="text" class="form-control" name="currency" value="{{ enquiry.currency|default:'USD' }}">
+                                <input type="text" class="form-control" name="currency" id="lot_edit_currency" value="{{ enquiry.currency|default:'USD' }}">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Total Est Retail Value (MSRP)</label>
-                                <input type="number" step="0.01" class="form-control" name="msrp" value="{{ batch_data.msrp|default:'' }}">
+                                <input type="number" step="0.01" min="0" class="form-control" name="msrp" id="lot_edit_msrp" value="{{ batch_data.msrp|default:'' }}" placeholder="0.00" required>
+                                <small class="text-muted" style="font-size: 11px;">Total batch retail MSRP</small>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small fw-semibold text-dark">Total Price / Liquidation Value</label>
-                                <input type="number" step="0.01" class="form-control" name="liquidation_price" value="{{ batch_data.liquidation_price|default:'' }}">
+                                <label class="form-label small fw-semibold text-dark">Total Liquidation Price</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="liquidation_price" id="lot_edit_liquidation_price" value="{{ batch_data.liquidation_price|default:'' }}" placeholder="0.00" required>
+                                <small class="text-muted" style="font-size: 11px;">Seller payout liquidation value</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">
+                                    Price <span class="badge bg-secondary-subtle text-secondary" style="font-size: 9px;">+10% Markup</span>
+                                </label>
+                                <input type="number" step="0.01" class="form-control bg-light text-muted fw-bold" id="lot_edit_calc_price" value="{{ batch_data.price|default:'' }}" readonly tabindex="-1" style="cursor: not-allowed;" title="Auto-calculated: 10% platform markup above Liquidation Price (No manual edit)">
+                                <small class="text-muted" style="font-size: 11px;">Auto (10% of Liq.)</small>
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold text-dark">Offer / Discount</label>
-                                <input type="text" class="form-control" name="offer" value="{{ batch_data.offer|default:enquiry.offer|default:'' }}" placeholder="e.g. 47% Off MSRP">
+                                <input type="text" class="form-control bg-light text-muted font-monospace" name="offer" id="lot_edit_calc_offer" value="{{ batch_data.offer|default:enquiry.offer|default:'' }}" readonly tabindex="-1" style="cursor: not-allowed;" placeholder="e.g. 60% Off MSRP">
+                                <small class="text-muted" style="font-size: 11px;">Auto from MSRP</small>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-12" id="lot_pricing_warning_box" style="display: none;">
+                                <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 border-warning shadow-xs rounded-2">
+                                    <i class="bi bi-exclamation-triangle-fill fs-6 text-warning"></i>
+                                    <span id="lot_pricing_warning_text"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
                                 <label class="form-label small fw-semibold text-dark">Open to Offers</label>
                                 <select class="form-select" name="allow_counter_offers">
-                                    <option value="true" {% if batch_data.open_to_offer %}selected{% endif %}>Yes</option>
-                                    <option value="false" {% if not batch_data.open_to_offer %}selected{% endif %}>No</option>
+                                    <option value="true" {% if batch_data.open_to_offer %}selected{% endif %}>Yes - Accepting Counter Offers</option>
+                                    <option value="false" {% if not batch_data.open_to_offer %}selected{% endif %}>No - Fixed Price Only</option>
                                 </select>
                             </div>
                         </div>

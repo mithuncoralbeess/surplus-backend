@@ -292,9 +292,14 @@
 
                     <!-- Pricing Section -->
                     <div class="premium-card p-4 mb-4">
-                        <h6 class="fw-bold text-uppercase text-muted mb-4" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                            <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
-                        </h6>
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                                <i class="bi bi-currency-dollar me-2 text-success"></i>Pricing & Financials
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2.5 rounded-2 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs" data-bs-toggle="modal" data-bs-target="#editSellerEnquiryModal" style="font-size: 12px;">
+                                <i class="bi bi-pencil-square"></i> Edit Pricing
+                            </button>
+                        </div>
                         <div class="d-flex flex-wrap gap-3">
                             <div class="inline-card border-left-success py-2 px-3 bg-white shadow-sm rounded">
                                 <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-success me-1"></i> Price</span>
@@ -626,9 +631,65 @@
             });
         });
 
-        // Edit Form Submit Handler
+        // Edit Form Submit Handler & Live Price Calculation
         const editForm = document.getElementById('editSellerEnquiryForm');
         if (editForm) {
+            const msrpInput = document.getElementById('edit_msrp');
+            const liqInput = document.getElementById('edit_liquidating_price');
+            const priceInput = document.getElementById('edit_calc_price');
+            const offerInput = document.getElementById('edit_calc_offer');
+            const warningBox = document.getElementById('edit_pricing_warning_box');
+            const warningText = document.getElementById('edit_pricing_warning_text');
+            const currInput = document.getElementById('edit_currency');
+
+            function updateSellerPricingCalc() {
+                if (!msrpInput || !liqInput || !priceInput) return;
+                const msrp = parseFloat(msrpInput.value) || 0;
+                const liq = parseFloat(liqInput.value) || 0;
+                const curr = (currInput ? currInput.value.trim() : '') || 'AED';
+
+                // Price is strictly 10% platform markup above liquidation price (no manual price edit)
+                if (liq > 0) {
+                    priceInput.value = (liq * 1.10).toFixed(2);
+                } else {
+                    priceInput.value = '';
+                }
+
+                // Offer is strictly calculated by MSRP and Liquidation Price
+                let discount = 0;
+                if (msrp > 0 && liq > 0) {
+                    discount = Math.round(((msrp - liq) / msrp) * 100);
+                    if (offerInput) {
+                        offerInput.value = `${discount}%`;
+                    }
+                } else if (offerInput) {
+                    offerInput.value = '0%';
+                }
+
+                // Check: if liquidation price is below 60% of MSRP show warning
+                if (msrp > 0 && liq > 0) {
+                    const threshold60 = msrp * 0.60;
+                    const liqPctOfMsrp = Math.round((liq / msrp) * 100);
+
+                    if (liq < threshold60) {
+                        warningBox.style.display = 'block';
+                        warningText.innerHTML = `<strong>⚠️ Warning:</strong> Liquidation price (<strong>${curr} ${liq.toFixed(2)}</strong>) is below <strong>60% of MSRP</strong> (${curr} ${threshold60.toFixed(2)}) &mdash; currently <strong>${liqPctOfMsrp}% of MSRP</strong> (${discount}% discount).`;
+                    } else if (discount < 60) {
+                        warningBox.style.display = 'block';
+                        warningText.innerHTML = `<strong>⚠️ Surplus Policy Note:</strong> Liquidation discount (<strong>${discount}%</strong>) is below the recommended 60% liquidation policy target (${liqPctOfMsrp}% of MSRP).`;
+                    } else {
+                        warningBox.style.display = 'none';
+                    }
+                } else {
+                    warningBox.style.display = 'none';
+                }
+            }
+
+            if (msrpInput) msrpInput.addEventListener('input', updateSellerPricingCalc);
+            if (liqInput) liqInput.addEventListener('input', updateSellerPricingCalc);
+            if (currInput) currInput.addEventListener('input', updateSellerPricingCalc);
+            updateSellerPricingCalc();
+
             editForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('saveEditBtn');
@@ -650,6 +711,9 @@
                     });
                     const data = await res.json();
                     if (res.ok && data.success) {
+                        if (data.warning) {
+                            alert(data.warning);
+                        }
                         location.reload();
                     } else {
                         alert(data.message || 'Failed to update enquiry.');
@@ -662,10 +726,9 @@
                     btn.textContent = 'Save Changes';
                 }
             });
-        const enqModalForm = document.getElementById('editSellerEnquiryForm');
-        if (enqModalForm) {
-            const enqSelect = enqModalForm.querySelector('select[name="enquiry_status"]');
-            const actSelect = enqModalForm.querySelector('select[name="active_status"]');
+
+            const enqSelect = editForm.querySelector('select[name="enquiry_status"]');
+            const actSelect = editForm.querySelector('select[name="active_status"]');
             if (enqSelect && actSelect) {
                 const syncActiveState = () => {
                     const isApproved = enqSelect.value.toLowerCase() === 'approved';
@@ -679,6 +742,15 @@
                 };
                 enqSelect.addEventListener('change', syncActiveState);
                 syncActiveState();
+            }
+
+            // Auto-trigger edit modal if ?action=edit in URL
+            if (new URLSearchParams(window.location.search).get('action') === 'edit') {
+                const editModalEl = document.getElementById('editSellerEnquiryModal');
+                if (editModalEl && typeof bootstrap !== 'undefined') {
+                    const modalInst = new bootstrap.Modal(editModalEl);
+                    modalInst.show();
+                }
             }
         }
 
@@ -753,126 +825,207 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editSellerEnquiryForm">
-                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Product Name / Title</label>
-                            <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:product_data.product_name|default:'' }}" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
-                            <select class="form-select" name="enquiry_status">
-                                <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
-                                <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
-                                <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Active Status</label>
-                            <select class="form-select" name="active_status">
-                                <option value="active" {% if enquiry.is_active %}selected{% endif %}>Active</option>
-                                <option value="inactive" {% if not enquiry.is_active %}selected{% endif %}>Inactive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Category</label>
-                            <select class="form-select" name="subcategory_id">
-                                <option value="">-- Select Category --</option>
-                                {% for main in categories %}
-                                <optgroup label="{{ main.name }}">
-                                    {% for sub in main.subcategories.all %}
-                                    <option value="{{ sub.id }}" {% if enquiry.category_id == sub.id or product_data.product_category == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+                <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                    
+                    <!-- Section 1: Basic Information -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-info-circle me-1"></i> Basic Product Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Product Name / Title</label>
+                                <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:product_data.product_name|default:'' }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
+                                <select class="form-select" name="enquiry_status">
+                                    <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
+                                    <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Active Status</label>
+                                <select class="form-select" name="active_status">
+                                    <option value="active" {% if enquiry.is_active %}selected{% endif %}>Active</option>
+                                    <option value="inactive" {% if not enquiry.is_active %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Category</label>
+                                <select class="form-select" name="subcategory_id">
+                                    <option value="">-- Select Category --</option>
+                                    {% for main in categories %}
+                                    <optgroup label="{{ main.name }}">
+                                        {% for sub in main.subcategories.all %}
+                                        <option value="{{ sub.id }}" {% if enquiry.subcategory_id == sub.id or enquiry.category_id == sub.id or product_data.product_category == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
-                                </optgroup>
-                                {% endfor %}
-                            </select>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Brand Name</label>
+                                <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Model / Part No</label>
+                                <input type="text" class="form-control" name="model_no" value="{{ enquiry.model_no|default:product_data.model_no|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Stock Condition</label>
+                                <select class="form-select" name="condition">
+                                    <option value="New / Sealed" {% if enquiry.condition == 'New / Sealed' or product_data.condition == 'New / Sealed' %}selected{% endif %}>New / Sealed</option>
+                                    <option value="Surplus" {% if enquiry.condition == 'Surplus' or product_data.condition == 'Surplus' or not enquiry.condition %}selected{% endif %}>Surplus</option>
+                                    <option value="Like New" {% if enquiry.condition == 'Like New' or product_data.condition == 'Like New' %}selected{% endif %}>Like New</option>
+                                    <option value="Used" {% if enquiry.condition == 'Used' or product_data.condition == 'Used' %}selected{% endif %}>Used</option>
+                                    <option value="Refurbished" {% if enquiry.condition == 'Refurbished' or product_data.condition == 'Refurbished' %}selected{% endif %}>Refurbished</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">Stock Quantity</label>
+                                <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Brand Name</label>
-                            <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Liquidating Price ({{ product_data.currency|default:'AED' }})</label>
-                            <input type="number" step="0.01" class="form-control" name="price" value="{{ enquiry.price|default:product_data.liquidating_price|default:'' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Original / Previous Price</label>
-                            <input type="number" step="0.01" class="form-control" name="original_price" value="{{ product_data.previous_price|default:'' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Offer (%)</label>
-                            <input type="number" step="0.01" class="form-control" name="offer" value="{{ enquiry.offer|default:product_data.offer|default:'0' }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-semibold text-dark">Quantity</label>
-                            <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-dark">Model / Part No</label>
-                            <input type="text" class="form-control" name="model_no" value="{{ product_data.model_no|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-dark">Manufacturing Country</label>
-                            <input type="text" class="form-control" name="manufacturing_country" value="{{ enquiry.manufacturing_country|default:product_data.manufacturing_country|default:'' }}">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-dark">Manufacturing Year</label>
-                            <input type="number" class="form-control" name="manufacturing_year" value="{{ enquiry.manufacturing_year|default:product_data.manufacturing_year|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Dimensions</label>
-                            <input type="text" class="form-control" name="dimensions" value="{{ enquiry.dimensions|default:product_data.dimensions|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Warranty</label>
-                            <input type="text" class="form-control" name="warranty" value="{{ enquiry.warranty|default:product_data.warranty|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Inventory Country</label>
-                            <input type="text" class="form-control" name="inventory_country" value="{{ enquiry.inventory_country|default:product_data.inventory_country|default:'' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold text-dark">Inventory Location</label>
-                            <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
-                            <textarea class="form-control" name="reason_to_sell" rows="2">{{ enquiry.reason_to_sell|default:product_data.reason_to_sell|default:'' }}</textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold text-dark">Description</label>
-                            <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>
-                        </div>
+                    </div>
 
-                        <!-- Marketplace Collections & Showcases in Edit Modal -->
-                        <div class="col-12">
-                            <div class="p-3 rounded-3 bg-light border">
-                                <label class="form-label small fw-bold text-dark mb-2 d-block">
-                                    <i class="bi bi-tags-fill me-1 text-primary"></i> Marketplace Collections & Showcases
+                    <!-- Section 2: Pricing & Financials -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <h6 class="fw-bold text-uppercase text-primary small mb-0">
+                                <i class="bi bi-currency-dollar me-1"></i> Pricing & Financials
+                            </h6>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                                Price = Liquidation Price + 10%
+                            </span>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">Currency</label>
+                                <input type="text" class="form-control" name="currency" id="edit_currency" value="{{ product_data.currency|default:'AED' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">MSRP / Previous Price</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="msrp" id="edit_msrp" value="{{ enquiry.msrp|default:product_data.previous_price|default:'' }}" placeholder="0.00" required>
+                                <small class="text-muted" style="font-size: 11px;">Original retail value</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-dark">Liquidation Price</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="liquidating_price" id="edit_liquidating_price" value="{{ enquiry.liquidating_price|default:product_data.liquidating_price|default:'' }}" placeholder="0.00" required>
+                                <small class="text-muted" style="font-size: 11px;">Seller payout value</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">
+                                    Price <span class="badge bg-secondary-subtle text-secondary" style="font-size: 9px;">+10% Markup</span>
                                 </label>
-                                <div class="d-flex align-items-center gap-4 flex-wrap">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_featured" id="edit_is_featured" {% if enquiry.is_featured %}checked{% endif %}>
-                                        <label class="form-check-label small fw-semibold text-danger" for="edit_is_featured">
-                                            <i class="bi bi-star-fill me-1"></i> Featured Deal
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_best_selling" id="edit_is_best_selling" {% if enquiry.is_best_selling %}checked{% endif %}>
-                                        <label class="form-check-label small fw-semibold text-warning-emphasis" for="edit_is_best_selling">
-                                            <i class="bi bi-fire me-1"></i> Best Seller
-                                        </label>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_new_arrival" id="edit_is_new_arrival" {% if enquiry.is_new_arrival %}checked{% endif %}>
-                                        <label class="form-check-label small fw-semibold text-info-emphasis" for="edit_is_new_arrival">
-                                            <i class="bi bi-rocket-takeoff-fill me-1"></i> New Arrival
-                                        </label>
-                                    </div>
+                                <input type="number" step="0.01" class="form-control bg-light text-muted fw-bold" id="edit_calc_price" value="{{ product_data.current_price|default:'' }}" readonly tabindex="-1" style="cursor: not-allowed;" title="Auto-calculated: 10% platform markup above Liquidation Price (No manual edit)">
+                                <small class="text-muted" style="font-size: 11px;">Auto (10% of Liq.)</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-semibold text-dark">Offer (%)</label>
+                                <input type="text" class="form-control bg-light text-muted font-monospace" id="edit_calc_offer" name="offer" value="{{ enquiry.offer|default:product_data.offer|default:'0' }}%" readonly tabindex="-1" style="cursor: not-allowed;">
+                                <small class="text-muted" style="font-size: 11px;">Auto from MSRP</small>
+                            </div>
+                            <div class="col-12" id="edit_pricing_warning_box" style="display: none;">
+                                <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 border-warning shadow-xs rounded-2">
+                                    <i class="bi bi-exclamation-triangle-fill fs-6 text-warning"></i>
+                                    <span id="edit_pricing_warning_text"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-semibold text-dark">Available for Offers</label>
+                                <select class="form-select" name="is_available_for_offers">
+                                    <option value="true" {% if enquiry.is_available_for_offers %}selected{% endif %}>Yes - Accepting Buyer Offers</option>
+                                    <option value="false" {% if not enquiry.is_available_for_offers %}selected{% endif %}>No - Fixed Price Only</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Specifications & Logistics -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-truck me-1"></i> Specifications & Logistics
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Dimensions</label>
+                                <input type="text" class="form-control" name="dimensions" value="{{ enquiry.dimensions|default:product_data.dimensions|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Manufacturing Country</label>
+                                <input type="text" class="form-control" name="manufacturing_country" value="{{ enquiry.manufacturing_country|default:product_data.manufacturing_country|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Manufacturing Year</label>
+                                <input type="number" class="form-control" name="manufacturing_year" value="{{ enquiry.manufacturing_year|default:product_data.manufacturing_year|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Expiry Date</label>
+                                <input type="date" class="form-control" name="expiry_date" value="{{ product_data.expiry_date|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Inventory Country</label>
+                                <input type="text" class="form-control" name="inventory_country" value="{{ enquiry.inventory_country|default:product_data.inventory_country|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Inventory Location</label>
+                                <input type="text" class="form-control" name="inventory_location" value="{{ enquiry.inventory_location|default:'' }}">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-semibold text-dark">Warranty</label>
+                                <input type="text" class="form-control" name="warranty" value="{{ enquiry.warranty|default:product_data.warranty|default:'' }}" placeholder="e.g. 1 Year Manufacturer Warranty">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Notes & Descriptions -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-primary small mb-3 border-bottom pb-2">
+                            <i class="bi bi-file-earmark-text me-1"></i> Description & Reason to Sell
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
+                                <textarea class="form-control" name="reason_to_sell" rows="2">{{ enquiry.reason_to_sell|default:product_data.reason_to_sell|default:'' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-dark">Description</label>
+                                <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Marketplace Collections & Showcases -->
+                    <div class="mb-2">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <label class="form-label small fw-bold text-dark mb-2 d-block">
+                                <i class="bi bi-tags-fill me-1 text-primary"></i> Marketplace Collections & Showcases
+                            </label>
+                            <div class="d-flex align-items-center gap-4 flex-wrap">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_featured" id="edit_is_featured" {% if enquiry.is_featured %}checked{% endif %}>
+                                    <label class="form-check-label small fw-semibold text-danger" for="edit_is_featured">
+                                        <i class="bi bi-star-fill me-1"></i> Featured Deal
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_best_selling" id="edit_is_best_selling" {% if enquiry.is_best_selling %}checked{% endif %}>
+                                    <label class="form-check-label small fw-semibold text-warning-emphasis" for="edit_is_best_selling">
+                                        <i class="bi bi-fire me-1"></i> Best Seller
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_new_arrival" id="edit_is_new_arrival" {% if enquiry.is_new_arrival %}checked{% endif %}>
+                                    <label class="form-check-label small fw-semibold text-info-emphasis" for="edit_is_new_arrival">
+                                        <i class="bi bi-rocket-takeoff-fill me-1"></i> New Arrival
+                                    </label>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
                 <div class="modal-footer border-top p-3">
                     <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>

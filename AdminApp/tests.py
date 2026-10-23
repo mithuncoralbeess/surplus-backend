@@ -429,5 +429,155 @@ class AdminAppAuthTests(TestCase):
         lot_products = LotProduct.objects.filter(lot=lot)
         self.assertEqual(lot_products.count(), 2)
 
+    def test_seller_enquiry_edit_api_pricing_and_fields(self):
+        """
+        Verify seller_enquiry_edit_api:
+        - Only liquidation price and msrp are editable in pricing
+        - Price is auto-calculated as liquidation_price * 1.10
+        - If liquidation price is below 60% of MSRP, a warning is returned
+        - All fields properly update the Product model in DB and raw_data
+        """
+        from .models import Product, MainCategory, SubCategory
+        from decimal import Decimal
+
+        admin = AdminDetails.objects.create(
+            username="admin_edit_tester",
+            email="tester_edit@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = admin.id
+        session["session_version"] = 1
+        session.save()
+
+        main_cat = MainCategory.objects.create(name="Electronics")
+        sub_cat = SubCategory.objects.create(name="Laptops", main_category=main_cat)
+
+        prod = Product.objects.create(
+            product_name="Original Name",
+            liquidating_price=Decimal("100.00"),
+            msrp=Decimal("200.00"),
+            currency="USD",
+            quantity=5
+        )
+
+        # 1. Edit with liquidation price = 50, msrp = 100 (which is 50% < 60% of MSRP -> triggers warning)
+        # Attempt to pass a custom "price" of 999 to test that it is ignored
+        payload = {
+            "title": "Updated Laptop Name",
+            "brand": "Dell",
+            "model_no": "XPS-15",
+            "subcategory_id": sub_cat.id,
+            "liquidating_price": "50.00",
+            "price": "999.00",  # Must NOT overwrite auto-calculated price!
+            "msrp": "100.00",
+            "stock_quantity": 12,
+            "condition": "Like New",
+            "currency": "USD",
+            "inventory_location": "Dubai Warehouse",
+            "is_available_for_offers": True,
+            "is_featured": True
+        }
+
+        res = self.client.post(f"/admin/api/enquiries/seller/{prod.id}/edit/", payload, format="json")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        data = res.data
+        self.assertTrue(data["success"])
+        # Price must be 50 * 1.10 = 55.00
+        self.assertEqual(data["price"], 55.0)
+        self.assertEqual(data["liquidating_price"], 50.0)
+        # Warning because 50 < 0.60 * 100 (60)
+        self.assertIsNotNone(data["warning"])
+        self.assertIn("below 60% of MSRP", data["warning"])
+
+        # Reload from DB
+        prod.refresh_from_db()
+        self.assertEqual(prod.product_name, "Updated Laptop Name")
+        self.assertEqual(prod.brand_name, "Dell")
+        self.assertEqual(prod.model_no, "XPS-15")
+        self.assertEqual(prod.subcategory, sub_cat)
+        self.assertEqual(prod.quantity, 12)
+        self.assertEqual(prod.liquidating_price, Decimal("50.00"))
+        self.assertEqual(prod.msrp, Decimal("100.00"))
+        self.assertEqual(prod.current_price, Decimal("55.00"))
+        self.assertEqual(prod.condition, "Like New")
+        self.assertTrue(prod.is_available_for_offers)
+        self.assertTrue(prod.is_featured)
+        self.assertEqual(prod.raw_data.get("price"), "55.00")
+        self.assertEqual(prod.raw_data.get("liquidating_price"), "50.00")
+
+    def test_lot_enquiry_edit_api_pricing_and_fields(self):
+        """
+        Verify lot_enquiry_edit_api:
+        - Only liquidation price and msrp are editable in pricing
+        - Price is auto-calculated as liquidation_price * 1.10
+        - If liquidation price is below 60% of MSRP, a warning is returned
+        - All fields properly update the Lot model in DB and raw_data
+        """
+        from .models import Lot, MainCategory, SubCategory
+        from decimal import Decimal
+
+        admin = AdminDetails.objects.create(
+            username="admin_lot_tester",
+            email="tester_lot@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = admin.id
+        session["session_version"] = 1
+        session.save()
+
+        main_cat = MainCategory.objects.create(name="Networking")
+        sub_cat = SubCategory.objects.create(name="Switches", main_category=main_cat)
+
+        lot = Lot.objects.create(
+            title="Old Switch Lot",
+            total_est_retail_value_msrp=Decimal("1000.00"),
+            ask_price_surplus_payout=Decimal("500.00"),
+            currency="USD"
+        )
+
+        # Edit with liquidation price = 400, msrp = 1000 (40% < 60% of MSRP -> triggers warning)
+        # Attempt to pass custom price of 9999 to test that it is ignored
+        payload = {
+            "title": "Cisco Catalyst Batch",
+            "subcategory_id": sub_cat.id,
+            "liquidation_price": "400.00",
+            "price": "9999.00",  # Must be ignored
+            "msrp": "1000.00",
+            "currency": "USD",
+            "condition": "Surplus",
+            "distinct_skus": "15",
+            "total_units": "150",
+            "inventory_location": "Riyadh Logistics Center"
+        }
+
+        res = self.client.post(f"/admin/api/enquiries/lots/{lot.id}/edit/", payload, format="multipart")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        data = res.data
+        self.assertTrue(data["success"])
+        # Price must be 400 * 1.10 = 440.00
+        self.assertEqual(data["price"], 440.0)
+        self.assertEqual(data["liquidation_price"], 400.0)
+        # Warning because 400 < 0.60 * 1000 (600)
+        self.assertIsNotNone(data["warning"])
+        self.assertIn("below 60% of MSRP", data["warning"])
+
+        # Reload from DB
+        lot.refresh_from_db()
+        self.assertEqual(lot.title, "Cisco Catalyst Batch")
+        self.assertEqual(lot.ask_price_surplus_payout, Decimal("400.00"))
+        self.assertEqual(lot.total_est_retail_value_msrp, Decimal("1000.00"))
+        self.assertEqual(lot.condition, "Surplus")
+        self.assertEqual(lot.number_of_distinct_skus, 15)
+        self.assertEqual(lot.total_units_quantity, 150)
+        self.assertEqual(lot.raw_data.get("price"), 440.0)
+        self.assertEqual(lot.raw_data.get("liquidation_price"), 400.0)
+        self.assertEqual(lot.raw_data.get("category"), "Switches")
+
 
 
