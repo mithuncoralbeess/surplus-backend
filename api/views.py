@@ -715,12 +715,10 @@ def verify_registration_otp(request):
         status=True
     )
     
-    # Trigger notifications: Admin in-app alert, Admin email, User welcome email, User in-app notification
-    try:
-        from AdminApp.services import notify_new_user_registration
-        notify_new_user_registration(vendor)
-    except Exception as notif_err:
-        logger.error(f"Error triggering registration notifications for vendor {vendor.id}: {notif_err}")
+    # Note: Registration notifications & emails (admin notification email, user welcome email)
+    # are deferred until profile completion in complete_profile(), because full profile details
+    # (country, company name, business location, categories interested, user type)
+    # are mandatory in the frontend onboarding flow.
     
     # We do NOT mark the OTP as used here because the frontend will immediately 
     # use this same OTP to call /api/auth/login/verify-otp/ to generate the auth session.
@@ -870,6 +868,19 @@ def complete_profile(request):
     vendor.category_interested = cat_inst
     
     vendor.save()
+
+    # Trigger new user registration notifications & emails now that full profile details are submitted
+    try:
+        from AdminApp.models import VendorNotification
+        has_welcomed = VendorNotification.objects.filter(
+            vendor=vendor,
+            title="Welcome to Surplus Market!"
+        ).exists()
+        if not has_welcomed:
+            from AdminApp.services import notify_new_user_registration
+            notify_new_user_registration(vendor)
+    except Exception as notif_err:
+        logger.error(f"Error triggering registration notifications on profile completion for vendor {vendor.id}: {notif_err}")
 
     prof_info = vendor.get_profile_completion_details()
     activated_products_count = 0

@@ -1435,12 +1435,19 @@ def notify_new_user_registration(vendor):
     user_type = getattr(vendor, "user_type", "BUYER")
     email = getattr(vendor, "email", "")
     country = getattr(vendor, "country", "") or "UAE"
+    company_name = getattr(vendor, "company_name", "") or ""
+    business_location = getattr(vendor, "business_location", "") or ""
 
     # 1. In-app Admin Notification
     try:
+        company_tag = f" ({company_name})" if company_name else ""
+        location_tag = country
+        if business_location and business_location != country:
+            location_tag = f"{country} - {business_location}"
+
         create_admin_notification(
-            title=f"New User Registration: {full_name}",
-            message=f"New {user_type} account ({vendor_id}) registered: {email} from {country}.",
+            title=f"New User Registration: {full_name}{company_tag}",
+            message=f"New {user_type} account ({vendor_id}) registered: {email} from {location_tag}.",
             notification_type="USER_REGISTRATION",
             action_url=f"/admin/users/?q={email}" if email else "/admin/users/",
             for_superadmins_only=False
