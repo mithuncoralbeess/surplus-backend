@@ -522,14 +522,27 @@ def submit_lot_enquiry(request):
         raw_data=raw_data
     )
 
+    s_email = (
+        (request.user.email if getattr(request, "user", None) and request.user.is_authenticated else None)
+        or request.data.get("email")
+        or request.data.get("user_email")
+        or request.data.get("seller_email")
+        or ""
+    )
+    if isinstance(s_email, (list, tuple)) and s_email:
+        s_email = s_email[0]
+    s_email = str(s_email or "").strip()
+
     vendor_obj = None
+    if s_email:
+        vendor_obj = VendorDetails.objects.filter(email__iexact=s_email).first()
+
     vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id")
-    if vendor_param:
+    if not vendor_obj and vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
 
-    s_email = (vendor_obj.email if vendor_obj else (request.data.get("email") or request.data.get("user_email") or request.data.get("seller_email") or "")).strip()
-    if not vendor_obj and s_email:
-        vendor_obj = VendorDetails.objects.filter(email__iexact=s_email).first()
+    if vendor_obj and not s_email:
+        s_email = vendor_obj.email
 
     if vendor_obj:
         lot.vendor = vendor_obj
@@ -2176,13 +2189,34 @@ def submit_lot_request(request):
         if serializer.is_valid():
             lot = serializer.save()
 
-            # Resolve and link vendor record if provided
+            # Resolve and link vendor record (prioritizing verified email over potentially stale client vendor_id)
+            submitted_email = (
+                (request.user.email if getattr(request, "user", None) and request.user.is_authenticated else None)
+                or data.get("email")
+                or data.get("user_email")
+                or data.get("seller_email")
+                or (user_info.get("email") if isinstance(user_info, dict) else None)
+                or (raw_payload.get("user_email") if isinstance(raw_payload, dict) else None)
+                or (raw_payload.get("email") if isinstance(raw_payload, dict) else None)
+                or ""
+            )
+            if isinstance(submitted_email, (list, tuple)) and submitted_email:
+                submitted_email = submitted_email[0]
+            submitted_email = str(submitted_email or "").strip()
+
             vendor_obj = None
-            if vendor_param:
+            if submitted_email:
+                vendor_obj = VendorDetails.objects.filter(email__iexact=submitted_email).first()
+
+            if not vendor_obj and vendor_param:
                 vendor_obj = _resolve_vendor_from_param(vendor_param)
-                if vendor_obj:
-                    lot.vendor = vendor_obj
-                    lot.save(update_fields=["vendor"])
+
+            if vendor_obj:
+                lot.vendor = vendor_obj
+                lot.save(update_fields=["vendor"])
+                if isinstance(raw_payload, dict):
+                    raw_payload["vendor_id"] = vendor_obj.vendor_id
+                    raw_payload["user_email"] = vendor_obj.email
 
             # Store complete raw payload with manifest items safely
             if isinstance(raw_payload, dict):
@@ -2521,12 +2555,22 @@ def track_view_api(request):
 # Vendor In-App Notification REST APIs
 # ==============================================================================
 
-def _resolve_vendor_from_param(vendor_param):
+def _resolve_vendor_from_param(vendor_param, email_fallback=None):
     """Helper to resolve a VendorDetails record from USR-xxxx, int ID, username, or email."""
+    from AdminApp.models import VendorDetails
+    if isinstance(vendor_param, (list, tuple)) and vendor_param:
+        vendor_param = vendor_param[0]
+
+    if email_fallback and str(email_fallback).strip():
+        email_str = str(email_fallback).strip()
+        vendor_by_email = VendorDetails.objects.filter(email__iexact=email_str).first()
+        if vendor_by_email:
+            return vendor_by_email
+
     if not vendor_param:
         return None
-    from AdminApp.models import VendorDetails
-    v_str = str(vendor_param).strip()
+
+    v_str = str(vendor_param).strip().strip("[]'\"")
     v_clean = v_str[4:].strip() if v_str.upper().startswith("USR-") else v_str
     vendor = None
     if v_clean.isdigit():
@@ -2535,6 +2579,8 @@ def _resolve_vendor_from_param(vendor_param):
         vendor = VendorDetails.objects.filter(email__iexact=v_str).first()
     if not vendor:
         vendor = VendorDetails.objects.filter(username__iexact=v_str).first()
+    if not vendor and v_str.upper().startswith("USR-"):
+        vendor = VendorDetails.objects.filter(vendor_id__iexact=v_str).first()
     return vendor
 
 
