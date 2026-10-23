@@ -70,6 +70,7 @@ class EmailService:
                     "address": cls.FROM_ADDRESS,
                 },
                 "to": [{"email_address": {"address": addr}} for addr in to_recipients],
+                "reply_to": [{"address": "contact@surplusmarket.com", "name": "Surplus Market"}],
                 "subject": subject,
                 "htmlbody": html_content,
             }
@@ -97,16 +98,18 @@ class EmailService:
             plain_body = re.sub(r'<[^>]+>', ' ', html_content or "")
             plain_body = ' '.join(plain_body.split()).strip() or subject
 
+            from django.core.mail import EmailMultiAlternatives
             from_email_str = f"{cls.FROM_NAME} <{cls.FROM_ADDRESS}>"
-            send_mail(
+            mail_msg = EmailMultiAlternatives(
                 subject=subject,
-                message=plain_body,
-                html_message=html_content,
+                body=plain_body,
                 from_email=from_email_str,
-                recipient_list=to_recipients,
-                fail_silently=False,
+                to=to_recipients,
+                reply_to=["contact@surplusmarket.com"],
             )
-            logger.info(f"Email sent via Django SMTP fallback to {to_str}: {subject}")
+            mail_msg.attach_alternative(html_content, "text/html")
+            mail_msg.send(fail_silently=False)
+            logger.info(f"Email sent via Django SMTP / Brevo backend to {to_str}: {subject}")
             return True
         except Exception as e:
             logger.error(f"Failed to send email via SMTP backup to {to_str}: {e}")
@@ -1120,7 +1123,7 @@ class EmailService:
                     f"<p>Thank you for reaching out regarding a partnership with Surplus Market. Our Business Development team is reviewing your proposal and will be in touch shortly.</p>"
                 )
 
-            user_subject = f"Partnership Proposal Received - Surplus Market [Ref #{enquiry_id or 'General'}]"
+            user_subject = f"Thank You for Reaching Out - Surplus Market Partnership [#{enquiry_id or 'General'}]"
             results["user_email"] = cls.send_email(email, user_subject, user_html, "PartnershipUserConfirm", context=context)
 
         return results

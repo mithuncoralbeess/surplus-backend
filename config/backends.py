@@ -58,6 +58,13 @@ class BrevoHTTPEmailBackend(BaseEmailBackend):
                 "subject": msg.subject,
                 "textContent": plain_text,
             }
+
+            # Set Reply-To header for deliverability & direct partner communication
+            if hasattr(msg, 'reply_to') and msg.reply_to:
+                r_name, r_addr = email.utils.parseaddr(msg.reply_to[0])
+                payload["replyTo"] = {"email": r_addr or msg.reply_to[0], "name": r_name or "Surplus Market Support"}
+            else:
+                payload["replyTo"] = {"email": "contact@surplusmarket.com", "name": "Surplus Market Support"}
             
             if html_content:
                 payload["htmlContent"] = html_content

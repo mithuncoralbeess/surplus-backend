@@ -74,29 +74,35 @@
         </div>
         <div class="content">
             <p style="font-size: 15px; margin-top: 0;">
-                Hello <strong>{{ enquiry.name|default:"Prospective Partner" }}</strong>,
+                Hello <strong>{{ name|default:enquiry.name|default:"Prospective Partner" }}</strong>,
             </p>
-            <p style="font-size: 14px; line-height: 1.6;">
-                Thank you for your proposal to collaborate with Surplus Market. Our Business Development and Strategic Partnerships team has received your submission and is actively evaluating mutual collaboration opportunities.
+            <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+                Thank you for your proposal to collaborate with <strong>Surplus Market</strong>. Our Business Development and Strategic Partnerships team has received your submission and is actively reviewing your proposal.
             </p>
             <div class="summary-box">
-                <p style="margin: 0 0 6px 0;"><strong>Proposal Reference:</strong> <span style="font-family: monospace;">#{{ enquiry.id }}</span></p>
-                <p style="margin: 0 0 6px 0;"><strong>Partnership Track:</strong> {{ enquiry.partnership_interest|default:"Strategic Collaboration" }}</p>
-                {% if enquiry.business_location %}
-                <p style="margin: 0 0 6px 0;"><strong>Location:</strong> {{ enquiry.business_location }}</p>
+                <p style="margin: 0 0 6px 0;"><strong>Proposal Reference:</strong> <span style="font-family: monospace; color: #0a5c48; font-weight: 700;">#{{ enquiry_id|default:enquiry.id|default:"General" }}</span></p>
+                <p style="margin: 0 0 6px 0;"><strong>Partnership Track:</strong> {{ partnership_interest|default:enquiry.partnership_interest|default:"Strategic Collaboration" }}</p>
+                {% if business_location or enquiry.business_location %}
+                <p style="margin: 0 0 6px 0;"><strong>Location:</strong> {{ business_location|default:enquiry.business_location }}</p>
                 {% endif %}
-                {% if enquiry.subject %}
-                <p style="margin: 0 0 6px 0;"><strong>Subject:</strong> {{ enquiry.subject }}</p>
+                {% if subject or enquiry.subject %}
+                <p style="margin: 0 0 6px 0;"><strong>Subject:</strong> {{ subject|default:enquiry.subject }}</p>
                 {% endif %}
                 <p style="margin: 0 0 4px 0;"><strong>Collaboration Details:</strong></p>
-                <div class="message-preview">{{ enquiry.collaboration_details|default:"(No details provided)" }}</div>
+                <div class="message-preview">{{ collaboration_details|default:enquiry.collaboration_details|default:"(No details provided)" }}</div>
             </div>
-            <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
-                A member of our partnerships team will be in touch with you shortly. If you have any additional documentation or portfolio presentations to share, you can reply directly to this email.
+            <p style="font-size: 13.5px; color: #475569; line-height: 1.5;">
+                A member of our partnerships team will be in touch with you within 24 to 48 business hours. If you have any additional documentation, presentations, or catalog manifests to share, you can reply directly to this email at <a href="mailto:contact@surplusmarket.com" style="color: #0a5c48; font-weight: 600; text-decoration: none;">contact@surplusmarket.com</a>.
             </p>
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="https://surplusmarket.com" target="_blank" style="display: inline-block; background: #0a5c48; color: #ffffff !important; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 2px 6px rgba(10, 92, 72, 0.25);">
+                    Visit Surplus Market Marketplace &rarr;
+                </a>
+            </div>
         </div>
         <div class="footer">
-            &copy; Surplus Market Strategic Partnerships &bull; All rights reserved.
+            &copy; Surplus Market Strategic Partnerships &bull; <a href="https://surplusmarket.com" style="color: #0a5c48; text-decoration: none;">surplusmarket.com</a><br/>
+            Dubai, United Arab Emirates &bull; <a href="mailto:contact@surplusmarket.com" style="color: #64748b;">contact@surplusmarket.com</a>
         </div>
     </div>
 </body>
