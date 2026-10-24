@@ -2312,6 +2312,13 @@ def seller_enquiry_detail_view(request, enquiry_id):
         "product_data": product_data,
         "required_product_keys": required_product_keys,
         "categories": categories,
+        "reason_to_sell_options": [
+            "Surplus Inventory",
+            "Overstock Clearance",
+            "Business Closure",
+            "Asset Liquidation",
+            "Canceled Project",
+        ],
         "assisted_by_admin": assisted_by_admin,
         "intake_channel": intake_channel,
     }

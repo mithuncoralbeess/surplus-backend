@@ -995,7 +995,19 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Reason to Sell</label>
-                                <textarea class="form-control" name="reason_to_sell" rows="2">{{ enquiry.reason_to_sell|default:product_data.reason_to_sell|default:'' }}</textarea>
+                                <select class="form-select" name="reason_to_sell" id="edit_reason_to_sell">
+                                    <option value="Surplus Inventory" {% if enquiry.reason_to_sell == 'Surplus Inventory' or product_data.reason_to_sell == 'Surplus Inventory' or not enquiry.reason_to_sell and not product_data.reason_to_sell %}selected{% endif %}>Surplus Inventory</option>
+                                    <option value="Overstock Clearance" {% if enquiry.reason_to_sell == 'Overstock Clearance' or product_data.reason_to_sell == 'Overstock Clearance' %}selected{% endif %}>Overstock Clearance</option>
+                                    <option value="Business Closure" {% if enquiry.reason_to_sell == 'Business Closure' or product_data.reason_to_sell == 'Business Closure' %}selected{% endif %}>Business Closure</option>
+                                    <option value="Asset Liquidation" {% if enquiry.reason_to_sell == 'Asset Liquidation' or product_data.reason_to_sell == 'Asset Liquidation' %}selected{% endif %}>Asset Liquidation</option>
+                                    <option value="Canceled Project" {% if enquiry.reason_to_sell == 'Canceled Project' or product_data.reason_to_sell == 'Canceled Project' %}selected{% endif %}>Canceled Project</option>
+                                    {% if enquiry.reason_to_sell and enquiry.reason_to_sell != 'Surplus Inventory' and enquiry.reason_to_sell != 'Overstock Clearance' and enquiry.reason_to_sell != 'Business Closure' and enquiry.reason_to_sell != 'Asset Liquidation' and enquiry.reason_to_sell != 'Canceled Project' %}
+                                    <option value="{{ enquiry.reason_to_sell }}" selected>{{ enquiry.reason_to_sell }} (Custom)</option>
+                                    {% elif product_data.reason_to_sell and product_data.reason_to_sell != 'Surplus Inventory' and product_data.reason_to_sell != 'Overstock Clearance' and product_data.reason_to_sell != 'Business Closure' and product_data.reason_to_sell != 'Asset Liquidation' and product_data.reason_to_sell != 'Canceled Project' %}
+                                    <option value="{{ product_data.reason_to_sell }}" selected>{{ product_data.reason_to_sell }} (Custom)</option>
+                                    {% endif %}
+                                </select>
+                                <small class="text-muted" style="font-size: 11px;">Select the liquidation context for buyer transparency.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Description</label>
