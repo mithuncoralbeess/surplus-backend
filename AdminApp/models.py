@@ -992,9 +992,60 @@ class Lot(models.Model):
         if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
             first = self.category_allocations[0]
             if isinstance(first, dict):
-                return first.get("category_name", "")
+                return first.get("category_name", "") or first.get("category", "")
         if isinstance(self.raw_data, dict):
-            return self.raw_data.get("category", "")
+            return self.raw_data.get("category", "") or self.raw_data.get("subcategory", "")
+        return ""
+
+    @property
+    def category_id(self):
+        """Returns the primary subcategory ID for this lot."""
+        if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
+            for alloc in self.category_allocations:
+                if isinstance(alloc, dict):
+                    cid = alloc.get("category_id") or alloc.get("subcategory_id")
+                    if cid is not None:
+                        try:
+                            return int(cid)
+                        except (ValueError, TypeError):
+                            pass
+        if isinstance(self.raw_data, dict):
+            cid = self.raw_data.get("subcategory_id") or self.raw_data.get("category_id")
+            if cid is not None:
+                try:
+                    return int(cid)
+                except (ValueError, TypeError):
+                    pass
+            # Try to match subcategory by name in SubCategory table
+            sub_name = self.raw_data.get("subcategory") or self.raw_data.get("category")
+            if sub_name:
+                try:
+                    sub = SubCategory.objects.filter(name__iexact=str(sub_name).strip()).first()
+                    if sub:
+                        return sub.id
+                except Exception:
+                    pass
+        return None
+
+    @property
+    def subcategory_id(self):
+        return self.category_id
+
+    @property
+    def category_name(self):
+        """Returns the primary subcategory name for this lot."""
+        if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
+            for alloc in self.category_allocations:
+                if isinstance(alloc, dict):
+                    name = alloc.get("category_name") or alloc.get("category") or alloc.get("subcategory")
+                    if name:
+                        return str(name).strip()
+                elif isinstance(alloc, str) and alloc.strip():
+                    return alloc.strip()
+        if isinstance(self.raw_data, dict):
+            name = self.raw_data.get("subcategory") or self.raw_data.get("category")
+            if name:
+                return str(name).strip()
         return ""
 
     @property

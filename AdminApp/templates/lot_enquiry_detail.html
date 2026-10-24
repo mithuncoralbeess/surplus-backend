@@ -2526,7 +2526,7 @@
                                     {% for main in categories %}
                                     <optgroup label="{{ main.name }}">
                                         {% for sub in main.subcategories.all %}
-                                        <option value="{{ sub.id }}" {% if enquiry.category_id == sub.id or enquiry.category_name == sub.name %}selected{% endif %}>{{ sub.name }}</option>
+                                        <option value="{{ sub.id }}" {% if current_subcategory_id %}{% if current_subcategory_id == sub.id %}selected{% endif %}{% elif enquiry.category_name|lower == sub.name|lower %}selected{% endif %}>{{ sub.name }}</option>
                                         {% endfor %}
                                     </optgroup>
                                     {% endfor %}

@@ -2364,7 +2364,10 @@ def lot_enquiry_edit_api(request, enquiry_id):
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
-        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+        if request.user and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            admin_user = request.user
+        else:
+            return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
 
     from .models import Lot, SubCategory, VendorDetails
     try:
@@ -2465,22 +2468,36 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.currency = str(data["currency"]).strip().upper()
 
     # Category update from subcategory_id
-    if "subcategory_id" in data and data["subcategory_id"]:
+    subcat_val = data.get("subcategory_id") or data.get("category_id") or data.get("category")
+    if subcat_val not in (None, ""):
         try:
-            sub_cat = SubCategory.objects.get(id=int(data["subcategory_id"]))
-            lot.category_allocations = [{
-                "category_id": sub_cat.id,
-                "category_name": sub_cat.name,
-                "main_category_id": sub_cat.main_category_id,
-                "main_category_name": sub_cat.main_category.name if sub_cat.main_category else "",
-                "percentage": 100
-            }]
-            if not isinstance(lot.raw_data, dict):
-                lot.raw_data = {}
-            lot.raw_data["category"] = sub_cat.name
-            lot.raw_data["subcategory"] = sub_cat.name
-            if sub_cat.main_category:
-                lot.raw_data["main_category"] = sub_cat.main_category.name
+            sub_cat = None
+            if str(subcat_val).isdigit():
+                sub_cat = SubCategory.objects.filter(id=int(subcat_val)).first()
+            if not sub_cat:
+                sub_cat = SubCategory.objects.filter(name__iexact=str(subcat_val).strip()).first()
+            if sub_cat:
+                lot.category_allocations = [{
+                    "category": sub_cat.name,
+                    "category_id": sub_cat.id,
+                    "category_name": sub_cat.name,
+                    "subcategory": sub_cat.name,
+                    "subcategory_id": sub_cat.id,
+                    "main_category_id": sub_cat.main_category_id,
+                    "main_category_name": sub_cat.main_category.name if sub_cat.main_category else "",
+                    "percentage": 100
+                }]
+                if not isinstance(lot.raw_data, dict):
+                    lot.raw_data = {}
+                lot.raw_data["category"] = sub_cat.name
+                lot.raw_data["subcategory"] = sub_cat.name
+                lot.raw_data["category_id"] = sub_cat.id
+                lot.raw_data["subcategory_id"] = sub_cat.id
+                lot.raw_data["category_allocations"] = lot.category_allocations
+                lot.raw_data["category_breakdown"] = f"{sub_cat.name} (100%)"
+                if sub_cat.main_category:
+                    lot.raw_data["main_category"] = sub_cat.main_category.name
+                    lot.raw_data["main_category_id"] = sub_cat.main_category_id
         except Exception:
             pass
 
@@ -3002,6 +3019,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "enquiry": enquiry,
         "categories": MainCategory.objects.prefetch_related("subcategories").all(),
+        "current_subcategory_id": enquiry.category_id,
+        "current_category_name": enquiry.category_name,
     }
 
     # Extract Products list (Only load saved products from DB; un-saved file data requires clicking "Parse Spreadsheet Data")
