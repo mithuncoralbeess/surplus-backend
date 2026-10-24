@@ -303,6 +303,7 @@ class LotSerializer(serializers.ModelSerializer):
     vendor_id = serializers.SerializerMethodField()
     manifest_data = serializers.SerializerMethodField()
     warehouse_images = serializers.SerializerMethodField()
+    third_party_documents = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
@@ -429,6 +430,31 @@ class LotSerializer(serializers.ModelSerializer):
             res_url = resolve_media_url(img)
             if not res_url:
                 continue
+            if res_url.startswith('/') and request:
+                result.append(request.build_absolute_uri(res_url))
+            else:
+                result.append(res_url)
+        return result
+
+    def get_third_party_documents(self, obj):
+        import json
+        raw_docs = obj.third_party_documents
+        if isinstance(raw_docs, str):
+            try:
+                raw_docs = json.loads(raw_docs)
+            except Exception:
+                raw_docs = [raw_docs] if raw_docs.strip() else []
+        if not isinstance(raw_docs, list):
+            raw_docs = [raw_docs] if raw_docs else []
+
+        from .utils import resolve_media_url
+        request = self.context.get('request')
+        result = []
+        for doc in raw_docs:
+            if not doc:
+                continue
+            doc_str = str(doc).strip()
+            res_url = resolve_media_url(doc_str) or doc_str
             if res_url.startswith('/') and request:
                 result.append(request.build_absolute_uri(res_url))
             else:
