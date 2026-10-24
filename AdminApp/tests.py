@@ -434,7 +434,7 @@ class AdminAppAuthTests(TestCase):
         Verify seller_enquiry_edit_api:
         - Only liquidation price and msrp are editable in pricing
         - Price is auto-calculated as liquidation_price * 1.10
-        - If liquidation price is below 60% of MSRP, a warning is returned
+        - If liquidation discount is below 60% of MSRP, a warning is returned
         - All fields properly update the Product model in DB and raw_data
         """
         from .models import Product, MainCategory, SubCategory
@@ -488,9 +488,9 @@ class AdminAppAuthTests(TestCase):
         # Price must be 50 * 1.10 = 55.00
         self.assertEqual(data["price"], 55.0)
         self.assertEqual(data["liquidating_price"], 50.0)
-        # Warning because 50 < 0.60 * 100 (60)
+        # Warning because discount 50% < 60% policy target
         self.assertIsNotNone(data["warning"])
-        self.assertIn("below 60% of MSRP", data["warning"])
+        self.assertIn("below the recommended 60%", data["warning"])
 
         # Reload from DB
         prod.refresh_from_db()
@@ -513,7 +513,7 @@ class AdminAppAuthTests(TestCase):
         Verify lot_enquiry_edit_api:
         - Only liquidation price and msrp are editable in pricing
         - Price is auto-calculated as liquidation_price * 1.10
-        - If liquidation price is below 60% of MSRP, a warning is returned
+        - If liquidation discount is below 60% of MSRP, a warning is returned
         - All fields properly update the Lot model in DB and raw_data
         """
         from .models import Lot, MainCategory, SubCategory
@@ -541,12 +541,12 @@ class AdminAppAuthTests(TestCase):
             currency="USD"
         )
 
-        # Edit with liquidation price = 400, msrp = 1000 (40% < 60% of MSRP -> triggers warning)
+        # Edit with liquidation price = 500, msrp = 1000 (discount 50% < 60% policy target -> triggers warning)
         # Attempt to pass custom price of 9999 to test that it is ignored
         payload = {
             "title": "Cisco Catalyst Batch",
             "subcategory_id": sub_cat.id,
-            "liquidation_price": "400.00",
+            "liquidation_price": "500.00",
             "price": "9999.00",  # Must be ignored
             "msrp": "1000.00",
             "currency": "USD",
@@ -560,12 +560,12 @@ class AdminAppAuthTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         data = res.data
         self.assertTrue(data["success"])
-        # Price must be 400 * 1.10 = 440.00
-        self.assertEqual(data["price"], 440.0)
-        self.assertEqual(data["liquidation_price"], 400.0)
-        # Warning because 400 < 0.60 * 1000 (600)
+        # Price must be 500 * 1.10 = 550.00
+        self.assertEqual(data["price"], 550.0)
+        self.assertEqual(data["liquidation_price"], 500.0)
+        # Warning because discount 50% < 60% policy target
         self.assertIsNotNone(data["warning"])
-        self.assertIn("below 60% of MSRP", data["warning"])
+        self.assertIn("below the recommended 60%", data["warning"])
 
         # Reload from DB
         lot.refresh_from_db()

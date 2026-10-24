@@ -666,17 +666,15 @@
                     offerInput.value = '0%';
                 }
 
-                // Check: if liquidation price is below 60% of MSRP show warning
+                // Check surplus policy: discount should be >= 60% (liquidation price <= 40% of MSRP)
                 if (msrp > 0 && liq > 0) {
-                    const threshold60 = msrp * 0.60;
-                    const liqPctOfMsrp = Math.round((liq / msrp) * 100);
-
-                    if (liq < threshold60) {
+                    const maxAllowedLiq = msrp * 0.40;
+                    if (liq >= msrp) {
                         warningBox.style.display = 'block';
-                        warningText.innerHTML = `<strong>⚠️ Warning:</strong> Liquidation price (<strong>${curr} ${liq.toFixed(2)}</strong>) is below <strong>60% of MSRP</strong> (${curr} ${threshold60.toFixed(2)}) &mdash; currently <strong>${liqPctOfMsrp}% of MSRP</strong> (${discount}% discount).`;
+                        warningText.innerHTML = `<strong>⚠️ Warning:</strong> Liquidation price (<strong>${curr} ${liq.toFixed(2)}</strong>) cannot be greater than or equal to MSRP (<strong>${curr} ${msrp.toFixed(2)}</strong>).`;
                     } else if (discount < 60) {
                         warningBox.style.display = 'block';
-                        warningText.innerHTML = `<strong>⚠️ Surplus Policy Note:</strong> Liquidation discount (<strong>${discount}%</strong>) is below the recommended 60% liquidation policy target (${liqPctOfMsrp}% of MSRP).`;
+                        warningText.innerHTML = `<strong>⚠️ Surplus Policy Note:</strong> Liquidation discount (<strong>${discount}%</strong>) is below the recommended 60% liquidation policy target (maximum recommended liquidation price is <strong>${curr} ${maxAllowedLiq.toFixed(2)}</strong>).`;
                     } else {
                         warningBox.style.display = 'none';
                     }

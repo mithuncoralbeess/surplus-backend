@@ -1918,13 +1918,18 @@ def seller_enquiry_edit_api(request, enquiry_id):
             except Exception:
                 pass
 
-        # Check 60% MSRP Warning
+        # Check 60% Surplus Policy Warning (only warn if discount < 60% or liquidation price >= msrp)
         warning_msg = None
         if product.liquidating_price and product.msrp and product.msrp > Decimal("0.00"):
-            threshold_60 = Decimal(str(product.msrp)) * Decimal("0.60")
-            if Decimal(str(product.liquidating_price)) < threshold_60:
-                liq_pct = round((float(product.liquidating_price) / float(product.msrp)) * 100, 1)
-                warning_msg = f"Warning: Liquidation price ({product.currency} {product.liquidating_price}) is below 60% of MSRP ({product.currency} {product.msrp}) - currently {liq_pct}% of MSRP."
+            liq = Decimal(str(product.liquidating_price))
+            msrp = Decimal(str(product.msrp))
+            if liq >= msrp:
+                warning_msg = f"Warning: Liquidation price ({product.currency} {liq}) cannot be greater than or equal to MSRP ({product.currency} {msrp})."
+            else:
+                discount_pct = round(((msrp - liq) / msrp) * Decimal("100"), 1)
+                if discount_pct < Decimal("60.0"):
+                    max_allowed = (msrp * Decimal("0.40")).quantize(Decimal("0.01"))
+                    warning_msg = f"Surplus Policy Note: Liquidation discount ({discount_pct}%) is below the recommended 60% target (maximum recommended payout is {product.currency} {max_allowed})."
 
         if "is_available_for_offers" in data:
             val = data["is_available_for_offers"]
@@ -2443,13 +2448,18 @@ def lot_enquiry_edit_api(request, enquiry_id):
     # Calculate buyer price: strictly 10% platform markup above liquidation price (no manual price edit)
     calculated_price = round(float(lot.ask_price_surplus_payout or 0.0) * 1.10, 2)
 
-    # Check 60% MSRP Warning
+    # Check 60% Surplus Policy Warning (only warn if discount < 60% or liquidation price >= msrp)
     warning_msg = None
     if lot.ask_price_surplus_payout and lot.total_est_retail_value_msrp and float(lot.total_est_retail_value_msrp) > 0:
-        threshold_60 = float(lot.total_est_retail_value_msrp) * 0.60
-        if float(lot.ask_price_surplus_payout) < threshold_60:
-            pct = round((float(lot.ask_price_surplus_payout) / float(lot.total_est_retail_value_msrp)) * 100, 1)
-            warning_msg = f"Warning: Liquidation price ({lot.currency or 'USD'} {lot.ask_price_surplus_payout}) is below 60% of MSRP ({lot.currency or 'USD'} {lot.total_est_retail_value_msrp}) - currently {pct}% of MSRP."
+        liq = float(lot.ask_price_surplus_payout)
+        msrp = float(lot.total_est_retail_value_msrp)
+        if liq >= msrp:
+            warning_msg = f"Warning: Total liquidation price ({lot.currency or 'USD'} {liq}) cannot be greater than or equal to MSRP ({lot.currency or 'USD'} {msrp})."
+        else:
+            discount_pct = round(((msrp - liq) / msrp) * 100, 1)
+            if discount_pct < 60.0:
+                max_allowed = round(msrp * 0.40, 2)
+                warning_msg = f"Surplus Policy Note: Liquidation discount ({discount_pct}%) is below the recommended 60% target (maximum recommended payout is {lot.currency or 'USD'} {max_allowed})."
 
     if "currency" in data and str(data["currency"]).strip():
         lot.currency = str(data["currency"]).strip().upper()
