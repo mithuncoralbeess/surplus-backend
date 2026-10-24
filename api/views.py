@@ -1550,7 +1550,7 @@ def submit_product_request(request):
     POST /api/submit-product-request/ - Submit a single product enquiry
     """
     import json
-    from decimal import Decimal
+    from decimal import Decimal, ROUND_HALF_UP
     from django.utils.dateparse import parse_date
     from django.utils.text import slugify
     from django.core.files.storage import default_storage
@@ -1838,6 +1838,11 @@ def submit_product_request(request):
         data.get('warehouse_location') or 
         data.get('stock_location') or ''
     ).strip()
+    inventory_city = (
+        data.get('inventory_city') or 
+        data.get('inventoryCity') or 
+        data.get('city') or ''
+    ).strip()
 
     # 6. Manufacturing Year
     manufacturing_year = None
@@ -1968,6 +1973,7 @@ def submit_product_request(request):
         model_no=model_no,
         manufacturing_country=manufacturing_country,
         inventory_country=inventory_country,
+        inventory_city=inventory_city,
         inventory_location=inventory_location,
         manufacturing_year=manufacturing_year,
         dimensions=dimensions,
@@ -2088,7 +2094,7 @@ def submit_product_request(request):
 
     seller_label = (product.vendor.full_name or product.vendor.company_name or product.vendor.username) if product.vendor else (data.get("name") or data.get("full_name") or "Guest Seller")
     seller_email = (product.vendor.email if product.vendor else (data.get("email") or data.get("user_email") or data.get("seller_email") or ""))
-    seller_phone = (product.vendor.phone if product.vendor else (data.get("phone") or data.get("mobile") or ""))
+    seller_phone = ((getattr(product.vendor, "mobile_number", None) or getattr(product.vendor, "phone", "")) if product.vendor else (data.get("phone") or data.get("mobile") or data.get("mobile_number") or ""))
 
     # 1. Vendor In-App Notification
     if product.vendor:
