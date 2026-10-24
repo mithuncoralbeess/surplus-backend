@@ -180,13 +180,55 @@ class EmailService:
         return cls.send_email(to_email, f"Surplus Market - Your Verification OTP: {otp}", html_content, "OTP")
 
     @classmethod
-    def send_signup_welcome(cls, to_email: str, first_name="") -> bool:
-        """Welcome email sent after user creation."""
+    def send_signup_welcome(cls, to_email: str, first_name="", vendor=None) -> bool:
+        """Rich welcome email sent after user completes registration / onboarding."""
+        frontend_base = cls.get_frontend_url()
+        marketplace_url = f"{frontend_base}/"
+        profile_url = f"{frontend_base}/profile"
+
+        vendor_id = getattr(vendor, "vendor_id", None) or (vendor.get("vendor_id") if isinstance(vendor, dict) else "")
+        raw_id = getattr(vendor, "id", None) or (vendor.get("id") if isinstance(vendor, dict) else "")
+        if not vendor_id and raw_id:
+            vendor_id = f"USR-{int(raw_id):04d}"
+
+        full_name = getattr(vendor, "full_name", None) or (vendor.get("full_name") if isinstance(vendor, dict) else "") or first_name or "Valued Member"
+        resolved_first_name = first_name or (getattr(vendor, "first_name", "") if vendor else "") or full_name.split()[0]
+        user_type = getattr(vendor, "user_type", None) or (vendor.get("user_type") if isinstance(vendor, dict) else "BUYER")
+        account_entity_type = getattr(vendor, "account_entity_type", None) or (vendor.get("account_entity_type") if isinstance(vendor, dict) else "COMPANY")
+        company_name = getattr(vendor, "company_name", None) or (vendor.get("company_name") if isinstance(vendor, dict) else "")
+        country = getattr(vendor, "country", None) or (vendor.get("country") if isinstance(vendor, dict) else "United Arab Emirates")
+        business_location = getattr(vendor, "business_location", None) or (vendor.get("business_location") if isinstance(vendor, dict) else "")
+
+        cats = getattr(vendor, "category_interested_list", None) or []
+        if not cats and hasattr(vendor, "category_interested"):
+            cats = vendor.category_interested if isinstance(vendor.category_interested, list) else [str(vendor.category_interested)]
+        elif isinstance(vendor, dict):
+            cats = vendor.get("category_interested", [])
+            if isinstance(cats, str):
+                cats = [c.strip() for c in cats.split(",") if c.strip()]
+        categories_str = ", ".join(cats) if cats else ""
+
+        context = {
+            "first_name": resolved_first_name,
+            "full_name": full_name,
+            "vendor_id": vendor_id,
+            "email": to_email,
+            "user_type": user_type,
+            "account_entity_type": account_entity_type,
+            "company_name": company_name,
+            "country": country,
+            "business_location": business_location,
+            "categories_str": categories_str,
+            "marketplace_url": marketplace_url,
+            "contact_email": "contact@surplusmarket.com",
+            "support_email": "contact@surplusmarket.com",
+        }
+
         html_content = render_to_string(
             "FinalTemplates/partials/email_partials/email_signup_yes.html",
-            {"first_name": first_name},
+            context,
         )
-        return cls.send_email(to_email, "Welcome to Surplus Market!", html_content, "Welcome")
+        return cls.send_email(to_email, "Welcome to Surplus Market - Your Sourcing & Liquidation Gateway!", html_content, "Welcome", context=context)
 
     @classmethod
     def send_password_reset_yes(cls, to_email: str, first_name="", reset_link=None) -> bool:
@@ -1159,13 +1201,17 @@ class EmailService:
             vendor_id = f"USR-{int(raw_id):04d}"
 
         email = getattr(vendor, "email", None) or (vendor.get("email") if isinstance(vendor, dict) else "")
-        full_name = getattr(vendor, "full_name", None) or (vendor.get("full_name") if isinstance(vendor, dict) else "") or getattr(vendor, "username", "New User")
+        username = getattr(vendor, "username", None) or (vendor.get("username") if isinstance(vendor, dict) else "")
+        full_name = getattr(vendor, "full_name", None) or (vendor.get("full_name") if isinstance(vendor, dict) else "") or username or "New User"
         phone = getattr(vendor, "mobile_number", None) or (vendor.get("mobile_number") if isinstance(vendor, dict) else "")
         user_type = getattr(vendor, "user_type", None) or (vendor.get("user_type") if isinstance(vendor, dict) else "BUYER")
         account_entity_type = getattr(vendor, "account_entity_type", None) or (vendor.get("account_entity_type") if isinstance(vendor, dict) else "COMPANY")
         company_name = getattr(vendor, "company_name", None) or (vendor.get("company_name") if isinstance(vendor, dict) else "")
         country = getattr(vendor, "country", None) or (vendor.get("country") if isinstance(vendor, dict) else "United Arab Emirates")
         business_location = getattr(vendor, "business_location", None) or (vendor.get("business_location") if isinstance(vendor, dict) else "")
+        business_address = getattr(vendor, "business_address", None) or (vendor.get("business_address") if isinstance(vendor, dict) else "")
+        business_type = getattr(vendor, "business_type", None) or (vendor.get("business_type") if isinstance(vendor, dict) else "")
+        tax_registration_number = getattr(vendor, "tax_registration_number", None) or (vendor.get("tax_registration_number") if isinstance(vendor, dict) else "")
 
         cats = getattr(vendor, "category_interested_list", None) or []
         if not cats and hasattr(vendor, "category_interested"):
@@ -1189,6 +1235,7 @@ class EmailService:
         context = {
             "vendor": vendor,
             "vendor_id": vendor_id,
+            "username": username,
             "full_name": full_name,
             "email": email,
             "phone": phone,
@@ -1197,6 +1244,9 @@ class EmailService:
             "company_name": company_name,
             "country": country,
             "business_location": business_location,
+            "business_address": business_address,
+            "business_type": business_type,
+            "tax_registration_number": tax_registration_number,
             "categories_str": categories_str,
             "registered_at": reg_time_str,
             "admin_url": admin_url,
@@ -1211,10 +1261,14 @@ class EmailService:
             logger.warning(f"Template rendering failed for admin user registration alert: {e}")
             html_content = (
                 f"<h2>New User Registered: {full_name}</h2>"
-                f"<p>User ID: <strong>{vendor_id}</strong></p>"
-                f"<p>Email: <strong>{email}</strong> | Phone: {phone}</p>"
-                f"<p>User Type: <strong>{user_type}</strong> | Entity: {account_entity_type}</p>"
-                f"<p>Company: {company_name} | Location: {country}</p>"
+                f"<p>User ID: <strong>{vendor_id}</strong> | Username: <strong>@{username}</strong></p>"
+                f"<p>Email: <strong>{email}</strong> | Phone: <strong>{phone}</strong></p>"
+                f"<p>User Type: <strong>{user_type}</strong> | Entity Type: <strong>{account_entity_type}</strong></p>"
+                f"<p>Company: <strong>{company_name or '-'}</strong> | Business Type: <strong>{business_type or '-'}</strong></p>"
+                f"<p>Country: <strong>{country}</strong> | Location: <strong>{business_location or '-'}</strong></p>"
+                f"<p>Address: <strong>{business_address or '-'}</strong></p>"
+                f"<p>TRN: <strong>{tax_registration_number or '-'}</strong></p>"
+                f"<p>Categories: <strong>{categories_str or '-'}</strong></p>"
                 f"<p><a href='{admin_url}'>View User in Admin Portal</a></p>"
             )
 
@@ -1468,7 +1522,7 @@ def notify_new_user_registration(vendor):
     try:
         if email:
             first_name = getattr(vendor, "first_name", "") or full_name
-            EmailService.send_signup_welcome(to_email=email, first_name=first_name)
+            EmailService.send_signup_welcome(to_email=email, first_name=first_name, vendor=vendor)
     except Exception as e:
         logger.error(f"Failed to send welcome email to user {email}: {e}")
 

@@ -228,6 +228,7 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
         "lot_number": lot.lot_number,
         "lot_title": lot.title or lot.lot_number,
         "currency": getattr(lot, "currency", "USD") or "USD",
+        "file_url": lot.file.url if getattr(lot, "file", None) and hasattr(lot.file, "url") and lot.file else getattr(lot, "file_url", None),
         "is_saved_to_db": is_saved_to_db,
         "summary": {
             "total_skus": len(items),

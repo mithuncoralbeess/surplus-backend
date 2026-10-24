@@ -3592,13 +3592,23 @@ def manage_users_view(request):
         email = vendor.email or ""
         company = vendor.company_name or "-"
         phone = vendor.mobile_number or "-"
-        country = vendor.business_location or "-"
+        country = getattr(vendor, "country", None) or "-"
+        business_location = getattr(vendor, "business_location", None) or "-"
         entity_type = vendor.get_account_entity_type_display() if hasattr(vendor, "get_account_entity_type_display") else vendor.account_entity_type
 
         # Filter logic
         if search_query:
             sq = search_query.lower()
-            if not (sq in name.lower() or sq in email.lower() or sq in company.lower() or sq in phone.lower() or sq in vendor.user_id.lower()):
+            vendor_vid = getattr(vendor, "vendor_id", "") or f"USR-{vendor.id:04d}"
+            if not (
+                sq in name.lower()
+                or sq in email.lower()
+                or sq in company.lower()
+                or sq in phone.lower()
+                or sq in vendor_vid.lower()
+                or sq in country.lower()
+                or sq in business_location.lower()
+            ):
                 continue
 
         if type_filter and type_filter.lower() != "all":
@@ -3611,6 +3621,9 @@ def manage_users_view(request):
             if status_filter.lower() == "inactive" and is_active:
                 continue
 
+        cat_list = vendor.category_interested_list if hasattr(vendor, "category_interested_list") else []
+        cat_display = ", ".join(cat_list) if cat_list else (str(vendor.category_interested) if vendor.category_interested else "-")
+
         users_list.append({
             "id": vendor.id,
             "vendor_id": vendor.vendor_id,
@@ -3622,12 +3635,13 @@ def manage_users_view(request):
             "type": u_type,
             "company": company,
             "country": country,
+            "business_location": business_location,
             "phone": phone,
             "entity_type": entity_type,
             "business_type": vendor.business_type or "-",
             "business_address": vendor.business_address or "-",
             "tax_registration_number": vendor.tax_registration_number or "-",
-            "category_interested": vendor.category_interested or "-",
+            "category_interested": cat_display,
             "status": "Active" if is_active else "Inactive",
             "joined": vendor.created_at,
         })
@@ -5465,6 +5479,19 @@ def add_lot_view(request):
         "General Surplus",
         "Other"
     ]
+    try:
+        from AdminApp.models import MainCategory
+        db_main_cats = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True))
+    except Exception:
+        db_main_cats = []
+
+    combined_categories = []
+    for c in db_main_cats + standard_categories:
+        c_clean = str(c).strip()
+        if c_clean and c_clean not in combined_categories:
+            combined_categories.append(c_clean)
+
+    import json
 
     context = {
         "admin": admin_user,
@@ -5479,7 +5506,8 @@ def add_lot_view(request):
         "sale_method_options": sale_method_options,
         "currency_options": currency_options,
         "excluded_countries_options": excluded_countries_options,
-        "standard_categories": standard_categories,
+        "standard_categories": combined_categories,
+        "categories_json": json.dumps(combined_categories),
         "countries": STANDARD_COUNTRIES,
         "page_title": "Add Lot Request (Assisted Offline Intake)",
     }
@@ -5495,6 +5523,8 @@ def add_lot_view(request):
         seller_name = request.POST.get("seller_name", "").strip()
         seller_phone = request.POST.get("seller_phone", "").strip()
         seller_email = request.POST.get("seller_email", "").strip()
+        if not seller_email and admin_user and getattr(admin_user, "email", None):
+            seller_email = admin_user.email.strip()
         seller_company = request.POST.get("seller_company", "").strip()
         seller_location = request.POST.get("seller_location", "").strip()
         intake_notes = request.POST.get("intake_notes", "").strip()
@@ -5570,9 +5600,15 @@ def add_lot_view(request):
             c_name_clean = str(c_name).strip()
             c_pct_clean = str(c_pct).strip().replace("%", "")
             if c_name_clean and c_pct_clean:
+                try:
+                    pct_int = int(float(c_pct_clean))
+                except (ValueError, TypeError):
+                    pct_int = 0
                 category_allocations.append({
                     "category_name": c_name_clean,
-                    "alocation": f"{c_pct_clean}%"
+                    "alocation": f"{c_pct_clean}%",
+                    "allocation": f"{c_pct_clean}%",
+                    "percentage": pct_int
                 })
         if not category_allocations:
             raw_alloc_str = request.POST.get("category_allocations", "")
@@ -5759,6 +5795,50 @@ def add_lot_view(request):
         if not total_units_quantity and parsed_items:
             total_units_quantity = sum(int(p.get("quantity") or 1) for p in parsed_items)
 
+        # Fallback: Auto-calculate category allocations from parsed manifest items if not provided
+        if not category_allocations and parsed_items:
+            from collections import defaultdict
+            cat_units = defaultdict(int)
+            for p in parsed_items:
+                c_name = str(p.get("product_category") or p.get("category") or p.get("subcategory") or "General Surplus").strip()
+                if not c_name or c_name == "-" or c_name.lower() in ("none", "nan", "nil"):
+                    c_name = "General Surplus"
+                c_name = c_name.replace("*", "").strip()
+                try:
+                    qty = int(p.get("quantity") or p.get("available_quantity") or 1)
+                except (ValueError, TypeError):
+                    qty = 1
+                cat_units[c_name] += max(1, qty)
+
+            total_cat_u = sum(cat_units.values())
+            if total_cat_u > 0:
+                sorted_cats = sorted(cat_units.items(), key=lambda x: x[1], reverse=True)
+                if len(sorted_cats) == 1:
+                    category_allocations.append({
+                        "category_name": sorted_cats[0][0],
+                        "alocation": "100%",
+                        "allocation": "100%",
+                        "percentage": 100
+                    })
+                else:
+                    running_sum = 0
+                    temp_allocs = []
+                    for c_name, u_count in sorted_cats:
+                        pct = round((u_count / total_cat_u) * 100)
+                        running_sum += pct
+                        temp_allocs.append([c_name, pct])
+                    diff = 100 - running_sum
+                    if diff != 0 and temp_allocs:
+                        temp_allocs[0][1] += diff
+                    for c_name, pct in temp_allocs:
+                        if pct > 0:
+                            category_allocations.append({
+                                "category_name": c_name,
+                                "alocation": f"{pct}%",
+                                "allocation": f"{pct}%",
+                                "percentage": pct
+                            })
+
         # Status
         is_active = request.POST.get("is_active") == "on"
 
@@ -5784,6 +5864,10 @@ def add_lot_view(request):
             "is_saved_to_db": True,
             "parse_summary": parse_summary,
             "products": parsed_items,
+            "category_allocations": category_allocations,
+            "category": category_allocations[0]["category_name"] if category_allocations else "General Surplus",
+            "subcategory": category_allocations[0]["category_name"] if category_allocations else "General Surplus",
+            "category_breakdown": ", ".join([f"{c['category_name']} ({c.get('allocation') or c.get('alocation')})" for c in category_allocations]) if category_allocations else "",
         }
 
         # --- 7. Save Lot Record ---

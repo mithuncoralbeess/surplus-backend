@@ -761,10 +761,7 @@ def complete_profile(request):
         if not vendor:
             return Response({"success": False, "message": "Account not found."}, status=status.HTTP_404_NOT_FOUND)
         prof_info = vendor.get_profile_completion_details()
-        return Response({
-            "success": True, 
-            "status": "profile_found", 
-            "message": "Profile fetched successfully.",
+        profile_data = {
             "vendor_id": vendor.vendor_id,
             "raw_vendor_id": vendor.id,
             "email": vendor.email,
@@ -774,15 +771,22 @@ def complete_profile(request):
             "company_name": vendor.company_name,
             "user_type": vendor.user_type,
             "mobile_number": vendor.mobile_number,
-            "country": getattr(vendor, "country", ""),
-            "business_location": vendor.business_location,
-            "business_address": vendor.business_address,
-            "tax_registration_number": vendor.tax_registration_number,
-            "business_type": vendor.business_type,
+            "country": getattr(vendor, "country", "") or "United Arab Emirates",
+            "business_location": vendor.business_location or "",
+            "business_address": vendor.business_address or "",
+            "tax_registration_number": vendor.tax_registration_number or "",
+            "business_type": vendor.business_type or "",
             "category_interested": vendor.category_interested_list,
             "profile_completion_percentage": prof_info["percentage"],
             "is_profile_complete": prof_info["is_complete"],
             "profile_completion": prof_info
+        }
+        return Response({
+            "success": True, 
+            "status": "profile_found", 
+            "message": "Profile fetched successfully.",
+            "data": profile_data,
+            **profile_data
         })
     serializer = CompleteProfileSerializer(data=request.data)
     if not serializer.is_valid():
@@ -846,18 +850,63 @@ def complete_profile(request):
     cat_inst = data.get("category_interested", [])
     if isinstance(cat_inst, str):
         val = cat_inst.strip()
+        parsed = None
         if val.startswith("[") and val.endswith("]"):
             try:
                 import json
-                parsed = json.loads(val)
-                if isinstance(parsed, list):
-                    cat_inst = parsed
-                else:
-                    cat_inst = [c.strip() for c in str(parsed).split(",") if c.strip()]
+                p = json.loads(val)
+                if isinstance(p, list):
+                    parsed = p
             except Exception:
-                cat_inst = [c.strip().strip("'\"[]") for c in val.split(",") if c.strip().strip("'\"[]")]
+                pass
+
+        if parsed is None:
+            # Check against known MainCategory names first so category names with commas
+            # like 'Apparel, Footwear & Accessories' or 'Construction, Hardware & MRO' are NOT split!
+            try:
+                from AdminApp.models import MainCategory
+                known_cats = list(MainCategory.objects.values_list("name", flat=True))
+            except Exception:
+                known_cats = []
+
+            if not known_cats:
+                known_cats = [
+                    "Apparel, Footwear & Accessories",
+                    "Automotive",
+                    "Books, Stationery & Office Supplies",
+                    "Construction, Hardware & MRO",
+                    "Consumer Electronics",
+                    "Electrical & Lighting",
+                    "Electrical Parts",
+                    "Electronics & ICT",
+                    "Furniture & Interiors",
+                    "General Mix Lots",
+                    "Hospitality, Catering & Commercial Supplies",
+                    "Household & Cleaning Items",
+                    "Industrial Machinery & Equipment",
+                    "Medical, Laboratory & Scientific Equipment",
+                    "Oil & Gas Equipment & MRO",
+                    "Packaging & Industrial Consumables",
+                    "Renewable Energy & Environmental Equipment",
+                    "Toys & Sports"
+                ]
+
+            known_cats.sort(key=len, reverse=True)
+            matched = []
+            remaining_str = val
+            for kc in known_cats:
+                pattern = re.compile(re.escape(kc), re.IGNORECASE)
+                if pattern.search(remaining_str):
+                    matched.append(kc)
+                    remaining_str = pattern.sub("", remaining_str)
+
+            if matched:
+                leftovers = [c.strip() for c in re.split(r'[,;]+', remaining_str) if c.strip() and len(c.strip()) > 1]
+                cat_inst = matched + leftovers
+            else:
+                cat_inst = [c.strip() for c in re.split(r'[,;]+', val) if c.strip()]
         else:
-            cat_inst = [c.strip() for c in val.split(",") if c.strip()]
+            cat_inst = parsed
     elif isinstance(cat_inst, list):
         cat_inst = [str(c).strip().strip("'\"[]") for c in cat_inst if str(c).strip().strip("'\"[]")]
 
@@ -871,12 +920,16 @@ def complete_profile(request):
 
     # Trigger new user registration notifications & emails now that full profile details are submitted
     try:
-        from AdminApp.models import VendorNotification
+        from AdminApp.models import VendorNotification, AdminNotification
+        admin_notif_exists = AdminNotification.objects.filter(
+            notification_type="USER_REGISTRATION",
+            action_url__icontains=vendor.email
+        ).exists()
         has_welcomed = VendorNotification.objects.filter(
             vendor=vendor,
             title="Welcome to Surplus Market!"
         ).exists()
-        if not has_welcomed:
+        if not has_welcomed or not admin_notif_exists:
             from AdminApp.services import notify_new_user_registration
             notify_new_user_registration(vendor)
     except Exception as notif_err:
@@ -925,10 +978,7 @@ def complete_profile(request):
         except Exception:
             pass
     
-    return Response({
-        "success": True, 
-        "status": "profile_completed", 
-        "message": "Profile completed successfully.",
+    profile_data = {
         "vendor_id": vendor.vendor_id,
         "raw_vendor_id": vendor.id,
         "email": vendor.email,
@@ -938,16 +988,23 @@ def complete_profile(request):
         "company_name": vendor.company_name,
         "user_type": vendor.user_type,
         "mobile_number": vendor.mobile_number,
-        "country": getattr(vendor, "country", ""),
-        "business_location": vendor.business_location,
-        "business_address": vendor.business_address,
-        "tax_registration_number": vendor.tax_registration_number,
-        "business_type": vendor.business_type,
+        "country": getattr(vendor, "country", "") or "United Arab Emirates",
+        "business_location": vendor.business_location or "",
+        "business_address": vendor.business_address or "",
+        "tax_registration_number": vendor.tax_registration_number or "",
+        "business_type": vendor.business_type or "",
         "category_interested": vendor.category_interested_list,
         "profile_completion_percentage": prof_info["percentage"],
         "is_profile_complete": prof_info["is_complete"],
         "profile_completion": prof_info,
         "activated_products_count": activated_products_count
+    }
+    return Response({
+        "success": True, 
+        "status": "profile_completed", 
+        "message": "Profile completed successfully.",
+        "data": profile_data,
+        **profile_data
     })
 
 

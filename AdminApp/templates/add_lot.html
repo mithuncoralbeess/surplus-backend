@@ -202,8 +202,14 @@
                                     <span class="text-muted fw-normal">Optional</span>
                                 </label>
                                 <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
-                                    placeholder="vendor@company.com" value="{{ form_data.seller_email|default:'' }}">
-                                <div class="form-text small">Auto-generated if left blank.</div>
+                                    placeholder="{{ admin.email|default:'vendor@company.com' }}" value="{{ form_data.seller_email|default:'' }}">
+                                <div class="form-text small">
+                                    {% if admin.email %}
+                                    Defaults to logged-in admin email (<strong>{{ admin.email }}</strong>) if left blank.
+                                    {% else %}
+                                    Auto-generated if left blank.
+                                    {% endif %}
+                                </div>
                             </div>
 
                             <div class="col-md-4">
@@ -1305,18 +1311,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // -------------------------------------------------------------
     // 0. Standard Category List for Allocations
     // -------------------------------------------------------------
-    const STANDARD_CATEGORIES = [
-        "Electricals",
-        "Electronics",
-        "Apparel",
-        "Industrial Hardware",
-        "Automotive & Spare Parts",
-        "Home & Living",
-        "Tools & Machinery",
-        "Medical & Health",
-        "General Surplus",
-        "Other"
-    ];
+    const STANDARD_CATEGORIES = {{ categories_json|safe|default:'["Electricals", "Electronics", "Apparel", "Industrial Hardware", "Automotive & Spare Parts", "Home & Living", "Tools & Machinery", "Medical & Health", "General Surplus", "Other"]' }};
+
+    function resolveOrAddCategory(catName) {
+        if (!catName) return '';
+        const trimmed = catName.trim().replace(/^[\*\-\s]+|[\*\-\s]+$/g, '');
+        if (!trimmed) return '';
+        const found = STANDARD_CATEGORIES.find(c => c.toLowerCase() === trimmed.toLowerCase());
+        if (found) return found;
+        STANDARD_CATEGORIES.push(trimmed);
+        return trimmed;
+    }
 
     // -------------------------------------------------------------
     // 1. Category Allocation Rows Management & Visual Progress
@@ -1329,14 +1334,48 @@ document.addEventListener('DOMContentLoaded', function () {
     const allocationProgressBar = document.getElementById('allocationProgressBar');
     const allocationProgressLabel = document.getElementById('allocationProgressLabel');
 
+    function showEmptyCategoryState() {
+        if (!allocationsContainer) return;
+        if (allocationsContainer.querySelector('#emptyCategoryAllocationsState')) return;
+        allocationsContainer.innerHTML = `
+            <div id="emptyCategoryAllocationsState" class="text-center py-4 px-3 border border-dashed rounded-3 bg-light-subtle my-2">
+                <div class="mb-2">
+                    <span class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle" style="width: 44px; height: 44px;">
+                        <i class="bi bi-diagram-3-fill fs-5"></i>
+                    </span>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">No Categories Allocated Yet</h6>
+                <p class="text-muted small mb-3 mx-auto" style="max-width: 460px;">
+                    Upload an Excel manifest above to <strong>automatically fetch categories and calculate breakdown percentages</strong>, or click below to specify manually.
+                </p>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5" id="emptyStateAddRowBtn">
+                    <i class="bi bi-plus-lg"></i> Add Category Row
+                </button>
+            </div>
+        `;
+        const emptyBtn = document.getElementById('emptyStateAddRowBtn');
+        if (emptyBtn) {
+            emptyBtn.addEventListener('click', function () {
+                createCategoryRow('', 100);
+            });
+        }
+    }
+
+    function hideEmptyCategoryState() {
+        const emptyState = document.getElementById('emptyCategoryAllocationsState');
+        if (emptyState) emptyState.remove();
+    }
+
     function createCategoryRow(categoryName = '', allocationPct = 100) {
+        hideEmptyCategoryState();
+        const resolvedName = resolveOrAddCategory(categoryName);
         const row = document.createElement('div');
         row.className = 'category-row row g-2 align-items-center mb-2.5';
 
         let optionsHtml = '';
         STANDARD_CATEGORIES.forEach(cat => {
-            const isSel = (cat.toLowerCase() === categoryName.toLowerCase()) ? 'selected' : '';
-            optionsHtml += `<option value="${cat}" ${isSel}>${cat}</option>`;
+            const isSel = (cat.toLowerCase() === resolvedName.toLowerCase()) ? 'selected' : '';
+            optionsHtml += `<option value="${escapeHtml(cat)}" ${isSel}>${escapeHtml(cat)}</option>`;
         });
 
         row.innerHTML = `
@@ -1365,6 +1404,21 @@ document.addEventListener('DOMContentLoaded', function () {
         updateReadinessChecklist();
     }
 
+    function applyCategoryAllocations(allocationsList) {
+        if (!allocationsContainer) return;
+        allocationsContainer.innerHTML = '';
+        if (!allocationsList || allocationsList.length === 0) {
+            showEmptyCategoryState();
+            updateAllocationSum();
+            return;
+        }
+        allocationsList.forEach(item => {
+            createCategoryRow(item.name, item.percentage);
+        });
+        updateAllocationSum();
+        updateReadinessChecklist();
+    }
+
     if (addCategoryRowBtn) {
         addCategoryRowBtn.addEventListener('click', function () {
             createCategoryRow('', 10);
@@ -1375,13 +1429,14 @@ document.addEventListener('DOMContentLoaded', function () {
         allocationsContainer.addEventListener('click', function (e) {
             if (e.target.closest('.remove-cat-btn')) {
                 const row = e.target.closest('.category-row');
-                const allRows = allocationsContainer.querySelectorAll('.category-row');
-                if (allRows.length > 1) {
+                if (row) {
                     row.remove();
+                    const remainingRows = allocationsContainer.querySelectorAll('.category-row');
+                    if (remainingRows.length === 0) {
+                        showEmptyCategoryState();
+                    }
                     updateAllocationSum();
                     updateReadinessChecklist();
-                } else {
-                    alert('At least one category allocation row is required.');
                 }
             }
         });
@@ -1408,7 +1463,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const clampedSum = Math.min(sum, 100);
         allocationProgressBar.style.width = `${clampedSum}%`;
 
-        if (sum === 100) {
+        if (pctInputs.length === 0) {
+            allocationTotalBadge.className = 'badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-1.5 rounded-pill fw-bold';
+            allocationWarningText.className = 'text-muted small fw-medium';
+            allocationWarningText.innerHTML = '<i class="bi bi-info-circle me-1"></i> Auto-fetched when you upload an Excel manifest, or add manually (must total 100%).';
+            allocationProgressBar.className = 'progress-bar bg-secondary';
+        } else if (sum === 100) {
             allocationTotalBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold';
             allocationWarningText.className = 'text-success small fw-medium';
             allocationWarningText.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Perfect: 100% Allocation Balanced';
@@ -2298,6 +2358,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     let totalMsrp = 0.0;
                     let totalAsk = 0.0;
                     const rowErrors = [];
+                    const categoryStatsMap = {};
 
                     dataRows.forEach((row, rowIdx) => {
                         const actualRowNum = headerIndex + 2 + rowIdx;
@@ -2325,6 +2386,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         validSkus++;
                         totalUnits += pQty;
+
+                        // Track Category breakdown by unit quantity
+                        let detectedCat = pCat;
+                        if (!detectedCat || detectedCat === '-' || detectedCat.toLowerCase() === 'none' || detectedCat.toLowerCase() === 'nan') {
+                            detectedCat = pSub;
+                        }
+                        if (!detectedCat || detectedCat === '-' || detectedCat.toLowerCase() === 'none' || detectedCat.toLowerCase() === 'nan') {
+                            detectedCat = 'General Surplus';
+                        }
+                        detectedCat = detectedCat.replace(/^[\*\-\s]+|[\*\-\s]+$/g, '').trim();
+
+                        if (!categoryStatsMap[detectedCat]) {
+                            categoryStatsMap[detectedCat] = { name: detectedCat, units: 0, skus: 0 };
+                        }
+                        categoryStatsMap[detectedCat].units += (pQty > 0 ? pQty : 1);
+                        categoryStatsMap[detectedCat].skus += 1;
 
                         // Optional financial columns
                         if (columnMap['msrp'] !== undefined) {
@@ -2356,17 +2433,65 @@ document.addEventListener('DOMContentLoaded', function () {
                         return;
                     }
 
-                    // 7. Success state
+                    // 7. Calculate Category Breakdown Allocations (Single category = 100%, Multiple categories = proportional %)
+                    const detectedCategories = Object.values(categoryStatsMap);
+                    detectedCategories.sort((a, b) => b.units - a.units || b.skus - a.skus);
+
+                    let computedAllocations = [];
+                    const totalManifestCatUnits = detectedCategories.reduce((sum, c) => sum + c.units, 0);
+
+                    if (detectedCategories.length === 1) {
+                        // Single category: exactly 1 row with 100%
+                        computedAllocations = [{
+                            name: detectedCategories[0].name,
+                            percentage: 100,
+                            units: detectedCategories[0].units
+                        }];
+                    } else if (detectedCategories.length > 1 && totalManifestCatUnits > 0) {
+                        // Multiple categories: calculate percentage based on units
+                        let runningSum = 0;
+                        computedAllocations = detectedCategories.map(c => {
+                            const rawPct = (c.units / totalManifestCatUnits) * 100;
+                            const roundedPct = Math.round(rawPct);
+                            runningSum += roundedPct;
+                            return {
+                                name: c.name,
+                                percentage: roundedPct,
+                                units: c.units
+                            };
+                        });
+
+                        // Balance to exactly 100%
+                        const diff = 100 - runningSum;
+                        if (diff !== 0 && computedAllocations.length > 0) {
+                            computedAllocations[0].percentage += diff;
+                        }
+
+                        // Filter out zero percentage items and ensure exactly 100%
+                        computedAllocations = computedAllocations.filter(c => c.percentage > 0);
+                        const finalSum = computedAllocations.reduce((sum, c) => sum + c.percentage, 0);
+                        if (finalSum !== 100 && computedAllocations.length > 0) {
+                            computedAllocations[0].percentage += (100 - finalSum);
+                        }
+                    }
+
+                    // 8. Success state
                     clientManifestData.isValid = true;
                     clientManifestData.skus = validSkus;
                     clientManifestData.units = totalUnits;
                     clientManifestData.msrp = totalMsrp;
                     clientManifestData.askPrice = totalAsk;
+                    clientManifestData.categoryAllocations = computedAllocations;
 
                     parsedSkuCount.textContent = validSkus;
                     parsedTotalUnits.textContent = totalUnits.toLocaleString();
                     parsedTotalMsrp.textContent = totalMsrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     parsedTotalAsk.textContent = totalAsk.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                    // Auto-fetch & populate Section 3 Category Breakdown immediately
+                    if (computedAllocations.length > 0) {
+                        applyCategoryAllocations(computedAllocations);
+                    }
 
                     if (manifestParsedSummary) manifestParsedSummary.classList.remove('d-none');
                     clearManifestError();
@@ -2401,6 +2526,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (clientManifestData.askPrice > 0 && askPriceInput && !askPriceInput.value) {
                 askPriceInput.value = clientManifestData.askPrice.toFixed(2);
                 askPriceInput.dispatchEvent(new Event('input'));
+            }
+            if (clientManifestData.categoryAllocations && clientManifestData.categoryAllocations.length > 0) {
+                applyCategoryAllocations(clientManifestData.categoryAllocations);
             }
         });
     }
@@ -2599,7 +2727,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     activeRestrictedCountries = [];
                     updateExcludedBadges();
                     allocationsContainer.innerHTML = '';
-                    createCategoryRow('Electronics', 100);
+                    showEmptyCategoryState();
+                    updateAllocationSum();
                     updatePricingCalculations();
                     updateLivePreview();
                     updateReadinessChecklist();
@@ -2616,6 +2745,13 @@ document.addEventListener('DOMContentLoaded', function () {
         addLotForm.addEventListener('submit', function (e) {
             let isValid = true;
             let firstInvalidEl = null;
+
+            // Default seller email to logged-in admin email if left blank
+            const sellerEmailEl = document.getElementById('sellerEmailInput');
+            const loggedInAdminEmail = '{{ admin.email|default:""|escapejs }}';
+            if (sellerEmailEl && !sellerEmailEl.value.trim() && loggedInAdminEmail) {
+                sellerEmailEl.value = loggedInAdminEmail;
+            }
 
             // Strict Manifest File Check: if file is attached, it MUST be valid
             if (manifestFileInput && manifestFileInput.files && manifestFileInput.files.length > 0 && !clientManifestData.isValid) {
@@ -2662,11 +2798,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Category Allocation Sum Check
             let sum = 0;
-            document.querySelectorAll('.category-pct-input').forEach(inp => {
+            const pctInputs = document.querySelectorAll('.category-pct-input');
+            pctInputs.forEach(inp => {
                 sum += parseFloat(inp.value) || 0;
             });
-            if (sum !== 100) {
-                alert(`Category allocation percentages must equal exactly 100%. Current sum: ${sum}%. Please adjust allocations.`);
+            if (pctInputs.length === 0 || sum !== 100) {
+                alert(pctInputs.length === 0
+                    ? 'Please specify category allocations (upload an Excel manifest to auto-detect categories, or add category rows manually totaling 100%).'
+                    : `Category allocation percentages must equal exactly 100%. Current sum: ${sum}%. Please adjust allocations.`
+                );
                 e.preventDefault();
                 return;
             }
@@ -2717,7 +2857,8 @@ document.addEventListener('DOMContentLoaded', function () {
             cityCountBadge.textContent = `${initialCities.length || 'Custom'} cities`;
         }
     }
-    createCategoryRow('Electronics', 100);
+    showEmptyCategoryState();
+    updateAllocationSum();
     updatePricingCalculations();
     updateLivePreview();
     updateReadinessChecklist();

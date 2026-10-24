@@ -2,24 +2,432 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Surplus Market!</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7fb; margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .header { background: linear-gradient(135deg, #0a5c48, #0f766e); padding: 30px; text-align: center; color: #ffffff; }
-        .content { padding: 30px; }
-        .footer { padding: 20px 30px; background: #f8fafc; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fb;
+            margin: 0;
+            padding: 24px 12px;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background: linear-gradient(135deg, #0a5c48 0%, #0f766e 100%);
+            padding: 36px 28px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            line-height: 1.25;
+            color: #ffffff;
+        }
+        .header p {
+            margin: 0;
+            font-size: 14px;
+            color: #d1fae5;
+            line-height: 1.45;
+        }
+        .content {
+            padding: 32px 28px;
+        }
+        .greeting {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .greeting strong {
+            color: #0a5c48;
+        }
+        .intro-text {
+            font-size: 14.5px;
+            line-height: 1.65;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+
+        /* Account Snapshot Card */
+        .account-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .id-badge {
+            font-family: monospace;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            border: 1px solid #a7f3d0;
+        }
+        .account-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .account-table td {
+            padding: 6px 0;
+            font-size: 13.5px;
+            vertical-align: top;
+        }
+        .account-label {
+            color: #64748b;
+            width: 38%;
+            font-weight: 500;
+        }
+        .account-value {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Section Heading */
+        .section-heading {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 24px 0 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Feature Blocks */
+        .feature-grid {
+            margin-bottom: 26px;
+        }
+        .feature-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #0d9488;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        .feature-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .feature-item p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.55;
+            color: #475569;
+        }
+
+        /* Checklist / Getting Started */
+        .steps-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        .steps-box h3 {
+            margin: 0 0 12px 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #166534;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: #1e3a29;
+        }
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+        .step-num {
+            background: #16a34a;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 11px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            text-align: center;
+            margin: 28px 0 20px 0;
+        }
+        .btn-primary {
+            display: inline-block;
+            background: #0a5c48;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14.5px;
+            box-shadow: 0 3px 10px rgba(10, 92, 72, 0.25);
+            margin-bottom: 10px;
+        }
+        .btn-secondary {
+            display: block;
+            text-align: center;
+            color: #0f766e;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: underline;
+            margin-top: 8px;
+        }
+
+        /* Help Box */
+        .help-box {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 24px;
+            border: 1px dashed #cbd5e1;
+            font-size: 13px;
+            line-height: 1.55;
+            color: #475569;
+            text-align: center;
+        }
+        .help-box strong {
+            color: #1e293b;
+        }
+        .help-box a {
+            color: #0d9488;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer {
+            background: #f8fafc;
+            padding: 22px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            line-height: 1.6;
+        }
+        .footer a {
+            color: #64748b;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1 style="margin:0; font-size: 24px;">Welcome to Surplus Market!</h1>
+            <span class="header-badge">&starf; Official Member Activation</span>
+            <h1>Welcome to Surplus Market!</h1>
+            <p>Your Premier B2B Marketplace for Liquidation, Overstock &amp; Bulk Sourcing</p>
         </div>
+
         <div class="content">
-            <p>Hello <strong>{{ first_name|default:"Valued Member" }}</strong>,</p>
-            <p>Your account has been successfully created. You can now explore surplus listings, connect with vendors, and manage your inventory seamlessly.</p>
+            <!-- Personalized Greeting -->
+            <p class="greeting">
+                Hello <strong>{{ first_name|default:"Valued Member" }}</strong>,
+            </p>
+            <p class="intro-text">
+                Welcome aboard! Your account has been successfully created and verified on <strong>Surplus Market</strong>. You now have direct access to our comprehensive B2B liquidation ecosystem connecting verified trade buyers, wholesalers, and enterprise sellers worldwide.
+            </p>
+
+            <!-- Account Summary Card -->
+            <div class="account-card">
+                <div class="card-header">
+                    <span class="card-title">Your Account Snapshot</span>
+                    {% if vendor_id %}
+                    <span class="id-badge">{{ vendor_id }}</span>
+                    {% endif %}
+                </div>
+                <table class="account-table">
+                    <tr>
+                        <td class="account-label">Full Name:</td>
+                        <td class="account-value">{{ full_name|default:first_name|default:"-" }}</td>
+                    </tr>
+                    {% if vendor_id %}
+                    <tr>
+                        <td class="account-label">Member / Vendor ID:</td>
+                        <td class="account-value" style="font-family: monospace; color: #0a5c48;">{{ vendor_id }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="account-label">Registered Email:</td>
+                        <td class="account-value"><a href="mailto:{{ email }}" style="color: #2563eb; text-decoration: none;">{{ email }}</a></td>
+                    </tr>
+                    <tr>
+                        <td class="account-label">Account Role:</td>
+                        <td class="account-value">
+                            <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                                {{ user_type|default:"Buyer" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if company_name %}
+                    <tr>
+                        <td class="account-label">Company Name:</td>
+                        <td class="account-value">{{ company_name }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if country %}
+                    <tr>
+                        <td class="account-label">Country:</td>
+                        <td class="account-value">{{ country }}{% if business_location and business_location != country %} &bull; {{ business_location }}{% endif %}</td>
+                    </tr>
+                    {% endif %}
+                    {% if categories_str %}
+                    <tr>
+                        <td class="account-label">Preferred Categories:</td>
+                        <td class="account-value">{{ categories_str }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="account-label">Account Status:</td>
+                        <td class="account-value" style="color: #16a34a;">
+                            &#10003; Active &amp; Verified
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- What You Can Do (Value Props) -->
+            <div class="section-heading">
+                <span>&#128640; What You Can Do on Surplus Market</span>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h3>Explore Verified Surplus &amp; Overstock Lots</h3>
+                    <p>
+                        Access verified liquidation inventory, customer returns, factory overruns, and bulk retail clearance lots at up to <strong>70% &ndash; 90% below MSRP</strong>. Full manifests with condition grades and unit breakdowns are available on every listing.
+                    </p>
+                </div>
+
+                <div class="feature-item" style="border-left-color: #0284c7;">
+                    <h3>Submit RFQs &amp; Negotiate Custom Pricing</h3>
+                    <p>
+                        Need specific volume tiers, packaging configurations, or container quantities? Submit <strong>Requests for Quote (RFQs)</strong> directly to sellers and receive competitive bulk offers tailored to your business needs.
+                    </p>
+                </div>
+
+                <div class="feature-item" style="border-left-color: #8b5cf6;">
+                    <h3>Liquidate Excess Inventory Rapidly</h3>
+                    <p>
+                        Have deadstock, returned items, or surplus inventory to move? Upload your inventory manifests via Excel or CSV with automatic category parsing, and connect with thousands of active global liquidation buyers.
+                    </p>
+                </div>
+
+                <div class="feature-item" style="border-left-color: #f59e0b;">
+                    <h3>Transparent Manifests &amp; Condition Grading</h3>
+                    <p>
+                        Every listing features standardized condition grades (Brand New, Like New, Liquidation, Refurbished, or Customer Returns) so you always know exactly what you are purchasing before committing.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Getting Started Next Steps -->
+            <div class="steps-box">
+                <h3>&#128203; Quick Checklist to Get Started</h3>
+                <div class="step-item">
+                    <span class="step-num">1</span>
+                    <div>
+                        <strong>Complete Your Profile:</strong> Head to your profile settings to add your Tax Registration Number (TRN) and business address for expedited transaction approvals.
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">2</span>
+                    <div>
+                        <strong>Set Category Preferences:</strong> Select your interested sectors to receive instant notifications whenever relevant surplus lots arrive.
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">3</span>
+                    <div>
+                        <strong>Explore Deals or Post an RFQ:</strong> Browse live lots, place offers, or initiate direct inquiries with vetted sellers.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+                <a href="{{ marketplace_url }}" class="btn-primary" target="_blank">
+                    Explore Marketplace Listings &rarr;
+                </a>
+                <a href="{{ profile_url }}" class="btn-secondary" target="_blank">
+                    Manage Your Account &amp; Profile &rarr;
+                </a>
+            </div>
+
+            <!-- Need Help Box -->
+            <div class="help-box">
+                <strong>Have Questions or Need Sourcing Support?</strong><br>
+                Our specialized B2B trade desk is here to help you source inventory or list surplus assets. Email us anytime at <a href="mailto:contact@surplusmarket.com">contact@surplusmarket.com</a>.
+            </div>
         </div>
-        <div class="footer">&copy; Surplus Market. All rights reserved.</div>
+
+        <!-- Footer -->
+        <div class="footer">
+            &copy; Surplus Market B2B Trading Platform. All rights reserved.<br>
+            <span style="font-size: 11px; color: #94a3b8;">
+                You received this email because you registered an account on Surplus Market.
+            </span>
+        </div>
     </div>
 </body>
 </html>

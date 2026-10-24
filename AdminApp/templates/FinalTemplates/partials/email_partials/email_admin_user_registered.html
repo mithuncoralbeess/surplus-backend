@@ -124,11 +124,13 @@
         </div>
         <div class="content">
             <p class="intro">
-                A new user has successfully registered and verified their account on <strong>Surplus Market</strong>. Here are the account details:
+                A new user has successfully registered and submitted their profile details on <strong>Surplus Market</strong>. Here are the full registration details:
             </p>
+
+            <!-- Card 1: User & Account Profile -->
             <div class="card">
                 <div class="card-title">
-                    <span>Account Profile</span>
+                    <span>User &amp; Account Details</span>
                     <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 12px;">{{ vendor_id }}</span>
                 </div>
                 <table class="meta-table">
@@ -137,8 +139,8 @@
                         <td class="meta-value">{{ full_name|default:"-" }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">Vendor / User ID:</td>
-                        <td class="meta-value" style="font-family: monospace; color: #0d9488;">{{ vendor_id }}</td>
+                        <td class="meta-label">Vendor ID:</td>
+                        <td class="meta-value" style="font-family: monospace; color: #0d9488;">{{ vendor_id }}{% if username %} <span style="color: #64748b; font-weight: normal;">(@{{ username }})</span>{% endif %}</td>
                     </tr>
                     <tr>
                         <td class="meta-label">Email Address:</td>
@@ -149,29 +151,13 @@
                         <td class="meta-value">{{ phone|default:"-" }}</td>
                     </tr>
                     <tr>
-                        <td class="meta-label">User Type:</td>
-                        <td class="meta-value"><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">{{ user_type }}</span></td>
+                        <td class="meta-label">User Role:</td>
+                        <td class="meta-value">
+                            <span style="background: {% if user_type == 'Seller' %}#e0f2fe; color: #0369a1;{% elif user_type == 'Both' %}#f3e8ff; color: #7e22ce;{% else %}#dbeafe; color: #1e40af;{% endif %} padding: 3px 10px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                                {{ user_type }}
+                            </span>
+                        </td>
                     </tr>
-                    <tr>
-                        <td class="meta-label">Entity Type:</td>
-                        <td class="meta-value">{{ account_entity_type|default:"Company" }}</td>
-                    </tr>
-                    {% if company_name %}
-                    <tr>
-                        <td class="meta-label">Company Name:</td>
-                        <td class="meta-value">{{ company_name }}</td>
-                    </tr>
-                    {% endif %}
-                    <tr>
-                        <td class="meta-label">Country / Location:</td>
-                        <td class="meta-value">{{ country|default:"UAE" }}{% if business_location and business_location != country %} ({{ business_location }}){% endif %}</td>
-                    </tr>
-                    {% if categories_str %}
-                    <tr>
-                        <td class="meta-label">Categories Interested:</td>
-                        <td class="meta-value">{{ categories_str }}</td>
-                    </tr>
-                    {% endif %}
                     <tr>
                         <td class="meta-label">Registered At:</td>
                         <td class="meta-value">{{ registered_at }}</td>
@@ -179,8 +165,50 @@
                 </table>
             </div>
 
+            <!-- Card 2: Business & Geographic Details -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Business &amp; Geographic Details</span>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase;">{{ account_entity_type|default:"Company" }}</span>
+                </div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Entity Type:</td>
+                        <td class="meta-value">{{ account_entity_type|default:"Company/Business" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Company Name:</td>
+                        <td class="meta-value">{% if company_name %}{{ company_name }}{% else %}<span style="color: #94a3b8; font-style: italic;">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Country:</td>
+                        <td class="meta-value"><strong>{{ country|default:"United Arab Emirates" }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Business Location:</td>
+                        <td class="meta-value">{% if business_location and business_location != '-' %}{{ business_location }}{% else %}<span style="color: #94a3b8; font-style: italic;">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Business Type:</td>
+                        <td class="meta-value">{% if business_type and business_type != '-' %}{{ business_type }}{% else %}<span style="color: #94a3b8; font-style: italic;">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Business Address:</td>
+                        <td class="meta-value">{% if business_address and business_address != '-' %}{{ business_address }}{% else %}<span style="color: #94a3b8; font-style: italic;">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Tax ID / TRN:</td>
+                        <td class="meta-value">{% if tax_registration_number and tax_registration_number != '-' %}<span style="font-family: monospace;">{{ tax_registration_number }}</span>{% else %}<span style="color: #94a3b8; font-style: italic;">Not specified</span>{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Interested Categories:</td>
+                        <td class="meta-value">{% if categories_str %}{{ categories_str }}{% else %}<span style="color: #94a3b8; font-style: italic;">None selected</span>{% endif %}</td>
+                    </tr>
+                </table>
+            </div>
+
             <a href="{{ admin_url }}" class="cta-btn" target="_blank">
-                View User in Admin Portal &rarr;
+                View User Profile in Admin Portal &rarr;
             </a>
         </div>
         <div class="footer">
