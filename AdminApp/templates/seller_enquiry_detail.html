@@ -709,19 +709,26 @@
                         },
                         body: JSON.stringify(payload)
                     });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
+                    let data = null;
+                    try {
+                        data = await res.json();
+                    } catch (parseErr) {
+                        data = null;
+                    }
+                    if (res.ok && data && data.success) {
                         if (data.warning) {
                             alert(data.warning);
                         }
                         location.reload();
                     } else {
-                        alert(data.message || 'Failed to update enquiry.');
+                        const errMsg = (data && (data.message || data.error)) || `Server returned an error (${res.status}). Please try again.`;
+                        alert(errMsg);
                         btn.disabled = false;
                         btn.textContent = 'Save Changes';
                     }
                 } catch (err) {
-                    alert('Connection error. Please try again.');
+                    console.error('Fetch error:', err);
+                    alert('Network error. Please check your connection and try again.');
                     btn.disabled = false;
                     btn.textContent = 'Save Changes';
                 }

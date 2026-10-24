@@ -1400,11 +1400,36 @@ class Product(models.Model):
 
     @property
     def condition(self):
+        if hasattr(self, '_condition') and self._condition:
+            return self._condition
+        if hasattr(self, '_extra_raw_data') and isinstance(self._extra_raw_data, dict):
+            return self._extra_raw_data.get('condition', '') or ""
         return ""
+
+    @condition.setter
+    def condition(self, value):
+        self._condition = str(value or '').strip()
+        if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+            self._extra_raw_data = {}
+        if isinstance(self._extra_raw_data, dict):
+            self._extra_raw_data['condition'] = self._condition
 
     @property
     def is_available_for_offers(self):
+        if hasattr(self, '_is_available_for_offers') and self._is_available_for_offers is not None:
+            return self._is_available_for_offers
+        if hasattr(self, '_extra_raw_data') and isinstance(self._extra_raw_data, dict):
+            return bool(self._extra_raw_data.get('is_available_for_offers', False))
         return False
+
+    @is_available_for_offers.setter
+    def is_available_for_offers(self, value):
+        bool_val = value in (True, "true", "True", "1", 1, "on", "yes")
+        self._is_available_for_offers = bool_val
+        if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+            self._extra_raw_data = {}
+        if isinstance(self._extra_raw_data, dict):
+            self._extra_raw_data['is_available_for_offers'] = bool_val
 
     @property
     def warranty_document(self):
