@@ -1118,8 +1118,8 @@
                 this.updateSoundIcon();
                 this.bindEvents();
                 this.fetchData(true);
-                // Background real-time polling every 12 seconds
-                this.pollInterval = setInterval(() => this.fetchData(false), 12000);
+                // Background real-time polling every 30 seconds
+                this.pollInterval = setInterval(() => this.fetchData(false), 30000);
             }
 
             updateSoundIcon() {

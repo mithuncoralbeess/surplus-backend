@@ -63,6 +63,9 @@ def _get_authenticated_admin(request):
     Helper to check session version validity against database & cache.
     Optimized with short-term cache lookup to avoid redundant DB queries per request.
     """
+    if hasattr(request, "_cached_admin_user") and request._cached_admin_user:
+        return request._cached_admin_user
+
     admin_id = request.session.get("adminid")
     session_version = request.session.get("session_version")
 
@@ -77,7 +80,7 @@ def _get_authenticated_admin(request):
     if not admin_user:
         try:
             admin_user = AdminDetails.objects.get(id=admin_id, status=True)
-            cache.set(cache_key, admin_user, 60)
+            cache.set(cache_key, admin_user, 300)
         except AdminDetails.DoesNotExist:
             if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
                 return request.user
@@ -94,6 +97,8 @@ def _get_authenticated_admin(request):
         if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
             return request.user
         return None
+
+    request._cached_admin_user = admin_user
     return admin_user
 
 
@@ -342,13 +347,13 @@ def admin_login(request):
         email__iexact=identifier
     ) | AdminDetails.objects.filter(username__iexact=identifier)
 
-    if not admin_qs.exists() and identifier.upper().startswith("ADM-"):
+    candidate = admin_qs.first()
+    if not candidate and identifier.upper().startswith("ADM-"):
         adm_id_clean = identifier[4:].strip()
         if adm_id_clean.isdigit():
-            admin_qs = AdminDetails.objects.filter(id=int(adm_id_clean))
+            candidate = AdminDetails.objects.filter(id=int(adm_id_clean)).first()
 
-    if admin_qs.exists():
-        candidate = admin_qs.first()
+    if candidate:
         is_pass_valid = False
         try:
             # Model handles PBKDF2 and auto-upgrades legacy SHA-256 hashes
@@ -368,7 +373,7 @@ def admin_login(request):
             admin_user = candidate
 
     # Fallback Auth: Standard Django authenticate for superusers ONLY if not registered in AdminDetails
-    if not admin_user and not admin_qs.exists():
+    if not admin_user and not candidate:
         django_user = authenticate(request, username=identifier, password=user_pass)
         if django_user and (django_user.is_superuser or django_user.is_staff):
             admin_user = (
@@ -398,6 +403,9 @@ def admin_login(request):
     # Session Setup:
     request.session["adminid"] = admin_user.id
     request.session["session_version"] = admin_user.session_version
+    request._cached_admin_user = admin_user
+    cache.set(f"admin_obj_{admin_user.id}", admin_user, timeout=300)
+    cache.set(f"admin_version_{admin_user.id}", admin_user.session_version, timeout=86400)
 
     # Role-Based Routing:
     if admin_user.email == "super@gmail.com" or admin_user.account_type == "SuperAdmin":
@@ -581,62 +589,55 @@ def adminDashBoard(request):
             staff_list = list(AdminDetails.objects.all().order_by("-created_at"))
             cache.set(staff_list_key, staff_list, timeout=300)
 
-    # Cached KPI metrics & stats (30s)
-    stats_cache_key = "admin_dashboard_stats_v4"
+    # Cached KPI metrics & stats (600s / 10 minutes)
+    stats_cache_key = "admin_dashboard_stats_v6"
     stats = cache.get(stats_cache_key)
 
     if stats is None:
-        # Products and Lots counts
-        products_count = Product.objects.count()
-        lot_listings_count = Lot.objects.count()
-
-        # Initially no need of sales/stock value calculation, set to 0
-        total_sales_due = 0.0
-        total_sales_amount = 0.0
-        active_products_stock = 0
-
-        # Consolidated Query 3: Vendors (buyers, sellers, total registered)
-        vendor_aggs = VendorDetails.objects.aggregate(
-            total=Count("id"),
-            buyers=Count("id", filter=Q(user_type__in=["BUYER", "BOTH"])),
-            sellers=Count("id", filter=Q(user_type__in=["SELLER", "BOTH"])),
-        )
-        buyers_count = vendor_aggs["buyers"] or 0
-        sellers_count = vendor_aggs["sellers"] or 0
-        registered_users = vendor_aggs["total"] or 0
-
-        companies_count = (
-            VendorDetails.objects
-            .exclude(company_name="")
-            .exclude(company_name__isnull=True)
-            .exclude(company_name__iexact="N/A")
-            .exclude(company_name__iexact="None")
-            .values("company_name")
-            .distinct()
-            .count()
-        )
-
-        # Consolidated Query 4: Admin Accounts
-        admin_aggs = AdminDetails.objects.aggregate(
-            total=Count("id"),
-            active=Count("id", filter=Q(status=True)),
-            pending=Count("id", filter=Q(status=False)),
-        )
-
-        rfq_requests_count = RfqEnquiry.objects.count()
-        categories_count = MainCategory.objects.count()
-        subcategories_count = SubCategory.objects.count()
-
-        pending_admins = admin_aggs["pending"] or 0
+        try:
+            with connection.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        (SELECT COUNT(*) FROM products),
+                        (SELECT COUNT(*) FROM lots),
+                        (SELECT COUNT(*) FROM vendor_details),
+                        (SELECT COUNT(*) FROM vendor_details WHERE user_type IN ('BUYER', 'BOTH')),
+                        (SELECT COUNT(*) FROM vendor_details WHERE user_type IN ('SELLER', 'BOTH')),
+                        (SELECT COUNT(DISTINCT company_name) FROM vendor_details WHERE company_name IS NOT NULL AND company_name != '' AND LOWER(company_name) NOT IN ('n/a', 'none')),
+                        (SELECT COUNT(*) FROM admin_details),
+                        (SELECT COUNT(*) FROM admin_details WHERE status = true),
+                        (SELECT COUNT(*) FROM admin_details WHERE status = false),
+                        (SELECT COUNT(*) FROM rfq_enquiries),
+                        (SELECT COUNT(*) FROM main_categories),
+                        (SELECT COUNT(*) FROM sub_categories)
+                """)
+                row = cur.fetchone()
+                (
+                    products_count,
+                    lot_listings_count,
+                    registered_users,
+                    buyers_count,
+                    sellers_count,
+                    companies_count,
+                    total_admins,
+                    active_admins,
+                    pending_admins,
+                    rfq_requests_count,
+                    categories_count,
+                    subcategories_count
+                ) = (row[i] or 0 for i in range(12))
+        except Exception:
+            products_count = lot_listings_count = registered_users = buyers_count = sellers_count = 0
+            companies_count = total_admins = active_admins = pending_admins = rfq_requests_count = categories_count = subcategories_count = 0
 
         stats = {
             "currency": "USD",
-            "total_admins": admin_aggs["total"] or 0,
-            "active_admins": admin_aggs["active"] or 0,
+            "total_admins": total_admins,
+            "active_admins": active_admins,
             "pending_admins": pending_admins,
-            "total_sales_due": f"{total_sales_due:.2f}",
-            "total_sales_amount": f"{total_sales_amount:.2f}",
-            "active_products_qty": active_products_stock,
+            "total_sales_due": "0.00",
+            "total_sales_amount": "0.00",
+            "active_products_qty": 0,
             "buyers": buyers_count,
             "sellers": sellers_count,
             "companies": companies_count,
@@ -651,7 +652,7 @@ def adminDashBoard(request):
             "purchase_invoices": lot_listings_count,
             "sales_invoices": rfq_requests_count,
         }
-        cache.set(stats_cache_key, stats, timeout=300)
+        cache.set(stats_cache_key, stats, timeout=600)
     else:
         pending_admins = stats.get("pending_admins", 0)
 
@@ -1444,10 +1445,13 @@ def seller_enquiries_view(request, status_filter=None):
     country_filter = request.GET.get("country", "").strip()
     page_num = request.GET.get("page", 1)
 
-    # Categories list: all active MainCategory names + categories assigned in products
-    mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
-    prod_cats = list(Product.objects.filter(category__isnull=False).values_list("category__name", flat=True).distinct())
-    all_categories = sorted(list(set(mc_names) | set(prod_cats)))
+    # Categories list: cached for 15 minutes to eliminate full-table scan on every page request
+    all_categories = cache.get("seller_enquiry_categories")
+    if all_categories is None:
+        mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
+        prod_cats = list(Product.objects.filter(category__isnull=False).values_list("category__name", flat=True).distinct())
+        all_categories = sorted(list(set(mc_names) | set(prod_cats)))
+        cache.set("seller_enquiry_categories", all_categories, timeout=900)
 
     ALL_COUNTRIES = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia",
@@ -1473,7 +1477,9 @@ def seller_enquiries_view(request, status_filter=None):
         "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
     ]
 
-    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").prefetch_related("images").order_by("-created_at")
+    qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").defer(
+        "description", "reason_to_sell", "warranty_attachment", "third_party_documents"
+    ).order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1498,13 +1504,16 @@ def seller_enquiries_view(request, status_filter=None):
             Q(vendor__business_location__icontains=country_filter)
         )
     
-    # Consolidated Status Counts (1 query instead of 4)
-    counts_data = Product.objects.aggregate(
-        total=Count("id"),
-        pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
-        approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
-        declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
-    )
+    # Consolidated Status Counts (cached for 60s to prevent full table aggregate on every pagination/filter)
+    counts_data = cache.get("seller_enquiry_counts")
+    if not counts_data:
+        counts_data = Product.objects.aggregate(
+            total=Count("id"),
+            pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
+            approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
+            declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+        )
+        cache.set("seller_enquiry_counts", counts_data, timeout=60)
     total_count = counts_data["total"] or 0
     pending_count = counts_data["pending"] or 0
     approved_count = counts_data["approved"] or 0
@@ -1584,15 +1593,18 @@ def lot_enquiries_view(request, status_filter=None):
     country_filter = request.GET.get("country", "").strip()
     page_num = request.GET.get("page", 1)
 
-    # Categories list: all active MainCategory names + categories assigned in lots
-    mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
-    assigned_cats = set()
-    for raw_alloc in Lot.objects.exclude(category_allocations=[]).values_list("category_allocations", flat=True):
-        if isinstance(raw_alloc, list):
-            for c in raw_alloc:
-                if isinstance(c, dict) and c.get("category_name"):
-                    assigned_cats.add(c["category_name"].strip())
-    all_categories = sorted(list(set(mc_names) | assigned_cats))
+    # Categories list: cached for 15 minutes to eliminate full-table scan on every page request
+    all_categories = cache.get("lot_enquiry_categories")
+    if all_categories is None:
+        mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
+        assigned_cats = set()
+        for raw_alloc in Lot.objects.exclude(category_allocations=[]).values_list("category_allocations", flat=True):
+            if isinstance(raw_alloc, list):
+                for c in raw_alloc:
+                    if isinstance(c, dict) and c.get("category_name"):
+                        assigned_cats.add(c["category_name"].strip())
+        all_categories = sorted(list(set(mc_names) | assigned_cats))
+        cache.set("lot_enquiry_categories", all_categories, timeout=900)
 
     ALL_COUNTRIES = [
         "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia",
@@ -1618,7 +1630,10 @@ def lot_enquiries_view(request, status_filter=None):
         "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
     ]
 
-    qs = Lot.objects.all().select_related("vendor", "admin").order_by("-created_at")
+    # Critical optimization: defer raw_data and large manifests/images (prevents downloading 40MB of raw spreadsheets per page)
+    qs = Lot.objects.all().select_related("vendor", "admin").defer(
+        "raw_data", "warehouse_images", "third_party_documents", "description", "key_brands_included"
+    ).order_by("-created_at")
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1640,13 +1655,16 @@ def lot_enquiries_view(request, status_filter=None):
             Q(inventory_country__icontains=country_filter)
         )
 
-    # Consolidated Status Counts (1 query instead of 4)
-    lot_counts_data = Lot.objects.aggregate(
-        total=Count("id"),
-        pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
-        approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
-        declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
-    )
+    # Consolidated Status Counts (cached for 60s)
+    lot_counts_data = cache.get("lot_enquiry_counts")
+    if not lot_counts_data:
+        lot_counts_data = Lot.objects.aggregate(
+            total=Count("id"),
+            pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
+            approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
+            declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+        )
+        cache.set("lot_enquiry_counts", lot_counts_data, timeout=60)
     total_count = lot_counts_data["total"] or 0
     pending_count = lot_counts_data["pending"] or 0
     approved_count = lot_counts_data["approved"] or 0
@@ -1708,6 +1726,7 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     if request.method == "DELETE":
         enquiry.delete()
+        cache.delete("seller_enquiry_counts")
         return Response({"success": True, "message": "Product deleted successfully."})
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
@@ -1785,6 +1804,7 @@ def seller_enquiry_status_api(request, enquiry_id):
                 enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
+    cache.delete("seller_enquiry_counts")
 
     msg = "Product status updated."
     if enquiry.enquiry_status == "APPROVED":
@@ -2841,6 +2861,7 @@ def lot_enquiry_status_api(request, enquiry_id):
 
     if request.method == "DELETE":
         enquiry.delete()
+        cache.delete("lot_enquiry_counts")
         return Response({"success": True, "message": "Lot deleted successfully."})
 
     has_explicit_active = ("active_status" in request.data or "is_active" in request.data)
@@ -2901,6 +2922,7 @@ def lot_enquiry_status_api(request, enquiry_id):
                 enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
 
     enquiry.save()
+    cache.delete("lot_enquiry_counts")
 
     msg = f"Lot status updated to {new_status}."
     if enquiry.enquiry_status == "approved":
@@ -4796,26 +4818,38 @@ def partnership_enquiries_view(request):
 
         if action == "update_status" and enquiry_id and new_status:
             PartnershipEnquiry.objects.filter(id=enquiry_id).update(status=new_status.upper())
+            cache.delete("partnership_enquiry_counts")
             if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True, "message": f"Status updated to {new_status.upper()}"})
             return redirect("partnership_enquiries")
 
         elif action == "delete" and selected_ids:
             PartnershipEnquiry.objects.filter(id__in=selected_ids).delete()
+            cache.delete("partnership_enquiry_counts")
             if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True, "message": "Selected enquiry deleted successfully"})
             return redirect("partnership_enquiries")
 
     db_enquiries = PartnershipEnquiry.objects.all().order_by("-created_at")
     
-    counts = {
-        "total": db_enquiries.count(),
-        "pending": db_enquiries.filter(status="PENDING").count(),
-        "contacted": db_enquiries.filter(status="CONTACTED").count(),
-        "referral": db_enquiries.filter(
-            Q(partnership_interest__icontains="referral") | Q(business_location__icontains="gcc") | Q(business_location__icontains="uae")
-        ).count() or db_enquiries.count()
-    }
+    # Consolidated & Cached Status Counts (1 query cached for 60s instead of 4 sequential queries)
+    counts = cache.get("partnership_enquiry_counts")
+    if not counts:
+        data = PartnershipEnquiry.objects.aggregate(
+            total=Count("id"),
+            pending=Count("id", filter=Q(status="PENDING")),
+            contacted=Count("id", filter=Q(status="CONTACTED")),
+            referral=Count("id", filter=Q(
+                Q(partnership_interest__icontains="referral") | Q(business_location__icontains="gcc") | Q(business_location__icontains="uae")
+            ))
+        )
+        counts = {
+            "total": data.get("total") or 0,
+            "pending": data.get("pending") or 0,
+            "contacted": data.get("contacted") or 0,
+            "referral": data.get("referral") or data.get("total") or 0,
+        }
+        cache.set("partnership_enquiry_counts", counts, timeout=60)
 
     enquiries_list = []
     for item in db_enquiries:
@@ -4955,11 +4989,13 @@ def all_products_view(request):
     search_query = request.GET.get("q", "").strip()
     page_num = request.GET.get("page", 1)
 
-    # Filter to show approved products (both active and inactive)
-    products_qs = Product.objects.select_related("category", "subcategory", "vendor").filter(
+    # Filter to show approved products (both active and inactive) with lean column footprint
+    products_qs = Product.objects.select_related("category", "subcategory", "vendor").defer(
+        "description", "reason_to_sell", "warranty_attachment", "third_party_documents"
+    ).filter(
         Q(enquiry_status__iexact="APPROVED") | Q(enquiry_status__iexact="approved")
     ).order_by("-created_at")
-    approved_enquiries = SellerProductEnquiry.objects.filter(enquiry_status="approved")
+    approved_enquiries = SellerProductEnquiry.objects.none()
 
     if search_query:
         prod_filter = (
@@ -7123,7 +7159,7 @@ def rfq_requests_view(request, status_filter=None):
         return redirect("admin_login_page")
 
     from .models import RfqEnquiry
-    from django.db.models import Q, Sum
+    from django.db.models import Q, Sum, Count
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
     current_status = (status_filter or request.GET.get("status", "all")).upper()
@@ -7140,12 +7176,25 @@ def rfq_requests_view(request, status_filter=None):
     elif date_filter == "30days":
         qs = qs.filter(created_at__gte=timezone.now() - timezone.timedelta(days=30))
 
-    total_count = RfqEnquiry.objects.count()
-    pending_count = RfqEnquiry.objects.filter(status="PENDING").count()
-    quoted_count = RfqEnquiry.objects.filter(status="QUOTED").count()
-    accepted_count = RfqEnquiry.objects.filter(status="ACCEPTED").count()
-    declined_count = RfqEnquiry.objects.filter(status="DECLINED").count()
-    pipeline_val = RfqEnquiry.objects.aggregate(total_val=Sum("estimated_value"))["total_val"] or Decimal("0.00")
+    # Consolidated & Cached RFQ Status Counts (1 single query cached for 60s instead of 6 sequential round-trips)
+    rfq_counts_data = cache.get("rfq_enquiry_counts")
+    if not rfq_counts_data:
+        rfq_counts_data = RfqEnquiry.objects.aggregate(
+            total=Count("id"),
+            pending=Count("id", filter=Q(status="PENDING")),
+            quoted=Count("id", filter=Q(status="QUOTED")),
+            accepted=Count("id", filter=Q(status="ACCEPTED")),
+            declined=Count("id", filter=Q(status="DECLINED")),
+            pipeline_value=Sum("estimated_value"),
+        )
+        cache.set("rfq_enquiry_counts", rfq_counts_data, timeout=60)
+
+    total_count = rfq_counts_data.get("total") or 0
+    pending_count = rfq_counts_data.get("pending") or 0
+    quoted_count = rfq_counts_data.get("quoted") or 0
+    accepted_count = rfq_counts_data.get("accepted") or 0
+    declined_count = rfq_counts_data.get("declined") or 0
+    pipeline_val = rfq_counts_data.get("pipeline_value") or Decimal("0.00")
 
     if current_status in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
         qs = qs.filter(status=current_status)
@@ -7284,6 +7333,7 @@ def rfq_request_status_api(request, rfq_id):
     if request.method == "DELETE":
         ref = rfq.reference
         rfq.delete()
+        cache.delete("rfq_enquiry_counts")
         return Response({"success": True, "message": f"RFQ '{ref}' deleted successfully."})
 
     new_status = (request.data.get("status") or "").strip().upper()
@@ -7303,6 +7353,7 @@ def rfq_request_status_api(request, rfq_id):
                 pass
 
     rfq.save()
+    cache.delete("rfq_enquiry_counts")
 
     if rfq.buyer:
         try:

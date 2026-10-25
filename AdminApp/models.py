@@ -993,7 +993,7 @@ class Lot(models.Model):
             first = self.category_allocations[0]
             if isinstance(first, dict):
                 return first.get("category_name", "") or first.get("category", "")
-        if isinstance(self.raw_data, dict):
+        if "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             return self.raw_data.get("category", "") or self.raw_data.get("subcategory", "")
         return ""
 
@@ -1009,7 +1009,7 @@ class Lot(models.Model):
                             return int(cid)
                         except (ValueError, TypeError):
                             pass
-        if isinstance(self.raw_data, dict):
+        if "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             cid = self.raw_data.get("subcategory_id") or self.raw_data.get("category_id")
             if cid is not None:
                 try:
@@ -1049,7 +1049,7 @@ class Lot(models.Model):
                             return int(mid)
                         except (ValueError, TypeError):
                             pass
-        if isinstance(self.raw_data, dict):
+        if "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             mid = self.raw_data.get("main_category_id")
             if mid is not None:
                 try:
@@ -1065,7 +1065,7 @@ class Lot(models.Model):
                     cid = alloc.get("category_id") or alloc.get("subcategory_id")
                     if cid:
                         break
-        if not cid and isinstance(self.raw_data, dict):
+        if not cid and "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             cid = self.raw_data.get("subcategory_id") or self.raw_data.get("category_id")
         if cid:
             try:
@@ -1078,7 +1078,7 @@ class Lot(models.Model):
         # Match category_name against MainCategory table
         cat_name = self.category_name
         raw_main = ""
-        if isinstance(self.raw_data, dict):
+        if "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             raw_main = str(self.raw_data.get("main_category") or "").strip()
         names_to_try = [n for n in (raw_main, cat_name) if n]
         for name in names_to_try:
@@ -1109,7 +1109,7 @@ class Lot(models.Model):
                         return str(name).strip()
                 elif isinstance(alloc, str) and alloc.strip():
                     return alloc.strip()
-        if isinstance(self.raw_data, dict):
+        if "raw_data" not in self.get_deferred_fields() and isinstance(self.raw_data, dict):
             name = self.raw_data.get("subcategory") or self.raw_data.get("category")
             if name:
                 return str(name).strip()
@@ -1695,70 +1695,6 @@ class ContactUsEnquiry(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.email}) - {self.enquiry_type}"
-
-
-class AnalyticsViewLog(models.Model):
-    ENTITY_TYPE_CHOICES = (
-        ("blog", "Blog Post"),
-        ("product", "Product"),
-        ("lot", "Lot Batch"),
-        ("page", "Page"),
-        ("other", "Other"),
-    )
-
-    entity_type = models.CharField(max_length=50, choices=ENTITY_TYPE_CHOICES, default="other", db_index=True)
-    entity_id = models.IntegerField(null=True, blank=True, db_index=True)
-    entity_slug = models.CharField(max_length=255, blank=True, default="", db_index=True)
-    path = models.CharField(max_length=500, blank=True, default="", db_index=True)
-    referrer = models.CharField(max_length=500, blank=True, default="")
-    user_agent = models.TextField(blank=True, default="")
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
-    user = models.ForeignKey(VendorDetails, on_delete=models.SET_NULL, null=True, blank=True, related_name="view_logs")
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        verbose_name = "Analytics View Log"
-        verbose_name_plural = "Analytics View Logs"
-        db_table = "analytics_view_logs"
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["entity_type", "entity_id"], name="idx_view_type_id"),
-            models.Index(fields=["entity_type", "entity_slug"], name="idx_view_type_slug"),
-        ]
-
-class PageViewLog(models.Model):
-    ENTITY_TYPE_CHOICES = (
-        ("lot", "Lot Batch"),
-        ("product", "Product"),
-        ("blog", "Blog Post"),
-        ("page", "Page"),
-    )
-
-    entity_type = models.CharField(max_length=20, choices=ENTITY_TYPE_CHOICES, db_index=True)
-    entity_id = models.IntegerField(null=True, blank=True, db_index=True)
-    entity_slug = models.CharField(max_length=255, blank=True, default="", db_index=True)
-    path = models.CharField(max_length=500, blank=True, default="", db_index=True)
-    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
-    user_agent = models.TextField(blank=True, default="")
-    referrer = models.CharField(max_length=500, blank=True, default="")
-    duration_seconds = models.PositiveIntegerField(default=0, db_index=True, help_text="Time spent on page in seconds")
-    session_id = models.CharField(max_length=100, blank=True, default="", db_index=True)
-    visitor_id = models.CharField(max_length=100, blank=True, default="", db_index=True)
-    is_stuck = models.BooleanField(default=False, db_index=True, help_text="Flagged if user stayed unusually long without converting")
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-
-    class Meta:
-        verbose_name = "Page View Log"
-        verbose_name_plural = "Page View Logs"
-        db_table = "page_view_logs"
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["entity_type", "entity_id", "ip_address", "created_at"], name="idx_page_view_dedup_id"),
-            models.Index(fields=["entity_type", "entity_slug", "ip_address", "created_at"], name="idx_page_view_dedup_slug"),
-        ]
-
-    def __str__(self):
-        return f"{self.entity_type} ({self.entity_slug or self.entity_id}) - {self.ip_address} @ {self.created_at}"
 
 
 class BlogPost(models.Model):

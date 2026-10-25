@@ -61,40 +61,7 @@ class CompleteProfileSerializer(serializers.Serializer):
 class SendLoginOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-from AdminApp.models import PartnershipEnquiry, ContactUsEnquiry, AnalyticsViewLog, PageViewLog, Product, Lot
-
-class PageViewLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PageViewLog
-        fields = [
-            'id',
-            'entity_type',
-            'entity_id',
-            'entity_slug',
-            'path',
-            'ip_address',
-            'user_agent',
-            'referrer',
-            'created_at',
-        ]
-        read_only_fields = ['id', 'created_at']
-
-class AnalyticsViewLogSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = AnalyticsViewLog
-        fields = [
-            'id',
-            'entity_type',
-            'entity_id',
-            'entity_slug',
-            'path',
-            'referrer',
-            'user_agent',
-            'ip_address',
-            'created_at',
-        ]
-        read_only_fields = ['id', 'created_at']
+from AdminApp.models import PartnershipEnquiry, ContactUsEnquiry, Product, Lot
 
 class ContactUsEnquirySerializer(serializers.ModelSerializer):
 

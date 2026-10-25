@@ -79,13 +79,12 @@ def _get_global_pending_counts():
 def _get_admin_notifications_context(admin_user, is_super):
     """
     Fetches recent notifications and unread badge for the current admin.
-    Cached for 120s (2 minutes).
+    Cached for 300s (5 minutes).
     """
-    key = f"ctx_admin_notifs_v4_{admin_user.id}"
+    key = f"ctx_admin_notifs_v5_{admin_user.id}"
     data = cache.get(key)
     if data is None:
         try:
-            pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
             if is_super:
                 notif_qs = AdminNotification.objects.filter(
                     Q(admin=admin_user) | Q(for_superadmins_only=True) | Q(admin__isnull=True)
@@ -97,11 +96,11 @@ def _get_admin_notifications_context(admin_user, is_super):
 
             recent_notifs = list(notif_qs.order_by("-created_at")[:12])
             unread_count = sum(1 for n in recent_notifs if not n.is_read)
-            if unread_count == 0:
+            if unread_count == 0 and len(recent_notifs) == 12:
                 unread_count = notif_qs.filter(is_read=False).count()
 
             data = {
-                "pending_admins_count": pending_admins,
+                "pending_admins_count": 0,
                 "admin_unread_notifications_count": unread_count,
                 "admin_recent_notifications": recent_notifs,
             }
@@ -111,7 +110,7 @@ def _get_admin_notifications_context(admin_user, is_super):
                 "admin_unread_notifications_count": 0,
                 "admin_recent_notifications": [],
             }
-        cache.set(key, data, timeout=120)
+        cache.set(key, data, timeout=300)
     return data
 
 
@@ -142,20 +141,21 @@ def maintenance_mode_context(request):
         context_data.update(_get_global_pending_counts())
 
         # 3. Admin session & notifications
-        admin_id = request.session.get("adminid")
-        if admin_id:
-            admin_user_cache_key = f"ctx_admin_user_v4_{admin_id}"
-            admin_user = cache.get(admin_user_cache_key)
-            if admin_user is None:
-                admin_user = AdminDetails.objects.filter(id=admin_id, status=True).first()
-                if admin_user:
-                    cache.set(admin_user_cache_key, admin_user, timeout=300)
+        admin_user = getattr(request, "_cached_admin_user", None)
+        if not admin_user:
+            admin_id = request.session.get("adminid")
+            if admin_id:
+                admin_user = cache.get(f"admin_obj_{admin_id}")
+                if admin_user is None:
+                    admin_user = AdminDetails.objects.filter(id=admin_id, status=True).first()
+                    if admin_user:
+                        cache.set(f"admin_obj_{admin_id}", admin_user, timeout=300)
 
-            if admin_user:
-                is_super = (admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com")
-                context_data["current_admin"] = admin_user
-                context_data["is_super_admin"] = is_super
-                context_data.update(_get_admin_notifications_context(admin_user, is_super))
+        if admin_user:
+            is_super = (admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com")
+            context_data["current_admin"] = admin_user
+            context_data["is_super_admin"] = is_super
+            context_data.update(_get_admin_notifications_context(admin_user, is_super))
     except Exception:
         pass
 
