@@ -51,6 +51,14 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
     If items_override is provided, uses those cleaned items directly (useful for previewing newly parsed spreadsheets).
     """
     from .models import LotProduct
+    from django.core.cache import cache
+
+    cache_key = None
+    if items_override is None:
+        cache_key = f"lot_wh_explorer_v1_{lot.id}_{int(lot.updated_at.timestamp()) if getattr(lot, 'updated_at', None) else 0}"
+        cached_res = cache.get(cache_key)
+        if cached_res is not None:
+            return cached_res
 
     raw_items = []
     is_saved_to_db = False
@@ -222,7 +230,7 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
     top_profit_drivers = top_candidates[:6] if top_candidates else items[:6]
 
 
-    return {
+    result = {
         "success": True,
         "lot_id": lot.id,
         "lot_number": lot.lot_number,
@@ -245,3 +253,6 @@ def get_lot_warehouse_explorer_data(lot, items_override=None):
         "top_profit_drivers": top_profit_drivers,
         "items": items,
     }
+    if cache_key:
+        cache.set(cache_key, result, 1800)
+    return result

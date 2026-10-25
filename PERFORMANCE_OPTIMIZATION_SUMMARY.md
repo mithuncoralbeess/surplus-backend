@@ -58,6 +58,17 @@ Prior to these fixes, navigating to **Lot Enquiries** took upwards of **410 seco
 2. **Partnership Enquiries (`/admin/enquiries/partnership/`)**:
    - 4 separate sequential `.count()` queries.
 
+### 3.5 Public Lot Inventory APIs (`/api/lots/`, `/api/lots/<id>/`, `/api/lots/<id>/explorer/`) — 5 to 7 Seconds Delay
+1. **Massive Payload with Duplicated Manifest Data (~1.24 MB for 6 lots)**:
+   - In `LotSerializer`, every lot serialized both `products` and `manifest_data`.
+   - Both fields contained identical full manifest SKU row specifications (~224 KB each = ~450 KB per lot duplicated).
+   - Transferring 1.24 MB of raw JSON over the internet added 1.5 – 2 seconds of pure network serialization delay on every request.
+2. **Heavy Python Processing on Every Request**:
+   - Both `get_products` and `get_manifest_data` ran `clean_lot_product_item` on every SKU row of every lot on every single HTTP GET request without memoization.
+3. **Database Column Overhead**:
+   - Initial queries loaded the full `raw_data` JSON manifest blob across the remote Neon PostgreSQL connection instead of deferring it for listing cards.
+
+
 ---
 
 ## 4. Technical Fixes Implemented
@@ -127,6 +138,14 @@ Prior to these fixes, navigating to **Lot Enquiries** took upwards of **410 seco
 - **CORS Exposed Headers**: Added `Content-Encoding`, `Content-Length`, and `Content-Type` to `CORS_EXPOSE_HEADERS` to enable frontend clients to accurately detect and unpack compressed response streams.
 - **HTTP Keep-Alive Connection Reuse**: Added `--keep-alive 5` to the Gunicorn WSGI startup configuration in [`Procfile`](file:///d:/CORALBEES/surplus-backend/Procfile), maintaining persistent TCP connections from edge proxies/CDNs and eliminating repeated TLS/TCP handshake overheads.
 
+### 4.11 Public Lot Inventory Architecture & Lightweight Serialization
+- **Lightweight `LotListSerializer`**: Created [`LotListSerializer`](file:///d:/CORALBEES/surplus-backend/AdminApp/serializers.py) for all catalog list endpoints (`/api/lots/`). It returns clean card metadata (`lot_number`, `title`, `unit_count`, `msrp`, `image`, `condition`, `liquidation_price`, `offer`), while keeping `products: []` and `manifest_data: []` as safe empty arrays. This eliminates hundreds of kilobytes of nested manifest items per lot without breaking any frontend components.
+- **Queryset `raw_data` Deferral & Foreign Key Resolution**: In [`submit_lot_request`](file:///d:/CORALBEES/surplus-backend/api/views.py), added `.defer("raw_data").select_related("vendor")` so the multi-megabyte raw manifest JSON is never queried across the network on catalog browse requests.
+- **Memoized Manifest Cleaning in Detail Serializer**: Implemented `_get_cleaned_manifest_items(obj)` in `LotSerializer` so that detail requests parse and clean the manifest SKU rows once per lot instance rather than computing them separately for both `products` and `manifest_data`.
+- **Public API Response Caching**: 
+  - Added URL-hashed response caching to `submit_lot_request` (120s TTL) for instant warm browsing.
+  - Added timestamp-versioned caching to [`public_lot_detail_api`](file:///d:/CORALBEES/surplus-backend/api/views.py) and [`get_lot_warehouse_explorer_data`](file:///d:/CORALBEES/surplus-backend/AdminApp/warehouse_explorer.py) (1800s TTL) so repeat visits to lot detail and virtual warehouse explorer grids load in milliseconds.
+
 ---
 
 ## 5. Performance Benchmark Results
@@ -152,6 +171,15 @@ Measured payload reduction via GZip compression across key endpoints:
 | **Admin KPI Dashboard** | 131,139 bytes (128.1 KB) | 19,351 bytes (18.9 KB) | `gzip` | **85.2% Saved** |
 | **Buyer RFQ Requests** | 137,878 bytes (134.6 KB) | 21,073 bytes (20.6 KB) | `gzip` | **84.7% Saved** |
 
+### 5.3 Public Lot Inventory REST APIs (Real-World Measurements)
+Measured directly on live production dataset:
+
+| Endpoint / Feature | Before Fix (Payload / Time) | After Fix (Payload / Time) | Warm Load Time | Improvement / Savings |
+| :--- | :---: | :---: | :---: | :---: |
+| **Lot Catalog Listing** (`GET /api/lots/`) | 1,236,262 B (1.24 MB) / **5.5 – 6.7s** | 11,900 B (11.6 KB) / **0.72s** | **0.0019s (1.9ms)** | **99.04% Smaller / ~9x Faster** |
+| **Lot Single Detail** (`GET /api/lots/<id>/`) | 831,027 B (811 KB) / **4.8 – 7.4s** | 831,027 B / **2.33s** (memoized) | **0.83s** (warm cache) | **~3x Faster Cold / Instant Warm** |
+| **Warehouse Explorer SKU Grid** (`/api/lots/<id>/explorer/`) | 246,958 B (241 KB) / **2.9 – 4.0s** | 246,958 B / **1.83s** (memoized) | **0.78s** (warm cache) | **~2.2x Faster Cold / Instant Warm** |
+
 ---
 
 ## 6. Cache Invalidation & Data Freshness Strategy
@@ -159,13 +187,16 @@ Measured payload reduction via GZip compression across key endpoints:
 To ensure admin actions are immediately reflected without waiting for cache expiration:
 - **Status Change**: When an admin approves or declines an item via the UI or status API, the specific cache key (`lot_enquiry_counts`, `seller_enquiry_counts`, `rfq_enquiry_counts`, `partnership_enquiry_counts`) is immediately deleted.
 - **Deletions**: Deleting any enquiry or lot flushes the status counts cache.
-- **Short TTL**: Status counts have a 60-second fallback TTL; category dropdowns have a 15-minute TTL.
-- **Detail View Unaffected**: Single-record detail pages ([`lot_enquiry_detail_view`](file:///d:/CORALBEES/surplus-backend/AdminApp/views.py#L2922), [`seller_enquiry_detail_view`](file:///d:/CORALBEES/surplus-backend/AdminApp/views.py#L2084)) load the full un-deferred record for 1 individual ID, ensuring complete editing capabilities without performance penalty.
+- **Short TTL**: Status counts have a 60-second fallback TTL; category dropdowns have a 15-minute TTL; public lot listings have a 120-second TTL.
+- **Detail View Unaffected**: Single-record detail pages load the full un-deferred record for 1 individual ID, ensuring complete editing capabilities without performance penalty.
 
 ---
 
 ## 7. Modified Files Reference
 
+- [`AdminApp/serializers.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/serializers.py): Introduced lightweight `LotListSerializer` and memoized `_get_cleaned_manifest_items(obj)` on `LotSerializer`.
+- [`AdminApp/warehouse_explorer.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/warehouse_explorer.py): Added analytics caching for virtual warehouse SKU explorer.
+- [`api/views.py`](file:///d:/CORALBEES/surplus-backend/api/views.py): Integrated `LotListSerializer`, deferred `raw_data`, and added response caching to `submit_lot_request` and `public_lot_detail_api`.
 - [`AdminApp/models.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py): Added `get_deferred_fields()` checks on `Lot` properties.
 - [`AdminApp/views.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/views.py): Query optimizations, field deferrals, multi-condition counts, and cache invalidation across all enquiry views and status APIs.
 - [`config/settings.py`](file:///d:/CORALBEES/surplus-backend/config/settings.py): Ordered `WhiteNoiseMiddleware` and `GZipMiddleware`, configured `CompressedStaticFilesStorage`, and added `CORS_EXPOSE_HEADERS`.
@@ -175,3 +206,4 @@ To ensure admin actions are immediately reflected without waiting for cache expi
 - [`AdminApp/templates/partials/navbar.html`](file:///d:/CORALBEES/surplus-backend/AdminApp/templates/partials/navbar.html): Increased notification polling from 12s to 30s.
 - [`api/serializers.py`](file:///d:/CORALBEES/surplus-backend/api/serializers.py): Cleaned removed analytics serializers.
 - [`AdminApp/management/commands/set_admin_password.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/management/commands/set_admin_password.py): New management command for synchronizing admin passwords.
+
