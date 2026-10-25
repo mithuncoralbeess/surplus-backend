@@ -47,8 +47,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # High-priority CORS handling (must be first)
     "django.middleware.security.SecurityMiddleware",
-    "django.middleware.gzip.GZipMiddleware",  # High-performance response compression
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Must precede GZip and app middleware for static assets
+    "django.middleware.gzip.GZipMiddleware",  # High-performance dynamic response compression (Gzip)
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -183,6 +183,11 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+CORS_EXPOSE_HEADERS = [
+    "Content-Encoding",
+    "Content-Length",
+    "Content-Type",
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
@@ -229,6 +234,19 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "AdminApp" / "templates" / "static",
 ]
+
+# WhiteNoise High-Performance Text Compression & Caching
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0  # 1 year immutable cache in production
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

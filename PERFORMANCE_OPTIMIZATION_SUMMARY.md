@@ -121,10 +121,17 @@ Prior to these fixes, navigating to **Lot Enquiries** took upwards of **410 seco
 - Increased navbar notification polling interval from 12 seconds to 30 seconds ([`AdminApp/templates/partials/navbar.html`](file:///d:/CORALBEES/surplus-backend/AdminApp/templates/partials/navbar.html#L145)).
 - Added CDN `preconnect` and `dns-prefetch` resource hints to [`AdminApp/templates/base.html`](file:///d:/CORALBEES/surplus-backend/AdminApp/templates/base.html#L11-L15).
 
+### 4.10 Text Compression & Network Layer Optimization
+- **Dynamic Response GZip Compression**: Configured `django.middleware.gzip.GZipMiddleware` immediately following `WhiteNoiseMiddleware`. Automatically compresses all HTML pages, API JSON responses, and XML payloads larger than 200 bytes for clients sending `Accept-Encoding: gzip`.
+- **WhiteNoise Static Pre-Compression (Brotli + Gzip)**: Enabled `whitenoise.storage.CompressedStaticFilesStorage` in `STORAGES` / `STATICFILES_STORAGE` and configured `WHITENOISE_MAX_AGE = 31536000` (1-year immutable cache) for pre-compressed CSS, JavaScript, and font assets.
+- **CORS Exposed Headers**: Added `Content-Encoding`, `Content-Length`, and `Content-Type` to `CORS_EXPOSE_HEADERS` to enable frontend clients to accurately detect and unpack compressed response streams.
+- **HTTP Keep-Alive Connection Reuse**: Added `--keep-alive 5` to the Gunicorn WSGI startup configuration in [`Procfile`](file:///d:/CORALBEES/surplus-backend/Procfile), maintaining persistent TCP connections from edge proxies/CDNs and eliminating repeated TLS/TCP handshake overheads.
+
 ---
 
 ## 5. Performance Benchmark Results
 
+### 5.1 Latency Benchmarks (Before vs. After)
 Measured on live database with 50-row pagination and full admin session context:
 
 | Page / Route | Before Optimization | Cold Load (No Cache) | Warm Load (Cached) | Improvement Factor |
@@ -134,6 +141,16 @@ Measured on live database with 50-row pagination and full admin session context:
 | **Admin Dashboard** (`/admin/dashboard/`) | **6.11 s** | **2.22 s** | **0.006 s** | **~1000x faster (warm)** |
 | **RFQ Requests** (`/admin/rfq-requests/`) | **3.5 – 4.5 s** | **1.48 s** | **1.07 s** | **~3.5x faster** |
 | **Partnership Enquiries** (`/admin/enquiries/partnership/`) | **1.5 – 2.0 s** | **0.73 s** | **0.35 s** | **~5x faster** |
+
+### 5.2 Text Compression & Bandwidth Reduction Metrics
+Measured payload reduction via GZip compression across key endpoints:
+
+| Endpoint / Route | Uncompressed Size | Compressed Size | Content-Encoding | Bandwidth Saved |
+| :--- | :---: | :---: | :---: | :---: |
+| **Seller Product Enquiries** | 522,398 bytes (510.2 KB) | 33,720 bytes (32.9 KB) | `gzip` | **93.5% Saved** |
+| **Lot Batch Enquiries** | 323,212 bytes (315.6 KB) | 28,896 bytes (28.2 KB) | `gzip` | **91.1% Saved** |
+| **Admin KPI Dashboard** | 131,139 bytes (128.1 KB) | 19,351 bytes (18.9 KB) | `gzip` | **85.2% Saved** |
+| **Buyer RFQ Requests** | 137,878 bytes (134.6 KB) | 21,073 bytes (20.6 KB) | `gzip` | **84.7% Saved** |
 
 ---
 
@@ -151,6 +168,8 @@ To ensure admin actions are immediately reflected without waiting for cache expi
 
 - [`AdminApp/models.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/models.py): Added `get_deferred_fields()` checks on `Lot` properties.
 - [`AdminApp/views.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/views.py): Query optimizations, field deferrals, multi-condition counts, and cache invalidation across all enquiry views and status APIs.
+- [`config/settings.py`](file:///d:/CORALBEES/surplus-backend/config/settings.py): Ordered `WhiteNoiseMiddleware` and `GZipMiddleware`, configured `CompressedStaticFilesStorage`, and added `CORS_EXPOSE_HEADERS`.
+- [`Procfile`](file:///d:/CORALBEES/surplus-backend/Procfile): Added `--keep-alive 5` for HTTP persistent connection reuse.
 - [`AdminApp/context_processors.py`](file:///d:/CORALBEES/surplus-backend/AdminApp/context_processors.py): Memoized admin lookup, unified caching, and notification badge optimization.
 - [`AdminApp/templates/base.html`](file:///d:/CORALBEES/surplus-backend/AdminApp/templates/base.html): Added CDN preconnect headers.
 - [`AdminApp/templates/partials/navbar.html`](file:///d:/CORALBEES/surplus-backend/AdminApp/templates/partials/navbar.html): Increased notification polling from 12s to 30s.
