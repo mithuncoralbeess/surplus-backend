@@ -65,6 +65,27 @@ def from_usd(amount_usd: Optional[Any], target_currency: Optional[str]) -> float
 
 _typesense_client: Optional[typesense.Client] = None
 
+# Circuit breaker: when Typesense is unreachable, skip network calls for a cooldown
+# window instead of blocking every request with connection timeouts/retries.
+_TS_DOWN_UNTIL: float = 0.0
+_TS_COOLDOWN_SECONDS = 60.0
+
+
+def _ts_is_tripped() -> bool:
+    import time
+    return time.monotonic() < _TS_DOWN_UNTIL
+
+
+def _ts_trip() -> None:
+    import time
+    global _TS_DOWN_UNTIL
+    _TS_DOWN_UNTIL = time.monotonic() + _TS_COOLDOWN_SECONDS
+
+
+def _ts_reset() -> None:
+    global _TS_DOWN_UNTIL
+    _TS_DOWN_UNTIL = 0.0
+
 
 def get_typesense_client() -> typesense.Client:
     """
@@ -87,6 +108,9 @@ def get_typesense_client() -> typesense.Client:
             }],
             "api_key": api_key,
             "connection_timeout_seconds": timeout,
+            # Fail fast: default is 3 retries with 1s interval (~20s+ when server is down)
+            "num_retries": 0,
+            "retry_interval_seconds": 0.1,
         })
     return _typesense_client
 

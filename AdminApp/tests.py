@@ -27,7 +27,7 @@ class AdminAppAuthTests(TestCase):
         admin = AdminDetails.objects.get(email="super@gmail.com")
         self.assertEqual(admin.account_type, "SuperAdmin")
         self.assertEqual(admin.web_is_active, "live")
-        self.assertTrue(":" in admin.pass_word)  # Salted format <hash>:<salt>
+        self.assertTrue(admin.pass_word.startswith("pbkdf2_"))  # Django PBKDF2 hash
         self.assertTrue(admin.check_password("supersecretpassword"))
 
     def test_standard_admin_registration(self):

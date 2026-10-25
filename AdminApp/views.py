@@ -156,13 +156,8 @@ def admin_signup_view(request):
         email = data["email"].strip().lower()
         confirm_pass = data["resolved_password"]
 
-        # Salted SHA-256 Password Hashing: <hash>:<salt>
-        salt = uuid.uuid4().hex
-        enc_pass = (
-            hashlib.sha256(salt.encode() + confirm_pass.encode()).hexdigest()
-            + ":"
-            + salt
-        )
+        # Django PBKDF2 password hashing
+        enc_pass = AdminDetails.hash_password(confirm_pass)
 
         is_super = (email == "super@gmail.com")
         account_type = "SuperAdmin" if is_super else "Admin"
@@ -222,7 +217,7 @@ def admin_register(request):
     """
     Admin Registration Flow (API & form handler):
     - Supports full_name, email, password, confirm_password (and optional username)
-    - Salted SHA-256 password hashing
+    - Django PBKDF2 password hashing
     - Role assignment (SuperAdmin for super@gmail.com, XLSXAdmin for xlsxsurplusadmin@gmail.com, Admin otherwise)
     - Standard admin accounts require SuperAdmin approval (status=False initially)
     """
@@ -246,13 +241,8 @@ def admin_register(request):
     email = data["email"].strip().lower()
     confirm_pass = data["resolved_password"]
 
-    # Salted SHA-256 Password Hashing: <hash>:<salt>
-    salt = uuid.uuid4().hex
-    enc_pass = (
-        hashlib.sha256(salt.encode() + confirm_pass.encode()).hexdigest()
-        + ":"
-        + salt
-    )
+    # Django PBKDF2 password hashing
+    enc_pass = AdminDetails.hash_password(confirm_pass)
 
     # Role Assignment & Approval Status:
     if email == "super@gmail.com":
@@ -316,7 +306,7 @@ def admin_login(request):
     """
     Admin Login Flow:
     - Supports JSON API, HTML Form POST, and GET query string logins
-    - Hash verification with salted SHA-256
+    - Hash verification with Django PBKDF2 (legacy SHA-256 auto-upgraded)
     - Fallback auth to standard Django superusers
     - Session setup: adminid and session_version
     - Role-based routing: SuperAdmin, XLSX Admin, Admin, Vendor
@@ -362,15 +352,8 @@ def admin_login(request):
         candidate = admin_qs.first()
         is_pass_valid = False
         try:
-            if ":" in candidate.pass_word:
-                stored_hash, salt = candidate.pass_word.split(":", 1)
-                computed_hash = hashlib.sha256(
-                    salt.encode() + user_pass.encode()
-                ).hexdigest()
-                if computed_hash == stored_hash:
-                    is_pass_valid = True
-            else:
-                is_pass_valid = candidate.check_password(user_pass)
+            # Model handles PBKDF2 and auto-upgrades legacy SHA-256 hashes
+            is_pass_valid = candidate.check_password(user_pass)
         except (ValueError, AttributeError):
             pass
 
@@ -544,13 +527,7 @@ def super_admin_verify_otp(request):
     otp_record.is_used = True
     otp_record.save()
 
-    salt = uuid.uuid4().hex
-    enc_pass = (
-        hashlib.sha256(salt.encode() + new_password.encode()).hexdigest()
-        + ":"
-        + salt
-    )
-    admin_user.pass_word = enc_pass
+    admin_user.set_password(new_password)
     admin_user.session_version += 1
     admin_user.save()
 
@@ -2470,34 +2447,58 @@ def lot_enquiry_edit_api(request, enquiry_id):
     # Category update from subcategory_id
     subcat_val = data.get("subcategory_id") or data.get("category_id") or data.get("category")
     if subcat_val not in (None, ""):
+        subcat_str = str(subcat_val).strip()
         try:
-            sub_cat = None
-            if str(subcat_val).isdigit():
-                sub_cat = SubCategory.objects.filter(id=int(subcat_val)).first()
-            if not sub_cat:
-                sub_cat = SubCategory.objects.filter(name__iexact=str(subcat_val).strip()).first()
-            if sub_cat:
-                lot.category_allocations = [{
-                    "category": sub_cat.name,
-                    "category_id": sub_cat.id,
-                    "category_name": sub_cat.name,
-                    "subcategory": sub_cat.name,
-                    "subcategory_id": sub_cat.id,
-                    "main_category_id": sub_cat.main_category_id,
-                    "main_category_name": sub_cat.main_category.name if sub_cat.main_category else "",
-                    "percentage": 100
-                }]
-                if not isinstance(lot.raw_data, dict):
-                    lot.raw_data = {}
-                lot.raw_data["category"] = sub_cat.name
-                lot.raw_data["subcategory"] = sub_cat.name
-                lot.raw_data["category_id"] = sub_cat.id
-                lot.raw_data["subcategory_id"] = sub_cat.id
-                lot.raw_data["category_allocations"] = lot.category_allocations
-                lot.raw_data["category_breakdown"] = f"{sub_cat.name} (100%)"
-                if sub_cat.main_category:
-                    lot.raw_data["main_category"] = sub_cat.main_category.name
-                    lot.raw_data["main_category_id"] = sub_cat.main_category_id
+            if subcat_str.lower().startswith("main_"):
+                main_id = int(subcat_str.split("_")[1])
+                from .models import MainCategory
+                main_cat = MainCategory.objects.filter(id=main_id).first()
+                if main_cat:
+                    lot.category_allocations = [{
+                        "category": main_cat.name,
+                        "category_name": main_cat.name,
+                        "main_category_id": main_cat.id,
+                        "main_category_name": main_cat.name,
+                        "percentage": 100
+                    }]
+                    if not isinstance(lot.raw_data, dict):
+                        lot.raw_data = {}
+                    lot.raw_data["category"] = main_cat.name
+                    lot.raw_data["subcategory"] = main_cat.name
+                    lot.raw_data["category_id"] = None
+                    lot.raw_data["subcategory_id"] = None
+                    lot.raw_data["main_category"] = main_cat.name
+                    lot.raw_data["main_category_id"] = main_cat.id
+                    lot.raw_data["category_allocations"] = lot.category_allocations
+                    lot.raw_data["category_breakdown"] = f"{main_cat.name} (100%)"
+            else:
+                sub_cat = None
+                if subcat_str.isdigit():
+                    sub_cat = SubCategory.objects.filter(id=int(subcat_str)).first()
+                if not sub_cat:
+                    sub_cat = SubCategory.objects.filter(name__iexact=subcat_str).first()
+                if sub_cat:
+                    lot.category_allocations = [{
+                        "category": sub_cat.name,
+                        "category_id": sub_cat.id,
+                        "category_name": sub_cat.name,
+                        "subcategory": sub_cat.name,
+                        "subcategory_id": sub_cat.id,
+                        "main_category_id": sub_cat.main_category_id,
+                        "main_category_name": sub_cat.main_category.name if sub_cat.main_category else "",
+                        "percentage": 100
+                    }]
+                    if not isinstance(lot.raw_data, dict):
+                        lot.raw_data = {}
+                    lot.raw_data["category"] = sub_cat.name
+                    lot.raw_data["subcategory"] = sub_cat.name
+                    lot.raw_data["category_id"] = sub_cat.id
+                    lot.raw_data["subcategory_id"] = sub_cat.id
+                    lot.raw_data["category_allocations"] = lot.category_allocations
+                    lot.raw_data["category_breakdown"] = f"{sub_cat.name} (100%)"
+                    if sub_cat.main_category:
+                        lot.raw_data["main_category"] = sub_cat.main_category.name
+                        lot.raw_data["main_category_id"] = sub_cat.main_category_id
         except Exception:
             pass
 
@@ -3020,6 +3021,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "enquiry": enquiry,
         "categories": MainCategory.objects.prefetch_related("subcategories").all(),
         "current_subcategory_id": enquiry.category_id,
+        "current_main_category_id": enquiry.main_category_id,
         "current_category_name": enquiry.category_name,
     }
 

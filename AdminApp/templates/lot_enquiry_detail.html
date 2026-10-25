@@ -1288,9 +1288,11 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ explorer_data|json_script:"initial-explorer-data" }}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        window.initialExplorerData = {{ explorer_json|safe }};
+        const explorerDataEl = document.getElementById("initial-explorer-data");
+        window.initialExplorerData = explorerDataEl ? JSON.parse(explorerDataEl.textContent || "null") : null;
         window.currentParsedProducts = (window.initialExplorerData && window.initialExplorerData.items) ? window.initialExplorerData.items : null;
 
         function escapeHtml(str) {
@@ -2525,8 +2527,9 @@
                                     <option value="">-- Select Category --</option>
                                     {% for main in categories %}
                                     <optgroup label="{{ main.name }}">
+                                        <option value="main_{{ main.id }}" {% if current_main_category_id|stringformat:"s" == main.id|stringformat:"s" and not current_subcategory_id %}selected{% endif %}>{{ main.name }} (All / General)</option>
                                         {% for sub in main.subcategories.all %}
-                                        <option value="{{ sub.id }}" {% if current_subcategory_id %}{% if current_subcategory_id == sub.id %}selected{% endif %}{% elif enquiry.category_name|lower == sub.name|lower %}selected{% endif %}>{{ sub.name }}</option>
+                                        <option value="{{ sub.id }}" {% if current_subcategory_id and current_subcategory_id|stringformat:"s" == sub.id|stringformat:"s" %}selected{% elif not current_subcategory_id and current_category_name and current_category_name|lower == sub.name|lower %}selected{% endif %}>{{ sub.name }}</option>
                                         {% endfor %}
                                     </optgroup>
                                     {% endfor %}

@@ -1016,20 +1016,87 @@ class Lot(models.Model):
                     return int(cid)
                 except (ValueError, TypeError):
                     pass
-            # Try to match subcategory by name in SubCategory table
-            sub_name = self.raw_data.get("subcategory") or self.raw_data.get("category")
-            if sub_name:
-                try:
-                    sub = SubCategory.objects.filter(name__iexact=str(sub_name).strip()).first()
-                    if sub:
-                        return sub.id
-                except Exception:
-                    pass
+
+        # Match subcategory by name in SubCategory table
+        sub_name = self.category_name
+        if sub_name:
+            clean_sub = str(sub_name).strip()
+            # If main category is known, prioritize matching within that main category
+            mid = self.main_category_id
+            if mid:
+                sub = SubCategory.objects.filter(main_category_id=mid, name__iexact=clean_sub).first()
+                if sub:
+                    return sub.id
+            sub = SubCategory.objects.filter(name__iexact=clean_sub).first()
+            if sub:
+                return sub.id
+
         return None
 
     @property
     def subcategory_id(self):
         return self.category_id
+
+    @property
+    def main_category_id(self):
+        """Returns the primary main category ID for this lot."""
+        if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
+            for alloc in self.category_allocations:
+                if isinstance(alloc, dict):
+                    mid = alloc.get("main_category_id")
+                    if mid is not None:
+                        try:
+                            return int(mid)
+                        except (ValueError, TypeError):
+                            pass
+        if isinstance(self.raw_data, dict):
+            mid = self.raw_data.get("main_category_id")
+            if mid is not None:
+                try:
+                    return int(mid)
+                except (ValueError, TypeError):
+                    pass
+
+        # Check if category_id maps to a subcategory with main category
+        cid = None
+        if isinstance(self.category_allocations, list) and len(self.category_allocations) > 0:
+            for alloc in self.category_allocations:
+                if isinstance(alloc, dict):
+                    cid = alloc.get("category_id") or alloc.get("subcategory_id")
+                    if cid:
+                        break
+        if not cid and isinstance(self.raw_data, dict):
+            cid = self.raw_data.get("subcategory_id") or self.raw_data.get("category_id")
+        if cid:
+            try:
+                sub = SubCategory.objects.filter(id=int(cid)).select_related("main_category").first()
+                if sub and sub.main_category_id:
+                    return sub.main_category_id
+            except (ValueError, TypeError):
+                pass
+
+        # Match category_name against MainCategory table
+        cat_name = self.category_name
+        raw_main = ""
+        if isinstance(self.raw_data, dict):
+            raw_main = str(self.raw_data.get("main_category") or "").strip()
+        names_to_try = [n for n in (raw_main, cat_name) if n]
+        for name in names_to_try:
+            main = MainCategory.objects.filter(name__iexact=name).first()
+            if main:
+                return main.id
+            name_lower = name.lower()
+            stem = name_lower.rstrip("s")
+            for m in MainCategory.objects.all():
+                m_lower = m.name.lower()
+                if name_lower in m_lower or m_lower in name_lower or (len(stem) >= 4 and stem in m_lower):
+                    return m.id
+                for word in name_lower.split():
+                    w_stem = word.rstrip("s")
+                    if len(w_stem) >= 4 and (w_stem in m_lower or word in m_lower):
+                        return m.id
+
+        return None
 
     @property
     def category_name(self):
