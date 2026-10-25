@@ -36,7 +36,6 @@ from .models import (
     LotBatchEnquiry,
     PartnershipEnquiry,
     ContactUsEnquiry,
-    PageViewLog,
     MainCategory,
     SubCategory,
     Lot,
@@ -368,23 +367,25 @@ def admin_login(request):
                 )
             admin_user = candidate
 
-    # Fallback Auth: Standard Django authenticate for superusers
-    if not admin_user:
+    # Fallback Auth: Standard Django authenticate for superusers ONLY if not registered in AdminDetails
+    if not admin_user and not admin_qs.exists():
         django_user = authenticate(request, username=identifier, password=user_pass)
         if django_user and (django_user.is_superuser or django_user.is_staff):
-            admin_user, _ = AdminDetails.objects.get_or_create(
-                username=django_user.username,
-                defaults={
-                    "email": django_user.email or f"{django_user.username}@surplus.local",
-                    "first_name": django_user.first_name,
-                    "last_name": django_user.last_name,
-                    "pass_word": AdminDetails.hash_password(user_pass),
-                    "account_type": "SuperAdmin" if django_user.is_superuser else "Admin",
-                    "status": True,
-                    "session_version": 1,
-                    "web_is_active": "live",
-                },
+            admin_user = (
+                AdminDetails.objects.filter(username__iexact=django_user.username).first()
+                or (AdminDetails.objects.filter(email__iexact=django_user.email).first() if django_user.email else None)
             )
+            if not admin_user:
+                admin_user = AdminDetails.objects.create(
+                    username=django_user.username,
+                    email=django_user.email or f"{django_user.username}@surplus.local",
+                    full_name=f"{django_user.first_name} {django_user.last_name}".strip(),
+                    pass_word=AdminDetails.hash_password(user_pass),
+                    account_type="SuperAdmin" if django_user.is_superuser else "Admin",
+                    status=True,
+                    session_version=1,
+                    web_is_active="live",
+                )
 
     if not admin_user:
         if request.headers.get("Accept", "").find("text/html") != -1 and request.content_type != "application/json":
@@ -531,6 +532,15 @@ def super_admin_verify_otp(request):
     admin_user.session_version += 1
     admin_user.save()
 
+    # Sync corresponding Django auth_user record if present
+    try:
+        from django.contrib.auth.models import User
+        for u in (User.objects.filter(email__iexact=admin_user.email) | User.objects.filter(username__iexact=admin_user.username)).distinct():
+            u.set_password(new_password)
+            u.save()
+    except Exception:
+        pass
+
     cache_key = f"admin_version_{admin_user.id}"
     cache.set(cache_key, admin_user.session_version, timeout=86400)
 
@@ -616,7 +626,6 @@ def adminDashBoard(request):
         rfq_requests_count = RfqEnquiry.objects.count()
         categories_count = MainCategory.objects.count()
         subcategories_count = SubCategory.objects.count()
-        total_page_views = PageViewLog.objects.count()
 
         pending_admins = admin_aggs["pending"] or 0
 
@@ -636,7 +645,6 @@ def adminDashBoard(request):
             "products": products_count,
             "categories": categories_count,
             "subcategories": subcategories_count,
-            "total_page_views": total_page_views,
             "registered_users": registered_users,
             # Backward compatibility aliases
             "custom_landing_users": buyers_count,
@@ -4122,147 +4130,6 @@ def contact_enquiries_view(request):
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
-
-
-def page_views_analytics_view(request):
-    """
-    Dedicated view for Page Visits, Traffic Analytics, and Dwell-Time / Stuck User Intelligence in the Admin Portal.
-    Displays page-by-page view counts, average dwell time, where users spend the most time,
-    stuck-user analysis, KPI cards, and detailed view logs.
-    """
-    admin_user = _get_authenticated_admin(request)
-    if not admin_user:
-        return redirect("admin_login_page")
-
-    from django.db.models import Avg, Count, Max, Sum, Q
-
-    entity_type_filter = request.GET.get("entity_type", "").strip().lower()
-    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
-    active_tab = request.GET.get("tab", "pages").strip().lower()
-
-    logs = PageViewLog.objects.all().order_by("-created_at")
-
-    if entity_type_filter:
-        logs = logs.filter(entity_type=entity_type_filter)
-
-    if search_query:
-        logs = logs.filter(
-            Q(path__icontains=search_query) |
-            Q(entity_slug__icontains=search_query) |
-            Q(ip_address__icontains=search_query) |
-            Q(user_agent__icontains=search_query) |
-            Q(referrer__icontains=search_query)
-        )
-
-    # Core Counts
-    total_views = PageViewLog.objects.count()
-    today_views = PageViewLog.objects.filter(created_at__date=timezone.now().date()).count()
-    unique_visitors = PageViewLog.objects.exclude(ip_address__isnull=True).values("ip_address").distinct().count()
-    total_stuck_sessions = PageViewLog.objects.filter(is_stuck=True).count()
-
-    # Average Platform Dwell Time
-    avg_dwell_res = PageViewLog.objects.filter(duration_seconds__gt=0).aggregate(avg_sec=Avg("duration_seconds"))
-    platform_avg_seconds = round(avg_dwell_res.get("avg_sec") or 0)
-
-    # 1. Page-by-Page Aggregation (Number of views for each page + dwell time)
-    page_stats_qs = (
-        PageViewLog.objects.exclude(path="")
-        .values("path", "entity_type")
-        .annotate(
-            view_count=Count("id"),
-            unique_count=Count("ip_address", distinct=True),
-            avg_duration=Avg("duration_seconds"),
-            max_duration=Max("duration_seconds"),
-            stuck_count=Count("id", filter=Q(is_stuck=True))
-        )
-    )
-
-    if search_query:
-        page_stats_qs = page_stats_qs.filter(path__icontains=search_query)
-    if entity_type_filter:
-        page_stats_qs = page_stats_qs.filter(entity_type=entity_type_filter)
-
-    def _fmt(sec):
-        if not sec or sec <= 0:
-            return "< 5s"
-        if sec < 60:
-            return f"{sec}s"
-        m = sec // 60
-        s = sec % 60
-        return f"{m}m {s}s" if s > 0 else f"{m}m"
-
-    page_stats_list = []
-    for item in page_stats_qs.order_by("-view_count")[:150]:
-        avg_sec = round(item.get("avg_duration") or 0)
-        max_sec = item.get("max_duration") or 0
-        v_count = item.get("view_count") or 1
-        s_count = item.get("stuck_count") or 0
-        stuck_pct = round((s_count / v_count) * 100, 1)
-
-        page_stats_list.append({
-            "path": item["path"],
-            "entity_type": item["entity_type"],
-            "view_count": v_count,
-            "unique_count": item.get("unique_count") or 0,
-            "avg_seconds": avg_sec,
-            "avg_duration_fmt": _fmt(avg_sec),
-            "max_duration_fmt": _fmt(max_sec),
-            "stuck_count": s_count,
-            "stuck_pct": stuck_pct,
-            "is_high_dwell": avg_sec >= 120,
-        })
-
-    # 2. "Where Users Stayed More" Leaderboard (Ranked by highest dwell time)
-    most_stayed_pages = sorted(
-        [p for p in page_stats_list if p["avg_seconds"] > 0],
-        key=lambda x: x["avg_seconds"],
-        reverse=True
-    )[:8]
-
-    # 3. Stuck Pages Analysis (Pages with highest stuck rate / friction)
-    stuck_pages_analysis = sorted(
-        [p for p in page_stats_list if p["stuck_count"] > 0],
-        key=lambda x: (x["stuck_count"], x["stuck_pct"]),
-        reverse=True
-    )[:8]
-
-    # Top entity breakdown
-    top_blogs = BlogPost.objects.all().order_by("-views_count")[:5]
-    top_products = Product.objects.all().order_by("-views_count")[:5]
-    top_lots = Lot.objects.all().order_by("-views_count")[:5]
-
-    # Format logs for live table with human readable duration
-    formatted_logs = []
-    for log in logs[:100]:
-        sec = log.duration_seconds or 0
-        formatted_logs.append({
-            "log": log,
-            "duration_fmt": _fmt(sec),
-            "is_stuck": log.is_stuck or (sec >= 180)
-        })
-
-    context = {
-        "admin": admin_user,
-        "logs": logs[:100],
-        "formatted_logs": formatted_logs,
-        "total_views": total_views,
-        "today_views": today_views,
-        "unique_visitors": unique_visitors,
-        "total_stuck_sessions": total_stuck_sessions,
-        "platform_avg_duration": _fmt(platform_avg_seconds),
-        "page_stats_list": page_stats_list,
-        "most_stayed_pages": most_stayed_pages,
-        "stuck_pages_analysis": stuck_pages_analysis,
-        "top_blogs": top_blogs,
-        "top_products": top_products,
-        "top_lots": top_lots,
-        "search_query": search_query,
-        "selected_entity_type": entity_type_filter,
-        "active_tab": active_tab,
-        "page_title": "Page Visits & User Dwell-Time Analytics",
-        "page_subtitle": "Real-time Traffic Tracking, Per-Page Views, Dwell Time & Stuck User Friction Analysis"
-    }
-    return render(request, "page_views_analytics.html", context)
 
 
 

@@ -51,7 +51,6 @@ from .views import (
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
-    page_views_analytics_view,
     whatsapp_command_center_view,
     whatsapp_preview_api,
     whatsapp_send_broadcast_api,
@@ -183,10 +182,6 @@ urlpatterns = [
 
     # Redirect legacy sellers-buyers to manage users
     path("sellers-buyers/", lambda request: redirect("manage_users")),
-
-    # Analytics & Traffic Tracking
-    path("analytics/page-views/", page_views_analytics_view, name="page_views_analytics"),
-    path("analytics/traffic/", page_views_analytics_view, name="page_views_analytics_alt"),
 
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),

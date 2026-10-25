@@ -27,7 +27,6 @@ from .views import (
     submit_lot_request,
     public_lot_detail_api,
     lot_warehouse_explorer_api,
-    track_view_api,
     get_public_categories,
     get_vendor_notifications,
     get_vendor_unread_count,
@@ -64,10 +63,6 @@ urlpatterns = [
 
     # Public Category & Subcategory REST API
     path("categories/", get_public_categories, name="public_categories_list"),
-
-    # Analytics View Tracking
-    path("analytics/track-view/", track_view_api, name="track_view_api"),
-    path("track-view/", track_view_api, name="track_view_api_alt"),
 
     
     # Headless CMS Public REST APIs for Frontend Server

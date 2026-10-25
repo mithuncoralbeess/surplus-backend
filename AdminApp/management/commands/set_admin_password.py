@@ -46,6 +46,23 @@ class Command(BaseCommand):
         admin.session_version += 1  # force logout of existing sessions
         admin.save(update_fields=["pass_word", "session_version", "updated_at"])
 
+        # Also sync corresponding Django User (auth_user) records
+        try:
+            from django.contrib.auth.models import User
+            django_users = (
+                User.objects.filter(email__iexact=admin.email)
+                | User.objects.filter(username__iexact=admin.username)
+            ).distinct()
+            for du in django_users:
+                du.set_password(password)
+                du.save()
+            if django_users.exists():
+                self.stdout.write(self.style.SUCCESS(
+                    f"Synced {django_users.count()} matching Django auth_user record(s)."
+                ))
+        except Exception as exc:
+            self.stdout.write(self.style.WARNING(f"Could not sync auth_user: {exc}"))
+
         cache.delete(f"admin_obj_{admin.id}")
         cache.set(f"admin_version_{admin.id}", admin.session_version, timeout=86400)
 
