@@ -130,14 +130,48 @@
                             id="password"
                             name="password"
                             class="form-control bg-light border-start-0 border-end-0 ps-0"
-                            placeholder="Min. 8 characters"
+                            placeholder="At least 8 chars with upper, lower, number & symbol"
                             required
-                            minlength="6"
+                            minlength="8"
                             autocomplete="new-password"
                         >
                         <span class="input-group-text bg-light text-secondary border-start-0" id="togglePassBtn" style="cursor: pointer;" title="Toggle password visibility">
                             <i class="bi bi-eye" id="togglePassIcon"></i>
                         </span>
+                    </div>
+
+                    <!-- Password Policy Checklist -->
+                    <div class="p-3 mt-2 mb-1 bg-light rounded-3 border" id="passwordPolicyBox">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-dark fw-semibold small" style="font-size: 0.8rem;">
+                                <i class="bi bi-shield-check text-primary me-1"></i>Password Policy Requirements
+                            </span>
+                            <span id="policyStatusBadge" class="badge bg-secondary-subtle text-secondary border rounded-pill" style="font-size: 0.7rem;">
+                                0/5 Satisfied
+                            </span>
+                        </div>
+                        <ul class="list-unstyled mb-0 d-flex flex-column gap-1.5" style="font-size: 0.78rem;">
+                            <li id="ruleLength" class="text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-dash-circle text-muted" id="ruleLengthIcon"></i>
+                                <span>At least 8 characters long</span>
+                            </li>
+                            <li id="ruleUpper" class="text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-dash-circle text-muted" id="ruleUpperIcon"></i>
+                                <span>At least 1 uppercase letter (A-Z)</span>
+                            </li>
+                            <li id="ruleLower" class="text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-dash-circle text-muted" id="ruleLowerIcon"></i>
+                                <span>At least 1 lowercase letter (a-z)</span>
+                            </li>
+                            <li id="ruleNumber" class="text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-dash-circle text-muted" id="ruleNumberIcon"></i>
+                                <span>At least 1 number (0-9)</span>
+                            </li>
+                            <li id="ruleSpecial" class="text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-dash-circle text-muted" id="ruleSpecialIcon"></i>
+                                <span>At least 1 special character (!@#$%^&*...)</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
@@ -257,6 +291,62 @@
             }
         }
 
+        // Password Policy UI elements
+        const ruleLength = document.getElementById("ruleLength");
+        const ruleLengthIcon = document.getElementById("ruleLengthIcon");
+        const ruleUpper = document.getElementById("ruleUpper");
+        const ruleUpperIcon = document.getElementById("ruleUpperIcon");
+        const ruleLower = document.getElementById("ruleLower");
+        const ruleLowerIcon = document.getElementById("ruleLowerIcon");
+        const ruleNumber = document.getElementById("ruleNumber");
+        const ruleNumberIcon = document.getElementById("ruleNumberIcon");
+        const ruleSpecial = document.getElementById("ruleSpecial");
+        const ruleSpecialIcon = document.getElementById("ruleSpecialIcon");
+        const policyStatusBadge = document.getElementById("policyStatusBadge");
+
+        function updateRuleItem(element, iconElement, isValid) {
+            if (!element || !iconElement) return;
+            if (isValid) {
+                element.classList.remove("text-secondary");
+                element.classList.add("text-success", "fw-medium");
+                iconElement.className = "bi bi-check-circle-fill text-success";
+            } else {
+                element.classList.remove("text-success", "fw-medium");
+                element.classList.add("text-secondary");
+                iconElement.className = "bi bi-dash-circle text-muted";
+            }
+        }
+
+        function checkPasswordPolicy(val) {
+            const hasLength = val.length >= 8;
+            const hasUpper = /[A-Z]/.test(val);
+            const hasLower = /[a-z]/.test(val);
+            const hasNumber = /[0-9]/.test(val);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]\\\/~`';]/.test(val);
+
+            updateRuleItem(ruleLength, ruleLengthIcon, hasLength);
+            updateRuleItem(ruleUpper, ruleUpperIcon, hasUpper);
+            updateRuleItem(ruleLower, ruleLowerIcon, hasLower);
+            updateRuleItem(ruleNumber, ruleNumberIcon, hasNumber);
+            updateRuleItem(ruleSpecial, ruleSpecialIcon, hasSpecial);
+
+            const passedCount = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+            if (policyStatusBadge) {
+                if (passedCount === 5) {
+                    policyStatusBadge.className = "badge bg-success-subtle text-success border border-success-subtle rounded-pill";
+                    policyStatusBadge.textContent = "Strong Password (5/5)";
+                } else if (passedCount >= 3) {
+                    policyStatusBadge.className = "badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill";
+                    policyStatusBadge.textContent = `${passedCount}/5 Satisfied`;
+                } else {
+                    policyStatusBadge.className = "badge bg-secondary-subtle text-secondary border rounded-pill";
+                    policyStatusBadge.textContent = `${passedCount}/5 Satisfied`;
+                }
+            }
+
+            return hasLength && hasUpper && hasLower && hasNumber && hasSpecial;
+        }
+
         // Live check password matching
         function checkPasswordsMatch() {
             if (passwordInput.value && confirmPasswordInput.value) {
@@ -272,7 +362,10 @@
             return true;
         }
 
-        passwordInput.addEventListener("input", checkPasswordsMatch);
+        passwordInput.addEventListener("input", () => {
+            checkPasswordPolicy(passwordInput.value);
+            checkPasswordsMatch();
+        });
         confirmPasswordInput.addEventListener("input", checkPasswordsMatch);
 
         if (form) {
@@ -297,8 +390,8 @@
                     return;
                 }
 
-                if (!password || password.length < 6) {
-                    showAlert("Password must be at least 6 characters long.");
+                if (!checkPasswordPolicy(password)) {
+                    showAlert("Password does not meet the security policy. Please ensure it has at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special symbol.");
                     passwordInput.focus();
                     return;
                 }

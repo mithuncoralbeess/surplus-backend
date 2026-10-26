@@ -18,7 +18,7 @@ class AdminAppAuthTests(TestCase):
             "email": "super@gmail.com",
             "firstname": "Super",
             "lastname": "User",
-            "confirm_password": "supersecretpassword",
+            "confirm_password": "SuperSecret@2026!",
         }
         response = self.client.post("/admin/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -28,7 +28,7 @@ class AdminAppAuthTests(TestCase):
         self.assertEqual(admin.account_type, "SuperAdmin")
         self.assertEqual(admin.web_is_active, "live")
         self.assertTrue(admin.pass_word.startswith("pbkdf2_"))  # Django PBKDF2 hash
-        self.assertTrue(admin.check_password("supersecretpassword"))
+        self.assertTrue(admin.check_password("SuperSecret@2026!"))
 
     def test_standard_admin_registration(self):
         """
@@ -37,7 +37,7 @@ class AdminAppAuthTests(TestCase):
         payload = {
             "full_name": "Standard Admin",
             "email": "admin@gmail.com",
-            "confirm_password": "password123",
+            "confirm_password": "AdminPass@2026!",
         }
         response = self.client.post("/admin/register/", payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -60,8 +60,8 @@ class AdminAppAuthTests(TestCase):
         signup_payload = {
             "full_name": "Alex Mercer",
             "email": "alex.mercer@surplus.com",
-            "password": "SecurePassword999",
-            "confirm_password": "SecurePassword999",
+            "password": "SecurePassword@999",
+            "confirm_password": "SecurePassword@999",
         }
         signup_res = self.client.post("/admin/signup/", signup_payload, format="json")
         self.assertEqual(signup_res.status_code, status.HTTP_201_CREATED)
@@ -75,7 +75,7 @@ class AdminAppAuthTests(TestCase):
         # 3. Attempting to log in while pending approval MUST be blocked with 403 Forbidden
         login_res_blocked = self.client.post(
             "/admin/login/",
-            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword@999"},
             format="json",
         )
         self.assertEqual(login_res_blocked.status_code, status.HTTP_403_FORBIDDEN)
@@ -117,7 +117,7 @@ class AdminAppAuthTests(TestCase):
         # 5. Now approved admin can log in successfully!
         login_res_success = self.client.post(
             "/admin/login/",
-            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword999"},
+            {"user_email": "alex.mercer@surplus.com", "user_pass": "SecurePassword@999"},
             format="json",
         )
         self.assertEqual(login_res_success.status_code, status.HTTP_200_OK)
@@ -132,7 +132,7 @@ class AdminAppAuthTests(TestCase):
             "email": "test@gmail.com",
             "firstname": "Test",
             "lastname": "User",
-            "confirm_password": "password123",
+            "confirm_password": "DuplicateTestPass@2026!",
         }
         self.client.post("/admin/register/", payload, format="json")
         response = self.client.post("/admin/register/", payload, format="json")
@@ -210,7 +210,7 @@ class AdminAppAuthTests(TestCase):
             {
                 "username": "superadmin",
                 "email": "super@gmail.com",
-                "confirm_password": "mypassword",
+                "confirm_password": "SuperLogin@2026!",
             },
             format="json",
         )
@@ -218,7 +218,7 @@ class AdminAppAuthTests(TestCase):
         # Login
         login_response = self.client.post(
             "/admin/login/",
-            {"user_email": "super@gmail.com", "user_pass": "mypassword"},
+            {"user_email": "super@gmail.com", "user_pass": "SuperLogin@2026!"},
             format="json",
         )
         self.assertEqual(login_response.status_code, status.HTTP_200_OK)
@@ -239,7 +239,7 @@ class AdminAppAuthTests(TestCase):
             {
                 "username": "superadmin",
                 "email": "super@gmail.com",
-                "confirm_password": "oldpassword",
+                "confirm_password": "OldPassword@2026!",
             },
             format="json",
         )
@@ -264,8 +264,8 @@ class AdminAppAuthTests(TestCase):
             {
                 "email": "super@gmail.com",
                 "otp": otp_record.otp,
-                "new_password": "newsuperpassword",
-                "confirm_password": "newsuperpassword",
+                "new_password": "NewSuperPassword@2026!",
+                "confirm_password": "NewSuperPassword@2026!",
             },
             format="json",
         )
@@ -275,8 +275,67 @@ class AdminAppAuthTests(TestCase):
         # Reload admin from db
         admin.refresh_from_db()
         self.assertEqual(admin.session_version, initial_version + 1)
-        self.assertTrue(admin.check_password("newsuperpassword"))
-        self.assertFalse(admin.check_password("oldpassword"))
+        self.assertTrue(admin.check_password("NewSuperPassword@2026!"))
+        self.assertFalse(admin.check_password("OldPassword@2026!"))
+
+    def test_admin_password_policy_enforcement(self):
+        """
+        Tests that passwords violating the password policy are rejected with 400 Bad Request,
+        while compliant passwords succeed.
+        """
+        # 1. Too short (< 8 chars)
+        res = self.client.post("/admin/register/", {
+            "email": "user1@example.com",
+            "full_name": "Test User",
+            "confirm_password": "Sh1!",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("at least 8 characters", str(res.data))
+
+        # 2. Missing uppercase
+        res = self.client.post("/admin/register/", {
+            "email": "user2@example.com",
+            "full_name": "Test User",
+            "confirm_password": "lowercase123!",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("uppercase letter", str(res.data))
+
+        # 3. Missing lowercase
+        res = self.client.post("/admin/register/", {
+            "email": "user3@example.com",
+            "full_name": "Test User",
+            "confirm_password": "UPPERCASE123!",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("lowercase letter", str(res.data))
+
+        # 4. Missing number
+        res = self.client.post("/admin/register/", {
+            "email": "user4@example.com",
+            "full_name": "Test User",
+            "confirm_password": "NoNumbersHere!@",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue("digit" in str(res.data).lower() or "number" in str(res.data).lower())
+
+        # 5. Missing special character
+        res = self.client.post("/admin/register/", {
+            "email": "user5@example.com",
+            "full_name": "Test User",
+            "confirm_password": "NoSpecialChar123",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("special character", str(res.data).lower())
+
+        # 6. Compliant password succeeds
+        res = self.client.post("/admin/register/", {
+            "email": "user6@example.com",
+            "full_name": "Test User",
+            "confirm_password": "ValidPassword@2026!",
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(res.data["success"])
 
     def test_lot_batch_id_lookup_and_pending_view(self):
         """

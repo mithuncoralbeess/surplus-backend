@@ -3,7 +3,7 @@ Set (reset) an AdminDetails password using Django's PBKDF2 hasher.
 
 Usage:
     python manage.py set_admin_password super@gmail.com
-    python manage.py set_admin_password super@gmail.com --password "Super@25"
+    python manage.py set_admin_password super@gmail.com --password "SuperAdmin@2026!"
 
 Also reports any admins whose stored password is not yet a Django hash.
 """
@@ -26,6 +26,11 @@ class Command(BaseCommand):
             "--password",
             help="New password. If omitted you will be prompted securely.",
         )
+        parser.add_argument(
+            "--no-policy-check",
+            action="store_true",
+            help="Bypass password policy check.",
+        )
 
     def handle(self, *args, **options):
         email = options["email"].strip().lower()
@@ -41,6 +46,15 @@ class Command(BaseCommand):
                 raise CommandError("Passwords do not match.")
         if not password:
             raise CommandError("Password cannot be empty.")
+
+        if not options.get("no_policy_check"):
+            from AdminApp.password_policy import validate_admin_password
+            policy_errors = validate_admin_password(password)
+            if policy_errors:
+                raise CommandError(
+                    "Password does not satisfy the latest password policy:\n - "
+                    + "\n - ".join(policy_errors)
+                )
 
         admin.set_password(password)
         admin.session_version += 1  # force logout of existing sessions

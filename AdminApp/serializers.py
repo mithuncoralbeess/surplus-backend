@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import AdminDetails, VendorDetails
+from .password_policy import enforce_admin_password_policy
 
 
 class AdminRegisterSerializer(serializers.Serializer):
@@ -31,8 +32,8 @@ class AdminRegisterSerializer(serializers.Serializer):
         if raw_password and confirm_pass and raw_password != confirm_pass:
             raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
 
-        if len(password) < 6:
-            raise serializers.ValidationError({"password": "Password must be at least 6 characters."})
+        # Enforce latest password policy
+        enforce_admin_password_policy(password, field_name="password")
 
         attrs["resolved_password"] = password
 
@@ -208,6 +209,7 @@ class SuperAdminVerifyOTPSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs.get("new_password") != attrs.get("confirm_password"):
             raise serializers.ValidationError({"password": "Passwords do not match."})
+        enforce_admin_password_policy(attrs.get("new_password"), field_name="new_password")
         return attrs
 
 

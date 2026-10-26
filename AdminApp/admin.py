@@ -28,6 +28,15 @@ class AdminDetailsForm(forms.ModelForm):
         if not self.instance.pk:
             self.fields["raw_password"].required = True
 
+    def clean_raw_password(self):
+        raw_password = self.cleaned_data.get("raw_password")
+        if raw_password:
+            from .password_policy import validate_admin_password
+            errors = validate_admin_password(raw_password)
+            if errors:
+                raise forms.ValidationError(" ".join(errors))
+        return raw_password
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         raw_password = self.cleaned_data.get("raw_password")
