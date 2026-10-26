@@ -14,6 +14,60 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom Styles -->
     <link rel="stylesheet" href="{% static 'css/admin_login.css' %}">
+    <style>
+        .strength-bar {
+            height: 4px;
+            border-radius: 9999px;
+            background-color: #e2e8f0;
+            transition: background-color 0.25s ease;
+        }
+        [data-bs-theme="dark"] .strength-bar {
+            background-color: #334155;
+        }
+        .policy-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.32rem;
+            font-size: 0.72rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            line-height: 1.25;
+        }
+        .policy-chip .chip-icon {
+            font-size: 0.55rem;
+            color: #94a3b8;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .policy-chip.is-valid {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+            font-weight: 500;
+        }
+        .policy-chip.is-valid .chip-icon {
+            font-size: 0.75rem;
+            color: #10b981;
+            font-weight: 700;
+        }
+        [data-bs-theme="dark"] .policy-chip {
+            background: #1e293b;
+            color: #94a3b8;
+            border-color: #334155;
+        }
+        [data-bs-theme="dark"] .policy-chip.is-valid {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        [data-bs-theme="dark"] .policy-chip.is-valid .chip-icon {
+            color: #34d399;
+        }
+    </style>
     <script>
         (function() {
             document.documentElement.setAttribute('data-bs-theme', 'light');
@@ -120,7 +174,10 @@
 
                 <!-- Password -->
                 <div class="mb-3">
-                    <label for="password" class="form-label text-dark small fw-semibold">Password <span class="text-danger">*</span></label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="password" class="form-label text-dark small fw-semibold mb-0">Password <span class="text-danger">*</span></label>
+                        <span id="strengthText" class="small text-secondary" style="font-size: 0.75rem; transition: color 0.2s ease;">Min. 8 characters</span>
+                    </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-secondary border-end-0">
                             <i class="bi bi-lock"></i>
@@ -130,7 +187,7 @@
                             id="password"
                             name="password"
                             class="form-control bg-light border-start-0 border-end-0 ps-0"
-                            placeholder="At least 8 chars with upper, lower, number & symbol"
+                            placeholder="Create a strong password"
                             required
                             minlength="8"
                             autocomplete="new-password"
@@ -140,38 +197,37 @@
                         </span>
                     </div>
 
-                    <!-- Password Policy Checklist -->
-                    <div class="p-3 mt-2 mb-1 bg-light rounded-3 border" id="passwordPolicyBox">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="text-dark fw-semibold small" style="font-size: 0.8rem;">
-                                <i class="bi bi-shield-check text-primary me-1"></i>Password Policy Requirements
-                            </span>
-                            <span id="policyStatusBadge" class="badge bg-secondary-subtle text-secondary border rounded-pill" style="font-size: 0.7rem;">
-                                0/5 Satisfied
-                            </span>
-                        </div>
-                        <ul class="list-unstyled mb-0 d-flex flex-column gap-1.5" style="font-size: 0.78rem;">
-                            <li id="ruleLength" class="text-secondary d-flex align-items-center gap-2">
-                                <i class="bi bi-dash-circle text-muted" id="ruleLengthIcon"></i>
-                                <span>At least 8 characters long</span>
-                            </li>
-                            <li id="ruleUpper" class="text-secondary d-flex align-items-center gap-2">
-                                <i class="bi bi-dash-circle text-muted" id="ruleUpperIcon"></i>
-                                <span>At least 1 uppercase letter (A-Z)</span>
-                            </li>
-                            <li id="ruleLower" class="text-secondary d-flex align-items-center gap-2">
-                                <i class="bi bi-dash-circle text-muted" id="ruleLowerIcon"></i>
-                                <span>At least 1 lowercase letter (a-z)</span>
-                            </li>
-                            <li id="ruleNumber" class="text-secondary d-flex align-items-center gap-2">
-                                <i class="bi bi-dash-circle text-muted" id="ruleNumberIcon"></i>
-                                <span>At least 1 number (0-9)</span>
-                            </li>
-                            <li id="ruleSpecial" class="text-secondary d-flex align-items-center gap-2">
-                                <i class="bi bi-dash-circle text-muted" id="ruleSpecialIcon"></i>
-                                <span>At least 1 special character (!@#$%^&*...)</span>
-                            </li>
-                        </ul>
+                    <!-- 5-Segment Strength Meter -->
+                    <div class="d-flex gap-1 mt-2" id="strengthMeter" style="height: 4px;">
+                        <div class="flex-grow-1 strength-bar" id="bar1"></div>
+                        <div class="flex-grow-1 strength-bar" id="bar2"></div>
+                        <div class="flex-grow-1 strength-bar" id="bar3"></div>
+                        <div class="flex-grow-1 strength-bar" id="bar4"></div>
+                        <div class="flex-grow-1 strength-bar" id="bar5"></div>
+                    </div>
+
+                    <!-- Compact Policy Requirement Chips -->
+                    <div class="d-flex flex-wrap gap-1 mt-2" id="passwordChips">
+                        <span id="chipLength" class="policy-chip">
+                            <i class="bi bi-circle chip-icon" id="iconLength"></i>
+                            <span>8+ characters</span>
+                        </span>
+                        <span id="chipUpper" class="policy-chip">
+                            <i class="bi bi-circle chip-icon" id="iconUpper"></i>
+                            <span>Uppercase</span>
+                        </span>
+                        <span id="chipLower" class="policy-chip">
+                            <i class="bi bi-circle chip-icon" id="iconLower"></i>
+                            <span>Lowercase</span>
+                        </span>
+                        <span id="chipNumber" class="policy-chip">
+                            <i class="bi bi-circle chip-icon" id="iconNumber"></i>
+                            <span>Number</span>
+                        </span>
+                        <span id="chipSpecial" class="policy-chip">
+                            <i class="bi bi-circle chip-icon" id="iconSpecial"></i>
+                            <span>Symbol (!@#$)</span>
+                        </span>
                     </div>
                 </div>
 
@@ -189,7 +245,7 @@
                             class="form-control bg-light border-start-0 border-end-0 ps-0"
                             placeholder="Re-enter password"
                             required
-                            minlength="6"
+                            minlength="8"
                             autocomplete="new-password"
                         >
                         <span class="input-group-text bg-light text-secondary border-start-0" id="toggleConfirmPassBtn" style="cursor: pointer;" title="Toggle password visibility">
@@ -291,31 +347,45 @@
             }
         }
 
-        // Password Policy UI elements
-        const ruleLength = document.getElementById("ruleLength");
-        const ruleLengthIcon = document.getElementById("ruleLengthIcon");
-        const ruleUpper = document.getElementById("ruleUpper");
-        const ruleUpperIcon = document.getElementById("ruleUpperIcon");
-        const ruleLower = document.getElementById("ruleLower");
-        const ruleLowerIcon = document.getElementById("ruleLowerIcon");
-        const ruleNumber = document.getElementById("ruleNumber");
-        const ruleNumberIcon = document.getElementById("ruleNumberIcon");
-        const ruleSpecial = document.getElementById("ruleSpecial");
-        const ruleSpecialIcon = document.getElementById("ruleSpecialIcon");
-        const policyStatusBadge = document.getElementById("policyStatusBadge");
+        // Modern Password Policy & Strength Meter UI
+        const chipLength = document.getElementById("chipLength");
+        const iconLength = document.getElementById("iconLength");
+        const chipUpper = document.getElementById("chipUpper");
+        const iconUpper = document.getElementById("iconUpper");
+        const chipLower = document.getElementById("chipLower");
+        const iconLower = document.getElementById("iconLower");
+        const chipNumber = document.getElementById("chipNumber");
+        const iconNumber = document.getElementById("iconNumber");
+        const chipSpecial = document.getElementById("chipSpecial");
+        const iconSpecial = document.getElementById("iconSpecial");
+        const strengthText = document.getElementById("strengthText");
 
-        function updateRuleItem(element, iconElement, isValid) {
-            if (!element || !iconElement) return;
+        const bars = [
+            document.getElementById("bar1"),
+            document.getElementById("bar2"),
+            document.getElementById("bar3"),
+            document.getElementById("bar4"),
+            document.getElementById("bar5")
+        ];
+
+        function updateChip(chip, icon, isValid) {
+            if (!chip || !icon) return;
             if (isValid) {
-                element.classList.remove("text-secondary");
-                element.classList.add("text-success", "fw-medium");
-                iconElement.className = "bi bi-check-circle-fill text-success";
+                chip.classList.add("is-valid");
+                icon.className = "bi bi-check2 chip-icon";
             } else {
-                element.classList.remove("text-success", "fw-medium");
-                element.classList.add("text-secondary");
-                iconElement.className = "bi bi-dash-circle text-muted";
+                chip.classList.remove("is-valid");
+                icon.className = "bi bi-circle chip-icon";
             }
         }
+
+        const STRENGTH_CONFIG = [
+            { label: "Too weak", color: "#ef4444" },
+            { label: "Weak", color: "#f97316" },
+            { label: "Fair", color: "#eab308" },
+            { label: "Good", color: "#84cc16" },
+            { label: "Strong", color: "#10b981" }
+        ];
 
         function checkPasswordPolicy(val) {
             const hasLength = val.length >= 8;
@@ -324,23 +394,40 @@
             const hasNumber = /[0-9]/.test(val);
             const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]\\\/~`';]/.test(val);
 
-            updateRuleItem(ruleLength, ruleLengthIcon, hasLength);
-            updateRuleItem(ruleUpper, ruleUpperIcon, hasUpper);
-            updateRuleItem(ruleLower, ruleLowerIcon, hasLower);
-            updateRuleItem(ruleNumber, ruleNumberIcon, hasNumber);
-            updateRuleItem(ruleSpecial, ruleSpecialIcon, hasSpecial);
+            updateChip(chipLength, iconLength, hasLength);
+            updateChip(chipUpper, iconUpper, hasUpper);
+            updateChip(chipLower, iconLower, hasLower);
+            updateChip(chipNumber, iconNumber, hasNumber);
+            updateChip(chipSpecial, iconSpecial, hasSpecial);
 
             const passedCount = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-            if (policyStatusBadge) {
-                if (passedCount === 5) {
-                    policyStatusBadge.className = "badge bg-success-subtle text-success border border-success-subtle rounded-pill";
-                    policyStatusBadge.textContent = "Strong Password (5/5)";
-                } else if (passedCount >= 3) {
-                    policyStatusBadge.className = "badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill";
-                    policyStatusBadge.textContent = `${passedCount}/5 Satisfied`;
-                } else {
-                    policyStatusBadge.className = "badge bg-secondary-subtle text-secondary border rounded-pill";
-                    policyStatusBadge.textContent = `${passedCount}/5 Satisfied`;
+            const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+            const defaultBarColor = isDark ? "#334155" : "#e2e8f0";
+
+            if (!val) {
+                bars.forEach(b => { if (b) b.style.backgroundColor = defaultBarColor; });
+                if (strengthText) {
+                    strengthText.textContent = "Min. 8 characters";
+                    strengthText.style.color = "";
+                    strengthText.className = "small text-secondary";
+                }
+            } else {
+                const config = STRENGTH_CONFIG[passedCount - 1] || STRENGTH_CONFIG[0];
+                bars.forEach((b, idx) => {
+                    if (b) {
+                        b.style.backgroundColor = idx < passedCount ? config.color : defaultBarColor;
+                    }
+                });
+                if (strengthText) {
+                    if (passedCount === 5) {
+                        strengthText.innerHTML = `<i class="bi bi-shield-fill-check me-1"></i>Strong password`;
+                        strengthText.style.color = "#10b981";
+                        strengthText.className = "small fw-semibold";
+                    } else {
+                        strengthText.textContent = `${config.label} (${passedCount}/5)`;
+                        strengthText.style.color = config.color;
+                        strengthText.className = "small fw-medium";
+                    }
                 }
             }
 
