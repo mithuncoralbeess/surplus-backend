@@ -734,9 +734,9 @@
                                 <div class="form-text small">Original aggregate retail value.</div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="liquidationPriceCol">
                                 <label class="form-label-custom">
-                                    <span>Liquidation Price (Surplus Payout) <span class="text-danger">*</span></span>
+                                    <span>Liquidation Price (Surplus Payout) <span class="text-danger" id="lpRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
@@ -744,18 +744,24 @@
                                         placeholder="0.00" value="{{ form_data.ask_price_surplus_payout|default:'' }}" required>
                                 </div>
                                 <div class="form-text small" id="lpHintText">Max 40% of MSRP (min 60% off).</div>
+                                <div class="form-check mt-2 pt-1">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" id="openForOffersCheckbox" name="open_for_offers" value="true" {% if form_data.open_for_offers %}checked{% endif %}>
+                                    <label class="form-check-label small fw-bold text-dark cursor-pointer user-select-none" for="openForOffersCheckbox">
+                                        Open for Offers
+                                    </label>
+                                </div>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-3" id="offerCol">
                                 <label class="form-label-custom">
-                                    <span>Offer (% Off MSRP) <span class="text-danger">*</span></span>
+                                    <span>Offer (% Off MSRP) <span class="text-danger" id="offerRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" step="1" min="60" max="99" class="form-control form-control-custom font-monospace fw-bold text-danger" name="offer_pct" id="offerPctInput"
                                         placeholder="60" value="60" required>
                                     <span class="input-group-text font-monospace bg-light fw-bold">% OFF</span>
                                 </div>
-                                <div class="form-text small">Min 60% off (user can use 60%+).</div>
+                                <div class="form-text small" id="offerHintText">Min 60% off (user can use 60%+).</div>
                                 <input type="hidden" name="offer" id="offerInput" value="60% Off MSRP">
                             </div>
                         </div>
@@ -804,19 +810,19 @@
                         </div>
 
                         <!-- Sale Method & Counter Offers -->
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
+                        <div class="row g-3 mb-4" id="saleMethodRow">
+                            <div class="col-md-6" id="saleMethodCol">
                                 <label class="form-label-custom">
                                     <span>Sale Method</span>
                                 </label>
-                                <select class="form-select form-select-custom" name="sale_method">
+                                <select class="form-select form-select-custom" name="sale_method" id="saleMethodSelect">
                                     {% for sm in sale_method_options %}
                                     <option value="{{ sm.value }}" {% if sm.value == 'offer' %}selected{% endif %}>{{ sm.label }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
 
-                            <div class="col-md-6 d-flex align-items-end">
+                            <div class="col-md-6 d-flex align-items-end" id="counterOfferCol">
                                 <div class="option-toggle-box w-100 mb-0 py-2.5 px-3">
                                     <div class="form-check form-switch mb-0">
                                         <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
@@ -1486,6 +1492,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // -------------------------------------------------------------
     const msrpInput = document.getElementById('msrpInput');
     const askPriceInput = document.getElementById('askPriceInput');
+    const openForOffersCheckbox = document.getElementById('openForOffersCheckbox');
+    const lpRequiredStar = document.getElementById('lpRequiredStar');
+    const lpHintText = document.getElementById('lpHintText');
+    const offerRequiredStar = document.getElementById('offerRequiredStar');
+    const offerHintText = document.getElementById('offerHintText');
+    const saleMethodCol = document.getElementById('saleMethodCol');
+    const counterOfferCol = document.getElementById('counterOfferCol');
+    const saleMethodSelect = document.getElementById('saleMethodSelect');
     const offerPctInput = document.getElementById('offerPctInput');
     const offerInput = document.getElementById('offerInput');
     const currencySelect = document.getElementById('currencySelect');
@@ -1496,7 +1510,114 @@ document.addEventListener('DOMContentLoaded', function () {
     const maxPayoutText = document.getElementById('maxPayoutText');
     const liquidationWarningBanner = document.getElementById('liquidationWarningBanner');
 
+    function toggleOpenForOffersUI() {
+        const isOpen = Boolean(openForOffersCheckbox && openForOffersCheckbox.checked);
+
+        if (isOpen) {
+            // Liquidation Price input will not accept value
+            if (askPriceInput) {
+                askPriceInput.value = '';
+                askPriceInput.readOnly = true;
+                askPriceInput.removeAttribute('required');
+                askPriceInput.removeAttribute('min');
+                askPriceInput.classList.remove('is-invalid');
+                askPriceInput.classList.add('bg-light', 'text-muted');
+                askPriceInput.placeholder = 'Not required (Open for Offers)';
+                askPriceInput.style.cursor = 'not-allowed';
+            }
+            if (lpRequiredStar) lpRequiredStar.classList.add('d-none');
+            if (lpHintText) {
+                lpHintText.textContent = 'Liquidation price not required (Open for offers).';
+                lpHintText.className = 'form-text small text-primary fw-medium';
+            }
+
+            // Offer (% Off MSRP) is not required
+            if (offerPctInput) {
+                offerPctInput.disabled = true;
+                offerPctInput.removeAttribute('required');
+                offerPctInput.classList.add('bg-light', 'text-muted');
+            }
+            if (offerRequiredStar) offerRequiredStar.classList.add('d-none');
+            if (offerHintText) {
+                offerHintText.textContent = 'Negotiable — buyer submits offers.';
+                offerHintText.className = 'form-text small text-primary fw-medium';
+            }
+            if (offerInput) offerInput.value = 'Negotiable / Open for Offers';
+
+            // Hide Sale Method container
+            if (saleMethodCol) saleMethodCol.classList.add('d-none');
+            if (counterOfferCol) {
+                counterOfferCol.classList.remove('col-md-6');
+                counterOfferCol.classList.add('col-md-12');
+            }
+            if (saleMethodSelect) saleMethodSelect.value = 'offer';
+        } else {
+            // Liquidation Price input will accept value and is mandatory
+            if (askPriceInput) {
+                askPriceInput.readOnly = false;
+                askPriceInput.setAttribute('required', 'required');
+                askPriceInput.setAttribute('min', '0.01');
+                askPriceInput.classList.remove('bg-light', 'text-muted');
+                askPriceInput.placeholder = '0.00';
+                askPriceInput.style.cursor = '';
+            }
+            if (lpRequiredStar) lpRequiredStar.classList.remove('d-none');
+            if (lpHintText) {
+                lpHintText.textContent = 'Max 40% of MSRP (min 60% off).';
+                lpHintText.className = 'form-text small text-muted';
+            }
+
+            // Offer (% Off MSRP) is active
+            if (offerPctInput) {
+                offerPctInput.disabled = false;
+                offerPctInput.setAttribute('required', 'required');
+                offerPctInput.classList.remove('bg-light', 'text-muted');
+            }
+            if (offerRequiredStar) offerRequiredStar.classList.remove('d-none');
+            if (offerHintText) {
+                offerHintText.textContent = 'Min 60% off (user can use 60%+).';
+                offerHintText.className = 'form-text small text-muted';
+            }
+
+            // Show Sale Method container
+            if (saleMethodCol) saleMethodCol.classList.remove('d-none');
+            if (counterOfferCol) {
+                counterOfferCol.classList.remove('col-md-12');
+                counterOfferCol.classList.add('col-md-6');
+            }
+        }
+        updatePricingCalculations('toggle');
+    }
+
+    if (openForOffersCheckbox) {
+        openForOffersCheckbox.addEventListener('change', toggleOpenForOffersUI);
+    }
+
+    // Strictly prevent user from inputting value into Liquidation Price when Open for Offers is checked
+    if (askPriceInput) {
+        askPriceInput.addEventListener('keydown', function (e) {
+            if (openForOffersCheckbox && openForOffersCheckbox.checked) {
+                if (e.key !== 'Tab' && e.key !== 'Escape') {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+        askPriceInput.addEventListener('paste', function (e) {
+            if (openForOffersCheckbox && openForOffersCheckbox.checked) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        askPriceInput.addEventListener('input', function () {
+            if (openForOffersCheckbox && openForOffersCheckbox.checked) {
+                this.value = '';
+            }
+        });
+    }
+
     function updatePricingCalculations(source) {
+        const isOpen = Boolean(openForOffersCheckbox && openForOffersCheckbox.checked);
         const msrp = parseFloat(msrpInput.value) || 0;
         let ask = parseFloat(askPriceInput.value) || 0;
         let offerPct = offerPctInput ? (parseInt(offerPctInput.value) || 60) : 60;
@@ -1505,65 +1626,93 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update all currency symbols
         document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = curr);
 
-        if (msrp > 0) {
-            const maxPayout = msrp * 0.40;
-            maxPayoutText.textContent = `${curr} ${maxPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-            // Two-way sync: calculate liquidation price from offer, or offer from liquidation price
-            if (source === 'offer') {
-                if (offerPct < 60) offerPct = 60;
-                ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
-                askPriceInput.value = ask.toFixed(2);
-            } else if (source === 'msrp' && (!ask || ask === 0)) {
-                if (offerPct < 60) offerPct = 60;
-                ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
-                askPriceInput.value = ask.toFixed(2);
-            } else if (source === 'ask' && ask > 0) {
-                const calculatedOffer = Math.round(((msrp - ask) / msrp) * 100);
-                if (offerPctInput) offerPctInput.value = calculatedOffer;
-                offerPct = calculatedOffer;
-            }
-        } else {
-            maxPayoutText.textContent = '-';
-        }
-
-        if (ask > 0) {
-            const publicPrice = ask * 1.10;
-            publicListingPriceText.textContent = `${curr} ${publicPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        } else {
-            publicListingPriceText.textContent = '-';
-        }
-
-        if (msrp > 0 && ask > 0) {
-            const discountPct = Math.round(((msrp - ask) / msrp) * 100);
-            discountBadge.textContent = `${discountPct}% Off MSRP`;
-            discountProgressBarText.textContent = `${discountPct}% (Policy Target: >= 60%)`;
-            if (offerInput) offerInput.value = `${discountPct}% Off MSRP`;
-
-            const barWidth = Math.max(0, Math.min(discountPct, 100));
-            discountProgressBar.style.width = `${barWidth}%`;
-
-            if (discountPct >= 60) {
-                discountBadge.className = 'badge bg-success px-3 py-1.5 rounded-pill fw-bold';
-                discountProgressBar.className = 'progress-bar bg-success';
-                liquidationWarningBanner.classList.add('d-none');
+        if (isOpen) {
+            if (askPriceInput) askPriceInput.value = '';
+            ask = 0;
+            if (msrp > 0) {
+                const maxPayout = msrp * 0.40;
+                maxPayoutText.textContent = `${curr} ${maxPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } else {
-                discountBadge.className = 'badge bg-danger px-3 py-1.5 rounded-pill fw-bold';
-                discountProgressBar.className = 'progress-bar bg-danger';
-                liquidationWarningBanner.classList.remove('d-none');
+                maxPayoutText.textContent = '-';
+            }
+            publicListingPriceText.textContent = 'Open for Offers (Negotiable)';
+            discountBadge.textContent = 'Negotiable (Open for Offers)';
+            discountBadge.className = 'badge bg-primary px-3 py-1.5 rounded-pill fw-bold';
+            discountProgressBarText.textContent = 'Open for Offers (Negotiable)';
+            discountProgressBar.style.width = '100%';
+            discountProgressBar.className = 'progress-bar bg-primary';
+            liquidationWarningBanner.classList.add('d-none');
+            const previewPill = document.getElementById('previewDiscountPill');
+            if (previewPill) {
+                previewPill.textContent = 'OPEN FOR OFFERS';
+                previewPill.classList.remove('d-none');
+            }
+            if (offerInput) offerInput.value = 'Negotiable / Open for Offers';
+        } else {
+            if (msrp > 0) {
+                const maxPayout = msrp * 0.40;
+                maxPayoutText.textContent = `${curr} ${maxPayout.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                // Two-way sync: calculate liquidation price from offer, or offer from liquidation price
+                if (source === 'offer') {
+                    if (offerPct < 60) offerPct = 60;
+                    ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                    askPriceInput.value = ask.toFixed(2);
+                } else if (source === 'msrp' && (!ask || ask === 0)) {
+                    if (offerPct < 60) offerPct = 60;
+                    ask = Math.round((msrp * (1.0 - (offerPct / 100.0))) * 100) / 100;
+                    askPriceInput.value = ask.toFixed(2);
+                } else if (source === 'ask' && ask > 0) {
+                    const calculatedOffer = Math.round(((msrp - ask) / msrp) * 100);
+                    if (offerPctInput) offerPctInput.value = calculatedOffer;
+                    offerPct = calculatedOffer;
+                }
+            } else {
+                maxPayoutText.textContent = '-';
             }
 
-            document.getElementById('previewDiscountPill').textContent = `${discountPct}% OFF`;
-            document.getElementById('previewDiscountPill').classList.remove('d-none');
-        } else {
-            discountBadge.textContent = '0% Off MSRP';
-            discountBadge.className = 'badge bg-secondary px-3 py-1.5 rounded-pill fw-bold';
-            discountProgressBar.style.width = '0%';
-            discountProgressBarText.textContent = '0% (Policy Target: >= 60%)';
-            discountProgressBar.className = 'progress-bar bg-secondary';
-            liquidationWarningBanner.classList.add('d-none');
-            document.getElementById('previewDiscountPill').classList.add('d-none');
-            if (offerInput) offerInput.value = '60% Off MSRP';
+            if (ask > 0) {
+                const publicPrice = ask * 1.10;
+                publicListingPriceText.textContent = `${curr} ${publicPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            } else {
+                publicListingPriceText.textContent = '-';
+            }
+
+            if (msrp > 0 && ask > 0) {
+                const discountPct = Math.round(((msrp - ask) / msrp) * 100);
+                discountBadge.textContent = `${discountPct}% Off MSRP`;
+                discountProgressBarText.textContent = `${discountPct}% (Policy Target: >= 60%)`;
+                if (offerInput) offerInput.value = `${discountPct}% Off MSRP`;
+
+                const barWidth = Math.max(0, Math.min(discountPct, 100));
+                discountProgressBar.style.width = `${barWidth}%`;
+
+                if (discountPct >= 60) {
+                    discountBadge.className = 'badge bg-success px-3 py-1.5 rounded-pill fw-bold';
+                    discountProgressBar.className = 'progress-bar bg-success';
+                    liquidationWarningBanner.classList.add('d-none');
+                } else {
+                    discountBadge.className = 'badge bg-danger px-3 py-1.5 rounded-pill fw-bold';
+                    discountProgressBar.className = 'progress-bar bg-danger';
+                    liquidationWarningBanner.classList.remove('d-none');
+                }
+
+                const previewPill = document.getElementById('previewDiscountPill');
+                if (previewPill) {
+                    previewPill.textContent = `${discountPct}% OFF`;
+                    previewPill.classList.remove('d-none');
+                }
+            } else {
+                discountBadge.textContent = '0% Off MSRP';
+                discountBadge.className = 'badge bg-secondary px-3 py-1.5 rounded-pill fw-bold';
+                discountProgressBar.style.width = '0%';
+                discountProgressBarText.textContent = '0% (Policy Target: >= 60%)';
+                discountProgressBar.className = 'progress-bar bg-secondary';
+                liquidationWarningBanner.classList.add('d-none');
+                const previewPill = document.getElementById('previewDiscountPill');
+                if (previewPill) previewPill.classList.add('d-none');
+                if (offerInput) offerInput.value = '60% Off MSRP';
+            }
         }
 
         updateLivePreview();
@@ -1862,13 +2011,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const curr = currencySelect ? currencySelect.value : 'USD';
         const msrp = parseFloat(msrpInput.value) || 0;
         const ask = parseFloat(askPriceInput.value) || 0;
+        const isOpen = Boolean(openForOffersCheckbox && openForOffersCheckbox.checked);
 
         previewTitle.textContent = lotTitleInput.value.trim() || 'Package Listing Title Preview';
         previewBrands.textContent = keyBrandsInput.value.trim() ? `Key Brands: ${keyBrandsInput.value.trim()}` : 'Key Brands: -';
 
-        previewPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
-        previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
-        previewPublicPrice.textContent = ask > 0 ? `${curr} ${(ask * 1.10).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+        if (isOpen) {
+            previewPrice.textContent = 'Negotiable';
+            previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            previewPublicPrice.textContent = 'Open for Offers';
+        } else {
+            previewPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            previewPublicPrice.textContent = ask > 0 ? `${curr} ${(ask * 1.10).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+        }
 
         summarySellerName.textContent = sellerNameInput.value.trim() || '-';
         
@@ -2523,7 +2679,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 msrpInput.value = clientManifestData.msrp.toFixed(2);
                 msrpInput.dispatchEvent(new Event('input'));
             }
-            if (clientManifestData.askPrice > 0 && askPriceInput && !askPriceInput.value) {
+            if (clientManifestData.askPrice > 0 && askPriceInput && !askPriceInput.value && (!openForOffersCheckbox || !openForOffersCheckbox.checked)) {
                 askPriceInput.value = clientManifestData.askPrice.toFixed(2);
                 askPriceInput.dispatchEvent(new Event('input'));
             }
@@ -2683,7 +2839,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // 6. Pricing & Liquidation Discount
         const msrp = (typeof msrpInput !== 'undefined' && msrpInput && msrpInput.value) ? parseFloat(msrpInput.value) : 0;
         const ask = (typeof askPriceInput !== 'undefined' && askPriceInput && askPriceInput.value) ? parseFloat(askPriceInput.value) : 0;
-        const pricingOk = Boolean(msrp > 0 && ask > 0 && ask <= msrp * 0.40);
+        const isOpen = Boolean(typeof openForOffersCheckbox !== 'undefined' && openForOffersCheckbox && openForOffersCheckbox.checked);
+        const pricingOk = isOpen ? Boolean(msrp > 0) : Boolean(msrp > 0 && ask > 0 && ask <= msrp * 0.40);
         setCheckItem(checkPricing, pricingOk);
         if (pricingOk) count++;
 
@@ -2729,6 +2886,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     allocationsContainer.innerHTML = '';
                     showEmptyCategoryState();
                     updateAllocationSum();
+                    if (openForOffersCheckbox) openForOffersCheckbox.checked = false;
+                    toggleOpenForOffersUI();
                     updatePricingCalculations();
                     updateLivePreview();
                     updateReadinessChecklist();
@@ -2763,6 +2922,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Mandatory Text Inputs
+            const isOpen = Boolean(openForOffersCheckbox && openForOffersCheckbox.checked);
             const requiredFields = [
                 { id: 'sellerNameInput', name: 'Seller Contact Name' },
                 { id: 'sellerPhoneInput', name: 'Seller WhatsApp / Phone' },
@@ -2774,7 +2934,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 { id: 'distinctSkusInput', name: 'Distinct SKUs' },
                 { id: 'totalUnitsInput', name: 'Total Units' },
                 { id: 'msrpInput', name: 'Total Est. Retail Value (MSRP)' },
-                { id: 'askPriceInput', name: 'Ask Price (Surplus Payout)' }
+                ...(!isOpen ? [{ id: 'askPriceInput', name: 'Ask Price (Surplus Payout)' }] : [])
             ];
 
             for (const f of requiredFields) {
@@ -2812,14 +2972,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Liquidation Discount Policy Check (>= 60%)
-            const msrpVal = parseFloat(msrpInput.value) || 0;
-            const askVal = parseFloat(askPriceInput.value) || 0;
-            if (msrpVal > 0 && askVal > 0) {
-                const discount = ((msrpVal - askVal) / msrpVal) * 100;
-                if (discount < 59.9) {
-                    const maxAllowed = (msrpVal * 0.40).toFixed(2);
-                    const curr = currencySelect ? currencySelect.value : 'USD';
-                    alert(`Minimum 60% discount required in liquidation price (maximum allowed payout is ${curr} ${maxAllowed}). Current discount is ${Math.round(discount)}%. Please use 60% or above.`);
+            if (!isOpen) {
+                const msrpVal = parseFloat(msrpInput.value) || 0;
+                const askVal = parseFloat(askPriceInput.value) || 0;
+                if (msrpVal > 0 && askVal > 0) {
+                    const discount = ((msrpVal - askVal) / msrpVal) * 100;
+                    if (discount < 59.9) {
+                        const maxAllowed = (msrpVal * 0.40).toFixed(2);
+                        const curr = currencySelect ? currencySelect.value : 'USD';
+                        alert(`Minimum 60% discount required in liquidation price (maximum allowed payout is ${curr} ${maxAllowed}). Current discount is ${Math.round(discount)}%. Please use 60% or above.`);
+                        askPriceInput.focus();
+                        e.preventDefault();
+                        return;
+                    }
+                } else {
+                    alert('Please enter a valid Liquidation Price (Surplus Payout).');
                     askPriceInput.focus();
                     e.preventDefault();
                     return;
@@ -2859,6 +3026,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     showEmptyCategoryState();
     updateAllocationSum();
+    toggleOpenForOffersUI();
     updatePricingCalculations();
     updateLivePreview();
     updateReadinessChecklist();

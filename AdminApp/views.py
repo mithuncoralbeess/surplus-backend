@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from django.db import connection
 from django.db.models import Q, Sum, Count
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -589,11 +590,12 @@ def adminDashBoard(request):
             staff_list = list(AdminDetails.objects.all().order_by("-created_at"))
             cache.set(staff_list_key, staff_list, timeout=300)
 
-    # Cached KPI metrics & stats (600s / 10 minutes)
-    stats_cache_key = "admin_dashboard_stats_v6"
+    # Cached KPI metrics & stats (300s / 5 minutes)
+    stats_cache_key = "admin_dashboard_stats_v8"
     stats = cache.get(stats_cache_key)
 
     if stats is None:
+        query_success = False
         try:
             with connection.cursor() as cur:
                 cur.execute("""
@@ -609,7 +611,8 @@ def adminDashBoard(request):
                         (SELECT COUNT(*) FROM admin_details WHERE status = false),
                         (SELECT COUNT(*) FROM rfq_enquiries),
                         (SELECT COUNT(*) FROM main_categories),
-                        (SELECT COUNT(*) FROM sub_categories)
+                        (SELECT COUNT(*) FROM sub_categories),
+                        (SELECT COALESCE(SUM(quantity), 0) FROM products WHERE is_active = true)
                 """)
                 row = cur.fetchone()
                 (
@@ -624,11 +627,15 @@ def adminDashBoard(request):
                     pending_admins,
                     rfq_requests_count,
                     categories_count,
-                    subcategories_count
-                ) = (row[i] or 0 for i in range(12))
-        except Exception:
+                    subcategories_count,
+                    active_products_qty
+                ) = (row[i] or 0 for i in range(13))
+                query_success = True
+        except Exception as e:
+            logger.exception("Failed to query dynamic dashboard statistics: %s", e)
             products_count = lot_listings_count = registered_users = buyers_count = sellers_count = 0
             companies_count = total_admins = active_admins = pending_admins = rfq_requests_count = categories_count = subcategories_count = 0
+            active_products_qty = 0
 
         stats = {
             "currency": "USD",
@@ -637,7 +644,7 @@ def adminDashBoard(request):
             "pending_admins": pending_admins,
             "total_sales_due": "0.00",
             "total_sales_amount": "0.00",
-            "active_products_qty": 0,
+            "active_products_qty": f"{int(active_products_qty):,}" if active_products_qty else "0",
             "buyers": buyers_count,
             "sellers": sellers_count,
             "companies": companies_count,
@@ -652,7 +659,8 @@ def adminDashBoard(request):
             "purchase_invoices": lot_listings_count,
             "sales_invoices": rfq_requests_count,
         }
-        cache.set(stats_cache_key, stats, timeout=600)
+        if query_success:
+            cache.set(stats_cache_key, stats, timeout=300)
     else:
         pending_admins = stats.get("pending_admins", 0)
 
@@ -5429,7 +5437,7 @@ def add_lot_view(request):
     ]
     shipping_terms_options = ["Buyer Arranges Freight", "Seller Arranges Freight", "Free Shipping"]
     sale_method_options = [
-        {"value": "offer", "label": "Accept Offers"},
+        {"value": "offer", "label": "Negotiable"},
         {"value": "fixed", "label": "Fixed Price"},
         {"value": "auction", "label": "Auction"}
     ]
@@ -5635,22 +5643,35 @@ def add_lot_view(request):
                     pass
             return 0.0
 
+        open_for_offers = request.POST.get("open_for_offers") in ("on", "true", "1", "True", True)
+
         total_est_retail_value_msrp = _parse_form_num(request.POST.get("total_est_retail_value_msrp") or request.POST.get("msrp"))
-        ask_price_surplus_payout = _parse_form_num(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price"))
+        
+        if open_for_offers:
+            ask_price_surplus_payout = 0.0
+            sale_method = "offer"
+            allow_counter_offers = True
+            discount_val = 0
+            offer_text = "Open for Offers"
+        else:
+            ask_price_surplus_payout = _parse_form_num(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price"))
+            sale_method = request.POST.get("sale_method", "offer").strip()
+            allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
 
-
-        sale_method = request.POST.get("sale_method", "offer").strip()
-        allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
-        excluded_export_countries = request.POST.getlist("excluded_export_countries")
-
-        discount_val = 0
-        if total_est_retail_value_msrp > 0 and ask_price_surplus_payout > 0:
-            discount_val = round(((total_est_retail_value_msrp - ask_price_surplus_payout) / total_est_retail_value_msrp) * 100)
-            if ask_price_surplus_payout > (total_est_retail_value_msrp * 0.40):
-                max_allowed = round(total_est_retail_value_msrp * 0.40, 2)
-                messages.error(request, f"Minimum 60% discount required in liquidation price. Maximum allowed payout is {currency} {max_allowed} (current discount is {discount_val}%).")
+            if ask_price_surplus_payout <= 0:
+                messages.error(request, "Liquidation Price (Surplus Payout) is required when lot is not open for offers.")
                 return render(request, "add_lot.html", {**context, "form_data": request.POST})
-        offer_text = f"{discount_val}% Off MSRP" if discount_val > 0 else ("Open to Offer" if allow_counter_offers else "")
+
+            discount_val = 0
+            if total_est_retail_value_msrp > 0 and ask_price_surplus_payout > 0:
+                discount_val = round(((total_est_retail_value_msrp - ask_price_surplus_payout) / total_est_retail_value_msrp) * 100)
+                if ask_price_surplus_payout > (total_est_retail_value_msrp * 0.40):
+                    max_allowed = round(total_est_retail_value_msrp * 0.40, 2)
+                    messages.error(request, f"Minimum 60% discount required in liquidation price. Maximum allowed payout is {currency} {max_allowed} (current discount is {discount_val}%).")
+                    return render(request, "add_lot.html", {**context, "form_data": request.POST})
+            offer_text = f"{discount_val}% Off MSRP" if discount_val > 0 else ("Open to Offer" if allow_counter_offers else "")
+
+        excluded_export_countries = request.POST.getlist("excluded_export_countries")
 
         # --- 5. Media & Document Uploads ---
         third_party_documents = []
@@ -5829,6 +5850,7 @@ def add_lot_view(request):
             "third_party_documents": third_party_documents,
             "allow_counter_offers": allow_counter_offers,
             "open_to_offer": "Yes" if allow_counter_offers else "No",
+            "open_for_offers": open_for_offers,
             "is_saved_to_db": True,
             "parse_summary": parse_summary,
             "products": parsed_items,

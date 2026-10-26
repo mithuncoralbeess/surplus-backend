@@ -688,6 +688,12 @@ class LotBatchEnquiry(models.Model):
             models.Index(fields=["uploaded_by", "created_at"], name="idx_batch_user_created"),
         ]
 
+    @property
+    def open_for_offers(self):
+        if isinstance(self.raw_data, dict) and "open_for_offers" in self.raw_data:
+            return bool(self.raw_data.get("open_for_offers"))
+        return self.sale_method == "offer" and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
+
     def save(self, *args, **kwargs):
         if not self.batch_id:
             max_id = LotBatchEnquiry.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
@@ -868,7 +874,7 @@ class Lot(models.Model):
                 msrp_d = Decimal(str(self.total_est_retail_value_msrp))
                 ask_d = Decimal(str(self.ask_price_surplus_payout))
                 if msrp_d > Decimal("0.00") and ask_d > Decimal("0.00") and msrp_d > ask_d:
-                    if not (self.offer and "open to offer" in str(self.offer).lower()):
+                    if not (self.offer and any(kw in str(self.offer).lower() for kw in ("open to offer", "open for offers", "negotiable"))):
                         discount_pct = int(round(((msrp_d - ask_d) / msrp_d) * Decimal("100")))
                         self.offer = f"{discount_pct}% Off MSRP"
             except Exception:
@@ -982,6 +988,12 @@ class Lot(models.Model):
                 sync_lot_embedding(self)
             except Exception:
                 pass
+
+    @property
+    def open_for_offers(self):
+        if isinstance(self.raw_data, dict) and "open_for_offers" in self.raw_data:
+            return bool(self.raw_data.get("open_for_offers"))
+        return self.sale_method == "offer" and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
 
     @property
     def batch_id(self):

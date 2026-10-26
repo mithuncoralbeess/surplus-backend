@@ -638,5 +638,123 @@ class AdminAppAuthTests(TestCase):
         self.assertEqual(lot.raw_data.get("liquidation_price"), 400.0)
         self.assertEqual(lot.raw_data.get("category"), "Switches")
 
+    def test_add_lot_open_for_offers_and_negotiable(self):
+        """
+        Verify:
+        - Sale Method option 'offer' has label 'Negotiable' (changed from 'Accept Offers')
+        - add_lot POST with open_for_offers: no need for Liquidation Price, ask_price_surplus_payout defaults to 0.0,
+          sale_method defaults to 'offer', allow_counter_offers=True, and discount policy is bypassed
+        - add_lot POST without open_for_offers requires Liquidation Price and enforces 60% discount
+        """
+        from .models import Lot, VendorDetails
+        from decimal import Decimal
+
+        admin = AdminDetails.objects.create(
+            username="admin_lot_offers_tester",
+            email="admin_offers@gmail.com",
+            account_type="SuperAdmin",
+            status=True,
+            session_version=1,
+        )
+        session = self.client.session
+        session["adminid"] = admin.id
+        session["session_version"] = 1
+        session.save()
+
+        # 1. GET add_lot page and check sale_method_options
+        get_res = self.client.get("/admin/lots/add/")
+        self.assertEqual(get_res.status_code, status.HTTP_200_OK)
+        sale_methods = get_res.context["sale_method_options"]
+        offer_option = next((sm for sm in sale_methods if sm["value"] == "offer"), None)
+        self.assertIsNotNone(offer_option)
+        self.assertEqual(offer_option["label"], "Negotiable")
+
+        # 2. POST add_lot with open_for_offers=on (no liquidation price provided)
+        post_data_open = {
+            "seller_name": "Test Seller",
+            "seller_phone": "+1234567890",
+            "seller_email": "seller@example.com",
+            "title": "Lot Open For Offers",
+            "key_brands_included": "BrandA, BrandB",
+            "description": "Assorted stock open for offers",
+            "inventory_country": "United States",
+            "inventory_location": "Dallas, TX",
+            "distinct_skus": "10",
+            "total_units": "500",
+            "currency": "USD",
+            "total_est_retail_value_msrp": "50000.00",
+            # No ask_price_surplus_payout provided!
+            "open_for_offers": "on",
+            "category_names": ["Electronics"],
+            "category_allocations": ["100"],
+        }
+        res_open = self.client.post("/admin/lots/add/", post_data_open, follow=False)
+        self.assertEqual(res_open.status_code, 302)  # Redirects to pending lots on success
+
+        created_lot_open = Lot.objects.filter(title="Lot Open For Offers").first()
+        self.assertIsNotNone(created_lot_open)
+        self.assertEqual(created_lot_open.ask_price_surplus_payout, Decimal("0.00"))
+        self.assertEqual(created_lot_open.sale_method, "offer")
+        self.assertTrue(created_lot_open.open_for_offers)
+        self.assertTrue(created_lot_open.raw_data.get("open_for_offers"))
+        self.assertTrue(created_lot_open.raw_data.get("allow_counter_offers"))
+
+        # 3. POST add_lot without open_for_offers and without liquidation price -> Should fail validation
+        post_data_no_lp = {
+            "seller_name": "Test Seller",
+            "seller_phone": "+1234567890",
+            "seller_email": "seller@example.com",
+            "title": "Lot Missing Price",
+            "total_est_retail_value_msrp": "50000.00",
+            # ask_price_surplus_payout is missing and open_for_offers is not checked
+            "category_names": ["Electronics"],
+            "category_allocations": ["100"],
+        }
+        res_no_lp = self.client.post("/admin/lots/add/", post_data_no_lp, follow=False)
+        self.assertEqual(res_no_lp.status_code, 200)  # Re-renders add_lot.html with error
+        self.assertFalse(Lot.objects.filter(title="Lot Missing Price").exists())
+
+        # 4. POST add_lot without open_for_offers and violating 60% discount -> Should fail validation
+        post_data_invalid_discount = {
+            "seller_name": "Test Seller",
+            "seller_phone": "+1234567890",
+            "seller_email": "seller@example.com",
+            "title": "Lot Bad Discount",
+            "total_est_retail_value_msrp": "10000.00",
+            "ask_price_surplus_payout": "6000.00",  # Only 40% discount, requires >= 60% (max 4000)
+            "category_names": ["Electronics"],
+            "category_allocations": ["100"],
+        }
+        res_invalid_discount = self.client.post("/admin/lots/add/", post_data_invalid_discount, follow=False)
+        self.assertEqual(res_invalid_discount.status_code, 200)
+        self.assertFalse(Lot.objects.filter(title="Lot Bad Discount").exists())
+
+        # 5. POST add_lot without open_for_offers and valid liquidation price -> Should succeed
+        post_data_valid = {
+            "seller_name": "Test Seller",
+            "seller_phone": "+1234567890",
+            "seller_email": "seller@example.com",
+            "title": "Lot Valid Price",
+            "key_brands_included": "BrandA",
+            "description": "Assorted stock",
+            "inventory_country": "United States",
+            "inventory_location": "Dallas, TX",
+            "distinct_skus": "10",
+            "total_units": "500",
+            "currency": "USD",
+            "total_est_retail_value_msrp": "10000.00",
+            "ask_price_surplus_payout": "3500.00",  # 65% discount (<= 4000)
+            "sale_method": "fixed",
+            "category_names": ["Electronics"],
+            "category_allocations": ["100"],
+        }
+        res_valid = self.client.post("/admin/lots/add/", post_data_valid, follow=False)
+        self.assertEqual(res_valid.status_code, 302)
+        created_lot_valid = Lot.objects.filter(title="Lot Valid Price").first()
+        self.assertIsNotNone(created_lot_valid)
+        self.assertEqual(created_lot_valid.ask_price_surplus_payout, Decimal("3500.00"))
+        self.assertEqual(created_lot_valid.sale_method, "fixed")
+        self.assertFalse(created_lot_valid.open_for_offers)
+
 
 

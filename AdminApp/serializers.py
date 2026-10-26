@@ -307,6 +307,7 @@ class LotSerializer(serializers.ModelSerializer):
     warehouse_images = serializers.SerializerMethodField()
     third_party_documents = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    open_for_offers = serializers.SerializerMethodField()
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
 
@@ -344,6 +345,7 @@ class LotSerializer(serializers.ModelSerializer):
             "total_est_retail_value_msrp",
             "ask_price_surplus_payout",
             "offer",
+            "open_for_offers",
             "excluded_export_countries",
             "sale_method",
             "file",
@@ -361,6 +363,13 @@ class LotSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "lot_number", "file_url", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
+
+    def get_open_for_offers(self, obj):
+        if hasattr(obj, 'open_for_offers'):
+            return obj.open_for_offers
+        if isinstance(getattr(obj, 'raw_data', None), dict):
+            return bool(obj.raw_data.get("open_for_offers", False))
+        return False
 
     def get_vendor_id(self, obj):
         if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
