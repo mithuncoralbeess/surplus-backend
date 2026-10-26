@@ -176,7 +176,13 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label for="password" class="form-label text-dark small fw-semibold mb-0">Password <span class="text-danger">*</span></label>
-                        <span id="strengthText" class="small text-secondary" style="font-size: 0.75rem; transition: color 0.2s ease;">Min. 8 characters</span>
+                        <div class="d-flex align-items-center gap-1.5">
+                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none text-primary fw-semibold small d-inline-flex align-items-center gap-1" id="btnSuggestPassword" title="Auto-suggest a strong password meeting all security rules">
+                                <i class="bi bi-magic"></i> <span id="suggestBtnText">Auto Suggest</span>
+                            </button>
+                            <span class="text-muted" style="font-size: 0.65rem;">&bull;</span>
+                            <span id="strengthText" class="small text-secondary" style="font-size: 0.75rem; transition: color 0.2s ease;">Min. 8 characters</span>
+                        </div>
                     </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-secondary border-end-0">
@@ -454,6 +460,80 @@
             checkPasswordsMatch();
         });
         confirmPasswordInput.addEventListener("input", checkPasswordsMatch);
+
+        // Auto-Suggest Strong Password Generator
+        const btnSuggestPassword = document.getElementById("btnSuggestPassword");
+        const suggestBtnText = document.getElementById("suggestBtnText");
+
+        function generateStrongPassword(len = 16) {
+            const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            const lower = "abcdefghjkmnpqrstuvwxyz";
+            const nums = "23456789";
+            const syms = "!@#$%^&*()_+~|}{[]:;?><,./-=";
+            const all = upper + lower + nums + syms;
+
+            const getRandomChar = (charset) => {
+                const arr = new Uint32Array(1);
+                window.crypto.getRandomValues(arr);
+                return charset[arr[0] % charset.length];
+            };
+
+            let pwd = [
+                getRandomChar(upper),
+                getRandomChar(upper),
+                getRandomChar(lower),
+                getRandomChar(lower),
+                getRandomChar(nums),
+                getRandomChar(nums),
+                getRandomChar(syms),
+                getRandomChar(syms)
+            ];
+
+            while (pwd.length < len) {
+                pwd.push(getRandomChar(all));
+            }
+
+            for (let i = pwd.length - 1; i > 0; i--) {
+                const arr = new Uint32Array(1);
+                window.crypto.getRandomValues(arr);
+                const j = arr[0] % (i + 1);
+                [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+            }
+
+            return pwd.join("");
+        }
+
+        if (btnSuggestPassword) {
+            btnSuggestPassword.addEventListener("click", () => {
+                const suggested = generateStrongPassword(16);
+                passwordInput.value = suggested;
+                confirmPasswordInput.value = suggested;
+
+                // Reveal password briefly so user can see it
+                passwordInput.type = "text";
+                confirmPasswordInput.type = "text";
+                if (togglePassIcon) togglePassIcon.className = "bi bi-eye-slash";
+                if (toggleConfirmPassIcon) toggleConfirmPassIcon.className = "bi bi-eye-slash";
+
+                // Evaluate policy and match
+                checkPasswordPolicy(suggested);
+                checkPasswordsMatch();
+
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(suggested).then(() => {
+                        if (suggestBtnText) suggestBtnText.textContent = "Copied!";
+                        btnSuggestPassword.classList.remove("text-primary");
+                        btnSuggestPassword.classList.add("text-success");
+                        setTimeout(() => {
+                            if (suggestBtnText) suggestBtnText.textContent = "Auto Suggest";
+                            btnSuggestPassword.classList.remove("text-success");
+                            btnSuggestPassword.classList.add("text-primary");
+                        }, 2500);
+                    }).catch(() => {});
+                }
+            });
+        }
 
         if (form) {
             form.addEventListener("submit", async (e) => {

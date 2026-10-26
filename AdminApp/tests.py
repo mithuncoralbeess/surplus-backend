@@ -756,5 +756,109 @@ class AdminAppAuthTests(TestCase):
         self.assertEqual(created_lot_valid.sale_method, "fixed")
         self.assertFalse(created_lot_valid.open_for_offers)
 
+    def test_admin_profile_view_and_change_password_flow(self):
+        """
+        Tests accessing profile page, updating full name, and changing password with password policy enforcement.
+        """
+        # 1. Create active admin user
+        admin = AdminDetails.objects.create(
+            username="profile_test_admin",
+            full_name="Profile Tester",
+            email="profile.tester@surplus.com",
+            pass_word=AdminDetails.hash_password("OldSecurePass@2026!"),
+            account_type="Admin",
+            status=True,
+            session_version=1
+        )
+
+        # 2. Anonymous request -> Redirects to login
+        res_anon = self.client.get("/admin/profile/")
+        self.assertEqual(res_anon.status_code, 302)
+        self.assertIn("/admin/login/", res_anon.url)
+
+        # 3. Log in as admin
+        session = self.client.session
+        session["adminid"] = admin.id
+        session["session_version"] = admin.session_version
+        session.save()
+
+        # 4. Authenticated GET -> HTTP 200
+        res_auth = self.client.get("/admin/profile/")
+        self.assertEqual(res_auth.status_code, 200)
+        self.assertContains(res_auth, "Admin Profile & Security")
+        self.assertContains(res_auth, "profile.tester@surplus.com")
+        self.assertContains(res_auth, "Change Password")
+
+        # 5. Update Profile Name
+        res_update_name = self.client.post("/admin/profile/", {
+            "action": "update_profile",
+            "full_name": "Updated Profile Tester"
+        }, format="json")
+        self.assertEqual(res_update_name.status_code, 200)
+        admin.refresh_from_db()
+        self.assertEqual(admin.full_name, "Updated Profile Tester")
+
+        # 6. Change Password: Wrong current password -> Error
+        res_wrong_old = self.client.post("/admin/profile/", {
+            "action": "change_password",
+            "old_password": "WrongPassword123!",
+            "new_password": "ValidNewPassword@2026!",
+            "confirm_new_password": "ValidNewPassword@2026!"
+        }, format="json")
+        self.assertEqual(res_wrong_old.status_code, 400)
+        self.assertIn("Incorrect current password", res_wrong_old.json()["message"])
+
+        # 7. Change Password: Mismatched new passwords -> Error
+        res_mismatch = self.client.post("/admin/profile/", {
+            "action": "change_password",
+            "old_password": "OldSecurePass@2026!",
+            "new_password": "ValidNewPassword@2026!",
+            "confirm_new_password": "DifferentPassword@2026!"
+        }, format="json")
+        self.assertEqual(res_mismatch.status_code, 400)
+        self.assertIn("do not match", res_mismatch.json()["message"])
+
+        # 8. Change Password: New password identical to old password -> Error
+        res_same_pass = self.client.post("/admin/profile/", {
+            "action": "change_password",
+            "old_password": "OldSecurePass@2026!",
+            "new_password": "OldSecurePass@2026!",
+            "confirm_new_password": "OldSecurePass@2026!"
+        }, format="json")
+        self.assertEqual(res_same_pass.status_code, 400)
+        self.assertIn("cannot be the same", res_same_pass.json()["message"])
+
+        # 9. Change Password: Weak password failing policy (no uppercase, no special char) -> Error
+        res_weak = self.client.post("/admin/profile/", {
+            "action": "change_password",
+            "old_password": "OldSecurePass@2026!",
+            "new_password": "weakpassword123",
+            "confirm_new_password": "weakpassword123"
+        }, format="json")
+        self.assertEqual(res_weak.status_code, 400)
+        self.assertFalse(res_weak.json()["success"])
+        self.assertTrue(len(res_weak.json().get("policy_errors", [])) > 0)
+
+        # 10. Change Password: Valid strong password meeting all policy rules -> Success
+        res_success = self.client.post("/admin/profile/", {
+            "action": "change_password",
+            "old_password": "OldSecurePass@2026!",
+            "new_password": "BrandNewStrongPass@2027#",
+            "confirm_new_password": "BrandNewStrongPass@2027#"
+        }, format="json")
+        self.assertEqual(res_success.status_code, 200)
+        self.assertTrue(res_success.json()["success"])
+
+        # Verify database updates
+        admin.refresh_from_db()
+        self.assertEqual(admin.session_version, 2)
+        self.assertTrue(admin.check_password("BrandNewStrongPass@2027#"))
+        self.assertFalse(admin.check_password("OldSecurePass@2026!"))
+
+        # Verify current session was kept valid with updated session_version
+        self.assertEqual(self.client.session.get("session_version"), 2)
+        res_subsequent_get = self.client.get("/admin/profile/")
+        self.assertEqual(res_subsequent_get.status_code, 200)
+
 
 

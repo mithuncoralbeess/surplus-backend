@@ -1,0 +1,829 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Profile & Security | Surplus Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 px-3 px-md-4">
+    <!-- Breadcrumbs -->
+    <nav class="custom-breadcrumb" aria-label="breadcrumb">
+        <ol class="breadcrumb-list">
+            <li class="breadcrumb-item">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a>
+            </li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item">
+                <a href="/admin/admins/">User Management</a>
+            </li>
+            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <span>Admin Profile & Security</span>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="header-title d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-person-gear text-primary fs-3"></i>
+                Admin Profile & Security
+            </h1>
+            <p class="header-subtitle mb-0">
+                Manage your administrative identity, account credentials, and security password policy.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% if is_super_admin %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-shield-shaded me-1"></i>Super Administrator
+            </span>
+            {% else %}
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-shield-check me-1"></i>{{ admin.account_type|default:"Admin" }}
+            </span>
+            {% endif %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold d-inline-flex align-items-center gap-1.5">
+                <span class="rounded-circle bg-success d-inline-block" style="width: 8px; height: 8px;"></span> Active
+            </span>
+        </div>
+    </div>
+
+    <!-- Django Messages (if traditional form redirect used) -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show d-flex align-items-center gap-2 rounded-3 shadow-xs" role="alert">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-triangle-fill text-danger{% else %}bi-info-circle-fill text-primary{% endif %} fs-5 flex-shrink-0"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Grid: Left Profile Card, Right Change Password Card -->
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Profile Overview & Meta -->
+        <div class="col-12 col-xl-4 col-lg-5">
+            <!-- Profile Identity Card -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <!-- Cover Banner Background -->
+                <div class="p-4 text-center position-relative" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                    <div class="position-relative d-inline-block">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-lg mx-auto fw-bold"
+                             style="width: 84px; height: 84px; font-size: 2rem; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: 3px solid rgba(255, 255, 255, 0.25);">
+                            {{ admin.full_name|default:admin.username|slice:":1"|upper }}
+                        </div>
+                        <span class="position-absolute bottom-0 end-0 p-1.5 bg-success border border-white border-2 rounded-circle" title="Active Account"></span>
+                    </div>
+                    <h4 class="fw-bold text-white mt-3 mb-1" id="profileDisplayName">
+                        {{ admin.full_name|default:admin.username }}
+                    </h4>
+                    <p class="text-white-50 small mb-2 font-monospace">@{{ admin.username }}</p>
+                    <div class="d-flex justify-content-center align-items-center gap-2">
+                        <span class="badge bg-white bg-opacity-15 text-white font-monospace rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
+                            {{ admin.admin_id|default:"ADM-0001" }}
+                        </span>
+                        <span class="badge {% if is_super_admin %}bg-warning text-dark{% else %}bg-primary text-white{% endif %} rounded-pill px-2.5 py-1" style="font-size: 0.75rem;">
+                            {{ admin.account_type }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Identity Details Body -->
+                <div class="card-body p-4">
+                    <h6 class="text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                        Account Information
+                    </h6>
+                    <div class="list-group list-group-flush border-0">
+                        <!-- Email -->
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 border-light">
+                            <span class="text-secondary small d-flex align-items-center gap-2">
+                                <i class="bi bi-envelope text-primary"></i> Work Email
+                            </span>
+                            <span class="fw-semibold small text-dark font-monospace text-truncate" style="max-width: 190px;" title="{{ admin.email }}">
+                                {{ admin.email }}
+                            </span>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 border-light">
+                            <span class="text-secondary small d-flex align-items-center gap-2">
+                                <i class="bi bi-person-badge text-primary"></i> Login Username
+                            </span>
+                            <span class="fw-semibold small text-dark font-monospace">
+                                {{ admin.username }}
+                            </span>
+                        </div>
+
+                        <!-- Role / Level -->
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 border-light">
+                            <span class="text-secondary small d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-check text-primary"></i> Role Access
+                            </span>
+                            <span class="badge bg-light text-dark border small fw-semibold">
+                                {{ admin.account_type }}
+                            </span>
+                        </div>
+
+                        <!-- Session Version -->
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 border-light">
+                            <span class="text-secondary small d-flex align-items-center gap-2" title="Tracks active login session invalidation version">
+                                <i class="bi bi-fingerprint text-primary"></i> Session Security
+                            </span>
+                            <span class="badge bg-light text-secondary border small font-monospace" id="profileSessionVersion">
+                                v{{ admin.session_version|default:"1" }}
+                            </span>
+                        </div>
+
+                        <!-- Created At -->
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2.5 border-light">
+                            <span class="text-secondary small d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar-event text-primary"></i> Registered Date
+                            </span>
+                            <span class="small text-secondary">
+                                {{ admin.created_at|date:"M d, Y"|default:"-" }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Profile Name Update Accordion -->
+                    <div class="mt-3 pt-3 border-top">
+                        <button class="btn btn-outline-secondary btn-sm w-100 rounded-3 d-flex align-items-center justify-content-center gap-2"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#editNameCollapse" aria-expanded="false" aria-controls="editNameCollapse">
+                            <i class="bi bi-pencil-square"></i> Edit Full Name
+                        </button>
+
+                        <div class="collapse mt-3" id="editNameCollapse">
+                            <form id="editProfileNameForm" method="POST" action="/admin/profile/">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_profile">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold text-secondary" for="full_name_input">Full Name</label>
+                                    <input type="text" class="form-control form-control-sm rounded-3" id="full_name_input" name="full_name" value="{{ admin.full_name }}" required>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm rounded-3 px-3 fw-semibold" id="saveNameBtn">
+                                        Save Name
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Policy Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-light bg-opacity-60">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-shield-lock-fill text-primary fs-5"></i>
+                    <h6 class="fw-bold text-dark mb-0">Password Security Rules</h6>
+                </div>
+                <p class="text-secondary small mb-3" style="line-height: 1.5;">
+                    To protect sensitive surplus management operations, admin passwords must comply with modern complexity standards:
+                </p>
+                <ul class="text-secondary small ps-3 mb-0" style="line-height: 1.7;">
+                    <li>Minimum <strong>8 characters</strong></li>
+                    <li>At least <strong>1 uppercase</strong> letter (A-Z)</li>
+                    <li>At least <strong>1 lowercase</strong> letter (a-z)</li>
+                    <li>At least <strong>1 number</strong> digit (0-9)</li>
+                    <li>At least <strong>1 special character</strong> (!@#$...)</li>
+                    <li>Changing password terminates other active sessions</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Change Password Form -->
+        <div class="col-12 col-xl-8 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-transparent border-0 p-4 pb-0">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                <i class="bi bi-key-fill text-primary"></i> Change Password
+                            </h4>
+                            <p class="text-secondary small mb-0">
+                                Verify your current password and set a secure new password complying with security standards.
+                            </p>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2.5 py-1.5 rounded-pill small fw-semibold">
+                            <i class="bi bi-lock me-1"></i>Policy Enforced
+                        </span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Dynamic Alert Banner for Password Change -->
+                    <div id="passwordAlertBanner" class="alert alert-danger d-none align-items-center gap-2 py-2.5 px-3 small rounded-3 mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0" id="passwordAlertIcon"></i>
+                        <span id="passwordAlertText"></span>
+                    </div>
+
+                    <form id="adminChangePasswordForm" method="POST" action="/admin/profile/">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_password">
+
+                        <!-- 1. Old Password -->
+                        <div class="mb-4">
+                            <label for="old_password" class="form-label text-dark small fw-semibold mb-1">
+                                Current Password <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-end-0">
+                                    <i class="bi bi-shield-lock"></i>
+                                </span>
+                                <input
+                                    type="password"
+                                    id="old_password"
+                                    name="old_password"
+                                    class="form-control bg-light border-start-0 border-end-0 ps-0"
+                                    placeholder="Enter your current password"
+                                    required
+                                    autocomplete="current-password"
+                                >
+                                <span class="input-group-text bg-light text-secondary border-start-0" id="toggleOldPassBtn" style="cursor: pointer;" title="Toggle visibility">
+                                    <i class="bi bi-eye" id="toggleOldPassIcon"></i>
+                                </span>
+                            </div>
+                            <div class="form-text text-secondary small">
+                                Required to verify your identity before applying password changes.
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted opacity-25">
+
+                        <!-- 2. New Password with Auto-Suggest and Policy Meter -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="new_password" class="form-label text-dark small fw-semibold mb-0">
+                                    New Password <span class="text-danger">*</span>
+                                </label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none text-primary fw-semibold small d-inline-flex align-items-center gap-1" id="btnSuggestPassword" title="Auto-suggest a strong password meeting all security rules">
+                                        <i class="bi bi-magic"></i> <span id="suggestBtnText">Auto Suggest</span>
+                                    </button>
+                                    <span class="text-muted" style="font-size: 0.65rem;">&bull;</span>
+                                    <span id="strengthText" class="small text-secondary" style="font-size: 0.78rem; transition: color 0.2s ease;">Min. 8 characters</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-end-0">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input
+                                    type="password"
+                                    id="new_password"
+                                    name="new_password"
+                                    class="form-control bg-light border-start-0 border-end-0 ps-0"
+                                    placeholder="Enter secure new password"
+                                    required
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                >
+                                <span class="input-group-text bg-light text-secondary border-start-0" id="toggleNewPassBtn" style="cursor: pointer;" title="Toggle visibility">
+                                    <i class="bi bi-eye" id="toggleNewPassIcon"></i>
+                                </span>
+                            </div>
+
+                            <!-- 5-Segment Strength Meter -->
+                            <div class="d-flex gap-1 mt-2" id="strengthMeter" style="height: 4px;">
+                                <div class="flex-grow-1 strength-bar" id="bar1"></div>
+                                <div class="flex-grow-1 strength-bar" id="bar2"></div>
+                                <div class="flex-grow-1 strength-bar" id="bar3"></div>
+                                <div class="flex-grow-1 strength-bar" id="bar4"></div>
+                                <div class="flex-grow-1 strength-bar" id="bar5"></div>
+                            </div>
+
+                            <!-- Compact Policy Requirement Chips -->
+                            <div class="d-flex flex-wrap gap-1 mt-2.5" id="passwordChips">
+                                <span id="chipLength" class="policy-chip">
+                                    <i class="bi bi-circle chip-icon" id="iconLength"></i>
+                                    <span>8+ characters</span>
+                                </span>
+                                <span id="chipUpper" class="policy-chip">
+                                    <i class="bi bi-circle chip-icon" id="iconUpper"></i>
+                                    <span>Uppercase (A-Z)</span>
+                                </span>
+                                <span id="chipLower" class="policy-chip">
+                                    <i class="bi bi-circle chip-icon" id="iconLower"></i>
+                                    <span>Lowercase (a-z)</span>
+                                </span>
+                                <span id="chipNumber" class="policy-chip">
+                                    <i class="bi bi-circle chip-icon" id="iconNumber"></i>
+                                    <span>Number (0-9)</span>
+                                </span>
+                                <span id="chipSpecial" class="policy-chip">
+                                    <i class="bi bi-circle chip-icon" id="iconSpecial"></i>
+                                    <span>Symbol (!@#$)</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Confirm New Password -->
+                        <div class="mb-4">
+                            <label for="confirm_new_password" class="form-label text-dark small fw-semibold mb-1">
+                                Confirm New Password <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary border-end-0">
+                                    <i class="bi bi-lock-fill"></i>
+                                </span>
+                                <input
+                                    type="password"
+                                    id="confirm_new_password"
+                                    name="confirm_new_password"
+                                    class="form-control bg-light border-start-0 border-end-0 ps-0"
+                                    placeholder="Re-type new password"
+                                    required
+                                    minlength="8"
+                                    autocomplete="new-password"
+                                >
+                                <span class="input-group-text bg-light text-secondary border-start-0" id="toggleConfirmPassBtn" style="cursor: pointer;" title="Toggle visibility">
+                                    <i class="bi bi-eye" id="toggleConfirmPassIcon"></i>
+                                </span>
+                            </div>
+                            <div id="passwordMismatchError" class="text-danger small mt-1 d-none">
+                                <i class="bi bi-exclamation-circle me-1"></i>New passwords do not match.
+                            </div>
+                            <div id="passwordMatchSuccess" class="text-success small mt-1 d-none">
+                                <i class="bi bi-check-circle me-1"></i>New passwords match.
+                            </div>
+                        </div>
+
+                        <!-- Action Submit Button -->
+                        <div class="d-flex align-items-center justify-content-between pt-2">
+                            <span class="text-secondary small">
+                                <i class="bi bi-info-circle me-1"></i>Other active sessions will be invalidated.
+                            </span>
+                            <button type="submit" class="btn btn-primary px-4 py-2.5 fw-semibold rounded-3 shadow-sm d-inline-flex align-items-center gap-2" id="submitPasswordBtn">
+                                <span class="spinner-border spinner-border-sm d-none" id="passwordBtnSpinner" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-shield-check" id="submitBtnIcon"></i>
+                                <span id="passwordBtnText">Update Password</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .strength-bar {
+        height: 4px;
+        border-radius: 9999px;
+        background-color: #e2e8f0;
+        transition: background-color 0.25s ease;
+    }
+    [data-bs-theme="dark"] .strength-bar {
+        background-color: #334155;
+    }
+    .policy-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+        font-size: 0.72rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 9999px;
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+        line-height: 1.25;
+    }
+    .policy-chip .chip-icon {
+        font-size: 0.55rem;
+        color: #94a3b8;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .policy-chip.is-valid {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #a7f3d0;
+        font-weight: 500;
+    }
+    .policy-chip.is-valid .chip-icon {
+        font-size: 0.75rem;
+        color: #10b981;
+        font-weight: 700;
+    }
+    [data-bs-theme="dark"] .policy-chip {
+        background: #1e293b;
+        color: #94a3b8;
+        border-color: #334155;
+    }
+    [data-bs-theme="dark"] .policy-chip.is-valid {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    [data-bs-theme="dark"] .policy-chip.is-valid .chip-icon {
+        color: #34d399;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Password toggles helper
+    function setupPasswordToggle(buttonId, iconId, inputId) {
+        const btn = document.getElementById(buttonId);
+        const icon = document.getElementById(iconId);
+        const input = document.getElementById(inputId);
+
+        if (btn && icon && input) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isPassword = input.type === "password";
+                input.type = isPassword ? "text" : "password";
+
+                if (isPassword) {
+                    icon.classList.remove("bi-eye");
+                    icon.classList.add("bi-eye-slash");
+                } else {
+                    icon.classList.remove("bi-eye-slash");
+                    icon.classList.add("bi-eye");
+                }
+                input.focus();
+            });
+        }
+    }
+
+    setupPasswordToggle("toggleOldPassBtn", "toggleOldPassIcon", "old_password");
+    setupPasswordToggle("toggleNewPassBtn", "toggleNewPassIcon", "new_password");
+    setupPasswordToggle("toggleConfirmPassBtn", "toggleConfirmPassIcon", "confirm_new_password");
+
+    // Elements
+    const form = document.getElementById("adminChangePasswordForm");
+    const oldPasswordInput = document.getElementById("old_password");
+    const newPasswordInput = document.getElementById("new_password");
+    const confirmPasswordInput = document.getElementById("confirm_new_password");
+    const submitBtn = document.getElementById("submitPasswordBtn");
+    const btnText = document.getElementById("passwordBtnText");
+    const btnSpinner = document.getElementById("passwordBtnSpinner");
+    const btnIcon = document.getElementById("submitBtnIcon");
+    const alertBanner = document.getElementById("passwordAlertBanner");
+    const alertText = document.getElementById("passwordAlertText");
+    const alertIcon = document.getElementById("passwordAlertIcon");
+    const mismatchError = document.getElementById("passwordMismatchError");
+    const matchSuccess = document.getElementById("passwordMatchSuccess");
+    const profileSessionVersion = document.getElementById("profileSessionVersion");
+
+    // Chips & Bars
+    const chipLength = document.getElementById("chipLength");
+    const iconLength = document.getElementById("iconLength");
+    const chipUpper = document.getElementById("chipUpper");
+    const iconUpper = document.getElementById("iconUpper");
+    const chipLower = document.getElementById("chipLower");
+    const iconLower = document.getElementById("iconLower");
+    const chipNumber = document.getElementById("chipNumber");
+    const iconNumber = document.getElementById("iconNumber");
+    const chipSpecial = document.getElementById("chipSpecial");
+    const iconSpecial = document.getElementById("iconSpecial");
+    const strengthText = document.getElementById("strengthText");
+
+    const bars = [
+        document.getElementById("bar1"),
+        document.getElementById("bar2"),
+        document.getElementById("bar3"),
+        document.getElementById("bar4"),
+        document.getElementById("bar5")
+    ];
+
+    function showAlert(message, type = "danger") {
+        alertBanner.className = `alert alert-${type} d-flex align-items-center gap-2 py-2.5 px-3 small rounded-3 mb-4`;
+        alertText.textContent = message;
+        if (alertIcon) {
+            alertIcon.className = (type === "success")
+                ? "bi bi-check-circle-fill flex-shrink-0 text-success fs-5"
+                : "bi bi-exclamation-triangle-fill flex-shrink-0 text-danger fs-5";
+        }
+        alertBanner.classList.remove("d-none");
+    }
+
+    function hideAlert() {
+        alertBanner.classList.add("d-none");
+    }
+
+    function updateChip(chip, icon, isValid) {
+        if (!chip || !icon) return;
+        if (isValid) {
+            chip.classList.add("is-valid");
+            icon.className = "bi bi-check2 chip-icon";
+        } else {
+            chip.classList.remove("is-valid");
+            icon.className = "bi bi-circle chip-icon";
+        }
+    }
+
+    const STRENGTH_CONFIG = [
+        { label: "Too weak", color: "#ef4444" },
+        { label: "Weak", color: "#f97316" },
+        { label: "Fair", color: "#eab308" },
+        { label: "Good", color: "#84cc16" },
+        { label: "Strong", color: "#10b981" }
+    ];
+
+    function checkPasswordPolicy(val) {
+        const hasLength = val.length >= 8;
+        const hasUpper = /[A-Z]/.test(val);
+        const hasLower = /[a-z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>\-_+=\[\]\\\/~`';]/.test(val);
+
+        updateChip(chipLength, iconLength, hasLength);
+        updateChip(chipUpper, iconUpper, hasUpper);
+        updateChip(chipLower, iconLower, hasLower);
+        updateChip(chipNumber, iconNumber, hasNumber);
+        updateChip(chipSpecial, iconSpecial, hasSpecial);
+
+        const passedCount = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+        const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+        const defaultBarColor = isDark ? "#334155" : "#e2e8f0";
+
+        if (!val) {
+            bars.forEach(b => { if (b) b.style.backgroundColor = defaultBarColor; });
+            if (strengthText) {
+                strengthText.textContent = "Min. 8 characters";
+                strengthText.style.color = "";
+                strengthText.className = "small text-secondary";
+            }
+        } else {
+            const config = STRENGTH_CONFIG[passedCount - 1] || STRENGTH_CONFIG[0];
+            bars.forEach((b, idx) => {
+                if (b) {
+                    b.style.backgroundColor = idx < passedCount ? config.color : defaultBarColor;
+                }
+            });
+            if (strengthText) {
+                if (passedCount === 5) {
+                    strengthText.innerHTML = `<i class="bi bi-shield-fill-check me-1"></i>Strong password`;
+                    strengthText.style.color = "#10b981";
+                    strengthText.className = "small fw-semibold";
+                } else {
+                    strengthText.textContent = `${config.label} (${passedCount}/5)`;
+                    strengthText.style.color = config.color;
+                    strengthText.className = "small fw-medium";
+                }
+            }
+        }
+
+        return hasLength && hasUpper && hasLower && hasNumber && hasSpecial;
+    }
+
+    function checkPasswordsMatch() {
+        const newPass = newPasswordInput.value;
+        const confirmPass = confirmPasswordInput.value;
+
+        if (newPass && confirmPass) {
+            if (newPass !== confirmPass) {
+                mismatchError.classList.remove("d-none");
+                matchSuccess.classList.add("d-none");
+                return false;
+            } else {
+                mismatchError.classList.add("d-none");
+                matchSuccess.classList.remove("d-none");
+                return true;
+            }
+        } else {
+            mismatchError.classList.add("d-none");
+            matchSuccess.classList.add("d-none");
+            return false;
+        }
+    }
+
+    newPasswordInput.addEventListener("input", () => {
+        checkPasswordPolicy(newPasswordInput.value);
+        checkPasswordsMatch();
+    });
+
+    confirmPasswordInput.addEventListener("input", checkPasswordsMatch);
+
+    // Auto-Suggest Strong Password Generator
+    const btnSuggestPassword = document.getElementById("btnSuggestPassword");
+    const suggestBtnText = document.getElementById("suggestBtnText");
+
+    function generateStrongPassword(len = 16) {
+        const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const lower = "abcdefghjkmnpqrstuvwxyz";
+        const nums = "23456789";
+        const syms = "!@#$%^&*()_+~|}{[]:;?><,./-=";
+        const all = upper + lower + nums + syms;
+
+        const getRandomChar = (charset) => {
+            const arr = new Uint32Array(1);
+            window.crypto.getRandomValues(arr);
+            return charset[arr[0] % charset.length];
+        };
+
+        let pwd = [
+            getRandomChar(upper),
+            getRandomChar(upper),
+            getRandomChar(lower),
+            getRandomChar(lower),
+            getRandomChar(nums),
+            getRandomChar(nums),
+            getRandomChar(syms),
+            getRandomChar(syms)
+        ];
+
+        while (pwd.length < len) {
+            pwd.push(getRandomChar(all));
+        }
+
+        for (let i = pwd.length - 1; i > 0; i--) {
+            const arr = new Uint32Array(1);
+            window.crypto.getRandomValues(arr);
+            const j = arr[0] % (i + 1);
+            [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+        }
+
+        return pwd.join("");
+    }
+
+    if (btnSuggestPassword) {
+        btnSuggestPassword.addEventListener("click", () => {
+            const suggested = generateStrongPassword(16);
+            newPasswordInput.value = suggested;
+            confirmPasswordInput.value = suggested;
+
+            // Reveal password temporarily so user can review it
+            newPasswordInput.type = "text";
+            confirmPasswordInput.type = "text";
+            const newIcon = document.getElementById("toggleNewPassIcon");
+            const confIcon = document.getElementById("toggleConfirmPassIcon");
+            if (newIcon) newIcon.className = "bi bi-eye-slash";
+            if (confIcon) confIcon.className = "bi bi-eye-slash";
+
+            // Evaluate policy and match
+            checkPasswordPolicy(suggested);
+            checkPasswordsMatch();
+
+            // Copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(suggested).then(() => {
+                    if (suggestBtnText) suggestBtnText.textContent = "Copied!";
+                    btnSuggestPassword.classList.remove("text-primary");
+                    btnSuggestPassword.classList.add("text-success");
+                    setTimeout(() => {
+                        if (suggestBtnText) suggestBtnText.textContent = "Auto Suggest";
+                        btnSuggestPassword.classList.remove("text-success");
+                        btnSuggestPassword.classList.add("text-primary");
+                    }, 2500);
+                }).catch(() => {});
+            }
+        });
+    }
+
+    // Handle AJAX Submission
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const oldPass = oldPasswordInput.value.trim();
+            const newPass = newPasswordInput.value;
+            const confirmPass = confirmPasswordInput.value;
+
+            if (!oldPass) {
+                showAlert("Please enter your current password.");
+                oldPasswordInput.focus();
+                return;
+            }
+
+            if (!checkPasswordPolicy(newPass)) {
+                showAlert("New password does not meet security policy requirements. Please check all criteria.");
+                newPasswordInput.focus();
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showAlert("New passwords do not match. Please verify.");
+                confirmPasswordInput.focus();
+                return;
+            }
+
+            if (oldPass === newPass) {
+                showAlert("New password cannot be the same as your current password. Please choose a different password.");
+                newPasswordInput.focus();
+                return;
+            }
+
+            // Set loading state
+            submitBtn.disabled = true;
+            btnSpinner.classList.remove("d-none");
+            if (btnIcon) btnIcon.classList.add("d-none");
+            btnText.textContent = "Updating...";
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || "";
+                const response = await fetch("/admin/profile/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        action: "change_password",
+                        old_password: oldPass,
+                        new_password: newPass,
+                        confirm_new_password: confirmPass
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showAlert(data.message || "Password updated successfully!", "success");
+                    form.reset();
+                    checkPasswordPolicy("");
+                    mismatchError.classList.add("d-none");
+                    matchSuccess.classList.add("d-none");
+
+                    // Restore input types to password
+                    oldPasswordInput.type = "password";
+                    newPasswordInput.type = "password";
+                    confirmPasswordInput.type = "password";
+                    const oldIcon = document.getElementById("toggleOldPassIcon");
+                    const newIcon = document.getElementById("toggleNewPassIcon");
+                    const confIcon = document.getElementById("toggleConfirmPassIcon");
+                    if (oldIcon) oldIcon.className = "bi bi-eye";
+                    if (newIcon) newIcon.className = "bi bi-eye";
+                    if (confIcon) confIcon.className = "bi bi-eye";
+
+                    // Update session version badge if returned
+                    if (profileSessionVersion) {
+                        const currentV = parseInt(profileSessionVersion.textContent.replace("v", "") || "1", 10);
+                        profileSessionVersion.textContent = `v${currentV + 1}`;
+                    }
+                } else {
+                    showAlert(data.message || "Failed to update password. Please check your inputs.", "danger");
+                }
+            } catch (err) {
+                console.error("Password update error:", err);
+                showAlert("A network error occurred. Please try again.", "danger");
+            } finally {
+                submitBtn.disabled = false;
+                btnSpinner.classList.add("d-none");
+                if (btnIcon) btnIcon.classList.remove("d-none");
+                btnText.textContent = "Update Password";
+            }
+        });
+    }
+
+    // Handle Edit Name Form
+    const editNameForm = document.getElementById("editProfileNameForm");
+    if (editNameForm) {
+        editNameForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fullNameVal = document.getElementById("full_name_input").value.trim();
+            if (!fullNameVal) return;
+
+            const saveBtn = document.getElementById("saveNameBtn");
+            if (saveBtn) saveBtn.disabled = true;
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || "";
+                const response = await fetch("/admin/profile/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        action: "update_profile",
+                        full_name: fullNameVal
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    const disp = document.getElementById("profileDisplayName");
+                    if (disp) disp.textContent = fullNameVal;
+                    const navDisp = document.getElementById("userProfileName");
+                    if (navDisp) navDisp.textContent = fullNameVal;
+                    const collapseEl = document.getElementById("editNameCollapse");
+                    if (collapseEl && window.bootstrap) {
+                        const bsCollapse = bootstrap.Collapse.getInstance(collapseEl) || new bootstrap.Collapse(collapseEl, { toggle: false });
+                        bsCollapse.hide();
+                    }
+                    showAlert("Profile name updated successfully.", "success");
+                } else {
+                    showAlert(data.message || "Failed to update profile name.", "danger");
+                }
+            } catch (err) {
+                showAlert("Network error updating profile name.", "danger");
+            } finally {
+                if (saveBtn) saveBtn.disabled = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

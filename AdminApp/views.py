@@ -57,6 +57,7 @@ from .serializers import (
     SuperAdminVerifyOTPSerializer,
     ContentPageSerializer,
 )
+from .password_policy import validate_admin_password
 
 
 def _get_authenticated_admin(request):
@@ -4098,6 +4099,153 @@ def delete_admin_api(request, admin_id):
         return Response({"success": True, "message": f"Admin account '{name}' has been deleted."}, status=status.HTTP_200_OK)
     except AdminDetails.DoesNotExist:
         return Response({"success": False, "message": "Admin account not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+def admin_profile_view(request):
+    """
+    Renders the Admin Profile & Security Settings page.
+    Allows logged-in admins to inspect their profile metadata and change their password.
+    Enforces current password verification, matching double new password, and strict password policy.
+    Maintains active session for the current administrator while invalidating other stale sessions.
+    Supports both standard form POST and JSON/AJAX API requests.
+    """
+    admin_user = _get_authenticated_admin(request)
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.content_type == "application/json"
+
+    if not admin_user:
+        if is_ajax:
+            return JsonResponse({"success": False, "message": "Authentication required. Please log in again."}, status=401)
+        return redirect("admin_login_page")
+
+    is_super = getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com"
+
+    if request.method == "POST":
+        if request.content_type == "application/json":
+            try:
+                data = json.loads(request.body.decode("utf-8"))
+            except Exception:
+                data = {}
+        else:
+            data = request.POST
+
+        action = data.get("action", "change_password")
+
+        # Action: Update Profile Info (Full Name)
+        if action == "update_profile":
+            full_name = data.get("full_name", "").strip()
+            if not full_name:
+                err_msg = "Full name cannot be empty."
+                if is_ajax:
+                    return JsonResponse({"success": False, "message": err_msg}, status=400)
+                messages.error(request, err_msg)
+                return redirect("admin_profile")
+
+            admin_user.full_name = full_name
+            admin_user.save(update_fields=["full_name", "updated_at"])
+            cache.delete(f"admin_obj_{admin_user.id}")
+
+            success_msg = "Profile details updated successfully."
+            if is_ajax:
+                return JsonResponse({"success": True, "message": success_msg, "full_name": full_name})
+            messages.success(request, success_msg)
+            return redirect("admin_profile")
+
+        # Action: Change Password
+        old_password = data.get("old_password", "")
+        new_password = data.get("new_password", "")
+        confirm_new_password = data.get("confirm_new_password", "")
+
+        # 1. Require current password
+        if not old_password:
+            msg = "Please enter your current password."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 2. Require new password and confirm new password
+        if not new_password or not confirm_new_password:
+            msg = "Please enter and confirm your new password."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 3. Verify current password matches DB
+        if not admin_user.check_password(old_password):
+            msg = "Incorrect current password. Please re-enter your valid current password."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 4. Verify new passwords match
+        if new_password != confirm_new_password:
+            msg = "New passwords do not match. Please verify both new password fields."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 5. New password cannot be identical to current password
+        if old_password == new_password:
+            msg = "New password cannot be the same as your current password. Please choose a different password."
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 6. Strict Password Policy Enforcement
+        policy_errors = validate_admin_password(new_password, user=admin_user)
+        if policy_errors:
+            msg = " ".join(policy_errors)
+            if is_ajax:
+                return JsonResponse({"success": False, "message": msg, "policy_errors": policy_errors}, status=400)
+            messages.error(request, msg)
+            return redirect("admin_profile")
+
+        # 7. Update Password and Increment Session Version
+        admin_user.set_password(new_password)
+        admin_user.session_version = (admin_user.session_version or 1) + 1
+        admin_user.save()
+
+        # Update cache & preserve CURRENT session while invalidating other concurrent sessions
+        cache_key = f"admin_version_{admin_user.id}"
+        cache.set(cache_key, admin_user.session_version, timeout=86400)
+        cache.delete(f"admin_obj_{admin_user.id}")
+
+        request.session["session_version"] = admin_user.session_version
+        request.session["adminid"] = admin_user.id
+        request.session.modified = True
+
+        # Sync Django auth User if present
+        try:
+            from django.contrib.auth.models import User
+            from django.contrib.auth import update_session_auth_hash
+            users = (User.objects.filter(email__iexact=admin_user.email) | User.objects.filter(username__iexact=admin_user.username)).distinct()
+            for u in users:
+                u.set_password(new_password)
+                u.save()
+                if getattr(request, "user", None) and request.user.is_authenticated and request.user.id == u.id:
+                    update_session_auth_hash(request, u)
+        except Exception as e:
+            logger.warning(f"Error syncing django auth user on admin password change: {e}")
+
+        success_msg = "Your password has been changed successfully! Your session has been renewed."
+        if is_ajax:
+            return JsonResponse({"success": True, "message": success_msg})
+        messages.success(request, success_msg)
+        return redirect("admin_profile")
+
+    # GET Request: Render Profile
+    pending_admins = AdminDetails.objects.filter(status=False).count() if is_super else 0
+
+    context = {
+        "admin": admin_user,
+        "is_super_admin": is_super,
+        "pending_admins_count": pending_admins,
+    }
+    return render(request, "admin_profile.html", context)
 
 
 def contact_enquiries_view(request):

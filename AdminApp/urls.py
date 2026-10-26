@@ -12,6 +12,7 @@ from .views import (
     admin_login,
     admin_logout_view,
     get_current_admin,
+    admin_profile_view,
     manage_admins_view,
     toggle_admin_status_api,
     delete_admin_api,
@@ -109,6 +110,8 @@ urlpatterns = [
     path("register/", admin_register, name="admin_register"),
     path("logout/", admin_logout_view, name="admin_logout"),
     path("me/", get_current_admin, name="admin_me"),
+    path("profile/", admin_profile_view, name="admin_profile"),
+    path("profile/change-password/", admin_profile_view, name="admin_change_password"),
 
     # Password Reset & OTP Flow
     path("password-reset/", super_admin_password_reset, name="super_admin_password_reset"),
