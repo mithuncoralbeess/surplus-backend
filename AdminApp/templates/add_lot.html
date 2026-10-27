@@ -5,6 +5,472 @@
 
 {% block content %}
 <div class="container-fluid pb-5">
+<style>
+/* =============================================================
+   ANTIGRAVITY SURPLUS PORTAL: HIGH-END FORM DESIGN SYSTEM
+   Strict Uniform Equal-Height & Perfect Alignment Across Grid
+   ============================================================= */
+
+/* Admin Submitter Status Verification Banner */
+.admin-verification-banner {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
+    border: 1.5px solid rgba(37, 99, 235, 0.22);
+}
+
+[data-bs-theme="dark"] .admin-verification-banner {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.admin-avatar-pill {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* Cards & Container Shells with Color-Coded Section Tops */
+.admin-form-card {
+    border-radius: 1rem !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    margin-bottom: 2rem !important;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-form-card .card-header {
+    padding: 1.15rem 1.65rem !important;
+    background-color: #ffffff !important;
+    border-bottom: 1.5px solid #f1f5f9 !important;
+}
+
+.admin-form-card .card-body {
+    padding: 1.85rem !important;
+}
+
+/* Color-Coded Card Top Accent Strips */
+.card-section-0 { border-top: 4px solid #10b981 !important; }
+.card-section-1 { border-top: 4px solid #2563eb !important; }
+.card-section-2 { border-top: 4px solid #6366f1 !important; }
+.card-section-3 { border-top: 4px solid #f59e0b !important; }
+.card-section-4 { border-top: 4px solid #0284c7 !important; }
+.card-section-5 { border-top: 4px solid #0d9488 !important; }
+.card-sidebar-preview { border-top: 4px solid #0f172a !important; }
+.card-sidebar-readiness { border-top: 4px solid #3b82f6 !important; }
+.card-sidebar-action { border-top: 4px solid #2563eb !important; }
+
+/* Color Accent System Utilities */
+.bg-emerald-subtle { background-color: #ecfdf5 !important; }
+.text-emerald { color: #059669 !important; }
+.border-emerald-subtle { border-color: #a7f3d0 !important; }
+
+.bg-primary-subtle { background-color: #eff6ff !important; }
+.text-primary { color: #2563eb !important; }
+.border-primary-subtle { border-color: #bfdbfe !important; }
+
+.bg-indigo-subtle { background-color: #eef2ff !important; }
+.text-indigo { color: #4f46e5 !important; }
+.border-indigo-subtle { border-color: #c7d2fe !important; }
+
+.bg-cyan-subtle { background-color: #f0f9ff !important; }
+.text-cyan { color: #0284c7 !important; }
+.border-cyan-subtle { border-color: #bae6fd !important; }
+
+.bg-teal-subtle { background-color: #f0fdfa !important; }
+.text-teal { color: #0d9488 !important; }
+.border-teal-subtle { border-color: #99f6e4 !important; }
+
+.bg-amber-subtle { background-color: #fffbeb !important; }
+.text-amber { color: #d97706 !important; }
+.border-amber-subtle { border-color: #fde68a !important; }
+
+.bg-danger-subtle { background-color: #fef2f2 !important; }
+.text-danger { color: #dc2626 !important; }
+
+.section-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* =============================================================
+   STRICT EQUAL HEIGHT & HORIZONTAL ALIGNMENT ENFORCEMENT
+   ============================================================= */
+
+/* 1. Labels: Strict 24px height prevents any vertical misalignment across columns */
+.form-label-custom {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.45rem !important;
+    font-size: 0.825rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-transform: none !important;
+    letter-spacing: -0.01em !important;
+}
+
+[data-bs-theme="dark"] .form-label-custom {
+    color: #cbd5e1 !important;
+}
+
+.form-label-custom .label-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    white-space: nowrap !important;
+    font-weight: 600 !important;
+    color: inherit !important;
+}
+
+.form-label-custom .badge-optional {
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    padding: 0.15rem 0.55rem !important;
+    border-radius: 999px !important;
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+
+[data-bs-theme="dark"] .form-label-custom .badge-optional {
+    background-color: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+}
+
+/* 2. Controls: Strict 46px height across Inputs, Selects, and Input-Groups */
+.form-control-custom,
+.form-select-custom,
+.input-group-text,
+.input-group .form-control-custom,
+.input-group .form-select-custom,
+.input-group .form-control,
+.input-group .form-select {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    line-height: 44px !important;
+    font-size: 0.895rem !important;
+}
+
+.form-control-custom,
+.form-select-custom {
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 0.65rem !important;
+    padding: 0 0.95rem !important;
+    font-weight: 500 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control-custom:hover,
+.form-select-custom:hover {
+    border-color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+}
+
+.form-control-custom:focus,
+.form-select-custom:focus {
+    border-color: #2563eb !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.15) !important;
+    outline: none !important;
+}
+
+/* Hero Input (Listing Title) */
+.form-control-hero {
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    padding: 0 1.15rem !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
+.form-control-hero:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Textarea exception to fixed height */
+textarea.form-control-custom {
+    height: auto !important;
+    min-height: 110px !important;
+    max-height: none !important;
+    line-height: 1.55 !important;
+    padding: 0.8rem 1rem !important;
+}
+
+/* 3. Helper Texts: Strict 18px height and single-line ellipsis prevents row misalignment */
+.form-text {
+    height: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    font-size: 0.735rem !important;
+    color: #64748b !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0 !important;
+    line-height: 18px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+}
+
+/* 4. Input Groups: Seamless icon addons with fixed width and smooth focus interaction */
+.input-group {
+    border-radius: 0.65rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    position: relative;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+}
+
+.addon-icon {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 1.05rem !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-right: none !important;
+    border-top-left-radius: 0.65rem !important;
+    border-bottom-left-radius: 0.65rem !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.input-group > .form-control-custom:not(:first-child),
+.input-group > .form-select-custom:not(:first-child) {
+    border-left: none !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0.65rem !important;
+    border-bottom-right-radius: 0.65rem !important;
+}
+
+.input-group > .form-control-custom:not(:last-child),
+.input-group > .form-select-custom:not(:last-child) {
+    border-right: none !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.input-group > .input-group-text:last-child:not(.addon-icon) {
+    border: 1.5px solid #cbd5e1 !important;
+    border-left: none !important;
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 0.825rem !important;
+    border-top-right-radius: 0.65rem !important;
+    border-bottom-right-radius: 0.65rem !important;
+    padding: 0 0.85rem !important;
+    flex-shrink: 0;
+}
+
+.input-group > .currency-symbol {
+    border: 1.5px solid #cbd5e1 !important;
+    border-right: none !important;
+    border-top-left-radius: 0.65rem !important;
+    border-bottom-left-radius: 0.65rem !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    background-color: #f8fafc !important;
+    font-weight: 700 !important;
+    padding: 0 0.85rem !important;
+    flex-shrink: 0;
+}
+
+.input-group:focus-within .addon-icon,
+.input-group:focus-within .currency-symbol {
+    border-color: #2563eb !important;
+}
+
+.input-group:focus-within > .form-control-custom,
+.input-group:focus-within > .form-select-custom {
+    border-color: #2563eb !important;
+}
+
+.input-group:focus-within > .input-group-text:last-child {
+    border-color: #2563eb !important;
+}
+
+/* Channel Selection Cards in Section 0 */
+.channel-box {
+    height: 96px !important;
+    min-height: 96px !important;
+    max-height: 96px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.85rem !important;
+    padding: 0.85rem 0.5rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.channel-icon-avatar {
+    width: 40px;
+    height: 40px;
+    transition: transform 0.2s ease;
+}
+
+.channel-radio-card:hover .channel-box {
+    border-color: #94a3b8 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08) !important;
+}
+
+.channel-radio-card:hover .channel-icon-avatar {
+    transform: scale(1.08);
+}
+
+.channel-radio-card input:checked + .channel-box {
+    background-color: #f0f7ff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px #2563eb, 0 4px 14px rgba(37, 99, 235, 0.12) !important;
+}
+
+.channel-radio-card input:checked + .channel-box .channel-label {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+/* Option Toggle Cards */
+.option-toggle-card {
+    background-color: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.85rem !important;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.option-toggle-card:hover {
+    border-color: #cbd5e1 !important;
+    background-color: #ffffff !important;
+}
+
+/* Dropzones */
+.dropzone-enhanced {
+    border: 2px dashed #cbd5e1 !important;
+    border-radius: 0.85rem !important;
+    padding: 1.75rem 1rem !important;
+    text-align: center;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.dropzone-enhanced:hover {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    transform: translateY(-1px);
+}
+
+/* Pricing Terminal in Section 5 */
+.pricing-terminal {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 1rem !important;
+    padding: 1.5rem !important;
+}
+
+.metric-kpi-tile {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.75rem !important;
+    padding: 1.15rem !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-kpi-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1 !important;
+}
+
+.option-toggle-box {
+    background-color: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.65rem !important;
+    transition: border-color 0.2s ease;
+}
+
+/* Dark Mode Overrides */
+[data-bs-theme="dark"] .admin-form-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .admin-form-card .card-header {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .form-control-custom,
+[data-bs-theme="dark"] .form-select-custom {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .addon-icon {
+    border-color: #475569 !important;
+    background-color: #1e293b !important;
+}
+
+[data-bs-theme="dark"] .channel-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .pricing-terminal {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .metric-kpi-tile {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+</style>
 
     <!-- Page Header & Breadcrumb -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
@@ -95,10 +561,10 @@
             <div class="col-lg-8">
 
                 <!-- 0. Seller / Vendor Information (Assisted Offline Intake) -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-success bg-opacity-10 text-success">
+                            <div class="section-icon-badge bg-emerald-subtle text-emerald">
                                 <i class="bi bi-person-lines-fill"></i>
                             </div>
                             <div>
@@ -116,7 +582,6 @@
                         <div class="mb-4">
                             <label class="form-label-custom">
                                 <span class="label-title">Intake Submission Channel <span class="text-danger">*</span></span>
-                                <span class="label-hint">Vendor communication source</span>
                             </label>
                             <div class="row g-2.5 intake-channel-grid mt-1">
                                 <div class="col-6 col-sm-4 col-md">
@@ -159,7 +624,7 @@
                                     <label class="channel-radio-card w-100 mb-0" data-channel="Direct / Walk-In">
                                         <input type="radio" name="intake_channel" value="Direct / Walk-In" class="d-none">
                                         <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
-                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-secondary bg-secondary bg-opacity-10 rounded-circle">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-warning bg-warning bg-opacity-10 rounded-circle">
                                                 <i class="bi bi-building fs-5"></i>
                                             </div>
                                             <span class="channel-label fw-semibold small text-dark d-block">Direct / Walk-In</span>
@@ -171,7 +636,7 @@
                                     <label class="channel-radio-card w-100 mb-0" data-channel="Other">
                                         <input type="radio" name="intake_channel" value="Other" class="d-none">
                                         <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
-                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-dark bg-dark bg-opacity-10 rounded-circle">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-secondary bg-secondary bg-opacity-10 rounded-circle">
                                                 <i class="bi bi-grid-fill fs-5"></i>
                                             </div>
                                             <span class="channel-label fw-semibold small text-dark d-block">Other</span>
@@ -189,11 +654,11 @@
                                     <span class="label-title">Seller Contact Name <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-person-fill"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_name" id="sellerNameInput"
                                         placeholder="e.g. Rahul Sharma / John Doe" value="{{ form_data.seller_name|default:'' }}" required>
                                 </div>
-                                <div class="form-text small text-muted">Primary vendor contact or authorized representative</div>
+                                <div class="form-text">Primary vendor contact or authorized representative</div>
                             </div>
 
                             <div class="col-md-6">
@@ -201,11 +666,11 @@
                                     <span class="label-title">WhatsApp / Mobile Number <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-whatsapp"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_phone" id="sellerPhoneInput"
                                         placeholder="e.g. +971 50 123 4567" value="{{ form_data.seller_phone|default:'' }}" required>
                                 </div>
-                                <div class="form-text small text-muted">Used for automatic seller profile matching and WhatsApp dispatch</div>
+                                <div class="form-text">Used for seller profile matching and WhatsApp dispatch</div>
                             </div>
                         </div>
 
@@ -217,17 +682,11 @@
                                     <span class="badge-optional">Optional</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-envelope-at-fill"></i></span>
                                     <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
                                         placeholder="{{ admin.email|default:'vendor@company.com' }}" value="{{ form_data.seller_email|default:'' }}">
                                 </div>
-                                <div class="form-text small text-muted">
-                                    {% if admin.email %}
-                                    Defaults to logged-in admin email (<strong>{{ admin.email }}</strong>) if left blank.
-                                    {% else %}
-                                    Auto-generated if left blank.
-                                    {% endif %}
-                                </div>
+                                <div class="form-text">{% if admin.email %}Defaults to logged-in admin email ({{ admin.email }}){% else %}Auto-linked or registered{% endif %}</div>
                             </div>
 
                             <div class="col-md-4">
@@ -236,11 +695,11 @@
                                     <span class="badge-optional">Optional</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-building"></i></span>
+                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-building-fill"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
                                         placeholder="Apex Industrial Supplies LLC" value="{{ form_data.seller_company|default:'' }}">
                                 </div>
-                                <div class="form-text small text-muted">Leave blank if individual private seller</div>
+                                <div class="form-text">Leave blank if individual private seller</div>
                             </div>
 
                             <div class="col-md-4">
@@ -249,11 +708,11 @@
                                     <span class="badge-optional">Optional</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
                                         placeholder="Dubai, UAE / Houston, TX" value="{{ form_data.seller_location|default:'' }}">
                                 </div>
-                                <div class="form-text small text-muted">City, Freezone, or Country</div>
+                                <div class="form-text">City, Freezone, or Country</div>
                             </div>
                         </div>
 
@@ -264,22 +723,22 @@
                                 <span class="badge-optional">Admin Only</span>
                             </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light text-muted"><i class="bi bi-journal-text"></i></span>
+                                <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-journal-text"></i></span>
                                 <input type="text" class="form-control form-control-custom" name="intake_notes" id="intakeNotesInput"
                                     placeholder="e.g. Received full inventory manifest via WhatsApp, verified stock location in JAFZA warehouse"
                                     value="{{ form_data.intake_notes|default:'' }}">
                             </div>
-                            <div class="form-text small text-muted">Private internal log for auditing and tracking offline communications</div>
+                            <div class="form-text">Private internal log for auditing and tracking offline communications</div>
                         </div>
 
                     </div>
                 </div>
 
                 <!-- 1. Manifest Spreadsheet Upload -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm" id="manifestUploadCard">
+                <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm" id="manifestUploadCard">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <div class="section-icon-badge bg-primary-subtle text-primary">
                                 <i class="bi bi-file-earmark-spreadsheet-fill"></i>
                             </div>
                             <div>
@@ -396,9 +855,9 @@
                 </div>
 
                 <!-- 2. Basic Lot Details -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
-                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                        <div class="section-icon-badge bg-indigo-subtle text-indigo">
                             <i class="bi bi-card-heading"></i>
                         </div>
                         <div>
@@ -410,37 +869,47 @@
 
                         <!-- Listing Title (Hero Input) -->
                         <div class="mb-4">
-                            <label class="form-label-custom">
+                            <label class="form-label-custom" for="lotTitleInput">
                                 <span class="label-title">Listing Title <span class="text-danger">*</span></span>
                                 <span class="label-hint" id="titleCharCount">0 / 200</span>
                             </label>
-                            <input type="text" class="form-control form-control-hero" name="title" id="lotTitleInput" maxlength="200"
-                                placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances"
-                                value="{{ form_data.title|default:'' }}" required>
-                            <div class="form-text small mt-1">Descriptive title highlighting brands, bundle size, and inventory categories.</div>
+                            <div class="input-group">
+                                <span class="input-group-text addon-icon bg-indigo-subtle text-indigo" style="height: 52px !important; min-height: 52px !important; font-size: 1.15rem;"><i class="bi bi-tag-fill"></i></span>
+                                <input type="text" class="form-control form-control-hero" name="title" id="lotTitleInput" maxlength="200"
+                                    placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances"
+                                    value="{{ form_data.title|default:'' }}" required>
+                            </div>
+                            <div class="form-text">Descriptive title highlighting brands, bundle size, and inventory categories.</div>
                         </div>
 
                         <!-- Key Brands Included -->
                         <div class="mb-4">
-                            <label class="form-label-custom">
+                            <label class="form-label-custom" for="keyBrandsInput">
                                 <span class="label-title">Key Brands Included <span class="text-danger">*</span></span>
                                 <span class="label-hint" id="brandsCharCount">0 / 300</span>
                             </label>
-                            <input type="text" class="form-control form-control-custom" name="key_brands_included" id="keyBrandsInput" maxlength="300"
-                                placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt"
-                                value="{{ form_data.key_brands_included|default:'' }}" required>
-                            <div class="form-text small mt-1">Comma-separated list of major manufacturer brands contained in this package.</div>
+                            <div class="input-group">
+                                <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-award-fill"></i></span>
+                                <input type="text" class="form-control form-control-custom" name="key_brands_included" id="keyBrandsInput" maxlength="300"
+                                    placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt"
+                                    value="{{ form_data.key_brands_included|default:'' }}" required>
+                            </div>
+                            <div class="form-text">Comma-separated list of major manufacturer brands contained in this package.</div>
                         </div>
 
                         <!-- Description & Notes -->
                         <div class="mb-4">
-                            <label class="form-label-custom">
+                            <label class="form-label-custom" for="lotDescInput">
                                 <span class="label-title">Lot Description &amp; Manifest Notes <span class="text-danger">*</span></span>
                                 <span class="label-hint" id="descCharCount">0 / 3000</span>
                             </label>
-                            <textarea class="form-control form-control-custom" name="description" id="lotDescInput" rows="4" maxlength="3000"
-                                placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..."
-                                required>{{ form_data.description|default:'' }}</textarea>
+                            <div class="input-group align-items-stretch">
+                                <span class="input-group-text addon-icon bg-indigo-subtle text-indigo d-flex align-items-start pt-3" style="height: auto !important; min-height: 110px;"><i class="bi bi-text-paragraph"></i></span>
+                                <textarea class="form-control form-control-custom" name="description" id="lotDescInput" rows="4" maxlength="3000"
+                                    placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..."
+                                    required>{{ form_data.description|default:'' }}</textarea>
+                            </div>
+                            <div class="form-text">Comprehensive overview of inventory origin, cosmetic grade, and surplus disposition.</div>
                         </div>
 
                         <!-- Warehouse & Product Photos / Videos -->
@@ -448,7 +917,6 @@
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <label class="form-label-custom mb-0">
                                     <span class="label-title">Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span></span>
-                                    <span class="label-hint">At least 1 photo/video required</span>
                                 </label>
                                 <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill" id="mediaCountBadge">0 files</span>
                             </div>
@@ -475,10 +943,10 @@
                 </div>
 
                 <!-- 3. Category Breakdown -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card card-section-3 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <div class="section-icon-badge bg-amber-subtle text-amber">
                                 <i class="bi bi-pie-chart-fill"></i>
                             </div>
                             <div>
@@ -520,10 +988,10 @@
                 </div>
 
                 <!-- 4. Condition & Logistics Specifications -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card card-section-4 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                            <div class="section-icon-badge bg-cyan-subtle text-cyan">
                                 <i class="bi bi-box-seam-fill"></i>
                             </div>
                             <div>
@@ -531,8 +999,8 @@
                                 <div class="text-muted small">Quality grade, inventory age, freight packaging, and warehouse location</div>
                             </div>
                         </div>
-                        <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill fw-medium small">
-                            <i class="bi bi-geo-alt me-1 text-primary"></i>Physical Inventory
+                        <span class="badge bg-cyan-subtle text-cyan border border-cyan-subtle px-3 py-1.5 rounded-pill fw-medium small">
+                            <i class="bi bi-geo-alt me-1"></i>Physical Inventory Specs
                         </span>
                     </div>
                     <div class="card-body p-4">
@@ -543,24 +1011,30 @@
                                 <label class="form-label-custom" for="conditionSelect">
                                     <span class="label-title">Overall Condition <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom" name="condition" id="conditionSelect" required>
-                                    {% for cond in condition_options %}
-                                    <option value="{{ cond }}" {% if cond == 'New' %}selected{% endif %}>{{ cond }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text small text-muted">Functional &amp; cosmetic grade</div>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-patch-check-fill"></i></span>
+                                    <select class="form-select form-select-custom" name="condition" id="conditionSelect" required>
+                                        {% for cond in condition_options %}
+                                        <option value="{{ cond }}" {% if cond == 'New' %}selected{% endif %}>{{ cond }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Functional &amp; cosmetic grade</div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
                                     <span class="label-title">Source Type <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom" name="source_type" required>
-                                    {% for src in source_type_options %}
-                                    <option value="{{ src }}" {% if src == 'Overstock' %}selected{% endif %}>{{ src }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text small text-muted">Inventory origin type</div>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-box-arrow-in-down"></i></span>
+                                    <select class="form-select form-select-custom" name="source_type" required>
+                                        {% for src in source_type_options %}
+                                        <option value="{{ src }}" {% if src == 'Overstock' %}selected{% endif %}>{{ src }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Inventory origin type</div>
                             </div>
 
                             <div class="col-md-4">
@@ -568,12 +1042,15 @@
                                     <span class="label-title">Stock Age</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <select class="form-select form-select-custom" name="inventory_stock_age">
-                                    {% for age in stock_age_options %}
-                                    <option value="{{ age }}" {% if forloop.first %}selected{% endif %}>{{ age }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text small text-muted">Estimated warehouse shelf age</div>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-hourglass-split"></i></span>
+                                    <select class="form-select form-select-custom" name="inventory_stock_age">
+                                        {% for age in stock_age_options %}
+                                        <option value="{{ age }}" {% if forloop.first %}selected{% endif %}>{{ age }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Estimated warehouse shelf age</div>
                             </div>
                         </div>
 
@@ -584,7 +1061,7 @@
                                     <span class="label-title">Inventory Country <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-globe-americas"></i></span>
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-globe-americas"></i></span>
                                     <select class="form-select form-select-custom" name="inventory_country" id="inventoryCountrySelect" required>
                                         <option value="">-- Select Country --</option>
                                         {% for c in countries %}
@@ -592,21 +1069,20 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                <div class="form-text small text-muted">Country where physical goods are stored</div>
+                                <div class="form-text">Country where physical goods are stored</div>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label-custom" for="inventoryLocationInput">
                                     <span class="label-title">Inventory Location <span class="text-danger">*</span></span>
-                                    <span class="label-hint">Facility / Warehouse / City</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-danger"><i class="bi bi-geo-alt-fill"></i></span>
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
                                         placeholder="e.g. Warehouse 12, Jebel Ali Free Zone, Dubai" value="{{ form_data.inventory_location|default:'' }}"
                                         required>
                                 </div>
-                                <div class="form-text small text-muted">Exact facility address or freezone name</div>
+                                <div class="form-text">Exact facility address or freezone name</div>
                             </div>
                         </div>
 
@@ -615,25 +1091,27 @@
                             <div class="col-md-6">
                                 <label class="form-label-custom" for="distinctSkusInput">
                                     <span class="label-title">Distinct SKUs <span class="text-danger">*</span></span>
-                                    <span class="label-hint">Unique line items in package</span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" min="1" class="form-control form-control-custom" name="number_of_distinct_skus" id="distinctSkusInput"
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-upc-scan"></i></span>
+                                    <input type="number" min="1" class="form-control form-control-custom font-monospace fw-bold" name="number_of_distinct_skus" id="distinctSkusInput"
                                         placeholder="24" value="{{ form_data.number_of_distinct_skus|default:'' }}" required>
-                                    <span class="input-group-text bg-light text-secondary fw-semibold">SKUs</span>
+                                    <span class="input-group-text bg-light text-secondary fw-semibold font-monospace">SKUs</span>
                                 </div>
+                                <div class="form-text">Unique catalog line items</div>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label-custom" for="totalUnitsInput">
                                     <span class="label-title">Total Units / Quantity <span class="text-danger">*</span></span>
-                                    <span class="label-hint">Total aggregate piece count</span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" min="1" class="form-control form-control-custom" name="total_units_quantity" id="totalUnitsInput"
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-boxes"></i></span>
+                                    <input type="number" min="1" class="form-control form-control-custom font-monospace fw-bold" name="total_units_quantity" id="totalUnitsInput"
                                         placeholder="1500" value="{{ form_data.total_units_quantity|default:'' }}" required>
-                                    <span class="input-group-text bg-light text-secondary fw-semibold">Units</span>
+                                    <span class="input-group-text bg-light text-secondary fw-semibold font-monospace">Units</span>
                                 </div>
+                                <div class="form-text">Total aggregate piece count</div>
                             </div>
                         </div>
 
@@ -643,11 +1121,15 @@
                                 <label class="form-label-custom">
                                     <span class="label-title">Primary Unit Type <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom" name="primary_unit_type" required>
-                                    {% for ut in unit_type_options %}
-                                    <option value="{{ ut }}" {% if ut == 'Pieces / Units' %}selected{% endif %}>{{ ut }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-box-seam"></i></span>
+                                    <select class="form-select form-select-custom" name="primary_unit_type" required>
+                                        {% for ut in unit_type_options %}
+                                        <option value="{{ ut }}" {% if ut == 'Pieces / Units' %}selected{% endif %}>{{ ut }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Packaging measurement unit</div>
                             </div>
 
                             <div class="col-md-6">
@@ -656,10 +1138,11 @@
                                     <span class="badge-optional">Optional</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-speedometer2"></i></span>
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-speedometer2"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="total_weight"
                                         placeholder="e.g. 1,500 kg / 3,300 lbs" value="{{ form_data.total_weight|default:'' }}">
                                 </div>
+                                <div class="form-text">Total gross shipment weight</div>
                             </div>
                         </div>
 
@@ -669,29 +1152,42 @@
                                 <label class="form-label-custom">
                                     <span class="label-title">Load Type <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom" name="load_type" required>
-                                    {% for lt in load_type_options %}
-                                    <option value="{{ lt }}" {% if lt == 'Pallet' %}selected{% endif %}>{{ lt }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-layers-fill"></i></span>
+                                    <select class="form-select form-select-custom" name="load_type" required>
+                                        {% for lt in load_type_options %}
+                                        <option value="{{ lt }}" {% if lt == 'Pallet' %}selected{% endif %}>{{ lt }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Freight packaging tier</div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
                                     <span class="label-title">Shipping Size <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom" name="shipping_size" required>
-                                    {% for sz in shipping_size_options %}
-                                    <option value="{{ sz }}" {% if sz == 'Single Pallet' %}selected{% endif %}>{{ sz }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-truck"></i></span>
+                                    <select class="form-select form-select-custom" name="shipping_size" required>
+                                        {% for sz in shipping_size_options %}
+                                        <option value="{{ sz }}" {% if sz == 'Single Pallet' %}selected{% endif %}>{{ sz }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Transport capacity classification</div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
                                     <span class="label-title">Pallet Count <span class="text-danger">*</span></span>
                                 </label>
-                                <input type="number" min="1" class="form-control form-control-custom" name="pallet_count" value="{{ form_data.pallet_count|default:'1' }}" required>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-grid-3x3-gap-fill"></i></span>
+                                    <input type="number" min="1" class="form-control form-control-custom font-monospace fw-bold" name="pallet_count" value="{{ form_data.pallet_count|default:'1' }}" required>
+                                    <span class="input-group-text bg-light text-secondary fw-semibold">Pallets</span>
+                                </div>
+                                <div class="form-text">Number of physical pallet stacks</div>
                             </div>
                         </div>
 
@@ -700,13 +1196,16 @@
                             <div class="col-md-6">
                                 <label class="form-label-custom">
                                     <span class="label-title">Shipping Terms</span>
-                                    <span class="label-hint">Freight responsibility</span>
                                 </label>
-                                <select class="form-select form-select-custom" name="shipping_terms">
-                                    {% for st in shipping_terms_options %}
-                                    <option value="{{ st }}" {% if st == 'Buyer Arranges Freight' %}selected{% endif %}>{{ st }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-signpost-split-fill"></i></span>
+                                    <select class="form-select form-select-custom" name="shipping_terms">
+                                        {% for st in shipping_terms_options %}
+                                        <option value="{{ st }}" {% if st == 'Buyer Arranges Freight' %}selected{% endif %}>{{ st }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Freight responsibility Incoterm</div>
                             </div>
 
                             <div class="col-md-6">
@@ -714,8 +1213,12 @@
                                     <span class="label-title">Lot Size / Volume</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <input type="text" class="form-control form-control-custom" name="lot_size"
-                                    placeholder="e.g. 4 Pallets / Half Truckload" value="{{ form_data.lot_size|default:'' }}">
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-cyan-subtle text-cyan"><i class="bi bi-aspect-ratio-fill"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="lot_size"
+                                        placeholder="e.g. 4 Pallets / Half Truckload" value="{{ form_data.lot_size|default:'' }}">
+                                </div>
+                                <div class="form-text">Package cubic space volume</div>
                             </div>
                         </div>
 
@@ -723,7 +1226,7 @@
                         <div class="option-toggle-card p-3 rounded-3 border bg-light-subtle mt-4" id="certToggleBox">
                             <div class="d-flex align-items-center justify-content-between gap-3">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                                    <div class="rounded-circle bg-cyan-subtle text-cyan d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
                                         <i class="bi bi-patch-check-fill fs-5"></i>
                                     </div>
                                     <div>
@@ -750,80 +1253,105 @@
                 </div>
 
                 <!-- 5. Commercial Terms & Liquidation Pricing -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
-                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
-                            <i class="bi bi-cash-stack"></i>
+                <div class="card admin-form-card card-section-5 mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-teal-subtle text-teal">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">5. Commercial Terms &amp; Liquidation Pricing</h6>
+                                <div class="text-muted small">Total estimated retail value, seller payout ask price, and sales method</div>
+                            </div>
                         </div>
-                        <div>
-                            <h6 class="fw-bold mb-0 text-dark">5. Commercial Terms &amp; Liquidation Pricing</h6>
-                            <div class="text-muted small">Total estimated retail value, seller payout ask price, and sales method</div>
-                        </div>
+                        <span class="badge bg-teal-subtle text-teal border border-teal-subtle px-3 py-1.5 rounded-pill fw-medium small">
+                            <i class="bi bi-graph-up-arrow me-1"></i>Pricing Safeguards
+                        </span>
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Currency, MSRP, Liquidation Price, Offer -->
-                        <div class="row g-3 mb-3">
+                        <!-- Open for Offers Option Toggle Card -->
+                        <div class="option-toggle-card p-3 rounded-3 border bg-light-subtle mb-4" id="openForOffersCard">
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-teal-subtle text-teal d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                                        <i class="bi bi-tag-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <label class="fw-semibold text-dark mb-0 cursor-pointer user-select-none d-block" for="openForOffersCheckbox">
+                                            Open for Offers / Negotiable Payout Mode
+                                        </label>
+                                        <div class="text-muted small">When checked, vendor does not set a fixed price; qualified buyers submit competitive bids</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-0 fs-5">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="openForOffersCheckbox" name="open_for_offers" value="true" {% if form_data.open_for_offers %}checked{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Currency, MSRP, Liquidation Price, Target Discount -->
+                        <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="currencySelect">
                                     <span class="label-title">Currency <span class="text-danger">*</span></span>
                                 </label>
-                                <select class="form-select form-select-custom font-monospace" name="currency" id="currencySelect" required>
-                                    {% for cur in currency_options %}
-                                    <option value="{{ cur }}" {% if cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-teal-subtle text-teal"><i class="bi bi-currency-exchange"></i></span>
+                                    <select class="form-select form-select-custom font-monospace fw-bold" name="currency" id="currencySelect" required>
+                                        {% for cur in currency_options %}
+                                        <option value="{{ cur }}" {% if cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Listing valuation currency</div>
                             </div>
 
                             <div class="col-md-3">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="msrpInput">
                                     <span class="label-title">MSRP (Est. Retail) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
-                                    <input type="number" step="0.01" min="1" class="form-control form-control-custom" name="total_est_retail_value_msrp" id="msrpInput"
+                                    <span class="input-group-text currency-symbol font-monospace fw-bold bg-light text-dark">USD</span>
+                                    <input type="number" step="0.01" min="1" class="form-control form-control-custom font-monospace fw-bold" name="total_est_retail_value_msrp" id="msrpInput"
                                         placeholder="0.00" value="{{ form_data.total_est_retail_value_msrp|default:'' }}" required>
                                 </div>
-                                <div class="form-text small">Original aggregate retail value.</div>
+                                <div class="form-text">Catalog retail replacement value</div>
                             </div>
 
                             <div class="col-md-3" id="liquidationPriceCol">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="askPriceInput">
                                     <span class="label-title">Liquidation Payout <span class="text-danger" id="lpRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
-                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-custom" name="ask_price_surplus_payout" id="askPriceInput"
+                                    <span class="input-group-text currency-symbol font-monospace fw-bold bg-light text-success">USD</span>
+                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-custom font-monospace fw-bold text-success" name="ask_price_surplus_payout" id="askPriceInput"
                                         placeholder="0.00" value="{{ form_data.ask_price_surplus_payout|default:'' }}" required>
                                 </div>
-                                <div class="form-text small" id="lpHintText">Max 40% of MSRP (min 60% off).</div>
-                                <div class="form-check mt-2 pt-1">
-                                    <input class="form-check-input cursor-pointer" type="checkbox" id="openForOffersCheckbox" name="open_for_offers" value="true" {% if form_data.open_for_offers %}checked{% endif %}>
-                                    <label class="form-check-label small fw-bold text-dark cursor-pointer user-select-none" for="openForOffersCheckbox">
-                                        Open for Offers
-                                    </label>
-                                </div>
+                                <div class="form-text" id="lpHintText">Max 40% of MSRP (min 60% off)</div>
                             </div>
 
                             <div class="col-md-3" id="offerCol">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="offerPctInput">
                                     <span class="label-title">Target Discount <span class="text-danger" id="offerRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="1" min="60" max="99" class="form-control form-control-custom font-monospace fw-bold text-danger" name="offer_pct" id="offerPctInput"
+                                    <span class="input-group-text addon-icon bg-danger-subtle text-danger"><i class="bi bi-percent"></i></span>
+                                    <input type="number" step="1" min="60" max="99" class="form-control form-control-custom font-monospace fw-bold text-danger text-center" name="offer_pct" id="offerPctInput"
                                         placeholder="60" value="60" required>
-                                    <span class="input-group-text font-monospace bg-light fw-bold">% OFF</span>
+                                    <span class="input-group-text font-monospace bg-light fw-bold text-danger">% OFF</span>
                                 </div>
-                                <div class="form-text small" id="offerHintText">Min 60% off (user can use 60%+).</div>
+                                <div class="form-text" id="offerHintText">Min 60% liquidation discount</div>
                                 <input type="hidden" name="offer" id="offerInput" value="60% Off MSRP">
                             </div>
                         </div>
 
                         <!-- Real-time Financial Terminal & Liquidation KPI Analysis -->
-                        <div class="pricing-terminal mb-3">
+                        <div class="pricing-terminal mb-4">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                 <span class="fw-bold small text-dark d-flex align-items-center gap-2">
-                                    <i class="bi bi-graph-down-arrow text-primary fs-6"></i> Liquidation Pricing Analysis
+                                    <i class="bi bi-graph-down-arrow text-teal fs-6"></i> Liquidation Pricing Analysis &amp; Margin Rules
                                 </span>
                                 <span id="discountBadge" class="badge bg-secondary px-3 py-1.5 rounded-pill fw-bold">0% Off MSRP</span>
                             </div>
@@ -865,34 +1393,42 @@
                         <!-- Sale Method & Counter Offers -->
                         <div class="row g-3 mb-4" id="saleMethodRow">
                             <div class="col-md-6" id="saleMethodCol">
-                                <label class="form-label-custom">
-                                    <span>Sale Method</span>
+                                <label class="form-label-custom" for="saleMethodSelect">
+                                    <span class="label-title">Sale Method</span>
                                 </label>
-                                <select class="form-select form-select-custom" name="sale_method" id="saleMethodSelect">
-                                    {% for sm in sale_method_options %}
-                                    <option value="{{ sm.value }}" {% if sm.value == 'offer' %}selected{% endif %}>{{ sm.label }}</option>
-                                    {% endfor %}
-                                </select>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-teal-subtle text-teal"><i class="bi bi-shop"></i></span>
+                                    <select class="form-select form-select-custom" name="sale_method" id="saleMethodSelect">
+                                        {% for sm in sale_method_options %}
+                                        <option value="{{ sm.value }}" {% if sm.value == 'offer' %}selected{% endif %}>{{ sm.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-text">Direct negotiation or fixed-price purchase</div>
                             </div>
 
-                            <div class="col-md-6 d-flex align-items-end" id="counterOfferCol">
-                                <div class="option-toggle-box w-100 mb-0 py-2.5 px-3">
-                                    <div class="form-check form-switch mb-0">
+                            <div class="col-md-6" id="counterOfferCol">
+                                <label class="form-label-custom" for="counterOfferSwitch">
+                                    <span class="label-title">Counter Offers</span>
+                                </label>
+                                <div class="option-toggle-box w-100 mb-0 px-3 d-flex align-items-center" style="height: 46px;">
+                                    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
                                         <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
                                             id="counterOfferSwitch" name="allow_counter_offers" checked>
-                                        <label class="form-check-label fw-semibold cursor-pointer ms-2 text-dark" for="counterOfferSwitch">
+                                        <label class="form-check-label fw-semibold cursor-pointer ms-1 text-dark small" for="counterOfferSwitch">
                                             Allow Counter Offers from Buyers
                                         </label>
                                     </div>
                                 </div>
+                                <div class="form-text">Permits bids below public asking price</div>
                             </div>
                         </div>
 
                         <!-- Excluded Export Countries (Modern Tag / Pill Selector) -->
                         <div>
                             <label class="form-label-custom mb-2">
-                                <span>Excluded Export Countries <span class="text-muted fw-normal">(Optional)</span></span>
-                                <span class="text-muted fw-normal">Select destinations where export is prohibited</span>
+                                <span class="label-title">Excluded Export Countries</span>
+                                <span class="badge-optional">Optional</span>
                             </label>
 
                             <!-- Quick Embargo Presets & Clear All Button -->
@@ -922,7 +1458,7 @@
                                 <option value="{{ country }}">{{ country }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text small mt-2">Lots will not be offered to buyers located in the selected restricted jurisdictions.</div>
+                            <div class="form-text mt-2">Lots will not be offered to buyers located in the selected restricted jurisdictions.</div>
                         </div>
 
                     </div>
@@ -934,9 +1470,9 @@
             <div class="col-lg-4">
 
                 <!-- 1. Sticky Live Package Preview Card -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
-                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <div class="card admin-form-card card-sidebar-preview mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
+                    <div class="card-header py-3 px-4 d-flex align-items-center justify-content-between text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
                             <i class="bi bi-eye-fill text-primary"></i> Live Marketplace Preview
                         </h6>
                         <span class="badge bg-primary text-white font-monospace" id="previewChannelBadge">WhatsApp</span>
@@ -1009,7 +1545,7 @@
                 </div>
 
                 <!-- 2. Dynamic Readiness Checklist -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm p-4">
+                <div class="card admin-form-card card-sidebar-readiness mb-4 border-0 shadow-sm p-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold mb-0 text-dark">
                             <i class="bi bi-clipboard2-check-fill text-primary me-1"></i> Listing Readiness
@@ -1053,7 +1589,7 @@
                 </div>
 
                 <!-- 3. Sticky Action Box -->
-                <div class="card admin-form-card border-0 shadow-sm p-4 sticky-action-box">
+                <div class="card admin-form-card card-sidebar-action border-0 shadow-sm p-4 sticky-action-box">
                     <button type="submit" form="addLotForm" id="submitLotBottomBtn"
                         class="btn btn-primary btn-lg w-100 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 mb-2 shadow-sm">
                         <i class="bi bi-plus-circle-fill"></i> Create Lot Listing
@@ -1078,370 +1614,6 @@
 <!-- SheetJS (XLSX) for Instant Client-Side Manifest Parsing -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-<style>
-    /* Antigravity Surplus Market Design System */
-    .admin-verification-banner {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
-        border: 1px solid rgba(37, 99, 235, 0.2);
-    }
-
-    [data-bs-theme="dark"] .admin-verification-banner {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
-        border-color: rgba(37, 99, 235, 0.35);
-    }
-
-    .admin-avatar-pill {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    }
-
-    /* Cards & Container Shells */
-    .admin-form-card {
-        border-radius: 1rem !important;
-        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
-        background: var(--bs-card-bg, #ffffff) !important;
-        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
-        margin-bottom: 2rem !important;
-        overflow: hidden;
-    }
-
-    .admin-form-card .card-header {
-        padding: 1.25rem 1.75rem !important;
-        background-color: var(--bs-card-bg, #ffffff) !important;
-        border-bottom: 1px solid var(--bs-border-color, #e2e8f0) !important;
-    }
-
-    .admin-form-card .card-body {
-        padding: 2rem !important;
-    }
-
-    .section-icon-badge {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.15rem;
-        flex-shrink: 0;
-    }
-
-    /* Typography & Custom Labels */
-    .form-label-custom {
-        font-size: 0.825rem !important;
-        font-weight: 600 !important;
-        color: #1e293b !important;
-        margin-bottom: 0.45rem !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        text-transform: none !important;
-        letter-spacing: normal !important;
-    }
-
-    [data-bs-theme="dark"] .form-label-custom {
-        color: #cbd5e1 !important;
-    }
-
-    .form-label-custom > span:first-child,
-    .form-label-custom .label-title {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 0.25rem !important;
-        white-space: nowrap !important;
-        font-weight: 600 !important;
-        color: inherit !important;
-    }
-
-    .form-label-custom .label-hint,
-    .form-label-custom .text-muted {
-        font-size: 0.74rem !important;
-        font-weight: 400 !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        color: #64748b !important;
-    }
-
-    .form-label-custom .badge-optional {
-        font-size: 0.7rem !important;
-        font-weight: 500 !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        padding: 0.15rem 0.5rem !important;
-        border-radius: 999px !important;
-        background-color: #f1f5f9 !important;
-        color: #64748b !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-
-    [data-bs-theme="dark"] .form-label-custom .badge-optional {
-        background-color: #1e293b !important;
-        color: #94a3b8 !important;
-        border-color: #334155 !important;
-    }
-
-    .form-control-custom,
-    .form-select-custom {
-        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
-        border-radius: 0.65rem !important;
-        padding: 0.625rem 0.9rem !important;
-        font-size: 0.915rem !important;
-        line-height: 1.45 !important;
-        transition: all 0.15s ease-in-out;
-        background-color: var(--bs-body-bg, #ffffff) !important;
-        color: var(--bs-body-color, #0f172a) !important;
-    }
-
-    .form-control-custom:focus,
-    .form-select-custom:focus {
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
-        outline: none;
-    }
-
-    .form-control-hero {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        padding: 0.85rem 1.1rem !important;
-        border-radius: 0.75rem !important;
-        border: 1px solid var(--bs-border-color, #cbd5e1) !important;
-        background-color: var(--bs-body-bg, #ffffff) !important;
-        color: var(--bs-body-color, #0f172a) !important;
-    }
-
-    .form-control-hero:focus {
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
-    }
-
-    /* Channel Selection Cards */
-    .channel-box {
-        background: var(--bs-card-bg, #ffffff) !important;
-        border: 1.5px solid var(--bs-border-color, #e2e8f0) !important;
-        border-radius: 0.85rem !important;
-        padding: 1.1rem 0.65rem !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        position: relative;
-    }
-
-    .channel-icon-avatar {
-        width: 44px;
-        height: 44px;
-        transition: transform 0.2s ease;
-    }
-
-    .channel-radio-card:hover .channel-box {
-        border-color: #94a3b8 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
-    }
-
-    .channel-radio-card:hover .channel-icon-avatar {
-        transform: scale(1.08);
-    }
-
-    .channel-radio-card input:checked + .channel-box {
-        background-color: #f0f7ff !important;
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px #2563eb, 0 4px 14px rgba(37, 99, 235, 0.12) !important;
-    }
-
-    .channel-radio-card input:checked + .channel-box .channel-label {
-        color: #1d4ed8 !important;
-        font-weight: 700 !important;
-    }
-
-    [data-bs-theme="dark"] .channel-box {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-    }
-
-    [data-bs-theme="dark"] .channel-radio-card input:checked + .channel-box {
-        background-color: rgba(37, 99, 235, 0.15) !important;
-        border-color: #3b82f6 !important;
-    }
-
-    /* Pricing Financial Terminal Box */
-    .pricing-terminal {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%) !important;
-        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
-        border-radius: 1rem !important;
-        padding: 1.5rem !important;
-        margin-top: 0.5rem !important;
-        margin-bottom: 2rem !important;
-    }
-
-    [data-bs-theme="dark"] .pricing-terminal {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%) !important;
-        border-color: #334155 !important;
-    }
-
-    .metric-kpi-tile {
-        background: var(--bs-body-bg, #ffffff) !important;
-        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
-        border-radius: 0.75rem !important;
-        padding: 1.25rem !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .metric-kpi-tile:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
-    }
-
-    /* Option Toggle Cards */
-    .option-toggle-card,
-    .option-toggle-box {
-        background-color: #f8fafc !important;
-        border: 1px solid var(--bs-border-color, #e2e8f0) !important;
-        border-radius: 0.85rem !important;
-        padding: 1.15rem 1.35rem !important;
-        margin-bottom: 1.5rem !important;
-        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    [data-bs-theme="dark"] .option-toggle-card,
-    [data-bs-theme="dark"] .option-toggle-box {
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
-    }
-
-    .option-toggle-card.active-box,
-    .option-toggle-box.active-box {
-        border-color: #10b981 !important;
-        background-color: rgba(16, 185, 129, 0.05) !important;
-        box-shadow: 0 0 0 1px #10b981;
-    }
-
-    /* Dropzone Enhanced */
-    .dropzone-enhanced {
-        border: 2px dashed #93c5fd;
-        background: rgba(239, 246, 255, 0.45);
-        border-radius: 1rem;
-        padding: 2.5rem 1.5rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .dropzone-enhanced:hover,
-    .dropzone-enhanced.dragover {
-        border-color: #2563eb;
-        background: rgba(219, 234, 254, 0.65);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
-    }
-
-    [data-bs-theme="dark"] .dropzone-enhanced {
-        border-color: #3b82f6;
-        background: rgba(30, 41, 59, 0.4);
-    }
-
-    [data-bs-theme="dark"] .dropzone-enhanced:hover,
-    [data-bs-theme="dark"] .dropzone-enhanced.dragover {
-        background: rgba(30, 58, 138, 0.3);
-    }
-
-    #mediaDropzone * {
-        pointer-events: none;
-    }
-
-    /* Media Preview Cards */
-    .media-preview-card {
-        position: relative;
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid var(--bs-border-color, #e5e7eb);
-        background: var(--bs-body-bg, #ffffff);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .media-preview-card:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-
-    .media-preview-card img,
-    .media-preview-card video {
-        width: 100%;
-        height: 95px;
-        object-fit: cover;
-        display: block;
-    }
-
-    .media-preview-card .badge-cover {
-        position: absolute;
-        top: 6px;
-        left: 6px;
-        font-size: 0.65rem;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: rgba(15, 23, 42, 0.88);
-        color: #fff;
-        font-weight: 600;
-        backdrop-filter: blur(4px);
-    }
-
-    .media-preview-card .btn-remove {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: rgba(220, 38, 38, 0.9);
-        color: #fff;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        cursor: pointer;
-        transition: background 0.15s, transform 0.15s;
-    }
-
-    .media-preview-card .btn-remove:hover {
-        background: #b91c1c;
-        transform: scale(1.1);
-    }
-
-    /* Checklist Progress */
-    .checklist-item {
-        transition: color 0.15s ease;
-    }
-
-    .checklist-item.done i {
-        color: #10b981 !important;
-    }
-
-    .checklist-item.done {
-        color: var(--bs-body-color, #0f172a);
-        font-weight: 500;
-    }
-
-    .sticky-preview-card,
-    .sticky-action-box {
-        position: sticky;
-        top: 1.5rem;
-        z-index: 5;
-    }
-
-    .text-truncate-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .shadow-xs {
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
