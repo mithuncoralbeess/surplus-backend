@@ -171,8 +171,8 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Seller Contact Name <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Person or contact</span>
+                                    <span class="label-title">Seller Contact Name <span class="text-danger">*</span></span>
+                                    <span class="label-hint">Contact person</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
@@ -183,8 +183,8 @@
 
                             <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>WhatsApp / Mobile Number <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Account matching</span>
+                                    <span class="label-title">WhatsApp / Mobile Number <span class="text-danger">*</span></span>
+                                    <span class="label-hint">Account match</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
@@ -198,8 +198,8 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Seller Email</span>
-                                    <span class="text-muted fw-normal">Optional</span>
+                                    <span class="label-title">Seller Email</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
                                 <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
                                     placeholder="{{ admin.email|default:'vendor@company.com' }}" value="{{ form_data.seller_email|default:'' }}">
@@ -214,8 +214,8 @@
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Company / Store Name</span>
-                                    <span class="text-muted fw-normal">Optional</span>
+                                    <span class="label-title">Company / Store Name</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
                                 <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
                                     placeholder="Apex Industrial Supplies" value="{{ form_data.seller_company|default:'' }}">
@@ -224,8 +224,8 @@
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Seller Location</span>
-                                    <span class="text-muted fw-normal">Optional</span>
+                                    <span class="label-title">Seller Location</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
                                 <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
                                     placeholder="Dubai, UAE / Houston, TX" value="{{ form_data.seller_location|default:'' }}">
@@ -236,8 +236,8 @@
                         <!-- Internal Admin Notes -->
                         <div>
                             <label class="form-label-custom">
-                                <span>Internal Admin Intake Notes</span>
-                                <span class="text-muted fw-normal">Visible only to admins</span>
+                                <span class="label-title">Internal Admin Intake Notes</span>
+                                <span class="badge-optional">Admin Only</span>
                             </label>
                             <input type="text" class="form-control form-control-custom" name="intake_notes" id="intakeNotesInput"
                                 placeholder="e.g. Received full inventory manifest via WhatsApp, verified stock location in JAFZA warehouse"
@@ -383,8 +383,8 @@
                         <!-- Listing Title (Hero Input) -->
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span>Listing Title <span class="text-danger">*</span></span>
-                                <span class="text-muted fw-normal" id="titleCharCount">0 / 200</span>
+                                <span class="label-title">Listing Title <span class="text-danger">*</span></span>
+                                <span class="label-hint" id="titleCharCount">0 / 200</span>
                             </label>
                             <input type="text" class="form-control form-control-hero" name="title" id="lotTitleInput" maxlength="200"
                                 placeholder="e.g. 6 Pallets of Mixed Brand Consumer Electronics & Home Appliances"
@@ -395,8 +395,8 @@
                         <!-- Key Brands Included -->
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span>Key Brands Included <span class="text-danger">*</span></span>
-                                <span class="text-muted fw-normal" id="brandsCharCount">0 / 300</span>
+                                <span class="label-title">Key Brands Included <span class="text-danger">*</span></span>
+                                <span class="label-hint" id="brandsCharCount">0 / 300</span>
                             </label>
                             <input type="text" class="form-control form-control-custom" name="key_brands_included" id="keyBrandsInput" maxlength="300"
                                 placeholder="e.g. Samsung, Sony, Philips, LG, Bosch, DeWalt"
@@ -407,8 +407,8 @@
                         <!-- Description & Notes -->
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span>Lot Description &amp; Manifest Notes <span class="text-danger">*</span></span>
-                                <span class="text-muted fw-normal" id="descCharCount">0 / 3000</span>
+                                <span class="label-title">Lot Description &amp; Manifest Notes <span class="text-danger">*</span></span>
+                                <span class="label-hint" id="descCharCount">0 / 3000</span>
                             </label>
                             <textarea class="form-control form-control-custom" name="description" id="lotDescInput" rows="4" maxlength="3000"
                                 placeholder="Comprehensive description of package origin, testing status, packaging condition, reason for surplus, pallet breakdown..."
@@ -419,8 +419,8 @@
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <label class="form-label-custom mb-0">
-                                    <span>Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">At least 1 photo/video required</span>
+                                    <span class="label-title">Product &amp; Warehouse Photos / Videos <span class="text-danger">*</span></span>
+                                    <span class="label-hint">At least 1 photo/video required</span>
                                 </label>
                                 <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill" id="mediaCountBadge">0 files</span>
                             </div>
@@ -493,62 +493,67 @@
 
                 <!-- 4. Condition & Logistics Specifications -->
                 <div class="card admin-form-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center gap-3">
-                        <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
-                            <i class="bi bi-box-seam-fill"></i>
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-box-seam-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">4. Condition &amp; Logistics Specifications</h6>
+                                <div class="text-muted small">Quality grade, inventory age, freight packaging, and warehouse location</div>
+                            </div>
                         </div>
-                        <div>
-                            <h6 class="fw-bold mb-0 text-dark">4. Condition &amp; Logistics Specifications</h6>
-                            <div class="text-muted small">Quality grade, inventory age, freight packaging, and warehouse location</div>
-                        </div>
+                        <span class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill fw-medium small">
+                            <i class="bi bi-geo-alt me-1 text-primary"></i>Physical Inventory
+                        </span>
                     </div>
                     <div class="card-body p-4">
 
                         <!-- Row 1: Condition, Source Type, Stock Age -->
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label-custom">
-                                    <span>Overall Condition <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Quality</span>
+                                <label class="form-label-custom" for="conditionSelect">
+                                    <span class="label-title">Overall Condition <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom" name="condition" id="conditionSelect" required>
                                     {% for cond in condition_options %}
                                     <option value="{{ cond }}" {% if cond == 'New' %}selected{% endif %}>{{ cond }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text small text-muted">Functional &amp; cosmetic grade</div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Source Type <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Origin</span>
+                                    <span class="label-title">Source Type <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom" name="source_type" required>
                                     {% for src in source_type_options %}
                                     <option value="{{ src }}" {% if src == 'Overstock' %}selected{% endif %}>{{ src }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text small text-muted">Inventory origin type</div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Stock Age</span>
-                                    <span class="text-muted fw-normal">Shelf time</span>
+                                    <span class="label-title">Stock Age</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
                                 <select class="form-select form-select-custom" name="inventory_stock_age">
                                     {% for age in stock_age_options %}
                                     <option value="{{ age }}" {% if forloop.first %}selected{% endif %}>{{ age }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="form-text small text-muted">Estimated warehouse shelf age</div>
                             </div>
                         </div>
 
-                        <!-- Row 2: Inventory Country & City -->
-                        <div class="row g-3 mb-3">
+                        <!-- Row 2: Inventory Country & City / Warehouse Location -->
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label-custom">
-                                    <span>Inventory Country <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Physical stock location</span>
+                                <label class="form-label-custom" for="inventoryCountrySelect">
+                                    <span class="label-title">Inventory Country <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-muted"><i class="bi bi-globe-americas"></i></span>
@@ -559,54 +564,56 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+                                <div class="form-text small text-muted">Country where physical goods are stored</div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label-custom d-flex justify-content-between align-items-center">
-                                    <span>Inventory Location <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal small">Warehouse / Facility / City</span>
+                                <label class="form-label-custom" for="inventoryLocationInput">
+                                    <span class="label-title">Inventory Location <span class="text-danger">*</span></span>
+                                    <span class="label-hint">Facility / Warehouse / City</span>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt-fill text-danger opacity-75"></i></span>
+                                    <span class="input-group-text bg-light text-danger"><i class="bi bi-geo-alt-fill"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
                                         placeholder="e.g. Warehouse 12, Jebel Ali Free Zone, Dubai" value="{{ form_data.inventory_location|default:'' }}"
                                         required>
                                 </div>
+                                <div class="form-text small text-muted">Exact facility address or freezone name</div>
                             </div>
                         </div>
 
-                        <!-- Row 2b: Distinct SKUs, Total Units -->
-                        <div class="row g-3 mb-3">
+                        <!-- Row 3: Distinct SKUs, Total Units -->
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label-custom">
-                                    <span>Distinct SKUs <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Unique items in package</span>
+                                <label class="form-label-custom" for="distinctSkusInput">
+                                    <span class="label-title">Distinct SKUs <span class="text-danger">*</span></span>
+                                    <span class="label-hint">Unique line items in package</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" min="1" class="form-control form-control-custom" name="number_of_distinct_skus" id="distinctSkusInput"
                                         placeholder="24" value="{{ form_data.number_of_distinct_skus|default:'' }}" required>
-                                    <span class="input-group-text bg-light text-muted small">SKUs</span>
+                                    <span class="input-group-text bg-light text-secondary fw-semibold">SKUs</span>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label-custom">
-                                    <span>Total Units / Quantity <span class="text-danger">*</span></span>
-                                    <span class="text-muted fw-normal">Total count</span>
+                                <label class="form-label-custom" for="totalUnitsInput">
+                                    <span class="label-title">Total Units / Quantity <span class="text-danger">*</span></span>
+                                    <span class="label-hint">Total aggregate piece count</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" min="1" class="form-control form-control-custom" name="total_units_quantity" id="totalUnitsInput"
                                         placeholder="1500" value="{{ form_data.total_units_quantity|default:'' }}" required>
-                                    <span class="input-group-text bg-light text-muted small">Units</span>
+                                    <span class="input-group-text bg-light text-secondary fw-semibold">Units</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Row 3: Unit Type, Total Weight, Load Type -->
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                        <!-- Row 4: Primary Unit Type & Total Weight -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Primary Unit Type <span class="text-danger">*</span></span>
+                                    <span class="label-title">Primary Unit Type <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom" name="primary_unit_type" required>
                                     {% for ut in unit_type_options %}
@@ -615,18 +622,24 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Total Weight</span>
-                                    <span class="text-muted fw-normal">Optional</span>
+                                    <span class="label-title">Total Weight</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
-                                <input type="text" class="form-control form-control-custom" name="total_weight"
-                                    placeholder="1,500 kg / 3,300 lbs" value="{{ form_data.total_weight|default:'' }}">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-speedometer2"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="total_weight"
+                                        placeholder="e.g. 1,500 kg / 3,300 lbs" value="{{ form_data.total_weight|default:'' }}">
+                                </div>
                             </div>
+                        </div>
 
+                        <!-- Row 5: Load Type, Shipping Size, Pallet Count -->
+                        <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Load Type <span class="text-danger">*</span></span>
+                                    <span class="label-title">Load Type <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom" name="load_type" required>
                                     {% for lt in load_type_options %}
@@ -634,13 +647,10 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                        </div>
 
-                        <!-- Row 4: Shipping Size, Lot Size, Pallet Count, Shipping Terms -->
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Shipping Size <span class="text-danger">*</span></span>
+                                    <span class="label-title">Shipping Size <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom" name="shipping_size" required>
                                     {% for sz in shipping_size_options %}
@@ -649,24 +659,20 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label-custom">
-                                    <span>Lot Size / Volume</span>
-                                </label>
-                                <input type="text" class="form-control form-control-custom" name="lot_size"
-                                    placeholder="4 Pallets / Half Truck" value="{{ form_data.lot_size|default:'' }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label-custom">
-                                    <span>Pallet Count <span class="text-danger">*</span></span>
+                                    <span class="label-title">Pallet Count <span class="text-danger">*</span></span>
                                 </label>
                                 <input type="number" min="1" class="form-control form-control-custom" name="pallet_count" value="{{ form_data.pallet_count|default:'1' }}" required>
                             </div>
+                        </div>
 
-                            <div class="col-md-3">
+                        <!-- Row 6: Shipping Terms & Lot Size / Volume -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
                                 <label class="form-label-custom">
-                                    <span>Shipping Terms</span>
+                                    <span class="label-title">Shipping Terms</span>
+                                    <span class="label-hint">Freight responsibility</span>
                                 </label>
                                 <select class="form-select form-select-custom" name="shipping_terms">
                                     {% for st in shipping_terms_options %}
@@ -674,20 +680,39 @@
                                     {% endfor %}
                                 </select>
                             </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label-custom">
+                                    <span class="label-title">Lot Size / Volume</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <input type="text" class="form-control form-control-custom" name="lot_size"
+                                    placeholder="e.g. 4 Pallets / Half Truckload" value="{{ form_data.lot_size|default:'' }}">
+                            </div>
                         </div>
 
-                        <!-- Certificate & Inspection Documents Toggle Box -->
-                        <div class="option-toggle-box mt-3" id="certToggleBox">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
-                                    id="certSwitch" name="third_party_certificate_available" {% if form_data.third_party_certificate_available %}checked{% endif %}>
-                                <label class="form-check-label fw-semibold cursor-pointer ms-2 text-dark" for="certSwitch">
-                                    Third-Party Certificate or Inspection Report Available
-                                </label>
+                        <!-- Certificate & Inspection Documents Toggle Card -->
+                        <div class="option-toggle-card p-3 rounded-3 border bg-light-subtle mt-4" id="certToggleBox">
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                                        <i class="bi bi-patch-check-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <label class="fw-semibold text-dark mb-0 cursor-pointer user-select-none d-block" for="certSwitch">
+                                            Third-Party Certificate or Inspection Report Available
+                                        </label>
+                                        <div class="text-muted small">Attach SGS, TÜV, warehouse inspection, or quality audit reports to increase buyer trust</div>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-0 fs-5">
+                                    <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                        id="certSwitch" name="third_party_certificate_available" {% if form_data.third_party_certificate_available %}checked{% endif %}>
+                                </div>
                             </div>
-                            <div id="certUploadBlock" class="d-none mt-3 pt-3 border-top">
-                                <label class="form-label-custom mb-1">
-                                    <span>Upload Certificate / Inspection Document (.PDF, .PNG, .JPG)</span>
+                            <div id="certUploadBlock" class="{% if not form_data.third_party_certificate_available %}d-none{% endif %} mt-3 pt-3 border-top">
+                                <label class="form-label-custom mb-1.5">
+                                    <span class="label-title">Upload Certificate / Inspection Document <span class="text-muted fw-normal">(.PDF, .PNG, .JPG)</span></span>
                                 </label>
                                 <input type="file" class="form-control form-control-custom" name="certificate_document" accept=".pdf,image/*">
                             </div>
@@ -713,7 +738,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-3">
                                 <label class="form-label-custom">
-                                    <span>Currency <span class="text-danger">*</span></span>
+                                    <span class="label-title">Currency <span class="text-danger">*</span></span>
                                 </label>
                                 <select class="form-select form-select-custom font-monospace" name="currency" id="currencySelect" required>
                                     {% for cur in currency_options %}
@@ -724,7 +749,7 @@
 
                             <div class="col-md-3">
                                 <label class="form-label-custom">
-                                    <span>MSRP (Total Est. Retail Value) <span class="text-danger">*</span></span>
+                                    <span class="label-title">MSRP (Est. Retail) <span class="text-danger">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
@@ -736,7 +761,7 @@
 
                             <div class="col-md-3" id="liquidationPriceCol">
                                 <label class="form-label-custom">
-                                    <span>Liquidation Price (Surplus Payout) <span class="text-danger" id="lpRequiredStar">*</span></span>
+                                    <span class="label-title">Liquidation Payout <span class="text-danger" id="lpRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text currency-symbol font-monospace bg-light">USD</span>
@@ -754,7 +779,7 @@
 
                             <div class="col-md-3" id="offerCol">
                                 <label class="form-label-custom">
-                                    <span>Offer (% Off MSRP) <span class="text-danger" id="offerRequiredStar">*</span></span>
+                                    <span class="label-title">Target Discount <span class="text-danger" id="offerRequiredStar">*</span></span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" step="1" min="60" max="99" class="form-control form-control-custom font-monospace fw-bold text-danger" name="offer_pct" id="offerPctInput"
@@ -1078,23 +1103,65 @@
 
     /* Typography & Custom Labels */
     .form-label-custom {
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.04em !important;
-        color: var(--bs-secondary-color, #64748b) !important;
-        margin-bottom: 0.55rem !important;
+        font-size: 0.825rem !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        margin-bottom: 0.45rem !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
+        text-transform: none !important;
+        letter-spacing: normal !important;
+    }
+
+    [data-bs-theme="dark"] .form-label-custom {
+        color: #cbd5e1 !important;
+    }
+
+    .form-label-custom > span:first-child,
+    .form-label-custom .label-title {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+        white-space: nowrap !important;
+        font-weight: 600 !important;
+        color: inherit !important;
+    }
+
+    .form-label-custom .label-hint,
+    .form-label-custom .text-muted {
+        font-size: 0.74rem !important;
+        font-weight: 400 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        color: #64748b !important;
+    }
+
+    .form-label-custom .badge-optional {
+        font-size: 0.7rem !important;
+        font-weight: 500 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        padding: 0.15rem 0.5rem !important;
+        border-radius: 999px !important;
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    [data-bs-theme="dark"] .form-label-custom .badge-optional {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+        border-color: #334155 !important;
     }
 
     .form-control-custom,
     .form-select-custom {
         border: 1px solid var(--bs-border-color, #cbd5e1) !important;
         border-radius: 0.65rem !important;
-        padding: 0.65rem 0.95rem !important;
-        font-size: 0.925rem !important;
+        padding: 0.625rem 0.9rem !important;
+        font-size: 0.915rem !important;
+        line-height: 1.45 !important;
         transition: all 0.15s ease-in-out;
         background-color: var(--bs-body-bg, #ffffff) !important;
         color: var(--bs-body-color, #0f172a) !important;
@@ -1103,7 +1170,7 @@
     .form-control-custom:focus,
     .form-select-custom:focus {
         border-color: #2563eb !important;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
         outline: none;
     }
 
@@ -1170,19 +1237,28 @@
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
     }
 
-    /* Option Toggle Boxes */
+    /* Option Toggle Cards */
+    .option-toggle-card,
     .option-toggle-box {
-        background-color: var(--bs-tertiary-bg, #f8fafc) !important;
+        background-color: #f8fafc !important;
         border: 1px solid var(--bs-border-color, #e2e8f0) !important;
         border-radius: 0.85rem !important;
-        padding: 1.25rem 1.5rem !important;
+        padding: 1.15rem 1.35rem !important;
         margin-bottom: 1.5rem !important;
-        transition: border-color 0.2s ease, background-color 0.2s ease;
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
+    [data-bs-theme="dark"] .option-toggle-card,
+    [data-bs-theme="dark"] .option-toggle-box {
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .option-toggle-card.active-box,
     .option-toggle-box.active-box {
         border-color: #10b981 !important;
-        background-color: rgba(16, 185, 129, 0.04) !important;
+        background-color: rgba(16, 185, 129, 0.05) !important;
+        box-shadow: 0 0 0 1px #10b981;
     }
 
     /* Dropzone Enhanced */
