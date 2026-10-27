@@ -95,7 +95,7 @@
             <div class="col-lg-8">
 
                 <!-- 0. Seller / Vendor Information (Assisted Offline Intake) -->
-                <div class="card admin-form-card mb-4 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                <div class="card admin-form-card mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
                             <div class="section-icon-badge bg-success bg-opacity-10 text-success">
@@ -103,11 +103,11 @@
                             </div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Contact Information</h6>
-                                <div class="text-muted small">Record which vendor sent these lot details (WhatsApp, Email, Offline Intake)</div>
+                                <div class="text-muted small">Record vendor source &amp; attribution (WhatsApp, Email, Offline Intake)</div>
                             </div>
                         </div>
                         <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small">
-                            <i class="bi bi-person-check-fill me-1"></i>Assisted Offline Intake
+                            <i class="bi bi-shield-check me-1"></i>Assisted Offline Intake
                         </span>
                     </div>
                     <div class="card-body p-4">
@@ -115,52 +115,67 @@
                         <!-- Intake Channel Quick-Select Cards -->
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span>Intake Submission Channel <span class="text-danger">*</span></span>
-                                <span class="text-muted fw-normal">How the vendor provided this lot</span>
+                                <span class="label-title">Intake Submission Channel <span class="text-danger">*</span></span>
+                                <span class="label-hint">Vendor communication source</span>
                             </label>
-                            <div class="row g-3 intake-channel-grid mt-1">
+                            <div class="row g-2.5 intake-channel-grid mt-1">
                                 <div class="col-6 col-sm-4 col-md">
-                                    <label class="channel-radio-card w-100 mb-0">
+                                    <label class="channel-radio-card w-100 mb-0" data-channel="WhatsApp">
                                         <input type="radio" name="intake_channel" value="WhatsApp" class="d-none" checked>
-                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
-                                            <i class="bi bi-whatsapp fs-3 text-success d-block mb-1"></i>
-                                            <span class="fw-semibold small d-block">WhatsApp</span>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-success bg-success bg-opacity-10 rounded-circle">
+                                                <i class="bi bi-whatsapp fs-5"></i>
+                                            </div>
+                                            <span class="channel-label fw-semibold small text-dark d-block">WhatsApp</span>
+                                            <span class="channel-subtext text-muted" style="font-size: 0.72rem;">Direct Chat</span>
                                         </div>
                                     </label>
                                 </div>
                                 <div class="col-6 col-sm-4 col-md">
-                                    <label class="channel-radio-card w-100 mb-0">
+                                    <label class="channel-radio-card w-100 mb-0" data-channel="Email">
                                         <input type="radio" name="intake_channel" value="Email" class="d-none">
-                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
-                                            <i class="bi bi-envelope-fill fs-3 text-primary d-block mb-1"></i>
-                                            <span class="fw-semibold small d-block">Email</span>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-primary bg-primary bg-opacity-10 rounded-circle">
+                                                <i class="bi bi-envelope-fill fs-5"></i>
+                                            </div>
+                                            <span class="channel-label fw-semibold small text-dark d-block">Email</span>
+                                            <span class="channel-subtext text-muted" style="font-size: 0.72rem;">Inbound Sheet</span>
                                         </div>
                                     </label>
                                 </div>
                                 <div class="col-6 col-sm-4 col-md">
-                                    <label class="channel-radio-card w-100 mb-0">
+                                    <label class="channel-radio-card w-100 mb-0" data-channel="Phone Call">
                                         <input type="radio" name="intake_channel" value="Phone Call" class="d-none">
-                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
-                                            <i class="bi bi-telephone-fill fs-3 text-info d-block mb-1"></i>
-                                            <span class="fw-semibold small d-block">Phone Call</span>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-info bg-info bg-opacity-10 rounded-circle">
+                                                <i class="bi bi-telephone-fill fs-5"></i>
+                                            </div>
+                                            <span class="channel-label fw-semibold small text-dark d-block">Phone Call</span>
+                                            <span class="channel-subtext text-muted" style="font-size: 0.72rem;">Voice Intake</span>
                                         </div>
                                     </label>
                                 </div>
                                 <div class="col-6 col-sm-4 col-md">
-                                    <label class="channel-radio-card w-100 mb-0">
+                                    <label class="channel-radio-card w-100 mb-0" data-channel="Direct / Walk-In">
                                         <input type="radio" name="intake_channel" value="Direct / Walk-In" class="d-none">
-                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
-                                            <i class="bi bi-building fs-3 text-secondary d-block mb-1"></i>
-                                            <span class="fw-semibold small d-block">Direct / Walk-In</span>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-secondary bg-secondary bg-opacity-10 rounded-circle">
+                                                <i class="bi bi-building fs-5"></i>
+                                            </div>
+                                            <span class="channel-label fw-semibold small text-dark d-block">Direct / Walk-In</span>
+                                            <span class="channel-subtext text-muted" style="font-size: 0.72rem;">Warehouse Visit</span>
                                         </div>
                                     </label>
                                 </div>
                                 <div class="col-6 col-sm-4 col-md">
-                                    <label class="channel-radio-card w-100 mb-0">
+                                    <label class="channel-radio-card w-100 mb-0" data-channel="Other">
                                         <input type="radio" name="intake_channel" value="Other" class="d-none">
-                                        <div class="channel-box text-center p-3 rounded-3 border h-100">
-                                            <i class="bi bi-grid-fill fs-3 text-dark d-block mb-1"></i>
-                                            <span class="fw-semibold small d-block">Other</span>
+                                        <div class="channel-box text-center p-3 rounded-3 border h-100 d-flex flex-column align-items-center justify-content-center">
+                                            <div class="channel-icon-avatar mb-2 d-flex align-items-center justify-content-center text-dark bg-dark bg-opacity-10 rounded-circle">
+                                                <i class="bi bi-grid-fill fs-5"></i>
+                                            </div>
+                                            <span class="channel-label fw-semibold small text-dark d-block">Other</span>
+                                            <span class="channel-subtext text-muted" style="font-size: 0.72rem;">Custom Source</span>
                                         </div>
                                     </label>
                                 </div>
@@ -168,42 +183,45 @@
                         </div>
 
                         <!-- Seller Contact Details -->
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="sellerNameInput">
                                     <span class="label-title">Seller Contact Name <span class="text-danger">*</span></span>
-                                    <span class="label-hint">Contact person</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_name" id="sellerNameInput"
                                         placeholder="e.g. Rahul Sharma / John Doe" value="{{ form_data.seller_name|default:'' }}" required>
                                 </div>
+                                <div class="form-text small text-muted">Primary vendor contact or authorized representative</div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="sellerPhoneInput">
                                     <span class="label-title">WhatsApp / Mobile Number <span class="text-danger">*</span></span>
-                                    <span class="label-hint">Account match</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
                                     <input type="text" class="form-control form-control-custom" name="seller_phone" id="sellerPhoneInput"
                                         placeholder="e.g. +971 50 123 4567" value="{{ form_data.seller_phone|default:'' }}" required>
                                 </div>
+                                <div class="form-text small text-muted">Used for automatic seller profile matching and WhatsApp dispatch</div>
                             </div>
                         </div>
 
                         <!-- Email, Company & Location -->
-                        <div class="row g-3 mb-3">
+                        <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="sellerEmailInput">
                                     <span class="label-title">Seller Email</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
-                                    placeholder="{{ admin.email|default:'vendor@company.com' }}" value="{{ form_data.seller_email|default:'' }}">
-                                <div class="form-text small">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
+                                        placeholder="{{ admin.email|default:'vendor@company.com' }}" value="{{ form_data.seller_email|default:'' }}">
+                                </div>
+                                <div class="form-text small text-muted">
                                     {% if admin.email %}
                                     Defaults to logged-in admin email (<strong>{{ admin.email }}</strong>) if left blank.
                                     {% else %}
@@ -213,35 +231,45 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="sellerCompanyInput">
                                     <span class="label-title">Company / Store Name</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
-                                    placeholder="Apex Industrial Supplies" value="{{ form_data.seller_company|default:'' }}">
-                                <div class="form-text small">Leave blank if individual seller.</div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-building"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
+                                        placeholder="Apex Industrial Supplies LLC" value="{{ form_data.seller_company|default:'' }}">
+                                </div>
+                                <div class="form-text small text-muted">Leave blank if individual private seller</div>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label-custom">
+                                <label class="form-label-custom" for="sellerLocationInput">
                                     <span class="label-title">Seller Location</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
-                                    placeholder="Dubai, UAE / Houston, TX" value="{{ form_data.seller_location|default:'' }}">
-                                <div class="form-text small">City, Freezone, or Country.</div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
+                                        placeholder="Dubai, UAE / Houston, TX" value="{{ form_data.seller_location|default:'' }}">
+                                </div>
+                                <div class="form-text small text-muted">City, Freezone, or Country</div>
                             </div>
                         </div>
 
                         <!-- Internal Admin Notes -->
                         <div>
-                            <label class="form-label-custom">
+                            <label class="form-label-custom" for="intakeNotesInput">
                                 <span class="label-title">Internal Admin Intake Notes</span>
                                 <span class="badge-optional">Admin Only</span>
                             </label>
-                            <input type="text" class="form-control form-control-custom" name="intake_notes" id="intakeNotesInput"
-                                placeholder="e.g. Received full inventory manifest via WhatsApp, verified stock location in JAFZA warehouse"
-                                value="{{ form_data.intake_notes|default:'' }}">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-journal-text"></i></span>
+                                <input type="text" class="form-control form-control-custom" name="intake_notes" id="intakeNotesInput"
+                                    placeholder="e.g. Received full inventory manifest via WhatsApp, verified stock location in JAFZA warehouse"
+                                    value="{{ form_data.intake_notes|default:'' }}">
+                            </div>
+                            <div class="form-text small text-muted">Private internal log for auditing and tracking offline communications</div>
                         </div>
 
                     </div>
@@ -1191,22 +1219,50 @@
 
     /* Channel Selection Cards */
     .channel-box {
-        background: var(--bs-body-bg, #ffffff) !important;
-        border-color: var(--bs-border-color, #e2e8f0) !important;
-        padding: 1.1rem 0.75rem !important;
-        transition: all 0.2s ease;
+        background: var(--bs-card-bg, #ffffff) !important;
+        border: 1.5px solid var(--bs-border-color, #e2e8f0) !important;
+        border-radius: 0.85rem !important;
+        padding: 1.1rem 0.65rem !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        position: relative;
     }
 
-    .channel-radio-card input:checked + .channel-box {
-        background-color: rgba(37, 99, 235, 0.08) !important;
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px #2563eb;
+    .channel-icon-avatar {
+        width: 44px;
+        height: 44px;
+        transition: transform 0.2s ease;
     }
 
     .channel-radio-card:hover .channel-box {
         border-color: #94a3b8 !important;
         transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    .channel-radio-card:hover .channel-icon-avatar {
+        transform: scale(1.08);
+    }
+
+    .channel-radio-card input:checked + .channel-box {
+        background-color: #f0f7ff !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px #2563eb, 0 4px 14px rgba(37, 99, 235, 0.12) !important;
+    }
+
+    .channel-radio-card input:checked + .channel-box .channel-label {
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+    }
+
+    [data-bs-theme="dark"] .channel-box {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    [data-bs-theme="dark"] .channel-radio-card input:checked + .channel-box {
+        background-color: rgba(37, 99, 235, 0.15) !important;
+        border-color: #3b82f6 !important;
     }
 
     /* Pricing Financial Terminal Box */

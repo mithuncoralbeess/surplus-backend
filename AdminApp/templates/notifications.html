@@ -4,12 +4,13 @@
 {% block title %}Admin Notification Center | Surplus Portal{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3 px-3 px-md-4">
+<div class="container-fluid py-3">
     <!-- Breadcrumb & Header -->
     <div class="mb-4">
         <nav class="custom-breadcrumb mb-2" aria-label="breadcrumb">
             <ol class="breadcrumb-list mb-0">
-                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i>
+                        Dashboard</a></li>
                 <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
                 <li class="breadcrumb-item active" aria-current="page"><span>Notification Center</span></li>
             </ol>
@@ -18,18 +19,25 @@
             <div>
                 <div class="d-flex align-items-center gap-2.5">
                     <h1 class="header-title mb-0">Admin Notification Center</h1>
-                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.72rem; font-weight: 600; padding: 3px 9px;">
+                    <span
+                        class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace"
+                        style="font-size: 0.72rem; font-weight: 600; padding: 3px 9px;">
                         ● Live Sync Active
                     </span>
                 </div>
-                <p class="header-subtitle mt-1 mb-0">Real-time alerts, supplier lot submissions, buyer RFQs, and platform audits</p>
+                <p class="header-subtitle mt-1 mb-0">Real-time alerts, supplier lot submissions, buyer RFQs, and
+                    platform audits</p>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-outline-secondary fw-semibold px-3 py-2 rounded-3 shadow-xs d-inline-flex align-items-center gap-1.5" id="pageRefreshBtn" onclick="window.location.reload()">
+                <button type="button"
+                    class="btn btn-outline-secondary fw-semibold px-3 py-2 rounded-3 shadow-xs d-inline-flex align-items-center gap-1.5"
+                    id="pageRefreshBtn" onclick="window.location.reload()">
                     <i class="bi bi-arrow-clockwise"></i>
                     <span>Refresh</span>
                 </button>
-                <button type="button" class="btn btn-primary fw-semibold px-3.5 py-2 rounded-3 shadow-xs d-inline-flex align-items-center gap-1.5" id="pageMarkAllReadBtn">
+                <button type="button"
+                    class="btn btn-primary fw-semibold px-3.5 py-2 rounded-3 shadow-xs d-inline-flex align-items-center gap-1.5"
+                    id="pageMarkAllReadBtn">
                     <i class="bi bi-check2-all"></i>
                     <span>Mark All as Read</span>
                 </button>
@@ -41,60 +49,88 @@
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <a href="?filter=all" class="text-decoration-none">
-                <div class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'all' or not filter_type %}bg-primary text-white shadow-md{% else %}bg-white text-dark{% endif %}">
+                <div
+                    class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'all' or not filter_type %}bg-primary text-white shadow-md{% else %}bg-white text-dark{% endif %}">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="small fw-semibold {% if filter_type == 'all' or not filter_type %}text-white-50{% else %}text-muted{% endif %}">TOTAL ALERTS</span>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'all' or not filter_type %}bg-white bg-opacity-20 text-white{% else %}bg-primary-subtle text-primary{% endif %}" style="width: 36px; height: 36px;">
+                        <span
+                            class="small fw-semibold {% if filter_type == 'all' or not filter_type %}text-white-50{% else %}text-muted{% endif %}">TOTAL
+                            ALERTS</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'all' or not filter_type %}bg-white bg-opacity-20 text-white{% else %}bg-primary-subtle text-primary{% endif %}"
+                            style="width: 36px; height: 36px;">
                             <i class="bi bi-bell-fill fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'all' or not filter_type %}text-white{% else %}text-dark{% endif %}">{{ total_count|default:"0" }}</h3>
-                    <span class="small mt-1 {% if filter_type == 'all' or not filter_type %}text-white-50{% else %}text-secondary{% endif %}" style="font-size: 0.72rem;">All platform notifications</span>
+                    <h3
+                        class="fw-bold mb-0 {% if filter_type == 'all' or not filter_type %}text-white{% else %}text-dark{% endif %}">
+                        {{ total_count|default:"0" }}</h3>
+                    <span
+                        class="small mt-1 {% if filter_type == 'all' or not filter_type %}text-white-50{% else %}text-secondary{% endif %}"
+                        style="font-size: 0.72rem;">All platform notifications</span>
                 </div>
             </a>
         </div>
 
         <div class="col-6 col-lg-3">
             <a href="?filter=unread" class="text-decoration-none">
-                <div class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'unread' %}bg-danger text-white shadow-md{% else %}bg-white text-dark{% endif %}">
+                <div
+                    class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'unread' %}bg-danger text-white shadow-md{% else %}bg-white text-dark{% endif %}">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="small fw-semibold {% if filter_type == 'unread' %}text-white-50{% else %}text-muted{% endif %}">UNREAD</span>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'unread' %}bg-white bg-opacity-20 text-white{% else %}bg-danger-subtle text-danger{% endif %}" style="width: 36px; height: 36px;">
+                        <span
+                            class="small fw-semibold {% if filter_type == 'unread' %}text-white-50{% else %}text-muted{% endif %}">UNREAD</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'unread' %}bg-white bg-opacity-20 text-white{% else %}bg-danger-subtle text-danger{% endif %}"
+                            style="width: 36px; height: 36px;">
                             <i class="bi bi-exclamation-circle-fill fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'unread' %}text-white{% else %}text-dark{% endif %}">{{ unread_count|default:"0" }}</h3>
-                    <span class="small mt-1 {% if filter_type == 'unread' %}text-white-50{% else %}text-secondary{% endif %}" style="font-size: 0.72rem;">Requires admin review</span>
+                    <h3 class="fw-bold mb-0 {% if filter_type == 'unread' %}text-white{% else %}text-dark{% endif %}">{{
+                        unread_count|default:"0" }}</h3>
+                    <span
+                        class="small mt-1 {% if filter_type == 'unread' %}text-white-50{% else %}text-secondary{% endif %}"
+                        style="font-size: 0.72rem;">Requires admin review</span>
                 </div>
             </a>
         </div>
 
         <div class="col-6 col-lg-3">
             <a href="?filter=rfq" class="text-decoration-none">
-                <div class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'rfq' %}bg-indigo text-white shadow-md{% else %}bg-white text-dark{% endif %}">
+                <div
+                    class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'rfq' %}bg-indigo text-white shadow-md{% else %}bg-white text-dark{% endif %}">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="small fw-semibold {% if filter_type == 'rfq' %}text-white-50{% else %}text-muted{% endif %}">BUYER RFQs</span>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'rfq' %}bg-white bg-opacity-20 text-white{% else %}bg-indigo-subtle text-indigo{% endif %}" style="width: 36px; height: 36px;">
+                        <span
+                            class="small fw-semibold {% if filter_type == 'rfq' %}text-white-50{% else %}text-muted{% endif %}">BUYER
+                            RFQs</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'rfq' %}bg-white bg-opacity-20 text-white{% else %}bg-indigo-subtle text-indigo{% endif %}"
+                            style="width: 36px; height: 36px;">
                             <i class="bi bi-file-earmark-text-fill fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'rfq' %}text-white{% else %}text-dark{% endif %}">{{ rfq_count|default:"0" }}</h3>
-                    <span class="small mt-1 {% if filter_type == 'rfq' %}text-white-50{% else %}text-secondary{% endif %}" style="font-size: 0.72rem;">High-value inquiries</span>
+                    <h3 class="fw-bold mb-0 {% if filter_type == 'rfq' %}text-white{% else %}text-dark{% endif %}">{{
+                        rfq_count|default:"0" }}</h3>
+                    <span
+                        class="small mt-1 {% if filter_type == 'rfq' %}text-white-50{% else %}text-secondary{% endif %}"
+                        style="font-size: 0.72rem;">High-value inquiries</span>
                 </div>
             </a>
         </div>
 
         <div class="col-6 col-lg-3">
             <a href="?filter=listing" class="text-decoration-none">
-                <div class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'listing' %}bg-emerald text-white shadow-md{% else %}bg-white text-dark{% endif %}">
+                <div
+                    class="card border-0 shadow-sm rounded-4 p-3 transition-all h-100 {% if filter_type == 'listing' %}bg-emerald text-white shadow-md{% else %}bg-white text-dark{% endif %}">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="small fw-semibold {% if filter_type == 'listing' %}text-white-50{% else %}text-muted{% endif %}">LOT LISTINGS</span>
-                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'listing' %}bg-white bg-opacity-20 text-white{% else %}bg-success-subtle text-success{% endif %}" style="width: 36px; height: 36px;">
+                        <span
+                            class="small fw-semibold {% if filter_type == 'listing' %}text-white-50{% else %}text-muted{% endif %}">LOT
+                            LISTINGS</span>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center {% if filter_type == 'listing' %}bg-white bg-opacity-20 text-white{% else %}bg-success-subtle text-success{% endif %}"
+                            style="width: 36px; height: 36px;">
                             <i class="bi bi-boxes fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'listing' %}text-white{% else %}text-dark{% endif %}">{{ listing_count|default:"0" }}</h3>
-                    <span class="small mt-1 {% if filter_type == 'listing' %}text-white-50{% else %}text-secondary{% endif %}" style="font-size: 0.72rem;">Wholesale surplus lots</span>
+                    <h3 class="fw-bold mb-0 {% if filter_type == 'listing' %}text-white{% else %}text-dark{% endif %}">
+                        {{ listing_count|default:"0" }}</h3>
+                    <span
+                        class="small mt-1 {% if filter_type == 'listing' %}text-white-50{% else %}text-secondary{% endif %}"
+                        style="font-size: 0.72rem;">Wholesale surplus lots</span>
                 </div>
             </a>
         </div>
@@ -111,48 +147,51 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
                 <!-- Status Pills -->
                 <div class="d-flex flex-wrap align-items-center gap-2">
-                    <a href="?filter=all{% if search_q %}&q={{ search_q }}{% endif %}" class="notif-center-filter-pill {% if not filter_type or filter_type == 'all' %}active{% endif %}">
+                    <a href="?filter=all{% if search_q %}&q={{ search_q }}{% endif %}"
+                        class="notif-center-filter-pill {% if not filter_type or filter_type == 'all' %}active{% endif %}">
                         <span>All</span>
                         <span class="pill-counter">{{ total_count|default:"0" }}</span>
                     </a>
-                    <a href="?filter=unread{% if search_q %}&q={{ search_q }}{% endif %}" class="notif-center-filter-pill {% if filter_type == 'unread' %}active is-unread{% endif %}">
+                    <a href="?filter=unread{% if search_q %}&q={{ search_q }}{% endif %}"
+                        class="notif-center-filter-pill {% if filter_type == 'unread' %}active is-unread{% endif %}">
                         <span>Unread</span>
-                        <span class="pill-counter {% if unread_count and unread_count > 0 %}counter-red{% endif %}">{{ unread_count|default:"0" }}</span>
+                        <span class="pill-counter {% if unread_count and unread_count > 0 %}counter-red{% endif %}">{{
+                            unread_count|default:"0" }}</span>
                     </a>
-                    <a href="?filter=listing{% if search_q %}&q={{ search_q }}{% endif %}" class="notif-center-filter-pill {% if filter_type == 'listing' %}active is-listing{% endif %}">
+                    <a href="?filter=listing{% if search_q %}&q={{ search_q }}{% endif %}"
+                        class="notif-center-filter-pill {% if filter_type == 'listing' %}active is-listing{% endif %}">
                         <span>Lot Listings</span>
                         <span class="pill-counter">{{ listing_count|default:"0" }}</span>
                     </a>
-                    <a href="?filter=rfq{% if search_q %}&q={{ search_q }}{% endif %}" class="notif-center-filter-pill {% if filter_type == 'rfq' %}active is-rfq{% endif %}">
+                    <a href="?filter=rfq{% if search_q %}&q={{ search_q }}{% endif %}"
+                        class="notif-center-filter-pill {% if filter_type == 'rfq' %}active is-rfq{% endif %}">
                         <span>Buyer RFQs</span>
                         <span class="pill-counter">{{ rfq_count|default:"0" }}</span>
                     </a>
-                    <a href="?filter=enquiry{% if search_q %}&q={{ search_q }}{% endif %}" class="notif-center-filter-pill {% if filter_type == 'enquiry' %}active is-enquiry{% endif %}">
+                    <a href="?filter=enquiry{% if search_q %}&q={{ search_q }}{% endif %}"
+                        class="notif-center-filter-pill {% if filter_type == 'enquiry' %}active is-enquiry{% endif %}">
                         <span>Product Enquiries</span>
                         <span class="pill-counter">{{ enquiry_count|default:"0" }}</span>
                     </a>
                 </div>
 
                 <!-- Search Input -->
-                <form method="GET" action="/admin/notifications/" class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0" style="min-width: 280px;">
+                <form method="GET" action="/admin/notifications/"
+                    class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0" style="min-width: 280px;">
                     {% if filter_type %}<input type="hidden" name="filter" value="{{ filter_type }}">{% endif %}
                     <div class="input-group input-group-sm w-100">
                         <span class="input-group-text bg-light border-end-0 text-muted">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input
-                            type="text"
-                            name="q"
-                            value="{{ search_q }}"
-                            class="form-control bg-light border-start-0 ps-0"
-                            placeholder="Search notifications..."
-                        >
+                        <input type="text" name="q" value="{{ search_q }}"
+                            class="form-control bg-light border-start-0 ps-0" placeholder="Search notifications...">
                         <button class="btn btn-primary px-3 fw-semibold" type="submit">
                             Search
                         </button>
                     </div>
                     {% if search_q %}
-                    <a href="/admin/notifications/{% if filter_type %}?filter={{ filter_type }}{% endif %}" class="btn btn-sm btn-outline-secondary rounded-2" title="Clear Search">
+                    <a href="/admin/notifications/{% if filter_type %}?filter={{ filter_type }}{% endif %}"
+                        class="btn btn-sm btn-outline-secondary rounded-2" title="Clear Search">
                         <i class="bi bi-x-lg"></i>
                     </a>
                     {% endif %}
@@ -162,21 +201,23 @@
             <!-- Notifications Feed Container -->
             <div class="d-flex flex-column gap-2.5" id="notificationsContainer">
                 {% for n in notifications %}
-                <div class="notif-feed-card {% if not n.is_read %}is-unread{% endif %}" id="notifItem-{{ n.id }}" data-id="{{ n.id }}">
+                <div class="notif-feed-card {% if not n.is_read %}is-unread{% endif %}" id="notifItem-{{ n.id }}"
+                    data-id="{{ n.id }}">
                     <div class="d-flex align-items-start gap-3">
-                        
+
                         <!-- Category Squircle Avatar -->
-                        <div class="notif-avatar flex-shrink-0 {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-avatar-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-avatar-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-avatar-admin{% elif n.notification_type == 'APPROVAL' %}notif-avatar-approval{% else %}notif-avatar-enquiry{% endif %}" style="width: 44px; height: 44px; min-width: 44px;">
+                        <div class="notif-avatar flex-shrink-0 {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-avatar-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-avatar-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-avatar-admin{% elif n.notification_type == 'APPROVAL' %}notif-avatar-approval{% else %}notif-avatar-enquiry{% endif %}"
+                            style="width: 44px; height: 44px; min-width: 44px;">
                             {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}
-                                <i class="bi bi-boxes"></i>
+                            <i class="bi bi-boxes"></i>
                             {% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}
-                                <i class="bi bi-file-earmark-text-fill"></i>
+                            <i class="bi bi-file-earmark-text-fill"></i>
                             {% elif n.notification_type == 'ADMIN_REGISTRATION' %}
-                                <i class="bi bi-shield-check"></i>
+                            <i class="bi bi-shield-check"></i>
                             {% elif n.notification_type == 'APPROVAL' %}
-                                <i class="bi bi-check2-circle"></i>
+                            <i class="bi bi-check2-circle"></i>
                             {% else %}
-                                <i class="bi bi-tag-fill"></i>
+                            <i class="bi bi-tag-fill"></i>
                             {% endif %}
                         </div>
 
@@ -185,17 +226,24 @@
                             <!-- Top: Category Badges, Title, Time -->
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1.5">
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <span class="notif-category-pill {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-tag-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-tag-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-tag-admin{% elif n.notification_type == 'APPROVAL' %}notif-tag-approval{% else %}notif-tag-enquiry{% endif %}">
-                                        {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}Lot Listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}Buyer RFQ{% elif n.notification_type == 'ADMIN_REGISTRATION' %}Admin Staff{% elif n.notification_type == 'APPROVAL' %}Approval{% else %}Product Enquiry{% endif %}
+                                    <span
+                                        class="notif-category-pill {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}notif-tag-listing{% elif 'RFQ' in n.title or n.notification_type == 'RFQ' %}notif-tag-rfq{% elif n.notification_type == 'ADMIN_REGISTRATION' %}notif-tag-admin{% elif n.notification_type == 'APPROVAL' %}notif-tag-approval{% else %}notif-tag-enquiry{% endif %}">
+                                        {% if 'Lot' in n.title or n.notification_type == 'LISTING' %}Lot Listing{% elif
+                                        'RFQ' in n.title or n.notification_type == 'RFQ' %}Buyer RFQ{% elif
+                                        n.notification_type == 'ADMIN_REGISTRATION' %}Admin Staff{% elif
+                                        n.notification_type == 'APPROVAL' %}Approval{% else %}Product Enquiry{% endif %}
                                     </span>
                                     {% if not n.is_read %}
                                     <span class="notif-badge-new unread-pill">NEW</span>
                                     {% endif %}
                                     {% if n.for_superadmins_only %}
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small" style="font-size: 0.65rem; font-weight: 700;">SuperAdmin Alert</span>
+                                    <span
+                                        class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill small"
+                                        style="font-size: 0.65rem; font-weight: 700;">SuperAdmin Alert</span>
                                     {% endif %}
                                 </div>
-                                <span class="text-secondary small d-inline-flex align-items-center gap-1" style="font-size: 0.74rem;">
+                                <span class="text-secondary small d-inline-flex align-items-center gap-1"
+                                    style="font-size: 0.74rem;">
                                     <i class="bi bi-clock"></i>
                                     <span>{{ n.created_at|date:"M d, Y" }} at {{ n.created_at|time:"h:i A" }}</span>
                                     <span class="text-muted ms-1">({{ n.created_at|timesince }} ago)</span>
@@ -203,31 +251,43 @@
                             </div>
 
                             <!-- Title -->
-                            <h5 class="fw-bold mb-1.5 text-dark notif-feed-title" style="font-size: 0.95rem; line-height: 1.35; letter-spacing: -0.01em;">
+                            <h5 class="fw-bold mb-1.5 text-dark notif-feed-title"
+                                style="font-size: 0.95rem; line-height: 1.35; letter-spacing: -0.01em;">
                                 {{ n.title }}
                             </h5>
 
                             <!-- Message Body -->
-                            <p class="text-secondary small mb-2.5 notif-feed-desc" style="line-height: 1.5; font-size: 0.82rem;">
+                            <p class="text-secondary small mb-2.5 notif-feed-desc"
+                                style="line-height: 1.5; font-size: 0.82rem;">
                                 {{ n.message }}
                             </p>
 
                             <!-- Footer Actions -->
-                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top border-light-subtle">
+                            <div
+                                class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top border-light-subtle">
                                 <div>
                                     {% if n.action_url %}
-                                    <a href="{{ n.action_url }}" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold shadow-xs d-inline-flex align-items-center gap-1.5" style="font-size: 0.78rem;" onclick="markPageNotifRead('{{ n.id }}')">
+                                    <a href="{{ n.action_url }}"
+                                        class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-semibold shadow-xs d-inline-flex align-items-center gap-1.5"
+                                        style="font-size: 0.78rem;" onclick="markPageNotifRead('{{ n.id }}')">
                                         <span>View Details</span>
                                         <i class="bi bi-arrow-right"></i>
                                     </a>
                                     {% endif %}
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold mark-read-toggle-btn" id="markReadBtn-{{ n.id }}" style="font-size: 0.75rem;" onclick="togglePageNotifRead('{{ n.id }}')">
-                                        <i class="bi {% if n.is_read %}bi-envelope text-secondary{% else %}bi-check2 text-primary{% endif %} me-1"></i>
+                                    <button type="button"
+                                        class="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold mark-read-toggle-btn"
+                                        id="markReadBtn-{{ n.id }}" style="font-size: 0.75rem;"
+                                        onclick="togglePageNotifRead('{{ n.id }}')">
+                                        <i
+                                            class="bi {% if n.is_read %}bi-envelope text-secondary{% else %}bi-check2 text-primary{% endif %} me-1"></i>
                                         <span>{% if n.is_read %}Mark as Unread{% else %}Mark as Read{% endif %}</span>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-light border text-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px;" onclick="deletePageNotif('{{ n.id }}')" title="Delete alert">
+                                    <button type="button"
+                                        class="btn btn-sm btn-light border text-danger rounded-circle p-0 d-inline-flex align-items-center justify-content-center"
+                                        style="width: 28px; height: 28px;" onclick="deletePageNotif('{{ n.id }}')"
+                                        title="Delete alert">
                                         <i class="bi bi-trash3" style="font-size: 0.75rem;"></i>
                                     </button>
                                 </div>
@@ -237,27 +297,29 @@
                 </div>
                 {% empty %}
                 <div class="text-center py-5">
-                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 bg-light text-secondary" style="width: 64px; height: 64px;">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 bg-light text-secondary"
+                        style="width: 64px; height: 64px;">
                         <i class="bi bi-check2-circle text-success fs-1"></i>
                     </div>
                     <h5 class="fw-bold text-dark mb-1">All Caught Up!</h5>
                     <p class="text-secondary small mb-3">
                         {% if search_q %}
-                            No notifications match your query "<strong>{{ search_q }}</strong>".
+                        No notifications match your query "<strong>{{ search_q }}</strong>".
                         {% elif filter_type == 'unread' %}
-                            You have no unread notifications requiring attention.
+                        You have no unread notifications requiring attention.
                         {% elif filter_type == 'rfq' %}
-                            No Buyer RFQ notifications found.
+                        No Buyer RFQ notifications found.
                         {% elif filter_type == 'listing' %}
-                            No Lot Listing notifications found.
+                        No Lot Listing notifications found.
                         {% elif filter_type == 'enquiry' %}
-                            No Product Enquiry notifications found.
+                        No Product Enquiry notifications found.
                         {% else %}
-                            There are currently no alerts recorded in the system.
+                        There are currently no alerts recorded in the system.
                         {% endif %}
                     </p>
                     {% if search_q or filter_type != 'all' %}
-                    <a href="/admin/notifications/" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                    <a href="/admin/notifications/"
+                        class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
                         View All Alerts
                     </a>
                     {% endif %}
@@ -270,224 +332,241 @@
 </div>
 
 <style>
-/* Notification Center Modern Styling */
-.bg-indigo {
-    background-color: #4f46e5 !important;
-}
-.bg-emerald {
-    background-color: #059669 !important;
-}
-.bg-indigo-subtle {
-    background-color: rgba(79, 70, 229, 0.12) !important;
-}
-.text-indigo {
-    color: #4f46e5 !important;
-}
+    /* Notification Center Modern Styling */
+    .bg-indigo {
+        background-color: #4f46e5 !important;
+    }
 
-.notif-center-filter-pill {
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #64748b;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    transition: all 0.15s ease;
-}
-.notif-center-filter-pill:hover {
-    background: #f1f5f9;
-    color: #0f172a;
-    border-color: #cbd5e1;
-}
-.notif-center-filter-pill.active {
-    background: #2563eb !important;
-    color: #ffffff !important;
-    border-color: #2563eb !important;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-}
-.notif-center-filter-pill.active.is-unread {
-    background: #dc2626 !important;
-    border-color: #dc2626 !important;
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
-}
-.notif-center-filter-pill.active.is-listing {
-    background: #059669 !important;
-    border-color: #059669 !important;
-    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
-}
-.notif-center-filter-pill.active.is-rfq {
-    background: #4f46e5 !important;
-    border-color: #4f46e5 !important;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
-}
-.notif-center-filter-pill.active.is-enquiry {
-    background: #0284c7 !important;
-    border-color: #0284c7 !important;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
-}
-.notif-center-filter-pill .pill-counter {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 1px 7px;
-    border-radius: 9999px;
-    background: #e2e8f0;
-    color: #475569;
-}
-.notif-center-filter-pill.active .pill-counter {
-    background: rgba(255, 255, 255, 0.28) !important;
-    color: #ffffff !important;
-}
-.notif-center-filter-pill .pill-counter.counter-red {
-    background: #fee2e2;
-    color: #dc2626;
-}
+    .bg-emerald {
+        background-color: #059669 !important;
+    }
 
-/* Feed Cards */
-.notif-feed-card {
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    border-left: 4px solid transparent;
-    padding: 16px 18px;
-    background: #ffffff;
-    transition: all 0.15s ease;
-}
-.notif-feed-card:hover {
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
-    border-color: #cbd5e1;
-}
-.notif-feed-card.is-unread {
-    background: #f8faff;
-    border-left: 4px solid #2563eb;
-    border-color: rgba(37, 99, 235, 0.2);
-}
-.notif-feed-card.is-unread .notif-feed-title {
-    color: #020617;
-}
+    .bg-indigo-subtle {
+        background-color: rgba(79, 70, 229, 0.12) !important;
+    }
 
-[data-bs-theme="dark"] .notif-feed-card {
-    background: #0f172a;
-    border-color: rgba(255, 255, 255, 0.08);
-}
-[data-bs-theme="dark"] .notif-feed-card.is-unread {
-    background: rgba(30, 58, 138, 0.16);
-    border-left-color: #3b82f6;
-    border-color: rgba(59, 130, 246, 0.25);
-}
-[data-bs-theme="dark"] .notif-feed-card.is-unread .notif-feed-title {
-    color: #ffffff;
-}
+    .text-indigo {
+        color: #4f46e5 !important;
+    }
+
+    .notif-center-filter-pill {
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        color: #64748b;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.15s ease;
+    }
+
+    .notif-center-filter-pill:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    .notif-center-filter-pill.active {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .notif-center-filter-pill.active.is-unread {
+        background: #dc2626 !important;
+        border-color: #dc2626 !important;
+        box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+    }
+
+    .notif-center-filter-pill.active.is-listing {
+        background: #059669 !important;
+        border-color: #059669 !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    }
+
+    .notif-center-filter-pill.active.is-rfq {
+        background: #4f46e5 !important;
+        border-color: #4f46e5 !important;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    }
+
+    .notif-center-filter-pill.active.is-enquiry {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+
+    .notif-center-filter-pill .pill-counter {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        border-radius: 9999px;
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .notif-center-filter-pill.active .pill-counter {
+        background: rgba(255, 255, 255, 0.28) !important;
+        color: #ffffff !important;
+    }
+
+    .notif-center-filter-pill .pill-counter.counter-red {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    /* Feed Cards */
+    .notif-feed-card {
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid transparent;
+        padding: 16px 18px;
+        background: #ffffff;
+        transition: all 0.15s ease;
+    }
+
+    .notif-feed-card:hover {
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+        border-color: #cbd5e1;
+    }
+
+    .notif-feed-card.is-unread {
+        background: #f8faff;
+        border-left: 4px solid #2563eb;
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .notif-feed-card.is-unread .notif-feed-title {
+        color: #020617;
+    }
+
+    [data-bs-theme="dark"] .notif-feed-card {
+        background: #0f172a;
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    [data-bs-theme="dark"] .notif-feed-card.is-unread {
+        background: rgba(30, 58, 138, 0.16);
+        border-left-color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.25);
+    }
+
+    [data-bs-theme="dark"] .notif-feed-card.is-unread .notif-feed-title {
+        color: #ffffff;
+    }
 </style>
 
 <script>
-function showNotifToast(msg, type = 'success') {
-    const box = document.getElementById('notifPageAlertBox');
-    if (!box) return;
-    box.className = `alert alert-${type} d-flex align-items-center gap-2 py-2.5 px-3.5 small rounded-3 mb-4 shadow-sm`;
-    box.innerHTML = `
+    function showNotifToast(msg, type = 'success') {
+        const box = document.getElementById('notifPageAlertBox');
+        if (!box) return;
+        box.className = `alert alert-${type} d-flex align-items-center gap-2 py-2.5 px-3.5 small rounded-3 mb-4 shadow-sm`;
+        box.innerHTML = `
         <i class="bi ${type === 'success' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger'} flex-shrink-0"></i>
         <span>${msg}</span>
     `;
-    box.classList.remove('d-none');
-    setTimeout(() => box.classList.add('d-none'), 4000);
-}
-
-function getPageCsrfToken() {
-    const hiddenEl = document.getElementById('adminNavbarCsrfToken');
-    if (hiddenEl && hiddenEl.value) return hiddenEl.value;
-    const cookies = document.cookie.split(';');
-    for (let c of cookies) {
-        const [name, val] = c.trim().split('=');
-        if (name === 'csrftoken') return val;
-    }
-    return '';
-}
-
-async function togglePageNotifRead(notifId) {
-    const card = document.getElementById(`notifItem-${notifId}`);
-    if (!card) return;
-    const isCurrentlyUnread = card.classList.contains('is-unread');
-    const newReadState = isCurrentlyUnread; // if unread -> make read
-
-    // Optimistic UI
-    if (newReadState) {
-        card.classList.remove('is-unread');
-        const badge = card.querySelector('.unread-pill');
-        if (badge) badge.classList.add('d-none');
-        const btn = document.getElementById(`markReadBtn-${notifId}`);
-        if (btn) btn.innerHTML = `<i class="bi bi-envelope text-secondary me-1"></i><span>Mark as Unread</span>`;
-    } else {
-        card.classList.add('is-unread');
-        const badge = card.querySelector('.unread-pill');
-        if (badge) badge.classList.remove('d-none');
-        const btn = document.getElementById(`markReadBtn-${notifId}`);
-        if (btn) btn.innerHTML = `<i class="bi bi-check2 text-primary me-1"></i><span>Mark as Read</span>`;
+        box.classList.remove('d-none');
+        setTimeout(() => box.classList.add('d-none'), 4000);
     }
 
-    try {
-        await fetch(`/admin/api/notifications/${notifId}/read/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() },
-            body: JSON.stringify({ is_read: newReadState })
-        });
-    } catch (err) {
-        console.error('Failed to toggle notification status', err);
+    function getPageCsrfToken() {
+        const hiddenEl = document.getElementById('adminNavbarCsrfToken');
+        if (hiddenEl && hiddenEl.value) return hiddenEl.value;
+        const cookies = document.cookie.split(';');
+        for (let c of cookies) {
+            const [name, val] = c.trim().split('=');
+            if (name === 'csrftoken') return val;
+        }
+        return '';
     }
-}
 
-async function markPageNotifRead(notifId) {
-    const card = document.getElementById(`notifItem-${notifId}`);
-    if (card && card.classList.contains('is-unread')) {
-        await togglePageNotifRead(notifId);
-    }
-}
+    async function togglePageNotifRead(notifId) {
+        const card = document.getElementById(`notifItem-${notifId}`);
+        if (!card) return;
+        const isCurrentlyUnread = card.classList.contains('is-unread');
+        const newReadState = isCurrentlyUnread; // if unread -> make read
 
-async function deletePageNotif(notifId) {
-    try {
-        const res = await fetch(`/admin/api/notifications/${notifId}/delete/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() }
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-            const card = document.getElementById(`notifItem-${notifId}`);
-            if (card) {
-                card.style.opacity = '0';
-                card.style.transform = 'translateX(20px)';
-                setTimeout(() => card.remove(), 200);
-            }
-            showNotifToast(data.message || 'Notification deleted.');
+        // Optimistic UI
+        if (newReadState) {
+            card.classList.remove('is-unread');
+            const badge = card.querySelector('.unread-pill');
+            if (badge) badge.classList.add('d-none');
+            const btn = document.getElementById(`markReadBtn-${notifId}`);
+            if (btn) btn.innerHTML = `<i class="bi bi-envelope text-secondary me-1"></i><span>Mark as Unread</span>`;
         } else {
-            showNotifToast(data.message || 'Failed to delete notification.', 'danger');
+            card.classList.add('is-unread');
+            const badge = card.querySelector('.unread-pill');
+            if (badge) badge.classList.remove('d-none');
+            const btn = document.getElementById(`markReadBtn-${notifId}`);
+            if (btn) btn.innerHTML = `<i class="bi bi-check2 text-primary me-1"></i><span>Mark as Read</span>`;
         }
-    } catch (err) {
-        showNotifToast('Server communication error.', 'danger');
-    }
-}
 
-document.getElementById('pageMarkAllReadBtn')?.addEventListener('click', async () => {
-    try {
-        const res = await fetch('/admin/api/notifications/read-all/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() }
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-            document.querySelectorAll('.notif-feed-card').forEach(card => {
-                card.classList.remove('is-unread');
-                const badge = card.querySelector('.unread-pill');
-                if (badge) badge.classList.add('d-none');
-                const btn = card.querySelector('.mark-read-toggle-btn');
-                if (btn) btn.innerHTML = `<i class="bi bi-envelope text-secondary me-1"></i><span>Mark as Unread</span>`;
+        try {
+            await fetch(`/admin/api/notifications/${notifId}/read/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() },
+                body: JSON.stringify({ is_read: newReadState })
             });
-            showNotifToast(data.message || 'All notifications marked as read.');
+        } catch (err) {
+            console.error('Failed to toggle notification status', err);
         }
-    } catch (err) {
-        showNotifToast('Failed to mark all as read.', 'danger');
     }
-});
+
+    async function markPageNotifRead(notifId) {
+        const card = document.getElementById(`notifItem-${notifId}`);
+        if (card && card.classList.contains('is-unread')) {
+            await togglePageNotifRead(notifId);
+        }
+    }
+
+    async function deletePageNotif(notifId) {
+        try {
+            const res = await fetch(`/admin/api/notifications/${notifId}/delete/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                const card = document.getElementById(`notifItem-${notifId}`);
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    setTimeout(() => card.remove(), 200);
+                }
+                showNotifToast(data.message || 'Notification deleted.');
+            } else {
+                showNotifToast(data.message || 'Failed to delete notification.', 'danger');
+            }
+        } catch (err) {
+            showNotifToast('Server communication error.', 'danger');
+        }
+    }
+
+    document.getElementById('pageMarkAllReadBtn')?.addEventListener('click', async () => {
+        try {
+            const res = await fetch('/admin/api/notifications/read-all/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getPageCsrfToken() }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                document.querySelectorAll('.notif-feed-card').forEach(card => {
+                    card.classList.remove('is-unread');
+                    const badge = card.querySelector('.unread-pill');
+                    if (badge) badge.classList.add('d-none');
+                    const btn = card.querySelector('.mark-read-toggle-btn');
+                    if (btn) btn.innerHTML = `<i class="bi bi-envelope text-secondary me-1"></i><span>Mark as Unread</span>`;
+                });
+                showNotifToast(data.message || 'All notifications marked as read.');
+            }
+        } catch (err) {
+            showNotifToast('Failed to mark all as read.', 'danger');
+        }
+    });
 </script>
 {% endblock %}
