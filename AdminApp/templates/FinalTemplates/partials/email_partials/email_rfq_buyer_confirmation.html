@@ -162,20 +162,12 @@
                     <span class="detail-label">Estimated Baseline Value</span>
                     <span class="detail-value" style="color: #0f7a61;">{{ rfq.currency }} {{ rfq.estimated_value|floatformat:2 }}</span>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Trade Incoterm</span>
-                    <span class="detail-value">{{ rfq.incoterm }}</span>
-                </div>
                 {% if rfq.destination_port %}
                 <div class="detail-row">
                     <span class="detail-label">Destination</span>
                     <span class="detail-value">{{ rfq.destination_port }}</span>
                 </div>
                 {% endif %}
-                <div class="detail-row">
-                    <span class="detail-label">Payment Terms</span>
-                    <span class="detail-value">{{ rfq.payment_method }}</span>
-                </div>
             </div>
 
             <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #1e293b;">Basket Line Items ({{ items|length }}):</h4>

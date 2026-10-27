@@ -85,8 +85,9 @@
                 <p style="margin: 0 0 8px 0;"><strong>Buyer Contact:</strong> {{ rfq.contact_person }} ({{ rfq.email }})</p>
                 <p style="margin: 0 0 8px 0;"><strong>Total Units:</strong> {{ rfq.total_units }} units across {{ rfq.items.count }} items</p>
                 <p style="margin: 0 0 8px 0;"><strong>Est. Baseline Value:</strong> <span class="stat-badge">{{ rfq.currency }} {{ rfq.estimated_value|floatformat:2 }}</span></p>
-                <p style="margin: 0 0 8px 0;"><strong>Trade Incoterm:</strong> {{ rfq.incoterm }} ({{ rfq.destination_port }})</p>
-                <p style="margin: 0;"><strong>Payment Term:</strong> {{ rfq.payment_method }}</p>
+                {% if rfq.destination_port %}
+                <p style="margin: 0;"><strong>Destination:</strong> {{ rfq.destination_port }}</p>
+                {% endif %}
             </div>
             <a href="{{ admin_review_url|default:'https://surplusmarket.com/admin/rfq-requests/' }}" class="cta-btn">
                 Review &amp; Issue Proforma in Admin Portal &rarr;

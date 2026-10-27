@@ -320,8 +320,21 @@ def get_public_blogs_list(request):
     if search:
         qs = qs.filter(Q(title__icontains=search) | Q(excerpt__icontains=search) | Q(content__icontains=search))
 
+    page_size_param = request.GET.get("page_size") or request.GET.get("limit")
+    is_all = str(request.GET.get("all", "")).lower() in ["true", "1", "yes"]
+
+    if is_all:
+        page_size = max(qs.count(), 1)
+    elif page_size_param:
+        try:
+            page_size = max(1, min(int(page_size_param), 500))
+        except (ValueError, TypeError):
+            page_size = 100
+    else:
+        page_size = 100
+
     page_num = request.GET.get("page", 1)
-    paginator = Paginator(qs, 12)
+    paginator = Paginator(qs, page_size)
     try:
         page_obj = paginator.page(page_num)
     except Exception:

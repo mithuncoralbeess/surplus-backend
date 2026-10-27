@@ -154,7 +154,7 @@
                     <th style="width: 250px; font-weight: 600;">Buyer Details</th>
                     <th style="width: 180px; font-weight: 600;">Basket Summary</th>
                     <th style="width: 160px; font-weight: 600;">Est. Value / Quote</th>
-                    <th style="width: 150px; font-weight: 600;">Incoterm &amp; Port</th>
+                    <th style="width: 150px; font-weight: 600;">Destination Port</th>
                     <th style="width: 130px; font-weight: 600;">Status</th>
                     <th style="width: 140px; font-weight: 600;">Date Submitted</th>
                     <th class="text-end pe-4" style="width: 140px; font-weight: 600;">Action</th>
@@ -224,11 +224,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-0.5" style="font-size: 0.75rem;">
-                            {{ item.incoterm|default:"EXW" }}
-                        </span>
-                        <div class="text-muted small mt-1 text-truncate" style="max-width: 140px;" title="{{ item.destination_port }}">
-                            {{ item.destination_port|default:"Not specified" }}
+                        <div class="small fw-semibold text-dark text-truncate" style="max-width: 140px;" title="{{ item.destination_port }}">
+                            <i class="bi bi-geo-alt text-secondary me-1"></i>{{ item.destination_port|default:"Not specified" }}
                         </div>
                     </td>
                     <td>
