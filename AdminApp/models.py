@@ -691,8 +691,14 @@ class LotBatchEnquiry(models.Model):
     @property
     def open_for_offers(self):
         if isinstance(self.raw_data, dict) and "open_for_offers" in self.raw_data:
-            return bool(self.raw_data.get("open_for_offers"))
-        return self.sale_method == "offer" and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
+            val = self.raw_data.get("open_for_offers")
+            if isinstance(val, bool):
+                return val
+            if isinstance(val, (int, float)):
+                return bool(val)
+            if isinstance(val, str):
+                return val.strip().lower() in ("true", "1", "yes", "t", "on")
+        return self.sale_method in ("offer", "") and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
@@ -879,6 +885,9 @@ class Lot(models.Model):
                         self.offer = f"{discount_pct}% Off MSRP"
             except Exception:
                 pass
+        elif self.open_for_offers or (self.sale_method == "offer" and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))):
+            if not self.offer:
+                self.offer = "Open for Offers"
 
         super().save(*args, **kwargs)
 
@@ -992,8 +1001,14 @@ class Lot(models.Model):
     @property
     def open_for_offers(self):
         if isinstance(self.raw_data, dict) and "open_for_offers" in self.raw_data:
-            return bool(self.raw_data.get("open_for_offers"))
-        return self.sale_method == "offer" and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
+            val = self.raw_data.get("open_for_offers")
+            if isinstance(val, bool):
+                return val
+            if isinstance(val, (int, float)):
+                return bool(val)
+            if isinstance(val, str):
+                return val.strip().lower() in ("true", "1", "yes", "t", "on")
+        return self.sale_method in ("offer", "") and (not self.ask_price_surplus_payout or self.ask_price_surplus_payout == Decimal("0.00"))
 
     @property
     def batch_id(self):

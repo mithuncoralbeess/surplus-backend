@@ -307,7 +307,8 @@ class LotSerializer(serializers.ModelSerializer):
     warehouse_images = serializers.SerializerMethodField()
     third_party_documents = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
-    open_for_offers = serializers.SerializerMethodField()
+    open_for_offers = serializers.BooleanField(required=False, default=False)
+    sales_method = serializers.CharField(source="sale_method", required=False, allow_blank=True)
     listing_title = serializers.CharField(source="title", required=False, allow_blank=True)
     lot_description_and_notes = serializers.CharField(source="description", required=False, allow_blank=True)
 
@@ -348,6 +349,7 @@ class LotSerializer(serializers.ModelSerializer):
             "open_for_offers",
             "excluded_export_countries",
             "sale_method",
+            "sales_method",
             "file",
             "file_url",
             "warehouse_images",
@@ -363,13 +365,6 @@ class LotSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "lot_number", "file_url", "image", "manifest_data", "created_at", "created_at_formatted", "updated_at"]
-
-    def get_open_for_offers(self, obj):
-        if hasattr(obj, 'open_for_offers'):
-            return obj.open_for_offers
-        if isinstance(getattr(obj, 'raw_data', None), dict):
-            return bool(obj.raw_data.get("open_for_offers", False))
-        return False
 
     def get_vendor_id(self, obj):
         if hasattr(obj, 'formatted_vendor_id') and obj.formatted_vendor_id:
@@ -589,13 +584,61 @@ class LotSerializer(serializers.ModelSerializer):
         if 'title' not in data_copy or not str(data_copy.get('title', '')).strip():
             data_copy['title'] = "Surplus Lot Inventory Package"
 
-        # Clean and parse decimal fields with alias support
-        price_aliases = ['ask_price_surplus_payout', 'asking_price', 'ask_price', 'price']
-        parsed_payout = None
-        for alias in price_aliases:
-            if alias in data_copy and data_copy[alias] not in (None, ""):
-                parsed_payout = _parse_num(data_copy[alias])
+        # Parse and normalize open_for_offers boolean and aliases
+        is_open_for_offers = None
+        for ofo_key in ['open_for_offers', 'openForOffers', 'open_for_offer', 'is_open_for_offers', 'isOpenForOffers']:
+            if ofo_key in data_copy and data_copy[ofo_key] is not None:
+                val = data_copy[ofo_key]
+                if isinstance(val, bool):
+                    is_open_for_offers = val
+                elif isinstance(val, (int, float)):
+                    is_open_for_offers = bool(val)
+                elif isinstance(val, str):
+                    is_open_for_offers = val.strip().lower() in ('true', '1', 'yes', 't', 'on')
                 break
+
+        # Map sales_method aliases (sales_method, salesMethod, saleMethod) to sale_method
+        normalized_sm = ""
+        for sm_key in ['sales_method', 'salesMethod', 'saleMethod', 'sale_method']:
+            if sm_key in data_copy and data_copy[sm_key] not in (None, ""):
+                sm_val = str(data_copy[sm_key]).strip().lower()
+                if sm_val in ('negotiable', 'negotiate', 'offer', 'make_offer'):
+                    normalized_sm = 'negotiable'
+                elif sm_val in ('fixed', 'fixed price', 'fixed_price', 'buy_now', 'direct_sale'):
+                    normalized_sm = 'fixed'
+                elif sm_val in ('auction', 'bidding', 'bid'):
+                    normalized_sm = 'auction'
+                elif sm_val:
+                    normalized_sm = sm_val
+                break
+
+        if is_open_for_offers is True:
+            # When open for offers is true, sales method is disabled in frontend and no value is needed
+            data_copy['open_for_offers'] = True
+            data_copy['sale_method'] = ""
+            data_copy['sales_method'] = ""
+            data_copy['offer'] = data_copy.get('offer') or 'Open for Offers'
+            data_copy['ask_price_surplus_payout'] = "0.00"
+        elif is_open_for_offers is False:
+            data_copy['open_for_offers'] = False
+            data_copy['sale_method'] = normalized_sm
+            data_copy['sales_method'] = normalized_sm
+        else:
+            data_copy['sale_method'] = normalized_sm
+            data_copy['sales_method'] = normalized_sm
+
+        # Clean and parse decimal fields with alias support
+        price_aliases = [
+            'ask_price_surplus_payout', 'liquidation_price', 'liquidating_price',
+            'liquidationPrice', 'liquidatingPrice', 'payout_price', 'payoutPrice',
+            'asking_price', 'ask_price', 'askingPrice', 'price'
+        ]
+        parsed_payout = None
+        if not is_open_for_offers:
+            for alias in price_aliases:
+                if alias in data_copy and data_copy[alias] not in (None, ""):
+                    parsed_payout = _parse_num(data_copy[alias])
+                    break
         data_copy['ask_price_surplus_payout'] = parsed_payout if parsed_payout is not None else "0.00"
 
         msrp_aliases = ['total_est_retail_value_msrp', 'total_retail_value', 'retail_value', 'msrp']
@@ -700,25 +743,35 @@ class LotSerializer(serializers.ModelSerializer):
         return ret
 
     def create(self, validated_data):
+        open_for_offers = validated_data.pop('open_for_offers', None)
         warehouse_images = validated_data.pop('warehouse_images', [])
         lot = super().create(validated_data)
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        if open_for_offers is not None:
+            lot.raw_data['open_for_offers'] = bool(open_for_offers)
+        lot.raw_data['sale_method'] = lot.sale_method
+        lot.raw_data['sales_method'] = lot.sale_method
         if warehouse_images:
             lot.warehouse_images = warehouse_images
-            if not isinstance(lot.raw_data, dict):
-                lot.raw_data = {}
             lot.raw_data['warehouse_images'] = warehouse_images
-            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        lot.save(update_fields=['warehouse_images', 'raw_data'])
         return lot
 
     def update(self, instance, validated_data):
+        open_for_offers = validated_data.pop('open_for_offers', None)
         warehouse_images = validated_data.pop('warehouse_images', None)
         lot = super().update(instance, validated_data)
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        if open_for_offers is not None:
+            lot.raw_data['open_for_offers'] = bool(open_for_offers)
+        lot.raw_data['sale_method'] = lot.sale_method
+        lot.raw_data['sales_method'] = lot.sale_method
         if warehouse_images is not None:
             lot.warehouse_images = warehouse_images
-            if not isinstance(lot.raw_data, dict):
-                lot.raw_data = {}
             lot.raw_data['warehouse_images'] = warehouse_images
-            lot.save(update_fields=['warehouse_images', 'raw_data'])
+        lot.save(update_fields=['warehouse_images', 'raw_data'])
         return lot
 
     def to_representation(self, instance):
@@ -726,10 +779,24 @@ class LotSerializer(serializers.ModelSerializer):
         try:
             ask = float(instance.ask_price_surplus_payout or 0.0)
             msrp = float(instance.total_est_retail_value_msrp or 0.0)
-            ret["liquidation_price"] = ask
-            ret["price"] = round(ask * 1.10, 2)
+            is_open = bool(instance.open_for_offers)
+            ret["open_for_offers"] = is_open
+            if is_open:
+                # When open for offers is true, no need of any value in sales method
+                ret["sale_method"] = ""
+                ret["sales_method"] = ""
+                ret["liquidation_price"] = 0.0
+                ret["price"] = 0.0
+                ret["offer"] = instance.offer or "Open for Offers"
+            else:
+                ret["sale_method"] = instance.sale_method or ""
+                ret["sales_method"] = ret["sale_method"]
+                ret["liquidation_price"] = ask
+                ret["price"] = round(ask * 1.10, 2)
             ret["msrp"] = msrp
-            if msrp > 0 and ask > 0 and msrp > ask:
+            if is_open:
+                ret["offer"] = instance.offer or "Open for Offers"
+            elif msrp > 0 and ask > 0 and msrp > ask:
                 disc = round(((msrp - ask) / msrp) * 100)
                 if not (instance.offer and "open to offer" in str(instance.offer).lower()):
                     ret["offer"] = f"{disc}% Off MSRP"

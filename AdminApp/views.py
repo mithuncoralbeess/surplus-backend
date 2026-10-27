@@ -5218,19 +5218,22 @@ def toggle_product_status_view(request, product_id):
 
 
 STANDARD_COUNTRIES = [
-    "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia",
-    "Austria", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belgium",
-    "Brazil", "Bulgaria", "Canada", "Chile", "China", "Colombia", "Croatia",
-    "Cyprus", "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland",
-    "France", "Georgia", "Germany", "Greece", "Hong Kong", "Hungary",
-    "Iceland", "India", "Indonesia", "Ireland", "Israel", "Italy", "Japan",
-    "Jordan", "Kazakhstan", "Kuwait", "Latvia", "Lebanon", "Lithuania",
-    "Luxembourg", "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand",
-    "Norway", "Oman", "Pakistan", "Philippines", "Poland", "Portugal",
-    "Qatar", "Romania", "Saudi Arabia", "Singapore", "Slovakia", "Slovenia",
-    "South Africa", "South Korea", "Spain", "Sweden", "Switzerland", "Taiwan",
-    "Thailand", "Turkey", "Ukraine", "United Arab Emirates", "United Kingdom",
-    "United States", "Vietnam"
+    "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia",
+    "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Belarus", "Belgium", "Belize",
+    "Bolivia", "Bosnia and Herzegovina", "Brazil", "Brunei", "Bulgaria", "Cambodia", "Cameroon",
+    "Canada", "Chile", "China", "Colombia", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic",
+    "Denmark", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Estonia", "Ethiopia",
+    "Finland", "France", "Georgia", "Germany", "Ghana", "Greece", "Guatemala", "Hong Kong", "Hungary",
+    "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast",
+    "Japan", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Latvia", "Lebanon", "Libya", "Lithuania",
+    "Luxembourg", "Malaysia", "Maldives", "Malta", "Mexico", "Moldova", "Monaco", "Morocco", "Myanmar",
+    "Nepal", "Netherlands", "New Zealand", "Nigeria", "North Korea", "Norway", "Oman", "Pakistan",
+    "Panama", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia",
+    "Saudi Arabia", "Senegal", "Serbia", "Singapore", "Slovakia", "Slovenia", "Somalia", "South Africa",
+    "South Korea", "Spain", "Sri Lanka", "Sudan", "Sweden", "Switzerland", "Syria", "Taiwan",
+    "Tanzania", "Thailand", "Tunisia", "Turkey", "Uganda", "Ukraine", "United Arab Emirates",
+    "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Venezuela", "Vietnam", "Yemen",
+    "Zambia", "Zimbabwe"
 ]
 
 STANDARD_CURRENCIES = ["USD", "EUR", "GBP", "AED", "SAR", "INR", "CAD", "AUD", "SGD", "QAR", "KWD", "OMR", "BHD", "JPY", "CNY"]
@@ -5590,7 +5593,7 @@ def add_lot_view(request):
         {"value": "auction", "label": "Auction"}
     ]
     currency_options = ["USD", "AED", "SAR", "EUR", "GBP"]
-    excluded_countries_options = ["Russia", "Iran", "North Korea", "Syria", "Cuba"]
+    excluded_countries_options = STANDARD_COUNTRIES
     standard_categories = [
         "Electricals",
         "Electronics",
@@ -5803,7 +5806,7 @@ def add_lot_view(request):
             offer_text = "Open for Offers"
         else:
             ask_price_surplus_payout = _parse_form_num(request.POST.get("ask_price_surplus_payout") or request.POST.get("liquidating_price") or request.POST.get("liquidation_price") or request.POST.get("price"))
-            sale_method = request.POST.get("sale_method", "offer").strip()
+            sale_method = (request.POST.get("sale_method") or request.POST.get("sales_method") or "offer").strip()
             allow_counter_offers = request.POST.get("allow_counter_offers") in ("on", "true", "1")
 
             if ask_price_surplus_payout <= 0:
@@ -5999,6 +6002,8 @@ def add_lot_view(request):
             "allow_counter_offers": allow_counter_offers,
             "open_to_offer": "Yes" if allow_counter_offers else "No",
             "open_for_offers": open_for_offers,
+            "sale_method": sale_method,
+            "sales_method": sale_method,
             "is_saved_to_db": True,
             "parse_summary": parse_summary,
             "products": parsed_items,

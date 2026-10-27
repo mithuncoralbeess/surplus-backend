@@ -529,9 +529,38 @@ def submit_lot_enquiry(request):
         raw_data["row_errors"] = parse_result.get("row_errors")
         raw_data["missing_mandatory_columns"] = parse_result.get("missing_mandatory_columns")
 
+    raw_open_for_offers = request.data.get("open_for_offers") if "open_for_offers" in request.data else request.data.get("openForOffers")
+    is_open_for_offers = False
+    if raw_open_for_offers is not None:
+        if isinstance(raw_open_for_offers, bool):
+            is_open_for_offers = raw_open_for_offers
+        elif isinstance(raw_open_for_offers, (int, float)):
+            is_open_for_offers = bool(raw_open_for_offers)
+        elif isinstance(raw_open_for_offers, str):
+            is_open_for_offers = raw_open_for_offers.strip().lower() in ("true", "1", "yes", "t", "on")
+
+    raw_sale_method = str(request.data.get("sale_method") or request.data.get("sales_method") or "").strip().lower()
+    if is_open_for_offers:
+        sale_method_val = ""
+    elif raw_sale_method in ("negotiable", "negotiate", "offer", "make_offer"):
+        sale_method_val = "negotiable"
+    elif raw_sale_method in ("fixed", "fixed price", "fixed_price", "buy_now", "direct_sale"):
+        sale_method_val = "fixed"
+    elif raw_sale_method in ("auction", "bidding", "bid"):
+        sale_method_val = "auction"
+    elif raw_sale_method:
+        sale_method_val = raw_sale_method
+    else:
+        sale_method_val = ""
+
+    raw_data["open_for_offers"] = is_open_for_offers
+    raw_data["sale_method"] = sale_method_val
+    raw_data["sales_method"] = sale_method_val
+
     lot = Lot.objects.create(
         file=file_obj,
         enquiry_status="pending",
+        sale_method=sale_method_val,
         raw_data=raw_data
     )
 
@@ -2283,6 +2312,62 @@ def submit_lot_request(request):
         data["title"] = title_val
         data["description"] = desc_val
 
+        # Normalize open_for_offers from frontend payload format (checkbox boolean / string)
+        raw_open_for_offers = (
+            data.get("open_for_offers")
+            if "open_for_offers" in data else
+            data.get("openForOffers")
+            if "openForOffers" in data else
+            data.get("open_for_offer")
+            if "open_for_offer" in data else
+            data.get("is_open_for_offers")
+            if "is_open_for_offers" in data else
+            None
+        )
+        is_open_for_offers = False
+        if raw_open_for_offers is not None:
+            if isinstance(raw_open_for_offers, bool):
+                is_open_for_offers = raw_open_for_offers
+            elif isinstance(raw_open_for_offers, (int, float)):
+                is_open_for_offers = bool(raw_open_for_offers)
+            elif isinstance(raw_open_for_offers, str):
+                is_open_for_offers = raw_open_for_offers.strip().lower() in ("true", "1", "yes", "t", "on")
+
+        data["open_for_offers"] = is_open_for_offers
+
+        # Normalize sales_method / sale_method
+        raw_sale_method = (
+            data.get("sale_method")
+            or data.get("sales_method")
+            or data.get("saleMethod")
+            or data.get("salesMethod")
+            or ""
+        )
+        if isinstance(raw_sale_method, str):
+            clean_sm = raw_sale_method.strip().lower()
+            if clean_sm in ("negotiable", "negotiate", "offer", "make_offer"):
+                sale_method_val = "negotiable"
+            elif clean_sm in ("fixed", "fixed price", "fixed_price", "buy_now", "direct_sale"):
+                sale_method_val = "fixed"
+            elif clean_sm in ("auction", "bidding", "bid"):
+                sale_method_val = "auction"
+            elif clean_sm:
+                sale_method_val = clean_sm
+            else:
+                sale_method_val = ""
+        else:
+            sale_method_val = ""
+
+        if is_open_for_offers:
+            # When open for offers is true, sales method is disabled in frontend and no value is needed
+            sale_method_val = ""
+            data["ask_price_surplus_payout"] = "0.00"
+            data["liquidation_price"] = "0.00"
+            data["offer"] = data.get("offer") or "Open for Offers"
+
+        data["sale_method"] = sale_method_val
+        data["sales_method"] = sale_method_val
+
 
 
 
@@ -2372,6 +2457,15 @@ def submit_lot_request(request):
             # Store complete raw payload with manifest items safely
             if isinstance(raw_payload, dict):
                 raw_payload["is_saved_to_db"] = True
+                raw_payload["open_for_offers"] = is_open_for_offers
+                raw_payload["sale_method"] = sale_method_val
+                raw_payload["sales_method"] = sale_method_val
+                if is_open_for_offers:
+                    raw_payload["sale_method"] = ""
+                    raw_payload["sales_method"] = ""
+                    raw_payload["liquidation_price"] = 0.0
+                    raw_payload["liquidating_price"] = 0.0
+                    raw_payload["ask_price_surplus_payout"] = 0.0
                 if lot.warehouse_images:
                     raw_payload["warehouse_images"] = lot.warehouse_images
                 if parsed_manifest_items:

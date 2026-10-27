@@ -1424,41 +1424,55 @@ textarea.form-control-custom {
                             </div>
                         </div>
 
-                        <!-- Excluded Export Countries (Modern Tag / Pill Selector) -->
+                        <!-- Excluded Export Countries (Dropdown Multi-Select by Admin, Initially No Data) -->
                         <div>
-                            <label class="form-label-custom mb-2">
-                                <span class="label-title">Excluded Export Countries</span>
-                                <span class="badge-optional">Optional</span>
-                            </label>
-
-                            <!-- Quick Embargo Presets & Clear All Button -->
-                            <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                                <span class="small text-muted me-1 fw-semibold">Quick Embargo Presets:</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Russia">Russia</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Iran">Iran</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="North Korea">North Korea</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Syria">Syria</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small" data-country="Cuba">Cuba</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-3 rounded-pill small" id="btnClearExcluded">Clear All</button>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label-custom mb-0" for="excludedCountryDropdown">
+                                    <span class="label-title">Excluded Export Countries</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <button type="button" class="btn btn-link text-danger text-decoration-none p-0 small fw-semibold d-none align-items-center gap-1" id="btnClearExcluded" style="font-size: 0.8rem;">
+                                    <i class="bi bi-x-circle"></i> Clear all exclusions
+                                </button>
                             </div>
 
-                            <!-- Selected Country Badges Display -->
-                            <div class="p-3 rounded-3 border bg-light">
-                                <div class="small fw-semibold text-secondary mb-2">Active Export Restrictions:</div>
-                                <div id="selectedCountriesBadges" class="d-flex flex-wrap gap-2">
-                                    <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
-                                        <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                            <!-- Dropdown Selector -->
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-md-8 col-lg-7">
+                                    <div class="input-group">
+                                        <span class="input-group-text addon-icon bg-light text-secondary">
+                                            <i class="bi bi-globe-americas"></i>
+                                        </span>
+                                        <select class="form-select form-select-custom" id="excludedCountryDropdown">
+                                            <option value="" selected>-- Select a country to exclude --</option>
+                                            {% for c in countries %}
+                                            <option value="{{ c }}">{{ c }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Excluded Countries Badges (Initially Empty / No Data) -->
+                            <div class="p-2.5 rounded-3 border bg-light mt-2" id="selectedCountriesBox">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span class="small fw-semibold text-secondary">Active Restrictions:</span>
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2 py-0.5 rounded-pill small" id="restrictionsCountBadge">0 excluded</span>
+                                </div>
+                                <div id="selectedCountriesBadges" class="d-flex flex-wrap gap-2 pt-1">
+                                    <span class="text-muted small py-1" id="noRestrictionsNotice">
+                                        <i class="bi bi-shield-check text-success me-1"></i>None (Worldwide - No export restrictions)
                                     </span>
                                 </div>
                             </div>
 
                             <!-- Hidden multi-select for standard Django POST -->
                             <select name="excluded_export_countries" id="excludedCountriesSelect" multiple class="d-none">
-                                {% for country in excluded_countries_options %}
+                                {% for country in countries %}
                                 <option value="{{ country }}">{{ country }}</option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text mt-2">Lots will not be offered to buyers located in the selected restricted jurisdictions.</div>
+                            <div class="form-text mt-1.5">Lots will not be offered to buyers located in the selected restricted jurisdictions.</div>
                         </div>
 
                     </div>
@@ -2994,12 +3008,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // -------------------------------------------------------------
-    // 8. Excluded Export Countries Tag / Pill Selector & Embargo Presets
+    // 8. Excluded Export Countries Dropdown Selector (Initially No Data)
     // -------------------------------------------------------------
+    const excludedCountryDropdown = document.getElementById('excludedCountryDropdown');
     const excludedCountriesSelect = document.getElementById('excludedCountriesSelect');
     const selectedCountriesBadges = document.getElementById('selectedCountriesBadges');
     const btnClearExcluded = document.getElementById('btnClearExcluded');
-    const quickEmbargoBtns = document.querySelectorAll('.btn-quick-embargo');
+    const restrictionsCountBadge = document.getElementById('restrictionsCountBadge');
 
     let activeRestrictedCountries = [];
 
@@ -3009,47 +3024,57 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (activeRestrictedCountries.length === 0) {
             selectedCountriesBadges.innerHTML = `
-                <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
-                    <i class="bi bi-globe me-1"></i>None (Worldwide - No export restrictions)
+                <span class="text-muted small py-1" id="noRestrictionsNotice">
+                    <i class="bi bi-shield-check text-success me-1"></i>None (Worldwide - No export restrictions)
                 </span>
             `;
+            if (restrictionsCountBadge) {
+                restrictionsCountBadge.textContent = '0 excluded';
+                restrictionsCountBadge.className = 'badge bg-secondary bg-opacity-10 text-secondary border-0 px-2 py-0.5 rounded-pill small';
+            }
+            if (btnClearExcluded) {
+                btnClearExcluded.classList.add('d-none');
+                btnClearExcluded.classList.remove('d-inline-flex');
+            }
         } else {
             activeRestrictedCountries.forEach((c) => {
                 const badge = document.createElement('span');
-                badge.className = 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5';
+                badge.className = 'badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2.5 py-1.5 rounded-pill d-inline-flex align-items-center gap-1.5 small fw-semibold';
                 badge.innerHTML = `
                     <i class="bi bi-shield-x"></i> ${c}
-                    <button type="button" class="btn-close btn-close-sm ms-1" style="font-size: 8px;" aria-label="Remove"></button>
+                    <button type="button" class="btn-close btn-close-sm ms-1" style="font-size: 8px;" aria-label="Remove ${c}"></button>
                 `;
-                badge.querySelector('button').addEventListener('click', () => {
+                badge.querySelector('button').addEventListener('click', (e) => {
+                    e.preventDefault();
                     removeExcludedCountry(c);
                 });
                 selectedCountriesBadges.appendChild(badge);
             });
+
+            if (restrictionsCountBadge) {
+                restrictionsCountBadge.textContent = `${activeRestrictedCountries.length} excluded`;
+                restrictionsCountBadge.className = 'badge bg-danger bg-opacity-10 text-danger border-0 px-2 py-0.5 rounded-pill small fw-semibold';
+            }
+            if (btnClearExcluded) {
+                btnClearExcluded.classList.remove('d-none');
+                btnClearExcluded.classList.add('d-inline-flex');
+            }
         }
 
-        // Sync hidden select options
+        // Sync hidden select options for standard Django POST
         if (excludedCountriesSelect) {
             Array.from(excludedCountriesSelect.options).forEach(opt => {
                 opt.selected = activeRestrictedCountries.includes(opt.value);
             });
         }
-
-        // Update quick embargo buttons active state
-        quickEmbargoBtns.forEach(btn => {
-            const country = btn.getAttribute('data-country');
-            if (activeRestrictedCountries.includes(country)) {
-                btn.className = 'btn btn-sm btn-danger py-1 px-3 rounded-pill small';
-            } else {
-                btn.className = 'btn btn-sm btn-outline-secondary btn-quick-embargo py-1 px-3 rounded-pill small';
-            }
-        });
     }
 
     function addExcludedCountry(country) {
         if (!country || country === 'None (Worldwide)') return;
-        if (!activeRestrictedCountries.includes(country)) {
-            activeRestrictedCountries.push(country);
+        const trimmed = country.trim();
+        if (!trimmed) return;
+        if (!activeRestrictedCountries.includes(trimmed)) {
+            activeRestrictedCountries.push(trimmed);
             updateExcludedBadges();
         }
     }
@@ -3059,23 +3084,35 @@ document.addEventListener('DOMContentLoaded', function () {
         updateExcludedBadges();
     }
 
-    quickEmbargoBtns.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const country = this.getAttribute('data-country');
-            if (activeRestrictedCountries.includes(country)) {
-                removeExcludedCountry(country);
-            } else {
+    if (excludedCountryDropdown) {
+        excludedCountryDropdown.addEventListener('change', function () {
+            const country = this.value;
+            if (country) {
                 addExcludedCountry(country);
+                this.value = ''; // Reset dropdown to placeholder
             }
         });
-    });
+    }
 
     if (btnClearExcluded) {
-        btnClearExcluded.addEventListener('click', () => {
+        btnClearExcluded.addEventListener('click', (e) => {
+            e.preventDefault();
             activeRestrictedCountries = [];
             updateExcludedBadges();
+            if (excludedCountryDropdown) excludedCountryDropdown.value = '';
         });
     }
+
+    // Initialize: load pre-selected if any (otherwise empty / no data initially)
+    if (excludedCountriesSelect) {
+        const preSelected = Array.from(excludedCountriesSelect.options)
+            .filter(opt => opt.selected && opt.value)
+            .map(opt => opt.value);
+        if (preSelected.length > 0) {
+            activeRestrictedCountries = preSelected;
+        }
+    }
+    updateExcludedBadges();
 
     // -------------------------------------------------------------
     // 9. Listing Readiness Dynamic Checklist Progress
