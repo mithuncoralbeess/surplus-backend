@@ -14,19 +14,31 @@
             -webkit-font-smoothing: antialiased;
         }
         .container {
-            max-width: 600px;
+            max-width: 620px;
             margin: 0 auto;
             background: #ffffff;
             border-radius: 14px;
             overflow: hidden;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
         }
         .header {
             background: linear-gradient(135deg, #0a5c48, #0f766e);
             padding: 30px;
             text-align: center;
             color: #ffffff;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
         }
         .header h1 {
             margin: 0 0 6px 0;
@@ -36,30 +48,92 @@
         .content {
             padding: 28px 30px;
         }
+        .section-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .meta-table td {
+            padding: 7px 0;
+            font-size: 13px;
+            vertical-align: top;
+        }
+        .meta-label {
+            color: #64748b;
+            width: 38%;
+            font-weight: 500;
+        }
+        .meta-val {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+        }
+        .meta-val a {
+            color: #0a5c48;
+            text-decoration: none;
+        }
         .stat-badge {
             display: inline-block;
-            background: #0f7a61;
+            background: #0a5c48;
             color: #ffffff;
-            padding: 4px 12px;
-            border-radius: 16px;
+            padding: 3px 10px;
+            border-radius: 12px;
             font-weight: 700;
             font-size: 13px;
         }
-        .cta-btn {
-            display: block;
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .items-table th {
+            text-align: left;
+            padding: 8px;
+            background: #e2e8f0;
+            color: #334155;
+            font-weight: 600;
+        }
+        .items-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-wrapper {
             text-align: center;
-            background: #0f7a61;
+            margin: 28px 0 10px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #0a5c48;
             color: #ffffff !important;
             text-decoration: none;
-            padding: 12px 24px;
+            padding: 13px 32px;
             border-radius: 8px;
             font-weight: 700;
-            margin-top: 24px;
             font-size: 14px;
+            box-shadow: 0 4px 10px rgba(10, 92, 72, 0.25);
         }
         .footer {
             background: #f8fafc;
-            padding: 20px;
+            padding: 18px 24px;
             text-align: center;
             font-size: 12px;
             color: #64748b;
@@ -70,31 +144,188 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>New Buyer RFQ Received</h1>
-            <p style="margin: 0; color: #94a3b8; font-size: 13px;">Action required: Issue proforma quote</p>
+            <span class="badge">Action Required &bull; New RFQ</span>
+            <h1>Buyer Quotation Request</h1>
+            <p style="margin: 0; color: #ccfbf1; font-size: 13px;">Consolidated enquiry submitted via marketplace cart</p>
         </div>
         <div class="content">
-            <p style="font-size: 15px; margin-top: 0;">
-                A new consolidated quotation enquiry has been submitted through the marketplace cart:
+            <p style="font-size: 14px; margin-top: 0; line-height: 1.5; color: #334155;">
+                A buyer has submitted a new Request For Quotation (RFQ). Please review the buyer's details and requested line items below to prepare and issue a proforma quotation.
             </p>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 20px; font-size: 13px;">
-                <p style="margin: 0 0 8px 0;"><strong>Reference:</strong> <span style="font-family: monospace;">{{ rfq.reference }}</span></p>
-                {% if rfq.company_name and rfq.company_name|lower != rfq.contact_person|lower and rfq.company_name != 'Individual Buyer' %}
-                <p style="margin: 0 0 8px 0;"><strong>Company:</strong> {{ rfq.company_name }}</p>
-                {% endif %}
-                <p style="margin: 0 0 8px 0;"><strong>Buyer Contact:</strong> {{ rfq.contact_person }} ({{ rfq.email }})</p>
-                <p style="margin: 0 0 8px 0;"><strong>Total Units:</strong> {{ rfq.total_units }} units across {{ rfq.items.count }} items</p>
-                <p style="margin: 0 0 8px 0;"><strong>Est. Baseline Value:</strong> <span class="stat-badge">{{ rfq.currency }} {{ rfq.estimated_value|floatformat:2 }}</span></p>
-                {% if rfq.destination_port %}
-                <p style="margin: 0;"><strong>Destination:</strong> {{ rfq.destination_port }}</p>
-                {% endif %}
+
+            <!-- Buyer Contact & Business Details -->
+            <div class="section-card">
+                <div class="section-title">Buyer &amp; Business Information</div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">RFQ Reference:</td>
+                        <td class="meta-val" style="font-family: monospace; color: #0a5c48; font-size: 14px;">
+                            {% if rfq.reference %}{{ rfq.reference }}{% elif ref %}{{ ref }}{% else %}RFQ-PENDING{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Buyer Name:</td>
+                        <td class="meta-val">
+                            {% if rfq.contact_person %}{{ rfq.contact_person }}{% elif buyer_name %}{{ buyer_name }}{% else %}Valued Buyer{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Email:</td>
+                        <td class="meta-val">
+                            {% if rfq.email %}
+                            <a href="mailto:{{ rfq.email }}">{{ rfq.email }}</a>
+                            {% elif buyer_email %}
+                            <a href="mailto:{{ buyer_email }}">{{ buyer_email }}</a>
+                            {% else %}
+                            <span style="color: #94a3b8;">Not provided</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Phone / Mobile:</td>
+                        <td class="meta-val">
+                            {% if rfq.phone %}
+                            <a href="tel:{{ rfq.phone }}">{{ rfq.phone }}</a>
+                            {% elif buyer_phone %}
+                            <a href="tel:{{ buyer_phone }}">{{ buyer_phone }}</a>
+                            {% else %}
+                            <span style="color: #94a3b8;">Not provided</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Company:</td>
+                        <td class="meta-val">
+                            {% if rfq.company_name and rfq.company_name|lower != rfq.contact_person|lower and rfq.company_name != 'Individual Buyer' %}
+                            {{ rfq.company_name }}
+                            {% elif company_name and company_name|lower != buyer_name|lower and company_name != 'Individual Buyer' %}
+                            {{ company_name }}
+                            {% else %}
+                            <span style="color: #94a3b8;">Individual / Direct Buyer</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Country:</td>
+                        <td class="meta-val">
+                            {% if rfq.country %}
+                            {{ rfq.country }}
+                            {% elif country %}
+                            {{ country }}
+                            {% else %}
+                            <span style="color: #94a3b8;">Not specified</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Business Location:</td>
+                        <td class="meta-val">
+                            {% if rfq.business_location %}
+                            {{ rfq.business_location }}
+                            {% elif business_location %}
+                            {{ business_location }}
+                            {% else %}
+                            <span style="color: #94a3b8;">Not specified</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
             </div>
-            <a href="{{ admin_review_url|default:'https://surplusmarket.com/admin/rfq-requests/' }}" class="cta-btn">
-                Review &amp; Issue Proforma in Admin Portal &rarr;
-            </a>
+
+            <!-- Quotation Summary -->
+            <div class="section-card">
+                <div class="section-title">Quotation Summary</div>
+                <table class="meta-table">
+                    <tr>
+                        <td class="meta-label">Total Units:</td>
+                        <td class="meta-val">
+                            {% if rfq.total_units %}{{ rfq.total_units }}{% elif total_units %}{{ total_units }}{% else %}0{% endif %} units
+                            {% if items_list %} across {{ items_list|length }} line item(s){% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="meta-label">Est. Baseline Value:</td>
+                        <td class="meta-val">
+                            <span class="stat-badge">
+                                {% if rfq.currency %}{{ rfq.currency }}{% elif currency %}{{ currency }}{% else %}USD{% endif %}
+                                {% if rfq.estimated_value %}{{ rfq.estimated_value|floatformat:2 }}{% elif estimated_value %}{{ estimated_value|floatformat:2 }}{% else %}0.00{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if rfq.destination_port %}
+                    <tr>
+                        <td class="meta-label">Destination Port:</td>
+                        <td class="meta-val">{{ rfq.destination_port }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if rfq.incoterm %}
+                    <tr>
+                        <td class="meta-label">Incoterm:</td>
+                        <td class="meta-val">{{ rfq.incoterm }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if rfq.payment_method %}
+                    <tr>
+                        <td class="meta-label">Payment Method:</td>
+                        <td class="meta-val">{{ rfq.payment_method }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if rfq.additional_notes %}
+                    <tr>
+                        <td class="meta-label">Special Notes:</td>
+                        <td class="meta-val" style="font-weight: normal; color: #475569;">{{ rfq.additional_notes }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <!-- Line Items Table -->
+            {% if items_list %}
+            <div class="section-card">
+                <div class="section-title">Requested Items ({{ items_list|length }})</div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item / Title</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: right;">Unit Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items_list %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.title|default:"Item" }}</strong>
+                                {% if item.sku %}
+                                <div style="font-size: 11px; color: #64748b;">SKU: {{ item.sku }}</div>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center; font-weight: 600;">{{ item.quantity }}</td>
+                            <td style="text-align: right; font-weight: 600;">
+                                {% if item.target_price %}
+                                {{ rfq.currency|default:"USD" }} {{ item.target_price }}
+                                <div style="font-size: 10px; color: #0a5c48;">(Target)</div>
+                                {% elif item.unit_price %}
+                                {{ rfq.currency|default:"USD" }} {{ item.unit_price }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="btn-wrapper">
+                <a href="{{ admin_review_url|default:'https://surplusmarket.com/admin/rfq-requests/' }}" class="cta-btn">
+                    Review &amp; Issue Proforma in Admin Portal &rarr;
+                </a>
+            </div>
         </div>
         <div class="footer">
-            Surplus Market Automated Administration Alert
+            Surplus Market Automated Administration Alert &bull; Confidential
         </div>
     </div>
 </body>

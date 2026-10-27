@@ -557,13 +557,6 @@ def submit_lot_enquiry(request):
     raw_data["sale_method"] = sale_method_val
     raw_data["sales_method"] = sale_method_val
 
-    lot = Lot.objects.create(
-        file=file_obj,
-        enquiry_status="pending",
-        sale_method=sale_method_val,
-        raw_data=raw_data
-    )
-
     s_email = (
         (request.user.email if getattr(request, "user", None) and request.user.is_authenticated else None)
         or request.data.get("email")
@@ -579,27 +572,39 @@ def submit_lot_enquiry(request):
     if s_email:
         vendor_obj = VendorDetails.objects.filter(email__iexact=s_email).first()
 
-    vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id")
+    vendor_param = request.data.get("vendor_id") or request.data.get("user_id") or request.headers.get("X-Vendor-Id") or request.headers.get("Vendor-Id")
     if not vendor_obj and vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
+
+    if not vendor_obj:
+        return Response({
+            "success": False,
+            "error_code": "AUTHENTICATION_REQUIRED",
+            "message": "You must be registered and logged in as a verified seller to submit a lot enquiry."
+        }, status=status.HTTP_401_UNAUTHORIZED)
 
     if vendor_obj and not s_email:
         s_email = vendor_obj.email
 
-    if vendor_obj:
-        lot.vendor = vendor_obj
-        lot.save(update_fields=["vendor"])
-        try:
-            from AdminApp.services import create_vendor_notification
-            create_vendor_notification(
-                vendor=vendor_obj,
-                title="Lot Manifest Uploaded",
-                message=f"Batch '{lot.lot_number}' has been received and is pending admin review.",
-                notification_type="LISTING",
-                action_url="/profile"
-            )
-        except Exception as e:
-            print(f"Error creating vendor lot notification: {e}")
+    lot = Lot.objects.create(
+        vendor=vendor_obj,
+        file=file_obj,
+        enquiry_status="pending",
+        sale_method=sale_method_val,
+        raw_data=raw_data
+    )
+
+    try:
+        from AdminApp.services import create_vendor_notification
+        create_vendor_notification(
+            vendor=vendor_obj,
+            title="Lot Manifest Uploaded",
+            message=f"Batch '{lot.lot_number}' has been received and is pending admin review.",
+            notification_type="LISTING",
+            action_url="/profile"
+        )
+    except Exception as e:
+        print(f"Error creating vendor lot notification: {e}")
 
     s_name = (vendor_obj.full_name or vendor_obj.company_name or vendor_obj.username) if vendor_obj else (request.data.get("name") or request.data.get("full_name") or "Valued Seller")
 
@@ -1346,9 +1351,41 @@ def submit_rfq_enquiry(request):
     if not email:
         return Response({"success": False, "message": "Email address is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    phone = str(payload.get("phone") or payload.get("contactNo") or payload.get("mobile") or "").strip()
-    country = str(payload.get("country") or "").strip()
-    business_location = str(payload.get("business_location") or payload.get("businessLocation") or payload.get("location") or "").strip()
+    user_info = {}
+    for ukey in ("user_information", "user_info", "userInfo", "user_data", "userData", "buyer_info"):
+        if ukey in payload and payload[ukey]:
+            uval = payload[ukey]
+            if isinstance(uval, str):
+                try:
+                    uval = json.loads(uval)
+                except Exception:
+                    uval = {}
+            if isinstance(uval, dict):
+                user_info = uval
+                break
+
+    phone = str(payload.get("phone") or payload.get("contactNo") or payload.get("mobile") or user_info.get("phone") or user_info.get("mobile") or "").strip()
+    country = str(
+        payload.get("country")
+        or payload.get("country_name")
+        or payload.get("countryName")
+        or payload.get("buyer_country")
+        or user_info.get("country")
+        or user_info.get("country_name")
+        or ""
+    ).strip()
+    business_location = str(
+        payload.get("business_location")
+        or payload.get("businessLocation")
+        or payload.get("location")
+        or payload.get("city")
+        or payload.get("business_address")
+        or payload.get("address")
+        or user_info.get("business_location")
+        or user_info.get("location")
+        or user_info.get("city")
+        or ""
+    ).strip()
     destination_port = str(payload.get("destination_port") or payload.get("destinationPort") or "").strip()
     incoterm = str(payload.get("incoterm") or "EXW").strip().upper()
     payment_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "Escrow").strip()
@@ -1529,6 +1566,8 @@ def submit_rfq_enquiry(request):
                 "email": email,
                 "phone": phone,
                 "company_name": company_name,
+                "country": rfq.country or country,
+                "business_location": rfq.business_location or business_location,
                 "reference": rfq.reference,
                 "total_units": rfq.total_units,
                 "estimated_value": rfq.estimated_value,
@@ -1764,28 +1803,15 @@ def submit_product_request(request):
         user_info.get('address') or ""
     ).strip()
 
-    # If vendor does not exist yet, auto-create VendorDetails from user details passed through API
-    if not vendor and user_email:
-        base_username = user_email.split('@')[0]
-        base_username = re.sub(r'[^a-zA-Z0-9_]', '_', base_username)[:140]
-        cand_username = base_username or "user"
-        cnt = 1
-        while VendorDetails.objects.filter(username__iexact=cand_username).exists():
-            cand_username = f"{base_username}_{cnt}"
-            cnt += 1
-        vendor = VendorDetails.objects.create(
-            username=cand_username,
-            email=user_email,
-            full_name=full_name,
-            company_name=company_name or full_name,
-            mobile_number=mobile_number,
-            business_location=business_location,
-            country=country or "United Arab Emirates",
-            business_address=business_address,
-            user_type="SELLER",
-            account_entity_type="COMPANY" if company_name else "INDIVIDUAL"
-        )
-    elif vendor:
+    # Enforce strict registration requirement: User must be an existing verified seller/vendor
+    if not vendor:
+        return Response({
+            "success": False,
+            "error_code": "AUTHENTICATION_REQUIRED",
+            "message": "You must be registered and logged in as a verified seller to list products."
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+    if vendor:
         # Update any blank vendor fields with details passed through API
         v_updated = False
         if full_name and not vendor.full_name:
@@ -2421,38 +2447,45 @@ def submit_lot_request(request):
         for key in ['manifest_items', 'preview_items', 'parsed_items', 'lot_details', 'products_list', 'products']:
             raw_payload.pop(key, None)
 
+        # Resolve and link vendor record (prioritizing verified email over potentially stale client vendor_id)
+        submitted_email = (
+            (request.user.email if getattr(request, "user", None) and request.user.is_authenticated else None)
+            or data.get("email")
+            or data.get("user_email")
+            or data.get("seller_email")
+            or (user_info.get("email") if isinstance(user_info, dict) else None)
+            or (raw_payload.get("user_email") if isinstance(raw_payload, dict) else None)
+            or (raw_payload.get("email") if isinstance(raw_payload, dict) else None)
+            or ""
+        )
+        if isinstance(submitted_email, (list, tuple)) and submitted_email:
+            submitted_email = submitted_email[0]
+        submitted_email = str(submitted_email or "").strip()
+
+        vendor_obj = None
+        if submitted_email:
+            vendor_obj = VendorDetails.objects.filter(email__iexact=submitted_email).first()
+
+        if not vendor_obj and vendor_param:
+            vendor_obj = _resolve_vendor_from_param(vendor_param)
+
+        # Enforce strict registration requirement: User must be an existing verified seller/vendor
+        if not vendor_obj:
+            return Response({
+                "success": False,
+                "error_code": "AUTHENTICATION_REQUIRED",
+                "message": "You must be registered and logged in as a verified seller to list inventory."
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
         serializer = LotSerializer(data=data)
         if serializer.is_valid():
             lot = serializer.save()
 
-            # Resolve and link vendor record (prioritizing verified email over potentially stale client vendor_id)
-            submitted_email = (
-                (request.user.email if getattr(request, "user", None) and request.user.is_authenticated else None)
-                or data.get("email")
-                or data.get("user_email")
-                or data.get("seller_email")
-                or (user_info.get("email") if isinstance(user_info, dict) else None)
-                or (raw_payload.get("user_email") if isinstance(raw_payload, dict) else None)
-                or (raw_payload.get("email") if isinstance(raw_payload, dict) else None)
-                or ""
-            )
-            if isinstance(submitted_email, (list, tuple)) and submitted_email:
-                submitted_email = submitted_email[0]
-            submitted_email = str(submitted_email or "").strip()
-
-            vendor_obj = None
-            if submitted_email:
-                vendor_obj = VendorDetails.objects.filter(email__iexact=submitted_email).first()
-
-            if not vendor_obj and vendor_param:
-                vendor_obj = _resolve_vendor_from_param(vendor_param)
-
-            if vendor_obj:
-                lot.vendor = vendor_obj
-                lot.save(update_fields=["vendor"])
-                if isinstance(raw_payload, dict):
-                    raw_payload["vendor_id"] = vendor_obj.vendor_id
-                    raw_payload["user_email"] = vendor_obj.email
+            lot.vendor = vendor_obj
+            lot.save(update_fields=["vendor"])
+            if isinstance(raw_payload, dict):
+                raw_payload["vendor_id"] = vendor_obj.vendor_id
+                raw_payload["user_email"] = vendor_obj.email
 
             # Store complete raw payload with manifest items safely
             if isinstance(raw_payload, dict):

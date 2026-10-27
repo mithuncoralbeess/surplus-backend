@@ -265,6 +265,10 @@ class EmailService:
         estimated_value = getattr(rfq, "estimated_value", None) or buyer_info.get("estimated_value", "0.00")
         currency = getattr(rfq, "currency", "USD") or buyer_info.get("currency", "USD")
 
+        country = getattr(rfq, "country", None) or (rfq.get("country") if isinstance(rfq, dict) else "") or buyer_info.get("country", "")
+        business_location = getattr(rfq, "business_location", None) or (rfq.get("business_location") if isinstance(rfq, dict) else "") or buyer_info.get("business_location", "")
+        phone = getattr(rfq, "phone", None) or (rfq.get("phone") if isinstance(rfq, dict) else "") or buyer_info.get("phone", "")
+
         resolved_items = items_list or (rfq.items.all() if hasattr(rfq, "items") else [])
 
         context = {
@@ -272,7 +276,10 @@ class EmailService:
             "ref": ref,
             "buyer_name": buyer_name,
             "buyer_email": buyer_email,
+            "buyer_phone": phone,
             "company_name": company_name,
+            "country": country,
+            "business_location": business_location,
             "total_units": total_units,
             "estimated_value": estimated_value,
             "currency": currency,
@@ -292,10 +299,12 @@ class EmailService:
                 f"<td style='padding:8px; border:1px solid #ddd;'>{getattr(it, 'quantity', it.get('quantity') if isinstance(it, dict) else '')}</td></tr>"
                 for it in resolved_items
             ])
+            loc_str = f" | Location: {business_location}" if business_location else ""
+            country_str = f" | Country: {country}" if country else ""
             html_content = (
                 f"<h2>New RFQ Quote Request Basket</h2>"
                 f"<p>Reference: <strong>{ref}</strong></p>"
-                f"<p>Buyer: <strong>{buyer_name}</strong> ({buyer_email})</p>"
+                f"<p>Buyer: <strong>{buyer_name}</strong> ({buyer_email}){country_str}{loc_str}</p>"
                 f"<p>Total Units: {total_units} | Value: {currency} {estimated_value}</p>"
                 f"<table style='border-collapse: collapse; width: 100%;'>"
                 f"<thead><tr><th style='border:1px solid #ddd; padding:8px;'>Item</th><th style='border:1px solid #ddd; padding:8px;'>Quantity</th></tr></thead>"
