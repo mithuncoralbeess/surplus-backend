@@ -4,6 +4,31 @@
 {% block title %}{{ page_title }} | Admin Panel{% endblock %}
 
 {% block content %}
+<style>
+/* Scoped styles for Products Inventory Table */
+.prod-thumb-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.prod-thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.filter-select {
+    font-size: 14px !important;
+    height: 38px;
+}
+</style>
+
 <div class="container-fluid">
     <!-- Page Header & Action -->
     <div class="page-header-container d-flex justify-content-between align-items-center mb-4">
@@ -16,9 +41,9 @@
                 </ol>
             </nav>
             <h1 class="header-title">{{ page_title }}</h1>
-            <p class="header-subtitle">Manage your entire product inventory</p>
+            <p class="header-subtitle">Manage your entire product inventory with category and country filters</p>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-2">
             <a href="/admin/products/add/" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4 py-2 fw-semibold">
                 <i class="bi bi-plus-lg"></i>
                 <span>Add Product</span>
@@ -26,33 +51,95 @@
         </div>
     </div>
 
+    <!-- Active Filters Alert Summary Bar (when filtered) -->
+    {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
+    <div class="alert alert-light border shadow-xs rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center gap-2 small">
+            <span class="text-secondary fw-semibold"><i class="bi bi-funnel-fill text-primary me-1"></i>Active Filters:</span>
+            {% if search_query %}
+            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded-pill">
+                Query: "{{ search_query }}"
+            </span>
+            {% endif %}
+            {% if category_filter and category_filter != 'all' %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                Category: {{ category_filter }}
+            </span>
+            {% endif %}
+            {% if country_filter and country_filter != 'all' %}
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+                Country: {{ country_filter }}
+            </span>
+            {% endif %}
+            <span class="text-muted ms-1">({{ total_count|default:page_obj.paginator.count }} item{{ total_count|pluralize }} found)</span>
+        </div>
+        <a href="/admin/products/all/" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 py-1 px-2.5" style="font-size: 13px !important;">
+            <i class="bi bi-x-circle"></i>
+            <span>Clear Filters</span>
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Main Content Card -->
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
             
             <!-- Bulk Action Form -->
-            <form method="POST" action="/admin/products/all/">
+            <form method="POST" id="productsForm" action="{{ request.get_full_path }}">
                 {% csrf_token %}
+
                 <!-- Filters & Toolbar Row -->
                 <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
-                    <!-- Search -->
-                    <div class="flex-grow-1" style="max-width: 450px;">
-                        <div class="input-group">
-                            <input type="text" name="q" value="{{ search_query }}" class="form-control rounded-end-0" placeholder="Search products by SKU or Name..." style="min-width: 250px;">
-                            <a href="/admin/products/all/" class="btn btn-outline-secondary">Reset</a>
+                    <!-- Filters Group (Search, Category, Country, Reset) -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center flex-grow-1">
+                        <!-- Search Box -->
+                        <div style="min-width: 240px; max-width: 320px;">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                                <input type="text" name="q" id="searchQueryInput" value="{{ search_query }}" class="form-control border-start-0 border-end-0" placeholder="Search SKU or Name..." style="font-size: 14px;">
+                                <button type="button" class="btn btn-outline-secondary border-start-0" onclick="applyFilters()">Search</button>
+                            </div>
                         </div>
+
+                        <!-- Category Filter Dropdown -->
+                        <div style="min-width: 180px; max-width: 230px;">
+                            <select name="category" id="categoryFilter" class="form-select filter-select" onchange="applyFilters()">
+                                <option value="all">All Categories</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Country Wise Filter Dropdown -->
+                        <div style="min-width: 170px; max-width: 210px;">
+                            <select name="country" id="countryFilter" class="form-select filter-select" onchange="applyFilters()">
+                                <option value="all">All Countries</option>
+                                {% for c in countries %}
+                                <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Reset Button -->
+                        {% if search_query or category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}
+                        <a href="/admin/products/all/" class="btn btn-outline-danger d-inline-flex align-items-center gap-1.5 px-3" style="font-size: 14px !important; height: 38px;" title="Reset All Filters">
+                            <i class="bi bi-x-lg"></i>
+                            <span>Reset</span>
+                        </a>
+                        {% endif %}
                     </div>
 
                     <!-- Bulk Actions -->
-                    <div class="d-flex gap-3 align-items-center">
-                        <div class="d-flex align-items-center">
-                            <select name="bulk_action" class="form-select rounded-end-0 text-secondary" style="min-width: 160px;">
+                    <div class="d-flex gap-2 align-items-center ms-auto">
+                        <div class="input-group" style="min-width: 240px;">
+                            <select name="bulk_action" id="bulkActionSelect" class="form-select text-secondary" style="font-size: 14px !important; height: 38px;">
                                 <option value="">Bulk Actions</option>
                                 <option value="Mark Active">Mark Active</option>
                                 <option value="Mark Inactive">Mark Inactive</option>
                                 <option value="Delete Selected">Delete Selected</option>
                             </select>
-                            <button class="btn text-white rounded-start-0 px-4" type="submit" style="background-color: #f97316; border-color: #f97316;">Apply</button>
+                            <button class="btn text-white px-3 fw-semibold" type="button" onclick="confirmBulkAction()" style="background-color: #f97316; border-color: #f97316; font-size: 14px !important; height: 38px;">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -61,16 +148,18 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
                         <thead class="table-light">
-                            <tr class="text-secondary">
+                            <tr class="text-secondary text-uppercase" style="font-size: 0.76rem; letter-spacing: 0.5px;">
                                 <th scope="col" style="width: 40px;">
                                     <div class="form-check">
-                                        <input class="form-check-input select-all-cb" type="checkbox">
+                                        <input class="form-check-input select-all-cb" type="checkbox" id="selectAllCheckbox">
                                     </div>
                                 </th>
-                                <th scope="col">Product Info</th>
-                                <th scope="col">Pricing</th>
-                                <th scope="col">Stock</th>
-                                <th scope="col" class="text-end">Actions</th>
+                                <th scope="col" style="min-width: 280px;">Product Info</th>
+                                <th scope="col" style="min-width: 170px;">Category &amp; Country</th>
+                                <th scope="col" style="min-width: 130px;">Pricing</th>
+                                <th scope="col" style="min-width: 110px;">Stock</th>
+                                <th scope="col" style="min-width: 110px;">Status</th>
+                                <th scope="col" class="text-end" style="min-width: 80px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="border-top-0">
@@ -82,10 +171,56 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="fw-bold fs-6">
-                                        <a href="/admin/products/{{ product.id }}/" class="text-dark text-decoration-none hover-primary">{{ product.product_name }}</a>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="prod-thumb-box">
+                                            {% with product.images.first as img %}
+                                                {% if img and img.image_url %}
+                                                    <img src="{{ img.image_url }}" alt="{{ product.product_name }}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                                                {% else %}
+                                                    <i class="bi bi-box-seam text-secondary fs-5"></i>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold fs-6">
+                                                <a href="/admin/products/{{ product.id }}/" class="text-dark text-decoration-none hover-primary">{{ product.product_name }}</a>
+                                            </div>
+                                            <div class="text-secondary font-monospace small mt-0.5">
+                                                ID: <span class="fw-semibold">{{ product.product_id|default:product.model_no|default:"-" }}</span>
+                                            </div>
+                                            {% if product.brand_name %}
+                                            <div class="mt-0.5">
+                                                <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-size: 0.70rem;">{{ product.brand_name }}</span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="text-secondary font-monospace small mt-1">ID: {{ product.product_id|default:product.model_no|default:"-" }}</div>
+                                </td>
+                                <td>
+                                    <!-- Category Badge -->
+                                    <div class="mb-1">
+                                        {% if product.category %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 rounded-pill d-inline-flex align-items-center gap-1" style="font-size: 0.74rem;">
+                                            <i class="bi bi-tag-fill"></i>{{ product.category.name }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted small fst-italic">No Category</span>
+                                        {% endif %}
+                                    </div>
+                                    <!-- Country Badge -->
+                                    <div>
+                                        {% if product.inventory_country %}
+                                        <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill d-inline-flex align-items-center gap-1" style="font-size: 0.74rem;" title="{{ product.inventory_city|default:'' }}{% if product.inventory_city and product.inventory_country %}, {% endif %}{{ product.inventory_country }}">
+                                            <i class="bi bi-geo-alt-fill text-danger"></i>{{ product.inventory_country }}
+                                        </span>
+                                        {% elif product.manufacturing_country %}
+                                        <span class="badge bg-light text-secondary border px-2 py-0.5 rounded-pill d-inline-flex align-items-center gap-1" style="font-size: 0.74rem;">
+                                            <i class="bi bi-globe"></i>{{ product.manufacturing_country }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted small fst-italic">-</span>
+                                        {% endif %}
+                                    </div>
                                 </td>
                                 <td>
                                     {% if product.previous_price %}
@@ -96,16 +231,33 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if product.stock_quantity > 10 %}
-                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">{{ product.stock_quantity }} in stock</span>
-                                    {% elif product.stock_quantity > 0 %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">Low: {{ product.stock_quantity }}</span>
+                                    {% if product.quantity > 10 %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1">{{ product.quantity }} in stock</span>
+                                    {% elif product.quantity > 0 %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1">Low: {{ product.quantity }}</span>
                                     {% else %}
                                     <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1">Out of Stock</span>
                                     {% endif %}
                                 </td>
+                                <td>
+                                    {% if product.is_active %}
+                                    <a href="/admin/products/{{ product.id }}/toggle-status/" 
+                                       class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none px-2 py-1 rounded-pill" 
+                                       title="Click to toggle status">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Active
+                                    </a>
+                                    {% else %}
+                                    <a href="/admin/products/{{ product.id }}/toggle-status/" 
+                                       class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-decoration-none px-2 py-1 rounded-pill" 
+                                       title="Click to toggle status">
+                                        <i class="bi bi-slash-circle me-1"></i>Inactive
+                                    </a>
+                                    {% endif %}
+                                </td>
                                 <td class="text-end">
-                                    <a href="/admin/products/{{ product.id }}/" class="btn btn-sm btn-light text-primary" title="View Details"><i class="bi bi-eye"></i></a>
+                                    <a href="/admin/products/{{ product.id }}/" class="btn btn-sm btn-light text-primary border" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -118,16 +270,37 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark fs-6">
-                                    {% if enquiry.raw_data.product_name %}
-                                        {{ enquiry.raw_data.product_name }}
-                                    {% elif enquiry.raw_data.title %}
-                                        {{ enquiry.raw_data.title }}
-                                    {% else %}
-                                        Seller Enquiry Product
-                                    {% endif %}
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="prod-thumb-box">
+                                        <i class="bi bi-box-seam text-secondary fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6">
+                                            {% if enquiry.raw_data.product_name %}
+                                                {{ enquiry.raw_data.product_name }}
+                                            {% elif enquiry.raw_data.title %}
+                                                {{ enquiry.raw_data.title }}
+                                            {% else %}
+                                                Seller Enquiry Product
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-secondary font-monospace small mt-0.5">ID: {{ enquiry.product_id }}</div>
+                                    </div>
                                 </div>
-                                <div class="text-secondary font-monospace small mt-1">ID: {{ enquiry.product_id }}</div>
+                            </td>
+                            <td>
+                                {% if enquiry.raw_data.category %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0.5 rounded-pill mb-1 d-inline-block" style="font-size: 0.74rem;">
+                                    {{ enquiry.raw_data.category }}
+                                </span>
+                                {% endif %}
+                                {% if enquiry.raw_data.country %}
+                                <div>
+                                    <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.74rem;">
+                                        {{ enquiry.raw_data.country }}
+                                    </span>
+                                </div>
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">
@@ -147,19 +320,38 @@
                                     {% endif %}
                                 </span>
                             </td>
+                            <td>
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2 py-1">
+                                    Enquiry
+                                </span>
+                            </td>
                             <td class="text-end">
-                                <a href="/admin/seller-enquiries/{{ enquiry.id }}/" class="btn btn-sm btn-light text-primary"><i class="bi bi-eye"></i></a>
+                                <a href="/admin/enquiries/seller/{{ enquiry.id }}/detail/" class="btn btn-sm btn-light text-primary border" title="View Enquiry">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
 
                         {% if not products and not approved_enquiries %}
                         <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i>
-                                <h5>No Products Found</h5>
-                                <p class="mb-0">You haven't added any products or approved any enquiries yet.</p>
-                                <a href="/admin/products/add/" class="btn btn-primary mt-3">Add First Product</a>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <div class="py-4">
+                                    <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i>
+                                    <h5>No Products Found</h5>
+                                    <p class="mb-3 text-secondary small">
+                                        {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
+                                        No products match your selected filter criteria. Try adjusting or clearing your filters.
+                                        {% else %}
+                                        You haven't added any products or approved any enquiries yet.
+                                        {% endif %}
+                                    </p>
+                                    {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
+                                    <a href="/admin/products/all/" class="btn btn-outline-primary btn-sm">Clear All Filters</a>
+                                    {% else %}
+                                    <a href="/admin/products/add/" class="btn btn-primary btn-sm">Add First Product</a>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endif %}
@@ -179,12 +371,15 @@
                     <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
                         {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}" title="First Page">
+                            <a class="page-link rounded-circle px-2 py-1" 
+                               href="?page=1{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" 
+                               title="First Page">
                                 <i class="bi bi-chevron-double-left"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <a class="page-link rounded-pill px-3 py-1" 
+                               href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                                 Previous
                             </a>
                         </li>
@@ -202,7 +397,10 @@
                                 </li>
                                 {% else %}
                                 <li class="page-item">
-                                    <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ p }}</a>
+                                    <a class="page-link rounded-circle px-3 py-1" 
+                                       href="?page={{ p }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                                        {{ p }}
+                                    </a>
                                 </li>
                                 {% endif %}
                             {% endif %}
@@ -210,12 +408,15 @@
 
                         {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                            <a class="page-link rounded-pill px-3 py-1" 
+                               href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                                 Next
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}" title="Last Page">
+                            <a class="page-link rounded-circle px-2 py-1" 
+                               href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" 
+                               title="Last Page">
                                 <i class="bi bi-chevron-double-right"></i>
                             </a>
                         </li>
@@ -233,4 +434,88 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Select-all checkbox handling
+    const selectAllCb = document.getElementById('selectAllCheckbox');
+    const itemCbs = document.querySelectorAll('.item-cb:not([disabled])');
+
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', (e) => {
+            itemCbs.forEach(cb => { cb.checked = e.target.checked; });
+        });
+    }
+
+    itemCbs.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (!cb.checked && selectAllCb) {
+                selectAllCb.checked = false;
+            } else if (selectAllCb) {
+                const allChecked = Array.from(itemCbs).every(c => c.checked);
+                selectAllCb.checked = allChecked;
+            }
+        });
+    });
+
+    // Enter key on search triggers applyFilters
+    const searchInput = document.getElementById('searchQueryInput');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyFilters();
+            }
+        });
+    }
+});
+
+function applyFilters() {
+    const search = document.getElementById('searchQueryInput').value.trim();
+    const category = document.getElementById('categoryFilter').value;
+    const country = document.getElementById('countryFilter').value;
+    
+    const url = new URL(window.location.origin + window.location.pathname);
+    
+    if (search) {
+        url.searchParams.set('q', search);
+    }
+    if (category && category !== 'all') {
+        url.searchParams.set('category', category);
+    }
+    if (country && country !== 'all') {
+        url.searchParams.set('country', country);
+    }
+    url.searchParams.set('page', '1');
+    
+    window.location.href = url.toString();
+}
+
+function confirmBulkAction() {
+    const actionSelect = document.getElementById('bulkActionSelect');
+    const action = actionSelect.value;
+    const selected = document.querySelectorAll('.item-cb:checked');
+
+    if (!action) {
+        alert('Please select a bulk action to perform.');
+        return;
+    }
+    if (selected.length === 0) {
+        alert('Please select at least one product using the checkboxes.');
+        return;
+    }
+
+    if (action === 'Delete Selected') {
+        if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${selected.length} selected product(s)?`)) {
+            return;
+        }
+    } else {
+        if (!confirm(`Apply action "${action}" to ${selected.length} selected product(s)?`)) {
+            return;
+        }
+    }
+
+    document.getElementById('productsForm').submit();
+}
+</script>
 {% endblock %}

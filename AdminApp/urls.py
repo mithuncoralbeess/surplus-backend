@@ -71,6 +71,7 @@ from .views import (
     main_categories_view,
     all_products_view,
     toggle_product_status_view,
+    expired_products_view,
     add_product_view,
     price_control_view,
     update_charge_percentage,
@@ -228,6 +229,12 @@ urlpatterns = [
     path("products/price-control/apply/", price_control_apply, name="price_control_apply"),
     path("api/products/price-control/preview/", price_control_preview_api, name="price_control_preview_api"),
     path("api/products/price-control/rollback/<int:log_id>/", price_control_rollback_api, name="price_control_rollback_api"),
+    path("products/expired/", expired_products_view, name="expired_products"),
+    path("products/similar/", lambda request: redirect("all_products"), name="similar_products"),
+    path("lots/list/", lambda request: redirect("lot_enquiries_list"), name="lots_list"),
+    path("product-url/", lambda request: redirect("all_products"), name="product_url_redirect"),
+    path("resources/", lambda request: redirect("adminDashBoard"), name="resources_redirect"),
+    path("content/webinars/", lambda request: redirect("content_pages_view"), name="webinars_redirect"),
     path("products/<int:product_id>/", product_detail_view, name="product_detail"),
 
     # Brand Management (Landing Page Brands)

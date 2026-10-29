@@ -5121,7 +5121,8 @@ def main_categories_view(request):
 def all_products_view(request):
     """
     List approved products with standard dashboard table layout.
-    Supports bulk actions for changing active/inactive status.
+    Supports bulk actions for changing active/inactive status,
+    as well as category filter, country wise filter, and search.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -5129,6 +5130,8 @@ def all_products_view(request):
 
     from django.db.models import Q
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    from django.core.cache import cache
+    from .models import MainCategory
 
     if request.method == "POST":
         action = request.POST.get("bulk_action")
@@ -5140,19 +5143,51 @@ def all_products_view(request):
                 Product.objects.filter(id__in=selected_ids).update(is_active=False)
             elif action == "Delete Selected":
                 Product.objects.filter(id__in=selected_ids).delete()
-        return redirect("/admin/products/all/")
+        return redirect(request.get_full_path())
 
     search_query = request.GET.get("q", "").strip()
+    category_filter = request.GET.get("category", "").strip()
+    country_filter = request.GET.get("country", "").strip()
     page_num = request.GET.get("page", 1)
 
+    # Categories list: cached for 15 minutes to eliminate full-table scan on every page request
+    all_categories = cache.get("all_products_categories_list")
+    if all_categories is None:
+        mc_names = list(MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct())
+        prod_cats = list(Product.objects.filter(category__isnull=False).values_list("category__name", flat=True).distinct())
+        all_categories = sorted(list(set(c.strip() for c in (mc_names + prod_cats) if c and c.strip())))
+        cache.set("all_products_categories_list", all_categories, timeout=900)
+
+    # Countries list: combining distinct DB inventory countries with standard global countries
+    db_countries = list(Product.objects.exclude(inventory_country="").values_list("inventory_country", flat=True).distinct())
+    all_countries = sorted(list(set(c.strip() for c in (db_countries + STANDARD_COUNTRIES) if c and c.strip())))
+
     # Filter to show approved products (both active and inactive) with lean column footprint
-    products_qs = Product.objects.select_related("category", "subcategory", "vendor").defer(
+    products_qs = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").defer(
         "description", "reason_to_sell", "warranty_attachment", "third_party_documents"
     ).filter(
         Q(enquiry_status__iexact="APPROVED") | Q(enquiry_status__iexact="approved")
     ).order_by("-created_at")
     approved_enquiries = SellerProductEnquiry.objects.none()
 
+    # Category Wise Filter
+    if category_filter and category_filter.lower() != "all":
+        products_qs = products_qs.filter(
+            Q(category__name__iexact=category_filter) |
+            Q(category__name__icontains=category_filter) |
+            Q(subcategory__name__icontains=category_filter)
+        )
+
+    # Country Wise Filter
+    if country_filter and country_filter.lower() != "all":
+        products_qs = products_qs.filter(
+            Q(inventory_country__iexact=country_filter) |
+            Q(inventory_country__icontains=country_filter) |
+            Q(inventory_location__icontains=country_filter) |
+            Q(manufacturing_country__iexact=country_filter)
+        )
+
+    # Search Query Filter
     if search_query:
         prod_filter = (
             Q(product_name__icontains=search_query) |
@@ -5186,6 +5221,11 @@ def all_products_view(request):
         "page_obj": page_obj,
         "approved_enquiries": approved_enquiries,
         "search_query": search_query,
+        "category_filter": category_filter,
+        "country_filter": country_filter,
+        "categories": all_categories,
+        "countries": all_countries,
+        "total_count": paginator.count,
         "page_title": "All Products",
     }
     return render(request, "all_products.html", context)
@@ -5214,6 +5254,156 @@ def toggle_product_status_view(request, product_id):
 
     next_url = request.META.get("HTTP_REFERER") or f"/admin/products/{product_id}/"
     return redirect(next_url)
+
+
+def expired_products_view(request):
+    """
+    List and manage expired and expiring products with shelf-life tracking.
+    Supports filtering by expiration timeframes (already expired, expiring soon, active & expired),
+    status filters, search, and bulk actions (extend expiry date, mark inactive, delete).
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from django.db.models import Q
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    from django.contrib import messages
+    from django.utils import timezone
+    import datetime
+
+    today = timezone.now().date()
+
+    if request.method == "POST":
+        action = request.POST.get("bulk_action", "").strip()
+        selected_ids = request.POST.getlist("selected_products")
+        if selected_ids and action:
+            if action == "Mark Inactive":
+                updated = Product.objects.filter(id__in=selected_ids).update(is_active=False)
+                messages.success(request, f"Successfully marked {updated} product(s) as inactive.")
+            elif action == "Mark Active":
+                updated = Product.objects.filter(id__in=selected_ids, enquiry_status__iexact="APPROVED").update(is_active=True)
+                messages.success(request, f"Successfully marked {updated} approved product(s) as active.")
+            elif action.startswith("Extend"):
+                days = 30
+                if "60" in action:
+                    days = 60
+                elif "90" in action:
+                    days = 90
+
+                prods_to_update = Product.objects.filter(id__in=selected_ids)
+                count = 0
+                for prod in prods_to_update:
+                    base = prod.expiry_date if (prod.expiry_date and prod.expiry_date >= today) else today
+                    prod.expiry_date = base + datetime.timedelta(days=days)
+                    prod.save(update_fields=["expiry_date", "updated_at"])
+                    count += 1
+                messages.success(request, f"Successfully extended expiry date by {days} days for {count} product(s).")
+            elif action == "Delete Selected":
+                deleted_count, _ = Product.objects.filter(id__in=selected_ids).delete()
+                messages.success(request, f"Successfully deleted {deleted_count} product(s).")
+
+        return redirect(request.get_full_path())
+
+    filter_type = request.GET.get("filter", "expired").strip().lower()
+    status_filter = request.GET.get("status", "all").strip().lower()
+    search_query = request.GET.get("q", "").strip()
+    page_num = request.GET.get("page", 1)
+
+    # Base Queryset with relations
+    products_qs = Product.objects.select_related(
+        "category", "subcategory", "vendor", "admin"
+    ).prefetch_related("images")
+
+    # Timeframe filter
+    if filter_type == "soon":
+        products_qs = products_qs.filter(
+            expiry_date__gte=today,
+            expiry_date__lte=today + datetime.timedelta(days=30)
+        ).order_by("expiry_date", "-created_at")
+    elif filter_type == "active_expired":
+        products_qs = products_qs.filter(
+            expiry_date__lt=today,
+            is_active=True
+        ).order_by("-expiry_date", "-created_at")
+    elif filter_type == "all":
+        products_qs = products_qs.filter(
+            expiry_date__isnull=False
+        ).order_by("-expiry_date", "-created_at")
+    else:  # default 'expired'
+        filter_type = "expired"
+        products_qs = products_qs.filter(
+            expiry_date__lt=today
+        ).order_by("-expiry_date", "-created_at")
+
+    # Status filter
+    if status_filter in ("approved", "pending", "declined"):
+        products_qs = products_qs.filter(enquiry_status__iexact=status_filter)
+
+    # Search filter
+    if search_query:
+        prod_filter = (
+            Q(product_name__icontains=search_query) |
+            Q(product_id__icontains=search_query) |
+            Q(model_no__icontains=search_query) |
+            Q(brand_name__icontains=search_query) |
+            Q(vendor__email__icontains=search_query) |
+            Q(vendor__username__icontains=search_query) |
+            Q(vendor__full_name__icontains=search_query) |
+            Q(vendor__company_name__icontains=search_query)
+        )
+        if search_query.upper().startswith("USR-"):
+            try:
+                vid = int(search_query[4:].strip())
+                prod_filter |= Q(vendor__id=vid)
+            except ValueError:
+                pass
+        products_qs = products_qs.filter(prod_filter)
+
+    # Global KPI counts across all products
+    counts = {
+        "expired": Product.objects.filter(expiry_date__lt=today).count(),
+        "soon": Product.objects.filter(expiry_date__gte=today, expiry_date__lte=today + datetime.timedelta(days=30)).count(),
+        "active_expired": Product.objects.filter(expiry_date__lt=today, is_active=True).count(),
+        "total_monitored": Product.objects.filter(expiry_date__isnull=False).count(),
+    }
+
+    paginator = Paginator(products_qs, 25)
+    try:
+        page_obj = paginator.page(page_num)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Annotate items on current page with calculated relative days
+    for prod in page_obj:
+        if prod.expiry_date:
+            delta = (prod.expiry_date - today).days
+            prod.days_diff = delta
+            prod.is_past_expiry = (delta < 0)
+            prod.days_overdue = abs(delta) if delta < 0 else 0
+            prod.is_expiring_today = (delta == 0)
+            prod.days_remaining = delta if delta > 0 else 0
+        else:
+            prod.days_diff = None
+            prod.is_past_expiry = False
+            prod.days_overdue = 0
+            prod.is_expiring_today = False
+            prod.days_remaining = 0
+
+    context = {
+        "admin": admin_user,
+        "products": page_obj,
+        "page_obj": page_obj,
+        "counts": counts,
+        "filter_type": filter_type,
+        "status_filter": status_filter,
+        "search_query": search_query,
+        "today": today,
+        "page_title": "Expired Products",
+    }
+    return render(request, "expired_products.html", context)
 
 
 
