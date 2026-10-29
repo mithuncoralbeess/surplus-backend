@@ -1,0 +1,865 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+/* ==========================================================================
+   Similar & Duplicate Products Dashboard - Premium Surplus Design System
+   ========================================================================== */
+
+.similar-header-wrapper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: all 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none !important;
+    display: block;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.kpi-card.active-kpi {
+    border-width: 2px;
+}
+
+.kpi-card.kpi-danger.active-kpi {
+    border-color: #ef4444;
+    background: #fff5f5;
+}
+
+.kpi-card.kpi-warning.active-kpi {
+    border-color: #f59e0b;
+    background: #fffdf5;
+}
+
+.kpi-card.kpi-primary.active-kpi {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.kpi-card.kpi-indigo.active-kpi {
+    border-color: #6366f1;
+    background: #eef2ff;
+}
+
+.kpi-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.kpi-danger .kpi-icon-box {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.kpi-warning .kpi-icon-box {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+
+.kpi-primary .kpi-icon-box {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+}
+
+.kpi-indigo .kpi-icon-box {
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+}
+
+.kpi-val {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 2px;
+    color: #0f172a;
+}
+
+.kpi-lbl {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.kpi-sub {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.cluster-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.15s ease;
+}
+
+.cluster-card:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.cluster-card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 14px 20px;
+}
+
+.prod-thumb-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.prod-thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mode-pill-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.84rem;
+    padding: 7px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.mode-pill-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.mode-pill-btn.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
+
+.target-inspector-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.score-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Breadcrumb & Header Wrapper -->
+    <div class="similar-header-wrapper d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <nav class="custom-breadcrumb mb-2" aria-label="breadcrumb">
+                <ol class="breadcrumb-list d-flex align-items-center gap-2 list-unstyled mb-0" style="font-size: 0.82rem;">
+                    <li><a href="/admin/dashboard/" class="text-decoration-none text-secondary"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="text-muted"><i class="bi bi-chevron-right small"></i></li>
+                    <li><a href="/admin/products/all/" class="text-decoration-none text-secondary">Products</a></li>
+                    <li class="text-muted"><i class="bi bi-chevron-right small"></i></li>
+                    <li class="active text-primary fw-semibold">Similar Products</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-copy fs-5"></i>
+                </div>
+                <div>
+                    <h1 class="header-title mb-0">Similar & Duplicate Products</h1>
+                    <p class="header-subtitle text-muted mb-0">Identify duplicate listings, analyze price variances between sellers, and detect catalog similarities</p>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/products/price-control/" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-sliders"></i>
+                <span>Price Control</span>
+            </a>
+            <a href="/admin/products/all/" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-boxes"></i>
+                <span>All Products</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- KPI Metric Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Duplicate Model Groups -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="?mode=duplicates{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="kpi-card kpi-danger {% if mode == 'duplicates' %}active-kpi{% endif %}">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="kpi-lbl">Duplicate Models</span>
+                    <div class="kpi-icon-box">
+                        <i class="bi bi-copy"></i>
+                    </div>
+                </div>
+                <div class="kpi-val text-danger">{{ counts.dupe_groups|default:"0" }}</div>
+                <div class="kpi-sub">Groups with identical model/part numbers</div>
+            </a>
+        </div>
+
+        <!-- 2. Total Duplicate Items -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="kpi-card kpi-indigo">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="kpi-lbl">Duplicate Listings</span>
+                    <div class="kpi-icon-box">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+                <div class="kpi-val text-indigo">{{ counts.dupe_items|default:"0" }}</div>
+                <div class="kpi-sub">Total product entries across duplicates</div>
+            </div>
+        </div>
+
+        <!-- 3. Price Discrepancies -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="?mode=price_variance{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="kpi-card kpi-warning {% if mode == 'price_variance' %}active-kpi{% endif %}">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="kpi-lbl">Price Discrepancies</span>
+                    <div class="kpi-icon-box">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div class="kpi-val text-warning">{{ counts.variance_groups|default:"0" }}</div>
+                <div class="kpi-sub">Duplicate models with differing seller prices</div>
+            </a>
+        </div>
+
+        <!-- 4. Brand & Category Clusters -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="?mode=brand_clusters{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="kpi-card kpi-primary {% if mode == 'brand_clusters' %}active-kpi{% endif %}">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="kpi-lbl">Brand Clusters</span>
+                    <div class="kpi-icon-box">
+                        <i class="bi bi-tag-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-val text-primary">{{ counts.brand_clusters|default:"0" }}</div>
+                <div class="kpi-sub">Distinct brand & category product groups</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Single Product Similarity Inspector (if target_product is selected) -->
+    {% if target_product %}
+    <div class="target-inspector-card shadow-sm">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-3 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary text-white px-2 py-1 rounded-pill fw-semibold">
+                    <i class="bi bi-search me-1"></i>Similarity Inspector
+                </span>
+                <span class="text-secondary small fw-medium">Analyzing similar products for:</span>
+            </div>
+            <a href="?mode={{ mode }}{% if search_query %}&q={{ search_query }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}" 
+               class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1">
+                <i class="bi bi-x-lg"></i>
+                <span>Close Inspector</span>
+            </a>
+        </div>
+
+        <!-- Target Product Summary -->
+        <div class="d-flex flex-wrap align-items-center gap-3 bg-white p-3 rounded-3 border mb-3">
+            <div class="prod-thumb-box" style="width: 54px; height: 54px;">
+                {% with target_product.images.first as img %}
+                    {% if img and img.image_url %}
+                        <img src="{{ img.image_url }}" alt="{{ target_product.product_name }}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                    {% else %}
+                        <i class="bi bi-box-seam text-secondary fs-4"></i>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="mb-0 fw-bold text-dark">{{ target_product.product_name }}</h5>
+                    <a href="/admin/products/{{ target_product.id }}/" class="text-primary text-decoration-none small" title="View details" target="_blank">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2 small mt-1">
+                    <span class="text-secondary font-monospace">SKU: <strong>{{ target_product.product_id }}</strong></span>
+                    <span class="text-muted">•</span>
+                    <span class="text-secondary">Model: <strong>{{ target_product.model_no|default:"N/A" }}</strong></span>
+                    <span class="text-muted">•</span>
+                    {% if target_product.brand_name %}
+                    <span class="badge bg-light text-dark border">{{ target_product.brand_name }}</span>
+                    {% endif %}
+                    {% if target_product.category %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">{{ target_product.category.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold fs-5 text-dark">{{ target_product.currency }} {{ target_product.current_price|default:target_product.liquidating_price }}</div>
+                <span class="badge bg-secondary-subtle text-secondary">{{ target_product.quantity }} in stock</span>
+            </div>
+        </div>
+
+        <!-- Similar Matches List -->
+        <h6 class="fw-bold text-secondary text-uppercase small mb-3" style="letter-spacing: 0.5px;">
+            <i class="bi bi-diagram-3-fill text-primary me-1"></i>Found {{ similar_matches|length }} Similar Product{{ similar_matches|length|pluralize }}
+        </h6>
+
+        {% if similar_matches %}
+        <div class="table-responsive bg-white rounded-3 border">
+            <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                <thead class="table-light">
+                    <tr class="text-secondary text-uppercase" style="font-size: 0.74rem;">
+                        <th style="min-width: 260px;">Similar Product</th>
+                        <th>Similarity Score</th>
+                        <th>Matching Criteria</th>
+                        <th>Price &amp; Variance</th>
+                        <th>Vendor / Location</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in similar_matches %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2.5">
+                                <div class="prod-thumb-box">
+                                    {% with item.images.first as img %}
+                                        {% if img and img.image_url %}
+                                            <img src="{{ img.image_url }}" alt="{{ item.product_name }}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                                        {% else %}
+                                            <i class="bi bi-box-seam text-secondary fs-5"></i>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div>
+                                    <a href="/admin/products/{{ item.id }}/" class="text-dark fw-bold text-decoration-none hover-primary">
+                                        {{ item.product_name }}
+                                    </a>
+                                    <div class="text-secondary font-monospace small">ID: {{ item.product_id }} | Model: {{ item.model_no|default:"-" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                    <div class="progress-bar {% if item.similarity_score >= 80 %}bg-success{% elif item.similarity_score >= 50 %}bg-primary{% else %}bg-warning{% endif %}" 
+                                         role="progressbar" style="width: {{ item.similarity_score }}%;"></div>
+                                </div>
+                                <span class="score-badge {% if item.similarity_score >= 80 %}bg-success-subtle text-success border border-success-subtle{% elif item.similarity_score >= 50 %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-warning-subtle text-warning border border-warning-subtle{% endif %}">
+                                    {{ item.similarity_score }}%
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for reason in item.match_reasons %}
+                                <span class="badge bg-light text-secondary border px-1.5 py-0.5 rounded-pill" style="font-size: 0.70rem;">
+                                    {{ reason }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ item.currency }} {{ item.liquidating_price }}</div>
+                            {% if item.price_diff_pct is not None %}
+                                {% if item.price_diff_pct > 0 %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.70rem;">
+                                    +{{ item.price_diff_pct }}% higher
+                                </span>
+                                {% elif item.price_diff_pct < 0 %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.70rem;">
+                                    {{ item.price_diff_pct }}% lower
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.70rem;">
+                                    Exact Price Match
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="small text-dark">{{ item.vendor.email|default:"Platform Direct" }}</div>
+                            {% if item.inventory_country %}
+                            <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                <i class="bi bi-geo-alt-fill text-danger me-0.5"></i>{{ item.inventory_country }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <a href="/admin/products/{{ item.id }}/" class="btn btn-sm btn-light border" title="View details" target="_blank">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="?target_id={{ item.id }}" class="btn btn-sm btn-outline-primary" title="Inspect this item">
+                                    <i class="bi bi-search"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center bg-white rounded-3 border text-muted">
+            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+            No close similarities detected for this product.
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Main Clusters Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <!-- Mode Selector Tabs & Category Filter Toolbar -->
+            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                <!-- Mode Filter Pills -->
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="text-secondary small fw-bold me-1 text-uppercase" style="letter-spacing: 0.5px;">View Mode:</span>
+                    <a href="?mode=duplicates{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="mode-pill-btn {% if mode == 'duplicates' %}active{% endif %}">
+                        <i class="bi bi-copy"></i>
+                        <span>Duplicate Models ({{ counts.dupe_groups|default:"0" }})</span>
+                    </a>
+                    <a href="?mode=price_variance{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="mode-pill-btn {% if mode == 'price_variance' %}active{% endif %}">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Price Discrepancies ({{ counts.variance_groups|default:"0" }})</span>
+                    </a>
+                    <a href="?mode=brand_clusters{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="mode-pill-btn {% if mode == 'brand_clusters' %}active{% endif %}">
+                        <i class="bi bi-tag"></i>
+                        <span>Brand Clusters ({{ counts.brand_clusters|default:"0" }})</span>
+                    </a>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="d-flex align-items-center gap-2">
+                    <label for="categoryFilter" class="text-secondary small fw-semibold text-nowrap">Category:</label>
+                    <select id="categoryFilter" class="form-select form-select-sm" style="min-width: 170px;" onchange="applyFilters()">
+                        <option value="all">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bulk Action & Search Toolbar -->
+            <form method="POST" id="similarProductsForm" action="{{ request.get_full_path }}">
+                {% csrf_token %}
+
+                <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
+                    <!-- Search Input -->
+                    <div class="flex-grow-1" style="max-width: 450px;">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" name="q" id="searchQueryInput" value="{{ search_query }}" class="form-control border-start-0 border-end-0" placeholder="Search by Model, SKU, or Product Name..." style="font-size: 14px;">
+                            <button type="button" class="btn btn-outline-secondary border-start-0" onclick="applyFilters()">Search</button>
+                            {% if search_query or category_filter and category_filter != 'all' %}
+                            <a href="?mode={{ mode }}" class="btn btn-outline-danger">Reset</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <div class="d-flex gap-2 align-items-center ms-auto">
+                        <div class="input-group" style="min-width: 250px;">
+                            <select name="bulk_action" id="bulkActionSelect" class="form-select text-secondary" style="font-size: 14px !important;">
+                                <option value="">Bulk Actions</option>
+                                <option value="Mark Inactive">Mark Inactive (Deactivate)</option>
+                                <option value="Mark Active">Mark Active (Approved Only)</option>
+                                <option value="Delete Selected">Delete Selected</option>
+                            </select>
+                            <button class="btn btn-primary px-3 fw-semibold text-white" type="button" onclick="confirmBulkAction()" style="font-size: 14px !important;">Apply</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clusters Container -->
+                {% if clusters %}
+                {% for cluster in clusters %}
+                <div class="cluster-card">
+                    <div class="cluster-card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge {{ cluster.badge_class }} px-2 py-1 rounded-pill fw-bold" style="font-size: 0.76rem;">
+                                {{ cluster.badge }}
+                            </span>
+                            <h5 class="mb-0 fw-bold text-dark font-monospace" style="font-size: 1.05rem;">
+                                {{ cluster.title }}
+                            </h5>
+                            <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill" style="font-size: 0.74rem;">
+                                {{ cluster.total_items }} listing{{ cluster.total_items|pluralize }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-end small">
+                                <span class="text-secondary">Price Range:</span>
+                                <strong class="text-dark">{{ cluster.currency }} {{ cluster.min_price }} - {{ cluster.max_price }}</strong>
+                                {% if cluster.has_variance %}
+                                <span class="badge bg-warning text-dark ms-1" title="Sellers have differing prices for this model">
+                                    <i class="bi bi-exclamation-circle-fill me-0.5"></i>Price Variance
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if cluster.products %}
+                            <a href="?target_id={{ cluster.products.0.id }}&mode={{ mode }}" class="btn btn-sm btn-outline-primary" title="Inspect similarity against this cluster">
+                                <i class="bi bi-diagram-3"></i> Inspect
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Products in this Cluster Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+                            <thead class="table-light">
+                                <tr class="text-secondary text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                    <th style="width: 40px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input cluster-select-all" type="checkbox" data-cluster-id="{{ forloop.counter }}">
+                                        </div>
+                                    </th>
+                                    <th style="min-width: 250px;">Product Info</th>
+                                    <th style="min-width: 170px;">Vendor / Seller</th>
+                                    <th style="min-width: 130px;">Price &amp; Margin</th>
+                                    <th style="min-width: 110px;">Stock</th>
+                                    <th style="min-width: 110px;">Listing Status</th>
+                                    <th class="text-end" style="min-width: 110px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="border-top-0">
+                                {% for product in cluster.products %}
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input item-cb cluster-item-{{ forloop.parentloop.counter }}" type="checkbox" name="selected_products" value="{{ product.id }}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="prod-thumb-box">
+                                                {% with product.images.first as img %}
+                                                    {% if img and img.image_url %}
+                                                        <img src="{{ img.image_url }}" alt="{{ product.product_name }}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                                                    {% else %}
+                                                        <i class="bi bi-box-seam text-secondary fs-5"></i>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark">
+                                                    <a href="/admin/products/{{ product.id }}/" class="text-dark text-decoration-none hover-primary">
+                                                        {{ product.product_name }}
+                                                    </a>
+                                                </div>
+                                                <div class="text-secondary font-monospace small mt-0.5">
+                                                    ID: <span class="fw-semibold">{{ product.product_id }}</span> | Model: {{ product.model_no|default:"-" }}
+                                                </div>
+                                                {% if product.brand_name %}
+                                                <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded-pill mt-0.5" style="font-size: 0.68rem;">
+                                                    {{ product.brand_name }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small fw-semibold text-dark">{{ product.vendor.email|default:"Platform Direct" }}</div>
+                                        <div class="text-muted small font-monospace">{{ product.vendor.vendor_id|default:"-" }}</div>
+                                        {% if product.inventory_country %}
+                                        <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded-pill" style="font-size: 0.68rem;">
+                                            <i class="bi bi-geo-alt-fill text-danger me-0.5"></i>{{ product.inventory_country }}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ product.currency }} {{ product.liquidating_price }}</div>
+                                        {% if product.current_price and product.current_price != product.liquidating_price %}
+                                        <div class="text-muted small">Buyer Price: {{ product.currency }} {{ product.current_price }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if product.quantity > 10 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-0.5">
+                                            {{ product.quantity }} in stock
+                                        </span>
+                                        {% elif product.quantity > 0 %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-0.5">
+                                            Low: {{ product.quantity }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5">
+                                            Out of Stock
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="mb-1">
+                                            {% if product.enquiry_status|upper == 'APPROVED' %}
+                                            <span class="badge bg-success text-white px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">APPROVED</span>
+                                            {% elif product.enquiry_status|upper == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">PENDING</span>
+                                            {% else %}
+                                            <span class="badge bg-danger text-white px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ product.enquiry_status }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if product.is_active %}
+                                            <a href="/admin/products/{{ product.id }}/toggle-status/" class="badge bg-success-subtle text-success border border-success-subtle text-decoration-none px-2 py-0.5 rounded-pill" title="Toggle status">
+                                                <i class="bi bi-check-circle-fill me-0.5"></i>Active
+                                            </a>
+                                            {% else %}
+                                            <a href="/admin/products/{{ product.id }}/toggle-status/" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle text-decoration-none px-2 py-0.5 rounded-pill" title="Toggle status">
+                                                <i class="bi bi-slash-circle me-0.5"></i>Inactive
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex align-items-center gap-1">
+                                            <a href="/admin/products/{{ product.id }}/" class="btn btn-sm btn-light border" title="View details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="?target_id={{ product.id }}&mode={{ mode }}" class="btn btn-sm btn-outline-primary" title="Inspect similar products">
+                                                <i class="bi bi-diagram-3"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination Footer -->
+                <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-3 border-top gap-3 bg-white">
+                    <div class="text-secondary small">
+                        Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                        <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                        <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> clusters
+                    </div>
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link rounded-circle px-2 py-1" 
+                                   href="?page=1&mode={{ mode }}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                                   title="First Page">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link rounded-pill px-3 py-1" 
+                                   href="?page={{ page_obj.previous_page_number }}&mode={{ mode }}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                    Previous
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
+                            </li>
+                            {% endif %}
+
+                            {% for p in page_obj.paginator.page_range %}
+                                {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                                    {% if p == page_obj.number %}
+                                    <li class="page-item active">
+                                        <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link rounded-circle px-3 py-1" 
+                                           href="?page={{ p }}&mode={{ mode }}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                            {{ p }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill px-3 py-1" 
+                                   href="?page={{ page_obj.next_page_number }}&mode={{ mode }}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                    Next
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link rounded-circle px-2 py-1" 
+                                   href="?page={{ page_obj.paginator.num_pages }}&mode={{ mode }}{% if category_filter and category_filter != 'all' %}&category={{ category_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                                   title="Last Page">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <div class="py-4">
+                        <i class="bi bi-check2-circle fs-1 text-success opacity-75 d-block mb-3"></i>
+                        <h5 class="fw-bold text-dark">No Duplicate Clusters Found</h5>
+                        <p class="text-secondary small mb-3">
+                            {% if search_query or category_filter and category_filter != 'all' %}
+                            No clusters match your active filters. Try clearing your search or category filter.
+                            {% else %}
+                            All products in this category currently have unique models and part numbers!
+                            {% endif %}
+                        </p>
+                        <a href="?mode=duplicates" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Reset View
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Cluster header select-all checkboxes
+    document.querySelectorAll('.cluster-select-all').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const clusterId = e.target.getAttribute('data-cluster-id');
+            const items = document.querySelectorAll('.cluster-item-' + clusterId);
+            items.forEach(it => { it.checked = e.target.checked; });
+        });
+    });
+
+    // Enter key on search input
+    const searchInput = document.getElementById('searchQueryInput');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyFilters();
+            }
+        });
+    }
+});
+
+function applyFilters() {
+    const search = document.getElementById('searchQueryInput').value.trim();
+    const category = document.getElementById('categoryFilter').value;
+    const url = new URL(window.location.href);
+
+    if (search) {
+        url.searchParams.set('q', search);
+    } else {
+        url.searchParams.delete('q');
+    }
+
+    if (category && category !== 'all') {
+        url.searchParams.set('category', category);
+    } else {
+        url.searchParams.delete('category');
+    }
+
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+
+function confirmBulkAction() {
+    const actionSelect = document.getElementById('bulkActionSelect');
+    const action = actionSelect.value;
+    const selected = document.querySelectorAll('.item-cb:checked');
+
+    if (!action) {
+        alert('Please select a bulk action to perform.');
+        return;
+    }
+    if (selected.length === 0) {
+        alert('Please select at least one product using the checkboxes.');
+        return;
+    }
+
+    if (action === 'Delete Selected') {
+        if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${selected.length} selected product(s)?`)) {
+            return;
+        }
+    } else {
+        if (!confirm(`Apply action "${action}" to ${selected.length} selected product(s)?`)) {
+            return;
+        }
+    }
+
+    document.getElementById('similarProductsForm').submit();
+}
+</script>
+{% endblock %}

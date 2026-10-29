@@ -5406,6 +5406,330 @@ def expired_products_view(request):
     return render(request, "expired_products.html", context)
 
 
+def similar_products_view(request):
+    """
+    Dashboard for discovering similar, competing, and duplicate products across catalog.
+    Supports:
+    - Duplicate detection by Model Number / Part Number / Title
+    - Price variance analysis between duplicate submissions
+    - Brand & Category clusters
+    - Single product similarity inspector (target_id)
+    - Bulk status actions (deactivate duplicates, delete)
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    import re
+    from django.db.models import Count, Min, Max, Avg, Q, F
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    from django.contrib import messages
+    from .models import MainCategory, Product
+
+    if request.method == "POST":
+        action = request.POST.get("bulk_action", "").strip()
+        selected_ids = request.POST.getlist("selected_products")
+        if selected_ids and action:
+            if action == "Mark Inactive":
+                updated = Product.objects.filter(id__in=selected_ids).update(is_active=False)
+                messages.success(request, f"Successfully marked {updated} product(s) as inactive.")
+            elif action == "Mark Active":
+                updated = Product.objects.filter(id__in=selected_ids, enquiry_status__iexact="APPROVED").update(is_active=True)
+                messages.success(request, f"Successfully marked {updated} approved product(s) as active.")
+            elif action == "Delete Selected":
+                deleted_count, _ = Product.objects.filter(id__in=selected_ids).delete()
+                messages.success(request, f"Successfully deleted {deleted_count} product(s).")
+        return redirect(request.get_full_path())
+
+    mode = request.GET.get("mode", "duplicates").strip().lower()
+    search_query = request.GET.get("q", "").strip()
+    category_filter = request.GET.get("category", "").strip()
+    target_id = request.GET.get("target_id", "").strip()
+    page_num = request.GET.get("page", 1)
+
+    target_product = None
+    similar_matches = []
+
+    # Single Product Similarity Inspector
+    if target_id:
+        try:
+            target_product = Product.objects.select_related("category", "subcategory", "vendor", "admin").prefetch_related("images").get(id=int(target_id))
+            sim_qs = Product.objects.exclude(id=target_product.id).select_related("category", "subcategory", "vendor", "admin").prefetch_related("images")
+
+            model_match_q = Q(model_no__iexact=target_product.model_no) if target_product.model_no else Q(pk=None)
+            name_words = [w.lower() for w in re.findall(r'\b[A-Za-z0-9]{3,}\b', target_product.product_name or '') if len(w) >= 3]
+
+            word_q = Q()
+            for w in name_words[:4]:
+                word_q |= Q(product_name__icontains=w)
+
+            brand_cat_q = Q()
+            if target_product.brand_name and target_product.category:
+                brand_cat_q = Q(brand_name__iexact=target_product.brand_name, category=target_product.category)
+            elif target_product.brand_name:
+                brand_cat_q = Q(brand_name__iexact=target_product.brand_name)
+
+            sim_candidates = sim_qs.filter(model_match_q | brand_cat_q | word_q)[:50]
+
+            for cand in sim_candidates:
+                score = 0
+                match_reasons = []
+
+                if target_product.model_no and cand.model_no and cand.model_no.strip().lower() == target_product.model_no.strip().lower():
+                    score += 50
+                    match_reasons.append(f"Model No: {cand.model_no}")
+                elif target_product.model_no and cand.model_no and (cand.model_no.strip().lower() in target_product.model_no.strip().lower() or target_product.model_no.strip().lower() in cand.model_no.strip().lower()):
+                    score += 30
+                    match_reasons.append(f"Partial Model: {cand.model_no}")
+
+                if target_product.brand_name and cand.brand_name and cand.brand_name.strip().lower() == target_product.brand_name.strip().lower():
+                    score += 25
+                    match_reasons.append(f"Brand: {cand.brand_name}")
+
+                if target_product.category and cand.category and cand.category_id == target_product.category_id:
+                    score += 15
+                    match_reasons.append("Same Category")
+
+                cand_words = set(w.lower() for w in re.findall(r'\b[A-Za-z0-9]{3,}\b', cand.product_name or ''))
+                common_words = set(name_words) & cand_words
+                if common_words:
+                    word_ratio = len(common_words) / max(len(name_words), 1)
+                    word_score = int(word_ratio * 20)
+                    score += word_score
+                    if word_score > 5:
+                        match_reasons.append(f"Keywords: {', '.join(list(common_words)[:3])}")
+
+                price_diff_pct = None
+                if target_product.liquidating_price and cand.liquidating_price and target_product.liquidating_price > 0:
+                    diff = ((cand.liquidating_price - target_product.liquidating_price) / target_product.liquidating_price) * 100
+                    price_diff_pct = round(diff, 1)
+
+                cand.similarity_score = min(score, 100)
+                cand.match_reasons = match_reasons
+                cand.price_diff_pct = price_diff_pct
+                similar_matches.append(cand)
+
+            similar_matches.sort(key=lambda x: x.similarity_score, reverse=True)
+            similar_matches = similar_matches[:20]
+        except (Product.DoesNotExist, ValueError):
+            target_product = None
+            similar_matches = []
+
+    # KPI counts across catalog
+    dupe_model_groups_count = (
+        Product.objects.exclude(model_no="")
+        .exclude(model_no__isnull=True)
+        .values("model_no")
+        .annotate(c=Count("id"))
+        .filter(c__gt=1)
+        .count()
+    )
+
+    dupe_model_items_count = sum(
+        Product.objects.exclude(model_no="")
+        .exclude(model_no__isnull=True)
+        .values("model_no")
+        .annotate(c=Count("id"))
+        .filter(c__gt=1)
+        .values_list("c", flat=True)
+    )
+
+    variance_groups_count = (
+        Product.objects.exclude(model_no="")
+        .exclude(model_no__isnull=True)
+        .values("model_no")
+        .annotate(c=Count("id"), min_p=Min("liquidating_price"), max_p=Max("liquidating_price"))
+        .filter(c__gt=1, min_p__lt=F("max_p"))
+        .count()
+    )
+
+    brand_clusters_count = (
+        Product.objects.exclude(brand_name="")
+        .exclude(brand_name__isnull=True)
+        .values("brand_name", "category")
+        .annotate(c=Count("id"))
+        .filter(c__gt=1)
+        .count()
+    )
+
+    counts = {
+        "dupe_groups": dupe_model_groups_count,
+        "dupe_items": dupe_model_items_count,
+        "variance_groups": variance_groups_count,
+        "brand_clusters": brand_clusters_count,
+    }
+
+    cluster_list = []
+
+    if mode == "brand_clusters":
+        base_groups = (
+            Product.objects.exclude(brand_name="")
+            .exclude(brand_name__isnull=True)
+            .values("brand_name", "category__name", "category_id")
+            .annotate(
+                total_items=Count("id"),
+                min_price=Min("liquidating_price"),
+                max_price=Max("liquidating_price"),
+            )
+            .filter(total_items__gt=1)
+        )
+        if category_filter and category_filter != "all":
+            base_groups = base_groups.filter(Q(category__name__iexact=category_filter) | Q(category__name__icontains=category_filter))
+        if search_query:
+            base_groups = base_groups.filter(Q(brand_name__icontains=search_query) | Q(category__name__icontains=search_query))
+
+        base_groups = base_groups.order_by("-total_items")
+
+        paginator = Paginator(base_groups, 10)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+        for g in page_obj:
+            b_name = g["brand_name"]
+            c_name = g["category__name"]
+            prods = list(
+                Product.objects.filter(brand_name__iexact=b_name, category_id=g["category_id"])
+                .select_related("vendor", "category", "admin")
+                .prefetch_related("images")
+                .order_by("-created_at")[:10]
+            )
+            cluster_list.append({
+                "type": "brand_cluster",
+                "title": f"{b_name} ({c_name or 'Uncategorized'})",
+                "badge": "Brand Cluster",
+                "badge_class": "bg-primary-subtle text-primary border-primary-subtle",
+                "key": b_name,
+                "total_items": g["total_items"],
+                "min_price": g["min_price"],
+                "max_price": g["max_price"],
+                "has_variance": g["min_price"] != g["max_price"],
+                "currency": prods[0].currency if prods else "USD",
+                "products": prods,
+            })
+
+    elif mode == "price_variance":
+        base_groups = (
+            Product.objects.exclude(model_no="")
+            .exclude(model_no__isnull=True)
+            .values("model_no")
+            .annotate(
+                total_items=Count("id"),
+                min_price=Min("liquidating_price"),
+                max_price=Max("liquidating_price"),
+            )
+            .filter(total_items__gt=1, min_price__lt=F("max_price"))
+        )
+        if category_filter and category_filter != "all":
+            base_groups = base_groups.filter(Q(category__name__iexact=category_filter) | Q(category__name__icontains=category_filter))
+        if search_query:
+            base_groups = base_groups.filter(Q(model_no__icontains=search_query) | Q(product_name__icontains=search_query))
+
+        base_groups = base_groups.order_by("-total_items")
+
+        paginator = Paginator(base_groups, 10)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+        for g in page_obj:
+            m_no = g["model_no"]
+            prods = list(
+                Product.objects.filter(model_no__iexact=m_no)
+                .select_related("vendor", "category", "admin")
+                .prefetch_related("images")
+                .order_by("liquidating_price")
+            )
+            cluster_list.append({
+                "type": "model_variance",
+                "title": f"Model: {m_no}",
+                "badge": "Price Discrepancy",
+                "badge_class": "bg-warning-subtle text-warning border-warning-subtle",
+                "key": m_no,
+                "total_items": g["total_items"],
+                "min_price": g["min_price"],
+                "max_price": g["max_price"],
+                "has_variance": True,
+                "currency": prods[0].currency if prods else "USD",
+                "products": prods,
+            })
+
+    else:
+        mode = "duplicates"
+        base_groups = (
+            Product.objects.exclude(model_no="")
+            .exclude(model_no__isnull=True)
+            .values("model_no")
+            .annotate(
+                total_items=Count("id"),
+                min_price=Min("liquidating_price"),
+                max_price=Max("liquidating_price"),
+            )
+            .filter(total_items__gt=1)
+        )
+        if category_filter and category_filter != "all":
+            base_groups = base_groups.filter(Q(category__name__iexact=category_filter) | Q(category__name__icontains=category_filter))
+        if search_query:
+            base_groups = base_groups.filter(Q(model_no__icontains=search_query) | Q(product_name__icontains=search_query) | Q(brand_name__icontains=search_query))
+
+        base_groups = base_groups.order_by("-total_items")
+
+        paginator = Paginator(base_groups, 10)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+        for g in page_obj:
+            m_no = g["model_no"]
+            prods = list(
+                Product.objects.filter(model_no__iexact=m_no)
+                .select_related("vendor", "category", "admin")
+                .prefetch_related("images")
+                .order_by("liquidating_price", "-created_at")
+            )
+            cluster_list.append({
+                "type": "model_duplicate",
+                "title": f"Model: {m_no}",
+                "badge": "Duplicate Model",
+                "badge_class": "bg-danger-subtle text-danger border-danger-subtle",
+                "key": m_no,
+                "total_items": g["total_items"],
+                "min_price": g["min_price"],
+                "max_price": g["max_price"],
+                "has_variance": g["min_price"] != g["max_price"],
+                "currency": prods[0].currency if prods else "USD",
+                "products": prods,
+            })
+
+    all_categories = (
+        MainCategory.objects.filter(is_active=True).values_list("name", flat=True).distinct()
+    )
+
+    context = {
+        "admin": admin_user,
+        "mode": mode,
+        "clusters": cluster_list,
+        "page_obj": page_obj,
+        "counts": counts,
+        "search_query": search_query,
+        "category_filter": category_filter,
+        "categories": sorted(list(all_categories)),
+        "target_product": target_product,
+        "similar_matches": similar_matches,
+        "page_title": "Similar & Duplicate Products",
+    }
+    return render(request, "similar_products.html", context)
+
+
 
 STANDARD_COUNTRIES = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia",
