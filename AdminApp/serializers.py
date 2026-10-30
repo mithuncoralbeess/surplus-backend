@@ -786,7 +786,7 @@ class LotSerializer(serializers.ModelSerializer):
                 ret["sale_method"] = ""
                 ret["sales_method"] = ""
                 ret["liquidation_price"] = 0.0
-                ret["price"] = 0.0
+                ret["price"] = round(msrp * 1.10, 2) if msrp > 0 else 0.0
                 ret["offer"] = instance.offer or "Open for Offers"
             else:
                 ret["sale_method"] = instance.sale_method or ""

@@ -2462,8 +2462,15 @@ def lot_enquiry_edit_api(request, enquiry_id):
         if parsed_liq is not None:
             lot.ask_price_surplus_payout = parsed_liq
 
-    # Calculate buyer price: strictly 10% platform markup above liquidation price (no manual price edit)
-    calculated_price = round(float(lot.ask_price_surplus_payout or 0.0) * 1.10, 2)
+    # Calculate buyer price: strictly 10% platform markup above liquidation price (or MSRP if open for offers)
+    ask_payout = float(lot.ask_price_surplus_payout or 0.0)
+    msrp_val = float(lot.total_est_retail_value_msrp or 0.0)
+    if ask_payout > 0:
+        calculated_price = round(ask_payout * 1.10, 2)
+    elif msrp_val > 0:
+        calculated_price = round(msrp_val * 1.10, 2)
+    else:
+        calculated_price = 0.0
 
     # Check 60% Surplus Policy Warning (only warn if discount < 60% or liquidation price >= msrp)
     warning_msg = None
@@ -3235,54 +3242,73 @@ def lot_enquiry_detail_view(request, enquiry_id):
                 msrp_num = n
                 break
 
-    # Extract Liquidation Price (payout to seller)
-    liq_num = 0.0
-    if enquiry.ask_price_surplus_payout and float(enquiry.ask_price_surplus_payout) > 0:
-        liq_num = float(enquiry.ask_price_surplus_payout)
-    else:
-        for k in ("ask_price_surplus_payout", "liquidation_price", "liquidating_price", "asking_price", "target_price"):
-            n = _clean_num(combined_raw.get(k))
-            if n > 0:
-                liq_num = n
-                break
-
     raw_offer_str = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer")) or ""
 
-    # If liquidation price is missing but we have MSRP and Offer % (e.g. 60% Off MSRP)
-    if liq_num <= 0 and msrp_num > 0 and raw_offer_str and "%" in raw_offer_str:
-        import re
-        pct_match = re.search(r"(\d+(\.\d+)?)%", raw_offer_str)
-        if pct_match:
-            try:
-                discount_pct_val = float(pct_match.group(1))
-                if 0 < discount_pct_val < 100:
-                    liq_num = round(msrp_num * (1.0 - (discount_pct_val / 100.0)), 2)
-            except Exception:
-                pass
+    # Open to offers detection: true if explicitly flagged or negotiable or offer payout is zero
+    is_open_to_offer = False
+    if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "open for offers", "accepting offer", "make an offer", "negotiable")):
+        is_open_to_offer = True
+    elif str(combined_raw.get("open_to_offer", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+    elif str(combined_raw.get("allow_counter_offers", "")).lower() in ("true", "1", "yes"):
+        is_open_to_offer = True
+    elif getattr(enquiry, "open_for_offers", False):
+        is_open_to_offer = True
+    elif str(combined_raw.get("open_for_offers", "")).lower() in ("true", "1", "yes", "t", "on"):
+        is_open_to_offer = True
 
-    # If liquidation price is STILL missing but combined_raw has "price"
-    if liq_num <= 0:
-        n = _clean_num(combined_raw.get("price") or combined_raw.get("current_price"))
-        if n > 0:
-            liq_num = n
-
-    # Offer dynamically calculated by MSRP and liquidation price (min 60% off policy, NO 10% in offer)
-    if msrp_num > 0 and liq_num > 0 and msrp_num > liq_num:
-        calc_discount = round(((msrp_num - liq_num) / msrp_num) * 100)
-        offer_val = f"{calc_discount}% Off MSRP"
-    elif raw_offer_str:
-        offer_val = raw_offer_str
+    if is_open_to_offer:
+        # For Open for Offers: Liquidation price is not needed (0/None and hidden in UI)
+        liq_num = 0.0
+        offer_val = raw_offer_str or "Open for Offers"
+        # Price is MSRP + 10% platform increment
+        price_num = round(msrp_num * 1.10, 2) if msrp_num > 0 else 0.0
     else:
-        offer_val = "60% Off MSRP"
+        # Extract Liquidation Price (payout to seller)
+        liq_num = 0.0
+        if enquiry.ask_price_surplus_payout and float(enquiry.ask_price_surplus_payout) > 0:
+            liq_num = float(enquiry.ask_price_surplus_payout)
+        else:
+            for k in ("ask_price_surplus_payout", "liquidation_price", "liquidating_price", "asking_price", "target_price"):
+                n = _clean_num(combined_raw.get(k))
+                if n > 0:
+                    liq_num = n
+                    break
 
-    # Price = Liquidation Price * 1.10 (our platform markup is strictly in price, NEVER in offer)
-    if liq_num > 0:
-        price_num = round(liq_num * 1.10, 2)
-    elif msrp_num > 0:
-        liq_num = round(msrp_num * 0.40, 2)
-        price_num = round(liq_num * 1.10, 2)
-    else:
-        price_num = 0.0
+        # If liquidation price is missing but we have MSRP and Offer % (e.g. 60% Off MSRP)
+        if liq_num <= 0 and msrp_num > 0 and raw_offer_str and "%" in raw_offer_str:
+            import re
+            pct_match = re.search(r"(\d+(\.\d+)?)%", raw_offer_str)
+            if pct_match:
+                try:
+                    discount_pct_val = float(pct_match.group(1))
+                    if 0 < discount_pct_val < 100:
+                        liq_num = round(msrp_num * (1.0 - (discount_pct_val / 100.0)), 2)
+                except Exception:
+                    pass
+
+        # If liquidation price is STILL missing but combined_raw has "price"
+        if liq_num <= 0:
+            n = _clean_num(combined_raw.get("price") or combined_raw.get("current_price"))
+            if n > 0:
+                liq_num = n
+
+        # Offer dynamically calculated by MSRP and liquidation price (min 60% off policy, NO 10% in offer)
+        if msrp_num > 0 and liq_num > 0 and msrp_num > liq_num:
+            calc_discount = round(((msrp_num - liq_num) / msrp_num) * 100)
+            offer_val = f"{calc_discount}% Off MSRP"
+        elif raw_offer_str:
+            offer_val = raw_offer_str
+        else:
+            offer_val = "60% Off MSRP"
+
+        # Price = Liquidation Price * 1.10 (our platform markup is strictly in price, NEVER in offer)
+        if liq_num > 0:
+            price_num = round(liq_num * 1.10, 2)
+        elif msrp_num > 0:
+            price_num = round(msrp_num * 1.10, 2)
+        else:
+            price_num = 0.0
 
     msrp_val = msrp_num if msrp_num > 0 else None
     liq_val = liq_num if liq_num > 0 else None
@@ -3292,16 +3318,6 @@ def lot_enquiry_detail_view(request, enquiry_id):
     formatted_liq = f"{liq_num:,.2f}" if liq_num > 0 else None
     formatted_price = f"{price_num:,.2f}" if price_num > 0 else None
     implied_ask_str = formatted_liq
-
-
-    # Open to offers detection: only true if explicitly flagged to accept counter/open offers
-    is_open_to_offer = False
-    if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "accepting offer", "make an offer")):
-        is_open_to_offer = True
-    elif str(combined_raw.get("open_to_offer", "")).lower() in ("true", "1", "yes"):
-        is_open_to_offer = True
-    elif str(combined_raw.get("allow_counter_offers", "")).lower() in ("true", "1", "yes"):
-        is_open_to_offer = True
 
     # Media URL
     raw_media = combined_raw.get("media") or combined_raw.get("media_files") or combined_raw.get("images") or combined_raw.get("image") or combined_raw.get("product_and_warehouse_images_or_videos")
@@ -3364,6 +3380,7 @@ def lot_enquiry_detail_view(request, enquiry_id):
         "offer": offer_val,
         "implied_ask": implied_ask_str,
         "open_to_offer": is_open_to_offer,
+        "open_for_offers": is_open_to_offer,
         "media": media_url,
         "shipping_terms": _clean_val(enquiry.shipping_terms or combined_raw.get("shipping_terms")),
         "load_type": _clean_val(enquiry.load_type or combined_raw.get("load_type")),

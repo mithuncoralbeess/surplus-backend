@@ -629,13 +629,13 @@ class AdminAppAuthTests(TestCase):
         # Reload from DB
         lot.refresh_from_db()
         self.assertEqual(lot.title, "Cisco Catalyst Batch")
-        self.assertEqual(lot.ask_price_surplus_payout, Decimal("400.00"))
+        self.assertEqual(lot.ask_price_surplus_payout, Decimal("500.00"))
         self.assertEqual(lot.total_est_retail_value_msrp, Decimal("1000.00"))
         self.assertEqual(lot.condition, "Surplus")
         self.assertEqual(lot.number_of_distinct_skus, 15)
         self.assertEqual(lot.total_units_quantity, 150)
-        self.assertEqual(lot.raw_data.get("price"), 440.0)
-        self.assertEqual(lot.raw_data.get("liquidation_price"), 400.0)
+        self.assertEqual(lot.raw_data.get("price"), 550.0)
+        self.assertEqual(lot.raw_data.get("liquidation_price"), 500.0)
         self.assertEqual(lot.raw_data.get("category"), "Switches")
 
     def test_add_lot_open_for_offers_and_negotiable(self):
