@@ -7754,6 +7754,9 @@ def update_product_collection_api(request):
     if "is_new_arrival" in data:
         product.is_new_arrival = bool(data["is_new_arrival"])
 
+    if (product.is_featured or product.is_best_selling or product.is_new_arrival) and str(product.enquiry_status).upper() == "APPROVED":
+        product.is_active = True
+
     # Update sequence order if present
     if "featured_order" in data:
         try:
@@ -7779,8 +7782,9 @@ def update_product_collection_api(request):
     product.save(update_fields=[
         "is_featured", "is_best_selling", "is_new_arrival",
         "featured_order", "best_selling_order", "new_arrival_order", "display_order",
-        "updated_at"
+        "is_active", "updated_at"
     ])
+    cache.delete("pub_homepage_collections_v3")
 
     featured_count = Product.objects.filter(is_featured=True, enquiry_status__iexact="APPROVED").count()
     best_selling_count = Product.objects.filter(is_best_selling=True, enquiry_status__iexact="APPROVED").count()
