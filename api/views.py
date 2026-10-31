@@ -2342,6 +2342,12 @@ def submit_lot_request(request):
         if search:
             qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search) | Q(key_brands_included__icontains=search))
 
+        collection_param = (request.GET.get("collection") or "").strip().lower()
+        if collection_param in ("featured", "featured_deals"):
+            qs = qs.order_by("-total_est_retail_value_msrp", "-views_count", "-created_at")
+        elif collection_param in ("new_arrivals", "new_arrival", "new"):
+            qs = qs.order_by("-created_at", "-id")
+
         page_num = request.GET.get("page", 1)
         limit = request.GET.get("limit", 12)
         try:
