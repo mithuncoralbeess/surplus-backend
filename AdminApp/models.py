@@ -1188,8 +1188,21 @@ class LotProduct(models.Model):
         # 'PRO-' is strictly reserved for standalone marketplace Product listings.
         # Lot products use 'BLK-XXXXX' batch line-item identifiers.
         if not self.product_id or str(self.product_id).upper().startswith("PRO-"):
-            max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
-            self.product_id = f"BLK-{(max_id + 1):05d}"
+            from django.db import connection
+            next_num = 1
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT nextval('lot_products_id_seq')")
+                    next_num = cursor.fetchone()[0]
+            except Exception:
+                max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+                next_num = max_id + 1
+
+            candidate = f"BLK-{next_num:05d}"
+            while LotProduct.objects.filter(product_id=candidate).exists():
+                next_num += 1
+                candidate = f"BLK-{next_num:05d}"
+            self.product_id = candidate
         super().save(*args, **kwargs)
 
     def __str__(self):

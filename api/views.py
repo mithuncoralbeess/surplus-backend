@@ -1304,6 +1304,73 @@ def submit_contact_us_enquiry(request):
     }, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def subscribe_newsletter(request):
+    """
+    Public API endpoint to subscribe an email address to the Surplus Market Newsletter.
+    Endpoint: POST /api/newsletter/subscribe/
+    """
+    from AdminApp.models import ContactUsEnquiry
+    import re
+
+    email = str(request.data.get("email") or "").strip().lower()
+    source = str(request.data.get("source") or "Footer Newsletter").strip()
+
+    if not email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return Response({
+            "success": False,
+            "message": "Please enter a valid email address."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    existing = ContactUsEnquiry.objects.filter(
+        email__iexact=email,
+        enquiry_type__iexact="Newsletter Subscription"
+    ).first()
+
+    if existing:
+        return Response({
+            "success": True,
+            "already_subscribed": True,
+            "message": "You are already subscribed to the Surplus Market newsletter!"
+        }, status=status.HTTP_200_OK)
+
+    enquiry = ContactUsEnquiry.objects.create(
+        full_name=email.split("@")[0].replace(".", " ").title() or "Newsletter Subscriber",
+        email=email,
+        phone="",
+        enquiry_type="Newsletter Subscription",
+        message=f"Subscribed to Surplus Market Newsletter via {source}."
+    )
+
+    try:
+        from AdminApp.services import create_admin_notification
+        create_admin_notification(
+            title=f"New Newsletter Subscriber - {email}",
+            message=f"{email} subscribed to the Surplus Market Newsletter ({source}).",
+            notification_type="ENQUIRY",
+            action_url="/admin/enquiries/contact-us/"
+        )
+    except Exception as e:
+        logger.error(f"[subscribe_newsletter] Admin notification error: {e}")
+
+    try:
+        from AdminApp.services import EmailService
+        EmailService.send_contact_us_emails(enquiry)
+    except Exception as e:
+        logger.error(f"[subscribe_newsletter] Email dispatch error: {e}")
+
+    return Response({
+        "success": True,
+        "message": "Successfully subscribed to the Surplus Market newsletter!",
+        "data": {
+            "id": enquiry.id,
+            "email": enquiry.email,
+            "createdAt": enquiry.created_at.isoformat() if enquiry.created_at else None
+        }
+    }, status=status.HTTP_201_CREATED)
+
+
 @api_view(["POST", "GET"])
 @permission_classes([AllowAny])
 def submit_rfq_enquiry(request):

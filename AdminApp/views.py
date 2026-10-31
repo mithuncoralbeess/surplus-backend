@@ -3244,18 +3244,24 @@ def lot_enquiry_detail_view(request, enquiry_id):
 
     raw_offer_str = _clean_val(enquiry.offer) or _clean_val(combined_raw.get("offer")) or ""
 
-    # Open to offers detection: true if explicitly flagged or negotiable or offer payout is zero
+    # Open for offers detection: true ONLY if explicitly flagged as open_for_offers,
+    # OR if liquidation price is 0/empty AND offer text specifies open to offers/negotiable.
+    # Note: allow_counter_offers is a negotiation setting for ANY lot, NOT "Open for Offers" mode!
+    explicit_open_for_offers = (
+        bool(getattr(enquiry, "open_for_offers", False))
+        or str(combined_raw.get("open_for_offers", "")).lower() in ("true", "1", "yes", "t", "on")
+    )
+    has_liquidation_payout = (
+        (enquiry.ask_price_surplus_payout is not None and float(enquiry.ask_price_surplus_payout) > 0)
+        or _clean_num(combined_raw.get("ask_price_surplus_payout") or combined_raw.get("liquidation_price") or combined_raw.get("liquidating_price")) > 0
+    )
+
     is_open_to_offer = False
-    if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "open for offers", "accepting offer", "make an offer", "negotiable")):
+    if explicit_open_for_offers:
         is_open_to_offer = True
-    elif str(combined_raw.get("open_to_offer", "")).lower() in ("true", "1", "yes"):
-        is_open_to_offer = True
-    elif str(combined_raw.get("allow_counter_offers", "")).lower() in ("true", "1", "yes"):
-        is_open_to_offer = True
-    elif getattr(enquiry, "open_for_offers", False):
-        is_open_to_offer = True
-    elif str(combined_raw.get("open_for_offers", "")).lower() in ("true", "1", "yes", "t", "on"):
-        is_open_to_offer = True
+    elif not has_liquidation_payout:
+        if enquiry.offer and any(kw in str(enquiry.offer).lower() for kw in ("open to offer", "open for offer", "open for offers", "accepting offer", "make an offer", "negotiable")):
+            is_open_to_offer = True
 
     if is_open_to_offer:
         # For Open for Offers: Liquidation price is not needed (0/None and hidden in UI)
@@ -6531,7 +6537,7 @@ def add_lot_view(request):
             "warehouse_images": warehouse_images,
             "third_party_documents": third_party_documents,
             "allow_counter_offers": allow_counter_offers,
-            "open_to_offer": "Yes" if allow_counter_offers else "No",
+            "open_to_offer": "Yes" if open_for_offers else "No",
             "open_for_offers": open_for_offers,
             "sale_method": sale_method,
             "sales_method": sale_method,
