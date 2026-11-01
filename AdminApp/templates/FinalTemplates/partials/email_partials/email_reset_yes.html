@@ -1,23 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+    <title>Password Updated - Surplus Market</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f7fb; margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .header { background: linear-gradient(135deg, #0a5c48, #0f766e); padding: 25px; text-align: center; color: #ffffff; }
-        .content { padding: 30px; }
-        .footer { padding: 15px; text-align: center; font-size: 12px; color: #94a3b8; }
+        * {
+            box-sizing: border-box;
+        }
+        body, table, td, p, a, li, blockquote {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            background-color: #f4f7fb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        table {
+            border-collapse: collapse !important;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        .break-word {
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            word-wrap: break-word !important;
+        }
+        @media only screen and (max-width: 600px) {
+            .mobile-outer {
+                padding: 12px 6px !important;
+            }
+            .mobile-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 8px !important;
+            }
+            .mobile-header {
+                padding: 24px 16px !important;
+            }
+            .mobile-content {
+                padding: 22px 16px !important;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header"><h2>Password Updated</h2></div>
-        <div class="content">
-            <p>Hello <strong>{{ first_name|default:"User" }}</strong>,</p>
-            <p>Your Surplus Market account password was recently changed. If this was you, you can safely ignore this email.</p>
-        </div>
-        <div class="footer">&copy; Surplus Market</div>
-    </div>
+<body style="margin: 0 !important; padding: 0 !important; width: 100% !important; min-width: 100% !important; background-color: #f4f7fb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="mobile-outer" style="background-color: #f4f7fb; width: 100% !important; padding: 24px 12px; margin: 0 auto;">
+        <tr>
+            <td align="center" style="padding: 0;">
+                <!-- Main Container Card -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="mobile-card" style="max-width: 580px; width: 100% !important; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); margin: 0 auto;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" class="mobile-header" style="background: linear-gradient(135deg, #0a5c48, #0f766e); padding: 28px 24px; text-align: center; color: #ffffff;">
+                            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Password Updated</h2>
+                            <p style="margin: 6px 0 0 0; color: #ccfbf1; font-size: 13px;">Security Notice &bull; Surplus Market</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td class="mobile-content" style="padding: 30px 24px; text-align: left; color: #1e293b;">
+                            <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; color: #1e293b;">
+                                Hello <strong>{{ first_name|default:"User" }}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                                Your Surplus Market account password was recently changed. If this was you, you can safely ignore this email.
+                            </p>
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin: 16px 0; font-size: 13px; line-height: 1.5; color: #64748b;">
+                                If you did not make this change, please contact Surplus Market customer support immediately or reset your credentials.
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 16px 24px; background: #f8fafc; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; line-height: 1.5;">
+                            &copy; Surplus Market. All rights reserved.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

@@ -1081,7 +1081,13 @@ class EmailService:
                 f"<p><a href='{admin_url}'>View in Admin Dashboard</a></p>"
             )
 
-        admin_subject = f"New Contact Enquiry from {full_name} [{enquiry_type}]"
+        if str(enquiry_type).strip().lower() == "newsletter subscription":
+            admin_subject = f"New Newsletter Subscription: {email}"
+            user_subject = "Welcome to Surplus Market Newsletter!"
+        else:
+            admin_subject = f"New Contact Enquiry from {full_name} [{enquiry_type}]"
+            user_subject = f"We have received your enquiry - Surplus Market [Ref #{enquiry_id or 'General'}]"
+
         results["admin_email"] = cls.send_email(admin_emails, admin_subject, admin_html, "ContactAdminAlert", context=context)
 
         # 2. User Confirmation Email
@@ -1093,14 +1099,20 @@ class EmailService:
                 )
             except Exception as e:
                 logger.warning(f"Template rendering failed for contact us user confirmation email, using fallback HTML: {e}")
-                user_html = (
-                    f"<h2>Thank You for Contacting Surplus Market</h2>"
-                    f"<p>Hello {full_name},</p>"
-                    f"<p>We have received your enquiry regarding {enquiry_type}. Our support team will review it and reply within 24 to 48 business hours.</p>"
-                    f"<p><strong>Your Message:</strong></p><blockquote>{message}</blockquote>"
-                )
+                if str(enquiry_type).strip().lower() == "newsletter subscription":
+                    user_html = (
+                        f"<h2>Welcome to Surplus Market Newsletter!</h2>"
+                        f"<p>Hello {full_name},</p>"
+                        f"<p>Thank you for subscribing to the Surplus Market Newsletter! You'll now receive timely updates on exclusive surplus inventory and wholesale lots.</p>"
+                    )
+                else:
+                    user_html = (
+                        f"<h2>Thank You for Contacting Surplus Market</h2>"
+                        f"<p>Hello {full_name},</p>"
+                        f"<p>We have received your enquiry regarding {enquiry_type}. Our support team will review it and reply within 24 to 48 business hours.</p>"
+                        f"<p><strong>Your Message:</strong></p><blockquote>{message}</blockquote>"
+                    )
 
-            user_subject = f"We have received your enquiry - Surplus Market [Ref #{enquiry_id or 'General'}]"
             results["user_email"] = cls.send_email(email, user_subject, user_html, "ContactUserConfirm", context=context)
 
         return results
