@@ -7,38 +7,75 @@
 <!-- Quill CSS -->
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <style>
-    /* Sticky Editor Control Bar (Header & Quill Toolbar stay pinned while scrolling article) */
+    /* Ensure ancestor layout elements never disable position: sticky */
+    html, body {
+        overflow-x: clip !important;
+    }
+    .dashboard-wrapper,
+    .main-layout,
+    .dashboard-main-content {
+        overflow-x: clip !important;
+        overflow-y: visible !important;
+    }
+    #articleEditorCard {
+        overflow: visible !important;
+        position: relative;
+    }
+
+    /* Sticky Editor Control Bar (Article Header & Quill Toolbar stay pinned while scrolling article) */
     .editor-sticky-bar {
+        position: -webkit-sticky;
         position: sticky;
-        top: 65px;
-        z-index: 95;
-        background-color: #ffffff;
-        padding-top: 0.35rem;
-        padding-bottom: 0.65rem;
-        border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        top: 64px;
+        z-index: 1005;
+        background-color: var(--color-bg-surface, #ffffff);
+        padding: 0.85rem 1.25rem 0.75rem 1.25rem;
+        margin-top: -1.5rem;
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        margin-bottom: 1rem;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+        border-bottom: 1px solid var(--color-border, #e2e8f0);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+        transition: box-shadow 0.2s ease, top 0.15s ease;
+    }
+    .editor-sticky-bar.is-pinned {
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12) !important;
+        border-bottom-color: #cbd5e1 !important;
     }
     [data-bs-theme="dark"] .editor-sticky-bar {
         background-color: #1e293b !important;
         border-bottom-color: #334155 !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     }
+    [data-bs-theme="dark"] .editor-sticky-bar.is-pinned {
+        background-color: #1e293b !important;
+        border-bottom-color: #475569 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    /* Quill Snow Formatting Toolbar Customization */
     .ql-toolbar.ql-snow {
         border-radius: 0.6rem;
         background-color: #f8fafc;
         border-color: #cbd5e1;
-        padding: 0.6rem 0.8rem;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.4rem;
     }
     [data-bs-theme="dark"] .ql-toolbar.ql-snow {
         background-color: #0f172a !important;
         border-color: #334155 !important;
     }
+
+    /* Quill Container & Natural Auto-Height Editor */
     .ql-container.ql-snow {
         border-radius: 0.6rem;
         border: 1px solid #cbd5e1 !important;
         font-family: inherit;
         font-size: 0.95rem;
-        min-height: 420px;
+        min-height: 480px;
+        height: auto !important;
         background-color: #ffffff;
         margin-top: 0.5rem;
     }
@@ -48,9 +85,12 @@
         color: #f8fafc !important;
     }
     .ql-editor {
-        min-height: 400px;
+        min-height: 460px;
+        height: auto !important;
+        overflow-y: visible !important;
         line-height: 1.6;
         color: #1e293b;
+        font-size: 1rem;
     }
     .ql-editor h1, .ql-editor h2, .ql-editor h3, .ql-editor h4 {
         color: #0f172a;
@@ -61,13 +101,15 @@
     .ql-editor p {
         margin-bottom: 0.75rem;
     }
+
+    /* Raw HTML Source Editor */
     .html-source-editor {
         font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.88rem;
         background-color: #0f172a;
         color: #e2e8f0;
         border-radius: 0.6rem;
-        min-height: 440px;
+        min-height: 480px;
         resize: vertical;
         line-height: 1.5;
         padding: 1rem;
@@ -367,6 +409,34 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // -------------------------------------------------------------
+    // Dynamic Sticky Header & Toolbar Position Guardian
+    // -------------------------------------------------------------
+    const stickyBar = document.getElementById('editorStickyBar');
+    const editorCard = document.getElementById('articleEditorCard');
+    const topNavbar = document.querySelector('.top-navbar');
+
+    function syncStickyOffset() {
+        if (!stickyBar) return;
+        const navHeight = topNavbar ? (topNavbar.offsetHeight || Math.round(topNavbar.getBoundingClientRect().height)) : 64;
+        stickyBar.style.top = `${navHeight}px`;
+
+        if (editorCard) {
+            const cardRect = editorCard.getBoundingClientRect();
+            // If the card is currently spanning the navbar edge, mark pinned
+            if (cardRect.top <= navHeight && cardRect.bottom > (navHeight + 100)) {
+                stickyBar.classList.add('is-pinned');
+            } else {
+                stickyBar.classList.remove('is-pinned');
+            }
+        }
+    }
+
+    window.addEventListener('scroll', syncStickyOffset, { passive: true });
+    window.addEventListener('resize', syncStickyOffset, { passive: true });
+    syncStickyOffset();
+    setTimeout(syncStickyOffset, 150);
+
     const titleInput = document.getElementById('blogTitleInput');
     const slugInput = document.getElementById('blogSlugInput');
     const form = document.getElementById('blogEditorForm');

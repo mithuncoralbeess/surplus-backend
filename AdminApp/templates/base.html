@@ -25,14 +25,14 @@
         })();
     </script>
     <style>
-        /* Global Layout Viewport & Overflow Containment */
+        /* Global Layout Viewport & Overflow Containment (Using clip to preserve position: sticky) */
         html, body {
-            overflow-x: hidden;
+            overflow-x: clip;
             max-width: 100%;
         }
 
         .dashboard-wrapper {
-            overflow-x: hidden;
+            overflow-x: clip;
             max-width: 100%;
             width: 100%;
         }
