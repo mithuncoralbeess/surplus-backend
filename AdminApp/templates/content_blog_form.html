@@ -7,22 +7,45 @@
 <!-- Quill CSS -->
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <style>
-    /* Quill Custom Styling */
+    /* Sticky Editor Control Bar (Header & Quill Toolbar stay pinned while scrolling article) */
+    .editor-sticky-bar {
+        position: sticky;
+        top: 65px;
+        z-index: 95;
+        background-color: #ffffff;
+        padding-top: 0.35rem;
+        padding-bottom: 0.65rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+    [data-bs-theme="dark"] .editor-sticky-bar {
+        background-color: #1e293b !important;
+        border-bottom-color: #334155 !important;
+    }
     .ql-toolbar.ql-snow {
-        border-top-left-radius: 0.6rem;
-        border-top-right-radius: 0.6rem;
+        border-radius: 0.6rem;
         background-color: #f8fafc;
         border-color: #cbd5e1;
         padding: 0.6rem 0.8rem;
     }
+    [data-bs-theme="dark"] .ql-toolbar.ql-snow {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+    }
     .ql-container.ql-snow {
-        border-bottom-left-radius: 0.6rem;
-        border-bottom-right-radius: 0.6rem;
-        border-color: #cbd5e1;
+        border-radius: 0.6rem;
+        border: 1px solid #cbd5e1 !important;
         font-family: inherit;
         font-size: 0.95rem;
-        min-height: 400px;
+        min-height: 420px;
         background-color: #ffffff;
+        margin-top: 0.5rem;
+    }
+    [data-bs-theme="dark"] .ql-container.ql-snow {
+        background-color: #0f172a !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
     }
     .ql-editor {
         min-height: 400px;
@@ -142,21 +165,22 @@
                 </div>
 
                 <!-- Rich Text Article Content Card -->
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                            <i class="bi bi-fonts text-primary fs-5"></i> Article Content Editor
-                        </h6>
-                        <div class="d-flex align-items-center gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" id="toggleCodeViewBtn">
-                                <i class="bi bi-code-slash me-1"></i> <span id="toggleBtnText">HTML Code View</span>
-                            </button>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">Rich WYSIWYG</span>
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" id="articleEditorCard">
+                    <!-- Sticky Header & Formatting Control Bar -->
+                    <div class="editor-sticky-bar" id="editorStickyBar">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2.5 pb-2 border-bottom">
+                            <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-fonts text-primary fs-5"></i> Article Content Editor
+                            </h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm" id="toggleCodeViewBtn">
+                                    <i class="bi bi-code-slash me-1"></i> <span id="toggleBtnText">HTML Code View</span>
+                                </button>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1">Rich WYSIWYG</span>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Quill Visual Rich Text Container -->
-                    <div id="quillEditorWrapper">
+                        <!-- Quill Formatting Toolbar (Sticky with Header) -->
                         <div id="quillToolbar">
                             <span class="ql-formats">
                                 <select class="ql-header">
@@ -203,6 +227,10 @@
                                 <button class="ql-clean" title="Clear Formatting"></button>
                             </span>
                         </div>
+                    </div>
+
+                    <!-- Quill Visual Rich Text Container -->
+                    <div id="quillEditorWrapper">
                         <div id="quillEditorContainer"></div>
                     </div>
 
@@ -371,10 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggleCodeViewBtn) {
         toggleCodeViewBtn.addEventListener('click', () => {
             isCodeViewActive = !isCodeViewActive;
+            const quillToolbarEl = document.getElementById('quillToolbar');
             if (isCodeViewActive) {
                 // Switch to Code View: copy latest Quill HTML to Textarea
                 htmlSourceTextarea.value = quill.root.innerHTML;
                 quillWrapper.style.display = 'none';
+                if (quillToolbarEl) quillToolbarEl.style.display = 'none';
                 htmlSourceWrapper.style.display = 'block';
                 toggleBtnText.textContent = 'Visual Rich Editor';
                 toggleCodeViewBtn.innerHTML = '<i class="bi bi-eye me-1"></i> Visual Rich Editor';
@@ -383,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Switch to Visual Editor: update Quill with edited HTML source
                 quill.root.innerHTML = htmlSourceTextarea.value;
                 htmlSourceWrapper.style.display = 'none';
+                if (quillToolbarEl) quillToolbarEl.style.display = 'block';
                 quillWrapper.style.display = 'block';
                 toggleBtnText.textContent = 'HTML Code View';
                 toggleCodeViewBtn.innerHTML = '<i class="bi bi-code-slash me-1"></i> HTML Code View';

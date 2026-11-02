@@ -5,6 +5,8 @@ from AdminApp.views import whatsapp_public_subscribe_api
 from .views import (
     api_root,
     health_check,
+    health_live,
+    health_ready,
     get_maintenance_status,
     ItemViewSet,
     get_public_pages_list,
@@ -48,6 +50,8 @@ router.register(r"items", ItemViewSet, basename="item")
 urlpatterns = [
     path("", api_root, name="api-root"),
     path("health/", health_check, name="health-check"),
+    path("health/live/", health_live, name="health-live"),
+    path("health/ready/", health_ready, name="health-ready"),
     path("maintenance-status/", get_maintenance_status, name="public_maintenance_status"),
     
     # Public Products & Showcase Collections REST API

@@ -35,6 +35,121 @@ def api_root(request):
 @api_view(["GET"])
 def health_check(request):
     """
+    Comprehensive health check endpoint verifying backend node status,
+    database primary/replica cluster failover state, and cache layer health.
+    """
+    import os
+    import socket
+    from django.core.cache import cache
+    from django.conf import settings
+    from config.db_router import get_db_cluster_status, mark_db_success, mark_db_failure
+
+    node_id = (
+        os.getenv("BACKEND_NODE_ID")
+        or os.getenv("RENDER_INSTANCE_ID")
+        or socket.gethostname()
+        or "primary-node-1"
+    )
+
+    db_cluster = get_db_cluster_status()
+    default_db_info = db_cluster.get("default", {})
+    db_status = default_db_info.get("status", "ok")
+    db_error = default_db_info.get("error")
+
+    if db_status == "ok":
+        mark_db_success("default")
+    else:
+        mark_db_failure("default", db_error or "Health probe failed")
+
+    any_healthy_db = any(info.get("status") == "ok" for info in db_cluster.values())
+
+    cache_status = "ok"
+    try:
+        cache.set("_health_probe", "1", timeout=10)
+        if cache.get("_health_probe") != "1":
+            cache_status = "degraded"
+    except Exception:
+        cache_status = "unavailable"
+
+    http_status = (
+        status.HTTP_200_OK
+        if any_healthy_db
+        else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    overall_status = (
+        "healthy"
+        if db_status == "ok"
+        else ("failover_active" if any_healthy_db else "degraded")
+    )
+
+    return Response(
+        {
+            "status": overall_status,
+            "node_id": node_id,
+            "timestamp": timezone.now().isoformat(),
+            "database": {
+                "status": db_status if db_status == "ok" else ("failover" if any_healthy_db else "unavailable"),
+                "vendor": connection.vendor,
+                "error": db_error,
+                "cluster": db_cluster,
+            },
+            "cache": {
+                "status": cache_status,
+            },
+            "search": {
+                "typesense_enabled": getattr(settings, "TYPESENSE_ENABLED", False),
+                "failover_engine": "postgresql_fulltext",
+            },
+        },
+        status=http_status,
+    )
+
+
+@api_view(["GET"])
+def health_live(request):
+    """
+    Lightweight Liveness probe (GET /api/health/live/) for load balancers.
+    """
+    import os
+    import socket
+    node_id = (
+        os.getenv("BACKEND_NODE_ID")
+        or os.getenv("RENDER_INSTANCE_ID")
+        or socket.gethostname()
+        or "primary-node-1"
+    )
+    return Response(
+        {
+            "status": "alive",
+            "node_id": node_id,
+            "timestamp": timezone.now().isoformat(),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+def health_ready(request):
+    """
+    Readiness probe (GET /api/health/ready/) for load balancers to verify
+    whether this node can serve traffic (primary or failover DB reachable).
+    """
+    from config.db_router import get_db_cluster_status
+    cluster = get_db_cluster_status()
+    ready = any(info.get("status") == "ok" for info in cluster.values())
+    return Response(
+        {
+            "status": "ready" if ready else "not_ready",
+            "timestamp": timezone.now().isoformat(),
+            "databases": cluster,
+        },
+        status=status.HTTP_200_OK if ready else status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
+
+
+def _legacy_health_check(request):
+    """
     Health check endpoint verifying backend status and database connection.
     """
     db_status = "ok"

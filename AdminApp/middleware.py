@@ -1,7 +1,56 @@
+import os
+import socket
+import logging
 from django.core.cache import cache
+from django.db import connections, close_old_connections, OperationalError, InterfaceError
 from django.http import JsonResponse
 from django.shortcuts import render
 from .models import SystemSettings
+
+logger = logging.getLogger(__name__)
+NODE_ID = os.getenv("NODE_ID") or socket.gethostname() or "surplus-node-1"
+
+
+class DatabaseFailoverMiddleware:
+    """
+    Resilience & Failover Middleware:
+    - Proactively cleans stale/closed DB connections before handling requests.
+    - If an OperationalError / InterfaceError occurs during an idempotent request (GET/HEAD),
+      closes broken connections, updates the DB circuit breaker, and transparently retries once.
+    - Injects X-Upstream-Node and X-Failover-Status headers for load balancer observability.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        failover_triggered = False
+        try:
+            response = self.get_response(request)
+        except (OperationalError, InterfaceError) as exc:
+            logger.warning(f"[DatabaseFailoverMiddleware] DB connection error on {request.path}: {exc}")
+            try:
+                from config.db_router import mark_db_failure
+                mark_db_failure("default", exc)
+            except Exception:
+                pass
+
+            for conn in connections.all():
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            close_old_connections()
+
+            if request.method in ("GET", "HEAD", "OPTIONS"):
+                failover_triggered = True
+                response = self.get_response(request)
+            else:
+                raise
+
+        response["X-Upstream-Node"] = NODE_ID
+        response["X-Failover-Status"] = "recovered" if failover_triggered else "primary"
+        return response
+
 
 class MaintenanceModeMiddleware:
     """
@@ -15,7 +64,7 @@ class MaintenanceModeMiddleware:
     def __call__(self, request):
         path = request.path
 
-        # Bypass admin routes, static/media files, authentication, and maintenance status check
+        # Bypass admin routes, static/media files, authentication, and health/maintenance status checks
         if (
             path.startswith('/admin/') or 
             path.startswith('/static/') or 
@@ -27,7 +76,7 @@ class MaintenanceModeMiddleware:
             path.startswith('/complete-') or
             path.startswith('/api/auth/') or
             path == '/api/maintenance-status/' or
-            path == '/api/health/'
+            path.startswith('/api/health')
         ):
             return self.get_response(request)
 

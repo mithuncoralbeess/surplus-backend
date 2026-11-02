@@ -55,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "AdminApp.middleware.DatabaseFailoverMiddleware",  # Automatic DB connection failover & read-retry
     "AdminApp.middleware.MaintenanceModeMiddleware",
 ]
 
@@ -79,25 +80,33 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database & Connection Pooling
+# ---------------------------------------------------------------------------
+# Database, Read-Replica Load Balancing & Automatic Failover
+# ---------------------------------------------------------------------------
 DATABASE_URL = os.getenv("DATABASE_URL")
+_conn_max_age = int(os.getenv("DB_CONN_MAX_AGE", "600"))
+_pg_keepalive_options = {
+    "connect_timeout": 10,
+    "keepalives": 1,
+    "keepalives_idle": 30,
+    "keepalives_interval": 10,
+    "keepalives_count": 5,
+}
 
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            conn_max_age=_conn_max_age,
             ssl_require="sslmode=require" in DATABASE_URL.lower(),
         )
     }
     DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-    DATABASES["default"]["OPTIONS"] = {
-        "connect_timeout": 10,
-        "keepalives": 1,
-        "keepalives_idle": 30,
-        "keepalives_interval": 10,
-        "keepalives_count": 5,
-    }
+    if "postgresql" in DATABASES["default"].get("ENGINE", "") or "postgis" in DATABASES["default"].get("ENGINE", ""):
+        DATABASES["default"]["OPTIONS"] = {
+            **DATABASES["default"].get("OPTIONS", {}),
+            **_pg_keepalive_options,
+        }
 else:
     DATABASES = {
         "default": {
@@ -105,6 +114,47 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+# Optional Read Replicas: comma-separated DATABASE_REPLICA_URLS
+_replica_urls_raw = os.getenv("DATABASE_REPLICA_URLS", "")
+for _idx, _rep_url in enumerate(
+    [u.strip() for u in _replica_urls_raw.split(",") if u.strip()], start=1
+):
+    _alias = f"replica_{_idx}"
+    DATABASES[_alias] = dj_database_url.parse(
+        _rep_url,
+        conn_max_age=_conn_max_age,
+        ssl_require="sslmode=require" in _rep_url.lower(),
+    )
+    DATABASES[_alias]["CONN_HEALTH_CHECKS"] = True
+    if "postgresql" in DATABASES[_alias].get("ENGINE", "") or "postgis" in DATABASES[_alias].get("ENGINE", ""):
+        DATABASES[_alias]["OPTIONS"] = {
+            **DATABASES[_alias].get("OPTIONS", {}),
+            **_pg_keepalive_options,
+        }
+
+# Optional Standby / Fallback Database: DATABASE_FALLBACK_URL
+_fallback_db_url = os.getenv("DATABASE_FALLBACK_URL", "").strip()
+if _fallback_db_url:
+    DATABASES["fallback"] = dj_database_url.parse(
+        _fallback_db_url,
+        conn_max_age=_conn_max_age,
+        ssl_require="sslmode=require" in _fallback_db_url.lower(),
+    )
+    DATABASES["fallback"]["CONN_HEALTH_CHECKS"] = True
+    if "postgresql" in DATABASES["fallback"].get("ENGINE", "") or "postgis" in DATABASES["fallback"].get("ENGINE", ""):
+        DATABASES["fallback"]["OPTIONS"] = {
+            **DATABASES["fallback"].get("OPTIONS", {}),
+            **_pg_keepalive_options,
+        }
+elif DATABASE_URL and (BASE_DIR / "db.sqlite3").exists():
+    # Automatic local SQLite emergency standby when primary is remote PostgreSQL
+    DATABASES["fallback"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+
+DATABASE_ROUTERS = ["config.db_router.PrimaryReplicaFailoverRouter"]
 
 
 # High-Performance Caching Layer
@@ -187,6 +237,8 @@ CORS_EXPOSE_HEADERS = [
     "Content-Encoding",
     "Content-Length",
     "Content-Type",
+    "X-Upstream-Node",
+    "X-Failover-Status",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -355,6 +407,3 @@ TYPESENSE_PROTOCOL = os.getenv("TYPESENSE_PROTOCOL", "http")
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "surplus_typesense_dev_key_123")
 TYPESENSE_COLLECTION_NAME = os.getenv("TYPESENSE_COLLECTION_NAME", "surplus_listings")
 TYPESENSE_TIMEOUT = float(os.getenv("TYPESENSE_TIMEOUT", "1.5"))
-
-
-
