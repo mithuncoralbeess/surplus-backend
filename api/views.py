@@ -3215,7 +3215,7 @@ def get_public_products_list(request):
     from django.core.cache import cache
     import hashlib
 
-    cache_key = 'pub_prods_v3_' + hashlib.md5(request.get_full_path().encode()).hexdigest()
+    cache_key = 'pub_prods_v4_' + hashlib.md5(request.get_full_path().encode()).hexdigest()
     cached_data = cache.get(cache_key)
     if cached_data is not None:
         return Response(cached_data, status=status.HTTP_200_OK)
@@ -3254,7 +3254,8 @@ def get_public_products_list(request):
         qs = qs.filter(is_best_selling=True)
         order_field = "best_selling_order"
     elif collection in ("new_arrivals", "new-arrivals", "new_arrival", "new"):
-        qs = qs.filter(is_new_arrival=True)
+        order_field = "new_arrival_order"
+        qs = qs  # New Arrivals are determined by approved date (date_approved), not restricted to manual flag
         order_field = "new_arrival_order"
 
     cat = request.GET.get("category")
@@ -3265,7 +3266,20 @@ def get_public_products_list(request):
     if search:
         qs = qs.filter(Q(product_name__icontains=search) | Q(brand_name__icontains=search) | Q(model_no__icontains=search))
 
-    qs = qs.annotate(
+    from django.db.models.functions import Coalesce
+    if collection in ("new_arrivals", "new-arrivals", "new_arrival", "new"):
+        qs = qs.annotate(effective_approved_at=Coalesce("date_approved", "created_at")).order_by("-effective_approved_at", "-created_at", "-id")
+    else:
+        qs = qs.annotate(
+            effective_approved_at=Coalesce("date_approved", "created_at"),
+            priority=Case(
+                When(**{order_field: 0}, then=Value(999999)),
+                default=order_field,
+                output_field=IntegerField()
+            )
+        ).order_by("priority", "-effective_approved_at", "-created_at")
+    if False:
+        qs.annotate(
         priority=Case(
             When(**{order_field: 0}, then=Value(999999)),
             default=order_field,
@@ -3305,7 +3319,8 @@ def get_homepage_collections(request):
     from django.db.models import Case, When, Value, IntegerField
     from django.core.cache import cache
 
-    cache_key = "pub_homepage_collections_v3"
+    from django.db.models.functions import Coalesce
+    cache_key = "pub_homepage_collections_v4"
     cached_res = cache.get(cache_key)
     if cached_res is not None:
         return Response(cached_res, status=status.HTTP_200_OK)
@@ -3316,13 +3331,16 @@ def get_homepage_collections(request):
         p=Case(When(featured_order=0, then=Value(999999)), default="featured_order", output_field=IntegerField())
     ).order_by("p", "-created_at")[:12]
 
+
     best_qs = base_qs.filter(is_best_selling=True).annotate(
         p=Case(When(best_selling_order=0, then=Value(999999)), default="best_selling_order", output_field=IntegerField())
     ).order_by("p", "-created_at")[:12]
 
-    new_qs = base_qs.filter(is_new_arrival=True).annotate(
-        p=Case(When(new_arrival_order=0, then=Value(999999)), default="new_arrival_order", output_field=IntegerField())
-    ).order_by("p", "-created_at")[:12]
+
+    new_qs = base_qs.annotate(effective_approved_at=Coalesce("date_approved", "created_at")).order_by("-effective_approved_at", "-created_at", "-id")[:12]
+    # Legacy new_qs block removed
+    # Priority and effective_approved_at applied above
+
 
     resp_data = {
         "success": True,
