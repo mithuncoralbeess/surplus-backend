@@ -2466,9 +2466,9 @@ def lot_enquiry_edit_api(request, enquiry_id):
     ask_payout = float(lot.ask_price_surplus_payout or 0.0)
     msrp_val = float(lot.total_est_retail_value_msrp or 0.0)
     if ask_payout > 0:
-        calculated_price = round(ask_payout * 1.10, 2)
+        calculated_price = round(ask_payout, 2)
     elif msrp_val > 0:
-        calculated_price = round(msrp_val * 1.10, 2)
+        calculated_price = round(msrp_val, 2)
     else:
         calculated_price = 0.0
 
@@ -3267,8 +3267,8 @@ def lot_enquiry_detail_view(request, enquiry_id):
         # For Open for Offers: Liquidation price is not needed (0/None and hidden in UI)
         liq_num = 0.0
         offer_val = raw_offer_str or "Open for Offers"
-        # Price is MSRP + 10% platform increment
-        price_num = round(msrp_num * 1.10, 2) if msrp_num > 0 else 0.0
+        # Price is MSRP directly (no 10% platform markup on lots)
+        price_num = round(msrp_num, 2) if msrp_num > 0 else 0.0
     else:
         # Extract Liquidation Price (payout to seller)
         liq_num = 0.0
@@ -3308,11 +3308,11 @@ def lot_enquiry_detail_view(request, enquiry_id):
         else:
             offer_val = "60% Off MSRP"
 
-        # Price = Liquidation Price * 1.10 (our platform markup is strictly in price, NEVER in offer)
+        # Price = Liquidation Price (no 10% platform markup on lots)
         if liq_num > 0:
-            price_num = round(liq_num * 1.10, 2)
+            price_num = round(liq_num, 2)
         elif msrp_num > 0:
-            price_num = round(msrp_num * 1.10, 2)
+            price_num = round(msrp_num, 2)
         else:
             price_num = 0.0
 
