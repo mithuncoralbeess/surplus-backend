@@ -1,4 +1,4 @@
-with open('AdminApp/templates/content_blog_form.html', 'r', encoding='utf-8') as f:
+why thiwith open('AdminApp/templates/content_blog_form.html', 'r', encoding='utf-8') as f:
     content = f.read()
 
 target = """    // Initialize Quill Rich Text Editor
