@@ -1678,6 +1678,11 @@ class ProductImage(models.Model):
                 return ""
         return ""
 
+    @property
+    def is_video(self):
+        u = str(self.url or "").lower().split("?")[0]
+        return any(u.endswith(ext) for ext in [".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi", ".m4v"])
+
 
 
 class PartnershipEnquiry(models.Model):

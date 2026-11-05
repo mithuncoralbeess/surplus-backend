@@ -2435,13 +2435,6 @@ def submit_lot_request(request):
     from django.db.models import Q
 
     if request.method == "GET":
-        from django.core.cache import cache
-        import hashlib
-        cache_key = f"lots_list_v2_{hashlib.md5(request.get_full_path().encode()).hexdigest()}"
-        cached_res = cache.get(cache_key)
-        if cached_res is not None:
-            return Response(cached_res, status=status.HTTP_200_OK)
-
         qs = Lot.objects.defer("raw_data").select_related("vendor").order_by("-created_at")
         email_param = (request.GET.get("email") or request.GET.get("user_email") or "").strip()
         vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
@@ -2511,7 +2504,6 @@ def submit_lot_request(request):
             "current_page": page_obj.number,
             "lots": serializer.data,
         }
-        cache.set(cache_key, resp_data, 120)
         return Response(resp_data, status=status.HTTP_200_OK)
 
     # POST request processing
@@ -2842,18 +2834,14 @@ def public_lot_detail_api(request, lot_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    cache_key = f"pub_lot_detail_v1_{lot.id}_{int(lot.updated_at.timestamp()) if getattr(lot, 'updated_at', None) else 0}"
-    cached_data = cache.get(cache_key)
-    if cached_data is not None:
-        return Response({
-            "success": True,
-            "lot": cached_data,
-            "data": cached_data
-        }, status=status.HTTP_200_OK)
+    if not lot.is_active or str(lot.enquiry_status).strip().lower() != "approved":
+        return Response(
+            {"success": False, "message": f"Lot '{lot_id}' is not available."},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
     serializer = LotSerializer(lot, context={"request": request})
     lot_data = serializer.data
-    cache.set(cache_key, lot_data, 1800)
 
     return Response({
         "success": True,
@@ -2882,6 +2870,12 @@ def lot_warehouse_explorer_api(request, lot_id):
     except Lot.DoesNotExist:
         return Response(
             {"success": False, "message": f"Lot '{lot_id}' not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if not lot.is_active or str(lot.enquiry_status).strip().lower() != "approved":
+        return Response(
+            {"success": False, "message": f"Lot '{lot_id}' is not available."},
             status=status.HTTP_404_NOT_FOUND
         )
 
@@ -3239,12 +3233,6 @@ def get_public_products_list(request):
     from django.db.models import Case, When, Value, IntegerField, Q
     from django.core.paginator import Paginator
     from django.core.cache import cache
-    import hashlib
-
-    cache_key = 'pub_prods_v4_' + hashlib.md5(request.get_full_path().encode()).hexdigest()
-    cached_data = cache.get(cache_key)
-    if cached_data is not None:
-        return Response(cached_data, status=status.HTTP_200_OK)
 
     vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
     status_param = (request.GET.get("status") or "").strip()
@@ -3330,7 +3318,6 @@ def get_public_products_list(request):
         "collection": collection or "all",
         "products": [_serialize_product_summary(p) for p in page_obj],
     }
-    cache.set(cache_key, resp_data, 120)
     return Response(resp_data, status=status.HTTP_200_OK)
 
 
@@ -3343,13 +3330,8 @@ def get_homepage_collections(request):
     """
     from AdminApp.models import Product
     from django.db.models import Case, When, Value, IntegerField
-    from django.core.cache import cache
 
     from django.db.models.functions import Coalesce
-    cache_key = "pub_homepage_collections_v4"
-    cached_res = cache.get(cache_key)
-    if cached_res is not None:
-        return Response(cached_res, status=status.HTTP_200_OK)
 
     base_qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
 
@@ -3374,7 +3356,6 @@ def get_homepage_collections(request):
         "best_selling": [_serialize_product_summary(p) for p in best_qs],
         "new_arrivals": [_serialize_product_summary(p) for p in new_qs],
     }
-    cache.set(cache_key, resp_data, 120)
     return Response(resp_data, status=status.HTTP_200_OK)
 
 

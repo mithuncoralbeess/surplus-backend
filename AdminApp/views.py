@@ -2428,13 +2428,18 @@ def lot_enquiry_edit_api(request, enquiry_id):
     # Warehouse images upload check in edit form
     from django.core.files.storage import default_storage
     new_wh_images = []
-    for img_key in ("warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos"):
+    video_extensions = (".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi", ".m4v")
+    for img_key in ("warehouse_images", "warehouse_image", "images", "image", "media", "media_files", "photos", "videos"):
         if img_key in request.FILES:
             for img_file in request.FILES.getlist(img_key):
                 if hasattr(img_file, "name"):
                     import uuid
                     safe_wh_name = f"{uuid.uuid4().hex[:8]}_{img_file.name}"
-                    saved_path = default_storage.save(f"lots/images/{safe_wh_name}", img_file)
+                    fname = img_file.name.lower()
+                    if any(fname.endswith(ve) for ve in video_extensions) or (hasattr(img_file, "content_type") and img_file.content_type.startswith("video/")):
+                        saved_path = default_storage.save(f"lots/videos/{safe_wh_name}", img_file)
+                    else:
+                        saved_path = default_storage.save(f"lots/images/{safe_wh_name}", img_file)
                     new_wh_images.append(default_storage.url(saved_path))
     replace_all = str(data.get("replace_all_images", "")).lower() in ("true", "1", "on")
     if new_wh_images:
@@ -2747,6 +2752,195 @@ def remove_lot_image_api(request, enquiry_id):
         return Response({"success": True, "message": "Image removed successfully."})
 
     return Response({"success": False, "message": "Target image not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def upload_seller_enquiry_media_api(request, enquiry_id):
+    """
+    Admin API to upload images and videos for a SellerProductEnquiry (Product).
+    Supports multiple files with .png, .jpg, .jpeg, .webp, .gif, .mp4, .webm, .mov, .mkv, .avi, etc.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user and getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        admin_user = request.user
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product, ProductImage
+    from django.core.files.storage import default_storage
+    from django.core.cache import cache
+    import uuid
+
+    try:
+        product = Product.objects.get(id=enquiry_id)
+    except Product.DoesNotExist:
+        return Response({"success": False, "message": "Product enquiry not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    uploaded_files = []
+    for key in ("media_files", "media", "images", "videos", "file", "warehouse_images", "photos"):
+        if key in request.FILES:
+            uploaded_files.extend(request.FILES.getlist(key))
+
+    if not uploaded_files:
+        return Response({"success": False, "message": "No media files were provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+    video_extensions = (".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi", ".m4v")
+    created_count = 0
+
+    for f in uploaded_files:
+        fname = getattr(f, "name", "")
+        if not fname:
+            continue
+        ext = fname.lower()
+        safe_name = f"{uuid.uuid4().hex[:8]}_{fname}"
+        
+        if any(ext.endswith(ve) for ve in video_extensions) or (hasattr(f, "content_type") and str(f.content_type).startswith("video/")):
+            saved_path = default_storage.save(f"products/videos/{safe_name}", f)
+            media_url = default_storage.url(saved_path)
+            ProductImage.objects.create(
+                product=product,
+                image=None,
+                image_url=media_url,
+                is_real_photo=True
+            )
+            created_count += 1
+        else:
+            ProductImage.objects.create(
+                product=product,
+                image=f,
+                is_real_photo=True
+            )
+            created_count += 1
+
+    cache.clear()
+    try:
+        from .typesense_service import index_product
+        index_product(product)
+    except Exception:
+        pass
+
+    return Response({
+        "success": True,
+        "message": f"{created_count} media file(s) uploaded successfully.",
+        "count": created_count
+    })
+
+
+@api_view(["POST"])
+def remove_seller_enquiry_media_api(request, enquiry_id):
+    """
+    Admin API to remove a single media item (image or video) from a Product.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user and getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        admin_user = request.user
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Product, ProductImage
+    from django.core.cache import cache
+
+    try:
+        product = Product.objects.get(id=enquiry_id)
+    except Product.DoesNotExist:
+        return Response({"success": False, "message": "Product enquiry not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    data = request.data or request.POST
+    img_id = data.get("image_id") or data.get("id")
+    img_url = data.get("url") or data.get("image_url")
+
+    target = None
+    if img_id and str(img_id).isdigit():
+        target = ProductImage.objects.filter(id=int(img_id), product=product).first()
+    elif img_url:
+        target = ProductImage.objects.filter(product=product, image_url=str(img_url).strip()).first()
+        if not target:
+            for pi in product.images.all():
+                if pi.url == str(img_url).strip() or str(pi.image) in str(img_url):
+                    target = pi
+                    break
+
+    if target:
+        target.delete()
+        cache.clear()
+        try:
+            from .typesense_service import index_product
+            index_product(product)
+        except Exception:
+            pass
+        return Response({"success": True, "message": "Media removed successfully."})
+
+    return Response({"success": False, "message": "Media item not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["POST"])
+def upload_lot_enquiry_media_api(request, enquiry_id):
+    """
+    Admin API to upload images and videos for a Lot enquiry.
+    Supports multiple files with .png, .jpg, .jpeg, .webp, .gif, .mp4, .webm, .mov, .mkv, .avi, etc.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return Response({"success": False, "message": "Unauthorized admin session."}, status=status.HTTP_401_UNAUTHORIZED)
+
+    from .models import Lot
+    from django.core.files.storage import default_storage
+    from django.core.cache import cache
+    import uuid
+
+    try:
+        lot = Lot.objects.get(id=enquiry_id)
+    except Lot.DoesNotExist:
+        return Response({"success": False, "message": "Lot not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    uploaded_files = []
+    for key in ("media_files", "media", "images", "videos", "warehouse_images", "file", "photos"):
+        if key in request.FILES:
+            uploaded_files.extend(request.FILES.getlist(key))
+
+    if not uploaded_files:
+        return Response({"success": False, "message": "No media files were provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+    video_extensions = (".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi", ".m4v")
+    new_urls = []
+
+    for f in uploaded_files:
+        fname = getattr(f, "name", "")
+        if not fname:
+            continue
+        ext = fname.lower()
+        safe_name = f"{uuid.uuid4().hex[:8]}_{fname}"
+        
+        if any(ext.endswith(ve) for ve in video_extensions) or (hasattr(f, "content_type") and str(f.content_type).startswith("video/")):
+            saved_path = default_storage.save(f"lots/videos/{safe_name}", f)
+        else:
+            saved_path = default_storage.save(f"lots/images/{safe_name}", f)
+        new_urls.append(default_storage.url(saved_path))
+
+    replace_all = str(request.data.get("replace_all_images", "")).lower() in ("true", "1", "on")
+    existing_wh = lot.warehouse_images if isinstance(lot.warehouse_images, list) else []
+    if replace_all:
+        lot.warehouse_images = new_urls
+    else:
+        lot.warehouse_images = existing_wh + new_urls
+
+    if not isinstance(lot.raw_data, dict):
+        lot.raw_data = {}
+    lot.raw_data["warehouse_images"] = lot.warehouse_images
+    lot.save(update_fields=["warehouse_images", "raw_data"])
+
+    cache.clear()
+    try:
+        from .typesense_service import index_lot
+        index_lot(lot)
+    except Exception:
+        pass
+
+    return Response({
+        "success": True,
+        "message": f"{len(new_urls)} media file(s) uploaded successfully.",
+        "media_urls": new_urls
+    })
 
 
 @api_view(["POST"])
@@ -3457,10 +3651,12 @@ def lot_enquiry_detail_view(request, enquiry_id):
         
         full_url = resolve_media_url(img_str)
         
+        is_vid = any(clean_path.lower().endswith(ext) for ext in (".mp4", ".webm", ".ogg", ".mov", ".mkv", ".avi", ".m4v"))
         normalized_warehouse_images.append({
             "url": full_url,
             "name": filename,
-            "raw": img_str
+            "raw": img_str,
+            "is_video": is_vid
         })
 
 

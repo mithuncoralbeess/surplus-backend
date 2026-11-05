@@ -63,24 +63,7 @@
                             <i class="bi {% if product.is_featured %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
                         </span>
                     </button>
-                    <button type="button" 
-                            class="btn btn-sm btn-collection-toggle {% if product.is_best_selling %}btn-warning text-dark{% else %}btn-outline-warning text-dark{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
-                            data-id="{{ product.id }}" data-flag="is_best_selling" data-active="{% if product.is_best_selling %}true{% else %}false{% endif %}"
-                            title="Toggle Best Selling status" style="font-size: 0.78rem;">
-                        <i class="bi bi-fire me-1"></i>Best Seller
-                        <span class="badge {% if product.is_best_selling %}bg-dark text-white{% else %}bg-warning-subtle text-dark{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
-                            <i class="bi {% if product.is_best_selling %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
-                        </span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-sm btn-collection-toggle {% if product.is_new_arrival %}btn-info text-white{% else %}btn-outline-info{% endif %} rounded-pill px-2.5 py-1 fw-semibold shadow-sm"
-                            data-id="{{ product.id }}" data-flag="is_new_arrival" data-active="{% if product.is_new_arrival %}true{% else %}false{% endif %}"
-                            title="Toggle New Arrival status" style="font-size: 0.78rem;">
-                        <i class="bi bi-rocket-takeoff-fill me-1"></i>New Arrival
-                        <span class="badge {% if product.is_new_arrival %}bg-white text-info{% else %}bg-info-subtle text-info{% endif %} rounded-circle ms-1 p-0.5" style="width: 16px; height: 16px; display: inline-inline; font-size: 0.65rem;">
-                            <i class="bi {% if product.is_new_arrival %}bi-check-lg{% else %}bi-plus{% endif %}"></i>
-                        </span>
-                    </button>
+
                 </span>
             </div>
             <p class="text-muted small mb-0">Master catalog entry & comprehensive product profile</p>

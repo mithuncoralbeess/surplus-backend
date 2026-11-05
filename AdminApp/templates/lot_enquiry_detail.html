@@ -875,17 +875,45 @@
             <div class="premium-card p-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <h6 class="fw-bold text-uppercase text-muted mb-0" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                        <i class="bi bi-image me-2 text-primary"></i>Product Media
+                        <i class="bi bi-camera-video me-2 text-primary"></i>Product Media
                     </h6>
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal" style="font-size: 11px;">
-                        <i class="bi bi-upload me-1"></i>Upload / Change
-                    </button>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-sm btn-primary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#uploadLotMediaModal" style="font-size: 11px;">
+                            <i class="bi bi-upload me-1"></i>Upload Media
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal" style="font-size: 11px;">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </button>
+                    </div>
                 </div>
                 <div class="text-center rounded-3 overflow-hidden bg-light p-3 border">
                     {% if warehouse_images and warehouse_images|length > 0 %}
                         <div class="d-flex flex-column gap-3">
                             {% for img in warehouse_images %}
+                                {% if img.is_video %}
+                                <div class="position-relative media-video-container border rounded bg-dark overflow-hidden shadow-xs">
+                                    <div class="position-absolute top-0 start-0 m-2" style="z-index: 5;">
+                                        <span class="badge bg-danger shadow-xs"><i class="bi bi-play-circle-fill me-1"></i> Video</span>
+                                    </div>
+                                    <div class="position-absolute top-0 end-0 m-2" style="z-index: 5;">
+                                        <button type="button" class="btn btn-sm btn-light border text-danger shadow-xs btn-remove-image px-2 py-1 rounded-2"
+                                                title="Remove this video" data-index="{{ forloop.counter0 }}" data-url="{{ img.raw }}">
+                                            <i class="bi bi-trash" style="font-size: 13px;"></i>
+                                        </button>
+                                    </div>
+                                    <video controls playsinline preload="metadata" class="w-100 rounded" style="max-height: 400px; background: #000;" src="{{ img.url }}">
+                                        <source src="{{ img.url }}">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    <div class="p-2 bg-light text-truncate small text-muted text-start border-top">
+                                        <i class="bi bi-camera-video me-1"></i> {{ img.name|default:"Warehouse Video" }}
+                                    </div>
+                                </div>
+                                {% else %}
                                 <div class="position-relative media-image-container border rounded bg-white overflow-hidden shadow-xs">
+                                    <div class="position-absolute top-0 start-0 m-2" style="z-index: 5;">
+                                        <span class="badge bg-secondary-subtle text-secondary shadow-xs"><i class="bi bi-image me-1"></i> Image</span>
+                                    </div>
                                     <div class="position-absolute top-0 end-0 m-2" style="z-index: 5;">
                                         <button type="button" class="btn btn-sm btn-light border text-danger shadow-xs btn-remove-image px-2 py-1 rounded-2"
                                                 title="Remove this image" data-index="{{ forloop.counter0 }}" data-url="{{ img.raw }}">
@@ -901,15 +929,13 @@
                                         <p class="small fw-semibold mb-1 text-dark text-truncate" title="{{ img.name }}">{{ img.name|default:'Warehouse Image' }}</p>
                                         <p class="text-muted small mb-3" style="font-size: 11px;">Image file preview unavailable or expired.</p>
                                         <div class="d-flex justify-content-center gap-2">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLotEnquiryModal">
-                                                <i class="bi bi-upload me-1"></i>Upload / Replace Image
-                                            </button>
                                             <button type="button" class="btn btn-sm btn-outline-danger btn-remove-image" data-index="{{ forloop.counter0 }}" data-url="{{ img.raw }}">
                                                 <i class="bi bi-trash me-1"></i>Remove
                                             </button>
                                         </div>
                                     </div>
                                 </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     {% elif batch_data.media %}
@@ -2704,15 +2730,15 @@
                                 <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:'' }}</textarea>
                             </div>
                             <div class="col-12">
-                                <label class="form-label small fw-semibold text-dark">Upload / Replace Warehouse Images</label>
-                                <input type="file" class="form-control" name="warehouse_images" multiple accept="image/*">
+                                <label class="form-label small fw-semibold text-dark">Upload / Replace Warehouse Images & Videos</label>
+                                <input type="file" class="form-control" name="warehouse_images" multiple accept="image/*,video/*">
                                 <div class="form-check mt-2">
                                     <input class="form-check-input" type="checkbox" name="replace_all_images" id="replaceAllImages">
                                     <label class="form-check-label small text-muted" for="replaceAllImages">
-                                        Replace existing images (check this to remove broken/old images and keep only the new upload)
+                                        Replace existing media (check this to remove old media and keep only the new upload)
                                     </label>
                                 </div>
-                                <small class="text-muted d-block mt-1">Select warehouse or product photos (.png, .jpg, .webp). Uploaded images will be shown in the Product Media card.</small>
+                                <small class="text-muted d-block mt-1">Select warehouse/product photos (.png, .jpg, .webp) or videos (.mp4, .webm, .mov, .mkv). Uploaded media will appear in the Product Media card.</small>
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Upload / Replace Excel Manifest File (.xlsx / .csv)</label>
@@ -2761,3 +2787,77 @@
     </div>
 </div>
 {% endblock %}
+<!-- Dedicated Modal: Upload Lot Enquiry Media (Images & Videos) -->
+<div class="modal fade" id="uploadLotMediaModal" tabindex="-1" aria-labelledby="uploadLotMediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="uploadLotMediaModalLabel">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary"></i> Upload Lot Media (Images & Videos)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadLotMediaForm" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Select Photos or Videos</label>
+                        <input type="file" class="form-control" name="media_files" id="lotMediaFilesInput" multiple accept="image/*,video/*" required>
+                        <small class="text-muted d-block mt-1">
+                            Supported image formats: .png, .jpg, .jpeg, .webp, .gif<br>
+                            Supported video formats: .mp4, .webm, .mov, .mkv, .avi
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4" id="btnSubmitLotMedia">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Upload Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const lotMediaForm = document.getElementById('uploadLotMediaForm');
+    if (lotMediaForm) {
+        lotMediaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitLotMedia');
+            const filesInput = document.getElementById('lotMediaFilesInput');
+            if (!filesInput.files || filesInput.files.length === 0) {
+                alert('Please select at least one image or video to upload.');
+                return;
+            }
+
+            const formData = new FormData(this);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+            try {
+                const res = await fetch('/admin/api/enquiries/lots/{{ enquiry.id }}/upload-media/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to upload media.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Upload Now';
+                }
+            } catch (err) {
+                alert('Network error while uploading media.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Upload Now';
+            }
+        });
+    }
+});
+</script>

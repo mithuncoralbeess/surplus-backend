@@ -8,6 +8,7 @@ import logging
 from django.db import transaction
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from django.core.cache import cache
 
 from .models import Product, Lot, ProductImage, VendorDetails
 from .typesense_service import index_product, delete_product, index_lot, delete_lot
@@ -20,6 +21,10 @@ def product_post_save_sync(sender, instance, **kwargs):
     """
     On product save/update, synchronize document with Typesense after DB transaction commits.
     """
+    try:
+        cache.clear()
+    except Exception as e:
+        logger.warning(f"Failed to clear cache on product save: {e}")
     def _sync():
         try:
             index_product(instance)
@@ -34,6 +39,10 @@ def product_post_delete_sync(sender, instance, **kwargs):
     """
     On product deletion, purge document from Typesense after DB transaction commits.
     """
+    try:
+        cache.clear()
+    except Exception as e:
+        logger.warning(f"Failed to clear cache on product delete: {e}")
     prod_id = instance.id
 
     def _sync():
@@ -50,6 +59,10 @@ def lot_post_save_sync(sender, instance, **kwargs):
     """
     On lot save/update, synchronize document with Typesense after DB transaction commits.
     """
+    try:
+        cache.clear()
+    except Exception as e:
+        logger.warning(f"Failed to clear cache on lot save: {e}")
     def _sync():
         try:
             index_lot(instance)
@@ -64,6 +77,10 @@ def lot_post_delete_sync(sender, instance, **kwargs):
     """
     On lot deletion, purge document from Typesense after DB transaction commits.
     """
+    try:
+        cache.clear()
+    except Exception as e:
+        logger.warning(f"Failed to clear cache on lot delete: {e}")
     lot_id = instance.id
 
     def _sync():

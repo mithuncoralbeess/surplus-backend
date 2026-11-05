@@ -42,6 +42,9 @@ from .views import (
     download_lot_manifest_template_view,
     seller_enquiry_status_api,
     seller_enquiry_edit_api,
+    upload_seller_enquiry_media_api,
+    remove_seller_enquiry_media_api,
+    upload_lot_enquiry_media_api,
     lot_enquiry_status_api,
     lot_enquiry_edit_api,
     remove_lot_image_api,
@@ -150,6 +153,8 @@ urlpatterns = [
     path("enquiries/seller/<str:status_filter>/", seller_enquiries_view, name="seller_enquiries_filtered"),
     path("api/enquiries/seller/<int:enquiry_id>/status/", seller_enquiry_status_api, name="seller_enquiry_status_api"),
     path("api/enquiries/seller/<int:enquiry_id>/edit/", seller_enquiry_edit_api, name="seller_enquiry_edit_api"),
+    path("api/enquiries/seller/<int:enquiry_id>/upload-media/", upload_seller_enquiry_media_api, name="upload_seller_enquiry_media_api"),
+    path("api/enquiries/seller/<int:enquiry_id>/remove-media/", remove_seller_enquiry_media_api, name="remove_seller_enquiry_media_api"),
 
     # Enquiries: Lot Batch Enquiries (BLK-XXXXX)
     path("lots/add/", add_lot_view, name="add_lot"),
@@ -161,6 +166,8 @@ urlpatterns = [
     path("api/enquiries/lots/<int:enquiry_id>/status/", lot_enquiry_status_api, name="lot_enquiry_status_api"),
     path("api/enquiries/lots/<int:enquiry_id>/edit/", lot_enquiry_edit_api, name="lot_enquiry_edit_api"),
     path("api/enquiries/lots/<int:enquiry_id>/remove-image/", remove_lot_image_api, name="remove_lot_image_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/remove-media/", remove_lot_image_api, name="remove_lot_media_api"),
+    path("api/enquiries/lots/<int:enquiry_id>/upload-media/", upload_lot_enquiry_media_api, name="upload_lot_enquiry_media_api"),
     path("api/enquiries/lots/<int:enquiry_id>/upload-manifest/", upload_lot_manifest_api, name="upload_lot_manifest_api"),
     path("api/enquiries/lots/<int:enquiry_id>/parse/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api"),
     path("api/enquiries/lots/<int:enquiry_id>/parse-spreadsheet/", parse_lot_spreadsheet_api, name="parse_lot_spreadsheet_api_alt"),
