@@ -282,23 +282,233 @@
                     </div>
                 </div>
 
-                <!-- SEO & Meta Tags Card -->
-                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-search text-success me-2"></i>SEO & Search Engine Metadata</h6>
-                    
-                    <div class="mb-3">
-                        <label for="metaTitleInput" class="form-label fw-semibold text-dark small">SEO Meta Title</label>
-                        <input type="text" class="form-control form-control-sm" id="metaTitleInput" placeholder="Meta title for Google search results..." value="{{ blog.meta_title|default:'' }}">
+                <!-- ============================================================= -->
+                <!-- FULL YOAST-STYLE SEO PLUGIN BOX -->
+                <!-- ============================================================= -->
+                <div class="yoast-seo-box mb-4">
+                    <div class="yoast-header">
+                        <h5 class="yoast-title">
+                            <i class="bi bi-google text-primary fs-5"></i>
+                            <span>Search Engine Optimization (SEO &amp; Meta Tags)</span>
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="seo-score-pill score-ok" id="overallSeoScoreBadge">
+                                <i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i>
+                                <span id="overallSeoScoreText">SEO: Needs Analysis</span>
+                            </span>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="metaDescInput" class="form-label fw-semibold text-dark small">SEO Meta Description</label>
-                        <textarea class="form-control form-control-sm" id="metaDescInput" rows="3" placeholder="Brief summary for Google search snippets (150-160 chars)...">{{ blog.meta_description|default:'' }}</textarea>
+                    <!-- Yoast Tabs Nav -->
+                    <div class="yoast-nav-tabs">
+                        <button type="button" class="yoast-tab-btn active" data-tab="tab-blog-seo-general">
+                            <i class="bi bi-search"></i>
+                            <span>SEO General</span>
+                        </button>
+                        <button type="button" class="yoast-tab-btn" data-tab="tab-blog-seo-social">
+                            <i class="bi bi-share"></i>
+                            <span>Social (OG / Twitter)</span>
+                        </button>
+                        <button type="button" class="yoast-tab-btn" data-tab="tab-blog-seo-advanced">
+                            <i class="bi bi-gear"></i>
+                            <span>Advanced Robots</span>
+                        </button>
+                        <button type="button" class="yoast-tab-btn" data-tab="tab-blog-seo-schema">
+                            <i class="bi bi-code-square"></i>
+                            <span>Schema &amp; JSON-LD</span>
+                        </button>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="metaKeywordsInput" class="form-label fw-semibold text-dark small">Meta Keywords</label>
-                        <input type="text" class="form-control form-control-sm" id="metaKeywordsInput" placeholder="Comma-separated keywords e.g. surplus, inventory, b2b" value="{{ blog.meta_keywords|default:'' }}">
+                    <!-- Tab 1: SEO General -->
+                    <div class="yoast-tab-content" id="tab-blog-seo-general">
+                        <!-- Focus Keyphrase -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="focusKeyphraseInput">Focus Keyphrase</label>
+                                <span class="text-muted small">Target keyword you want this article to rank for</span>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-key text-primary"></i></span>
+                                <input type="text" class="form-control" id="focusKeyphraseInput" value="{{ blog.focus_keyphrase|default:'' }}" placeholder="e.g. surplus electronics inventory liquidation">
+                            </div>
+                        </div>
+
+                        <!-- SEO Title & Meta Keywords Row -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaTitleInput">SEO / Meta Title</label>
+                                    <span class="text-muted small" id="metaTitleCounter">0 / 60 chars</span>
+                                </div>
+                                <input type="text" class="form-control" id="metaTitleInput" value="{{ blog.meta_title|default:'' }}" placeholder="Custom search result title (defaults to Blog Title)">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaKeywordsInput">Meta Keywords</label>
+                                    <span class="text-muted small">Comma separated</span>
+                                </div>
+                                <input type="text" class="form-control" id="metaKeywordsInput" value="{{ blog.meta_keywords|default:'' }}" placeholder="e.g. surplus, liquidation, wholesale, b2b inventory">
+                            </div>
+                        </div>
+
+                        <!-- Meta Description -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaDescInput">Meta Description</label>
+                                <span class="text-muted small" id="metaDescCounter">0 / 160 chars</span>
+                            </div>
+                            <textarea class="form-control" id="metaDescInput" rows="3" maxlength="220" placeholder="Brief summary displayed in Google search results (120-160 characters recommended)">{{ blog.meta_description|default:'' }}</textarea>
+                            <div class="char-counter-bar">
+                                <div class="char-counter-fill" id="metaDescBar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Google Search Result Preview Simulation -->
+                        <div class="google-serp-preview-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-secondary text-uppercase"><i class="bi bi-google me-1 text-primary"></i> Google Search Snippet Preview</div>
+                                <span class="badge bg-secondary-subtle text-secondary small">Desktop &amp; Mobile</span>
+                            </div>
+                            <div class="serp-brand-row">
+                                <div class="serp-favicon">S</div>
+                                <span class="serp-sitename">Surplus Market</span>
+                                <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplusmarket.com/blog/{{ blog.slug|default:"article-slug" }}</span>
+                            </div>
+                            <div class="serp-result-headline" id="serpTitlePreview">{% if blog.meta_title %}{{ blog.meta_title }}{% elif blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %} | Surplus Market Insights</div>
+                            <p class="serp-result-snippet" id="serpDescPreview">{{ blog.meta_description|default:blog.excerpt|default:"Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate." }}</p>
+                        </div>
+
+                        <!-- Real-Time Yoast SEO Checklist Analysis -->
+                        <div class="seo-analysis-panel mt-3">
+                            <div class="analysis-header">
+                                <i class="bi bi-clipboard-check text-primary"></i>
+                                <span>Real-Time SEO Analysis Checklist</span>
+                            </div>
+                            <ul class="analysis-list">
+                                <li id="chkKeyphraseTitle" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in SEO Title</span></li>
+                                <li id="chkKeyphraseDesc" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in Meta Description</span></li>
+                                <li id="chkKeyphraseSlug" class="warning"><i class="bi bi-circle-fill"></i> <span>Focus keyphrase in URL Slug</span></li>
+                                <li id="chkTitleLength" class="warning"><i class="bi bi-circle-fill"></i> <span>SEO Title optimal length (40-60 characters)</span></li>
+                                <li id="chkDescLength" class="warning"><i class="bi bi-circle-fill"></i> <span>Meta Description optimal length (120-160 characters)</span></li>
+                                <li id="chkContentLength" class="warning"><i class="bi bi-circle-fill"></i> <span>Article content body length check (> 150 words)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Social Media (Open Graph & Twitter Cards) -->
+                    <div class="yoast-tab-content d-none" id="tab-blog-seo-social">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-facebook me-1"></i> Facebook &amp; LinkedIn (Open Graph)</h6>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="ogTitleInput">Facebook Title (OG Title)</label>
+                                    <input type="text" class="form-control" id="ogTitleInput" value="{{ blog.og_title|default:'' }}" placeholder="Defaults to SEO Title if empty">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="ogDescInput">Facebook Description</label>
+                                    <textarea class="form-control" id="ogDescInput" rows="3" placeholder="Defaults to Meta Description if empty">{{ blog.og_description|default:'' }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="ogImageInput">Social Share Image URL</label>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="copyOgFromFeaturedBtn" style="font-size: 0.75rem;">
+                                            <i class="bi bi-image me-1"></i> Use Featured Image
+                                        </button>
+                                    </div>
+                                    <input type="text" class="form-control" id="ogImageInput" value="{{ blog.og_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/cover.jpg">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-info mb-3"><i class="bi bi-twitter-x me-1"></i> Twitter / X Cards</h6>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="twitterTitleInput">Twitter Title</label>
+                                    <input type="text" class="form-control" id="twitterTitleInput" value="{{ blog.twitter_title|default:'' }}" placeholder="Defaults to Facebook Title if empty">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-secondary text-uppercase" for="twitterDescInput">Twitter Description</label>
+                                    <textarea class="form-control" id="twitterDescInput" rows="3" placeholder="Defaults to Facebook Description if empty">{{ blog.twitter_description|default:'' }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="twitterImageInput">Twitter Image URL</label>
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="copyTwitterFromFeaturedBtn" style="font-size: 0.75rem;">
+                                            <i class="bi bi-image me-1"></i> Use Featured Image
+                                        </button>
+                                    </div>
+                                    <input type="text" class="form-control" id="twitterImageInput" value="{{ blog.twitter_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/twitter.jpg">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Social Card Preview -->
+                        <div class="mt-3">
+                            <div class="small fw-bold text-secondary text-uppercase mb-2"><i class="bi bi-eye me-1"></i> Social Card Preview Simulation</div>
+                            <div class="social-preview-card">
+                                <div class="social-preview-image" id="socialPreviewImgBox">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <div class="social-preview-body">
+                                    <div class="social-domain">SURPLUSMARKET.COM</div>
+                                    <div class="social-title" id="socialPreviewTitle">{% if blog.og_title %}{{ blog.og_title }}{% elif blog.meta_title %}{{ blog.meta_title }}{% elif blog.title %}{{ blog.title }}{% else %}Article Title{% endif %}</div>
+                                    <p class="social-desc" id="socialPreviewDesc">{% if blog.og_description %}{{ blog.og_description }}{% elif blog.meta_description %}{{ blog.meta_description }}{% elif blog.excerpt %}{{ blog.excerpt }}{% else %}Article description will be displayed when shared on social networks.{% endif %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Advanced Technical SEO -->
+                    <div class="yoast-tab-content d-none" id="tab-blog-seo-advanced">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsIndexSelect">Robots Index</label>
+                                <select class="form-select" id="robotsIndexSelect">
+                                    <option value="index" {% if blog.robots_index == 'index' or not blog %}selected{% endif %}>🟢 index (Allow search engines to index this article)</option>
+                                    <option value="noindex" {% if blog.robots_index == 'noindex' %}selected{% endif %}>🔴 noindex (Do not show this article in search results)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsFollowSelect">Robots Follow</label>
+                                <select class="form-select" id="robotsFollowSelect">
+                                    <option value="follow" {% if blog.robots_follow == 'follow' or not blog %}selected{% endif %}>🟢 follow (Follow links on this article)</option>
+                                    <option value="nofollow" {% if blog.robots_follow == 'nofollow' %}selected{% endif %}>🔴 nofollow (Do not follow links on this article)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsAdvancedInput">Advanced Robots Directives</label>
+                                <input type="text" class="form-control" id="robotsAdvancedInput" value="{{ blog.robots_advanced|default:'' }}" placeholder="e.g. noarchive, nosnippet, noimageindex">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary text-uppercase" for="canonicalUrlInput">Canonical URL Override</label>
+                                <input type="text" class="form-control" id="canonicalUrlInput" value="{{ blog.canonical_url|default:'' }}" placeholder="https://surplusmarket.com/blog/preferred-slug/">
+                                <span class="text-muted small mt-1 d-block">Leave blank to use default self-referencing canonical URL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Schema & JSON-LD -->
+                    <div class="yoast-tab-content d-none" id="tab-blog-seo-schema">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="schemaTypeSelect">Schema Post Type</label>
+                            <select class="form-select" id="schemaTypeSelect">
+                                <option value="BlogPosting" {% if blog.schema_type == 'BlogPosting' or not blog %}selected{% endif %}>BlogPosting (Standard Blog Article)</option>
+                                <option value="Article" {% if blog.schema_type == 'Article' %}selected{% endif %}>Article (General Editorial Article)</option>
+                                <option value="NewsArticle" {% if blog.schema_type == 'NewsArticle' %}selected{% endif %}>NewsArticle (Press Release &amp; News)</option>
+                                <option value="TechArticle" {% if blog.schema_type == 'TechArticle' %}selected{% endif %}>TechArticle (Technical Guide / Specification)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary text-uppercase" for="structuredDataTextarea">Custom JSON-LD Schema / Additional Meta Tags</label>
+                            <textarea class="form-control font-monospace" id="structuredDataTextarea" rows="6" placeholder='<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "My Blog Article"
+}
+</script>'>{{ blog.structured_data|default:'' }}</textarea>
+                            <span class="text-muted small mt-1 d-block">Optional: Add custom JSON-LD schema or specific meta tags for this article.</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -747,6 +957,187 @@ document.addEventListener('DOMContentLoaded', () => {
         return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
     }
 
+
+    // =========================================================
+    // YOAST SEO TABS & LIVE ANALYSIS ENGINE
+    // =========================================================
+    document.querySelectorAll('.yoast-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.yoast-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.yoast-tab-content').forEach(c => c.classList.add('d-none'));
+
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-tab');
+            document.getElementById(targetId)?.classList.remove('d-none');
+        });
+    });
+
+    const focusKeyphraseInput = document.getElementById('focusKeyphraseInput');
+    const metaTitleInput = document.getElementById('metaTitleInput');
+    const metaDescInput = document.getElementById('metaDescInput');
+    const metaKeywordsInput = document.getElementById('metaKeywordsInput');
+    const canonicalUrlInput = document.getElementById('canonicalUrlInput');
+    const ogTitleInput = document.getElementById('ogTitleInput');
+    const ogDescInput = document.getElementById('ogDescInput');
+    const ogImageInput = document.getElementById('ogImageInput');
+    const twitterTitleInput = document.getElementById('twitterTitleInput');
+    const twitterDescInput = document.getElementById('twitterDescInput');
+    const twitterImageInput = document.getElementById('twitterImageInput');
+
+    const metaTitleCounter = document.getElementById('metaTitleCounter');
+    const metaDescCounter = document.getElementById('metaDescCounter');
+    const metaDescBar = document.getElementById('metaDescBar');
+
+    const serpTitlePreview = document.getElementById('serpTitlePreview');
+    const serpUrlPreview = document.getElementById('serpUrlPreview');
+    const serpDescPreview = document.getElementById('serpDescPreview');
+
+    const socialPreviewTitle = document.getElementById('socialPreviewTitle');
+    const socialPreviewDesc = document.getElementById('socialPreviewDesc');
+    const socialPreviewImgBox = document.getElementById('socialPreviewImgBox');
+
+    function updateYoastSeoAnalysis() {
+        const title = (metaTitleInput?.value.trim() || titleInput?.value.trim() || 'Blog Title');
+        const slug = slugInput?.value.trim() || 'article-slug';
+        const desc = metaDescInput?.value.trim() || excerptInput?.value.trim() || 'Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate.';
+        const keyphrase = focusKeyphraseInput?.value.trim().toLowerCase() || '';
+
+        // Content word count from quill or source textarea
+        const rawHtml = isCodeViewActive ? htmlSourceTextarea.value : quill.root.innerHTML;
+        const textOnly = rawHtml.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').trim();
+        const words = textOnly ? textOnly.split(/\s+/).length : 0;
+
+        // SERP preview updates
+        if (serpTitlePreview) serpTitlePreview.textContent = title + ' | Surplus Market Insights';
+        if (serpUrlPreview) serpUrlPreview.textContent = 'https://surplusmarket.com/blog/' + slug;
+        if (serpDescPreview) serpDescPreview.textContent = desc;
+
+        // Title length counter
+        if (metaTitleCounter && metaTitleInput) {
+            metaTitleCounter.textContent = `${metaTitleInput.value.length} / 60 chars`;
+        }
+
+        // Meta Description counter & bar
+        if (metaDescCounter && metaDescInput) {
+            const len = metaDescInput.value.length;
+            metaDescCounter.textContent = `${len} / 160 chars`;
+            if (metaDescBar) {
+                const pct = Math.min(100, Math.round((len / 160) * 100));
+                metaDescBar.style.width = pct + '%';
+                metaDescBar.className = 'char-counter-fill';
+                if (len > 160) metaDescBar.classList.add('fill-danger');
+                else if (len >= 120) metaDescBar.classList.add('fill-success');
+                else if (len > 0) metaDescBar.classList.add('fill-warning');
+            }
+        }
+
+        // Social Preview
+        if (socialPreviewTitle) {
+            socialPreviewTitle.textContent = ogTitleInput?.value.trim() || title;
+        }
+        if (socialPreviewDesc) {
+            socialPreviewDesc.textContent = ogDescInput?.value.trim() || desc;
+        }
+        if (socialPreviewImgBox) {
+            const ogImg = ogImageInput?.value.trim() || twitterImageInput?.value.trim() || featuredImageUrlInput?.value.trim();
+            if (ogImg) {
+                socialPreviewImgBox.style.backgroundImage = `url(${ogImg})`;
+                socialPreviewImgBox.innerHTML = '';
+            } else {
+                socialPreviewImgBox.style.backgroundImage = '';
+                socialPreviewImgBox.innerHTML = '<i class="bi bi-image"></i>';
+            }
+        }
+
+        // Checklist checks
+        let passedChecks = 0;
+        function setCheck(id, condition) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (condition) {
+                el.className = 'good';
+                el.querySelector('i').className = 'bi bi-check-circle-fill';
+                passedChecks++;
+            } else {
+                el.className = 'warning';
+                el.querySelector('i').className = 'bi bi-circle-fill';
+            }
+        }
+
+        setCheck('chkKeyphraseTitle', keyphrase && title.toLowerCase().includes(keyphrase));
+        setCheck('chkKeyphraseDesc', keyphrase && desc.toLowerCase().includes(keyphrase));
+        setCheck('chkKeyphraseSlug', keyphrase && slug.toLowerCase().includes(keyphrase.replace(/\s+/g, '-')));
+        setCheck('chkTitleLength', title.length >= 40 && title.length <= 60);
+        setCheck('chkDescLength', desc.length >= 120 && desc.length <= 160);
+        setCheck('chkContentLength', words >= 150);
+
+        // Score Badge
+        const scoreBadge = document.getElementById('overallSeoScoreBadge');
+        const scoreText = document.getElementById('overallSeoScoreText');
+        if (scoreBadge && scoreText) {
+            if (passedChecks >= 5) {
+                scoreBadge.className = 'seo-score-pill score-good';
+                scoreText.textContent = 'SEO: Good';
+            } else if (passedChecks >= 3) {
+                scoreBadge.className = 'seo-score-pill score-ok';
+                scoreText.textContent = 'SEO: OK';
+            } else {
+                scoreBadge.className = 'seo-score-pill score-bad';
+                scoreText.textContent = 'SEO: Needs Work';
+            }
+        }
+    }
+
+    // Attach listeners for live SEO updates
+    [
+        focusKeyphraseInput, metaTitleInput, metaDescInput, metaKeywordsInput,
+        ogTitleInput, ogDescInput, ogImageInput, twitterTitleInput, twitterDescInput, twitterImageInput,
+        titleInput, slugInput, excerptInput
+    ].forEach(input => {
+        if (input) {
+            input.addEventListener('input', updateYoastSeoAnalysis);
+            input.addEventListener('change', updateYoastSeoAnalysis);
+        }
+    });
+
+    quill.on('text-change', () => {
+        updateYoastSeoAnalysis();
+    });
+
+    htmlSourceTextarea?.addEventListener('input', () => {
+        updateYoastSeoAnalysis();
+    });
+
+    // Auto-populate OG and Twitter images from Featured Image
+    const copyOgBtn = document.getElementById('copyOgFromFeaturedBtn');
+    if (copyOgBtn) {
+        copyOgBtn.addEventListener('click', () => {
+            const currentImg = featuredImageUrlInput?.value.trim();
+            if (currentImg && ogImageInput) {
+                ogImageInput.value = currentImg;
+                updateYoastSeoAnalysis();
+            } else {
+                alert('No featured image URL is currently set.');
+            }
+        });
+    }
+
+    const copyTwitterBtn = document.getElementById('copyTwitterFromFeaturedBtn');
+    if (copyTwitterBtn) {
+        copyTwitterBtn.addEventListener('click', () => {
+            const currentImg = featuredImageUrlInput?.value.trim();
+            if (currentImg && twitterImageInput) {
+                twitterImageInput.value = currentImg;
+                updateYoastSeoAnalysis();
+            } else {
+                alert('No featured image URL is currently set.');
+            }
+        });
+    }
+
+    // Initial SEO evaluation
+    updateYoastSeoAnalysis();
+
     // Submit handler
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -769,6 +1160,19 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('meta_title', document.getElementById('metaTitleInput').value);
             formData.append('meta_description', document.getElementById('metaDescInput').value);
             formData.append('meta_keywords', document.getElementById('metaKeywordsInput').value);
+            formData.append('focus_keyphrase', document.getElementById('focusKeyphraseInput')?.value || '');
+            formData.append('canonical_url', document.getElementById('canonicalUrlInput')?.value || '');
+            formData.append('robots_index', document.getElementById('robotsIndexSelect')?.value || 'index');
+            formData.append('robots_follow', document.getElementById('robotsFollowSelect')?.value || 'follow');
+            formData.append('robots_advanced', document.getElementById('robotsAdvancedInput')?.value || '');
+            formData.append('og_title', document.getElementById('ogTitleInput')?.value || '');
+            formData.append('og_description', document.getElementById('ogDescInput')?.value || '');
+            formData.append('og_image', document.getElementById('ogImageInput')?.value || '');
+            formData.append('twitter_title', document.getElementById('twitterTitleInput')?.value || '');
+            formData.append('twitter_description', document.getElementById('twitterDescInput')?.value || '');
+            formData.append('twitter_image', document.getElementById('twitterImageInput')?.value || '');
+            formData.append('schema_type', document.getElementById('schemaTypeSelect')?.value || 'BlogPosting');
+            formData.append('structured_data', document.getElementById('structuredDataTextarea')?.value || '');
             formData.append('read_time', document.getElementById('readTimeInput').value);
             formData.append('status', document.getElementById('blogStatusSelect').value);
             formData.append('clear_image', clearImageInput.value);

@@ -1754,9 +1754,28 @@ class BlogPost(models.Model):
     featured_image_url = models.CharField(max_length=500, blank=True, default="")
     
     # Yoast SEO & Meta Tags
+    focus_keyphrase = models.CharField(max_length=255, blank=True, default="", help_text="Main target search keyword")
     meta_title = models.CharField(max_length=255, blank=True, default="")
     meta_description = models.TextField(blank=True, default="")
     meta_keywords = models.CharField(max_length=255, blank=True, default="")
+    canonical_url = models.CharField(max_length=500, blank=True, default="", help_text="Canonical URL tag")
+    
+    # Advanced Robots Control
+    robots_index = models.CharField(max_length=20, default="index", choices=(("index", "Index"), ("noindex", "Noindex")))
+    robots_follow = models.CharField(max_length=20, default="follow", choices=(("follow", "Follow"), ("nofollow", "Nofollow")))
+    robots_advanced = models.CharField(max_length=100, blank=True, default="", help_text="e.g. noarchive, nosnippet, noimageindex")
+
+    # Social Media / Open Graph & Twitter Cards
+    og_title = models.CharField(max_length=255, blank=True, default="")
+    og_description = models.TextField(blank=True, default="")
+    og_image = models.CharField(max_length=500, blank=True, default="")
+    twitter_title = models.CharField(max_length=255, blank=True, default="")
+    twitter_description = models.TextField(blank=True, default="")
+    twitter_image = models.CharField(max_length=500, blank=True, default="")
+    
+    # Structured Data & Schema
+    schema_type = models.CharField(max_length=100, default="BlogPosting")
+    structured_data = models.TextField(blank=True, default="", help_text="Custom JSON-LD schema or custom meta tags")
     
     # Metrics & Status
     read_time = models.PositiveIntegerField(default=3)

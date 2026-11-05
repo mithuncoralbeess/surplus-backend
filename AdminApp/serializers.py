@@ -228,6 +228,22 @@ class ContentPageSerializer(serializers.ModelSerializer):
             "content",
             "components",
             "seo",
+            "focus_keyphrase",
+            "meta_title",
+            "meta_description",
+            "meta_keywords",
+            "canonical_url",
+            "robots_index",
+            "robots_follow",
+            "robots_advanced",
+            "og_title",
+            "og_description",
+            "og_image",
+            "twitter_title",
+            "twitter_description",
+            "twitter_image",
+            "schema_type",
+            "structured_data",
             "status",
             "is_active",
             "show_in_header",
@@ -239,6 +255,24 @@ class ContentPageSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at", "created_by_name"]
+        extra_kwargs = {
+            "focus_keyphrase": {"required": False, "allow_blank": True},
+            "meta_title": {"required": False, "allow_blank": True},
+            "meta_description": {"required": False, "allow_blank": True},
+            "meta_keywords": {"required": False, "allow_blank": True},
+            "canonical_url": {"required": False, "allow_blank": True},
+            "robots_index": {"required": False, "allow_blank": True},
+            "robots_follow": {"required": False, "allow_blank": True},
+            "robots_advanced": {"required": False, "allow_blank": True},
+            "og_title": {"required": False, "allow_blank": True},
+            "og_description": {"required": False, "allow_blank": True},
+            "og_image": {"required": False, "allow_blank": True},
+            "twitter_title": {"required": False, "allow_blank": True},
+            "twitter_description": {"required": False, "allow_blank": True},
+            "twitter_image": {"required": False, "allow_blank": True},
+            "schema_type": {"required": False, "allow_blank": True},
+            "structured_data": {"required": False, "allow_blank": True},
+        }
 
     def get_created_by_name(self, obj):
         if obj.created_by:
@@ -251,7 +285,7 @@ class ContentPageSerializer(serializers.ModelSerializer):
             "meta_title": obj.meta_title or obj.title or "",
             "meta_description": obj.meta_description or "",
             "meta_keywords": obj.meta_keywords or "",
-            "canonical_url": obj.canonical_url or f"https://surplus.com/{obj.slug}/",
+            "canonical_url": obj.canonical_url or f"https://surplusmarket.com/{obj.slug}/",
             "robots_index": obj.robots_index or "index",
             "robots_follow": obj.robots_follow or "follow",
             "robots_advanced": obj.robots_advanced or "",
@@ -262,16 +296,20 @@ class ContentPageSerializer(serializers.ModelSerializer):
             "twitter_description": obj.twitter_description or "",
             "twitter_image": obj.twitter_image or "",
             "schema_type": obj.schema_type or "WebPage",
-            "structured_data": obj.structured_data or {},
+            "structured_data": obj.structured_data or "",
         }
 
     def to_internal_value(self, data):
-        if isinstance(data, dict) and "seo" in data and isinstance(data["seo"], dict):
+        if isinstance(data, dict):
             data = data.copy()
-            seo_dict = data.pop("seo")
-            for key, val in seo_dict.items():
-                if key not in data:
-                    data[key] = val
+            if "seo" in data and isinstance(data["seo"], dict):
+                seo_dict = data.pop("seo")
+                for key, val in seo_dict.items():
+                    if key not in data:
+                        data[key] = val
+            if "structured_data" in data and isinstance(data["structured_data"], (dict, list)):
+                import json
+                data["structured_data"] = json.dumps(data["structured_data"])
         return super().to_internal_value(data)
 
 
