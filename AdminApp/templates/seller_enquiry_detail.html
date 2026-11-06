@@ -94,6 +94,13 @@
 
             {% if enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
+                class="detail-action-btn btn-action-correction btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
+            </button>
+            <button type="button"
                 class="detail-action-btn btn-action-decline btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
                 <i class="bi bi-x-circle-fill"></i>
@@ -106,12 +113,26 @@
                 <i class="bi bi-check-circle-fill"></i>
                 <span>Approve</span>
             </button>
+            <button type="button"
+                class="detail-action-btn btn-action-correction btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
+            </button>
             {% else %}
             <button type="button"
                 class="detail-action-btn btn-action-approve btn-action-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
                 <i class="bi bi-check-circle-fill"></i>
                 <span>Approve</span>
+            </button>
+            <button type="button"
+                class="detail-action-btn btn-action-correction btn-action-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
             </button>
             <button type="button"
                 class="detail-action-btn btn-action-decline btn-action-status"
@@ -122,6 +143,43 @@
             {% endif %}
         </div>
     </div>
+
+        {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}
+    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
+        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <span>Correction Requested from Seller</span>
+                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
+            </h6>
+            <p class="mb-1 text-dark small" style="line-height: 1.5;">
+                <strong>Reason:</strong> {% if enquiry.raw_data.correction_reason %}{{ enquiry.raw_data.correction_reason }}{% elif product_data.correction_reason %}{{ product_data.correction_reason }}{% else %}No specific reason recorded.{% endif %}
+            </p>
+            {% if enquiry.raw_data.correction_suggestion or product_data.correction_suggestion %}
+            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
+                <strong>Admin Suggestion:</strong> {% if enquiry.raw_data.correction_suggestion %}{{ enquiry.raw_data.correction_suggestion }}{% else %}{{ product_data.correction_suggestion }}{% endif %}
+            </p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-action-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="correction_needed">
+            <i class="bi bi-pencil-square me-1"></i> Update Correction
+        </button>
+    </div>
+    {% endif %}
+    {% if enquiry.enquiry_status|lower == 'declined' %}
+    <div class="alert alert-danger border border-danger-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3">
+        <i class="bi bi-x-circle-fill text-danger fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-danger mb-1">Listing Declined & Feedback Sent to Seller</h6>
+            <p class="mb-0 text-dark small" style="line-height: 1.5;">
+                <strong>Rejection Reason:</strong> {% if enquiry.raw_data.rejection_reason %}{{ enquiry.raw_data.rejection_reason }}{% elif product_data.rejection_reason %}{{ product_data.rejection_reason }}{% else %}No specific reason recorded.{% endif %}
+            </p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1 fw-semibold rounded-pill btn-action-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="declined">
+            <i class="bi bi-pencil-square me-1"></i> Update Reason & Re-send
+        </button>
+    </div>
+    {% endif %}
 
     <div class="row mb-4">
         <!-- User Details -->
@@ -286,7 +344,7 @@
                                 <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-tag-fill text-success me-1"></i> Price</span>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
-                                    <span class="fs-5 fw-medium text-dark">{{ product_data.current_price|default:product_data.liquidating_price|default:"N/A" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{% if product_data.current_price %}{{ product_data.current_price }}{% elif product_data.liquidating_price %}{{ product_data.liquidating_price }}{% else %}N/A{% endif %}</span>
                                 </div>
                             </div>
                             <div class="inline-card border-left-primary py-2 px-3 bg-white shadow-sm rounded">
@@ -300,7 +358,7 @@
                                 <span class="inline-label d-block text-muted mb-2" style="font-size: 0.85rem;"><i class="bi bi-receipt text-warning me-1"></i> MSRP</span>
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-primary-subtle text-primary me-2">{{ product_data.currency|default:"AED" }}</span>
-                                    <span class="fs-5 fw-medium text-dark">{{ product_data.msrp|default:product_data.previous_price|default:"N/A" }}</span>
+                                    <span class="fs-5 fw-medium text-dark">{% if product_data.msrp %}{{ product_data.msrp }}{% elif product_data.previous_price %}{{ product_data.previous_price }}{% else %}N/A{% endif %}</span>
                                 </div>
                             </div>
                             <div class="inline-card border-left-danger py-2 px-3 bg-white shadow-sm rounded">
@@ -372,13 +430,13 @@
                             <div class="col-md-6 col-lg-4">
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Country</span>
-                                    <span class="text-dark fw-bold"><i class="bi bi-globe text-primary me-1"></i> {{ enquiry.inventory_country|default:product_data.inventory_country|default:"N/A" }}</span>
+                                    <span class="text-dark fw-bold"><i class="bi bi-globe text-primary me-1"></i> {% if enquiry.inventory_country %}{{ enquiry.inventory_country }}{% elif product_data.inventory_country %}{{ product_data.inventory_country }}{% else %}N/A{% endif %}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Inventory Location</span>
-                                    <span class="text-dark fw-medium"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ enquiry.inventory_location|default:product_data.inventory_location|default:"N/A" }}</span>
+                                    <span class="text-dark fw-medium"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {% if enquiry.inventory_location %}{{ enquiry.inventory_location }}{% elif product_data.inventory_location %}{{ product_data.inventory_location }}{% else %}N/A{% endif %}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
@@ -574,6 +632,32 @@
                 const id = this.dataset.id;
                 const newStatus = this.dataset.status;
 
+                if (newStatus && newStatus.toLowerCase() === 'declined') {
+                    if (typeof window.openRejectionModal === 'function') {
+                        window.openRejectionModal({
+                            id: id,
+                            type: 'product',
+                            title: "{% if enquiry.title %}{{ enquiry.title|escapejs }}{% elif product_data.product_name %}{{ product_data.product_name|escapejs }}{% else %}Product Listing{% endif %}",
+                            onSuccess: () => location.reload()
+                        });
+                        return;
+                    }
+                }
+
+                if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
+                    if (typeof window.openCorrectionModal === 'function') {
+                        window.openCorrectionModal({
+                            id: id,
+                            type: 'product',
+                            title: "{% if enquiry.title %}{{ enquiry.title|escapejs }}{% elif product_data.product_name %}{{ product_data.product_name|escapejs }}{% else %}Product Listing{% endif %}",
+                            initialReason: "{% if enquiry.raw_data.correction_reason %}{{ enquiry.raw_data.correction_reason|escapejs }}{% elif product_data.correction_reason %}{{ product_data.correction_reason|escapejs }}{% endif %}",
+                            initialSuggestion: "{% if enquiry.raw_data.correction_suggestion %}{{ enquiry.raw_data.correction_suggestion|escapejs }}{% elif product_data.correction_suggestion %}{{ product_data.correction_suggestion|escapejs }}{% endif %}",
+                            onSuccess: () => location.reload()
+                        });
+                        return;
+                    }
+                }
+
                 fetch(`/admin/api/enquiries/seller/${id}/status/`, {
                     method: 'PUT',
                     headers: {
@@ -763,6 +847,11 @@
             if (enqSelect && actSelect) {
                 const syncActiveState = () => {
                     const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const isDeclined = enqSelect.value.toLowerCase() === 'declined';
+                    const rejWrapper = document.getElementById('sellerEditRejectionWrapper');
+                    if (rejWrapper) {
+                        rejWrapper.style.display = isDeclined ? 'block' : 'none';
+                    }
                     const activeOpt = actSelect.querySelector('option[value="active"]');
                     if (activeOpt) {
                         activeOpt.disabled = !isApproved;
@@ -866,14 +955,36 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Product Name / Title</label>
-                                <input type="text" class="form-control" name="title" value="{{ enquiry.title|default:product_data.product_name|default:'' }}" required>
+                                <input type="text" class="form-control" name="title" value="{% if enquiry.title %}{{ enquiry.title }}{% elif product_data.product_name %}{{ product_data.product_name }}{% endif %}" required>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Enquiry Status</label>
                                 <select class="form-select" name="enquiry_status">
                                     <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
                                     <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
-                                    <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                                    <option value="declined"     {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}
+    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
+        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <span>Correction Requested from Seller</span>
+                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
+            </h6>
+            <p class="mb-1 text-dark small" style="line-height: 1.5;">
+                <strong>Reason:</strong> {% if enquiry.raw_data.correction_reason %}{{ enquiry.raw_data.correction_reason }}{% elif product_data.correction_reason %}{{ product_data.correction_reason }}{% else %}No specific reason recorded.{% endif %}
+            </p>
+            {% if enquiry.raw_data.correction_suggestion or product_data.correction_suggestion %}
+            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
+                <strong>Admin Suggestion:</strong> {% if enquiry.raw_data.correction_suggestion %}{{ enquiry.raw_data.correction_suggestion }}{% else %}{{ product_data.correction_suggestion }}{% endif %}
+            </p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-action-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="correction_needed">
+            <i class="bi bi-pencil-square me-1"></i> Update Correction
+        </button>
+    </div>
+    {% endif %}
+    {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -882,6 +993,18 @@
                                     <option value="active" {% if enquiry.is_active %}selected{% endif %}>Active</option>
                                     <option value="inactive" {% if not enquiry.is_active %}selected{% endif %}>Inactive</option>
                                 </select>
+                            </div>
+                                                        <div class="col-12" id="sellerEditCorrectionWrapper" style="{% if enquiry.enquiry_status|lower != 'correction_needed' and enquiry.enquiry_status|lower != 'needs_correction' and enquiry.enquiry_status|lower != 'correction' %}display: none;{% endif %}">
+                                <div class="p-3 rounded-3 border border-warning-subtle" style="background-color: #fffbeb;">
+                                    <label class="form-label small fw-semibold text-warning-emphasis mb-1">Reason for Correction (sent to seller)</label>
+                                    <textarea class="form-control rounded-3 mb-2" name="correction_reason" rows="2" placeholder="Explain what needs to be corrected...">{% if enquiry.raw_data.correction_reason %}{{ enquiry.raw_data.correction_reason }}{% elif product_data.correction_reason %}{{ product_data.correction_reason }}{% endif %}</textarea>
+                                    <label class="form-label small fw-semibold text-secondary mb-1">Admin Suggestions (Optional)</label>
+                                    <textarea class="form-control rounded-3" name="correction_suggestion" rows="2" placeholder="Suggestions for the seller...">{% if enquiry.raw_data.correction_suggestion %}{{ enquiry.raw_data.correction_suggestion }}{% elif product_data.correction_suggestion %}{{ product_data.correction_suggestion }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12" id="sellerEditRejectionWrapper" style="{% if enquiry.enquiry_status|lower != 'declined' %}display: none;{% endif %}">
+                                <label class="form-label small fw-semibold text-danger">Rejection Reason / Feedback (emailed to seller on decline)</label>
+                                <textarea class="form-control rounded-3" name="rejection_reason" rows="2" placeholder="Explain why this listing is declined...">{% if enquiry.raw_data.rejection_reason %}{{ enquiry.raw_data.rejection_reason }}{% elif product_data.rejection_reason %}{{ product_data.rejection_reason }}{% endif %}</textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Category</label>
@@ -898,11 +1021,11 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Brand Name</label>
-                                <input type="text" class="form-control" name="brand" value="{{ enquiry.brand|default:product_data.brand_name|default:'' }}">
+                                <input type="text" class="form-control" name="brand" value="{% if enquiry.brand %}{{ enquiry.brand }}{% elif product_data.brand_name %}{{ product_data.brand_name }}{% endif %}">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Model / Part No</label>
-                                <input type="text" class="form-control" name="model_no" value="{{ enquiry.model_no|default:product_data.model_no|default:'' }}">
+                                <input type="text" class="form-control" name="model_no" value="{% if enquiry.model_no %}{{ enquiry.model_no }}{% elif product_data.model_no %}{{ product_data.model_no }}{% endif %}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Stock Condition</label>
@@ -916,7 +1039,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Stock Quantity</label>
-                                <input type="number" class="form-control" name="stock_quantity" value="{{ enquiry.stock_quantity|default:product_data.quantity|default:'' }}">
+                                <input type="number" class="form-control" name="stock_quantity" value="{% if enquiry.stock_quantity %}{{ enquiry.stock_quantity }}{% elif product_data.quantity %}{{ product_data.quantity }}{% endif %}">
                             </div>
                         </div>
                     </div>
@@ -938,12 +1061,12 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">MSRP / Previous Price</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="msrp" id="edit_msrp" value="{{ enquiry.msrp|default:product_data.previous_price|default:'' }}" placeholder="0.00" required>
+                                <input type="number" step="0.01" min="0" class="form-control" name="msrp" id="edit_msrp" value="{% if enquiry.msrp %}{{ enquiry.msrp }}{% elif product_data.previous_price %}{{ product_data.previous_price }}{% endif %}" placeholder="0.00" required>
                                 <small class="text-muted" style="font-size: 11px;">Original retail value</small>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Liquidation Price</label>
-                                <input type="number" step="0.01" min="0" class="form-control" name="liquidating_price" id="edit_liquidating_price" value="{{ enquiry.liquidating_price|default:product_data.liquidating_price|default:'' }}" placeholder="0.00" required>
+                                <input type="number" step="0.01" min="0" class="form-control" name="liquidating_price" id="edit_liquidating_price" value="{% if enquiry.liquidating_price %}{{ enquiry.liquidating_price }}{% elif product_data.liquidating_price %}{{ product_data.liquidating_price }}{% endif %}" placeholder="0.00" required>
                                 <small class="text-muted" style="font-size: 11px;">Seller payout value</small>
                             </div>
                             <div class="col-md-2">
@@ -955,7 +1078,7 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold text-dark">Offer (%)</label>
-                                <input type="text" class="form-control bg-light text-muted font-monospace" id="edit_calc_offer" name="offer" value="{{ enquiry.offer|default:product_data.offer|default:'0' }}%" readonly tabindex="-1" style="cursor: not-allowed;">
+                                <input type="text" class="form-control bg-light text-muted font-monospace" id="edit_calc_offer" name="offer" value="{% if enquiry.offer %}{{ enquiry.offer }}{% elif product_data.offer %}{{ product_data.offer }}{% else %}0{% endif %}%" readonly tabindex="-1" style="cursor: not-allowed;">
                                 <small class="text-muted" style="font-size: 11px;">Auto from MSRP</small>
                             </div>
                             <div class="col-12" id="edit_pricing_warning_box" style="display: none;">
@@ -982,15 +1105,15 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Dimensions</label>
-                                <input type="text" class="form-control" name="dimensions" value="{{ enquiry.dimensions|default:product_data.dimensions|default:'' }}">
+                                <input type="text" class="form-control" name="dimensions" value="{% if enquiry.dimensions %}{{ enquiry.dimensions }}{% elif product_data.dimensions %}{{ product_data.dimensions }}{% endif %}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Manufacturing Country</label>
-                                <input type="text" class="form-control" name="manufacturing_country" value="{{ enquiry.manufacturing_country|default:product_data.manufacturing_country|default:'' }}">
+                                <input type="text" class="form-control" name="manufacturing_country" value="{% if enquiry.manufacturing_country %}{{ enquiry.manufacturing_country }}{% elif product_data.manufacturing_country %}{{ product_data.manufacturing_country }}{% endif %}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Manufacturing Year</label>
-                                <input type="number" class="form-control" name="manufacturing_year" value="{{ enquiry.manufacturing_year|default:product_data.manufacturing_year|default:'' }}">
+                                <input type="number" class="form-control" name="manufacturing_year" value="{% if enquiry.manufacturing_year %}{{ enquiry.manufacturing_year }}{% elif product_data.manufacturing_year %}{{ product_data.manufacturing_year }}{% endif %}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Expiry Date</label>
@@ -998,7 +1121,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Inventory Country</label>
-                                <input type="text" class="form-control" name="inventory_country" value="{{ enquiry.inventory_country|default:product_data.inventory_country|default:'' }}">
+                                <input type="text" class="form-control" name="inventory_country" value="{% if enquiry.inventory_country %}{{ enquiry.inventory_country }}{% elif product_data.inventory_country %}{{ product_data.inventory_country }}{% endif %}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Inventory Location</label>
@@ -1006,7 +1129,7 @@
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label small fw-semibold text-dark">Warranty</label>
-                                <input type="text" class="form-control" name="warranty" value="{{ enquiry.warranty|default:product_data.warranty|default:'' }}" placeholder="e.g. 1 Year Manufacturer Warranty">
+                                <input type="text" class="form-control" name="warranty" value="{% if enquiry.warranty %}{{ enquiry.warranty }}{% elif product_data.warranty %}{{ product_data.warranty }}{% endif %}" placeholder="e.g. 1 Year Manufacturer Warranty">
                             </div>
                         </div>
                     </div>
@@ -1035,7 +1158,7 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label small fw-semibold text-dark">Description</label>
-                                <textarea class="form-control" name="description" rows="3">{{ enquiry.description|default:product_data.description|default:'' }}</textarea>
+                                <textarea class="form-control" name="description" rows="3">{% if enquiry.description %}{{ enquiry.description }}{% elif product_data.description %}{{ product_data.description }}{% endif %}</textarea>
                             </div>
                         </div>
                     </div>

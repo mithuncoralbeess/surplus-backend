@@ -695,6 +695,78 @@ class EmailService:
         return cls.send_email(to_email, subject, html_content, "ProductDeclined", context=context)
 
     @classmethod
+    def send_product_correction_email(
+        cls,
+        to_email: str,
+        product,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        suggestion: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the seller requesting corrections for their product listing.
+        """
+        if not to_email:
+            logger.warning("send_product_correction_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = cls.get_frontend_url()
+        default_action_url = f"{frontend_base}/profile"
+
+        product_name = (
+            getattr(product, "product_name", None)
+            or getattr(product, "title", None)
+            or (product.get("product_name") if isinstance(product, dict) else "")
+            or "Product Listing"
+        )
+        product_id = (
+            getattr(product, "product_id", None)
+            or getattr(product, "sku", None)
+            or (product.get("product_id") if isinstance(product, dict) else "")
+            or ""
+        )
+        category_name = ""
+        if hasattr(product, "category") and product.category:
+            category_name = getattr(product.category, "name", "")
+        elif isinstance(product, dict):
+            category_name = product.get("category") or ""
+
+        brand = getattr(product, "brand_name", None) or getattr(product, "brand", "") or (product.get("brand_name") if isinstance(product, dict) else "")
+        model_no = getattr(product, "model_no", None) or (product.get("model_no") if isinstance(product, dict) else "")
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "product_name": product_name,
+            "product_id": product_id,
+            "category_name": category_name,
+            "brand": brand,
+            "model_no": model_no,
+            "reason": reason or "",
+            "suggestion": suggestion or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_product_correction.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for product correction email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Product Listing Correction Requested</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your product listing <strong>{product_name}</strong> ({product_id}) requires some corrections before it can be approved.</p>"
+                f"<p><strong>Reason:</strong> {reason or 'Please review your listing specifications and resubmit.'}</p>"
+                + (f"<p><strong>Suggestion:</strong> {suggestion}</p>" if suggestion else "")
+                + f"<p><a href='{action_url or default_action_url}'>Review and correct your listing in your profile</a></p>"
+            )
+
+        subject = f"Action Required: Correction Needed for {product_name} [{product_id or 'PRO'}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "ProductCorrection", context=context)
+
+    @classmethod
     def send_lot_submitted_email(
         cls,
         to_email: str,
@@ -974,6 +1046,72 @@ class EmailService:
 
         subject = f"Lot Listing Update: {lot_title} [{lot_number}] - Surplus Market"
         return cls.send_email(to_email, subject, html_content, "LotDeclined", context=context)
+
+    @classmethod
+    def send_lot_correction_email(
+        cls,
+        to_email: str,
+        lot,
+        recipient_name: str = "Valued Seller",
+        reason: str = "",
+        suggestion: str = "",
+        action_url: str = ""
+    ) -> bool:
+        """
+        Sends an email notification to the vendor requesting corrections for their bulk lot listing.
+        """
+        if not to_email:
+            logger.warning("send_lot_correction_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = cls.get_frontend_url()
+        default_action_url = f"{frontend_base}/profile"
+
+        lot_title = (
+            getattr(lot, "title", None)
+            or (lot.get("title") if isinstance(lot, dict) else "")
+            or "Bulk Lot Listing"
+        )
+        lot_number = (
+            getattr(lot, "lot_number", None)
+            or getattr(lot, "batch_id", None)
+            or (lot.get("lot_number") if isinstance(lot, dict) else "")
+            or "LOT"
+        )
+        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        currency = getattr(lot, "currency", "USD") or "USD"
+
+        context = {
+            "user_name": recipient_name or "Valued Seller",
+            "lot_title": lot_title,
+            "lot_number": lot_number,
+            "distinct_skus": distinct_skus,
+            "total_units": total_units,
+            "currency": currency,
+            "reason": reason or "",
+            "suggestion": suggestion or "",
+            "action_url": action_url or default_action_url,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_lot_correction.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for lot correction email, using fallback HTML: {e}")
+            html_content = (
+                f"<h2>Bulk Lot Listing Correction Requested</h2>"
+                f"<p>Hello {recipient_name},</p>"
+                f"<p>Your bulk lot listing <strong>{lot_title}</strong> ({lot_number}) requires some corrections before it can be approved.</p>"
+                f"<p><strong>Reason:</strong> {reason or 'Please review your lot manifest and resubmit.'}</p>"
+                + (f"<p><strong>Suggestion:</strong> {suggestion}</p>" if suggestion else "")
+                + f"<p><a href='{action_url or default_action_url}'>Review and correct your lot in your profile</a></p>"
+            )
+
+        subject = f"Action Required: Correction Needed for Lot {lot_title} [{lot_number}] - Surplus Market"
+        return cls.send_email(to_email, subject, html_content, "LotCorrection", context=context)
 
     @classmethod
     def email_linsting_confirm(cls, seller_email: str, product_title: str) -> bool:

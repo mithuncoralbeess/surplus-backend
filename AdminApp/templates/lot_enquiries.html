@@ -28,8 +28,8 @@
 </div>
 
 <!-- KPI Metric Filter Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
+<div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+    <div class="col">
         <a href="/admin/enquiries/lots/" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -44,7 +44,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/lots/pending/" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -59,7 +59,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/lots/approved/" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'approved' %}border-success shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -74,7 +74,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/lots/declined/" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'declined' %}border-danger shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -137,6 +137,9 @@
                 <a href="/admin/enquiries/lots/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
                     class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}"
                     style="font-size: 14px !important;">Approved</a>
+                <a href="/admin/enquiries/lots/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
+                    class="btn btn-sm {% if current_status == 'correction' or current_status == 'correction_needed' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}"
+                    style="font-size: 14px !important;">Needs Correction</a>
                 <a href="/admin/enquiries/lots/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}"
                     class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}"
                     style="font-size: 14px !important;">Declined</a>
@@ -260,6 +263,12 @@
                             style="white-space: nowrap;">
                             {% if item.enquiry_status|lower == 'approved' %}
                             <button type="button"
+                                class="btn btn-outline-warning btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap text-dark"
+                                data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction"
+                                style="white-space: nowrap;">
+                                <i class="bi bi-pencil-square"></i> Correction
+                            </button>
+                            <button type="button"
                                 class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="declined" title="Decline Lot"
                                 style="white-space: nowrap;">
@@ -272,12 +281,24 @@
                                 style="white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
+                            <button type="button"
+                                class="btn btn-outline-warning btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap text-dark"
+                                data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction"
+                                style="white-space: nowrap;">
+                                <i class="bi bi-pencil-square"></i> Correction
+                            </button>
                             {% else %}
                             <button type="button"
                                 class="btn btn-outline-success btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
                                 data-id="{{ item.id }}" data-status="approved" title="Approve Lot"
                                 style="white-space: nowrap;">
                                 <i class="bi bi-check-lg"></i> Approve
+                            </button>
+                            <button type="button"
+                                class="btn btn-outline-warning btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap text-dark"
+                                data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction"
+                                style="white-space: nowrap;">
+                                <i class="bi bi-pencil-square"></i> Correction
                             </button>
                             <button type="button"
                                 class="btn btn-outline-danger btn-sm fw-semibold d-inline-flex align-items-center gap-1 btn-lot-status btn-lot-action-btn text-nowrap"
@@ -517,6 +538,34 @@
             btn.addEventListener('click', async () => {
                 const id = btn.dataset.id;
                 const newStatus = btn.dataset.status;
+
+                if (newStatus && newStatus.toLowerCase() === 'declined') {
+                    const tr = btn.closest('tr');
+                    const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Lot #${id}`) : `Lot #${id}`;
+                    if (typeof window.openRejectionModal === 'function') {
+                        window.openRejectionModal({
+                            id: id,
+                            type: 'lot',
+                            title: title.trim(),
+                            onSuccess: () => window.location.reload()
+                        });
+                        return;
+                    }
+                }
+
+                if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
+                    const tr = btn.closest('tr');
+                    const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Lot #${id}`) : `Lot #${id}`;
+                    if (typeof window.openCorrectionModal === 'function') {
+                        window.openCorrectionModal({
+                            id: id,
+                            type: 'lot',
+                            title: title.trim(),
+                            onSuccess: () => window.location.reload()
+                        });
+                        return;
+                    }
+                }
 
                 btn.disabled = true;
                 try {

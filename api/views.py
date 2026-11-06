@@ -1861,6 +1861,9 @@ def submit_product_request(request):
 
         prods_data = []
         for p in qs[:100]:
+            raw = p.raw_data if isinstance(p.raw_data, dict) else {}
+            corr_reason = raw.get("correction_reason") or raw.get("rejection_reason") or getattr(p, "_decline_reason", "")
+            corr_sugg = raw.get("correction_suggestion") or ""
             prods_data.append({
                 "id": p.id,
                 "reference": p.product_id or f"PRD-{p.id}",
@@ -1874,6 +1877,9 @@ def submit_product_request(request):
                 "msrp": float(p.msrp or 0),
                 "quantity": p.quantity,
                 "status": p.enquiry_status,
+                "correction_reason": corr_reason,
+                "correction_suggestion": corr_sugg,
+                "rejection_reason": corr_reason,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
             })
         return Response({"success": True, "data": prods_data}, status=status.HTTP_200_OK)
@@ -2362,6 +2368,9 @@ def submit_product_request(request):
             "certificate": product.third_party_certificate,
             "certificate_document": product.third_party_documents,
             "enquiry_status": product.enquiry_status,
+            "correction_reason": (product.raw_data.get("correction_reason") if isinstance(product.raw_data, dict) else ""),
+            "correction_suggestion": (product.raw_data.get("correction_suggestion") if isinstance(product.raw_data, dict) else ""),
+            "rejection_reason": (product.raw_data.get("rejection_reason") if isinstance(product.raw_data, dict) else ""),
             "is_active": product.is_active,
             "created_at": product.created_at.isoformat(),
             "images": [img.url for img in product.images.all()]

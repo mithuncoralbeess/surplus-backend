@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Lot Listing Correction Requested - Surplus Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            -webkit-text-size-adjust: none;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 30px 40px 20px 40px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #b45309;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid #fde68a;
+        }
+        .header h1 {
+            color: #0f172a;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 12px 0 0 0;
+        }
+        .content {
+            padding: 30px 40px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #334155;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 15px;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .lot-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .lot-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .reason-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+        }
+        .reason-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 6px;
+        }
+        .reason-text {
+            font-size: 14px;
+            color: #78350f;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .suggestion-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+        .suggestion-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 6px;
+        }
+        .suggestion-text {
+            font-size: 14px;
+            color: #047857;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .btn-wrapper {
+            text-align: center;
+            margin: 30px 0 10px 0;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #d97706;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 13px 32px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
+        }
+        .footer {
+            padding: 22px 30px;
+            background: #f8fafc;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
+            line-height: 1.5;
+        }
+        @media only screen and (max-width: 600px) {
+            .content, .header {
+                padding: 24px 20px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0 !important; padding: 0 !important; width: 100% !important; min-width: 100% !important; background-color: #f4f7fb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f7fb; padding: 24px 12px; margin: 0 auto;">
+        <tr>
+            <td align="center">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="container" style="max-width: 600px; background-color: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); margin: 0 auto;">
+                    <tr>
+                        <td align="center">
+                            <div class="header">
+                                <span class="badge">Action Required</span>
+                                <h1>Lot Listing Correction Requested</h1>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="content">
+                                <p class="greeting">Hello <strong>{{ user_name|default:"Valued Seller" }}</strong>,</p>
+                                <p class="message">
+                                    Our marketplace quality verification team has reviewed your bulk liquidation lot submission. A few updates or corrections are required before this lot can be approved and published live.
+                                </p>
+
+                                <div class="lot-card">
+                                    <div class="lot-title">{{ lot_title }}</div>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        {% if lot_number %}
+                                        <tr>
+                                            <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Batch / Lot #</td>
+                                            <td style="padding: 6px 0; color: #0f172a; font-size: 14px; font-weight: 600; text-align: right;">{{ lot_number }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if total_units %}
+                                        <tr>
+                                            <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Total Quantity</td>
+                                            <td style="padding: 6px 0; color: #0f172a; font-size: 14px; font-weight: 600; text-align: right;">{{ total_units }} Units</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if distinct_skus %}
+                                        <tr>
+                                            <td style="padding: 6px 0; color: #64748b; font-size: 14px; font-weight: 500;">Distinct SKUs</td>
+                                            <td style="padding: 6px 0; color: #0f172a; font-size: 14px; font-weight: 600; text-align: right;">{{ distinct_skus }} SKUs</td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+
+                                <div class="reason-box">
+                                    <div class="reason-title">What Needs Correction</div>
+                                    <p class="reason-text">
+                                        {% if reason %}
+                                            {{ reason }}
+                                        {% else %}
+                                            Please review and update the lot manifest, pricing, or documentation to meet verification standards.
+                                        {% endif %}
+                                    </p>
+                                </div>
+
+                                {% if suggestion %}
+                                <div class="suggestion-box">
+                                    <div class="suggestion-title">Admin Suggestions & Next Steps</div>
+                                    <p class="suggestion-text">{{ suggestion }}</p>
+                                </div>
+                                {% endif %}
+
+                                <p class="message" style="margin-bottom: 10px;">
+                                    You can update this bulk lot listing directly by navigating to your vendor profile on Surplus Market:
+                                </p>
+
+                                <div class="btn-wrapper">
+                                    <a href="{{ action_url|default:'https://surplusmarket.com/profile' }}" class="cta-btn" target="_blank">
+                                        Review & Correct Lot in Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <div class="footer">
+                                &copy; Surplus Market. All rights reserved.<br>
+                                Need help? Contact our seller onboarding and support team anytime.
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+

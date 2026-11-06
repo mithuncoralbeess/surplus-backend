@@ -1,0 +1,257 @@
+<!-- Reusable Listing Correction Request Modal for Products & Bulk Lots -->
+<div class="modal fade" id="correctionReasonModal" tabindex="-1" aria-labelledby="correctionReasonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-warning text-dark p-3.5 border-0">
+                <h5 class="modal-title fw-bold fs-6 d-flex align-items-center gap-2 mb-0" id="correctionReasonModalLabel">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                    <span>Request Listing Correction & Feedback</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="correctionReasonForm" onsubmit="return false;">
+                <div class="modal-body p-4 text-start">
+                    <div id="correctionItemAlert" class="alert alert-warning-subtle border border-warning-subtle text-dark py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-circle-fill text-warning fs-6 flex-shrink-0"></i>
+                        <span id="correctionItemTitle" class="fw-semibold text-truncate">Requesting Correction</span>
+                    </div>
+
+                    <p class="text-secondary small mb-3">
+                        Request the seller to update or correct listing specifications. An official notification and email will be dispatched to the seller with a direct link to update this listing in their profile.
+                    </p>
+
+                    <!-- Reason for Correction -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center" for="correctionReasonTextarea">
+                            <span>Reason for Correction <span class="text-danger">*</span></span>
+                            <span class="text-muted fw-normal" style="font-size: 0.72rem;" id="correctionCharCount">0 characters</span>
+                        </label>
+                        <textarea class="form-control rounded-3" id="correctionReasonTextarea" rows="3" 
+                            placeholder="Explain what is missing, unclear, or incorrect (e.g. Model number does not match label photo, pricing benchmark exceeded, or unverified condition)..." 
+                            style="resize: vertical; font-size: 0.88rem;" required></textarea>
+                        <div class="invalid-feedback d-none" id="correctionReasonError">Please explain why correction is needed.</div>
+                    </div>
+
+                    <!-- Admin Suggestions -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark" for="correctionSuggestionTextarea">
+                            <span>Admin Suggestions & Next Steps (Optional)</span>
+                        </label>
+                        <textarea class="form-control rounded-3" id="correctionSuggestionTextarea" rows="3" 
+                            placeholder="Provide clear instructions for the seller to resolve this (e.g. Please upload clear photo of manufacturer label and revise MSRP to reflect verifiable invoice)..." 
+                            style="resize: vertical; font-size: 0.88rem;"></textarea>
+                    </div>
+
+                    <!-- Quick Suggestions Chips -->
+                    <div class="mb-1">
+                        <label class="form-label small text-muted mb-1.5 d-block fw-semibold" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Quick Suggestions
+                        </label>
+                        <div class="d-flex flex-wrap gap-1.5" id="correctionQuickChips">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill correction-chip" style="font-size: 0.76rem;" data-reason="Product specifications or part numbers require clarification." data-sugg="Please review manufacturer specs and update model/part numbers accordingly.">
+                                <i class="bi bi-tag me-1"></i> Check Specs
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill correction-chip" style="font-size: 0.76rem;" data-reason="Uploaded photos are low-resolution or do not clearly show the physical inventory." data-sugg="Please re-upload high-resolution, unedited photos showing item condition, packaging, and label.">
+                                <i class="bi bi-image me-1"></i> Better Photos
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill correction-chip" style="font-size: 0.76rem;" data-reason="The asking liquidation price does not reflect wholesale surplus benchmarks." data-sugg="Please adjust liquidation price closer to market wholesale valuation to expedite buyer approval.">
+                                <i class="bi bi-currency-dollar me-1"></i> Pricing Update
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill correction-chip" style="font-size: 0.76rem;" data-reason="Missing official third-party certificate or proof of authenticity." data-sugg="Please attach valid certification, test reports, or proof of origin in PDF format.">
+                                <i class="bi bi-patch-check me-1"></i> Attach Certificate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top p-3 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning rounded-3 px-4 py-1.5 fw-bold text-dark d-inline-flex align-items-center gap-1.5 shadow-sm" id="correctionModalSubmitBtn">
+                        <i class="bi bi-send-fill"></i>
+                        <span>Send Correction Request</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentCorrectionTarget = null;
+    let correctionModalInstance = null;
+
+    function getCsrfToken() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input && input.value) return input.value;
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return cookie ? decodeURIComponent(cookie.split('=')[1]) : '{{ csrf_token }}';
+    }
+
+    function initCorrectionModal() {
+        const modalEl = document.getElementById('correctionReasonModal');
+        if (!modalEl) return null;
+        if (!correctionModalInstance && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            correctionModalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+        }
+        return correctionModalInstance;
+    }
+
+    window.openCorrectionModal = function(options) {
+        // options: { id, type: 'product'|'lot', title, initialReason, initialSuggestion, onSuccess }
+        currentCorrectionTarget = options || {};
+        const modalEl = document.getElementById('correctionReasonModal');
+        if (!modalEl) return;
+        const modal = initCorrectionModal();
+
+        const titleEl = document.getElementById('correctionItemTitle');
+        const reasonTextarea = document.getElementById('correctionReasonTextarea');
+        const suggTextarea = document.getElementById('correctionSuggestionTextarea');
+        const charCount = document.getElementById('correctionCharCount');
+        const errorEl = document.getElementById('correctionReasonError');
+        const submitBtn = document.getElementById('correctionModalSubmitBtn');
+
+        if (titleEl) {
+            const typeLabel = (options.type === 'lot') ? 'Lot' : 'Product';
+            titleEl.textContent = `Requesting Correction for ${typeLabel}: ${options.title || '#' + options.id}`;
+        }
+        if (reasonTextarea) {
+            reasonTextarea.value = options.initialReason || '';
+            reasonTextarea.classList.remove('is-invalid');
+        }
+        if (suggTextarea) {
+            suggTextarea.value = options.initialSuggestion || '';
+        }
+        if (charCount) charCount.textContent = `${(reasonTextarea ? reasonTextarea.value.length : 0)} characters`;
+        if (errorEl) errorEl.classList.add('d-none');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-send-fill"></i><span>Send Correction Request</span>';
+        }
+
+        if (modal) {
+            modal.show();
+            setTimeout(() => { if (reasonTextarea) reasonTextarea.focus(); }, 350);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('correctionReasonModal');
+        if (!modalEl) return;
+
+        const reasonTextarea = document.getElementById('correctionReasonTextarea');
+        const suggTextarea = document.getElementById('correctionSuggestionTextarea');
+        const charCount = document.getElementById('correctionCharCount');
+        const errorEl = document.getElementById('correctionReasonError');
+        const submitBtn = document.getElementById('correctionModalSubmitBtn');
+
+        if (reasonTextarea && charCount) {
+            reasonTextarea.addEventListener('input', function() {
+                charCount.textContent = `${reasonTextarea.value.length} characters`;
+                if (reasonTextarea.value.trim().length > 0) {
+                    reasonTextarea.classList.remove('is-invalid');
+                    if (errorEl) errorEl.classList.add('d-none');
+                }
+            });
+        }
+
+        // Quick chip clicks
+        document.querySelectorAll('.correction-chip').forEach(chip => {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                const reasonText = this.dataset.reason || '';
+                const suggText = this.dataset.sugg || '';
+
+                if (reasonTextarea && reasonText) {
+                    const existing = reasonTextarea.value.trim();
+                    if (!existing) {
+                        reasonTextarea.value = reasonText;
+                    } else if (!existing.includes(reasonText)) {
+                        reasonTextarea.value = existing + ' ' + reasonText;
+                    }
+                    reasonTextarea.dispatchEvent(new Event('input'));
+                }
+
+                if (suggTextarea && suggText) {
+                    const existingSugg = suggTextarea.value.trim();
+                    if (!existingSugg) {
+                        suggTextarea.value = suggText;
+                    } else if (!existingSugg.includes(suggText)) {
+                        suggTextarea.value = existingSugg + ' ' + suggText;
+                    }
+                }
+
+                if (reasonTextarea) reasonTextarea.focus();
+            });
+        });
+
+        // Submit action
+        if (submitBtn) {
+            submitBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                if (!currentCorrectionTarget || !currentCorrectionTarget.id) {
+                    alert('No item selected for correction.');
+                    return;
+                }
+
+                const reason = (reasonTextarea ? reasonTextarea.value.trim() : '');
+                const suggestion = (suggTextarea ? suggTextarea.value.trim() : '');
+
+                if (!reason) {
+                    if (reasonTextarea) reasonTextarea.classList.add('is-invalid');
+                    if (errorEl) errorEl.classList.remove('d-none');
+                    if (reasonTextarea) reasonTextarea.focus();
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status"></span><span>Sending Correction Request...</span>';
+
+                const targetType = (currentCorrectionTarget.type === 'lot') ? 'lots' : 'seller';
+                const apiUrl = `/admin/api/enquiries/${targetType}/${currentCorrectionTarget.id}/status/`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCsrfToken()
+                        },
+                        body: JSON.stringify({
+                            status: 'correction_needed',
+                            reason: reason,
+                            correction_reason: reason,
+                            suggestion: suggestion,
+                            correction_suggestion: suggestion
+                        })
+                    });
+
+                    const data = await response.json().catch(() => null);
+
+                    if (response.ok && data && data.success) {
+                        const modal = initCorrectionModal();
+                        if (modal) modal.hide();
+                        if (typeof currentCorrectionTarget.onSuccess === 'function') {
+                            currentCorrectionTarget.onSuccess(data);
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        const errMsg = (data && (data.message || data.error)) || 'Failed to submit correction request. Please try again.';
+                        alert(errMsg);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-send-fill"></i><span>Send Correction Request</span>';
+                    }
+                } catch (err) {
+                    console.error('Correction submission error:', err);
+                    alert('Connection error. Please check your network and try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-send-fill"></i><span>Send Correction Request</span>';
+                }
+            });
+        }
+    });
+})();
+</script>
+

@@ -33,8 +33,8 @@
 {% endif %}
 
 <!-- KPI Metric Filter Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
+<div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+    <div class="col">
         <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -49,7 +49,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -64,7 +64,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'approved' %}border-success shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -79,7 +79,7 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col">
         <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
             <div class="content-stat-card {% if current_status == 'declined' %}border-danger shadow-sm{% endif %}">
                 <div class="stat-card-content">
@@ -134,7 +134,8 @@
             <div class="btn-group" role="group" aria-label="Status filter">
                 <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">All</a>
                 <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Pending</a>
-                <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Approved</a>
+                <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Approved</a>
+                <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}" style="font-size: 14px !important;">Correction</a>
                 <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Declined</a>
             </div>
             {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
@@ -244,6 +245,10 @@
                         <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
                             <i class="bi bi-x-circle-fill me-1"></i>Declined
                         </span>
+                        {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
+                            <i class="bi bi-pencil-square me-1"></i>Needs Correction
+                        </span>
                         {% else %}
                         <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
                             <i class="bi bi-hourglass-split me-1"></i>Pending
@@ -253,18 +258,27 @@
                     <td class="text-end pe-4">
                         <div class="d-flex align-items-center justify-content-end gap-2">
                             {% if item.enquiry_status|lower == 'approved' %}
-                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
+                                <i class="bi bi-pencil-square"></i> Correction
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% elif item.enquiry_status|lower == 'declined' %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
                                 <i class="bi bi-check-lg"></i> Approve
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
+                                <i class="bi bi-pencil-square"></i> Correction
                             </button>
                             {% else %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
                                 <i class="bi bi-check-lg"></i> Approve
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
+                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
+                                <i class="bi bi-pencil-square"></i> Correction
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
                                 <i class="bi bi-x-lg"></i> Decline
                             </button>
                             {% endif %}
@@ -474,6 +488,34 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id;
             const newStatus = btn.dataset.status;
+
+            if (newStatus && newStatus.toLowerCase() === 'declined') {
+                const tr = btn.closest('tr');
+                const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Product #${id}`) : `Product #${id}`;
+                if (typeof window.openRejectionModal === 'function') {
+                    window.openRejectionModal({
+                        id: id,
+                        type: 'product',
+                        title: title.trim(),
+                        onSuccess: () => window.location.reload()
+                    });
+                    return;
+                }
+            }
+
+            if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
+                const tr = btn.closest('tr');
+                const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Product #${id}`) : `Product #${id}`;
+                if (typeof window.openCorrectionModal === 'function') {
+                    window.openCorrectionModal({
+                        id: id,
+                        type: 'product',
+                        title: title.trim(),
+                        onSuccess: () => window.location.reload()
+                    });
+                    return;
+                }
+            }
             
             btn.disabled = true;
             try {

@@ -1,0 +1,227 @@
+<!-- Reusable Rejection Reason Modal for Products & Bulk Lots -->
+<div class="modal fade" id="rejectionReasonModal" tabindex="-1" aria-labelledby="rejectionReasonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white p-3.5 border-0">
+                <h5 class="modal-title fw-bold fs-6 d-flex align-items-center gap-2 mb-0" id="rejectionReasonModalLabel">
+                    <i class="bi bi-x-circle-fill fs-5"></i>
+                    <span>Reject Listing & Send Feedback</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectionReasonForm" onsubmit="return false;">
+                <div class="modal-body p-4 text-start">
+                    <div id="rejectionItemAlert" class="alert alert-danger-subtle border border-danger-subtle text-danger py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-6 flex-shrink-0"></i>
+                        <span id="rejectionItemTitle" class="fw-semibold text-truncate">Rejecting Listing</span>
+                    </div>
+
+                    <p class="text-secondary small mb-3">
+                        Please provide a detailed reason for declining this listing. This explanation will be included in the official notification email sent to the seller so they can review and rectify the issues.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark d-flex justify-content-between align-items-center" for="rejectionReasonTextarea">
+                            <span>Reason for Rejection <span class="text-danger">*</span></span>
+                            <span class="text-muted fw-normal" style="font-size: 0.72rem;" id="rejectionCharCount">0 characters</span>
+                        </label>
+                        <textarea class="form-control rounded-3" id="rejectionReasonTextarea" rows="4" 
+                            placeholder="Explain why this listing is being declined (e.g., pricing does not align with wholesale benchmarks, product condition is unspecified, images lack clarity, or documentation is missing)..." 
+                            style="resize: vertical; font-size: 0.88rem;" required></textarea>
+                        <div class="invalid-feedback d-none" id="rejectionReasonError">Please enter a reason before submitting.</div>
+                    </div>
+
+                    <!-- Quick Rejection Chips -->
+                    <div class="mb-1">
+                        <label class="form-label small text-muted mb-1.5 d-block fw-semibold" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Quick Suggestions
+                        </label>
+                        <div class="d-flex flex-wrap gap-1.5" id="rejectionQuickChips">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill rejection-chip" style="font-size: 0.76rem;" data-reason="Incomplete product specifications or condition details provided.">
+                                <i class="bi bi-card-text me-1"></i> Incomplete Details
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill rejection-chip" style="font-size: 0.76rem;" data-reason="Product photos/media are blurry, insufficient, or lack physical inventory proof.">
+                                <i class="bi bi-image me-1"></i> Unclear Media
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill rejection-chip" style="font-size: 0.76rem;" data-reason="Asking liquidation price is above accepted wholesale market benchmark.">
+                                <i class="bi bi-tag me-1"></i> High Price
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill rejection-chip" style="font-size: 0.76rem;" data-reason="Listing violates marketplace quality verification or product policy guidelines.">
+                                <i class="bi bi-shield-x me-1"></i> Policy Issue
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2.5 rounded-pill rejection-chip" style="font-size: 0.76rem;" data-reason="Required warranty or certificate documents are missing or invalid.">
+                                <i class="bi bi-file-earmark-x me-1"></i> Missing Docs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top p-3 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 px-3.5 py-1.5 fw-semibold" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger rounded-3 px-4 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" id="rejectionModalSubmitBtn">
+                        <i class="bi bi-x-circle-fill"></i>
+                        <span>Confirm & Send Rejection</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentRejectTarget = null;
+    let rejectionModalInstance = null;
+
+    function getCsrfToken() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input && input.value) return input.value;
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return cookie ? decodeURIComponent(cookie.split('=')[1]) : '{{ csrf_token }}';
+    }
+
+    function initRejectionModal() {
+        const modalEl = document.getElementById('rejectionReasonModal');
+        if (!modalEl) return null;
+        if (!rejectionModalInstance && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            rejectionModalInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+        }
+        return rejectionModalInstance;
+    }
+
+    window.openRejectionModal = function(options) {
+        // options: { id, type: 'product'|'lot'|'seller', title, onSuccess }
+        currentRejectTarget = options || {};
+        const modalEl = document.getElementById('rejectionReasonModal');
+        if (!modalEl) return;
+        const modal = initRejectionModal();
+
+        const titleEl = document.getElementById('rejectionItemTitle');
+        const textarea = document.getElementById('rejectionReasonTextarea');
+        const charCount = document.getElementById('rejectionCharCount');
+        const errorEl = document.getElementById('rejectionReasonError');
+        const submitBtn = document.getElementById('rejectionModalSubmitBtn');
+
+        if (titleEl) {
+            const typeLabel = (options.type === 'lot') ? 'Lot' : 'Product';
+            titleEl.textContent = `Rejecting ${typeLabel}: ${options.title || '#' + options.id}`;
+        }
+        if (textarea) {
+            textarea.value = options.initialReason || '';
+            textarea.classList.remove('is-invalid');
+        }
+        if (charCount) charCount.textContent = `${(textarea ? textarea.value.length : 0)} characters`;
+        if (errorEl) errorEl.classList.add('d-none');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i><span>Confirm & Send Rejection</span>';
+        }
+
+        if (modal) {
+            modal.show();
+            setTimeout(() => { if (textarea) textarea.focus(); }, 350);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('rejectionReasonModal');
+        if (!modalEl) return;
+
+        const textarea = document.getElementById('rejectionReasonTextarea');
+        const charCount = document.getElementById('rejectionCharCount');
+        const errorEl = document.getElementById('rejectionReasonError');
+        const submitBtn = document.getElementById('rejectionModalSubmitBtn');
+
+        if (textarea && charCount) {
+            textarea.addEventListener('input', function() {
+                charCount.textContent = `${textarea.value.length} characters`;
+                if (textarea.value.trim().length > 0) {
+                    textarea.classList.remove('is-invalid');
+                    if (errorEl) errorEl.classList.add('d-none');
+                }
+            });
+        }
+
+        // Quick chip clicks
+        document.querySelectorAll('.rejection-chip').forEach(chip => {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                const reasonText = this.dataset.reason || '';
+                if (!textarea) return;
+                const existing = textarea.value.trim();
+                if (!existing) {
+                    textarea.value = reasonText;
+                } else if (!existing.includes(reasonText)) {
+                    textarea.value = existing + ' ' + reasonText;
+                }
+                textarea.dispatchEvent(new Event('input'));
+                textarea.focus();
+            });
+        });
+
+        // Submit action
+        if (submitBtn) {
+            submitBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                if (!currentRejectTarget || !currentRejectTarget.id) {
+                    alert('No item selected for rejection.');
+                    return;
+                }
+
+                const reason = (textarea ? textarea.value.trim() : '');
+                if (!reason) {
+                    if (textarea) textarea.classList.add('is-invalid');
+                    if (errorEl) errorEl.classList.remove('d-none');
+                    if (textarea) textarea.focus();
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status"></span><span>Rejecting & Sending Email...</span>';
+
+                const targetType = (currentRejectTarget.type === 'lot') ? 'lots' : 'seller';
+                const apiUrl = `/admin/api/enquiries/${targetType}/${currentRejectTarget.id}/status/`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCsrfToken()
+                        },
+                        body: JSON.stringify({
+                            status: 'declined',
+                            reason: reason,
+                            rejection_reason: reason
+                        })
+                    });
+
+                    const data = await response.json().catch(() => null);
+
+                    if (response.ok && data && data.success) {
+                        const modal = initRejectionModal();
+                        if (modal) modal.hide();
+                        if (typeof currentRejectTarget.onSuccess === 'function') {
+                            currentRejectTarget.onSuccess(data);
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        const errMsg = (data && (data.message || data.error)) || 'Failed to reject listing. Please try again.';
+                        alert(errMsg);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i><span>Confirm & Send Rejection</span>';
+                    }
+                } catch (err) {
+                    console.error('Rejection submission error:', err);
+                    alert('Connection error. Please check your network and try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-x-circle-fill"></i><span>Confirm & Send Rejection</span>';
+                }
+            });
+        }
+    });
+})();
+</script>
+

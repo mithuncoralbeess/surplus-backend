@@ -1536,15 +1536,19 @@ def seller_enquiries_view(request, status_filter=None):
             pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
             approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
             declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+            correction=Count("id", filter=Q(enquiry_status__in=["CORRECTION_NEEDED", "correction_needed", "needs_correction", "correction"])),
         )
         cache.set("seller_enquiry_counts", counts_data, timeout=60)
-    total_count = counts_data["total"] or 0
-    pending_count = counts_data["pending"] or 0
-    approved_count = counts_data["approved"] or 0
-    declined_count = counts_data["declined"] or 0
+    total_count = counts_data.get("total") or 0
+    pending_count = counts_data.get("pending") or 0
+    approved_count = counts_data.get("approved") or 0
+    declined_count = counts_data.get("declined") or 0
+    correction_count = counts_data.get("correction") or 0
 
     if current_status in ("pending", "approved", "declined"):
         qs = qs.filter(enquiry_status__iexact=current_status)
+    elif current_status in ("correction", "correction_needed", "needs_correction"):
+        qs = qs.filter(enquiry_status__in=["CORRECTION_NEEDED", "correction_needed", "needs_correction", "correction"])
 
     if search:
         search_filter = (
@@ -1592,6 +1596,7 @@ def seller_enquiries_view(request, status_filter=None):
             "pending": pending_count,
             "approved": approved_count,
             "declined": declined_count,
+            "correction": correction_count,
         }
     }
     return render(request, "seller_enquiries.html", context)
@@ -1687,15 +1692,19 @@ def lot_enquiries_view(request, status_filter=None):
             pending=Count("id", filter=Q(enquiry_status__iexact="pending")),
             approved=Count("id", filter=Q(enquiry_status__iexact="approved")),
             declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
+            correction=Count("id", filter=Q(enquiry_status__in=["correction_needed", "needs_correction", "correction", "CORRECTION_NEEDED"])),
         )
         cache.set("lot_enquiry_counts", lot_counts_data, timeout=60)
-    total_count = lot_counts_data["total"] or 0
-    pending_count = lot_counts_data["pending"] or 0
-    approved_count = lot_counts_data["approved"] or 0
-    declined_count = lot_counts_data["declined"] or 0
+    total_count = lot_counts_data.get("total") or 0
+    pending_count = lot_counts_data.get("pending") or 0
+    approved_count = lot_counts_data.get("approved") or 0
+    declined_count = lot_counts_data.get("declined") or 0
+    correction_count = lot_counts_data.get("correction") or 0
 
     if current_status in ("pending", "approved", "declined"):
         qs = qs.filter(enquiry_status=current_status)
+    elif current_status in ("correction", "correction_needed", "needs_correction"):
+        qs = qs.filter(enquiry_status__in=["correction_needed", "needs_correction", "correction", "CORRECTION_NEEDED"])
 
     if search:
         qs = qs.filter(Q(lot_number__icontains=search) | Q(title__icontains=search))
@@ -1725,6 +1734,7 @@ def lot_enquiries_view(request, status_filter=None):
             "pending": pending_count,
             "approved": approved_count,
             "declined": declined_count,
+            "correction": correction_count,
         }
     }
     return render(request, "lot_enquiries.html", context)
@@ -1758,7 +1768,9 @@ def seller_enquiry_status_api(request, enquiry_id):
     target_status = enquiry.enquiry_status
     if "status" in request.data:
         s_val = str(request.data.get("status", "")).upper()
-        if s_val in ("PENDING", "APPROVED", "DECLINED"):
+        if s_val in ("CORRECTION_NEEDED", "NEEDS_CORRECTION", "CORRECTION"):
+            target_status = "CORRECTION_NEEDED"
+        elif s_val in ("PENDING", "APPROVED", "DECLINED"):
             target_status = s_val
 
     if "active_status" in request.data:
@@ -1784,8 +1796,13 @@ def seller_enquiry_status_api(request, enquiry_id):
 
     vendor_profile_info = None
     if "status" in request.data:
-        new_status = request.data.get("status", "").upper()
-        if new_status.lower() in ("pending", "approved", "declined"):
+        raw_st = request.data.get("status", "").upper()
+        if raw_st in ("CORRECTION_NEEDED", "NEEDS_CORRECTION", "CORRECTION"):
+            new_status = "CORRECTION_NEEDED"
+        else:
+            new_status = raw_st
+
+        if new_status.lower() in ("pending", "approved", "declined", "correction_needed"):
             enquiry.enquiry_status = new_status
 
             # Resolve vendor to check profile completion if approving
@@ -1817,15 +1834,24 @@ def seller_enquiry_status_api(request, enquiry_id):
             if new_status.lower() == "approved":
                 if not has_explicit_active:
                     enquiry.is_active = True
-            elif new_status.lower() in ("declined", "pending"):
+            elif new_status.lower() in ("declined", "pending", "correction_needed"):
                 enquiry.is_active = False
 
             if "reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
             elif "rejection_reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
+            elif "correction_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("correction_reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
             elif "note" in request.data or "notes" in request.data:
                 enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
+                enquiry._correction_reason = enquiry._decline_reason
+
+            if "suggestion" in request.data or "correction_suggestion" in request.data:
+                enquiry._correction_suggestion = str(request.data.get("suggestion") or request.data.get("correction_suggestion") or "").strip()
 
     enquiry.save()
     cache.delete("seller_enquiry_counts")
@@ -1835,6 +1861,8 @@ def seller_enquiry_status_api(request, enquiry_id):
         msg = "Product approved and published to marketplace."
     elif enquiry.enquiry_status == "DECLINED":
         msg = "Product listing declined."
+    elif enquiry.enquiry_status in ("CORRECTION_NEEDED", "NEEDS_CORRECTION", "CORRECTION"):
+        msg = "Correction request sent to seller."
 
     return Response({
         "success": True,
@@ -2016,6 +2044,19 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 product.enquiry_status = status_val
                 if status_val != "APPROVED":
                     product.is_active = False
+
+        if "reason" in data:
+            product._decline_reason = str(data.get("reason", "")).strip()
+            product._correction_reason = product._decline_reason
+        elif "rejection_reason" in data:
+            product._decline_reason = str(data.get("rejection_reason", "")).strip()
+            product._correction_reason = product._decline_reason
+        elif "correction_reason" in data:
+            product._decline_reason = str(data.get("correction_reason", "")).strip()
+            product._correction_reason = product._decline_reason
+
+        if "suggestion" in data or "correction_suggestion" in data:
+            product._correction_suggestion = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
 
         if "active_status" in data:
             act_val = str(data["active_status"]).lower()
@@ -2624,6 +2665,19 @@ def lot_enquiry_edit_api(request, enquiry_id):
             if status_val != "approved":
                 lot.is_active = False
                 lot.active_status = "inactive"
+
+    if "reason" in data:
+        lot._decline_reason = str(data.get("reason", "")).strip()
+        lot._correction_reason = lot._decline_reason
+    elif "rejection_reason" in data:
+        lot._decline_reason = str(data.get("rejection_reason", "")).strip()
+        lot._correction_reason = lot._decline_reason
+    elif "correction_reason" in data:
+        lot._decline_reason = str(data.get("correction_reason", "")).strip()
+        lot._correction_reason = lot._decline_reason
+
+    if "suggestion" in data or "correction_suggestion" in data:
+        lot._correction_suggestion = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):
@@ -3094,7 +3148,9 @@ def lot_enquiry_status_api(request, enquiry_id):
     target_status = enquiry.enquiry_status
     if "status" in request.data:
         s_val = str(request.data.get("status", "")).lower()
-        if s_val in ("pending", "approved", "declined"):
+        if s_val in ("correction_needed", "needs_correction", "correction"):
+            target_status = "correction_needed"
+        elif s_val in ("pending", "approved", "declined"):
             target_status = s_val
 
     if "active_status" in request.data:
@@ -3128,23 +3184,37 @@ def lot_enquiry_status_api(request, enquiry_id):
         vendor_profile_info = target_vendor.get_profile_completion_details()
 
     if "status" in request.data:
-        new_status = str(request.data.get("status")).lower()
-        if new_status in ("pending", "approved", "declined"):
+        raw_s = str(request.data.get("status")).lower()
+        if raw_s in ("correction_needed", "needs_correction", "correction"):
+            new_status = "correction_needed"
+        else:
+            new_status = raw_s
+
+        if new_status in ("pending", "approved", "declined", "correction_needed"):
             enquiry.enquiry_status = new_status
             if new_status == "approved":
                 if not has_explicit_active:
                     enquiry.active_status = "active"
                     enquiry.is_active = True
-            elif new_status in ("declined", "pending"):
+            elif new_status in ("declined", "pending", "correction_needed"):
                 enquiry.active_status = "inactive"
                 enquiry.is_active = False
 
             if "reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
             elif "rejection_reason" in request.data:
                 enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
+            elif "correction_reason" in request.data:
+                enquiry._decline_reason = str(request.data.get("correction_reason", "")).strip()
+                enquiry._correction_reason = enquiry._decline_reason
             elif "note" in request.data or "notes" in request.data:
                 enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
+                enquiry._correction_reason = enquiry._decline_reason
+
+            if "suggestion" in request.data or "correction_suggestion" in request.data:
+                enquiry._correction_suggestion = str(request.data.get("suggestion") or request.data.get("correction_suggestion") or "").strip()
 
     enquiry.save()
     cache.delete("lot_enquiry_counts")
@@ -3154,6 +3224,8 @@ def lot_enquiry_status_api(request, enquiry_id):
         msg = "Lot approved and published to marketplace."
     elif enquiry.enquiry_status == "declined":
         msg = "Lot listing declined."
+    elif enquiry.enquiry_status in ("correction_needed", "needs_correction", "correction"):
+        msg = "Correction request sent to vendor."
 
     return Response({
         "success": True,

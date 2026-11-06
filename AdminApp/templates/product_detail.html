@@ -35,6 +35,10 @@
                 <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 small fw-semibold">
                     <i class="bi bi-clock-fill me-1"></i> Pending Approval
                 </span>
+                {% elif product.enquiry_status|lower == 'correction_needed' or product.enquiry_status|lower == 'needs_correction' or product.enquiry_status|lower == 'correction' %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 small fw-semibold">
+                    <i class="bi bi-pencil-square me-1"></i> Needs Correction
+                </span>
                 {% else %}
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 small fw-semibold">
                     <i class="bi bi-x-circle-fill me-1"></i> {{ product.enquiry_status|title }}
@@ -71,6 +75,31 @@
 
         <!-- Header Actions -->
         <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if product.enquiry_status|lower != 'approved' %}
+            <button type="button" 
+               class="btn btn-sm btn-outline-success rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm btn-product-action-status"
+               data-id="{{ product.id }}" data-status="approved"
+               title="Approve Product Listing">
+                <i class="bi bi-check-circle-fill fs-6"></i> Approve
+            </button>
+            {% endif %}
+
+            <button type="button" 
+               class="btn btn-sm btn-outline-warning text-dark rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm btn-product-action-status"
+               data-id="{{ product.id }}" data-status="correction_needed"
+               title="Request Correction from Seller">
+                <i class="bi bi-pencil-square fs-6"></i> Correction
+            </button>
+
+            {% if product.enquiry_status|lower != 'declined' %}
+            <button type="button" 
+               class="btn btn-sm btn-outline-danger rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm btn-product-action-status"
+               data-id="{{ product.id }}" data-status="declined"
+               title="Reject Product Listing">
+                <i class="bi bi-x-circle-fill fs-6"></i> Reject
+            </button>
+            {% endif %}
+
             {% if product.is_active %}
             <a href="/admin/products/{{ product.id }}/toggle-status/" 
                class="btn btn-sm btn-outline-warning rounded-3 px-3 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm"
@@ -90,6 +119,43 @@
             </a>
         </div>
     </div>
+
+        {% if product.enquiry_status|lower == 'correction_needed' or product.enquiry_status|lower == 'needs_correction' or product.enquiry_status|lower == 'correction' %}
+    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
+        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <span>Correction Requested from Seller</span>
+                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
+            </h6>
+            <p class="mb-1 text-dark small" style="line-height: 1.5;">
+                <strong>Reason:</strong> {{ product.raw_data.correction_reason|default:"No specific reason recorded." }}
+            </p>
+            {% if product.raw_data.correction_suggestion %}
+            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
+                <strong>Admin Suggestion:</strong> {{ product.raw_data.correction_suggestion }}
+            </p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-product-action-status flex-shrink-0" data-id="{{ product.id }}" data-status="correction_needed">
+            <i class="bi bi-pencil-square me-1"></i> Update Correction
+        </button>
+    </div>
+    {% endif %}
+    {% if product.enquiry_status|lower == 'declined' %}
+    <div class="alert alert-danger border border-danger-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3">
+        <i class="bi bi-x-circle-fill text-danger fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-danger mb-1">Product Listing Declined & Feedback Sent to Seller</h6>
+            <p class="mb-0 text-dark small" style="line-height: 1.5;">
+                <strong>Rejection Reason:</strong> {{ product.raw_data.rejection_reason|default:"No specific reason recorded." }}
+            </p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1 fw-semibold rounded-pill btn-product-action-status flex-shrink-0" data-id="{{ product.id }}" data-status="declined">
+            <i class="bi bi-pencil-square me-1"></i> Update Reason & Re-send
+        </button>
+    </div>
+    {% endif %}
 
     <!-- Quick Stats Grid Header (Same layout as Seller Enquiry Detail page) -->
     <div class="row g-3 mb-4">
@@ -671,6 +737,63 @@ document.addEventListener("DOMContentLoaded", () => {
                 bootstrap.Modal.getOrCreateInstance(modalEl).show();
             }
         }
+    });
+
+    // Handler: Product Approval & Rejection Status Actions
+    document.querySelectorAll('.btn-product-action-status').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const newStatus = this.dataset.status;
+
+            if (newStatus === 'declined') {
+                if (typeof window.openRejectionModal === 'function') {
+                    window.openRejectionModal({
+                        id: id,
+                        type: 'product',
+                        title: "{{ product.product_name|escapejs }}",
+                        onSuccess: () => window.location.reload()
+                    });
+                    return;
+                }
+            }
+
+            if (newStatus === 'correction_needed' || newStatus === 'correction') {
+                if (typeof window.openCorrectionModal === 'function') {
+                    window.openCorrectionModal({
+                        id: id,
+                        type: 'product',
+                        title: "{{ product.product_name|escapejs }}",
+                        initialReason: "{{ product.raw_data.correction_reason|default:''|escapejs }}",
+                        initialSuggestion: "{{ product.raw_data.correction_suggestion|default:''|escapejs }}",
+                        onSuccess: () => window.location.reload()
+                    });
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/admin/api/enquiries/seller/${id}/status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to update status.');
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.disabled = false;
+            }
+        });
     });
 
     const catalogMediaForm = document.getElementById('uploadProductCatalogMediaForm');

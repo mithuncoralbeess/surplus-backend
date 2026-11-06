@@ -421,6 +421,13 @@
 
             {% if enquiry.enquiry_status|lower == 'approved' %}
             <button type="button"
+                class="detail-action-btn btn-action-correction btn-lot-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
+            </button>
+            <button type="button"
                 class="detail-action-btn btn-action-decline btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="declined">
                 <i class="bi bi-x-circle-fill"></i>
@@ -433,12 +440,26 @@
                 <i class="bi bi-check-circle-fill"></i>
                 <span>Approve</span>
             </button>
+            <button type="button"
+                class="detail-action-btn btn-action-correction btn-lot-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
+            </button>
             {% else %}
             <button type="button"
                 class="detail-action-btn btn-action-approve btn-lot-status"
                 data-id="{{ enquiry.id }}" data-status="approved">
                 <i class="bi bi-check-circle-fill"></i>
                 <span>Approve</span>
+            </button>
+            <button type="button"
+                class="detail-action-btn btn-action-correction btn-lot-status"
+                data-id="{{ enquiry.id }}" data-status="correction_needed"
+                style="background: #fffbeb; color: #d97706; border-color: #fde68a;">
+                <i class="bi bi-pencil-square"></i>
+                <span>Correction</span>
             </button>
             <button type="button"
                 class="detail-action-btn btn-action-decline btn-lot-status"
@@ -453,6 +474,43 @@
             </a>
         </div>
     </div>
+
+        {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}
+    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
+        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <span>Correction Requested from Seller</span>
+                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
+            </h6>
+            <p class="mb-1 text-dark small" style="line-height: 1.5;">
+                <strong>Reason:</strong> {{ enquiry.raw_data.correction_reason|default:"No specific reason recorded." }}
+            </p>
+            {% if enquiry.raw_data.correction_suggestion %}
+            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
+                <strong>Admin Suggestion:</strong> {{ enquiry.raw_data.correction_suggestion }}
+            </p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-lot-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="correction_needed">
+            <i class="bi bi-pencil-square me-1"></i> Update Correction
+        </button>
+    </div>
+    {% endif %}
+    {% if enquiry.enquiry_status|lower == 'declined' %}
+    <div class="alert alert-danger border border-danger-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3">
+        <i class="bi bi-x-circle-fill text-danger fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-danger mb-1">Bulk Lot Declined & Feedback Sent to Seller</h6>
+            <p class="mb-0 text-dark small" style="line-height: 1.5;">
+                <strong>Rejection Reason:</strong> {{ enquiry.raw_data.rejection_reason|default:"No specific reason recorded." }}
+            </p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1 fw-semibold rounded-pill btn-lot-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="declined">
+            <i class="bi bi-pencil-square me-1"></i> Update Reason & Re-send
+        </button>
+    </div>
+    {% endif %}
 
     <div class="row mb-4">
         <!-- User Details -->
@@ -557,11 +615,11 @@
                         <div class="row g-3 align-items-center">
                             <div class="col-md-7">
                                 <span class="text-muted small text-uppercase fw-semibold d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Listing Title</span>
-                                <h5 class="fw-bold text-dark mb-0">{{ batch_data.listing_title|default:enquiry.title|default:"Wholesale Surplus Lot" }}</h5>
+                                <h5 class="fw-bold text-dark mb-0">{% if batch_data.listing_title %}{{ batch_data.listing_title }}{% elif enquiry.title %}{{ enquiry.title }}{% else %}Wholesale Surplus Lot{% endif %}</h5>
                             </div>
                             <div class="col-md-5">
                                 <span class="text-muted small text-uppercase fw-semibold d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Key Brands Included</span>
-                                <span class="text-dark fw-semibold fs-6">{{ batch_data.key_brands_included|default:batch_data.key_brands|default:"N/A" }}</span>
+                                <span class="text-dark fw-semibold fs-6">{% if batch_data.key_brands_included %}{{ batch_data.key_brands_included }}{% elif batch_data.key_brands %}{{ batch_data.key_brands }}{% else %}N/A{% endif %}</span>
                             </div>
                         </div>
                     </div>
@@ -630,13 +688,13 @@
                     <div class="col-md-6 col-lg-4">
                         <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Listing Title</span>
-                            <span class="text-dark fw-medium text-truncate d-block" title="{{ batch_data.listing_title|default:enquiry.title|default:'N/A' }}">{{ batch_data.listing_title|default:enquiry.title|default:"N/A" }}</span>
+                            <span class="text-dark fw-medium text-truncate d-block" title="{% if batch_data.listing_title %}{{ batch_data.listing_title }}{% elif enquiry.title %}{{ enquiry.title }}{% else %}N/A{% endif %}">{% if batch_data.listing_title %}{{ batch_data.listing_title }}{% elif enquiry.title %}{{ enquiry.title }}{% else %}N/A{% endif %}</span>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Key Brands Included</span>
-                            <span class="text-dark fw-medium">{{ batch_data.key_brands_included|default:batch_data.key_brands|default:"N/A" }}</span>
+                            <span class="text-dark fw-medium">{% if batch_data.key_brands_included %}{{ batch_data.key_brands_included }}{% elif batch_data.key_brands %}{{ batch_data.key_brands }}{% else %}N/A{% endif %}</span>
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-4">
@@ -814,7 +872,7 @@
                             <div class="d-flex align-items-baseline gap-1 my-1">
                                 <span class="fs-4 fw-bold font-monospace text-danger">
                                     {% if batch_data.offer or enquiry.offer %}
-                                        {{ batch_data.offer|default:enquiry.offer }}
+                                        {% if batch_data.offer %}{{ batch_data.offer }}{% elif enquiry.offer %}{{ enquiry.offer }}{% endif %}
                                     {% else %}
                                         N/A
                                     {% endif %}
@@ -848,7 +906,7 @@
                             <div class="col-md-6 col-lg-3">
                                 <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Load / Pallet Type</span>
-                                    <span class="text-dark fw-medium">{{ batch_data.load_type|default:batch_data.pallet_count|default:"N/A" }}</span>
+                                    <span class="text-dark fw-medium">{% if batch_data.load_type %}{{ batch_data.load_type }}{% elif batch_data.pallet_count %}{{ batch_data.pallet_count }}{% else %}N/A{% endif %}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-3">
@@ -2226,6 +2284,32 @@
                 const id = this.dataset.id;
                 const newStatus = this.dataset.status;
 
+                if (newStatus && newStatus.toLowerCase() === 'declined') {
+                    if (typeof window.openRejectionModal === 'function') {
+                        window.openRejectionModal({
+                            id: id,
+                            type: 'lot',
+                            title: "{% if enquiry.title %}{{ enquiry.title|escapejs }}{% elif enquiry.lot_number %}{{ enquiry.lot_number|escapejs }}{% else %}Bulk Lot Listing{% endif %}",
+                            onSuccess: () => location.reload()
+                        });
+                        return;
+                    }
+                }
+
+                if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
+                    if (typeof window.openCorrectionModal === 'function') {
+                        window.openCorrectionModal({
+                            id: id,
+                            type: 'lot',
+                            title: "{% if enquiry.title %}{{ enquiry.title|escapejs }}{% elif enquiry.lot_number %}{{ enquiry.lot_number|escapejs }}{% else %}Bulk Lot Listing{% endif %}",
+                            initialReason: "{{ enquiry.raw_data.correction_reason|default:''|escapejs }}",
+                            initialSuggestion: "{{ enquiry.raw_data.correction_suggestion|default:''|escapejs }}",
+                            onSuccess: () => location.reload()
+                        });
+                        return;
+                    }
+                }
+
                 fetch(`/admin/api/enquiries/lots/${id}/status/`, {
                     method: 'PUT',
                     headers: {
@@ -2343,6 +2427,11 @@
             if (enqSelect && actSelect) {
                 const syncLotActiveState = () => {
                     const isApproved = enqSelect.value.toLowerCase() === 'approved';
+                    const isDeclined = enqSelect.value.toLowerCase() === 'declined';
+                    const rejWrapper = document.getElementById('lotEditRejectionWrapper');
+                    if (rejWrapper) {
+                        rejWrapper.style.display = isDeclined ? 'block' : 'none';
+                    }
                     const activeOpt = actSelect.querySelector('option[value="active"]');
                     if (activeOpt) {
                         activeOpt.disabled = !isApproved;
@@ -2553,7 +2642,29 @@
                                 <select class="form-select" name="enquiry_status">
                                     <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
                                     <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
-                                    <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                                    <option value="declined"     {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}
+    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
+        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
+        <div class="flex-grow-1">
+            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <span>Correction Requested from Seller</span>
+                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
+            </h6>
+            <p class="mb-1 text-dark small" style="line-height: 1.5;">
+                <strong>Reason:</strong> {{ enquiry.raw_data.correction_reason|default:"No specific reason recorded." }}
+            </p>
+            {% if enquiry.raw_data.correction_suggestion %}
+            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
+                <strong>Admin Suggestion:</strong> {{ enquiry.raw_data.correction_suggestion }}
+            </p>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-lot-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="correction_needed">
+            <i class="bi bi-pencil-square me-1"></i> Update Correction
+        </button>
+    </div>
+    {% endif %}
+    {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -2562,6 +2673,18 @@
                                     <option value="active" {% if enquiry.active_status == 'active' %}selected{% endif %}>Active</option>
                                     <option value="inactive" {% if enquiry.active_status == 'inactive' %}selected{% endif %}>Inactive</option>
                                 </select>
+                            </div>
+                                                        <div class="col-12" id="lotEditCorrectionWrapper" style="{% if enquiry.enquiry_status|lower != 'correction_needed' and enquiry.enquiry_status|lower != 'needs_correction' and enquiry.enquiry_status|lower != 'correction' %}display: none;{% endif %}">
+                                <div class="p-3 rounded-3 border border-warning-subtle" style="background-color: #fffbeb;">
+                                    <label class="form-label small fw-semibold text-warning-emphasis mb-1">Reason for Correction (sent to seller)</label>
+                                    <textarea class="form-control rounded-3 mb-2" name="correction_reason" rows="2" placeholder="Explain what needs to be corrected...">{{ enquiry.raw_data.correction_reason|default:'' }}</textarea>
+                                    <label class="form-label small fw-semibold text-secondary mb-1">Admin Suggestions (Optional)</label>
+                                    <textarea class="form-control rounded-3" name="correction_suggestion" rows="2" placeholder="Suggestions for the seller...">{{ enquiry.raw_data.correction_suggestion|default:'' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-12" id="lotEditRejectionWrapper" style="{% if enquiry.enquiry_status|lower != 'declined' %}display: none;{% endif %}">
+                                <label class="form-label small fw-semibold text-danger">Rejection Reason / Feedback (emailed to seller on decline)</label>
+                                <textarea class="form-control rounded-3" name="rejection_reason" rows="2" placeholder="Explain why this bulk lot is declined...">{{ enquiry.raw_data.rejection_reason|default:'' }}</textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-dark">Category</label>
@@ -2678,7 +2801,7 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label small fw-semibold text-dark">Offer / Discount</label>
-                                <input type="text" class="form-control bg-light text-muted font-monospace" name="offer" id="lot_edit_calc_offer" value="{{ batch_data.offer|default:enquiry.offer|default:'' }}" readonly tabindex="-1" style="cursor: not-allowed;" placeholder="e.g. 60% Off MSRP">
+                                <input type="text" class="form-control bg-light text-muted font-monospace" name="offer" id="lot_edit_calc_offer" value="{% if batch_data.offer %}{{ batch_data.offer }}{% elif enquiry.offer %}{{ enquiry.offer }}{% endif %}" readonly tabindex="-1" style="cursor: not-allowed;" placeholder="e.g. 60% Off MSRP">
                                 <small class="text-muted" style="font-size: 11px;">Auto from MSRP</small>
                             </div>
                             <div class="col-12" id="lot_pricing_warning_box" style="display: none;">
@@ -2713,7 +2836,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Load / Pallet Type</label>
-                                <input type="text" class="form-control" name="load_type" value="{{ batch_data.load_type|default:batch_data.pallet_count|default:'' }}">
+                                <input type="text" class="form-control" name="load_type" value="{% if batch_data.load_type %}{{ batch_data.load_type }}{% elif batch_data.pallet_count %}{{ batch_data.pallet_count }}{% endif %}">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-dark">Total Weight</label>
@@ -2725,7 +2848,7 @@
                             </div>
                             <div class="col-md-5">
                                 <label class="form-label small fw-semibold text-dark">Inventory Country</label>
-                                <input type="text" class="form-control" name="inventory_country" value="{{ batch_data.inventory_country|default:enquiry.inventory_country|default:'' }}" placeholder="e.g. Saudi Arabia">
+                                <input type="text" class="form-control" name="inventory_country" value="{% if batch_data.inventory_country %}{{ batch_data.inventory_country }}{% elif enquiry.inventory_country %}{{ enquiry.inventory_country }}{% endif %}" placeholder="e.g. Saudi Arabia">
                             </div>
                         </div>
                     </div>

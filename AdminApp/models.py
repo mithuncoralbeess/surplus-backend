@@ -464,6 +464,7 @@ class SellerProductEnquiry(models.Model):
         ("pending", "Pending"),
         ("approved", "Approved"),
         ("declined", "Declined"),
+        ("correction_needed", "Needs Correction"),
     )
 
     ACTIVE_STATUS_CHOICES = (
@@ -586,6 +587,11 @@ class SellerProductEnquiry(models.Model):
 
             elif curr_status == 'DECLINED':
                 decline_reason = getattr(self, '_decline_reason', '')
+                if decline_reason:
+                    if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+                        self._extra_raw_data = {}
+                    if isinstance(self._extra_raw_data, dict):
+                        self._extra_raw_data['rejection_reason'] = decline_reason
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
@@ -612,6 +618,47 @@ class SellerProductEnquiry(models.Model):
                             product=self,
                             recipient_name=recipient_name,
                             reason=decline_reason
+                        )
+                    except Exception:
+                        pass
+
+            elif curr_status in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION'):
+                corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
+                corr_suggestion = getattr(self, '_correction_suggestion', '')
+                if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+                    self._extra_raw_data = {}
+                if isinstance(self._extra_raw_data, dict):
+                    self._extra_raw_data['correction_reason'] = corr_reason
+                    self._extra_raw_data['correction_suggestion'] = corr_suggestion
+                    self._extra_raw_data['rejection_reason'] = corr_reason
+
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        msg = f"Your product '{self.product_name}' requires corrections before it can be approved."
+                        if corr_reason:
+                            msg += f" Reason: {corr_reason}"
+                        if corr_suggestion:
+                            msg += f" Suggestion: {corr_suggestion}"
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Needs Correction",
+                            message=msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_correction_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name,
+                            reason=corr_reason,
+                            suggestion=corr_suggestion
                         )
                     except Exception:
                         pass
@@ -894,8 +941,10 @@ class Lot(models.Model):
         curr_status = str(self.enquiry_status).lower() if self.enquiry_status else ""
         prev_status = str(orig_status).lower() if orig_status else ""
 
-        # Trigger notifications & emails on status transition to approved or declined
-        if prev_status != curr_status and curr_status in ('approved', 'declined'):
+        has_explicit_decline = (curr_status == 'declined' and bool(getattr(self, '_decline_reason', None)))
+        has_explicit_correction = (curr_status in ('correction_needed', 'needs_correction', 'correction') and bool(getattr(self, '_correction_reason', None) or getattr(self, '_decline_reason', None)))
+        # Trigger notifications & emails on status transition to approved, declined, or correction_needed
+        if (prev_status != curr_status or has_explicit_decline or has_explicit_correction) and curr_status in ('approved', 'declined', 'correction_needed', 'needs_correction', 'correction'):
             target_vendor = self.vendor
             if not target_vendor and hasattr(self, '_user_id') and self._user_id:
                 try:
@@ -961,6 +1010,10 @@ class Lot(models.Model):
 
             elif curr_status == 'declined':
                 decline_reason = getattr(self, '_decline_reason', '')
+                if decline_reason:
+                    if not isinstance(self.raw_data, dict):
+                        self.raw_data = {}
+                    self.raw_data['rejection_reason'] = decline_reason
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
@@ -987,6 +1040,46 @@ class Lot(models.Model):
                             lot=self,
                             recipient_name=recipient_name,
                             reason=decline_reason
+                        )
+                    except Exception:
+                        pass
+
+            elif curr_status in ('correction_needed', 'needs_correction', 'correction'):
+                corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
+                corr_suggestion = getattr(self, '_correction_suggestion', '')
+                if not isinstance(self.raw_data, dict):
+                    self.raw_data = {}
+                self.raw_data['correction_reason'] = corr_reason
+                self.raw_data['correction_suggestion'] = corr_suggestion
+                self.raw_data['rejection_reason'] = corr_reason
+
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        msg = f"Your bulk lot '{self.title or self.lot_number}' requires corrections before it can be approved."
+                        if corr_reason:
+                            msg += f" Reason: {corr_reason}"
+                        if corr_suggestion:
+                            msg += f" Suggestion: {corr_suggestion}"
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Lot Listing Needs Correction",
+                            message=msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
+                    except Exception:
+                        pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_lot_correction_email(
+                            to_email=recipient_email,
+                            lot=self,
+                            recipient_name=recipient_name,
+                            reason=corr_reason,
+                            suggestion=corr_suggestion
                         )
                     except Exception:
                         pass
@@ -1278,6 +1371,7 @@ class Product(models.Model):
         ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
         ('DECLINED', 'Declined'),
+        ('CORRECTION_NEEDED', 'Needs Correction'),
     ]
     
     enquiry_status = models.CharField(
@@ -1359,9 +1453,12 @@ class Product(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Trigger notification and email if status transitioned to APPROVED or DECLINED
-        if not is_new and (str(old_status or '').upper() != str(self.enquiry_status).upper()):
-            curr_status = str(self.enquiry_status).upper()
+        # Trigger notification and email if status transitioned to APPROVED, DECLINED, or CORRECTION_NEEDED
+        curr_status = str(self.enquiry_status).upper()
+        status_changed = (str(old_status or '').upper() != curr_status)
+        has_explicit_decline = (curr_status == 'DECLINED' and bool(getattr(self, '_decline_reason', None)))
+        has_explicit_correction = (curr_status in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION') and bool(getattr(self, '_correction_reason', None) or getattr(self, '_decline_reason', None)))
+        if not is_new and (status_changed or has_explicit_decline or has_explicit_correction):
             target_vendor = self.vendor
             if not target_vendor and self.vendor_id:
                 try:
@@ -1382,15 +1479,17 @@ class Product(models.Model):
 
             recipient_email = None
             recipient_name = "Valued Seller"
-            if self.admin:
-                recipient_email = self.admin.email
-                recipient_name = self.admin.username or "Admin"
-            elif target_vendor:
+            if target_vendor:
                 recipient_email = target_vendor.email
                 recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
-
-            if not recipient_email and hasattr(self, '_user_email') and self._user_email:
+            elif isinstance(getattr(self, 'raw_data', None), dict) and (self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email")):
+                recipient_email = self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email")
+                recipient_name = self.raw_data.get("user_name") or self.raw_data.get("seller_name") or "Valued Seller"
+            elif hasattr(self, '_user_email') and self._user_email:
                 recipient_email = str(self._user_email).strip()
+            elif self.admin:
+                recipient_email = self.admin.email
+                recipient_name = self.admin.username or "Admin" 
 
             if curr_status == 'APPROVED':
                 profile_info = target_vendor.get_profile_completion_details() if target_vendor else None
@@ -1510,8 +1609,10 @@ class Product(models.Model):
         if hasattr(self, "_prefetched_objects_cache") and "images" in self._prefetched_objects_cache:
             images = self._prefetched_objects_cache["images"]
             return images[0] if images else None
-        first_img = self.images.first()
-        return first_img if first_img else None
+        try:
+            return self.images.first()
+        except Exception:
+            return None
 
     @property
     def raw_data(self):
@@ -1519,8 +1620,11 @@ class Product(models.Model):
             images = self._prefetched_objects_cache["images"]
             first_url = images[0].url if images else ""
         else:
-            first_img = self.images.first()
-            first_url = first_img.url if first_img else ""
+            try:
+                first_img = self.images.first()
+                first_url = first_img.url if first_img else ""
+            except Exception:
+                first_url = ""
         data = {
             "product_name": self.product_name,
             "title": self.product_name,
