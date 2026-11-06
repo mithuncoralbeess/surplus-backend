@@ -1266,12 +1266,14 @@ def content_blog_editor_view(request, blog_id=None):
         blog = BlogPost.objects.filter(id=blog_id).first()
         if not blog:
             return redirect("content_blogs_view")
+    else:
+        blog = BlogPost()
 
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "blog": blog,
-        "is_edit": blog is not None,
+        "is_edit": blog.id is not None if blog else False,
     }
     return render(request, "content_blog_form.html", context)
 

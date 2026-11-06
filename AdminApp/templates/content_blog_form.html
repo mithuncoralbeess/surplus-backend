@@ -375,7 +375,7 @@
                                 <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplusmarket.com/blog/{{ blog.slug|default:"article-slug" }}</span>
                             </div>
                             <div class="serp-result-headline" id="serpTitlePreview">{% if blog.meta_title %}{{ blog.meta_title }}{% elif blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %} | Surplus Market Insights</div>
-                            <p class="serp-result-snippet" id="serpDescPreview">{{ blog.meta_description|default:blog.excerpt|default:"Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate." }}</p>
+                            <p class="serp-result-snippet" id="serpDescPreview">{% if blog.meta_description %}{{ blog.meta_description }}{% elif blog.excerpt %}{{ blog.excerpt }}{% else %}Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate.{% endif %}</p>
                         </div>
 
                         <!-- Real-Time Yoast SEO Checklist Analysis -->
