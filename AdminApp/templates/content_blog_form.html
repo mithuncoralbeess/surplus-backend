@@ -164,11 +164,11 @@
     </div>
 
     <!-- Main Editor Form -->
-    <form id="blogEditorForm" enctype="multipart/form-data">
+    <form id="blogEditorForm" method="POST" action="{% if is_edit and blog.id %}/admin/content/blogs/{{ blog.id }}/edit/{% else %}/admin/content/blogs/create/{% endif %}" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="hidden" id="editBlogId" value="{{ blog.id|default:'' }}">
+        <input type="hidden" id="editBlogId" name="blog_id" value="{{ blog.id|default:'' }}">
         <!-- Hidden input storing raw HTML for form submit -->
-        <textarea id="blogContentInput" class="d-none">{{ blog.content|default:'' }}</textarea>
+        <textarea id="blogContentInput" name="content" class="d-none">{{ blog.content|default:'' }}</textarea>
 
         <div class="row g-4">
             <!-- Left Main Information Column (8 Cols) -->
@@ -177,25 +177,25 @@
                 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
                     <div class="mb-3">
                         <label for="blogTitleInput" class="form-label fw-semibold text-dark">Blog Title <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-lg fs-5 fw-bold" id="blogTitleInput" placeholder="Enter post title..." value="{{ blog.title|default:'' }}" required>
+                        <input type="text" class="form-control form-control-lg fs-5 fw-bold" id="blogTitleInput" name="title" placeholder="Enter post title..." value="{{ blog.title|default:'' }}" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="blogSlugInput" class="form-label fw-semibold text-dark small">URL Permalink Slug</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-light text-muted font-monospace">/blog/</span>
-                            <input type="text" class="form-control font-monospace" id="blogSlugInput" placeholder="auto-generated-slug" value="{{ blog.slug|default:'' }}">
+                            <input type="text" class="form-control font-monospace" id="blogSlugInput" name="slug" placeholder="auto-generated-slug" value="{{ blog.slug|default:'' }}">
                         </div>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="blogCodeInput" class="form-label fw-semibold text-dark small">Blog Code / Identifier</label>
-                            <input type="text" class="form-control form-control-sm font-monospace" id="blogCodeInput" placeholder="e.g. BLOG-001" value="{{ blog.blog_code|default:'' }}">
+                            <input type="text" class="form-control form-control-sm font-monospace" id="blogCodeInput" name="blog_code" placeholder="e.g. BLOG-001" value="{{ blog.blog_code|default:'' }}">
                         </div>
                         <div class="col-md-6">
                             <label for="blogAuthorInput" class="form-label fw-semibold text-dark small">Author Name</label>
-                            <input type="text" class="form-control form-control-sm" id="blogAuthorInput" placeholder="e.g. Admin" value="{{ blog.author|default:'Admin' }}">
+                            <input type="text" class="form-control form-control-sm" id="blogAuthorInput" name="author" placeholder="e.g. Admin" value="{{ blog.author|default:'Admin' }}">
                         </div>
                     </div>
                 </div>
@@ -203,7 +203,7 @@
                 <!-- Excerpt Card -->
                 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
                     <h6 class="fw-bold text-dark mb-3"><i class="bi bi-text-paragraph text-primary me-2"></i>Short Excerpt / Summary</h6>
-                    <textarea class="form-control" id="blogExcerptInput" rows="3" placeholder="Write a brief teaser summary for blog cards and search engines...">{{ blog.excerpt|default:'' }}</textarea>
+                    <textarea class="form-control" id="blogExcerptInput" name="excerpt" rows="3" placeholder="Write a brief teaser summary for blog cards and search engines...">{{ blog.excerpt|default:'' }}</textarea>
                 </div>
 
                 <!-- Rich Text Article Content Card -->
@@ -329,7 +329,7 @@
                             </div>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-key text-primary"></i></span>
-                                <input type="text" class="form-control" id="focusKeyphraseInput" value="{{ blog.focus_keyphrase|default:'' }}" placeholder="e.g. surplus electronics inventory liquidation">
+                                <input type="text" class="form-control" id="focusKeyphraseInput" name="focus_keyphrase" value="{{ blog.focus_keyphrase|default:'' }}" placeholder="e.g. surplus electronics inventory liquidation">
                             </div>
                         </div>
 
@@ -340,14 +340,14 @@
                                     <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaTitleInput">SEO / Meta Title</label>
                                     <span class="text-muted small" id="metaTitleCounter">0 / 60 chars</span>
                                 </div>
-                                <input type="text" class="form-control" id="metaTitleInput" value="{{ blog.meta_title|default:'' }}" placeholder="Custom search result title (defaults to Blog Title)">
+                                <input type="text" class="form-control" id="metaTitleInput" name="meta_title" value="{{ blog.meta_title|default:'' }}" placeholder="Custom search result title (defaults to Blog Title)">
                             </div>
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaKeywordsInput">Meta Keywords</label>
                                     <span class="text-muted small">Comma separated</span>
                                 </div>
-                                <input type="text" class="form-control" id="metaKeywordsInput" value="{{ blog.meta_keywords|default:'' }}" placeholder="e.g. surplus, liquidation, wholesale, b2b inventory">
+                                <input type="text" class="form-control" id="metaKeywordsInput" name="meta_keywords" value="{{ blog.meta_keywords|default:'' }}" placeholder="e.g. surplus, liquidation, wholesale, b2b inventory">
                             </div>
                         </div>
 
@@ -357,7 +357,7 @@
                                 <label class="form-label small fw-semibold text-secondary text-uppercase mb-0" for="metaDescInput">Meta Description</label>
                                 <span class="text-muted small" id="metaDescCounter">0 / 160 chars</span>
                             </div>
-                            <textarea class="form-control" id="metaDescInput" rows="3" maxlength="220" placeholder="Brief summary displayed in Google search results (120-160 characters recommended)">{{ blog.meta_description|default:'' }}</textarea>
+                            <textarea class="form-control" id="metaDescInput" name="meta_description" rows="3" maxlength="220" placeholder="Brief summary displayed in Google search results (120-160 characters recommended)">{{ blog.meta_description|default:'' }}</textarea>
                             <div class="char-counter-bar">
                                 <div class="char-counter-fill" id="metaDescBar"></div>
                             </div>
@@ -374,8 +374,8 @@
                                 <span class="serp-sitename">Surplus Market</span>
                                 <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplusmarket.com/blog/{{ blog.slug|default:"article-slug" }}</span>
                             </div>
-                            <div class="serp-result-headline" id="serpTitlePreview">{% if blog.meta_title %}{{ blog.meta_title }}{% elif blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %} | Surplus Market Insights</div>
-                            <p class="serp-result-snippet" id="serpDescPreview">{% if blog.meta_description %}{{ blog.meta_description }}{% elif blog.excerpt %}{{ blog.excerpt }}{% else %}Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate.{% endif %}</p>
+                            <div class="serp-result-headline" id="serpTitlePreview">{% if blog and blog.meta_title %}{{ blog.meta_title }}{% elif blog and blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %} | Surplus Market Insights</div>
+                            <p class="serp-result-snippet" id="serpDescPreview">{% if blog and blog.meta_description %}{{ blog.meta_description }}{% elif blog and blog.excerpt %}{{ blog.excerpt }}{% else %}Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate.{% endif %}</p>
                         </div>
 
                         <!-- Real-Time Yoast SEO Checklist Analysis -->
@@ -402,11 +402,11 @@
                                 <h6 class="fw-bold text-primary mb-3"><i class="bi bi-facebook me-1"></i> Facebook &amp; LinkedIn (Open Graph)</h6>
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold text-secondary text-uppercase" for="ogTitleInput">Facebook Title (OG Title)</label>
-                                    <input type="text" class="form-control" id="ogTitleInput" value="{{ blog.og_title|default:'' }}" placeholder="Defaults to SEO Title if empty">
+                                    <input type="text" class="form-control" id="ogTitleInput" name="og_title" value="{{ blog.og_title|default:'' }}" placeholder="Defaults to SEO Title if empty">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold text-secondary text-uppercase" for="ogDescInput">Facebook Description</label>
-                                    <textarea class="form-control" id="ogDescInput" rows="3" placeholder="Defaults to Meta Description if empty">{{ blog.og_description|default:'' }}</textarea>
+                                    <textarea class="form-control" id="ogDescInput" name="og_description" rows="3" placeholder="Defaults to Meta Description if empty">{{ blog.og_description|default:'' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
@@ -415,7 +415,7 @@
                                             <i class="bi bi-image me-1"></i> Use Featured Image
                                         </button>
                                     </div>
-                                    <input type="text" class="form-control" id="ogImageInput" value="{{ blog.og_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/cover.jpg">
+                                    <input type="text" class="form-control" id="ogImageInput" name="og_image" value="{{ blog.og_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/cover.jpg">
                                 </div>
                             </div>
 
@@ -423,11 +423,11 @@
                                 <h6 class="fw-bold text-info mb-3"><i class="bi bi-twitter-x me-1"></i> Twitter / X Cards</h6>
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold text-secondary text-uppercase" for="twitterTitleInput">Twitter Title</label>
-                                    <input type="text" class="form-control" id="twitterTitleInput" value="{{ blog.twitter_title|default:'' }}" placeholder="Defaults to Facebook Title if empty">
+                                    <input type="text" class="form-control" id="twitterTitleInput" name="twitter_title" value="{{ blog.twitter_title|default:'' }}" placeholder="Defaults to Facebook Title if empty">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold text-secondary text-uppercase" for="twitterDescInput">Twitter Description</label>
-                                    <textarea class="form-control" id="twitterDescInput" rows="3" placeholder="Defaults to Facebook Description if empty">{{ blog.twitter_description|default:'' }}</textarea>
+                                    <textarea class="form-control" id="twitterDescInput" name="twitter_description" rows="3" placeholder="Defaults to Facebook Description if empty">{{ blog.twitter_description|default:'' }}</textarea>
                                 </div>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
@@ -436,7 +436,7 @@
                                             <i class="bi bi-image me-1"></i> Use Featured Image
                                         </button>
                                     </div>
-                                    <input type="text" class="form-control" id="twitterImageInput" value="{{ blog.twitter_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/twitter.jpg">
+                                    <input type="text" class="form-control" id="twitterImageInput" name="twitter_image" value="{{ blog.twitter_image|default:'' }}" placeholder="https://surplusmarket.com/media/blog_images/twitter.jpg">
                                 </div>
                             </div>
                         </div>
@@ -450,8 +450,8 @@
                                 </div>
                                 <div class="social-preview-body">
                                     <div class="social-domain">SURPLUSMARKET.COM</div>
-                                    <div class="social-title" id="socialPreviewTitle">{% if blog.og_title %}{{ blog.og_title }}{% elif blog.meta_title %}{{ blog.meta_title }}{% elif blog.title %}{{ blog.title }}{% else %}Article Title{% endif %}</div>
-                                    <p class="social-desc" id="socialPreviewDesc">{% if blog.og_description %}{{ blog.og_description }}{% elif blog.meta_description %}{{ blog.meta_description }}{% elif blog.excerpt %}{{ blog.excerpt }}{% else %}Article description will be displayed when shared on social networks.{% endif %}</p>
+                                    <div class="social-title" id="socialPreviewTitle">{% if blog and blog.og_title %}{{ blog.og_title }}{% elif blog and blog.meta_title %}{{ blog.meta_title }}{% elif blog and blog.title %}{{ blog.title }}{% else %}Article Title{% endif %}</div>
+                                    <p class="social-desc" id="socialPreviewDesc">{% if blog and blog.og_description %}{{ blog.og_description }}{% elif blog and blog.meta_description %}{{ blog.meta_description }}{% elif blog and blog.excerpt %}{{ blog.excerpt }}{% else %}Article description will be displayed when shared on social networks.{% endif %}</p>
                                 </div>
                             </div>
                         </div>
@@ -462,25 +462,25 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsIndexSelect">Robots Index</label>
-                                <select class="form-select" id="robotsIndexSelect">
-                                    <option value="index" {% if blog.robots_index == 'index' or not blog %}selected{% endif %}>🟢 index (Allow search engines to index this article)</option>
-                                    <option value="noindex" {% if blog.robots_index == 'noindex' %}selected{% endif %}>🔴 noindex (Do not show this article in search results)</option>
+                                <select class="form-select" id="robotsIndexSelect" name="robots_index">
+                                    <option value="index" {% if not blog or blog.robots_index == 'index' or not blog.robots_index %}selected{% endif %}>🟢 index (Allow search engines to index this article)</option>
+                                    <option value="noindex" {% if blog and blog.robots_index == 'noindex' %}selected{% endif %}>🔴 noindex (Do not show this article in search results)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsFollowSelect">Robots Follow</label>
-                                <select class="form-select" id="robotsFollowSelect">
-                                    <option value="follow" {% if blog.robots_follow == 'follow' or not blog %}selected{% endif %}>🟢 follow (Follow links on this article)</option>
-                                    <option value="nofollow" {% if blog.robots_follow == 'nofollow' %}selected{% endif %}>🔴 nofollow (Do not follow links on this article)</option>
+                                <select class="form-select" id="robotsFollowSelect" name="robots_follow">
+                                    <option value="follow" {% if not blog or blog.robots_follow == 'follow' or not blog.robots_follow %}selected{% endif %}>🟢 follow (Follow links on this article)</option>
+                                    <option value="nofollow" {% if blog and blog.robots_follow == 'nofollow' %}selected{% endif %}>🔴 nofollow (Do not follow links on this article)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-secondary text-uppercase" for="robotsAdvancedInput">Advanced Robots Directives</label>
-                                <input type="text" class="form-control" id="robotsAdvancedInput" value="{{ blog.robots_advanced|default:'' }}" placeholder="e.g. noarchive, nosnippet, noimageindex">
+                                <input type="text" class="form-control" id="robotsAdvancedInput" name="robots_advanced" value="{{ blog.robots_advanced|default:'' }}" placeholder="e.g. noarchive, nosnippet, noimageindex">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label small fw-semibold text-secondary text-uppercase" for="canonicalUrlInput">Canonical URL Override</label>
-                                <input type="text" class="form-control" id="canonicalUrlInput" value="{{ blog.canonical_url|default:'' }}" placeholder="https://surplusmarket.com/blog/preferred-slug/">
+                                <input type="text" class="form-control" id="canonicalUrlInput" name="canonical_url" value="{{ blog.canonical_url|default:'' }}" placeholder="https://surplusmarket.com/blog/preferred-slug/">
                                 <span class="text-muted small mt-1 d-block">Leave blank to use default self-referencing canonical URL</span>
                             </div>
                         </div>
@@ -490,17 +490,17 @@
                     <div class="yoast-tab-content d-none" id="tab-blog-seo-schema">
                         <div class="mb-3">
                             <label class="form-label small fw-semibold text-secondary text-uppercase" for="schemaTypeSelect">Schema Post Type</label>
-                            <select class="form-select" id="schemaTypeSelect">
-                                <option value="BlogPosting" {% if blog.schema_type == 'BlogPosting' or not blog %}selected{% endif %}>BlogPosting (Standard Blog Article)</option>
-                                <option value="Article" {% if blog.schema_type == 'Article' %}selected{% endif %}>Article (General Editorial Article)</option>
-                                <option value="NewsArticle" {% if blog.schema_type == 'NewsArticle' %}selected{% endif %}>NewsArticle (Press Release &amp; News)</option>
-                                <option value="TechArticle" {% if blog.schema_type == 'TechArticle' %}selected{% endif %}>TechArticle (Technical Guide / Specification)</option>
+                            <select class="form-select" id="schemaTypeSelect" name="schema_type">
+                                <option value="BlogPosting" {% if not blog or blog.schema_type == 'BlogPosting' or not blog.schema_type %}selected{% endif %}>BlogPosting (Standard Blog Article)</option>
+                                <option value="Article" {% if blog and blog.schema_type == 'Article' %}selected{% endif %}>Article (General Editorial Article)</option>
+                                <option value="NewsArticle" {% if blog and blog.schema_type == 'NewsArticle' %}selected{% endif %}>NewsArticle (Press Release &amp; News)</option>
+                                <option value="TechArticle" {% if blog and blog.schema_type == 'TechArticle' %}selected{% endif %}>TechArticle (Technical Guide / Specification)</option>
                             </select>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label small fw-semibold text-secondary text-uppercase" for="structuredDataTextarea">Custom JSON-LD Schema / Additional Meta Tags</label>
-                            <textarea class="form-control font-monospace" id="structuredDataTextarea" rows="6" placeholder='<script type="application/ld+json">
+                            <textarea class="form-control font-monospace" id="structuredDataTextarea" name="structured_data" rows="6" placeholder='<script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
@@ -521,7 +521,7 @@
                     
                     <div class="mb-3">
                         <label for="blogStatusSelect" class="form-label fw-semibold text-dark small">Publish Status</label>
-                        <select class="form-select" id="blogStatusSelect">
+                        <select class="form-select" id="blogStatusSelect" name="status">
                             <option value="published" {% if blog.status == 'published' or not is_edit %}selected{% endif %}>Published</option>
                             <option value="draft" {% if blog.status == 'draft' %}selected{% endif %}>Draft</option>
                         </select>
@@ -529,12 +529,12 @@
 
                     <div class="mb-3">
                         <label for="blogCategoryInput" class="form-label fw-semibold text-dark small">Category</label>
-                        <input type="text" class="form-control" id="blogCategoryInput" placeholder="e.g. Inventory, Tech, Supplies" value="{{ blog.category_name|default:'General' }}">
+                        <input type="text" class="form-control" id="blogCategoryInput" name="category_name" placeholder="e.g. Inventory, Tech, Supplies" value="{{ blog.category_name|default:'General' }}">
                     </div>
 
                     <div class="mb-3">
                         <label for="readTimeInput" class="form-label fw-semibold text-dark small">Estimated Read Time (Minutes)</label>
-                        <input type="number" class="form-control" id="readTimeInput" min="1" max="120" value="{{ blog.read_time|default:'3' }}">
+                        <input type="number" class="form-control" id="readTimeInput" name="read_time" min="1" max="120" value="{{ blog.read_time|default:'3' }}">
                     </div>
                 </div>
 
@@ -575,19 +575,19 @@
                         <label for="featuredImageUrlInput" class="form-label fw-semibold text-dark small">External Image URL</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text bg-light text-muted"><i class="bi bi-globe"></i></span>
-                            <input type="text" class="form-control" id="featuredImageUrlInput" placeholder="https://example.com/banner.jpg" value="{{ blog.featured_image_url|default:'' }}">
+                            <input type="text" class="form-control" id="featuredImageUrlInput" name="featured_image_url" placeholder="https://example.com/banner.jpg" value="{{ blog.featured_image_url|default:'' }}">
                         </div>
                         <div class="form-text text-muted" style="font-size: 0.72rem;">Paste a direct link to an external banner image</div>
                     </div>
 
                     <!-- Hidden flag to track image removal -->
-                    <input type="hidden" id="clearImageInput" value="false">
+                    <input type="hidden" id="clearImageInput" name="clear_image" value="false">
 
                     <!-- Live Image Preview Card -->
-                    <div id="imagePreviewContainer" class="mt-3 p-2 bg-light rounded-3 border position-relative" style="display: {% if blog.featured_image_url or blog.image %}block{% else %}none{% endif %};">
+                    <div id="imagePreviewContainer" class="mt-3 p-2 bg-light rounded-3 border position-relative" style="display: {% if blog and blog.featured_image_url or blog and blog.image %}block{% else %}none{% endif %};">
                         <div class="d-flex align-items-center justify-content-between mb-2 px-1">
                             <span class="badge bg-secondary-subtle text-secondary small" id="previewBadge">
-                                {% if blog.image %}Uploaded File{% elif blog.featured_image_url %}Current Banner{% else %}Selected Image{% endif %}
+                                {% if blog and blog.image %}Uploaded File{% elif blog and blog.featured_image_url %}Current Banner{% else %}Selected Image{% endif %}
                             </span>
                             <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small fw-semibold" id="removeImageBtn" title="Remove Image">
                                 <i class="bi bi-trash3 me-1"></i>Remove
@@ -596,7 +596,7 @@
                         
                         <div class="text-center rounded overflow-hidden bg-white border" style="min-height: 100px; max-height: 180px;">
                             <img id="imagePreviewElement" 
-                                 src="{% if blog.image %}{{ blog.image.url }}{% elif blog.featured_image_url %}{{ blog.featured_image_url }}{% endif %}" 
+                                 src="{% if blog and blog.image %}{{ blog.image.url }}{% elif blog and blog.featured_image_url %}{{ blog.featured_image_url }}{% endif %}" 
                                  class="img-fluid w-100" 
                                  style="max-height: 180px; object-fit: cover; display: block;"
                                  alt="Blog Banner Preview">
@@ -1142,43 +1142,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const blogId = document.getElementById('editBlogId').value;
+            const blogId = (document.getElementById('editBlogId')?.value || '').trim();
             const submitBtn = document.getElementById('saveBlogBtn');
 
             // Obtain final HTML content depending on active view mode
             const finalContent = isCodeViewActive ? htmlSourceTextarea.value : quill.root.innerHTML;
+            if (hiddenInput) {
+                hiddenInput.value = finalContent;
+            }
 
-            const formData = new FormData();
-            formData.append('title', document.getElementById('blogTitleInput').value);
-            formData.append('slug', document.getElementById('blogSlugInput').value);
-            formData.append('blog_code', document.getElementById('blogCodeInput').value);
-            formData.append('author', document.getElementById('blogAuthorInput').value);
-            formData.append('category_name', document.getElementById('blogCategoryInput').value);
-            formData.append('excerpt', document.getElementById('blogExcerptInput').value);
-            formData.append('content', finalContent);
-            formData.append('featured_image_url', document.getElementById('featuredImageUrlInput').value);
-            formData.append('meta_title', document.getElementById('metaTitleInput').value);
-            formData.append('meta_description', document.getElementById('metaDescInput').value);
-            formData.append('meta_keywords', document.getElementById('metaKeywordsInput').value);
-            formData.append('focus_keyphrase', document.getElementById('focusKeyphraseInput')?.value || '');
-            formData.append('canonical_url', document.getElementById('canonicalUrlInput')?.value || '');
-            formData.append('robots_index', document.getElementById('robotsIndexSelect')?.value || 'index');
-            formData.append('robots_follow', document.getElementById('robotsFollowSelect')?.value || 'follow');
-            formData.append('robots_advanced', document.getElementById('robotsAdvancedInput')?.value || '');
-            formData.append('og_title', document.getElementById('ogTitleInput')?.value || '');
-            formData.append('og_description', document.getElementById('ogDescInput')?.value || '');
-            formData.append('og_image', document.getElementById('ogImageInput')?.value || '');
-            formData.append('twitter_title', document.getElementById('twitterTitleInput')?.value || '');
-            formData.append('twitter_description', document.getElementById('twitterDescInput')?.value || '');
-            formData.append('twitter_image', document.getElementById('twitterImageInput')?.value || '');
-            formData.append('schema_type', document.getElementById('schemaTypeSelect')?.value || 'BlogPosting');
-            formData.append('structured_data', document.getElementById('structuredDataTextarea')?.value || '');
-            formData.append('read_time', document.getElementById('readTimeInput').value);
-            formData.append('status', document.getElementById('blogStatusSelect').value);
-            formData.append('clear_image', clearImageInput.value);
+            const formData = new FormData(form);
+            formData.set('title', (document.getElementById('blogTitleInput')?.value || '').trim());
+            formData.set('slug', (document.getElementById('blogSlugInput')?.value || '').trim());
+            formData.set('blog_code', (document.getElementById('blogCodeInput')?.value || '').trim());
+            formData.set('author', (document.getElementById('blogAuthorInput')?.value || 'Admin').trim());
+            formData.set('category_name', (document.getElementById('blogCategoryInput')?.value || 'General').trim());
+            formData.set('excerpt', (document.getElementById('blogExcerptInput')?.value || '').trim());
+            formData.set('content', finalContent);
+            formData.set('featured_image_url', (document.getElementById('featuredImageUrlInput')?.value || '').trim());
+            formData.set('meta_title', (document.getElementById('metaTitleInput')?.value || '').trim());
+            formData.set('meta_description', (document.getElementById('metaDescInput')?.value || '').trim());
+            formData.set('meta_keywords', (document.getElementById('metaKeywordsInput')?.value || '').trim());
+            formData.set('focus_keyphrase', (document.getElementById('focusKeyphraseInput')?.value || '').trim());
+            formData.set('canonical_url', (document.getElementById('canonicalUrlInput')?.value || '').trim());
+            formData.set('robots_index', document.getElementById('robotsIndexSelect')?.value || 'index');
+            formData.set('robots_follow', document.getElementById('robotsFollowSelect')?.value || 'follow');
+            formData.set('robots_advanced', (document.getElementById('robotsAdvancedInput')?.value || '').trim());
+            formData.set('og_title', (document.getElementById('ogTitleInput')?.value || '').trim());
+            formData.set('og_description', (document.getElementById('ogDescInput')?.value || '').trim());
+            formData.set('og_image', (document.getElementById('ogImageInput')?.value || '').trim());
+            formData.set('twitter_title', (document.getElementById('twitterTitleInput')?.value || '').trim());
+            formData.set('twitter_description', (document.getElementById('twitterDescInput')?.value || '').trim());
+            formData.set('twitter_image', (document.getElementById('twitterImageInput')?.value || '').trim());
+            formData.set('schema_type', document.getElementById('schemaTypeSelect')?.value || 'BlogPosting');
+            formData.set('structured_data', (document.getElementById('structuredDataTextarea')?.value || '').trim());
+            formData.set('read_time', document.getElementById('readTimeInput')?.value || '3');
+            formData.set('status', document.getElementById('blogStatusSelect')?.value || 'published');
+            formData.set('clear_image', clearImageInput?.value || 'false');
 
             if (selectedImageFile) {
-                formData.append('image', selectedImageFile);
+                formData.set('image', selectedImageFile);
+            }
+
+            if (!formData.get('title')) {
+                alert('Please enter a blog title.');
+                return;
             }
 
             submitBtn.disabled = true;
@@ -1193,16 +1201,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: formData
                 });
-                const data = await res.json();
+                
+                let data;
+                try {
+                    data = await res.json();
+                } catch (parseErr) {
+                    const text = await res.text();
+                    data = { success: false, message: `Server error (${res.status}): ${text.substring(0, 150)}` };
+                }
+
                 if (res.ok && data.success) {
                     window.location.href = data.redirect_url || '/admin/content/blogs/';
                 } else {
-                    alert(data.message || 'Failed to save blog post.');
+                    alert(data.message || data.error || 'Failed to save blog post.');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Changes';
                 }
             } catch (err) {
-                alert('Server error occurred while saving.');
+                alert('Network or server error occurred while saving: ' + (err.message || err));
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Save Changes';
             }

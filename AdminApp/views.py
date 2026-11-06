@@ -1255,12 +1255,16 @@ def content_blogs_view(request):
 def content_blog_editor_view(request, blog_id=None):
     """
     Renders the Create / Edit Blog Post form.
+    Also handles standard form POST submissions seamlessly.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
     from .models import BlogPost
+    from django.utils.text import slugify
+    import secrets
+
     blog = None
     if blog_id:
         blog = BlogPost.objects.filter(id=blog_id).first()
@@ -1268,6 +1272,86 @@ def content_blog_editor_view(request, blog_id=None):
             return redirect("content_blogs_view")
     else:
         blog = BlogPost()
+
+    if request.method == "POST":
+        title = str(request.POST.get("title") or "").strip()
+        if not title:
+            context = {
+                "admin": admin_user,
+                "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
+                "blog": blog,
+                "is_edit": blog.id is not None,
+                "error_message": "Title is required.",
+            }
+            return render(request, "content_blog_form.html", context)
+
+        slug = str(request.POST.get("slug") or "").strip() or slugify(title)
+        blog_code = str(request.POST.get("blog_code") or "").strip() or f"BLOG-{secrets.SystemRandom().randint(100000, 999999)}"
+
+        if blog.id:
+            duplicate = BlogPost.objects.filter(slug=slug).exclude(id=blog.id).first()
+            if duplicate:
+                slug = f"{slug}-{blog.id}"
+        else:
+            duplicate = BlogPost.objects.filter(slug=slug).first()
+            if duplicate:
+                slug = f"{slug}-{secrets.SystemRandom().randint(100, 999)}"
+
+        blog.title = title
+        blog.slug = slug
+        blog.blog_code = blog_code
+        blog.author = str(request.POST.get("author") or "Admin").strip()
+        blog.category_name = str(request.POST.get("category_name") or "General").strip()
+        blog.excerpt = str(request.POST.get("excerpt") or "").strip()
+        blog.content = str(request.POST.get("content") or "").strip()
+        blog.featured_image_url = str(request.POST.get("featured_image_url") or "").strip()
+
+        # SEO Fields
+        blog.focus_keyphrase = str(request.POST.get("focus_keyphrase") or "").strip()
+        blog.meta_title = str(request.POST.get("meta_title") or "").strip()
+        blog.meta_description = str(request.POST.get("meta_description") or "").strip()
+        blog.meta_keywords = str(request.POST.get("meta_keywords") or "").strip()
+        blog.canonical_url = str(request.POST.get("canonical_url") or "").strip()
+        blog.robots_index = str(request.POST.get("robots_index") or "index").strip() or "index"
+        blog.robots_follow = str(request.POST.get("robots_follow") or "follow").strip() or "follow"
+        blog.robots_advanced = str(request.POST.get("robots_advanced") or "").strip()
+        blog.og_title = str(request.POST.get("og_title") or "").strip()
+        blog.og_description = str(request.POST.get("og_description") or "").strip()
+        blog.og_image = str(request.POST.get("og_image") or "").strip()
+        blog.twitter_title = str(request.POST.get("twitter_title") or "").strip()
+        blog.twitter_description = str(request.POST.get("twitter_description") or "").strip()
+        blog.twitter_image = str(request.POST.get("twitter_image") or "").strip()
+        blog.schema_type = str(request.POST.get("schema_type") or "BlogPosting").strip() or "BlogPosting"
+        blog.structured_data = str(request.POST.get("structured_data") or "").strip()
+
+        try:
+            blog.read_time = int(request.POST.get("read_time") or 3)
+        except (ValueError, TypeError):
+            blog.read_time = 3
+
+        blog.status = str(request.POST.get("status") or "published").strip().lower()
+        blog.is_active = (blog.status == "published")
+
+        if str(request.POST.get("clear_image") or "").lower() in ("true", "1", "yes"):
+            if blog.image:
+                try:
+                    blog.image.delete(save=False)
+                except Exception:
+                    pass
+            blog.image = None
+            blog.featured_image_url = ""
+
+        if "image" in request.FILES:
+            blog.image = request.FILES["image"]
+            blog.save()
+            if hasattr(blog.image, "url") and blog.image.url:
+                blog.featured_image_url = blog.image.url
+                blog.save(update_fields=["featured_image_url"])
+                _sync_blog_image_to_frontends(blog.image.name)
+        else:
+            blog.save()
+
+        return redirect("content_blogs_view")
 
     context = {
         "admin": admin_user,
@@ -1321,6 +1405,7 @@ def content_blogs_api(request, blog_id=None):
 
     from .models import BlogPost
     from django.utils.text import slugify
+    import secrets
 
     if request.method == "DELETE":
         target_id = blog_id or request.data.get("id")
@@ -1334,44 +1419,60 @@ def content_blogs_api(request, blog_id=None):
 
     if request.method in ("POST", "PUT"):
         payload = request.data
-        title = payload.get("title", "").strip()
+        title = str(payload.get("title") or "").strip()
         if not title:
             return Response({"success": False, "message": "Title is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        slug = payload.get("slug", "").strip() or slugify(title)
-        blog_code = payload.get("blog_code", "").strip() or f"BLOG-{secrets.SystemRandom().randint(100000, 999999)}"
+        slug = str(payload.get("slug") or "").strip() or slugify(title)
+        blog_code = str(payload.get("blog_code") or "").strip() or f"BLOG-{secrets.SystemRandom().randint(100000, 999999)}"
 
         if blog_id:
             blog = BlogPost.objects.filter(id=blog_id).first()
+            if not blog:
+                return Response({"success": False, "message": f"Blog post #{blog_id} not found."}, status=status.HTTP_404_NOT_FOUND)
+            duplicate = BlogPost.objects.filter(slug=slug).exclude(id=blog.id).first()
+            if duplicate:
+                slug = f"{slug}-{blog.id}"
         else:
-            blog = BlogPost.objects.filter(slug=slug).first() or BlogPost()
+            duplicate = BlogPost.objects.filter(slug=slug).first()
+            if duplicate:
+                slug = f"{slug}-{secrets.SystemRandom().randint(100, 999)}"
+            blog = BlogPost()
 
         blog.title = title
         blog.slug = slug
         blog.blog_code = blog_code
-        blog.author = payload.get("author", "Admin").strip()
-        blog.category_name = payload.get("category_name", "General").strip()
-        blog.excerpt = payload.get("excerpt", "").strip()
-        blog.content = payload.get("content", "").strip()
-        blog.featured_image_url = payload.get("featured_image_url", "").strip()
-        blog.focus_keyphrase = payload.get("focus_keyphrase", "").strip()
-        blog.meta_title = payload.get("meta_title", "").strip()
-        blog.meta_description = payload.get("meta_description", "").strip()
-        blog.meta_keywords = payload.get("meta_keywords", "").strip()
-        blog.canonical_url = payload.get("canonical_url", "").strip()
-        blog.robots_index = payload.get("robots_index", "index").strip() or "index"
-        blog.robots_follow = payload.get("robots_follow", "follow").strip() or "follow"
-        blog.robots_advanced = payload.get("robots_advanced", "").strip()
-        blog.og_title = payload.get("og_title", "").strip()
-        blog.og_description = payload.get("og_description", "").strip()
-        blog.og_image = payload.get("og_image", "").strip()
-        blog.twitter_title = payload.get("twitter_title", "").strip()
-        blog.twitter_description = payload.get("twitter_description", "").strip()
-        blog.twitter_image = payload.get("twitter_image", "").strip()
-        blog.schema_type = payload.get("schema_type", "BlogPosting").strip() or "BlogPosting"
-        blog.structured_data = payload.get("structured_data", "").strip()
-        blog.read_time = int(payload.get("read_time", 3))
-        blog.status = payload.get("status", "published").strip().lower()
+        blog.author = str(payload.get("author") or "Admin").strip()
+        blog.category_name = str(payload.get("category_name") or "General").strip()
+        blog.excerpt = str(payload.get("excerpt") or "").strip()
+        blog.content = str(payload.get("content") or "").strip()
+        blog.featured_image_url = str(payload.get("featured_image_url") or "").strip()
+
+        # Yoast SEO & Meta Tags
+        blog.focus_keyphrase = str(payload.get("focus_keyphrase") or "").strip()
+        blog.meta_title = str(payload.get("meta_title") or "").strip()
+        blog.meta_description = str(payload.get("meta_description") or "").strip()
+        blog.meta_keywords = str(payload.get("meta_keywords") or "").strip()
+        blog.canonical_url = str(payload.get("canonical_url") or "").strip()
+        blog.robots_index = str(payload.get("robots_index") or "index").strip() or "index"
+        blog.robots_follow = str(payload.get("robots_follow") or "follow").strip() or "follow"
+        blog.robots_advanced = str(payload.get("robots_advanced") or "").strip()
+        blog.og_title = str(payload.get("og_title") or "").strip()
+        blog.og_description = str(payload.get("og_description") or "").strip()
+        blog.og_image = str(payload.get("og_image") or "").strip()
+        blog.twitter_title = str(payload.get("twitter_title") or "").strip()
+        blog.twitter_description = str(payload.get("twitter_description") or "").strip()
+        blog.twitter_image = str(payload.get("twitter_image") or "").strip()
+        blog.schema_type = str(payload.get("schema_type") or "BlogPosting").strip() or "BlogPosting"
+        blog.structured_data = str(payload.get("structured_data") or "").strip()
+
+        try:
+            blog.read_time = int(payload.get("read_time") or 3)
+        except (ValueError, TypeError):
+            blog.read_time = 3
+
+        blog.status = str(payload.get("status") or "published").strip().lower()
+        blog.is_active = (blog.status == "published")
 
         # Handle clear_image request
         if str(payload.get("clear_image", "")).lower() in ("true", "1", "yes"):
@@ -1383,19 +1484,25 @@ def content_blogs_api(request, blog_id=None):
             blog.image = None
             blog.featured_image_url = ""
 
-        # Handle uploaded image file
-        if "image" in request.FILES:
-            blog.image = request.FILES["image"]
-            blog.save()
-            if hasattr(blog.image, "url") and blog.image.url:
-                blog.featured_image_url = blog.image.url
-                blog.save(update_fields=["featured_image_url"])
-                _sync_blog_image_to_frontends(blog.image.name)
-        else:
-            featured_url = payload.get("featured_image_url", "").strip()
-            if featured_url:
-                blog.featured_image_url = featured_url
-            blog.save()
+        try:
+            # Handle uploaded image file
+            if "image" in request.FILES:
+                blog.image = request.FILES["image"]
+                blog.save()
+                if hasattr(blog.image, "url") and blog.image.url:
+                    blog.featured_image_url = blog.image.url
+                    blog.save(update_fields=["featured_image_url"])
+                    _sync_blog_image_to_frontends(blog.image.name)
+            else:
+                featured_url = str(payload.get("featured_image_url") or "").strip()
+                if featured_url:
+                    blog.featured_image_url = featured_url
+                blog.save()
+        except Exception as save_err:
+            return Response({
+                "success": False,
+                "message": f"Database error saving blog post: {str(save_err)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "success": True,
@@ -1406,6 +1513,7 @@ def content_blogs_api(request, blog_id=None):
         }, status=status.HTTP_200_OK)
 
     return Response({"success": True, "message": "Blog API online."})
+
 
 
 @api_view(["POST"])
