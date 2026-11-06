@@ -1319,6 +1319,18 @@
 {{ explorer_data|json_script:"initial-explorer-data" }}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+    // Fallback click handler to guarantee modal opens
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-bs-target="#uploadLotMediaModal"]');
+        if (btn) {
+            e.preventDefault();
+            const modalEl = document.getElementById('uploadLotMediaModal');
+            if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        }
+    });
+
         const explorerDataEl = document.getElementById("initial-explorer-data");
         window.initialExplorerData = explorerDataEl ? JSON.parse(explorerDataEl.textContent || "null") : null;
         window.currentParsedProducts = (window.initialExplorerData && window.initialExplorerData.items) ? window.initialExplorerData.items : null;
@@ -2786,7 +2798,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
+
 <!-- Dedicated Modal: Upload Lot Enquiry Media (Images & Videos) -->
 <div class="modal fade" id="uploadLotMediaModal" tabindex="-1" aria-labelledby="uploadLotMediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -2861,3 +2873,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+{% endblock %}

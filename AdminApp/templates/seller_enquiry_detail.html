@@ -555,6 +555,18 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+    // Fallback click handler to guarantee modal opens
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-bs-target="#uploadSellerMediaModal"]');
+        if (btn) {
+            e.preventDefault();
+            const modalEl = document.getElementById('uploadSellerMediaModal');
+            if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        }
+    });
+
         // Status update handler
         document.querySelectorAll('.btn-action-status').forEach(btn => {
             btn.addEventListener('click', function (e) {
@@ -1055,7 +1067,7 @@
         </div>
     </div>
 </div>
-{% endblock %}
+
 <!-- Dedicated Modal: Upload Seller Enquiry Media (Images & Videos) -->
 <div class="modal fade" id="uploadSellerMediaModal" tabindex="-1" aria-labelledby="uploadSellerMediaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1195,3 +1207,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
+{% endblock %}

@@ -461,9 +461,14 @@
             
             <!-- Product Media Card -->
             <div class="premium-card p-4 mb-4 text-center">
-                <h6 class="fw-bold text-uppercase text-muted mb-3 text-start" style="letter-spacing: 0.5px; font-size: 0.8rem;">
-                    <i class="bi bi-image me-2 text-primary"></i> Product Media Showcase
-                </h6>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold text-uppercase text-muted mb-0 text-start" style="letter-spacing: 0.5px; font-size: 0.8rem;">
+                        <i class="bi bi-camera-video me-2 text-primary"></i> Product Media Showcase
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-primary py-0.5 px-2 rounded-2" data-bs-toggle="modal" data-bs-target="#uploadProductCatalogMediaModal" style="font-size: 11px;">
+                        <i class="bi bi-upload me-1"></i>Upload Image / Video
+                    </button>
+                </div>
 
                 <div class="rounded-3 overflow-hidden bg-light p-3 border mb-3 d-flex align-items-center justify-content-center" style="min-height: 280px; background-color: #f8fafc !important;">
                     {% if product.images.first %}
@@ -532,6 +537,38 @@
                 </ul>
     </div>
 
+</div>
+
+<!-- Dedicated Modal: Upload Catalog Product Media (Images & Videos) -->
+<div class="modal fade" id="uploadProductCatalogMediaModal" tabindex="-1" aria-labelledby="uploadProductCatalogMediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="uploadProductCatalogMediaModalLabel">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary"></i> Upload Product Media (Images & Videos)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadProductCatalogMediaForm" enctype="multipart/form-data">
+                <div class="modal-body p-4 text-start">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Select Photos or Videos</label>
+                        <input type="file" class="form-control" name="media_files" id="catalogMediaFilesInput" multiple accept="image/*,video/*" required>
+                        <small class="text-muted d-block mt-1">
+                            Supported image formats: .png, .jpg, .jpeg, .webp, .gif<br>
+                            Supported video formats: .mp4, .webm, .mov, .mkv, .avi
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold px-4" id="btnSubmitCatalogMedia">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Upload Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -623,6 +660,57 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // Fallback click handler to guarantee modal opens
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-bs-target="#uploadProductCatalogMediaModal"]');
+        if (btn) {
+            e.preventDefault();
+            const modalEl = document.getElementById('uploadProductCatalogMediaModal');
+            if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        }
+    });
+
+    const catalogMediaForm = document.getElementById('uploadProductCatalogMediaForm');
+    if (catalogMediaForm) {
+        catalogMediaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitCatalogMedia');
+            const filesInput = document.getElementById('catalogMediaFilesInput');
+            if (!filesInput.files || filesInput.files.length === 0) {
+                alert('Please select at least one image or video to upload.');
+                return;
+            }
+
+            const formData = new FormData(this);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+            try {
+                const res = await fetch('/admin/api/enquiries/seller/{{ product.id }}/upload-media/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to upload media.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Upload Now';
+                }
+            } catch (err) {
+                alert('Network error while uploading media.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Upload Now';
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
