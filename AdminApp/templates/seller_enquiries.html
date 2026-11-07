@@ -15,8 +15,9 @@
     --shopeers-text-sub: #6b7280;
     --shopeers-text-muted: #9ca3af;
     --shopeers-border: #f1f3f7;
-    --shopeers-blue: #2563eb;
-    --shopeers-blue-light: #eff6ff;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
     --shopeers-radius-lg: 22px;
     --shopeers-radius-md: 14px;
     --shopeers-radius-pill: 9999px;
@@ -31,8 +32,9 @@
     --shopeers-text-sub: #9ca3af;
     --shopeers-text-muted: #6b7280;
     --shopeers-border: #1f2937;
-    --shopeers-blue: #3b82f6;
-    --shopeers-blue-light: rgba(59, 130, 246, 0.15);
+    --shopeers-blue: #0ea27e;
+    --shopeers-blue-hover: #0a5c48;
+    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
     --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     --shopeers-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
@@ -88,42 +90,20 @@
     margin: 0.2rem 0 0 0;
 }
 
-/* Top Shopeers KPI Stat Metric Cards */
+/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
 .shopeers-kpi-card {
     background: var(--shopeers-card);
     border: 1px solid var(--shopeers-border);
     border-radius: var(--shopeers-radius-lg);
     padding: 1.25rem 1.35rem;
     box-shadow: var(--shopeers-shadow);
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     text-decoration: none;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
-}
-
-.shopeers-kpi-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shopeers-shadow-hover);
-    border-color: #cbd5e1;
-}
-
-.shopeers-kpi-card.active-card {
-    border-color: var(--shopeers-blue) !important;
-    box-shadow: 0 8px 24px -2px rgba(37, 99, 235, 0.16) !important;
-}
-
-.shopeers-kpi-card.active-card::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 24px;
-    right: 24px;
-    height: 3px;
-    background: var(--shopeers-blue);
-    border-radius: 9999px;
+    cursor: default;
 }
 
 .shopeers-kpi-label {
@@ -144,7 +124,7 @@
     flex-shrink: 0;
 }
 
-.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-blue { background: #e8f5f1; color: #0a5c48; }
 .icon-amber { background: #fffbeb; color: #f59e0b; }
 .icon-emerald { background: #ecfdf5; color: #10b981; }
 .icon-violet { background: #f5f3ff; color: #8b5cf6; }
@@ -220,7 +200,7 @@
 .shopeers-search-capsule:focus-within {
     background: #ffffff;
     border-color: var(--shopeers-blue);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
 }
 
 .shopeers-search-input {
@@ -247,7 +227,7 @@
 }
 
 .shopeers-search-btn:hover {
-    background: #1d4ed8;
+    background: var(--shopeers-blue-hover);
     color: #ffffff;
 }
 
@@ -334,7 +314,7 @@
 .shopeers-select:focus {
     background-color: #ffffff !important;
     border-color: var(--shopeers-blue) !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
 }
 
 /* Buttons */
@@ -349,15 +329,15 @@
     padding: 0.45rem 1.25rem;
     font-size: 0.82rem !important;
     font-weight: 600;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
     transition: all 0.18s ease;
     text-decoration: none;
     height: 38px;
 }
 
 .btn-shopeers-primary:hover {
-    background: #1d4ed8;
-    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    background: var(--shopeers-blue-hover);
+    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.35);
     transform: translateY(-1px);
     color: #ffffff !important;
 }
@@ -686,7 +666,7 @@
     background: var(--shopeers-blue);
     color: #ffffff !important;
     border-color: var(--shopeers-blue);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.3);
 }
 
 .shopeers-page-pill.disabled {
@@ -737,92 +717,82 @@
     <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
         <!-- 1. All Enquiries -->
         <div class="col">
-            <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="shopeers-kpi-card {% if current_status == 'all' %}active-card{% endif %}">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <span class="shopeers-kpi-label">All Enquiries</span>
-                        <div class="shopeers-kpi-icon icon-blue">
-                            <i class="bi bi-tags-fill"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
-                        <span class="shopeers-kpi-trend trend-all">Total Catalogue</span>
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">All Enquiries</span>
+                    <div class="shopeers-kpi-icon icon-blue">
+                        <i class="bi bi-tags-fill"></i>
                     </div>
                 </div>
-            </a>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-all">Total Catalogue</span>
+                </div>
+            </div>
         </div>
 
         <!-- 2. Pending Review -->
         <div class="col">
-            <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="shopeers-kpi-card {% if current_status == 'pending' %}active-card{% endif %}">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <span class="shopeers-kpi-label">Pending Review</span>
-                        <div class="shopeers-kpi-icon icon-amber">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
-                        <span class="shopeers-kpi-trend trend-pending">Requires Action</span>
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Pending Review</span>
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-hourglass-split"></i>
                     </div>
                 </div>
-            </a>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-pending">Requires Action</span>
+                </div>
+            </div>
         </div>
 
         <!-- 3. Approved -->
         <div class="col">
-            <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="shopeers-kpi-card {% if current_status == 'approved' %}active-card{% endif %}">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <span class="shopeers-kpi-label">Approved</span>
-                        <div class="shopeers-kpi-icon icon-emerald">
-                            <i class="bi bi-check2-circle"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="shopeers-kpi-number">{{ counts.approved|default:"0" }}</h3>
-                        <span class="shopeers-kpi-trend trend-approved">Live on Marketplace</span>
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Approved</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-check2-circle"></i>
                     </div>
                 </div>
-            </a>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.approved|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-approved">Live on Marketplace</span>
+                </div>
+            </div>
         </div>
 
         <!-- 4. Correction -->
         <div class="col">
-            <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="shopeers-kpi-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-card{% endif %}">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <span class="shopeers-kpi-label">Needs Correction</span>
-                        <div class="shopeers-kpi-icon icon-violet">
-                            <i class="bi bi-pencil-square"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="shopeers-kpi-number">{{ counts.correction|default:"0" }}</h3>
-                        <span class="shopeers-kpi-trend trend-correction">Pending Revision</span>
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Needs Correction</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-pencil-square"></i>
                     </div>
                 </div>
-            </a>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.correction|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-correction">Pending Revision</span>
+                </div>
+            </div>
         </div>
 
         <!-- 5. Declined -->
         <div class="col">
-            <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="shopeers-kpi-card {% if current_status == 'declined' %}active-card{% endif %}">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <span class="shopeers-kpi-label">Declined</span>
-                        <div class="shopeers-kpi-icon icon-rose">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="shopeers-kpi-number">{{ counts.declined|default:"0" }}</h3>
-                        <span class="shopeers-kpi-trend trend-declined">Rejected Listings</span>
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Declined</span>
+                    <div class="shopeers-kpi-icon icon-rose">
+                        <i class="bi bi-x-circle-fill"></i>
                     </div>
                 </div>
-            </a>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.declined|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-declined">Rejected Listings</span>
+                </div>
+            </div>
         </div>
     </div>
 
