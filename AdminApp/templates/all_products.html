@@ -5,326 +5,326 @@
 
 {% block content %}
 <style>
-/* ==========================================================================
+    /* ==========================================================================
    SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC - ALL PRODUCTS
    ========================================================================== */
 
-:root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-blue: #0a5c48;
-    --shopeers-blue-hover: #084c3b;
-    --shopeers-blue-light: #e8f5f1;
-    --shopeers-radius-lg: 22px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-}
+    :root {
+        --shopeers-bg: #f5f6fa;
+        --shopeers-card: #ffffff;
+        --shopeers-text-dark: #111827;
+        --shopeers-text-sub: #6b7280;
+        --shopeers-text-muted: #9ca3af;
+        --shopeers-border: #f1f3f7;
+        --shopeers-blue: #0a5c48;
+        --shopeers-blue-hover: #084c3b;
+        --shopeers-blue-light: #e8f5f1;
+        --shopeers-radius-lg: 22px;
+        --shopeers-radius-md: 14px;
+        --shopeers-radius-pill: 9999px;
+        --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
 
-[data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-blue: #0ea27e;
-    --shopeers-blue-hover: #0a5c48;
-    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-}
+    [data-bs-theme="dark"] {
+        --shopeers-bg: #0b1120;
+        --shopeers-card: #111827;
+        --shopeers-text-dark: #f9fafb;
+        --shopeers-text-sub: #9ca3af;
+        --shopeers-text-muted: #6b7280;
+        --shopeers-border: #1f2937;
+        --shopeers-blue: #0ea27e;
+        --shopeers-blue-hover: #0a5c48;
+        --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+        --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
 
-.shopeers-viewport {
-    background: transparent;
-    padding-bottom: 2rem;
-}
+    .shopeers-viewport {
+        background: transparent;
+        padding-bottom: 2rem;
+    }
 
-/* Header & Breadcrumb */
-.shopeers-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
+    /* Header & Breadcrumb */
+    .shopeers-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
 
-.shopeers-breadcrumb-nav {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    font-size: 0.78rem;
-    color: var(--shopeers-text-muted);
-    margin-bottom: 0.35rem;
-}
+    .shopeers-breadcrumb-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.78rem;
+        color: var(--shopeers-text-muted);
+        margin-bottom: 0.35rem;
+    }
 
-.shopeers-breadcrumb-nav a {
-    color: var(--shopeers-text-sub);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.15s ease;
-}
+    .shopeers-breadcrumb-nav a {
+        color: var(--shopeers-text-sub);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.15s ease;
+    }
 
-.shopeers-breadcrumb-nav a:hover {
-    color: var(--shopeers-blue);
-}
+    .shopeers-breadcrumb-nav a:hover {
+        color: var(--shopeers-blue);
+    }
 
-.shopeers-page-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    letter-spacing: -0.02em;
-    margin: 0;
-    line-height: 1.2;
-}
+    .shopeers-page-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        margin: 0;
+        line-height: 1.2;
+    }
 
-.shopeers-page-subtitle {
-    font-size: 0.85rem;
-    color: var(--shopeers-text-sub);
-    margin: 0.2rem 0 0 0;
-}
+    .shopeers-page-subtitle {
+        font-size: 0.85rem;
+        color: var(--shopeers-text-sub);
+        margin: 0.2rem 0 0 0;
+    }
 
-/* Primary Action Button (#0a5c48) */
-.btn-shopeers-primary {
-    background: var(--shopeers-blue) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.55rem 1.35rem !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
+    /* Primary Action Button (#0a5c48) */
+    .btn-shopeers-primary {
+        background: var(--shopeers-blue) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.55rem 1.35rem !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-blue-hover) !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
-}
+    .btn-shopeers-primary:hover {
+        background: var(--shopeers-blue-hover) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+    }
 
-/* Main Container Card */
-.shopeers-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.35rem 1.5rem;
-    margin-bottom: 1.5rem;
-}
+    /* Main Container Card */
+    .shopeers-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.35rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
 
-/* Capsule Search and Filters */
-.search-capsule {
-    position: relative;
-    width: 100%;
-}
+    /* Capsule Search and Filters */
+    .search-capsule {
+        position: relative;
+        width: 100%;
+    }
 
-.search-capsule i.bi-search {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--shopeers-text-muted);
-    font-size: 0.9rem;
-    pointer-events: none;
-}
+    .search-capsule i.bi-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--shopeers-text-muted);
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
 
-.search-capsule input {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.55rem 1rem 0.55rem 2.45rem;
-    font-size: 0.85rem;
-    width: 100%;
-    color: var(--shopeers-text-dark);
-    transition: all 0.2s ease;
-}
+    .search-capsule input {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--shopeers-radius-pill);
+        padding: 0.55rem 1rem 0.55rem 2.45rem;
+        font-size: 0.85rem;
+        width: 100%;
+        color: var(--shopeers-text-dark);
+        transition: all 0.2s ease;
+    }
 
-.search-capsule input:focus {
-    background: #ffffff;
-    border-color: var(--shopeers-blue);
-    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
-    outline: none;
-}
+    .search-capsule input:focus {
+        background: #ffffff;
+        border-color: var(--shopeers-blue);
+        box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+        outline: none;
+    }
 
-.filter-pill-select {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.52rem 2.2rem 0.52rem 1rem;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--shopeers-text-dark);
-    height: 38px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
+    .filter-pill-select {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--shopeers-radius-pill);
+        padding: 0.52rem 2.2rem 0.52rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--shopeers-text-dark);
+        height: 38px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
 
-.filter-pill-select:focus {
-    border-color: var(--shopeers-blue);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.1);
-}
+    .filter-pill-select:focus {
+        border-color: var(--shopeers-blue);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.1);
+    }
 
-/* Thumbnail Box */
-.prod-thumb-box {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid #eef2f6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    flex-shrink: 0;
-}
+    /* Thumbnail Box */
+    .prod-thumb-box {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #eef2f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
 
-.prod-thumb-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+    .prod-thumb-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-/* Micro Badges */
-.badge-category-pill {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    max-width: 220px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+    /* Micro Badges */
+    .badge-category-pill {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-.badge-country-pill {
-    background: #f8fafc;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-    font-size: 0.72rem;
-    font-weight: 500;
-    padding: 2px 8px;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
+    .badge-country-pill {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        font-size: 0.72rem;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
 
-.badge-status-active {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: var(--shopeers-radius-pill);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
+    .badge-status-active {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+        font-size: 0.74rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: var(--shopeers-radius-pill);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
 
-.badge-status-inactive {
-    background: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: var(--shopeers-radius-pill);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
+    .badge-status-inactive {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        font-size: 0.74rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: var(--shopeers-radius-pill);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
 
-/* Shopeers Clean Data Table */
-.shopeers-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-}
+    /* Shopeers Clean Data Table */
+    .shopeers-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
 
-.shopeers-table thead th {
-    background: transparent;
-    color: var(--shopeers-text-muted);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid #f1f3f7;
-    white-space: nowrap;
-}
+    .shopeers-table thead th {
+        background: transparent;
+        color: var(--shopeers-text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f3f7;
+        white-space: nowrap;
+    }
 
-.shopeers-table tbody tr {
-    transition: background 0.15s ease;
-}
+    .shopeers-table tbody tr {
+        transition: background 0.15s ease;
+    }
 
-.shopeers-table tbody tr:hover {
-    background: #fafbfc;
-}
+    .shopeers-table tbody tr:hover {
+        background: #fafbfc;
+    }
 
-.shopeers-table tbody td {
-    padding: 1.1rem 1rem;
-    border-bottom: 1px solid #f5f6fa;
-    vertical-align: middle;
-}
+    .shopeers-table tbody td {
+        padding: 1.1rem 1rem;
+        border-bottom: 1px solid #f5f6fa;
+        vertical-align: middle;
+    }
 
-/* Action Icon Buttons */
-.action-icon-pill {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    color: #64748b;
-    transition: all 0.15s ease;
-    text-decoration: none;
-}
+    /* Action Icon Buttons */
+    .action-icon-pill {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
 
-.action-icon-pill:hover {
-    background: #f8fafc;
-    color: var(--shopeers-blue);
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
-}
+    .action-icon-pill:hover {
+        background: #f8fafc;
+        color: var(--shopeers-blue);
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+    }
 
-/* Pagination */
-.pagination .page-link {
-    border-color: #e2e8f0;
-    color: #64748b;
-    font-size: 0.82rem;
-}
+    /* Pagination */
+    .pagination .page-link {
+        border-color: #e2e8f0;
+        color: #64748b;
+        font-size: 0.82rem;
+    }
 
-.pagination .page-item.active .page-link {
-    background-color: var(--shopeers-blue) !important;
-    border-color: var(--shopeers-blue) !important;
-    color: #ffffff !important;
-}
+    .pagination .page-item.active .page-link {
+        background-color: var(--shopeers-blue) !important;
+        border-color: var(--shopeers-blue) !important;
+        color: #ffffff !important;
+    }
 </style>
 
-<div class="container-fluid shopeers-viewport px-3 px-md-4 pt-3">
+<div class="container-fluid shopeers-viewport pt-3">
     <!-- Header & Breadcrumbs -->
     <div class="shopeers-header">
         <div>
@@ -334,7 +334,8 @@
                 <span class="text-dark fw-semibold">{{ page_title }}</span>
             </div>
             <h1 class="shopeers-page-title">{{ page_title }}</h1>
-            <p class="shopeers-page-subtitle">Manage your entire product catalog, pricing, inventory stocks, and visibility</p>
+            <p class="shopeers-page-subtitle">Manage your entire product catalog, pricing, inventory stocks, and
+                visibility</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="/admin/products/add/" class="btn-shopeers-primary">
@@ -346,9 +347,11 @@
 
     <!-- Active Filters Summary (if filtered) -->
     {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
-    <div class="alert alert-light border shadow-xs rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 mb-4 bg-white">
+    <div
+        class="alert alert-light border shadow-xs rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 mb-4 bg-white">
         <div class="d-flex flex-wrap align-items-center gap-2 small">
-            <span class="text-secondary fw-semibold"><i class="bi bi-funnel-fill text-success me-1"></i>Active Filters:</span>
+            <span class="text-secondary fw-semibold"><i class="bi bi-funnel-fill text-success me-1"></i>Active
+                Filters:</span>
             {% if search_query %}
             <span class="badge bg-secondary-subtle text-secondary border px-2.5 py-1 rounded-pill">
                 Query: "{{ search_query }}"
@@ -364,9 +367,12 @@
                 Country: {{ country_filter }}
             </span>
             {% endif %}
-            <span class="text-muted ms-1">({{ total_count|default:page_obj.paginator.count }} item{{ total_count|pluralize }} found)</span>
+            <span class="text-muted ms-1">({{ total_count|default:page_obj.paginator.count }} item{{
+                total_count|pluralize }} found)</span>
         </div>
-        <a href="/admin/products/all/" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1" style="font-size: 13px !important;">
+        <a href="/admin/products/all/"
+            class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1"
+            style="font-size: 13px !important;">
             <i class="bi bi-x-circle"></i>
             <span>Clear Filters</span>
         </a>
@@ -386,37 +392,45 @@
                     <!-- Search Capsule -->
                     <div style="min-width: 240px; max-width: 320px;" class="search-capsule">
                         <i class="bi bi-search"></i>
-                        <input type="text" name="q" id="searchQueryInput" value="{{ search_query }}" placeholder="Search SKU or Name...">
+                        <input type="text" name="q" id="searchQueryInput" value="{{ search_query }}"
+                            placeholder="Search SKU or Name...">
                     </div>
 
                     <!-- Category Filter Dropdown -->
                     <div style="min-width: 170px; max-width: 220px;">
-                        <select name="category" id="categoryFilter" class="form-select filter-pill-select" onchange="applyFilters()">
+                        <select name="category" id="categoryFilter" class="form-select filter-pill-select"
+                            onchange="applyFilters()">
                             <option value="all">All Categories</option>
                             {% for cat in categories %}
-                            <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                            <option value="{{ cat }}" {% if category_filter==cat %}selected{% endif %}>{{ cat }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <!-- Country Filter Dropdown -->
                     <div style="min-width: 160px; max-width: 210px;">
-                        <select name="country" id="countryFilter" class="form-select filter-pill-select" onchange="applyFilters()">
+                        <select name="country" id="countryFilter" class="form-select filter-pill-select"
+                            onchange="applyFilters()">
                             <option value="all">All Countries</option>
                             {% for c in countries %}
-                            <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                            <option value="{{ c }}" {% if country_filter==c %}selected{% endif %}>{{ c }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <!-- Search Button -->
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" style="height: 38px;" onclick="applyFilters()">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" style="height: 38px;"
+                        onclick="applyFilters()">
                         <i class="bi bi-search me-1"></i>Search
                     </button>
 
                     <!-- Reset Button -->
-                    {% if search_query or category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}
-                    <a href="/admin/products/all/" class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1.5 px-3" style="height: 38px;" title="Reset All Filters">
+                    {% if search_query or category_filter and category_filter != 'all' or country_filter and
+                    country_filter != 'all' %}
+                    <a href="/admin/products/all/"
+                        class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1.5 px-3"
+                        style="height: 38px;" title="Reset All Filters">
                         <i class="bi bi-x-lg"></i>
                         <span>Reset</span>
                     </a>
@@ -426,13 +440,16 @@
                 <!-- Bulk Actions -->
                 <div class="d-flex gap-2 align-items-center ms-auto">
                     <div class="input-group" style="min-width: 260px;">
-                        <select name="bulk_action" id="bulkActionSelect" class="form-select filter-pill-select" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
+                        <select name="bulk_action" id="bulkActionSelect" class="form-select filter-pill-select"
+                            style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;">
                             <option value="">Bulk Actions</option>
                             <option value="Mark Active">Mark Active</option>
                             <option value="Mark Inactive">Mark Inactive</option>
                             <option value="Delete Selected">Delete Selected</option>
                         </select>
-                        <button class="btn btn-shopeers-primary px-3 fw-semibold" type="button" onclick="confirmBulkAction()" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; height: 38px;">
+                        <button class="btn btn-shopeers-primary px-3 fw-semibold" type="button"
+                            onclick="confirmBulkAction()"
+                            style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; height: 38px;">
                             Apply
                         </button>
                     </div>
@@ -446,7 +463,8 @@
                         <tr>
                             <th scope="col" style="width: 40px;">
                                 <div class="form-check">
-                                    <input class="form-check-input select-all-cb" type="checkbox" id="selectAllCheckbox">
+                                    <input class="form-check-input select-all-cb" type="checkbox"
+                                        id="selectAllCheckbox">
                                 </div>
                             </th>
                             <th scope="col" style="min-width: 280px;">Product Info</th>
@@ -462,30 +480,36 @@
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input item-cb" type="checkbox" name="selected_products" value="{{ product.id }}">
+                                    <input class="form-check-input item-cb" type="checkbox" name="selected_products"
+                                        value="{{ product.id }}">
                                 </div>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="prod-thumb-box">
                                         {% with product.images.first as img %}
-                                            {% if img and img.image_url %}
-                                                <img src="{{ img.image_url }}" alt="{{ product.product_name }}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
-                                            {% else %}
-                                                <i class="bi bi-box-seam text-secondary fs-5"></i>
-                                            {% endif %}
+                                        {% if img and img.image_url %}
+                                        <img src="{{ img.image_url }}" alt="{{ product.product_name }}" loading="lazy"
+                                            onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                                        {% else %}
+                                        <i class="bi bi-box-seam text-secondary fs-5"></i>
+                                        {% endif %}
                                         {% endwith %}
                                     </div>
                                     <div>
                                         <div class="fw-bold" style="font-size: 0.92rem;">
-                                            <a href="/admin/products/{{ product.id }}/" class="text-dark text-decoration-none" style="transition: color 0.15s ease;">{{ product.product_name }}</a>
+                                            <a href="/admin/products/{{ product.id }}/"
+                                                class="text-dark text-decoration-none"
+                                                style="transition: color 0.15s ease;">{{ product.product_name }}</a>
                                         </div>
                                         <div class="text-secondary font-monospace small mt-0.5">
-                                            ID: <span class="fw-semibold">{{ product.product_id|default:product.model_no|default:"-" }}</span>
+                                            ID: <span class="fw-semibold">{{
+                                                product.product_id|default:product.model_no|default:"-" }}</span>
                                         </div>
                                         {% if product.brand_name %}
                                         <div class="mt-0.5">
-                                            <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ product.brand_name }}</span>
+                                            <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill"
+                                                style="font-size: 0.70rem;">{{ product.brand_name }}</span>
                                         </div>
                                         {% endif %}
                                     </div>
@@ -503,7 +527,8 @@
                                 </div>
                                 <div>
                                     {% if product.inventory_country %}
-                                    <span class="badge-country-pill" title="{{ product.inventory_city|default:'' }}{% if product.inventory_city and product.inventory_country %}, {% endif %}{{ product.inventory_country }}">
+                                    <span class="badge-country-pill"
+                                        title="{{ product.inventory_city|default:'' }}{% if product.inventory_city and product.inventory_country %}, {% endif %}{{ product.inventory_country }}">
                                         <i class="bi bi-geo-alt-fill text-danger"></i>{{ product.inventory_country }}
                                     </span>
                                     {% elif product.manufacturing_country %}
@@ -517,38 +542,46 @@
                             </td>
                             <td>
                                 {% if product.previous_price %}
-                                <div class="fw-bold text-success">{{ product.currency }} {{ product.current_price|default:product.liquidating_price }}</div>
-                                <div class="text-muted text-decoration-line-through small">{{ product.currency }} {{ product.previous_price }}</div>
+                                <div class="fw-bold text-success">{{ product.currency }} {{
+                                    product.current_price|default:product.liquidating_price }}</div>
+                                <div class="text-muted text-decoration-line-through small">{{ product.currency }} {{
+                                    product.previous_price }}</div>
                                 {% else %}
-                                <div class="fw-bold text-dark">{{ product.currency }} {{ product.current_price|default:product.liquidating_price }}</div>
+                                <div class="fw-bold text-dark">{{ product.currency }} {{
+                                    product.current_price|default:product.liquidating_price }}</div>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if product.quantity > 10 %}
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1 fw-semibold">{{ product.quantity }} in stock</span>
+                                <span
+                                    class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1 fw-semibold">{{
+                                    product.quantity }} in stock</span>
                                 {% elif product.quantity > 0 %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2.5 py-1 fw-semibold">Low: {{ product.quantity }}</span>
+                                <span
+                                    class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2.5 py-1 fw-semibold">Low:
+                                    {{ product.quantity }}</span>
                                 {% else %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2.5 py-1 fw-semibold">Out of Stock</span>
+                                <span
+                                    class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2.5 py-1 fw-semibold">Out
+                                    of Stock</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if product.is_active %}
-                                <a href="/admin/products/{{ product.id }}/toggle-status/" 
-                                   class="badge-status-active" 
-                                   title="Click to toggle status">
+                                <a href="/admin/products/{{ product.id }}/toggle-status/" class="badge-status-active"
+                                    title="Click to toggle status">
                                     <i class="bi bi-check-circle-fill"></i>Active
                                 </a>
                                 {% else %}
-                                <a href="/admin/products/{{ product.id }}/toggle-status/" 
-                                   class="badge-status-inactive" 
-                                   title="Click to toggle status">
+                                <a href="/admin/products/{{ product.id }}/toggle-status/" class="badge-status-inactive"
+                                    title="Click to toggle status">
                                     <i class="bi bi-slash-circle"></i>Inactive
                                 </a>
                                 {% endif %}
                             </td>
                             <td class="text-end">
-                                <a href="/admin/products/{{ product.id }}/" class="action-icon-pill" title="View Details">
+                                <a href="/admin/products/{{ product.id }}/" class="action-icon-pill"
+                                    title="View Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>
@@ -559,7 +592,8 @@
                         <tr>
                             <td>
                                 <div class="form-check">
-                                    <input class="form-check-input item-cb" type="checkbox" value="{{ enquiry.id }}" disabled>
+                                    <input class="form-check-input item-cb" type="checkbox" value="{{ enquiry.id }}"
+                                        disabled>
                                 </div>
                             </td>
                             <td>
@@ -570,14 +604,15 @@
                                     <div>
                                         <div class="fw-bold text-dark" style="font-size: 0.92rem;">
                                             {% if enquiry.raw_data.product_name %}
-                                                {{ enquiry.raw_data.product_name }}
+                                            {{ enquiry.raw_data.product_name }}
                                             {% elif enquiry.raw_data.title %}
-                                                {{ enquiry.raw_data.title }}
+                                            {{ enquiry.raw_data.title }}
                                             {% else %}
-                                                Seller Enquiry Product
+                                            Seller Enquiry Product
                                             {% endif %}
                                         </div>
-                                        <div class="text-secondary font-monospace small mt-0.5">ID: {{ enquiry.product_id }}</div>
+                                        <div class="text-secondary font-monospace small mt-0.5">ID: {{
+                                            enquiry.product_id }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -600,28 +635,31 @@
                             <td>
                                 <div class="fw-bold text-dark">
                                     {% if enquiry.raw_data.price %}
-                                        ${{ enquiry.raw_data.price }}
+                                    ${{ enquiry.raw_data.price }}
                                     {% else %}
-                                        <span class="text-muted fst-italic">N/A</span>
+                                    <span class="text-muted fst-italic">N/A</span>
                                     {% endif %}
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2.5 py-1 fw-semibold">
+                                <span
+                                    class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2.5 py-1 fw-semibold">
                                     {% if enquiry.raw_data.quantity %}
-                                        Qty: {{ enquiry.raw_data.quantity }}
+                                    Qty: {{ enquiry.raw_data.quantity }}
                                     {% else %}
-                                        Unknown
+                                    Unknown
                                     {% endif %}
                                 </span>
                             </td>
                             <td>
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold">
+                                <span
+                                    class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold">
                                     Enquiry
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a href="/admin/enquiries/seller/{{ enquiry.id }}/detail/" class="action-icon-pill" title="View Enquiry">
+                                <a href="/admin/enquiries/seller/{{ enquiry.id }}/detail/" class="action-icon-pill"
+                                    title="View Enquiry">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>
@@ -635,16 +673,21 @@
                                     <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i>
                                     <h5>No Products Found</h5>
                                     <p class="mb-3 text-secondary small">
-                                        {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
-                                        No products match your selected filter criteria. Try adjusting or clearing your filters.
+                                        {% if category_filter and category_filter != 'all' or country_filter and
+                                        country_filter != 'all' or search_query %}
+                                        No products match your selected filter criteria. Try adjusting or clearing your
+                                        filters.
                                         {% else %}
                                         You haven't added any products or approved any enquiries yet.
                                         {% endif %}
                                     </p>
-                                    {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
-                                    <a href="/admin/products/all/" class="btn btn-outline-secondary rounded-pill btn-sm px-3">Clear All Filters</a>
+                                    {% if category_filter and category_filter != 'all' or country_filter and
+                                    country_filter != 'all' or search_query %}
+                                    <a href="/admin/products/all/"
+                                        class="btn btn-outline-secondary rounded-pill btn-sm px-3">Clear All Filters</a>
                                     {% else %}
-                                    <a href="/admin/products/add/" class="btn-shopeers-primary btn-sm">Add First Product</a>
+                                    <a href="/admin/products/add/" class="btn-shopeers-primary btn-sm">Add First
+                                        Product</a>
                                     {% endif %}
                                 </div>
                             </td>
@@ -655,10 +698,11 @@
             </div>
 
             <!-- Pagination Footer -->
-            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-3 border-top gap-3 bg-white">
+            <div
+                class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-3 border-top gap-3 bg-white">
                 <div class="text-secondary small">
-                    Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
-                    <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                    Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to
+                    <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of
                     <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> products
                 </div>
                 {% if page_obj.has_other_pages %}
@@ -666,15 +710,15 @@
                     <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
                         {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" 
-                               href="?page=1{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" 
-                               title="First Page">
+                            <a class="page-link rounded-circle px-2 py-1"
+                                href="?page=1{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}"
+                                title="First Page">
                                 <i class="bi bi-chevron-double-left"></i>
                             </a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" 
-                               href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            <a class="page-link rounded-pill px-3 py-1"
+                                href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                                 Previous
                             </a>
                         </li>
@@ -685,41 +729,40 @@
                         {% endif %}
 
                         {% for p in page_obj.paginator.page_range %}
-                            {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
-                                {% if p == page_obj.number %}
-                                <li class="page-item active">
-                                    <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
-                                </li>
-                                {% else %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-circle px-3 py-1" 
-                                       href="?page={{ p }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                                        {{ p }}
-                                    </a>
-                                </li>
-                                {% endif %}
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %} {% if p==page_obj.number
+                            %} <li class="page-item active">
+                            <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link rounded-circle px-3 py-1"
+                                    href="?page={{ p }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                                    {{ p }}
+                                </a>
+                            </li>
                             {% endif %}
-                        {% endfor %}
+                            {% endif %}
+                            {% endfor %}
 
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" 
-                               href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                                Next
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" 
-                               href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" 
-                               title="Last Page">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
-                        </li>
-                        {% endif %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill px-3 py-1"
+                                    href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                                    Next
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link rounded-circle px-2 py-1"
+                                    href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}"
+                                    title="Last Page">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
+                            </li>
+                            {% endif %}
                     </ul>
                 </nav>
                 {% endif %}
@@ -729,86 +772,86 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Select-all checkbox handling
-    const selectAllCb = document.getElementById('selectAllCheckbox');
-    const itemCbs = document.querySelectorAll('.item-cb:not([disabled])');
+    document.addEventListener('DOMContentLoaded', () => {
+        // Select-all checkbox handling
+        const selectAllCb = document.getElementById('selectAllCheckbox');
+        const itemCbs = document.querySelectorAll('.item-cb:not([disabled])');
 
-    if (selectAllCb) {
-        selectAllCb.addEventListener('change', (e) => {
-            itemCbs.forEach(cb => { cb.checked = e.target.checked; });
-        });
-    }
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', (e) => {
+                itemCbs.forEach(cb => { cb.checked = e.target.checked; });
+            });
+        }
 
-    itemCbs.forEach(cb => {
-        cb.addEventListener('change', () => {
-            if (!cb.checked && selectAllCb) {
-                selectAllCb.checked = false;
-            } else if (selectAllCb) {
-                const allChecked = Array.from(itemCbs).every(c => c.checked);
-                selectAllCb.checked = allChecked;
-            }
+        itemCbs.forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (!cb.checked && selectAllCb) {
+                    selectAllCb.checked = false;
+                } else if (selectAllCb) {
+                    const allChecked = Array.from(itemCbs).every(c => c.checked);
+                    selectAllCb.checked = allChecked;
+                }
+            });
         });
+
+        // Enter key on search triggers applyFilters
+        const searchInput = document.getElementById('searchQueryInput');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyFilters();
+                }
+            });
+        }
     });
 
-    // Enter key on search triggers applyFilters
-    const searchInput = document.getElementById('searchQueryInput');
-    if (searchInput) {
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                applyFilters();
+    function applyFilters() {
+        const search = document.getElementById('searchQueryInput').value.trim();
+        const category = document.getElementById('categoryFilter').value;
+        const country = document.getElementById('countryFilter').value;
+
+        const url = new URL(window.location.origin + window.location.pathname);
+
+        if (search) {
+            url.searchParams.set('q', search);
+        }
+        if (category && category !== 'all') {
+            url.searchParams.set('category', category);
+        }
+        if (country && country !== 'all') {
+            url.searchParams.set('country', country);
+        }
+        url.searchParams.set('page', '1');
+
+        window.location.href = url.toString();
+    }
+
+    function confirmBulkAction() {
+        const actionSelect = document.getElementById('bulkActionSelect');
+        const action = actionSelect.value;
+        const selected = document.querySelectorAll('.item-cb:checked');
+
+        if (!action) {
+            alert('Please select a bulk action to perform.');
+            return;
+        }
+        if (selected.length === 0) {
+            alert('Please select at least one product using the checkboxes.');
+            return;
+        }
+
+        if (action === 'Delete Selected') {
+            if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${selected.length} selected product(s)?`)) {
+                return;
             }
-        });
-    }
-});
-
-function applyFilters() {
-    const search = document.getElementById('searchQueryInput').value.trim();
-    const category = document.getElementById('categoryFilter').value;
-    const country = document.getElementById('countryFilter').value;
-    
-    const url = new URL(window.location.origin + window.location.pathname);
-    
-    if (search) {
-        url.searchParams.set('q', search);
-    }
-    if (category && category !== 'all') {
-        url.searchParams.set('category', category);
-    }
-    if (country && country !== 'all') {
-        url.searchParams.set('country', country);
-    }
-    url.searchParams.set('page', '1');
-    
-    window.location.href = url.toString();
-}
-
-function confirmBulkAction() {
-    const actionSelect = document.getElementById('bulkActionSelect');
-    const action = actionSelect.value;
-    const selected = document.querySelectorAll('.item-cb:checked');
-
-    if (!action) {
-        alert('Please select a bulk action to perform.');
-        return;
-    }
-    if (selected.length === 0) {
-        alert('Please select at least one product using the checkboxes.');
-        return;
-    }
-
-    if (action === 'Delete Selected') {
-        if (!confirm(`Are you sure you want to PERMANENTLY DELETE ${selected.length} selected product(s)?`)) {
-            return;
+        } else {
+            if (!confirm(`Apply action "${action}" to ${selected.length} selected product(s)?`)) {
+                return;
+            }
         }
-    } else {
-        if (!confirm(`Apply action "${action}" to ${selected.length} selected product(s)?`)) {
-            return;
-        }
-    }
 
-    document.getElementById('productsForm').submit();
-}
+        document.getElementById('productsForm').submit();
+    }
 </script>
 {% endblock %}

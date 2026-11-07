@@ -5,288 +5,326 @@
 
 {% block content %}
 <style>
-/* ==========================================================================
+    /* ==========================================================================
    SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC - DASHBOARD
    ========================================================================== */
 
-:root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-blue: #0a5c48;
-    --shopeers-blue-hover: #084c3b;
-    --shopeers-blue-light: #e8f5f1;
-    --shopeers-radius-lg: 22px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-}
+    :root {
+        --shopeers-bg: #f5f6fa;
+        --shopeers-card: #ffffff;
+        --shopeers-text-dark: #111827;
+        --shopeers-text-sub: #6b7280;
+        --shopeers-text-muted: #9ca3af;
+        --shopeers-border: #f1f3f7;
+        --shopeers-blue: #0a5c48;
+        --shopeers-blue-hover: #084c3b;
+        --shopeers-blue-light: #e8f5f1;
+        --shopeers-radius-lg: 22px;
+        --shopeers-radius-md: 14px;
+        --shopeers-radius-pill: 9999px;
+        --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
 
-[data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-blue: #0ea27e;
-    --shopeers-blue-hover: #0a5c48;
-    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-}
+    [data-bs-theme="dark"] {
+        --shopeers-bg: #0b1120;
+        --shopeers-card: #111827;
+        --shopeers-text-dark: #f9fafb;
+        --shopeers-text-sub: #9ca3af;
+        --shopeers-text-muted: #6b7280;
+        --shopeers-border: #1f2937;
+        --shopeers-blue: #0ea27e;
+        --shopeers-blue-hover: #0a5c48;
+        --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+        --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
 
-.shopeers-viewport {
-    background: transparent;
-    padding-bottom: 2.5rem;
-}
+    .shopeers-viewport {
+        background: transparent;
+        padding-bottom: 2.5rem;
+    }
 
-/* Header */
-.shopeers-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
+    /* Header */
+    .shopeers-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
 
-.shopeers-page-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    letter-spacing: -0.02em;
-    margin: 0;
-    line-height: 1.2;
-}
+    .shopeers-page-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        margin: 0;
+        line-height: 1.2;
+    }
 
-.shopeers-page-subtitle {
-    font-size: 0.85rem;
-    color: var(--shopeers-text-sub);
-    margin: 0.2rem 0 0 0;
-}
+    .shopeers-page-subtitle {
+        font-size: 0.85rem;
+        color: var(--shopeers-text-sub);
+        margin: 0.2rem 0 0 0;
+    }
 
-/* Primary Button (#0a5c48) */
-.btn-shopeers-primary {
-    background: var(--shopeers-blue) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.55rem 1.35rem !important;
-    font-weight: 600 !important;
-    font-size: 0.85rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
+    /* Primary Button (#0a5c48) */
+    .btn-shopeers-primary {
+        background: var(--shopeers-blue) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.55rem 1.35rem !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-blue-hover) !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
-}
+    .btn-shopeers-primary:hover {
+        background: var(--shopeers-blue-hover) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+    }
 
-/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    padding: 1.25rem 1.35rem;
-    box-shadow: var(--shopeers-shadow);
-    text-decoration: none;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    cursor: default;
-}
+    /* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
+    .shopeers-kpi-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        padding: 1.25rem 1.35rem;
+        box-shadow: var(--shopeers-shadow);
+        text-decoration: none;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        cursor: default;
+    }
 
-.shopeers-kpi-label {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-}
+    .shopeers-kpi-label {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--shopeers-text-sub);
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
 
-.shopeers-kpi-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    flex-shrink: 0;
-}
+    .shopeers-kpi-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
 
-.icon-emerald { background: #ecfdf5; color: #0a5c48; }
-.icon-cyan { background: #ecfeff; color: #0891b2; }
-.icon-indigo { background: #e0e7ff; color: #4338ca; }
-.icon-violet { background: #f5f3ff; color: #8b5cf6; }
-.icon-amber { background: #fffbeb; color: #f59e0b; }
-.icon-rose { background: #fff1f2; color: #f43f5e; }
+    .icon-emerald {
+        background: #ecfdf5;
+        color: #0a5c48;
+    }
 
-.shopeers-kpi-number {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.65rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin: 0.45rem 0 0 0;
-}
+    .icon-cyan {
+        background: #ecfeff;
+        color: #0891b2;
+    }
 
-.shopeers-kpi-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-size: 0.70rem;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: var(--shopeers-radius-pill);
-    margin-top: 0.4rem;
-    width: fit-content;
-}
+    .icon-indigo {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
 
-.trend-emerald { background: #ecfdf5; color: #047857; }
-.trend-cyan { background: #ecfeff; color: #0e7490; }
-.trend-indigo { background: #e0e7ff; color: #3730a3; }
-.trend-violet { background: #f5f3ff; color: #6d28d9; }
+    .icon-violet {
+        background: #f5f3ff;
+        color: #8b5cf6;
+    }
 
-/* Section Header */
-.section-heading-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
+    .icon-amber {
+        background: #fffbeb;
+        color: #f59e0b;
+    }
 
-.section-heading-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    margin: 0;
-}
+    .icon-rose {
+        background: #fff1f2;
+        color: #f43f5e;
+    }
 
-/* Nav Hub Link Cards */
-.shopeers-hub-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    padding: 1.25rem 1.35rem;
-    box-shadow: var(--shopeers-shadow);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-}
+    .shopeers-kpi-number {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin: 0.45rem 0 0 0;
+    }
 
-.shopeers-hub-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
-    border-color: #cbd5e1;
-}
+    .shopeers-kpi-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.70rem;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: var(--shopeers-radius-pill);
+        margin-top: 0.4rem;
+        width: fit-content;
+    }
 
-.shopeers-hub-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
+    .trend-emerald {
+        background: #ecfdf5;
+        color: #047857;
+    }
 
-.shopeers-hub-value {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    line-height: 1.1;
-    margin: 0;
-}
+    .trend-cyan {
+        background: #ecfeff;
+        color: #0e7490;
+    }
 
-.shopeers-hub-title {
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--shopeers-text-sub);
-    margin: 0.15rem 0 0 0;
-}
+    .trend-indigo {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
 
-.shopeers-hub-arrow {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #94a3b8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
+    .trend-violet {
+        background: #f5f3ff;
+        color: #6d28d9;
+    }
 
-.shopeers-hub-card:hover .shopeers-hub-arrow {
-    background: var(--shopeers-blue);
-    color: #ffffff;
-    border-color: var(--shopeers-blue);
-    transform: translateX(3px);
-}
+    /* Section Header */
+    .section-heading-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
 
-/* Shopeers Table Card Container */
-.shopeers-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.35rem 1.5rem;
-    margin-bottom: 1.5rem;
-}
+    .section-heading-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        margin: 0;
+    }
 
-.shopeers-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-}
+    /* Nav Hub Link Cards */
+    .shopeers-hub-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        padding: 1.25rem 1.35rem;
+        box-shadow: var(--shopeers-shadow);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+    }
 
-.shopeers-table thead th {
-    background: transparent;
-    color: var(--shopeers-text-muted);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid #f1f3f7;
-    white-space: nowrap;
-}
+    .shopeers-hub-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
 
-.shopeers-table tbody tr {
-    transition: background 0.15s ease;
-}
+    .shopeers-hub-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
 
-.shopeers-table tbody tr:hover {
-    background: #fafbfc;
-}
+    .shopeers-hub-value {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        line-height: 1.1;
+        margin: 0;
+    }
 
-.shopeers-table tbody td {
-    padding: 1rem 1rem;
-    border-bottom: 1px solid #f5f6fa;
-    vertical-align: middle;
-}
+    .shopeers-hub-title {
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--shopeers-text-sub);
+        margin: 0.15rem 0 0 0;
+    }
+
+    .shopeers-hub-arrow {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .shopeers-hub-card:hover .shopeers-hub-arrow {
+        background: var(--shopeers-blue);
+        color: #ffffff;
+        border-color: var(--shopeers-blue);
+        transform: translateX(3px);
+    }
+
+    /* Shopeers Table Card Container */
+    .shopeers-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.35rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .shopeers-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .shopeers-table thead th {
+        background: transparent;
+        color: var(--shopeers-text-muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f3f7;
+        white-space: nowrap;
+    }
+
+    .shopeers-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .shopeers-table tbody tr:hover {
+        background: #fafbfc;
+    }
+
+    .shopeers-table tbody td {
+        padding: 1rem 1rem;
+        border-bottom: 1px solid #f5f6fa;
+        vertical-align: middle;
+    }
 </style>
 
-<div class="container-fluid shopeers-viewport px-3 px-md-4 pt-3">
+<div class="container-fluid shopeers-viewport pt-3">
     <!-- Header -->
     <div class="shopeers-header">
         <div>
@@ -298,7 +336,9 @@
             <p class="shopeers-page-subtitle">Real-time business performance, inventory liquidity & network pipeline</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/products/all/" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5" style="font-size: 0.85rem;">
+            <a href="/admin/products/all/"
+                class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5"
+                style="font-size: 0.85rem;">
                 <i class="bi bi-box-seam"></i> Products
             </a>
             <a href="/admin/enquiries/seller/" class="btn-shopeers-primary">
@@ -320,7 +360,8 @@
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_due|default:"0.00" }}</h2>
+                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{
+                        stats.total_sales_due|default:"0.00" }}</h2>
                     <span class="shopeers-kpi-trend trend-emerald">
                         <i class="bi bi-clock-history"></i> Current Outstanding
                     </span>
@@ -338,7 +379,8 @@
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_amount|default:"0.00" }}</h2>
+                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{
+                        stats.total_sales_amount|default:"0.00" }}</h2>
                     <span class="shopeers-kpi-trend trend-cyan">
                         <i class="bi bi-wallet2"></i> Settled Revenue
                     </span>
@@ -468,7 +510,8 @@
     <!-- Section: Network & Stakeholders -->
     <div class="section-heading-row mt-2">
         <h5 class="section-heading-title">
-            <i class="bi bi-diagram-3-fill me-2" style="color: var(--shopeers-blue);"></i>Network &amp; Stakeholder Ecosystem
+            <i class="bi bi-diagram-3-fill me-2" style="color: var(--shopeers-blue);"></i>Network &amp; Stakeholder
+            Ecosystem
         </h5>
         <span class="text-muted small">Registered entity overview</span>
     </div>
@@ -555,7 +598,8 @@
                 <h5 class="fw-bold text-dark mb-0" style="font-family: 'Outfit', sans-serif;">
                     <i class="bi bi-shield-shaded me-2 text-success"></i>Internal Administrative Staff
                 </h5>
-                <p class="text-secondary small mb-0 mt-0.5">Active moderators, operational managers & system administrators</p>
+                <p class="text-secondary small mb-0 mt-0.5">Active moderators, operational managers & system
+                    administrators</p>
             </div>
             <a href="/admin/staff/" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1">View All Staff</a>
         </div>
@@ -576,17 +620,19 @@
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs flex-shrink-0"
-                                     style="width: 38px; height: 38px; font-size: 0.90rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
+                                    style="width: 38px; height: 38px; font-size: 0.90rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
                                     {{ member.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">{{ member.username }}</div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">{{ member.username }}
+                                    </div>
                                     <div class="text-muted small">{{ member.first_name }} {{ member.last_name }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.74rem;">
+                            <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-medium"
+                                style="font-size: 0.74rem;">
                                 {{ member.account_type|default:"Admin" }}
                             </span>
                         </td>
@@ -597,11 +643,15 @@
                         </td>
                         <td>
                             {% if member.is_active %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.74rem;">
+                            <span
+                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold"
+                                style="font-size: 0.74rem;">
                                 <i class="bi bi-check-circle-fill me-1"></i>Active
                             </span>
                             {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.74rem;">
+                            <span
+                                class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1 fw-semibold"
+                                style="font-size: 0.74rem;">
                                 Inactive
                             </span>
                             {% endif %}
