@@ -25,22 +25,63 @@
         })();
     </script>
     <style>
-        /* Global Layout Viewport & Overflow Containment (Using clip to preserve position: sticky) */
+        /* ==========================================================================
+           SHOPEERS-INSPIRED UNIFIED DESIGN TOKENS & CANVAS PALETTE
+           ========================================================================== */
+        :root,
+        [data-bs-theme="light"] {
+            --color-bg-body: #f5f6fa !important;
+            --bs-body-bg: #f5f6fa !important;
+            --bs-body-bg-rgb: 245, 246, 250 !important;
+            --color-bg-surface: #ffffff !important;
+            --color-bg-surface-subtle: #f8fafc !important;
+            --color-border: #f1f3f7 !important;
+            --color-border-subtle: #f1f3f7 !important;
+            --color-primary: #0a5c48 !important;
+            --color-primary-hover: #084c3b !important;
+            --color-primary-active: #06392d !important;
+            --color-primary-light: #e8f5f1 !important;
+            --color-primary-glow: rgba(10, 92, 72, 0.25) !important;
+            --bs-primary: #0a5c48 !important;
+            --bs-primary-rgb: 10, 92, 72 !important;
+        }
+
+        [data-bs-theme="dark"] {
+            --color-bg-body: #0b1120 !important;
+            --bs-body-bg: #0b1120 !important;
+            --bs-body-bg-rgb: 11, 17, 32 !important;
+            --color-bg-surface: #111827 !important;
+            --color-bg-surface-subtle: #1e293b !important;
+            --color-border: #1f2937 !important;
+            --color-border-subtle: #1f2937 !important;
+            --color-primary: #0ea27e !important;
+            --color-primary-hover: #0a5c48 !important;
+            --color-primary-light: rgba(14, 162, 126, 0.15) !important;
+            --bs-primary: #0ea27e !important;
+            --bs-primary-rgb: 14, 162, 126 !important;
+        }
+
+        /* Global Layout Viewport & Canvas Background */
         html, body {
             overflow-x: clip;
             max-width: 100%;
+            background-color: var(--color-bg-body) !important;
         }
 
         .dashboard-wrapper {
             overflow-x: clip;
             max-width: 100%;
             width: 100%;
+            background-color: var(--color-bg-body) !important;
+            min-height: 100vh;
         }
 
         .main-layout {
             min-width: 0 !important;
             width: calc(100% - 280px) !important;
             max-width: calc(100% - 280px) !important;
+            background-color: var(--color-bg-body) !important;
+            min-height: 100vh;
         }
 
         @media (max-width: 991.98px) {
@@ -54,11 +95,62 @@
         .dashboard-main-content {
             min-width: 0 !important;
             max-width: 100% !important;
+            background-color: var(--color-bg-body) !important;
+            padding-bottom: 2.5rem;
         }
 
-        /* Global sizing per user request */
+        /* Top Navbar Shopeers Polish */
+        .top-navbar {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #f1f3f7 !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
+        }
+
+        [data-bs-theme="dark"] .top-navbar {
+            background-color: #111827 !important;
+            border-bottom: 1px solid #1f2937 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        .top-navbar .navbar-search-pill .pill-input {
+            background-color: #f5f6fa !important;
+            border: 1px solid #eef2f6 !important;
+            border-radius: 9999px !important;
+            font-size: 0.84rem !important;
+            color: #111827 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .top-navbar .navbar-search-pill .pill-input:focus {
+            background-color: #ffffff !important;
+            border-color: #0a5c48 !important;
+            box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
+            outline: none !important;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .navbar-search-pill .pill-input {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Global Buttons Polish (#0a5c48) */
         .btn, .form-select {
             font-size: 14px !important;
+        }
+
+        .btn-primary {
+            background-color: #0a5c48 !important;
+            border-color: #0a5c48 !important;
+            color: #ffffff !important;
+            box-shadow: 0 3px 10px rgba(10, 92, 72, 0.2) !important;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: #084c3b !important;
+            border-color: #084c3b !important;
+            color: #ffffff !important;
+            box-shadow: 0 5px 14px rgba(10, 92, 72, 0.3) !important;
         }
 
         /* Global Admin Header Uniformity (Page title & paragraph under breadcrumbs) */
@@ -89,10 +181,10 @@
             display: inline-flex !important;
             align-items: center !important;
             background-color: var(--color-bg-surface, #ffffff);
-            border: 1px solid var(--color-border, #e2e8f0);
-            border-radius: 30px !important;
+            border: 1px solid var(--color-border, #f1f3f7);
+            border-radius: 9999px !important;
             padding: 0.35rem 0.95rem !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
             margin-bottom: 0.85rem !important;
         }
 
@@ -130,7 +222,7 @@
 
         .custom-breadcrumb .breadcrumb-list .breadcrumb-item a:hover,
         .custom-breadcrumb .breadcrumb-list .breadcrumb-item a:hover i {
-            color: var(--color-primary, #2563eb) !important;
+            color: #0a5c48 !important;
         }
 
         .custom-breadcrumb .breadcrumb-list .breadcrumb-item.active {
@@ -139,7 +231,7 @@
         }
 
         .custom-breadcrumb .breadcrumb-list .breadcrumb-item.active span {
-            color: var(--color-primary, #2563eb) !important;
+            color: #0a5c48 !important;
         }
 
         .custom-breadcrumb .breadcrumb-list .breadcrumb-separator {
@@ -151,35 +243,37 @@
             opacity: 0.65 !important;
         }
 
-        /* Pagination Styling using --bs-warning-rgb */
+        /* Pagination Styling */
         .pagination {
-            --bs-pagination-color: rgb(var(--bs-warning-rgb));
-            --bs-pagination-hover-color: #d97706;
-            --bs-pagination-hover-bg: rgba(var(--bs-warning-rgb), 0.12);
+            --bs-pagination-color: #0a5c48;
+            --bs-pagination-hover-color: #084c3b;
+            --bs-pagination-hover-bg: #e8f5f1;
             --bs-pagination-active-color: #ffffff;
-            --bs-pagination-active-bg: rgb(var(--bs-warning-rgb));
-            --bs-pagination-active-border-color: rgb(var(--bs-warning-rgb));
-            --bs-pagination-focus-color: #d97706;
-            --bs-pagination-focus-bg: rgba(var(--bs-warning-rgb), 0.15);
-            --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-warning-rgb), 0.25);
+            --bs-pagination-active-bg: #0a5c48;
+            --bs-pagination-active-border-color: #0a5c48;
+            --bs-pagination-focus-color: #084c3b;
+            --bs-pagination-focus-bg: #e8f5f1;
+            --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(10, 92, 72, 0.2);
         }
 
         .pagination .page-link {
-            color: rgb(var(--bs-warning-rgb)) !important;
-            border-color: rgba(var(--bs-warning-rgb), 0.25) !important;
+            color: #475569 !important;
+            border-color: #e2e8f0 !important;
+            border-radius: 8px;
+            font-size: 0.84rem;
         }
 
         .pagination .page-link:hover {
-            color: #b45309 !important;
-            background-color: rgba(var(--bs-warning-rgb), 0.12) !important;
-            border-color: rgba(var(--bs-warning-rgb), 0.35) !important;
+            color: #0a5c48 !important;
+            background-color: #e8f5f1 !important;
+            border-color: #a7f3d0 !important;
         }
 
         .pagination .page-item.active .page-link {
             color: #ffffff !important;
-            background-color: rgb(var(--bs-warning-rgb)) !important;
-            border-color: rgb(var(--bs-warning-rgb)) !important;
-            box-shadow: 0 2px 4px rgba(var(--bs-warning-rgb), 0.3) !important;
+            background-color: #0a5c48 !important;
+            border-color: #0a5c48 !important;
+            box-shadow: 0 2px 6px rgba(10, 92, 72, 0.25) !important;
         }
 
         .pagination .page-item.disabled .page-link {
@@ -368,4 +462,3 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-
