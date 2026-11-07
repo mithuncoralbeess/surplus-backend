@@ -5,388 +5,372 @@
 {% block content %}
 <style>
 /* ==========================================================================
-   MODERN ENTERPRISE AESTHETIC DESIGN SYSTEM - SELLER ENQUIRIES
+   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC DESIGN SYSTEM
    ========================================================================== */
 
-/* Page Header & Breadcrumb */
-.enquiries-page-header {
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #2563eb;
+    --shopeers-blue-light: #eff6ff;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    --shopeers-shadow-hover: 0 10px 28px -4px rgba(15, 23, 42, 0.08), 0 3px 8px -2px rgba(15, 23, 42, 0.03);
+}
+
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-blue: #3b82f6;
+    --shopeers-blue-light: rgba(59, 130, 246, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shopeers-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.shopeers-viewport {
+    background: transparent;
+    padding-bottom: 2rem;
+}
+
+/* Header & Breadcrumb */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 1.5rem;
 }
 
-.breadcrumb-nav-pill {
+.shopeers-breadcrumb-nav {
     display: inline-flex;
     align-items: center;
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    border-radius: 9999px;
-    padding: 3px 12px;
-    margin-bottom: 0.6rem;
-}
-
-.breadcrumb-nav-list {
-    display: flex;
-    align-items: center;
     gap: 0.45rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-size: 0.76rem;
-    font-weight: 500;
-    color: #64748b;
+    font-size: 0.78rem;
+    color: var(--shopeers-text-muted);
+    margin-bottom: 0.35rem;
 }
 
-.breadcrumb-nav-list a {
-    color: #475569;
+.shopeers-breadcrumb-nav a {
+    color: var(--shopeers-text-sub);
     text-decoration: none;
+    font-weight: 500;
     transition: color 0.15s ease;
 }
 
-.breadcrumb-nav-list a:hover {
-    color: #0f172a;
+.shopeers-breadcrumb-nav a:hover {
+    color: var(--shopeers-blue);
 }
 
-.page-title-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.main-page-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.45rem;
+.shopeers-page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--shopeers-text-dark);
     letter-spacing: -0.02em;
     margin: 0;
     line-height: 1.2;
 }
 
-.live-indicator-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    font-size: 0.70rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
+.shopeers-page-subtitle {
+    font-size: 0.85rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.2rem 0 0 0;
 }
 
-.pulse-circle {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: #10b981;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: livePulse 2s infinite;
-}
-
-@keyframes livePulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.main-page-subtitle {
-    font-size: 0.84rem;
-    color: #64748b;
-    margin: 0.25rem 0 0 0;
-}
-
-/* KPI Metric Cards */
-.kpi-stat-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 1.1rem 1.15rem;
-    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+/* Top Shopeers KPI Stat Metric Cards */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    text-decoration: none;
     position: relative;
-    overflow: hidden;
 }
 
-.kpi-stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: transparent;
-    transition: background 0.2s ease;
-}
-
-.kpi-stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+.shopeers-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shopeers-shadow-hover);
     border-color: #cbd5e1;
 }
 
-.kpi-stat-card.active-card {
-    border-color: #4f46e5 !important;
-    box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.15) !important;
+.shopeers-kpi-card.active-card {
+    border-color: var(--shopeers-blue) !important;
+    box-shadow: 0 8px 24px -2px rgba(37, 99, 235, 0.16) !important;
 }
 
-.kpi-stat-card.active-card::before {
-    background: #4f46e5;
+.shopeers-kpi-card.active-card::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    background: var(--shopeers-blue);
+    border-radius: 9999px;
 }
 
-.kpi-stat-card.active-amber {
-    border-color: #f59e0b !important;
-    box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.15) !important;
-}
-.kpi-stat-card.active-amber::before { background: #f59e0b; }
-
-.kpi-stat-card.active-emerald {
-    border-color: #10b981 !important;
-    box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.15) !important;
-}
-.kpi-stat-card.active-emerald::before { background: #10b981; }
-
-.kpi-stat-card.active-violet {
-    border-color: #8b5cf6 !important;
-    box-shadow: 0 8px 24px -4px rgba(139, 92, 246, 0.15) !important;
-}
-.kpi-stat-card.active-violet::before { background: #8b5cf6; }
-
-.kpi-stat-card.active-rose {
-    border-color: #f43f5e !important;
-    box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.15) !important;
-}
-.kpi-stat-card.active-rose::before { background: #f43f5e; }
-
-.kpi-stat-label {
-    font-size: 0.72rem;
+.shopeers-kpi-label {
+    font-size: 0.76rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.2px;
 }
 
-.kpi-stat-number {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #0f172a;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin: 0.35rem 0 0 0;
-}
-
-.kpi-icon-box {
+.shopeers-kpi-icon {
     width: 38px;
     height: 38px;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
 }
 
-.box-indigo { background: #eef2ff; color: #4f46e5; }
-.box-amber { background: #fffbeb; color: #d97706; }
-.box-emerald { background: #ecfdf5; color: #059669; }
-.box-violet { background: #f5f3ff; color: #7c3aed; }
-.box-rose { background: #fff1f2; color: #e11d48; }
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-amber { background: #fffbeb; color: #f59e0b; }
+.icon-emerald { background: #ecfdf5; color: #10b981; }
+.icon-violet { background: #f5f3ff; color: #8b5cf6; }
+.icon-rose { background: #fff1f2; color: #f43f5e; }
 
-/* Main Card & Toolbar */
-.aesthetic-main-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 8px 24px -4px rgba(15, 23, 42, 0.03);
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.45rem 0 0 0;
+}
+
+.shopeers-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.70rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.4rem;
+    width: fit-content;
+}
+
+.trend-all { background: #f1f5f9; color: #475569; }
+.trend-pending { background: #fffbeb; color: #b45309; }
+.trend-approved { background: #ecfdf5; color: #047857; }
+.trend-correction { background: #f5f3ff; color: #6d28d9; }
+.trend-declined { background: #fff1f2; color: #be123c; }
+
+/* Main Table Container Card */
+.shopeers-main-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
-.aesthetic-toolbar {
-    padding: 1rem 1.25rem;
-    background: #ffffff;
-    border-bottom: 1px solid #f1f5f9;
+/* Toolbar Bar */
+.shopeers-toolbar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--shopeers-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
-.search-capsule {
+/* Shopeers Search Capsule */
+.shopeers-search-capsule {
     display: flex;
     align-items: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 2px 3px 2px 10px;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 3px 4px 3px 14px;
     transition: all 0.2s ease;
     width: 100%;
-    max-width: 340px;
+    max-width: 320px;
 }
 
-.search-capsule:focus-within {
+[data-bs-theme="dark"] .shopeers-search-capsule {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.shopeers-search-capsule:focus-within {
     background: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-.search-capsule-input {
+.shopeers-search-input {
     border: none !important;
     background: transparent !important;
     font-size: 0.85rem;
-    color: #0f172a;
+    color: var(--shopeers-text-dark);
     outline: none !important;
     box-shadow: none !important;
     width: 100%;
     padding: 0.35rem 0.4rem;
 }
 
-.search-capsule-btn {
-    border-radius: 8px;
-    padding: 0.35rem 0.85rem;
+.shopeers-search-btn {
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.4rem 0.95rem;
     font-size: 0.80rem;
     font-weight: 600;
-    background: #0f172a;
+    background: var(--shopeers-blue);
     color: #ffffff;
     border: none;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
-.search-capsule-btn:hover {
-    background: #334155;
+.shopeers-search-btn:hover {
+    background: #1d4ed8;
     color: #ffffff;
 }
 
-/* Segmented Status Tabs */
-.segmented-status-tabs {
+/* Shopeers Segmented Status Tabs */
+.shopeers-segmented-pills {
     display: inline-flex;
     align-items: center;
     background: #f1f5f9;
-    padding: 3px;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    border: 1px solid var(--shopeers-border);
+    gap: 2px;
 }
 
-.segment-tab-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.35rem 0.85rem;
-    font-size: 0.80rem;
+[data-bs-theme="dark"] .shopeers-segmented-pills {
+    background: #1e293b;
+}
+
+.shopeers-pill-tab {
+    padding: 0.35rem 0.95rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    border-radius: 7px;
-    color: #64748b;
+    border-radius: var(--shopeers-radius-pill);
+    color: var(--shopeers-text-sub);
     text-decoration: none;
-    transition: all 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
 }
 
-.segment-tab-item:hover {
-    color: #0f172a;
+.shopeers-pill-tab:hover {
+    color: var(--shopeers-text-dark);
 }
 
-.segment-tab-item.active {
+.shopeers-pill-tab.active {
     background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    color: var(--shopeers-text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.segment-tab-item.active-amber {
+[data-bs-theme="dark"] .shopeers-pill-tab.active {
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.shopeers-pill-tab.active-pending {
     background: #fffbeb;
-    color: #b45309;
-    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15);
+    color: #b45309 !important;
 }
 
-.segment-tab-item.active-emerald {
+.shopeers-pill-tab.active-approved {
     background: #ecfdf5;
-    color: #047857;
-    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
+    color: #047857 !important;
 }
 
-.segment-tab-item.active-violet {
+.shopeers-pill-tab.active-correction {
     background: #f5f3ff;
-    color: #6d28d9;
-    box-shadow: 0 1px 3px rgba(139, 92, 246, 0.15);
+    color: #6d28d9 !important;
 }
 
-.segment-tab-item.active-rose {
+.shopeers-pill-tab.active-declined {
     background: #fff1f2;
-    color: #be123c;
-    box-shadow: 0 1px 3px rgba(244, 63, 94, 0.15);
+    color: #be123c !important;
 }
 
-.tab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-}
-.tab-dot-amber { background: #f59e0b; }
-.tab-dot-emerald { background: #10b981; }
-.tab-dot-violet { background: #8b5cf6; }
-.tab-dot-rose { background: #f43f5e; }
-
-/* Custom Filter Selects */
-.aesthetic-select {
+/* Custom Dropdown Filters */
+.shopeers-select {
     background-color: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 10px !important;
+    border-radius: var(--shopeers-radius-pill) !important;
     font-size: 0.82rem !important;
     font-weight: 500;
-    color: #334155 !important;
-    padding: 0.45rem 2rem 0.45rem 0.75rem !important;
+    color: var(--shopeers-text-dark) !important;
+    padding: 0.42rem 2.2rem 0.42rem 0.95rem !important;
     height: 38px;
     transition: all 0.15s ease;
 }
 
-.aesthetic-select:focus {
-    background-color: #ffffff !important;
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+[data-bs-theme="dark"] .shopeers-select {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
 }
 
-/* Add Product & Action Buttons */
-.btn-aesthetic-primary {
+.shopeers-select:focus {
+    background-color: #ffffff !important;
+    border-color: var(--shopeers-blue) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* Buttons */
+.btn-shopeers-primary {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    background: #0f172a;
+    gap: 0.45rem;
+    background: var(--shopeers-blue);
     color: #ffffff !important;
-    border: 1px solid #0f172a;
-    border-radius: 10px;
-    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.45rem 1.25rem;
     font-size: 0.82rem !important;
     font-weight: 600;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-    transition: all 0.15s ease;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    transition: all 0.18s ease;
     text-decoration: none;
     height: 38px;
 }
 
-.btn-aesthetic-primary:hover {
-    background: #1e293b;
-    border-color: #1e293b;
-    color: #ffffff !important;
+.btn-shopeers-primary:hover {
+    background: #1d4ed8;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
     transform: translateY(-1px);
+    color: #ffffff !important;
 }
 
-.btn-aesthetic-ghost {
+.btn-shopeers-ghost {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    color: #475569 !important;
-    border-radius: 10px;
-    padding: 0.45rem 0.85rem;
+    color: var(--shopeers-text-sub) !important;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.95rem;
     font-size: 0.82rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
@@ -394,21 +378,26 @@
     height: 38px;
 }
 
-.btn-aesthetic-ghost:hover {
+[data-bs-theme="dark"] .btn-shopeers-ghost {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.btn-shopeers-ghost:hover {
     background: #f1f5f9;
-    color: #0f172a !important;
+    color: var(--shopeers-text-dark) !important;
     border-color: #cbd5e1;
 }
 
-.btn-aesthetic-clear {
+.btn-shopeers-clear {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     background: #fff1f2;
     border: 1px solid #fecdd3;
-    color: #e11d48 !important;
-    border-radius: 10px;
-    padding: 0.45rem 0.75rem;
+    color: #f43f5e !important;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.85rem;
     font-size: 0.82rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
@@ -416,78 +405,86 @@
     height: 38px;
 }
 
-.btn-aesthetic-clear:hover {
+.btn-shopeers-clear:hover {
     background: #ffe4e6;
-    color: #be123c !important;
+    color: #e11d48 !important;
 }
 
-/* Data Table Grid */
-.aesthetic-table {
+/* Shopeers Table Grid */
+.shopeers-table {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
 }
 
-.aesthetic-table thead th {
-    background: #f8fafc !important;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 0.8rem 1.25rem;
+.shopeers-table thead th {
+    background: transparent;
+    border-bottom: 1px solid var(--shopeers-border);
+    padding: 1rem 1.5rem;
     font-size: 0.70rem;
     font-weight: 700;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--shopeers-text-muted);
 }
 
-.aesthetic-table tbody tr {
+.shopeers-table tbody tr {
     transition: background-color 0.12s ease;
 }
 
-.aesthetic-table tbody tr:hover {
-    background-color: #f8fafc !important;
+.shopeers-table tbody tr:hover {
+    background-color: #f8fafc;
 }
 
-.aesthetic-table tbody td {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #f1f5f9;
+[data-bs-theme="dark"] .shopeers-table tbody tr:hover {
+    background-color: #1e293b;
+}
+
+.shopeers-table tbody td {
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--shopeers-border);
     vertical-align: middle;
 }
 
-/* Product Icon Avatar */
-.product-avatar-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+/* Product Avatar Box */
+.shopeers-product-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #eef2ff;
-    color: #4f46e5;
-    font-size: 1.05rem;
-    border: 1px solid #e0e7ff;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 1.15rem;
     flex-shrink: 0;
+    border: 1px solid var(--shopeers-border);
 }
 
-/* Typography in Rows */
-.product-id-link {
+[data-bs-theme="dark"] .shopeers-product-avatar {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.shopeers-id-badge {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.88rem;
+    font-size: 0.90rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--shopeers-text-dark);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-.product-id-link:hover {
-    color: #4f46e5;
+.shopeers-id-badge:hover {
+    color: var(--shopeers-blue);
 }
 
-.product-title-text {
-    font-size: 0.84rem;
+.shopeers-product-title {
+    font-size: 0.86rem;
     font-weight: 600;
-    color: #334155;
-    margin-top: 0.15rem;
+    color: var(--shopeers-text-dark);
+    margin-top: 0.2rem;
     line-height: 1.35;
     max-width: 380px;
     white-space: nowrap;
@@ -495,127 +492,90 @@
     text-overflow: ellipsis;
 }
 
-/* Compact Metadata Tags */
-.meta-tag {
+/* Compact Metadata Pills */
+.shopeers-meta-pill {
     display: inline-flex;
     align-items: center;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 500;
-    line-height: 1.3;
-    border: 1px solid transparent;
-}
-
-.meta-tag-category {
     background: #f1f5f9;
     color: #475569;
-    border-color: #e2e8f0;
 }
 
-.meta-tag-country {
-    background: #f8fafc;
-    color: #334155;
-    border-color: #e2e8f0;
+[data-bs-theme="dark"] .shopeers-meta-pill {
+    background: #1e293b;
+    color: #94a3b8;
 }
 
-.meta-tag-vendor {
-    background: #f8fafc;
-    color: #64748b;
-    border-color: #e2e8f0;
-    font-family: ui-monospace, monospace;
-    font-size: 0.70rem;
-}
-
-.meta-tag-admin {
-    background: #eef2ff;
-    color: #4338ca;
-    border-color: #e0e7ff;
-    font-family: ui-monospace, monospace;
-    font-size: 0.70rem;
-}
-
-.meta-tag-channel {
-    background: #ecfdf5;
-    color: #047857;
-    border-color: #a7f3d0;
-    font-size: 0.68rem;
-}
-
-/* Active / Inactive Pill */
-.active-pill-dot {
+.shopeers-dot-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 1px 6px;
-    border-radius: 9999px;
-    font-size: 0.68rem;
+    gap: 0.35rem;
+    padding: 2px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.70rem;
     font-weight: 600;
 }
 
-.pill-is-active {
+.dot-pill-active {
     background: #ecfdf5;
     color: #059669;
-    border: 1px solid #a7f3d0;
 }
 
-.pill-is-inactive {
+.dot-pill-inactive {
     background: #f1f5f9;
     color: #64748b;
-    border: 1px solid #e2e8f0;
 }
 
-.tiny-dot {
-    width: 5px;
-    height: 5px;
+.pulse-dot-sm {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
 }
-.tiny-dot-green { background: #10b981; }
-.tiny-dot-gray { background: #94a3b8; }
+.pulse-dot-green { background: #10b981; }
+.pulse-dot-gray { background: #94a3b8; }
 
 /* Status Badges */
-.status-badge-refined {
+.shopeers-status-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 3px 10px;
-    border-radius: 9999px;
+    padding: 4px 12px;
+    border-radius: var(--shopeers-radius-pill);
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.2px;
 }
 
-.badge-approved {
+.status-approved-pill {
     background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
+    color: #10b981;
 }
 
-.badge-pending {
+.status-pending-pill {
     background: #fffbeb;
-    color: #d97706;
-    border: 1px solid #fde68a;
+    color: #f59e0b;
 }
 
-.badge-correction {
+.status-correction-pill {
     background: #f5f3ff;
-    color: #7c3aed;
-    border: 1px solid #ddd6fe;
+    color: #8b5cf6;
 }
 
-.badge-declined {
+.status-declined-pill {
     background: #fff1f2;
-    color: #e11d48;
-    border: 1px solid #fecdd3;
+    color: #f43f5e;
 }
 
-/* Micro Action Buttons */
-.action-btn-refined {
+/* Action Buttons */
+.shopeers-action-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.3rem 0.65rem;
-    border-radius: 8px;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--shopeers-radius-pill);
     font-size: 0.78rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
@@ -624,91 +584,70 @@
     line-height: 1.25;
 }
 
-.btn-approve-refined {
+.action-approve-pill {
     background: #ecfdf5;
     color: #059669;
     border-color: #a7f3d0;
 }
-.btn-approve-refined:hover {
+.action-approve-pill:hover {
     background: #059669;
     color: #ffffff;
     border-color: #059669;
     transform: translateY(-1px);
 }
 
-.btn-correction-refined {
+.action-correction-pill {
     background: #fffbeb;
     color: #d97706;
     border-color: #fde68a;
 }
-.btn-correction-refined:hover {
+.action-correction-pill:hover {
     background: #d97706;
     color: #ffffff;
     border-color: #d97706;
     transform: translateY(-1px);
 }
 
-.btn-decline-refined {
+.action-decline-pill {
     background: #fff1f2;
     color: #e11d48;
     border-color: #fecdd3;
 }
-.btn-decline-refined:hover {
+.action-decline-pill:hover {
     background: #e11d48;
     color: #ffffff;
     border-color: #e11d48;
     transform: translateY(-1px);
 }
 
-.btn-more-refined {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+.shopeers-more-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    color: #64748b;
+    color: var(--shopeers-text-sub);
     transition: all 0.15s ease;
     cursor: pointer;
 }
 
-.btn-more-refined:hover {
+[data-bs-theme="dark"] .shopeers-more-btn {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.shopeers-more-btn:hover {
     background: #f1f5f9;
-    color: #0f172a;
-    border-color: #cbd5e1;
-}
-
-/* Modern Dropdown */
-.dropdown-menu-refined {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-    box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
-    padding: 0.4rem !important;
-    min-width: 200px;
-}
-
-.dropdown-menu-refined .dropdown-item {
-    border-radius: 8px;
-    font-size: 0.80rem;
-    font-weight: 500;
-    padding: 0.45rem 0.75rem;
-    color: #334155;
-    transition: all 0.12s ease;
-}
-
-.dropdown-menu-refined .dropdown-item:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    color: var(--shopeers-text-dark);
 }
 
 /* Pagination Footer */
-.aesthetic-pagination-footer {
-    padding: 0.85rem 1.25rem;
-    background: #ffffff;
-    border-top: 1px solid #f1f5f9;
+.shopeers-pagination-footer {
+    padding: 1.15rem 1.5rem;
+    border-top: 1px solid var(--shopeers-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -716,81 +655,76 @@
     gap: 0.75rem;
 }
 
-.page-btn-item {
+.shopeers-page-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 0.65rem;
-    border-radius: 8px;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.75rem;
+    border-radius: var(--shopeers-radius-pill);
     font-size: 0.80rem;
     font-weight: 600;
     text-decoration: none;
-    color: #475569;
+    color: var(--shopeers-text-sub);
     background: #ffffff;
     border: 1px solid #e2e8f0;
     transition: all 0.15s ease;
 }
 
-.page-btn-item:hover:not(.disabled) {
+[data-bs-theme="dark"] .shopeers-page-pill {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.shopeers-page-pill:hover:not(.disabled) {
     background: #f8fafc;
-    color: #0f172a;
-    border-color: #cbd5e1;
+    color: var(--shopeers-text-dark);
 }
 
-.page-btn-item.active {
-    background: #0f172a;
+.shopeers-page-pill.active {
+    background: var(--shopeers-blue);
     color: #ffffff !important;
-    border-color: #0f172a;
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-.page-btn-item.disabled {
+.shopeers-page-pill.disabled {
     opacity: 0.4;
     pointer-events: none;
 }
 </style>
 
-<div class="container-fluid px-0">
+<div class="shopeers-viewport">
     <!-- Header -->
-    <div class="enquiries-page-header">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div>
-                <div class="breadcrumb-nav-pill">
-                    <ol class="breadcrumb-nav-list">
-                        <li><a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a></li>
-                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.60rem;"></i></li>
-                        <li class="text-muted">Enquiries</li>
-                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.60rem;"></i></li>
-                        <li class="fw-semibold text-dark">Seller Enquiries</li>
-                    </ol>
-                </div>
-                <div class="page-title-group">
-                    <h1 class="main-page-title">Seller Product Enquiries</h1>
-                    <span class="live-indicator-chip">
-                        <span class="pulse-circle"></span>
-                        Live Intake
-                    </span>
-                </div>
-                <p class="main-page-subtitle">Review, approve, request revisions, and manage individual product listings submitted by sellers</p>
+    <div class="shopeers-header">
+        <div>
+            <div class="shopeers-breadcrumb-nav">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
+                <span>&rsaquo;</span>
+                <span>Enquiries</span>
+                <span>&rsaquo;</span>
+                <span class="text-dark fw-semibold">Seller Enquiries</span>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a href="/admin/products/add/" class="btn-aesthetic-primary">
-                    <i class="bi bi-plus-lg"></i>
-                    <span>Add Product</span>
-                </a>
-                <button type="button" class="btn-aesthetic-ghost" onclick="window.location.reload()" title="Refresh Table">
-                    <i class="bi bi-arrow-clockwise"></i>
-                    <span>Refresh</span>
-                </button>
-            </div>
+            <h1 class="shopeers-page-title">Seller Product Enquiries</h1>
+            <p class="shopeers-page-subtitle">Review, approve, request revisions, and manage individual product listings submitted by sellers</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/products/add/" class="btn-shopeers-primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Add Product</span>
+            </a>
+            <button type="button" class="btn-shopeers-ghost" onclick="window.location.reload()" title="Refresh Table">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </button>
         </div>
     </div>
 
     {% if messages %}
-    <div class="mb-3">
+    <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 12px; font-size: 0.88rem;">
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 16px; background: #ffffff;">
             <i class="bi bi-check-circle-fill text-success fs-5"></i>
             <div class="fw-medium text-dark">{{ message }}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -799,21 +733,21 @@
     </div>
     {% endif %}
 
-    <!-- 5 KPI Stat Metric Cards -->
+    <!-- 5 Shopeers Top Stat Metric Cards -->
     <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
         <!-- 1. All Enquiries -->
         <div class="col">
             <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="kpi-stat-card {% if current_status == 'all' %}active-card{% endif %}">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="kpi-stat-label">All Enquiries</span>
-                        <div class="kpi-icon-box box-indigo">
+                <div class="shopeers-kpi-card {% if current_status == 'all' %}active-card{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="shopeers-kpi-label">All Enquiries</span>
+                        <div class="shopeers-kpi-icon icon-blue">
                             <i class="bi bi-tags-fill"></i>
                         </div>
                     </div>
                     <div>
-                        <h3 class="kpi-stat-number">{{ counts.total|default:"0" }}</h3>
-                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Total catalogue</div>
+                        <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
+                        <span class="shopeers-kpi-trend trend-all">Total Catalogue</span>
                     </div>
                 </div>
             </a>
@@ -822,16 +756,16 @@
         <!-- 2. Pending Review -->
         <div class="col">
             <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="kpi-stat-card {% if current_status == 'pending' %}active-amber{% endif %}">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="kpi-stat-label">Pending Review</span>
-                        <div class="kpi-icon-box box-amber">
+                <div class="shopeers-kpi-card {% if current_status == 'pending' %}active-card{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="shopeers-kpi-label">Pending Review</span>
+                        <div class="shopeers-kpi-icon icon-amber">
                             <i class="bi bi-hourglass-split"></i>
                         </div>
                     </div>
                     <div>
-                        <h3 class="kpi-stat-number text-warning" style="color: #d97706 !important;">{{ counts.pending|default:"0" }}</h3>
-                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Requires review</div>
+                        <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
+                        <span class="shopeers-kpi-trend trend-pending">Requires Action</span>
                     </div>
                 </div>
             </a>
@@ -840,16 +774,16 @@
         <!-- 3. Approved -->
         <div class="col">
             <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="kpi-stat-card {% if current_status == 'approved' %}active-emerald{% endif %}">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="kpi-stat-label">Approved</span>
-                        <div class="kpi-icon-box box-emerald">
+                <div class="shopeers-kpi-card {% if current_status == 'approved' %}active-card{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="shopeers-kpi-label">Approved</span>
+                        <div class="shopeers-kpi-icon icon-emerald">
                             <i class="bi bi-check2-circle"></i>
                         </div>
                     </div>
                     <div>
-                        <h3 class="kpi-stat-number text-success" style="color: #059669 !important;">{{ counts.approved|default:"0" }}</h3>
-                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Live on marketplace</div>
+                        <h3 class="shopeers-kpi-number">{{ counts.approved|default:"0" }}</h3>
+                        <span class="shopeers-kpi-trend trend-approved">Live on Marketplace</span>
                     </div>
                 </div>
             </a>
@@ -858,16 +792,16 @@
         <!-- 4. Correction -->
         <div class="col">
             <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="kpi-stat-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-violet{% endif %}">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="kpi-stat-label">Needs Correction</span>
-                        <div class="kpi-icon-box box-violet">
+                <div class="shopeers-kpi-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-card{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="shopeers-kpi-label">Needs Correction</span>
+                        <div class="shopeers-kpi-icon icon-violet">
                             <i class="bi bi-pencil-square"></i>
                         </div>
                     </div>
                     <div>
-                        <h3 class="kpi-stat-number" style="color: #7c3aed !important;">{{ counts.correction|default:"0" }}</h3>
-                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Pending vendor edits</div>
+                        <h3 class="shopeers-kpi-number">{{ counts.correction|default:"0" }}</h3>
+                        <span class="shopeers-kpi-trend trend-correction">Pending Revision</span>
                     </div>
                 </div>
             </a>
@@ -876,61 +810,74 @@
         <!-- 5. Declined -->
         <div class="col">
             <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-                <div class="kpi-stat-card {% if current_status == 'declined' %}active-rose{% endif %}">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <span class="kpi-stat-label">Declined</span>
-                        <div class="kpi-icon-box box-rose">
+                <div class="shopeers-kpi-card {% if current_status == 'declined' %}active-card{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <span class="shopeers-kpi-label">Declined</span>
+                        <div class="shopeers-kpi-icon icon-rose">
                             <i class="bi bi-x-circle-fill"></i>
                         </div>
                     </div>
                     <div>
-                        <h3 class="kpi-stat-number text-danger" style="color: #e11d48 !important;">{{ counts.declined|default:"0" }}</h3>
-                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Rejected listings</div>
+                        <h3 class="shopeers-kpi-number">{{ counts.declined|default:"0" }}</h3>
+                        <span class="shopeers-kpi-trend trend-declined">Rejected Listings</span>
                     </div>
                 </div>
             </a>
         </div>
     </div>
 
-    <!-- Main Card Container -->
-    <div class="aesthetic-main-card">
+    <!-- Shopeers Main Table Card Container -->
+    <div class="shopeers-main-card">
+        <!-- Card Title Bar (Shopeers Best Selling Products Style) -->
+        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-1">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark" style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Best Selling Products</h5>
+                <p class="text-muted small mb-0 mt-0.5">Live product listings and vendor verification workflow</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill text-secondary bg-light border px-2.5 py-1.5" style="font-size: 0.72rem; font-weight: 600;">
+                    <i class="bi bi-record-circle text-success me-1"></i>Live Sync
+                </span>
+            </div>
+        </div>
+
         <!-- Toolbar -->
-        <div class="aesthetic-toolbar">
-            <!-- Search Box -->
-            <div class="search-capsule">
-                <i class="bi bi-search text-muted me-1" style="font-size: 0.82rem;"></i>
-                <input type="text" id="enquirySearch" class="search-capsule-input" placeholder="Search ID, Name, Model, Email..." value="{{ search }}">
-                <button class="search-capsule-btn" type="button" id="enquirySearchBtn">Search</button>
+        <div class="shopeers-toolbar">
+            <!-- Search Capsule -->
+            <div class="shopeers-search-capsule">
+                <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
+                <input type="text" id="enquirySearch" class="shopeers-search-input" placeholder="Search ID, Name, Model, Email..." value="{{ search }}">
+                <button class="shopeers-search-btn" type="button" id="enquirySearchBtn">Search</button>
             </div>
 
             <!-- Segmented Status Tabs -->
-            <div class="segmented-status-tabs">
+            <div class="shopeers-segmented-pills">
                 <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="segment-tab-item {% if current_status == 'all' %}active{% endif %}">
+                   class="shopeers-pill-tab {% if current_status == 'all' %}active{% endif %}">
                     All
                 </a>
                 <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="segment-tab-item {% if current_status == 'pending' %}active-amber{% endif %}">
-                    <span class="tab-dot tab-dot-amber"></span> Pending
+                   class="shopeers-pill-tab {% if current_status == 'pending' %}active active-pending{% endif %}">
+                    Pending
                 </a>
                 <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="segment-tab-item {% if current_status == 'approved' %}active-emerald{% endif %}">
-                    <span class="tab-dot tab-dot-emerald"></span> Approved
+                   class="shopeers-pill-tab {% if current_status == 'approved' %}active active-approved{% endif %}">
+                    Approved
                 </a>
                 <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="segment-tab-item {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-violet{% endif %}">
-                    <span class="tab-dot tab-dot-violet"></span> Correction
+                   class="shopeers-pill-tab {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active active-correction{% endif %}">
+                    Correction
                 </a>
                 <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="segment-tab-item {% if current_status == 'declined' %}active-rose{% endif %}">
-                    <span class="tab-dot tab-dot-rose"></span> Declined
+                   class="shopeers-pill-tab {% if current_status == 'declined' %}active active-declined{% endif %}">
+                    Declined
                 </a>
             </div>
 
-            <!-- Filters & Reset Controls -->
+            <!-- Filters -->
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- Category Select -->
-                <select class="form-select aesthetic-select" id="categoryFilter" style="min-width: 150px; max-width: 200px;">
+                <select class="form-select shopeers-select" id="categoryFilter" style="min-width: 150px; max-width: 200px;">
                     <option value="all">All Categories</option>
                     {% for cat in categories %}
                     <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
@@ -938,7 +885,7 @@
                 </select>
 
                 <!-- Country Select -->
-                <select class="form-select aesthetic-select" id="countryFilter" style="min-width: 140px; max-width: 180px;">
+                <select class="form-select shopeers-select" id="countryFilter" style="min-width: 140px; max-width: 180px;">
                     <option value="all">All Countries</option>
                     {% for c in countries %}
                     <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
@@ -946,7 +893,7 @@
                 </select>
 
                 <!-- Date Select -->
-                <select class="form-select aesthetic-select" id="dateFilter" style="width: 125px;">
+                <select class="form-select shopeers-select" id="dateFilter" style="width: 125px;">
                     <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
                     <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
                     <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
@@ -954,7 +901,7 @@
                 </select>
 
                 {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
-                <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-aesthetic-clear" title="Clear All Filters">
+                <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-shopeers-clear" title="Clear All Filters">
                     <i class="bi bi-x-lg"></i>
                     <span>Clear</span>
                 </a>
@@ -962,169 +909,178 @@
             </div>
         </div>
 
-        <!-- Table Grid -->
-        <div class="table-responsive" style="min-height: 300px;">
-            <table class="table aesthetic-table align-middle mb-0" id="enquiryTable">
+        <!-- Table Grid (Shopeers Best Selling Style) -->
+        <div class="table-responsive" style="min-height: 320px;">
+            <table class="table shopeers-table align-middle mb-0" id="enquiryTable">
                 <thead>
                     <tr>
-                        <th style="min-width: 320px;">Product &amp; Seller Details</th>
-                        <th style="width: 170px;">Date &amp; Time</th>
-                        <th style="width: 160px;">Status</th>
+                        <th style="min-width: 260px;">Product</th>
+                        <th style="width: 200px;">Category &amp; Location</th>
+                        <th style="width: 170px;">Seller</th>
+                        <th style="width: 140px;">Date &amp; Time</th>
+                        <th style="width: 140px;">Status</th>
                         <th class="text-end pe-4" style="width: 240px;">Quick Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in enquiries %}
                     <tr id="enquiry-row-{{ item.id }}">
-                        <!-- Product Details -->
+                        <!-- Product -->
                         <td>
-                            <div class="d-flex align-items-start gap-2.5">
-                                <div class="product-avatar-box">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="shopeers-product-avatar">
                                     <i class="bi bi-box-seam"></i>
                                 </div>
                                 <div class="min-w-0 flex-grow-1">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="product-id-link">
+                                        <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="shopeers-id-badge">
                                             {{ item.product_id }}
                                         </a>
                                         {% if item.is_featured %}
-                                        <span class="meta-tag" style="background: #fff1f2; color: #e11d48; border-color: #fecdd3;" title="Featured Deal">
+                                        <span class="shopeers-meta-pill text-danger" style="background: #fff1f2; font-weight: 600;" title="Featured Deal">
                                             <i class="bi bi-star-fill text-danger me-1" style="font-size: 0.65rem;"></i>Featured
                                         </span>
                                         {% endif %}
                                         {% if item.is_active %}
-                                        <span class="active-pill-dot pill-is-active" title="Active on Marketplace">
-                                            <span class="tiny-dot tiny-dot-green"></span> Active
+                                        <span class="shopeers-dot-pill dot-pill-active" title="Active on Marketplace">
+                                            <span class="pulse-dot-sm pulse-dot-green"></span> Active
                                         </span>
                                         {% else %}
-                                        <span class="active-pill-dot pill-is-inactive" title="Hidden / Inactive">
-                                            <span class="tiny-dot tiny-dot-gray"></span> Inactive
+                                        <span class="shopeers-dot-pill dot-pill-inactive" title="Hidden / Inactive">
+                                            <span class="pulse-dot-sm pulse-dot-gray"></span> Inactive
                                         </span>
                                         {% endif %}
                                     </div>
-
-                                    <div class="product-title-text" title="{{ item.product_name|default:'Product Enquiry' }}">
+                                    <div class="shopeers-product-title" title="{{ item.product_name|default:'Product Enquiry' }}">
                                         {{ item.product_name|default:'Product Enquiry' }}
-                                    </div>
-
-                                    <!-- Compact Meta Tags -->
-                                    <div class="d-flex align-items-center gap-1.5 flex-wrap mt-1">
-                                        {% if item.category %}
-                                        <span class="meta-tag meta-tag-category">
-                                            <i class="bi bi-folder2 text-primary me-1"></i>{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}
-                                        </span>
-                                        {% endif %}
-                                        {% if item.inventory_country %}
-                                        <span class="meta-tag meta-tag-country" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
-                                            <i class="bi bi-geo-alt text-danger me-1"></i>{{ item.inventory_country }}
-                                        </span>
-                                        {% endif %}
-                                        {% if item.vendor %}
-                                        <span class="meta-tag meta-tag-vendor" title="Seller: {{ item.vendor.email|default:'N/A' }}">
-                                            <i class="bi bi-person me-1"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
-                                        </span>
-                                        {% endif %}
-                                        {% if item.admin %}
-                                        <span class="meta-tag meta-tag-admin" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
-                                            <i class="bi bi-shield-check text-indigo me-1"></i>ADM-{{ item.admin.id|stringformat:"04d" }}
-                                        </span>
-                                        {% endif %}
-                                        {% if item.intake_channel %}
-                                        <span class="meta-tag meta-tag-channel">
-                                            {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1 text-success"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ item.intake_channel }}
-                                        </span>
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
                         </td>
 
+                        <!-- Category & Location -->
+                        <td>
+                            {% if item.category %}
+                            <div class="shopeers-meta-pill text-truncate mb-1" style="max-width: 190px;" title="{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}">
+                                <i class="bi bi-folder2 me-1 text-primary"></i>{{ item.category.name }}
+                            </div>
+                            {% endif %}
+                            {% if item.inventory_country %}
+                            <div class="small text-muted" style="font-size: 0.76rem;" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
+                                <i class="bi bi-geo-alt text-danger me-1"></i>{{ item.inventory_country }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Seller -->
+                        <td>
+                            {% if item.vendor %}
+                            <div class="fw-semibold font-monospace" style="font-size: 0.82rem; color: var(--shopeers-text-dark);" title="Seller: {{ item.vendor.email|default:'N/A' }}">
+                                <i class="bi bi-person me-1 text-muted"></i>{{ item.vendor.vendor_id }}
+                            </div>
+                            {% if item.vendor.full_name %}
+                            <div class="text-muted text-truncate" style="font-size: 0.74rem; max-width: 150px;">
+                                {{ item.vendor.full_name }}
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted small">N/A</span>
+                            {% endif %}
+                            {% if item.admin %}
+                            <div class="mt-1">
+                                <span class="shopeers-meta-pill text-primary font-monospace" style="background: #eff6ff; font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }}">
+                                    <i class="bi bi-shield-check me-1"></i>ADM-{{ item.admin.id|stringformat:"04d" }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </td>
+
                         <!-- Date & Time -->
                         <td style="white-space: nowrap;">
-                            <div class="fw-semibold text-dark" style="font-size: 0.82rem;">
-                                <i class="bi bi-calendar2 me-1.5 text-muted" style="font-size: 0.78rem;"></i>{{ item.created_at|date:"M d, Y" }}
+                            <div class="fw-semibold" style="font-size: 0.84rem; color: var(--shopeers-text-dark);">
+                                {{ item.created_at|date:"M d, Y" }}
                             </div>
-                            <div class="text-muted font-monospace mt-0.5" style="font-size: 0.74rem;">
-                                <i class="bi bi-clock me-1 text-muted" style="font-size: 0.72rem;"></i>{{ item.created_at|date:"H:i" }} IST
+                            <div class="mt-0.5 text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock me-1 opacity-75"></i>{{ item.created_at|date:"H:i" }} IST
                             </div>
                         </td>
 
                         <!-- Status Badge -->
                         <td style="white-space: nowrap;">
                             {% if item.enquiry_status|lower == 'approved' %}
-                            <span class="status-badge-refined badge-approved" id="status-badge-{{ item.id }}">
-                                <i class="bi bi-check-circle-fill"></i> Approved
+                            <span class="shopeers-status-pill status-approved-pill" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm pulse-dot-green"></span> Approved
                             </span>
                             {% elif item.enquiry_status|lower == 'declined' %}
-                            <span class="status-badge-refined badge-declined" id="status-badge-{{ item.id }}">
-                                <i class="bi bi-x-circle-fill"></i> Declined
+                            <span class="shopeers-status-pill status-declined-pill" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #f43f5e;"></span> Declined
                             </span>
                             {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
-                            <span class="status-badge-refined badge-correction" id="status-badge-{{ item.id }}">
-                                <i class="bi bi-pencil-square"></i> Needs Correction
+                            <span class="shopeers-status-pill status-correction-pill" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #8b5cf6;"></span> Correction
                             </span>
                             {% else %}
-                            <span class="status-badge-refined badge-pending" id="status-badge-{{ item.id }}">
-                                <i class="bi bi-hourglass-split"></i> Pending Review
+                            <span class="shopeers-status-pill status-pending-pill" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #f59e0b;"></span> Pending
                             </span>
                             {% endif %}
                         </td>
 
-                        <!-- Quick Actions -->
+                        <!-- Actions -->
                         <td class="text-end pe-4" style="white-space: nowrap;">
                             <div class="d-flex align-items-center justify-content-end gap-1.5">
                                 {% if item.enquiry_status|lower == 'approved' %}
-                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="shopeers-action-btn action-correction-pill btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
-                                <button type="button" class="action-btn-refined btn-decline-refined btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                <button type="button" class="shopeers-action-btn action-decline-pill btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
                                     <i class="bi bi-x-lg"></i> Decline
                                 </button>
                                 {% elif item.enquiry_status|lower == 'declined' %}
-                                <button type="button" class="action-btn-refined btn-approve-refined btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                <button type="button" class="shopeers-action-btn action-approve-pill btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
-                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="shopeers-action-btn action-correction-pill btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
                                 {% else %}
-                                <button type="button" class="action-btn-refined btn-approve-refined btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                <button type="button" class="shopeers-action-btn action-approve-pill btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
-                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="shopeers-action-btn action-correction-pill btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
-                                <button type="button" class="action-btn-refined btn-decline-refined btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                <button type="button" class="shopeers-action-btn action-decline-pill btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
                                     <i class="bi bi-x-lg"></i> Decline
                                 </button>
                                 {% endif %}
 
                                 <!-- More Dropdown -->
                                 <div class="dropdown d-inline-block">
-                                    <button class="btn-more-refined" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
+                                    <button class="shopeers-more-btn" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-refined">
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="border-radius: 14px; min-width: 200px; padding: 6px;">
                                         <li>
-                                            <a class="dropdown-item" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}">
+                                            <a class="dropdown-item py-1.5" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}">
                                                 <i class="bi bi-eye text-primary me-2"></i> View Details
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item text-primary" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit">
+                                            <a class="dropdown-item py-1.5 text-primary" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit">
                                                 <i class="bi bi-pencil-square me-2"></i> Edit Enquiry
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider my-1 opacity-25"></li>
                                         {% if item.is_active %}
                                         <li>
-                                            <a class="dropdown-item text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive">
+                                            <a class="dropdown-item py-1.5 text-secondary btn-action-active-status" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive">
                                                 <i class="bi bi-pause-circle me-2"></i> Mark as Inactive
                                             </a>
                                         </li>
                                         {% elif item.enquiry_status|lower == 'approved' %}
                                         <li>
-                                            <a class="dropdown-item text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active">
+                                            <a class="dropdown-item py-1.5 text-success btn-action-active-status" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active">
                                                 <i class="bi bi-play-circle-fill me-2"></i> Mark as Active
                                             </a>
                                         </li>
@@ -1132,20 +1088,20 @@
                                         <li><hr class="dropdown-divider my-1 opacity-25"></li>
                                         {% if item.enquiry_status != 'pending' %}
                                         <li>
-                                            <a class="dropdown-item btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending">
+                                            <a class="dropdown-item py-1.5 btn-action-status" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending">
                                                 <i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider my-1 opacity-25"></li>
                                         {% endif %}
                                         <li>
-                                            <a class="dropdown-item btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}">
+                                            <a class="dropdown-item py-1.5 btn-action-collection" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}">
                                                 <i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider my-1 opacity-25"></li>
                                         <li>
-                                            <a class="dropdown-item text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}">
+                                            <a class="dropdown-item py-1.5 text-danger btn-action-delete" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}">
                                                 <i class="bi bi-trash3 me-2"></i> Delete Enquiry
                                             </a>
                                         </li>
@@ -1156,14 +1112,14 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="py-4">
-                                <div class="product-avatar-box mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                                <div class="shopeers-product-avatar mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
                                     <i class="bi bi-inbox text-muted"></i>
                                 </div>
-                                <h5 class="fw-bold text-dark mb-1" style="font-size: 1rem;">No Seller Enquiries Found</h5>
-                                <p class="text-secondary small mb-3">No product listings match your selected status or search filter.</p>
-                                <a href="/admin/enquiries/seller/" class="btn-aesthetic-ghost">
+                                <h5 class="fw-bold" style="font-size: 1.05rem; color: var(--shopeers-text-dark);">No Seller Enquiries Found</h5>
+                                <p class="small mb-3" style="color: var(--shopeers-text-sub);">No product listings match your selected status or filter parameters.</p>
+                                <a href="/admin/enquiries/seller/" class="btn-shopeers-ghost">
                                     <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
                                 </a>
                             </div>
@@ -1174,30 +1130,30 @@
             </table>
         </div>
 
-        <!-- Pagination Footer -->
-        <div class="aesthetic-pagination-footer">
-            <div class="text-secondary small fw-medium">
-                Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
-                <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
-                <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+        <!-- Shopeers Pagination Footer -->
+        <div class="shopeers-pagination-footer">
+            <div class="small fw-medium" style="color: var(--shopeers-text-sub);">
+                Showing <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.start_index|default:0 }}</span> to 
+                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.end_index|default:0 }}</span> of 
+                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.paginator.count|default:0 }}</span> enquiries
             </div>
             {% if page_obj.has_other_pages %}
             <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0 align-items-center gap-1 list-unstyled d-flex">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1.5 list-unstyled d-flex">
                     {% if page_obj.has_previous %}
                     <li>
-                        <a class="page-btn-item" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
+                        <a class="shopeers-page-pill" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
                             <i class="bi bi-chevron-double-left"></i>
                         </a>
                     </li>
                     <li>
-                        <a class="page-btn-item" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                        <a class="shopeers-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                             Previous
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="page-btn-item disabled">Previous</span>
+                        <span class="shopeers-page-pill disabled">Previous</span>
                     </li>
                     {% endif %}
 
@@ -1205,11 +1161,11 @@
                         {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
                             {% if p == page_obj.number %}
                             <li>
-                                <span class="page-btn-item active">{{ p }}</span>
+                                <span class="shopeers-page-pill active">{{ p }}</span>
                             </li>
                             {% else %}
                             <li>
-                                <a class="page-btn-item" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
+                                <a class="shopeers-page-pill" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
                             </li>
                             {% endif %}
                         {% endif %}
@@ -1217,18 +1173,18 @@
 
                     {% if page_obj.has_next %}
                     <li>
-                        <a class="page-btn-item" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                        <a class="shopeers-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
                             Next
                         </a>
                     </li>
                     <li>
-                        <a class="page-btn-item" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
+                        <a class="shopeers-page-pill" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
                             <i class="bi bi-chevron-double-right"></i>
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="page-btn-item disabled">Next</span>
+                        <span class="shopeers-page-pill disabled">Next</span>
                     </li>
                     {% endif %}
                 </ul>
@@ -1339,7 +1295,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (newStatus && newStatus.toLowerCase() === 'declined') {
                 const tr = btn.closest('tr');
-                const title = tr ? (tr.querySelector('.product-id-link')?.textContent || `Product #${id}`) : `Product #${id}`;
+                const title = tr ? (tr.querySelector('.shopeers-id-badge')?.textContent || `Product #${id}`) : `Product #${id}`;
                 if (typeof window.openRejectionModal === 'function') {
                     window.openRejectionModal({
                         id: id,
@@ -1353,7 +1309,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
                 const tr = btn.closest('tr');
-                const title = tr ? (tr.querySelector('.product-id-link')?.textContent || `Product #${id}`) : `Product #${id}`;
+                const title = tr ? (tr.querySelector('.shopeers-id-badge')?.textContent || `Product #${id}`) : `Product #${id}`;
                 if (typeof window.openCorrectionModal === 'function') {
                     window.openCorrectionModal({
                         id: id,

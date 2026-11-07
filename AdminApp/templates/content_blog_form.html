@@ -203,7 +203,7 @@
                 <!-- Excerpt Card -->
                 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
                     <h6 class="fw-bold text-dark mb-3"><i class="bi bi-text-paragraph text-primary me-2"></i>Short Excerpt / Summary</h6>
-                    <textarea class="form-control" id="blogExcerptInput" name="excerpt" rows="3" placeholder="Write a brief teaser summary for blog cards and search engines...">{{ blog.excerpt|default:'' }}</textarea>
+                    <textarea class="form-control" id="blogExcerptInput" name="excerpt" rows="3" placeholder="Write a brief teaser summary for blog cards and search engines...">{% if blog %}{{ blog.excerpt|default:'' }}{% endif %}</textarea>
                 </div>
 
                 <!-- Rich Text Article Content Card -->

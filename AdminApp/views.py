@@ -1356,7 +1356,7 @@ def content_blog_editor_view(request, blog_id=None):
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
-        "blog": blog,
+        "blog": blog or BlogPost(),
         "is_edit": blog.id is not None if blog else False,
     }
     return render(request, "content_blog_form.html", context)
