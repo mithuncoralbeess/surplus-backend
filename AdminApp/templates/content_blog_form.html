@@ -7,6 +7,79 @@
 <!-- Quill CSS -->
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <style>
+    /* Shopeers Theme Variables */
+    :root {
+        --shopeers-bg: #f5f6fa;
+        --shopeers-card: #ffffff;
+        --shopeers-text-dark: #111827;
+        --shopeers-text-sub: #6b7280;
+        --shopeers-border: #f1f3f7;
+        --shopeers-primary: #0a5c48;
+        --shopeers-primary-hover: #084c3b;
+        --shopeers-primary-light: #e8f5f1;
+        --shopeers-radius-lg: 20px;
+        --shopeers-radius-pill: 9999px;
+    }
+
+    .btn-shopeers-primary {
+        background: var(--shopeers-primary) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.55rem 1.4rem !important;
+        font-weight: 600 !important;
+        font-size: 0.85rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-shopeers-primary:hover {
+        background: var(--shopeers-primary-hover) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+    }
+
+    .btn-shopeers-outline {
+        background: #ffffff !important;
+        color: var(--shopeers-text-dark) !important;
+        border: 1px solid var(--shopeers-border) !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.5rem 1.15rem !important;
+        font-weight: 600 !important;
+        font-size: 0.82rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+
+    .btn-shopeers-outline:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: var(--shopeers-text-dark) !important;
+    }
+
+    .breadcrumb-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        padding: 0.3rem 0.85rem;
+        border-radius: var(--shopeers-radius-pill);
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--shopeers-text-sub);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        margin-bottom: 0.4rem;
+    }
+
     /* Ensure ancestor layout elements never disable position: sticky */
     html, body {
         overflow-x: clip !important;
@@ -123,24 +196,23 @@
 </style>
 
 <div class="container-fluid py-2">
-    <!-- Custom Breadcrumb Navigation -->
-    <nav class="custom-breadcrumb" aria-label="breadcrumb">
-        <ol class="breadcrumb-list">
-            <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-            <li class="breadcrumb-item"><span>Content Manager</span></li>
-            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-            <li class="breadcrumb-item"><a href="/admin/content/blogs/">Blogs</a></li>
-            <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-            <li class="breadcrumb-item active" aria-current="page"><span>{% if is_edit %}Edit Blog{% else %}Create Blog{% endif %}</span></li>
-        </ol>
-    </nav>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-pill">
+        <i class="bi bi-house-door-fill text-muted"></i>
+        <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
+        <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+        <span class="text-secondary">Content Manager</span>
+        <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+        <a href="/admin/content/blogs/" class="text-decoration-none text-secondary">Blogs</a>
+        <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+        <span class="text-dark">{% if is_edit %}Edit Blog{% else %}Create Blog{% endif %}</span>
+    </div>
 
     <!-- Page Header Bar -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
         <div>
-            <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-journal-text text-primary"></i>
+            <h3 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif;">
+                <i class="bi bi-journal-text" style="color: var(--shopeers-primary);"></i>
                 {% if is_edit %}Edit Blog Post{% else %}Create New Blog Post{% endif %}
                 {% if is_edit %}
                     {% if blog.status == 'published' %}
@@ -149,16 +221,17 @@
                     <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 fs-6">Draft</span>
                     {% endif %}
                 {% endif %}
-            </h4>
+            </h3>
             <p class="text-muted small mb-0">Write articles, format rich content, and set SEO metadata</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/content/blogs/" class="btn btn-outline-secondary rounded-3 px-3 py-2 fw-semibold shadow-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Blogs
+            <a href="/admin/content/blogs/" class="btn-shopeers-outline">
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Blogs</span>
             </a>
-            <button type="submit" form="blogEditorForm" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold shadow-sm" id="saveBlogBtn">
-                <i class="bi bi-check2-circle me-1"></i>
-                {% if is_edit %}Save Changes{% else %}Publish Blog{% endif %}
+            <button type="submit" form="blogEditorForm" class="btn-shopeers-primary" id="saveBlogBtn">
+                <i class="bi bi-check2-circle"></i>
+                <span>{% if is_edit %}Save Changes{% else %}Publish Blog{% endif %}</span>
             </button>
         </div>
     </div>

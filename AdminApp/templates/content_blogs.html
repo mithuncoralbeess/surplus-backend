@@ -5,417 +5,742 @@
 
 {% block content %}
 <style>
-    /* Scoped UI Enhancement Styles for Blogs Management */
-    .blog-stat-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .blog-stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.08) !important;
-    }
-    
-    .blog-table-container {
-        border-radius: 1rem;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        border: 1px solid #e2e8f0;
-        width: 100%;
-        max-width: 100%;
-    }
-    .blog-table {
-        width: 100%;
-        min-width: 860px;
-    }
-    .blog-table thead th {
-        background-color: #f8fafc;
-        color: #334155;
-        font-weight: 700;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        padding: 0.9rem 1rem;
-        border-bottom: 1px solid #cbd5e1;
-    }
-    .blog-table tbody tr {
-        transition: background-color 0.15s ease;
-    }
-    .blog-table tbody tr:hover {
-        background-color: #f8fafc !important;
-    }
-    .blog-table td {
-        padding: 0.9rem 1rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    
-    /* Code Badge with High Contrast for Light Mode */
-    .blog-code-badge {
-        background-color: #e2e8f0 !important;
-        color: #0f172a !important;
-        border: 1px solid #cbd5e1 !important;
-        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.375rem;
-        display: inline-block;
-        line-height: 1.2;
-    }
+/* ==========================================================================
+   SHOPEERS-INSPIRED CLEAN MODERN BLOGS MANAGEMENT
+   ========================================================================== */
 
-    /* Thumbnail Styling */
-    .blog-thumb {
-        width: 52px;
-        height: 52px;
-        object-fit: cover;
-        border-radius: 0.6rem;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        background-color: #f1f5f9;
-        flex-shrink: 0;
-    }
-    .blog-thumb-placeholder {
-        width: 52px;
-        height: 52px;
-        border-radius: 0.6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.1rem;
-        color: #ffffff;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-        flex-shrink: 0;
-    }
-    
-    /* Author Avatar Circle */
-    .author-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background-color: #cbd5e1;
-        color: #0f172a;
-        font-weight: 700;
-        font-size: 0.78rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-    }
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-border-subtle: #edf0f5;
+    --shopeers-primary: #0a5c48;
+    --shopeers-primary-hover: #084c3b;
+    --shopeers-primary-light: #e8f5f1;
+    --shopeers-radius-lg: 20px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+}
 
-    /* Category Badge Colors with High Contrast */
-    .badge-cat-inventory { background-color: #e0e7ff !important; color: #3730a3 !important; border: 1px solid #c7d2fe !important; }
-    .badge-cat-general { background-color: #e0f2fe !important; color: #075985 !important; border: 1px solid #bae6fd !important; }
-    .badge-cat-tech { background-color: #f3e8ff !important; color: #581c87 !important; border: 1px solid #e9d5ff !important; }
-    .badge-cat-supplies { background-color: #fef3c7 !important; color: #78350f !important; border: 1px solid #fde68a !important; }
-    .badge-cat-default { background-color: #f1f5f9 !important; color: #334155 !important; border: 1px solid #cbd5e1 !important; }
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-border-subtle: #1e293b;
+    --shopeers-primary: #0ea27e;
+    --shopeers-primary-hover: #0a5c48;
+    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+}
 
-    /* Action Buttons */
-    .btn-action-icon {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.5rem;
-        transition: all 0.15s ease;
-    }
-    .btn-action-icon:hover {
-        transform: scale(1.06);
-    }
+.shopeers-viewport {
+    background: transparent;
+    padding-bottom: 2.5rem;
+}
+
+/* Header & Breadcrumb */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    padding: 0.3rem 0.85rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    margin-bottom: 0.4rem;
+}
+
+.page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.page-count-badge {
+    background: var(--shopeers-primary-light);
+    color: var(--shopeers-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--shopeers-radius-pill);
+    letter-spacing: 0;
+}
+
+.page-subtitle {
+    font-size: 0.86rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.25rem 0 0 0;
+}
+
+/* Primary Button (#0a5c48) */
+.btn-shopeers-primary {
+    background: var(--shopeers-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.55rem 1.35rem !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-primary-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+}
+
+.btn-shopeers-outline {
+    background: #ffffff !important;
+    color: var(--shopeers-text-dark) !important;
+    border: 1px solid var(--shopeers-border) !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.5rem 1.15rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-shopeers-outline:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: var(--shopeers-text-dark) !important;
+}
+
+/* Top KPI Stat Metric Cards (Static Display Cards) */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.3rem 1.4rem;
+    box-shadow: var(--shopeers-shadow);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: default;
+    user-select: none;
+}
+
+.shopeers-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.shopeers-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald { background: #ecfdf5; color: #0a5c48; }
+.icon-cyan    { background: #ecfeff; color: #0891b2; }
+.icon-amber   { background: #fffbeb; color: #d97706; }
+.icon-violet  { background: #f5f3ff; color: #7c3aed; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.55rem 0 0 0;
+}
+
+.shopeers-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.45rem;
+    width: fit-content;
+}
+
+.pill-emerald { background: #ecfdf5; color: #0a5c48; }
+.pill-amber   { background: #fffbeb; color: #d97706; }
+.pill-cyan    { background: #ecfeff; color: #0891b2; }
+.pill-violet  { background: #f5f3ff; color: #7c3aed; }
+
+/* Main Card Container */
+.shopeers-content-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.4rem;
+}
+
+/* Filter & Search Toolbar */
+.toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--shopeers-border);
+}
+
+.search-capsule {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+}
+
+.search-capsule i.bi-search {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--shopeers-text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.search-capsule input {
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.52rem 1rem 0.52rem 2.45rem;
+    font-size: 0.84rem;
+    width: 100%;
+    color: var(--shopeers-text-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.search-capsule input:focus {
+    border-color: var(--shopeers-primary);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+    outline: none;
+}
+
+.filter-select {
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.48rem 1rem 0.48rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--shopeers-text-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    border-color: var(--shopeers-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+}
+
+/* Shopeers Table Styling */
+.shopeers-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.shopeers-table thead th {
+    font-size: 0.70rem;
+    font-weight: 700;
+    color: var(--shopeers-text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--shopeers-border);
+    background: transparent;
+    white-space: nowrap;
+}
+
+.shopeers-table tbody td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--shopeers-border-subtle);
+    vertical-align: middle;
+    font-size: 0.86rem;
+    background: transparent;
+}
+
+.shopeers-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.shopeers-table tbody tr:hover td {
+    background: #fafbfc;
+}
+
+/* Blog Thumbnail */
+.blog-thumb-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--shopeers-border);
+    background-color: #f1f5f9;
+    flex-shrink: 0;
+}
+
+.blog-thumb-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Badges */
+.blog-code-pill {
+    background: #f1f5f9;
+    color: #475569;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--shopeers-radius-pill);
+}
+
+.blog-cat-pill {
+    background: #f8fafc;
+    color: var(--shopeers-text-sub);
+    border: 1px solid var(--shopeers-border-subtle);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.status-pill-published {
+    background: #ecfdf5;
+    color: #0a5c48;
+    border: 1px solid #d1fae5;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.status-pill-draft {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.author-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--shopeers-radius-pill);
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+}
+
+/* Action Icons */
+.action-btn-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--shopeers-border);
+    background: #ffffff;
+    color: var(--shopeers-text-sub);
+    font-size: 0.85rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.action-btn-circle:hover {
+    background: #f8fafc;
+    color: var(--shopeers-primary);
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.action-btn-circle.danger:hover {
+    color: #dc2626;
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+/* Pagination */
+.pagination .page-link {
+    border: 1px solid var(--shopeers-border);
+    color: var(--shopeers-text-dark);
+    font-size: 0.80rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--shopeers-primary);
+    border-color: var(--shopeers-primary);
+    color: #ffffff;
+}
 </style>
 
-<div class="container-fluid py-2">
-    <!-- Breadcrumb & Header Container -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+<div class="container-fluid shopeers-viewport pt-3">
+    <!-- Header -->
+    <div class="shopeers-header">
         <div>
-            <nav class="custom-breadcrumb mb-2" aria-label="breadcrumb">
-                <ol class="breadcrumb-list">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item"><span>Content Manager</span></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item active" aria-current="page"><span>Blogs</span></li>
-                </ol>
-            </nav>
-            <div class="d-flex align-items-center gap-3">
-                <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-2.5 d-flex align-items-center justify-content-center">
-                    <i class="bi bi-journal-richtext fs-3"></i>
-                </div>
-                <div>
-                    <h1 class="header-title">Blogs Management</h1>
-                    <p class="header-subtitle">Publish, edit, and organize article blogs, insights, and SEO content</p>
-                </div>
+            <div class="breadcrumb-pill">
+                <i class="bi bi-house-door-fill text-muted"></i>
+                <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+                <span class="text-secondary">Content Manager</span>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+                <span class="text-dark">Blogs</span>
             </div>
+            <h1 class="page-title">
+                <span>Blogs Management</span>
+                <span class="page-count-badge">{{ stats.total_blogs|default:"0" }} Articles</span>
+            </h1>
+            <p class="page-subtitle">Publish, edit, and organize article blogs, insights, and SEO content</p>
         </div>
-        <div>
-            <a href="/admin/content/blogs/create/" class="btn btn-primary rounded-3 px-4 py-2.5 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
-                <i class="bi bi-plus-lg fs-6"></i>
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/content/blogs/create/" class="btn-shopeers-primary">
+                <i class="bi bi-plus-lg"></i>
                 <span>Create New Blog</span>
             </a>
         </div>
     </div>
 
-    <!-- KPI Metric Cards -->
+    <!-- Top 4 KPI Stat Metric Cards (Static Display Cards) -->
     <div class="row g-3 mb-4">
+        <!-- Total Blogs -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 blog-stat-card">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Blogs</span>
-                        <h3 class="fw-bold mb-0 text-dark">{{ stats.total_blogs|default:"0" }}</h3>
+                    <span class="shopeers-kpi-label">TOTAL BLOGS</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-journal-richtext"></i>
                     </div>
-                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-journal-text fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.total_blogs|default:"0" }}</h2>
+                    <span class="shopeers-kpi-pill pill-emerald">
+                        <i class="bi bi-check2-circle"></i> Catalog Articles
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Published -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 blog-stat-card">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Published</span>
-                        <h3 class="fw-bold mb-0 text-success">{{ stats.published_blogs|default:"0" }}</h3>
+                    <span class="shopeers-kpi-label">PUBLISHED ARTICLES</span>
+                    <div class="shopeers-kpi-icon icon-cyan">
+                        <i class="bi bi-broadcast"></i>
                     </div>
-                    <div class="rounded-circle bg-success bg-opacity-10 text-success p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-check-circle fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.published_blogs|default:"0" }}</h2>
+                    <span class="shopeers-kpi-pill pill-cyan">
+                        <i class="bi bi-eye"></i> Live On Marketplace
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Drafts -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 blog-stat-card">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Drafts</span>
-                        <h3 class="fw-bold mb-0 text-warning">{{ stats.draft_blogs|default:"0" }}</h3>
+                    <span class="shopeers-kpi-label">DRAFTS &amp; REVIEW</span>
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-pencil-square"></i>
                     </div>
-                    <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-pencil-square fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.draft_blogs|default:"0" }}</h2>
+                    <span class="shopeers-kpi-pill pill-amber">
+                        <i class="bi bi-clock-history"></i> In Progress
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Total Reads -->
         <div class="col-xl-3 col-sm-6">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 blog-stat-card">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Total Views / Reads</span>
-                        <h3 class="fw-bold mb-0 text-info">{{ stats.total_reads|default:"0" }}</h3>
+                    <span class="shopeers-kpi-label">TOTAL VIEWS / READS</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-graph-up"></i>
                     </div>
-                    <div class="rounded-circle bg-info bg-opacity-10 text-info p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-eye fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.total_reads|default:"0" }}</h2>
+                    <span class="shopeers-kpi-pill pill-violet">
+                        <i class="bi bi-people"></i> Reader Engagement
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Table Card with Search & Filters -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white">
-        <div class="card-body p-4">
-            <!-- Toolbar Row -->
-            <form method="GET" action="/admin/content/blogs/" class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
-                <div class="flex-grow-1" style="max-width: 480px; min-width: 220px;">
-                    <div class="input-group">
-                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0 ps-0" placeholder="Search by blog title, code, author...">
-                        <button class="btn btn-primary px-3 fw-semibold" type="submit">Search</button>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 align-items-center flex-wrap">
-                    <!-- Status Filter -->
-                    <div class="input-group input-group-sm" style="width: auto;">
-                        <span class="input-group-text bg-light text-muted small"><i class="bi bi-funnel me-1"></i> Status</span>
-                        <select name="status" class="form-select form-select-sm text-dark fw-medium" onchange="this.form.submit()">
-                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-                            <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
-                            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
-                        </select>
-                    </div>
-
-                    <!-- Category Filter -->
-                    <div class="input-group input-group-sm" style="width: auto;">
-                        <span class="input-group-text bg-light text-muted small"><i class="bi bi-folder me-1"></i> Category</span>
-                        <select name="category" class="form-select form-select-sm text-dark fw-medium" onchange="this.form.submit()">
-                            <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
-                            {% for cat in categories_list %}
-                            <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    {% if search_query or status_filter != 'all' or category_filter != 'all' %}
-                    <a href="/admin/content/blogs/" class="btn btn-sm btn-outline-secondary rounded-3 px-3">
-                        <i class="bi bi-x-circle me-1"></i> Reset
-                    </a>
-                    {% endif %}
-                </div>
-            </form>
-
-            <!-- Table Responsive View -->
-            <div class="table-responsive blog-table-container">
-                <table class="table blog-table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col" style="min-width: 260px;">Blog Article & Info</th>
-                            <th scope="col" style="min-width: 110px;">Category</th>
-                            <th scope="col" style="min-width: 80px;">Author</th>
-                            <th scope="col" style="min-width: 100px;">Status</th>
-                            <th scope="col" style="min-width: 105px;">Date</th>
-                            <th scope="col" class="text-end" style="min-width: 90px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for blog in blogs %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    {% if blog.featured_image_url %}
-                                    <img src="{{ blog.featured_image_url }}" class="blog-thumb" alt="Blog cover" onerror="this.onerror=null; this.outerHTML='<div class=\'blog-thumb-placeholder\'>{{ blog.title|slice:':1'|upper }}</div>';">
-                                    {% elif blog.image %}
-                                    <img src="{{ blog.image.url }}" class="blog-thumb" alt="Blog cover" onerror="this.onerror=null; this.outerHTML='<div class=\'blog-thumb-placeholder\'>{{ blog.title|slice:':1'|upper }}</div>';">
-                                    {% else %}
-                                    <div class="blog-thumb-placeholder">
-                                        {{ blog.title|slice:":1"|upper }}
-                                    </div>
-                                    {% endif %}
-                                    <div style="min-width: 0;">
-                                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 320px;" title="{{ blog.title }}">
-                                            <a href="/admin/content/blogs/{{ blog.id }}/edit/" class="text-dark text-decoration-none hover-primary">{{ blog.title }}</a>
-                                        </h6>
-                                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="blog-code-badge">#{{ blog.blog_code|default:blog.slug }}</span>
-                                            <span class="text-secondary small text-truncate" style="max-width: 200px; font-size: 0.82rem;" title="/blog/{{ blog.slug }}/">/blog/{{ blog.slug }}/</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                {% if blog.category_name|lower == "inventory" %}
-                                <span class="badge badge-cat-inventory rounded-pill px-3 py-1 fw-semibold small">{{ blog.category_name }}</span>
-                                {% elif blog.category_name|lower == "general" %}
-                                <span class="badge badge-cat-general rounded-pill px-3 py-1 fw-semibold small">{{ blog.category_name }}</span>
-                                {% elif blog.category_name|lower == "tech" or blog.category_name|lower == "technology" %}
-                                <span class="badge badge-cat-tech rounded-pill px-3 py-1 fw-semibold small">{{ blog.category_name }}</span>
-                                {% elif blog.category_name|lower == "supplies" %}
-                                <span class="badge badge-cat-supplies rounded-pill px-3 py-1 fw-semibold small">{{ blog.category_name }}</span>
-                                {% else %}
-                                <span class="badge badge-cat-default rounded-pill px-3 py-1 fw-semibold small">{{ blog.category_name|default:"General" }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center" title="{{ blog.author|default:'Admin' }}">
-                                    <span class="author-avatar" title="{{ blog.author|default:'Admin' }}">{{ blog.author|default:'A'|slice:":1" }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                {% if blog.status == "published" %}
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 small fw-semibold d-inline-flex align-items-center gap-1">
-                                    <span class="rounded-circle bg-success d-inline-block" style="width: 6px; height: 6px;"></span> Published
-                                </span>
-                                {% else %}
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1 small fw-semibold d-inline-flex align-items-center gap-1">
-                                    <span class="rounded-circle bg-warning d-inline-block" style="width: 6px; height: 6px;"></span> Draft
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="small text-secondary fw-medium">{{ blog.created_at|date:"M d, Y" }}</span>
-                            </td>
-                            <td class="text-end">
-                                <div class="d-inline-flex align-items-center gap-1">
-                                    <a href="/admin/content/blogs/{{ blog.id }}/edit/" class="btn btn-action-icon btn-light text-primary border" title="Edit Blog">
-                                        <i class="bi bi-pencil-fill fs-6"></i>
-                                    </a>
-                                    <button class="btn btn-action-icon btn-light text-danger border delete-blog-btn" data-id="{{ blog.id }}" data-title="{{ blog.title }}" title="Delete Blog">
-                                        <i class="bi bi-trash3-fill fs-6"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <div class="py-4">
-                                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center p-4 mb-3">
-                                        <i class="bi bi-journal-x fs-1 text-muted"></i>
-                                    </div>
-                                    <h5 class="fw-bold text-dark mb-1">No Blog Posts Found</h5>
-                                    <p class="text-muted small mb-3">No matching articles found. Try adjusting your search query or filters.</p>
-                                    <a href="/admin/content/blogs/create/" class="btn btn-primary rounded-3 px-4 py-2">Create New Blog</a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="shopeers-content-card">
+        
+        <!-- Toolbar Row -->
+        <form method="GET" action="/admin/content/blogs/" class="toolbar-row">
+            <!-- Search Capsule -->
+            <div class="search-capsule">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search by title, code, author...">
             </div>
 
-            <!-- Pagination Footer -->
-            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-2 gap-3">
-                <div class="text-secondary small">
-                    Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
-                    <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
-                    <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0 }}</span> blogs
-                </div>
-                {% if page_obj.has_other_pages %}
-                <nav aria-label="Page navigation">
-                    <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}" title="First Page">
-                                <i class="bi bi-chevron-double-left"></i>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">
-                                Previous
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
-                        </li>
-                        {% endif %}
+            <!-- Filter Controls -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Status Filter -->
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+                    <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                </select>
 
-                        {% for p in page_obj.paginator.page_range %}
-                            {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
-                                {% if p == page_obj.number %}
-                                <li class="page-item active">
-                                    <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
-                                </li>
-                                {% else %}
-                                <li class="page-item">
-                                    <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">{{ p }}</a>
-                                </li>
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
+                <!-- Category Filter -->
+                <select name="category" class="filter-select" onchange="this.form.submit()">
+                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                    {% for cat in categories_list %}
+                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
 
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">
-                                Next
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}" title="Last Page">
-                                <i class="bi bi-chevron-double-right"></i>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                {% if search_query or status_filter != 'all' or category_filter != 'all' %}
+                <a href="/admin/content/blogs/" class="btn-shopeers-outline">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Reset</span>
+                </a>
                 {% endif %}
             </div>
+        </form>
+
+        <!-- Table Responsive View -->
+        <div class="table-responsive">
+            <table class="shopeers-table">
+                <thead>
+                    <tr>
+                        <th style="min-width: 280px;">BLOG ARTICLE &amp; INFO</th>
+                        <th style="min-width: 130px;">CATEGORY</th>
+                        <th style="min-width: 100px;">AUTHOR</th>
+                        <th style="min-width: 110px;">STATUS</th>
+                        <th style="min-width: 110px;">DATE</th>
+                        <th class="text-end" style="min-width: 90px;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for blog in blogs %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2.5">
+                                {% if blog.featured_image_url %}
+                                <img src="{{ blog.featured_image_url }}" class="blog-thumb-img" alt="Blog cover" onerror="this.onerror=null; this.outerHTML='<div class=\'blog-thumb-placeholder\'>{{ blog.title|slice:':1'|upper }}</div>';">
+                                {% elif blog.image %}
+                                <img src="{{ blog.image.url }}" class="blog-thumb-img" alt="Blog cover" onerror="this.onerror=null; this.outerHTML='<div class=\'blog-thumb-placeholder\'>{{ blog.title|slice:':1'|upper }}</div>';">
+                                {% else %}
+                                <div class="blog-thumb-placeholder">
+                                    {{ blog.title|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <div style="min-width: 0;">
+                                    <a href="/admin/content/blogs/{{ blog.id }}/edit/" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 320px;" title="{{ blog.title }}">
+                                        {{ blog.title }}
+                                    </a>
+                                    <div class="d-flex align-items-center gap-1.5 mt-0.5 flex-wrap">
+                                        <span class="blog-code-pill">#{{ blog.blog_code|default:blog.slug }}</span>
+                                        <span class="text-muted small text-truncate" style="max-width: 190px; font-size: 0.76rem;" title="/blog/{{ blog.slug }}/">/blog/{{ blog.slug }}/</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="blog-cat-pill">
+                                <i class="bi bi-tag-fill text-muted" style="font-size: 0.65rem;"></i>
+                                {{ blog.category_name|default:"General" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1.5" title="{{ blog.author|default:'Admin' }}">
+                                <span class="author-circle">{{ blog.author|default:'A'|slice:":1" }}</span>
+                                <span class="text-secondary small fw-medium text-truncate" style="max-width: 90px;">{{ blog.author|default:"Admin" }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if blog.status == "published" %}
+                            <span class="status-pill-published">
+                                <i class="bi bi-check-circle-fill"></i> Published
+                            </span>
+                            {% else %}
+                            <span class="status-pill-draft">
+                                <i class="bi bi-dash-circle"></i> Draft
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="small text-secondary fw-medium">{{ blog.created_at|date:"M d, Y" }}</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex align-items-center gap-1.5">
+                                <a href="/admin/content/blogs/{{ blog.id }}/edit/" class="action-btn-circle" title="Edit Blog">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                                <button type="button" class="action-btn-circle danger delete-blog-btn" data-id="{{ blog.id }}" data-title="{{ blog.title }}" title="Delete Blog">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-x fs-2 d-block mb-2 text-secondary"></i>
+                            <h6 class="fw-bold text-dark mb-1">No Blog Posts Found</h6>
+                            <p class="text-muted small mb-3">No matching articles found. Try adjusting your search query or filters.</p>
+                            <a href="/admin/content/blogs/create/" class="btn-shopeers-primary">Create New Blog</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination Footer -->
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-4 mt-2 gap-3 border-top">
+            <div class="text-secondary small">
+                Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0 }}</span> blogs
+            </div>
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}" title="First Page">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in page_obj.paginator.page_range %}
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                            {% if p == page_obj.number %}
+                            <li class="page-item active">
+                                <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">{{ p }}</a>
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if category_filter != 'all' %}&category={{ category_filter }}{% endif %}" title="Last Page">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -452,4 +777,3 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 {% endblock %}
-
