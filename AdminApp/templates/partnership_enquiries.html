@@ -5,266 +5,476 @@
 
 {% block content %}
 <style>
-    /* Custom Design System & Glassmorphism Utilities */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .glass-card:hover {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
+/* ==========================================================================
+   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC - PARTNERSHIP ENQUIRIES
+   ========================================================================== */
 
-    .stat-card-gradient-1 { background: linear-gradient(135deg, #ffffff 0%, #f4f4ff 100%); }
-    .stat-card-gradient-2 { background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); }
-    .stat-card-gradient-3 { background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); }
-    .stat-card-gradient-4 { background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); }
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
 
-    /* Pill Badges */
-    .badge-glass-location {
-        background: rgba(239, 68, 68, 0.08);
-        color: #dc2626;
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        font-weight: 600;
-        font-size: 0.76rem;
-        padding: 5px 12px;
-        border-radius: 50px;
-        letter-spacing: 0.3px;
-        text-transform: uppercase;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-blue: #0ea27e;
+    --shopeers-blue-hover: #0a5c48;
+    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
 
-    .badge-glass-interest {
-        background: rgba(99, 102, 241, 0.09);
-        color: #4f46e5;
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        font-weight: 600;
-        font-size: 0.78rem;
-        padding: 5px 12px;
-        border-radius: 50px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
+.shopeers-viewport {
+    background: transparent;
+    padding-bottom: 2rem;
+}
 
-    /* Table & Row Hover */
-    .table-modern {
-        border-collapse: separate;
-        border-spacing: 0 8px;
-    }
-    .table-modern tbody tr {
-        background: #ffffff;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-        border-radius: 12px;
-        transition: all 0.2s ease;
-    }
-    .table-modern tbody tr:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
-        background-color: #fafbfc !important;
-    }
-    .table-modern td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-    .table-modern td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+/* Header & Breadcrumb */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
 
-    /* Interactive Status Selector Pill */
-    .status-select-btn {
-        border-radius: 50px;
-        padding: 5px 14px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        border: 1px solid transparent;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s ease;
-    }
-    .status-pending { background-color: #fef3c7; color: #b45309; border-color: #fde68a; }
-    .status-reviewed { background-color: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
-    .status-contacted { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-    
-    .status-select-btn:hover {
-        transform: scale(1.04);
-        filter: brightness(0.97);
-    }
+.shopeers-breadcrumb-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--shopeers-text-muted);
+    margin-bottom: 0.35rem;
+}
 
-    /* Filter Nav Tabs */
-    .nav-tabs-glass {
-        border-bottom: none;
-        gap: 8px;
-    }
-    .nav-tabs-glass .nav-link {
-        border: 1px solid #e2e8f0;
-        border-radius: 50px;
-        color: #64748b;
-        font-weight: 500;
-        font-size: 0.85rem;
-        padding: 7px 18px;
-        background: #ffffff;
-        transition: all 0.2s ease;
-    }
-    .nav-tabs-glass .nav-link:hover {
-        border-color: #cbd5e1;
-        color: #1e293b;
-        background: #f8fafc;
-    }
-    .nav-tabs-glass .nav-link.active {
-        background: #4f46e5;
-        color: #ffffff;
-        border-color: #4f46e5;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-    }
+.shopeers-breadcrumb-nav a {
+    color: var(--shopeers-text-sub);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
 
-    /* Action Buttons */
-    .action-icon-btn {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #475569;
-        transition: all 0.18s ease;
-    }
-    .action-icon-btn:hover {
-        background: #f1f5f9;
-        color: #1e293b;
-        transform: translateY(-1px);
-    }
-    .action-icon-btn.btn-view:hover { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
-    .action-icon-btn.btn-mail:hover { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-    .action-icon-btn.btn-delete:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+.shopeers-breadcrumb-nav a:hover {
+    color: var(--shopeers-blue);
+}
 
-    /* Table Container & Minimum Height */
-    .table-container-card {
-        min-height: 560px;
-        display: flex;
-        flex-direction: column;
-    }
+.shopeers-page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
 
-    .table-responsive-custom {
-        min-height: 450px;
-        overflow-x: auto;
-        overflow-y: visible !important;
-    }
+.shopeers-page-subtitle {
+    font-size: 0.85rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.2rem 0 0 0;
+}
 
-    /* Table row padding & height */
-    .table-modern tbody tr td {
-        padding-top: 18px !important;
-        padding-bottom: 18px !important;
-        position: relative;
-    }
+/* Static Display KPI Cards */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    text-decoration: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: default;
+}
 
-    .table-modern .dropdown-menu {
-        z-index: 1050 !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
-    }
+.shopeers-kpi-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.2px;
+}
 
-    /* Custom Toast */
-    #statusToast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 9999;
-        display: none;
-    }
+.shopeers-kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald { background: #ecfdf5; color: #0a5c48; }
+.icon-amber { background: #fffbeb; color: #f59e0b; }
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-violet { background: #f5f3ff; color: #8b5cf6; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.45rem 0 0 0;
+}
+
+.shopeers-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.70rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.4rem;
+    width: fit-content;
+}
+
+.trend-all { background: #f1f5f9; color: #475569; }
+.trend-pending { background: #fffbeb; color: #b45309; }
+.trend-reviewed { background: #eff6ff; color: #1d4ed8; }
+.trend-contacted { background: #ecfdf5; color: #047857; }
+
+/* Main Card Container */
+.shopeers-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Segmented Filter Pills */
+.nav-pills-segmented {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    gap: 2px;
+    border: none;
+}
+
+.nav-pills-segmented .nav-link {
+    border: none;
+    background: transparent;
+    color: var(--shopeers-text-sub);
+    font-size: 0.80rem;
+    font-weight: 600;
+    padding: 0.4rem 1.1rem;
+    border-radius: var(--shopeers-radius-pill);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-pills-segmented .nav-link:hover {
+    color: var(--shopeers-text-dark);
+}
+
+.nav-pills-segmented .nav-link.active {
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+}
+
+/* Search Capsule */
+.search-capsule {
+    position: relative;
+    width: 280px;
+}
+
+.search-capsule i.bi-search {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--shopeers-text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.search-capsule input {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.55rem 1rem 0.55rem 2.45rem;
+    font-size: 0.85rem;
+    width: 100%;
+    color: var(--shopeers-text-dark);
+    transition: all 0.2s ease;
+}
+
+.search-capsule input:focus {
+    background: #ffffff;
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+    outline: none;
+}
+
+/* Shopeers Clean Table */
+.shopeers-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.shopeers-table thead th {
+    background: transparent;
+    color: var(--shopeers-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f3f7;
+    white-space: nowrap;
+}
+
+.shopeers-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.shopeers-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.shopeers-table tbody td {
+    padding: 1.1rem 1rem;
+    border-bottom: 1px solid #f5f6fa;
+    vertical-align: middle;
+}
+
+/* Micro Badges */
+.badge-glass-location {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-glass-interest {
+    background: #f5f3ff;
+    color: #6d28d9;
+    border: 1px solid #ddd6fe;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Interactive Status Selector Pill */
+.status-select-btn {
+    border-radius: var(--shopeers-radius-pill);
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+}
+
+.status-pending { background-color: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-reviewed { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.status-contacted { background-color: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+
+.status-select-btn:hover {
+    transform: scale(1.02);
+    filter: brightness(0.97);
+}
+
+/* Action Icons */
+.action-icon-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.action-icon-pill:hover {
+    background: #f8fafc;
+    color: var(--shopeers-blue);
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.action-icon-pill.btn-mail:hover { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.action-icon-pill.btn-delete:hover { background: #fff1f2; color: #e11d48; border-color: #fecdd3; }
+
+/* Primary Button */
+.btn-shopeers-primary {
+    background: var(--shopeers-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.5rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-blue-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+/* Toast */
+#statusToast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: none;
+}
 </style>
 
-<div class="container-fluid px-4 py-4">
-    <!-- Breadcrumb & Header -->
-    <div class="page-header-container mb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center">
-            <div>
-                <nav class="custom-breadcrumb" aria-label="breadcrumb">
-                    <ol class="breadcrumb-list">
-                        <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                        <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                        <li class="breadcrumb-item"><span>General Enquiries</span></li>
-                        <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                        <li class="breadcrumb-item active" aria-current="page"><span>Partnership Enquiries</span></li>
-                    </ol>
-                </nav>
-                <h1 class="header-title">Partnership Enquiries</h1>
-                <p class="header-subtitle">Review, manage, and track strategic business proposals & vendor collaborations</p>
+<div class="container-fluid shopeers-viewport px-3 px-md-4 pt-3">
+    <!-- Header & Breadcrumbs -->
+    <div class="shopeers-header">
+        <div>
+            <div class="shopeers-breadcrumb-nav">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a>
+                <span>/</span>
+                <span>General Enquiries</span>
+                <span>/</span>
+                <span class="text-dark fw-semibold">Partnership Enquiries</span>
             </div>
-            <div class="mt-3 mt-md-0">
-                <button class="btn btn-outline-secondary btn-sm px-3 rounded-pill d-inline-flex align-items-center gap-1.5" onclick="window.location.reload();">
-                    <i class="bi bi-arrow-clockwise"></i> Refresh
-                </button>
-            </div>
+            <h1 class="shopeers-page-title">Partnership Enquiries</h1>
+            <p class="shopeers-page-subtitle">Review, manage, and track strategic business proposals & vendor collaborations</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5" onclick="window.location.reload();" style="font-size: 0.82rem;">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <!-- KPI Metric Cards -->
+    <!-- 4 Static KPI Stat Cards -->
     <div class="row g-3 mb-4">
+        <!-- Total Proposals -->
         <div class="col-xl-3 col-sm-6">
-            <div class="glass-card stat-card-gradient-1 p-4 h-100">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Proposals</span>
-                        <h2 class="fw-bold text-dark mb-0 mt-1">{{ counts.total|default:enquiries|length }}</h2>
+                    <span class="shopeers-kpi-label">TOTAL PROPOSALS</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-handshake-fill"></i>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(79, 70, 229, 0.12); color: #4f46e5;">
-                        <i class="bi bi-handshake-fill fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ counts.total|default:enquiries|length }}</h2>
+                    <span class="shopeers-kpi-trend trend-all">
+                        <i class="bi bi-collection"></i> Total Received
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Pending Review -->
         <div class="col-xl-3 col-sm-6">
-            <div class="glass-card stat-card-gradient-2 p-4 h-100">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pending Review</span>
-                        <h2 class="fw-bold mb-0 mt-1" style="color: #d97706;">{{ counts.pending|default:"0" }}</h2>
+                    <span class="shopeers-kpi-label">PENDING REVIEW</span>
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-hourglass-split"></i>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.12); color: #d97706;">
-                        <i class="bi bi-hourglass-split fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-warning">{{ counts.pending|default:"0" }}</h2>
+                    <span class="shopeers-kpi-trend trend-pending">
+                        <i class="bi bi-clock-history"></i> Requires Action
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Contacted / Active -->
         <div class="col-xl-3 col-sm-6">
-            <div class="glass-card stat-card-gradient-3 p-4 h-100">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Contacted / Active</span>
-                        <h2 class="fw-bold text-success mb-0 mt-1">{{ counts.contacted|default:"0" }}</h2>
+                    <span class="shopeers-kpi-label">CONTACTED / ACTIVE</span>
+                    <div class="shopeers-kpi-icon icon-blue">
+                        <i class="bi bi-check-circle-fill"></i>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.12); color: #059669;">
-                        <i class="bi bi-check-circle-fill fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-success">{{ counts.contacted|default:"0" }}</h2>
+                    <span class="shopeers-kpi-trend trend-contacted">
+                        <i class="bi bi-check2-all"></i> Followed Up
+                    </span>
                 </div>
             </div>
         </div>
+
+        <!-- Referral & GCC -->
         <div class="col-xl-3 col-sm-6">
-            <div class="glass-card stat-card-gradient-4 p-4 h-100">
+            <div class="shopeers-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-uppercase fw-semibold text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Referral & GCC</span>
-                        <h2 class="fw-bold text-primary mb-0 mt-1">{{ counts.referral|default:"0" }}</h2>
+                    <span class="shopeers-kpi-label">REFERRAL &amp; GCC</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-globe2"></i>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(37, 99, 235, 0.12); color: #2563eb;">
-                        <i class="bi bi-globe2 fs-4"></i>
-                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-primary">{{ counts.referral|default:"0" }}</h2>
+                    <span class="shopeers-kpi-trend trend-reviewed">
+                        <i class="bi bi-pin-map"></i> Regional Network
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Table Container Card -->
-    <div class="glass-card table-container-card p-4">
-        <!-- Filter Tabs & Toolbar Row -->
+    <!-- Main Table Container Card -->
+    <div class="shopeers-card">
+        <!-- Toolbar: Segmented Tabs + Search Capsule -->
         <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4 border-bottom pb-3">
             <!-- Filter Tabs -->
-            <ul class="nav nav-tabs nav-tabs-glass" id="statusFilterTabs">
+            <ul class="nav nav-pills nav-pills-segmented" id="statusFilterTabs">
                 <li class="nav-item">
                     <button class="nav-link active" data-filter="all">All Proposals</button>
                 </li>
@@ -279,85 +489,85 @@
                 </li>
             </ul>
 
-            <!-- Search Bar & Actions -->
+            <!-- Search Capsule & Bulk Delete -->
             <div class="d-flex flex-wrap align-items-center gap-2.5">
-                <div class="position-relative" style="width: 280px;">
-                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                    <input type="text" id="partnershipSearch" class="form-control rounded-pill ps-5 border-1" placeholder="Search proposal, name, city..." style="font-size: 0.85rem; background: #f8fafc;">
+                <div class="search-capsule">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="partnershipSearch" placeholder="Search applicant, city, proposal...">
                 </div>
-                
-                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 d-none align-items-center gap-1.5" id="btnBulkDelete" onclick="handleBulkDelete();">
+
+                <button class="btn btn-outline-danger rounded-pill px-3 py-1.5 d-none align-items-center gap-1.5" id="btnBulkDelete" onclick="handleBulkDelete();" style="font-size: 0.82rem;">
                     <i class="bi bi-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
                 </button>
             </div>
         </div>
 
-        <!-- Proposals Table -->
-        <div class="table-responsive table-responsive-custom">
-            <table class="table table-modern align-middle mb-0">
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="shopeers-table align-middle mb-0">
                 <thead>
-                    <tr class="text-muted border-bottom" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.6px; background: #f8fafc;">
-                        <th class="ps-3 py-3" style="width: 40px;">
+                    <tr>
+                        <th style="width: 40px;">
                             <input class="form-check-input" type="checkbox" id="selectAll">
                         </th>
-                        <th class="py-3 fw-bold">Applicant Details</th>
-                        <th class="py-3 fw-bold">Location</th>
-                        <th class="py-3 fw-bold">Interest Type</th>
-                        <th class="py-3 fw-bold" style="width: 32%;">Subject & Proposal</th>
-                        <th class="py-3 fw-bold">Date & Time</th>
-                        <th class="py-3 fw-bold">Status</th>
-                        <th class="py-3 fw-bold text-center" style="width: 130px;">Actions</th>
+                        <th style="min-width: 220px;">Applicant Details</th>
+                        <th style="min-width: 140px;">Location</th>
+                        <th style="min-width: 140px;">Interest Type</th>
+                        <th style="min-width: 280px; width: 32%;">Subject &amp; Proposal</th>
+                        <th style="min-width: 130px;">Date &amp; Time</th>
+                        <th style="min-width: 120px;">Status</th>
+                        <th class="text-end" style="min-width: 110px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="partnershipTableBody">
                     {% for item in enquiries %}
                     <tr class="hover-row" data-status="{{ item.status }}" data-id="{{ item.id }}">
-                        <td class="ps-3 py-3">
+                        <td>
                             <input class="form-check-input row-checkbox" type="checkbox" value="{{ item.id }}" onchange="updateBulkDeleteState();">
                         </td>
-                        <td class="py-3">
+                        <td>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
-                                     style="width: 42px; height: 42px; font-size: 0.95rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs flex-shrink-0" 
+                                     style="width: 40px; height: 40px; font-size: 0.92rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
                                     {{ item.name|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.92rem;">{{ item.name }}</div>
-                                    <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted small hover-primary d-inline-flex align-items-center gap-1">
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">{{ item.name }}</div>
+                                    <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1">
                                         <i class="bi bi-envelope text-muted"></i> {{ item.email }}
                                     </a>
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3">
+                        <td>
                             <span class="badge-glass-location">
                                 <i class="bi bi-geo-alt-fill"></i>
                                 {{ item.location|default:"Doha, Qatar" }}
                             </span>
                         </td>
-                        <td class="py-3">
+                        <td>
                             <span class="badge-glass-interest">
                                 <i class="bi bi-pie-chart-fill"></i>
                                 {{ item.interest|default:"Referral" }}
                             </span>
                         </td>
-                        <td class="py-3">
-                            <div class="fw-semibold text-dark text-truncate mb-0.5" style="max-width: 300px;" title="{{ item.subject }}">
+                        <td>
+                            <div class="fw-semibold text-dark text-truncate mb-0.5" style="max-width: 290px;" title="{{ item.subject }}">
                                 {{ item.subject|default:"Proposal for Referral Partnership" }}
                             </div>
-                            <div class="text-muted text-truncate small mb-1" style="max-width: 300px;">
+                            <div class="text-muted text-truncate small mb-1" style="max-width: 290px;">
                                 {{ item.collaboration_details }}
                             </div>
-                            <button type="button" class="btn btn-link p-0 border-0 text-primary text-decoration-none fw-semibold small d-inline-flex align-items-center gap-1"
-                                    data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}">
+                            <button type="button" class="btn btn-link p-0 border-0 text-decoration-none fw-semibold small d-inline-flex align-items-center gap-1"
+                                    data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}" style="color: var(--shopeers-blue); font-size: 0.78rem;">
                                 Read Full Proposal <i class="bi bi-arrow-right-short"></i>
                             </button>
                         </td>
-                        <td class="py-3">
-                            <div class="text-dark fw-medium" style="font-size: 0.88rem;">{{ item.date }}</div>
+                        <td>
+                            <div class="text-dark fw-medium small">{{ item.date }}</div>
                             <div class="text-muted small"><i class="bi bi-clock me-1"></i>{{ item.time }}</div>
                         </td>
-                        <td class="py-3">
+                        <td>
                             <!-- Dropdown Interactive Status Selector -->
                             <div class="dropdown">
                                 <button class="status-select-btn dropdown-toggle {% if item.status == 'CONTACTED' %}status-contacted{% elif item.status == 'REVIEWED' %}status-reviewed{% else %}status-pending{% endif %}"
@@ -373,15 +583,15 @@
                                 </ul>
                             </div>
                         </td>
-                        <td class="py-3 text-center">
-                            <div class="d-flex justify-content-center gap-1.5">
-                                <button class="action-icon-btn btn-view" data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}" title="View Full Details">
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1.5">
+                                <button class="action-icon-pill" data-bs-toggle="modal" data-bs-target="#proposalModal{{ item.id }}" title="View Full Details">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <a href="mailto:{{ item.email }}?subject=Re:%20{{ item.subject|urlencode }}" class="action-icon-btn btn-mail" title="Email Applicant">
+                                <a href="mailto:{{ item.email }}?subject=Re:%20{{ item.subject|urlencode }}" class="action-icon-pill btn-mail" title="Email Applicant">
                                     <i class="bi bi-envelope"></i>
                                 </a>
-                                <button class="action-icon-btn btn-delete" onclick="deleteSingle('{{ item.id }}');" title="Delete Proposal">
+                                <button class="action-icon-pill btn-delete" onclick="deleteSingle('{{ item.id }}');" title="Delete Proposal">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -393,10 +603,10 @@
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                                 <!-- Modal Header -->
-                                <div class="modal-header border-0 p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                                <div class="modal-header border-0 p-4 text-white" style="background: linear-gradient(135deg, #0a5c48 0%, #06392d 100%);">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow" 
-                                             style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                             style="width: 48px; height: 48px; font-size: 1.1rem; background: rgba(255, 255, 255, 0.2);">
                                             {{ item.name|slice:":1"|upper }}
                                         </div>
                                         <div>
@@ -410,7 +620,7 @@
                                 <!-- Modal Body -->
                                 <div class="modal-body p-4" style="background-color: #f8fafc;">
                                     <!-- Info Summary Card -->
-                                    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                                    <div class="card border-0 shadow-xs rounded-4 p-4 mb-4 bg-white">
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Location</div>
@@ -427,7 +637,7 @@
                                             <div class="col-md-6">
                                                 <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Submitted On</div>
                                                 <div class="fw-semibold text-dark small">
-                                                    <i class="bi bi-calendar3 me-1 text-primary"></i> {{ item.date }} at {{ item.time }}
+                                                    <i class="bi bi-calendar3 me-1 text-success"></i> {{ item.date }} at {{ item.time }}
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -440,16 +650,16 @@
                                     </div>
 
                                     <!-- Proposal Detail Text Box -->
-                                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                                    <div class="card border-0 shadow-xs rounded-4 p-4 bg-white">
                                         <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                                             <h6 class="fw-bold text-dark mb-0">
-                                                <i class="bi bi-file-earmark-text text-primary me-2"></i>Subject: {{ item.subject }}
+                                                <i class="bi bi-file-earmark-text text-success me-2"></i>Subject: {{ item.subject }}
                                             </h6>
                                             <button class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" onclick="navigator.clipboard.writeText('{{ item.collaboration_details|escapejs }}'); showToast('Proposal details copied!');">
                                                 <i class="bi bi-copy"></i> Copy
                                             </button>
                                         </div>
-                                        <div class="text-secondary p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.92rem; white-space: pre-line; line-height: 1.7;">
+                                        <div class="text-secondary p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.90rem; white-space: pre-line; line-height: 1.7;">
                                             {{ item.collaboration_details }}
                                         </div>
                                     </div>
@@ -471,7 +681,7 @@
                     {% empty %}
                     <tr>
                         <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="bi bi-handshake fs-1 d-block mb-3 opacity-40 text-primary"></i>
+                            <i class="bi bi-handshake fs-1 d-block mb-3 opacity-40 text-success"></i>
                             <h6 class="fw-semibold text-dark">No partnership enquiries found</h6>
                             <p class="small text-muted mb-0">Submitted proposals from partners will appear here automatically.</p>
                         </td>

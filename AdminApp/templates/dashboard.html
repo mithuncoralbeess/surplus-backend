@@ -1,174 +1,617 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Dashboard - Surplus Admin{% endblock %}
 
 {% block content %}
-<!-- Page Title Header -->
-<header class="dashboard-header-title mb-4">
-    <h1 class="header-title">Dashboard</h1>
-    <p class="header-subtitle">Super Admin Dashboard</p>
-</header>
+<style>
+/* ==========================================================================
+   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC - DASHBOARD
+   ========================================================================== */
 
-<!-- Row 1: Top KPI Summary Cards -->
-<section class="row g-3 mb-4">
-    <!-- Total Sales Due -->
-    <div class="col-xl-4 col-md-6">
-        <div class="kpi-stat-card">
-            <div class="kpi-icon-circle badge-green">
-                <i class="bi bi-cash-stack"></i>
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
+
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-blue: #0ea27e;
+    --shopeers-blue-hover: #0a5c48;
+    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.shopeers-viewport {
+    background: transparent;
+    padding-bottom: 2.5rem;
+}
+
+/* Header */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.shopeers-page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.shopeers-page-subtitle {
+    font-size: 0.85rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.2rem 0 0 0;
+}
+
+/* Primary Button (#0a5c48) */
+.btn-shopeers-primary {
+    background: var(--shopeers-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.55rem 1.35rem !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-blue-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+}
+
+/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    text-decoration: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: default;
+}
+
+.shopeers-kpi-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.shopeers-kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald { background: #ecfdf5; color: #0a5c48; }
+.icon-cyan { background: #ecfeff; color: #0891b2; }
+.icon-indigo { background: #e0e7ff; color: #4338ca; }
+.icon-violet { background: #f5f3ff; color: #8b5cf6; }
+.icon-amber { background: #fffbeb; color: #f59e0b; }
+.icon-rose { background: #fff1f2; color: #f43f5e; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.45rem 0 0 0;
+}
+
+.shopeers-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.70rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.4rem;
+    width: fit-content;
+}
+
+.trend-emerald { background: #ecfdf5; color: #047857; }
+.trend-cyan { background: #ecfeff; color: #0e7490; }
+.trend-indigo { background: #e0e7ff; color: #3730a3; }
+.trend-violet { background: #f5f3ff; color: #6d28d9; }
+
+/* Section Header */
+.section-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.section-heading-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0;
+}
+
+/* Nav Hub Link Cards */
+.shopeers-hub-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+}
+
+.shopeers-hub-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+}
+
+.shopeers-hub-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.shopeers-hub-value {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    line-height: 1.1;
+    margin: 0;
+}
+
+.shopeers-hub-title {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--shopeers-text-sub);
+    margin: 0.15rem 0 0 0;
+}
+
+.shopeers-hub-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.shopeers-hub-card:hover .shopeers-hub-arrow {
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    border-color: var(--shopeers-blue);
+    transform: translateX(3px);
+}
+
+/* Shopeers Table Card Container */
+.shopeers-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.shopeers-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.shopeers-table thead th {
+    background: transparent;
+    color: var(--shopeers-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f1f3f7;
+    white-space: nowrap;
+}
+
+.shopeers-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.shopeers-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.shopeers-table tbody td {
+    padding: 1rem 1rem;
+    border-bottom: 1px solid #f5f6fa;
+    vertical-align: middle;
+}
+</style>
+
+<div class="container-fluid shopeers-viewport px-3 px-md-4 pt-3">
+    <!-- Header -->
+    <div class="shopeers-header">
+        <div>
+            <div class="d-inline-flex align-items-center gap-1.5 text-secondary small mb-1">
+                <i class="bi bi-house-door-fill text-muted"></i>
+                <span class="text-dark fw-semibold">Super Admin Dashboard</span>
             </div>
-            <div class="kpi-info">
-                <div class="kpi-value-row">
-                    <span class="currency-unit">{{ stats.currency|default:"USD" }}</span>
-                    <span class="kpi-num text-due">{{ stats.total_sales_due|default:"0.00" }}</span>
+            <h1 class="shopeers-page-title">Dashboard Overview</h1>
+            <p class="shopeers-page-subtitle">Real-time business performance, inventory liquidity & network pipeline</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/products/all/" class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5" style="font-size: 0.85rem;">
+                <i class="bi bi-box-seam"></i> Products
+            </a>
+            <a href="/admin/enquiries/seller/" class="btn-shopeers-primary">
+                <i class="bi bi-shop"></i>
+                <span>Seller Enquiries</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Row 1: Top 4 KPI Stat Metric Cards (Static Display Cards) -->
+    <div class="row g-3 mb-4">
+        <!-- Total Sales Due -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">TOTAL SALES DUE</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
                 </div>
-                <div class="kpi-label">Total Sales Due</div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_due|default:"0.00" }}</h2>
+                    <span class="shopeers-kpi-trend trend-emerald">
+                        <i class="bi bi-clock-history"></i> Current Outstanding
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sales Amount -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">TOTAL SALES REVENUE</span>
+                    <div class="shopeers-kpi-icon icon-cyan">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_amount|default:"0.00" }}</h2>
+                    <span class="shopeers-kpi-trend trend-cyan">
+                        <i class="bi bi-wallet2"></i> Settled Revenue
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Products Qty -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">ACTIVE INVENTORY STOCK</span>
+                    <div class="shopeers-kpi-icon icon-indigo">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.active_products_qty|default:"0" }}</h2>
+                    <span class="shopeers-kpi-trend trend-indigo">
+                        <i class="bi bi-check-circle"></i> Live Units Listed
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registered Users -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">REGISTERED USERS</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ stats.registered_users|default:"0" }}</h2>
+                    <span class="shopeers-kpi-trend trend-violet">
+                        <i class="bi bi-shield-check"></i> Total Accounts
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Total Sales Amount -->
-    <div class="col-xl-4 col-md-6">
-        <div class="kpi-stat-card">
-            <div class="kpi-icon-circle badge-cyan">
-                <i class="bi bi-box-arrow-in-down"></i>
-            </div>
-            <div class="kpi-info">
-                <div class="kpi-value-row">
-                    <span class="currency-unit">{{ stats.currency|default:"USD" }}</span>
-                    <span class="kpi-num text-sales">{{ stats.total_sales_amount|default:"0.00" }}</span>
+    <!-- Section: Catalog & Commercial Operations -->
+    <div class="section-heading-row mt-2">
+        <h5 class="section-heading-title">
+            <i class="bi bi-grid-fill me-2" style="color: var(--shopeers-blue);"></i>Catalog &amp; Sourcing Operations
+        </h5>
+        <span class="text-muted small">Operational modules</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- Products Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/products/all/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.products|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Product Catalog</div>
+                    </div>
                 </div>
-                <div class="kpi-label">Total Sales Amount</div>
-            </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Lot Listings Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/enquiries/lots/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-collection-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.lot_listings|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Lot Package Enquiries</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- RFQ Requests Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/rfq-requests/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-cyan">
+                        <i class="bi bi-file-earmark-text-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.rfq_requests|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Buyer RFQ Requests</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Categories Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/categories/main/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-tags-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.categories|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Taxonomy Categories</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
         </div>
     </div>
 
-    <!-- Active Products Qty -->
-    <div class="col-xl-4 col-md-6">
-        <div class="kpi-stat-card">
-            <div class="kpi-icon-circle badge-blue">
-                <i class="bi bi-arrow-left-right"></i>
-            </div>
-            <div class="kpi-info">
-                <div class="kpi-value-row">
-                    <span class="kpi-num text-sales">{{ stats.active_products_qty|default:"0" }}</span>
+    <!-- Section: Network & Stakeholders -->
+    <div class="section-heading-row mt-2">
+        <h5 class="section-heading-title">
+            <i class="bi bi-diagram-3-fill me-2" style="color: var(--shopeers-blue);"></i>Network &amp; Stakeholder Ecosystem
+        </h5>
+        <span class="text-muted small">Registered entity overview</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <!-- Buyers Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/users/?type=BUYER" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-person-fill-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.buyers|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Registered Buyers</div>
+                    </div>
                 </div>
-                <div class="kpi-label">Active Products Qty</div>
-            </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Sellers Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/enquiries/seller/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-shop-window"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.sellers|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Seller Enquiries</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Companies Hub -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/users/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-cyan">
+                        <i class="bi bi-building-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.companies|default:"0" }}</h4>
+                        <div class="shopeers-hub-title">Verified Companies</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Team Admins -->
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <a href="/admin/staff/" class="shopeers-hub-card">
+                <div class="shopeers-hub-info">
+                    <div class="shopeers-kpi-icon icon-indigo">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="shopeers-hub-value">{{ stats.total_admins|default:"1" }}</h4>
+                        <div class="shopeers-hub-title">Staff &amp; Admins</div>
+                    </div>
+                </div>
+                <div class="shopeers-hub-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
         </div>
     </div>
-</section>
 
-<!-- Row 2: Metric Banners (Orange, Cyan, Navy, Green) -->
-<section class="row g-3 mb-3">
-    <!-- Buyers -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/users/?type=BUYER" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-orange">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.buyers|default:"0" }}</div>
-                    <div class="banner-title">Buyers</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-person"></i>
-                </div>
+    <!-- Super Admin Staff Table (if SuperAdmin and staff available) -->
+    {% if is_super_admin and staff_list %}
+    <div class="shopeers-card mt-4">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+            <div>
+                <h5 class="fw-bold text-dark mb-0" style="font-family: 'Outfit', sans-serif;">
+                    <i class="bi bi-shield-shaded me-2 text-success"></i>Internal Administrative Staff
+                </h5>
+                <p class="text-secondary small mb-0 mt-0.5">Active moderators, operational managers & system administrators</p>
             </div>
-        </a>
-    </div>
+            <a href="/admin/staff/" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1">View All Staff</a>
+        </div>
 
-    <!-- Companies -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/users/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-cyan">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.companies|default:"0" }}</div>
-                    <div class="banner-title">Companies</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-briefcase"></i>
-                </div>
-            </div>
-        </a>
+        <div class="table-responsive">
+            <table class="shopeers-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="min-width: 220px;">Staff Member</th>
+                        <th style="min-width: 140px;">Role / Account Type</th>
+                        <th style="min-width: 180px;">Email</th>
+                        <th style="min-width: 120px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in staff_list %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs flex-shrink-0"
+                                     style="width: 38px; height: 38px; font-size: 0.90rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
+                                    {{ member.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">{{ member.username }}</div>
+                                    <div class="text-muted small">{{ member.first_name }} {{ member.last_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-medium" style="font-size: 0.74rem;">
+                                {{ member.account_type|default:"Admin" }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="mailto:{{ member.email }}" class="text-secondary text-decoration-none small">
+                                <i class="bi bi-envelope me-1"></i>{{ member.email }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if member.is_active %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.74rem;">
+                                <i class="bi bi-check-circle-fill me-1"></i>Active
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1 fw-semibold" style="font-size: 0.74rem;">
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-
-    <!-- Lot Listings -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/enquiries/lots/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-navy">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.lot_listings|default:"0" }}</div>
-                    <div class="banner-title">Lot Listings</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-boxes"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- RFQ Requests -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/rfq-requests/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-green">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.rfq_requests|default:"0" }}</div>
-                    <div class="banner-title">RFQ Requests</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-file-earmark-text"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-</section>
-
-<!-- Row 3: Metric Banners (Navy, Green, Orange, Cyan) -->
-<section class="row g-3 mb-4">
-    <!-- Products -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/products/all/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-navy">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.products|default:"0" }}</div>
-                    <div class="banner-title">Products</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-box-seam"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Categories -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/categories/main/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-green">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.categories|default:"0" }}</div>
-                    <div class="banner-title">Categories</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-folder2"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Registered Users -->
-    <div class="col-xl-3 col-lg-6 col-md-6">
-        <a href="/admin/users/" class="text-decoration-none">
-            <div class="dashboard-metric-banner banner-cyan">
-                <div class="banner-text-content">
-                    <div class="banner-number">{{ stats.registered_users|default:"0" }}</div>
-                    <div class="banner-title">Registered Users</div>
-                </div>
-                <div class="banner-icon-right">
-                    <i class="bi bi-people"></i>
-                </div>
-            </div>
-        </a>
-    </div>
-</section>
+    {% endif %}
+</div>
 {% endblock %}
-
-

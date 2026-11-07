@@ -3,303 +3,925 @@
 {% block title %}Buyer RFQ Requests - Surplus Admin{% endblock %}
 
 {% block content %}
-<!-- Page Header & Action -->
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
-    <div>
-        <nav class="custom-breadcrumb" aria-label="breadcrumb">
-            <ol class="breadcrumb-list">
-                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item"><span>Enquiries</span></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item active" aria-current="page"><span>Buyer RFQ Requests</span></li>
-            </ol>
-        </nav>
-        <h1 class="header-title">Buyer RFQ &amp; Quotation Requests</h1>
-        <p class="header-subtitle">Review, issue proforma quotes, and manage consolidated RFQs submitted by marketplace buyers</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="/admin/rfq-requests/" class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-        </a>
-    </div>
-</div>
+<style>
+/* ==========================================================================
+   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC DESIGN SYSTEM - BUYER RFQS
+   ========================================================================== */
 
-{% if messages %}
-<div class="mb-4">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-check-circle-fill text-success fs-5"></i>
-        <div class="fw-medium">{{ message }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    --shopeers-shadow-hover: 0 10px 28px -4px rgba(15, 23, 42, 0.08), 0 3px 8px -2px rgba(15, 23, 42, 0.03);
+}
 
-<!-- KPI Metric Filter Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-md-2 col-sm-6">
-        <a href="/admin/rfq-requests/" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">All RFQs</span>
-                        <h3 class="stat-number text-dark">{{ counts.total|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-indigo">
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-blue: #0ea27e;
+    --shopeers-blue-hover: #0a5c48;
+    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shopeers-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.shopeers-viewport {
+    background: transparent;
+    padding-bottom: 2rem;
+}
+
+/* Header & Breadcrumb */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.shopeers-breadcrumb-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--shopeers-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.shopeers-breadcrumb-nav a {
+    color: var(--shopeers-text-sub);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.shopeers-breadcrumb-nav a:hover {
+    color: var(--shopeers-blue);
+}
+
+.shopeers-page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.shopeers-page-subtitle {
+    font-size: 0.85rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.2rem 0 0 0;
+}
+
+/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    text-decoration: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: default;
+}
+
+.shopeers-kpi-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.2px;
+}
+
+.shopeers-kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald-theme { background: #e8f5f1; color: #0a5c48; }
+.icon-amber { background: #fffbeb; color: #f59e0b; }
+.icon-cyan { background: #ecfeff; color: #0891b2; }
+.icon-emerald { background: #ecfdf5; color: #10b981; }
+.icon-violet { background: #f5f3ff; color: #8b5cf6; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.45rem 0 0 0;
+}
+
+.shopeers-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.70rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.4rem;
+    width: fit-content;
+}
+
+.trend-all { background: #f1f5f9; color: #475569; }
+.trend-pending { background: #fffbeb; color: #b45309; }
+.trend-quoted { background: #ecfeff; color: #0e7490; }
+.trend-accepted { background: #ecfdf5; color: #047857; }
+.trend-pipeline { background: #e8f5f1; color: #0a5c48; }
+
+/* Main Table Container Card */
+.shopeers-main-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* Toolbar Bar */
+.shopeers-toolbar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--shopeers-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/* Capsule Search Bar */
+.shopeers-search-capsule {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 2px 6px 2px 14px;
+    min-width: 260px;
+    max-width: 420px;
+    flex-grow: 1;
+    transition: all 0.15s ease;
+}
+
+[data-bs-theme="dark"] .shopeers-search-capsule {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.shopeers-search-capsule:focus-within {
+    background: #ffffff;
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+}
+
+.shopeers-search-input {
+    border: none !important;
+    background: transparent !important;
+    font-size: 0.85rem;
+    color: var(--shopeers-text-dark);
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    padding: 0.35rem 0.4rem;
+}
+
+.shopeers-search-btn {
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.4rem 0.95rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    border: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.shopeers-search-btn:hover {
+    background: var(--shopeers-blue-hover);
+    color: #ffffff;
+}
+
+/* Segmented Status Tabs */
+.shopeers-segmented-pills {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    border: 1px solid var(--shopeers-border);
+    gap: 2px;
+}
+
+[data-bs-theme="dark"] .shopeers-segmented-pills {
+    background: #1e293b;
+}
+
+.shopeers-pill-tab {
+    padding: 0.35rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--shopeers-radius-pill);
+    color: var(--shopeers-text-sub);
+    text-decoration: none;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.shopeers-pill-tab:hover {
+    color: var(--shopeers-text-dark);
+}
+
+.shopeers-pill-tab.active {
+    background: #ffffff;
+    color: var(--shopeers-text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="dark"] .shopeers-pill-tab.active {
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.shopeers-select {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    font-size: 0.82rem !important;
+    font-weight: 500;
+    color: var(--shopeers-text-dark) !important;
+    padding: 0.42rem 2.2rem 0.42rem 0.95rem !important;
+    height: 38px;
+    transition: all 0.15s ease;
+}
+
+[data-bs-theme="dark"] .shopeers-select {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+.shopeers-select:focus {
+    background-color: #ffffff !important;
+    border-color: var(--shopeers-blue) !important;
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
+}
+
+.btn-shopeers-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: var(--shopeers-text-sub) !important;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.95rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 38px;
+}
+
+.btn-shopeers-ghost:hover {
+    background: #f1f5f9;
+    color: var(--shopeers-text-dark) !important;
+    border-color: #cbd5e1;
+}
+
+.btn-shopeers-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #f43f5e !important;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.85rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 38px;
+}
+
+.btn-shopeers-clear:hover {
+    background: #ffe4e6;
+    color: #e11d48 !important;
+}
+
+/* Shopeers Table Grid */
+.shopeers-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.shopeers-table thead th {
+    background: transparent;
+    border-bottom: 1px solid var(--shopeers-border);
+    padding: 1rem 1.5rem;
+    font-size: 0.70rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--shopeers-text-muted);
+}
+
+.shopeers-table tbody tr {
+    transition: background-color 0.12s ease;
+}
+
+.shopeers-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+[data-bs-theme="dark"] .shopeers-table tbody tr:hover {
+    background-color: #1e293b;
+}
+
+.shopeers-table tbody td {
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--shopeers-border);
+    vertical-align: middle;
+}
+
+/* Avatar Box */
+.shopeers-product-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    border: 1px solid var(--shopeers-border);
+}
+
+[data-bs-theme="dark"] .shopeers-product-avatar {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.shopeers-id-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.90rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.shopeers-id-badge:hover {
+    color: var(--shopeers-blue);
+}
+
+.shopeers-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+/* Status Badges */
+.shopeers-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 4px 12px;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.pulse-dot-sm {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.btn-rfq-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--shopeers-blue);
+    color: #ffffff !important;
+    border: none;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.35rem 0.95rem;
+    font-size: 0.78rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.2);
+}
+
+.btn-rfq-view:hover {
+    background: var(--shopeers-blue-hover);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.btn-rfq-delete {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #f43f5e;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-rfq-delete:hover {
+    background: #ffe4e6;
+    color: #e11d48;
+}
+
+/* Pagination Footer */
+.shopeers-pagination-footer {
+    padding: 1.15rem 1.5rem;
+    border-top: 1px solid var(--shopeers-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.shopeers-page-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.75rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.80rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--shopeers-text-sub);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+}
+
+.shopeers-page-pill.active {
+    background: var(--shopeers-blue);
+    color: #ffffff !important;
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.3);
+}
+
+.shopeers-page-pill.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+</style>
+
+<div class="shopeers-viewport">
+    <!-- Header -->
+    <div class="shopeers-header">
+        <div>
+            <div class="shopeers-breadcrumb-nav">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
+                <span>&rsaquo;</span>
+                <span>Enquiries</span>
+                <span>&rsaquo;</span>
+                <span class="text-dark fw-semibold">Buyer RFQ Requests</span>
+            </div>
+            <h1 class="shopeers-page-title">Buyer RFQ &amp; Quotation Requests</h1>
+            <p class="shopeers-page-subtitle">Review, issue proforma quotes, and manage consolidated RFQs submitted by marketplace buyers</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/rfq-requests/" class="btn-shopeers-ghost" title="Refresh Table">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 16px; background: #ffffff;">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium text-dark">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 5 Shopeers Top Stat Metric Cards (Static Display Cards) -->
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+        <!-- 1. All RFQs -->
+        <div class="col">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">All RFQs</span>
+                    <div class="shopeers-kpi-icon icon-emerald-theme">
                         <i class="bi bi-file-earmark-text"></i>
                     </div>
                 </div>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-all">Total Requests</span>
+                </div>
             </div>
-        </a>
-    </div>
-    <div class="col-md-2 col-sm-6">
-        <a href="/admin/rfq-requests/pending/" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Pending Quotes</span>
-                        <h3 class="stat-number text-warning">{{ counts.pending|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-amber">
+        </div>
+
+        <!-- 2. Pending Quotes -->
+        <div class="col">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Pending Quotes</span>
+                    <div class="shopeers-kpi-icon icon-amber">
                         <i class="bi bi-hourglass-split"></i>
                     </div>
                 </div>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-pending">Requires Proforma</span>
+                </div>
             </div>
-        </a>
-    </div>
-    <div class="col-md-2 col-sm-6">
-        <a href="/admin/rfq-requests/quoted/" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'quoted' %}border-info shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Proforma Issued</span>
-                        <h3 class="stat-number text-info">{{ counts.quoted|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-blue">
+        </div>
+
+        <!-- 3. Quoted -->
+        <div class="col">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Proforma Issued</span>
+                    <div class="shopeers-kpi-icon icon-cyan">
                         <i class="bi bi-receipt"></i>
                     </div>
                 </div>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.quoted|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-quoted">Awaiting Buyer</span>
+                </div>
             </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <a href="/admin/rfq-requests/accepted/" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'accepted' %}border-success shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Accepted Deals</span>
-                        <h3 class="stat-number text-success">{{ counts.accepted|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-green">
+        </div>
+
+        <!-- 4. Accepted Deals -->
+        <div class="col">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Accepted Deals</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
                         <i class="bi bi-check-circle"></i>
                     </div>
                 </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="content-stat-card">
-            <div class="stat-card-content">
-                <div class="stat-meta">
-                    <span class="stat-label">Pipeline Value</span>
-                    <h3 class="stat-number text-primary">${{ counts.pipeline_value|floatformat:0 }}</h3>
+                <div>
+                    <h3 class="shopeers-kpi-number">{{ counts.accepted|default:"0" }}</h3>
+                    <span class="shopeers-kpi-trend trend-accepted">Confirmed Deals</span>
                 </div>
-                <div class="stat-icon-wrapper icon-teal">
-                    <i class="bi bi-currency-dollar"></i>
+            </div>
+        </div>
+
+        <!-- 5. Pipeline Value -->
+        <div class="col">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-start justify-content-between">
+                    <span class="shopeers-kpi-label">Pipeline Value</span>
+                    <div class="shopeers-kpi-icon icon-emerald-theme">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="shopeers-kpi-number">${{ counts.pipeline_value|floatformat:0 }}</h3>
+                    <span class="shopeers-kpi-trend trend-pipeline">Gross Pipeline</span>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Main Table Card with Search & Filter Tabs -->
-<div class="content-table-card">
-    <!-- Card Toolbar -->
-    <div class="table-toolbar">
-        <form method="GET" action="/admin/rfq-requests/" class="d-flex flex-wrap gap-2 align-items-center w-100">
-            <div class="flex-grow-1" style="max-width: 450px;">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control rounded-end-0" placeholder="Search reference, company, email, destination..." value="{{ search }}">
-                    <button class="btn btn-primary rounded-start-0 px-3" type="submit">Search</button>
-                </div>
+    <!-- Shopeers Main Table Card Container -->
+    <div class="shopeers-main-card">
+        <!-- Card Title Bar (Shopeers Style) -->
+        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-1">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark" style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Quotation Requests</h5>
+                <p class="text-muted small mb-0 mt-0.5">Live buyer inquiry baskets and negotiation workflow</p>
             </div>
-
-            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
-                <select name="date_filter" onchange="this.form.submit()" class="form-select form-select-sm filter-select" style="width: 140px; font-size: 14px !important; height: 38px;">
-                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
-                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                    <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
-                    <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
-                </select>
-
-                <div class="btn-group" role="group" aria-label="Status filter">
-                    <a href="/admin/rfq-requests/" class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">All</a>
-                    <a href="/admin/rfq-requests/pending/" class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Pending</a>
-                    <a href="/admin/rfq-requests/quoted/" class="btn btn-sm {% if current_status == 'quoted' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Quoted</a>
-                    <a href="/admin/rfq-requests/accepted/" class="btn btn-sm {% if current_status == 'accepted' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Accepted</a>
-                    <a href="/admin/rfq-requests/declined/" class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}">Declined</a>
-                </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill text-secondary bg-light border px-2.5 py-1.5" style="font-size: 0.72rem; font-weight: 600;">
+                    <i class="bi bi-record-circle text-success me-1"></i>Live Sync
+                </span>
             </div>
-        </form>
-    </div>
+        </div>
 
-    <!-- RFQs Data Table -->
-    <div class="table-responsive" style="min-height: 250px;">
-        <table class="table content-data-table align-middle mb-0" id="rfqTable">
-            <thead>
-                <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                    <th style="width: 180px; font-weight: 600;">RFQ Reference</th>
-                    <th style="width: 250px; font-weight: 600;">Buyer Details</th>
-                    <th style="width: 180px; font-weight: 600;">Basket Summary</th>
-                    <th style="width: 160px; font-weight: 600;">Est. Value / Quote</th>
-                    <th style="width: 150px; font-weight: 600;">Destination Port</th>
-                    <th style="width: 130px; font-weight: 600;">Status</th>
-                    <th style="width: 140px; font-weight: 600;">Date Submitted</th>
-                    <th class="text-end pe-4" style="width: 140px; font-weight: 600;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in enquiries %}
-                <tr id="rfq-row-{{ item.id }}">
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
-                                <i class="bi bi-file-earmark-spreadsheet fs-6"></i>
-                            </div>
-                            <div>
-                                <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="fw-bold text-dark font-monospace text-decoration-none hover-underline" style="font-size: 0.90rem;">
-                                    {{ item.reference }}
-                                </a>
-                                {% if item.buyer %}
-                                <span class="badge bg-secondary-subtle text-secondary font-monospace d-block py-0.5 px-1 mt-0.5" style="font-size: 0.68rem; width: fit-content;">
-                                    <i class="bi bi-person me-0.5"></i>{{ item.buyer.vendor_id|default:item.buyer.username }}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:'Valued Buyer' }}">
-                            {{ item.contact_person|default:item.buyer.full_name|default:"Valued Buyer" }}
-                        </div>
-                        {% if item.company_name and item.company_name|lower != item.contact_person|lower and item.company_name != 'Individual Buyer' %}
-                        <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.company_name }}">
-                            <i class="bi bi-building me-1"></i>{{ item.company_name }}
-                        </div>
-                        {% endif %}
-                        <div class="text-muted small text-truncate" style="max-width: 230px;" title="{{ item.email }}">
-                            <i class="bi bi-envelope me-1"></i>{{ item.email }}
-                        </div>
-                        {% if item.phone %}
-                        <div class="text-muted small">
-                            <i class="bi bi-telephone me-1"></i>{{ item.phone }}
-                        </div>
-                        {% endif %}
-                        {% if item.business_location or item.country %}
-                        <div class="text-muted small">
-                            <i class="bi bi-geo-alt me-1"></i>{{ item.business_location|default:item.country }}
-                        </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 0.78rem;">
-                            {{ item.items.count }} item{{ item.items.count|pluralize }}
-                        </span>
-                        <div class="text-muted small mt-1">
-                            <strong>{{ item.total_units }}</strong> units total
-                        </div>
-                    </td>
-                    <td>
-                        <div class="fw-bold text-dark" style="font-size: 0.92rem;">
-                            {{ item.currency }} {{ item.estimated_value|floatformat:2 }}
-                        </div>
-                        {% if item.proforma_amount %}
-                        <div class="text-success small fw-semibold">
-                            <i class="bi bi-check-circle me-0.5"></i>Quoted: ${{ item.proforma_amount|floatformat:2 }}
-                        </div>
-                        {% else %}
-                        <span class="text-muted small">No proforma yet</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="small fw-semibold text-dark text-truncate" style="max-width: 140px;" title="{{ item.destination_port }}">
-                            <i class="bi bi-geo-alt text-secondary me-1"></i>{{ item.destination_port|default:"Not specified" }}
-                        </div>
-                    </td>
-                    <td>
-                        {% if item.status == 'PENDING' %}
-                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold">Pending</span>
-                        {% elif item.status == 'QUOTED' %}
-                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1 rounded-pill fw-semibold">Quoted</span>
-                        {% elif item.status == 'ACCEPTED' %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill fw-semibold">Accepted</span>
-                        {% elif item.status == 'DECLINED' %}
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1 rounded-pill fw-semibold">Declined</span>
-                        {% else %}
-                        <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1 rounded-pill fw-semibold">{{ item.status }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <span class="text-dark small d-block">{{ item.created_at|date:"M d, Y" }}</span>
-                        <span class="text-muted small">{{ item.created_at|date:"h:i A" }}</span>
-                    </td>
-                    <td class="text-end pe-4">
-                        <div class="d-inline-flex gap-1">
-                            <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn btn-sm btn-primary px-2.5 py-1 rounded-2 d-inline-flex align-items-center gap-1" title="Review & Quote">
-                                <i class="bi bi-eye"></i> View Quote
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1 rounded-2" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="text-center py-5">
-                        <div class="text-muted">
-                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                            <h6 class="fw-bold text-secondary mb-1">No RFQ requests found</h6>
-                            <p class="small mb-0">Buyer enquiry baskets submitted from the frontend store will appear here in real time.</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <!-- Toolbar -->
+        <div class="shopeers-toolbar">
+            <form method="GET" action="/admin/rfq-requests/" class="d-flex flex-wrap gap-2 align-items-center w-100 justify-content-between">
+                <!-- Search Capsule -->
+                <div class="shopeers-search-capsule">
+                    <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
+                    <input type="text" name="search" class="shopeers-search-input" placeholder="Search reference, company, email, destination..." value="{{ search }}">
+                    <button class="shopeers-search-btn" type="submit">Search</button>
+                </div>
 
-    <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-    <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <span class="text-muted small">
-            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} quotation requests
-        </span>
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">Previous</a>
-                </li>
-                {% endif %}
-                {% for p in page_obj.paginator.page_range %}
-                    {% if p == page_obj.number %}
-                    <li class="page-item active"><span class="page-link">{{ p }}</span></li>
-                    {% elif p >= page_obj.number|add:'-2' and p <= page_obj.number|add:'2' %}
-                    <li class="page-item"><a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a></li>
+                <!-- Segmented Status Tabs -->
+                <div class="shopeers-segmented-pills">
+                    <a href="/admin/rfq-requests/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
+                       class="shopeers-pill-tab {% if current_status == 'all' %}active{% endif %}">
+                        All
+                    </a>
+                    <a href="/admin/rfq-requests/pending/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
+                       class="shopeers-pill-tab {% if current_status == 'pending' %}active active-pending{% endif %}">
+                        Pending
+                    </a>
+                    <a href="/admin/rfq-requests/quoted/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
+                       class="shopeers-pill-tab {% if current_status == 'quoted' %}active active-approved{% endif %}">
+                        Quoted
+                    </a>
+                    <a href="/admin/rfq-requests/accepted/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
+                       class="shopeers-pill-tab {% if current_status == 'accepted' %}active active-approved{% endif %}">
+                        Accepted
+                    </a>
+                    <a href="/admin/rfq-requests/declined/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
+                       class="shopeers-pill-tab {% if current_status == 'declined' %}active active-declined{% endif %}">
+                        Declined
+                    </a>
+                </div>
+
+                <!-- Filters -->
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <select name="date_filter" onchange="this.form.submit()" class="form-select shopeers-select" style="width: 140px;">
+                        <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+                    </select>
+
+                    {% if search or date_filter and date_filter != 'all' %}
+                    <a href="/admin/rfq-requests/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-shopeers-clear" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                        <span>Clear</span>
+                    </a>
                     {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">Next</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+                </div>
+            </form>
+        </div>
+
+        <!-- RFQs Data Table -->
+        <div class="table-responsive" style="min-height: 320px;">
+            <table class="table shopeers-table align-middle mb-0" id="rfqTable">
+                <thead>
+                    <tr>
+                        <th style="min-width: 200px;">RFQ Reference</th>
+                        <th style="min-width: 240px;">Buyer Details</th>
+                        <th style="width: 160px;">Basket Summary</th>
+                        <th style="width: 170px;">Est. Value / Quote</th>
+                        <th style="width: 160px;">Destination</th>
+                        <th style="width: 140px;">Status</th>
+                        <th style="width: 140px;">Date</th>
+                        <th class="text-end pe-4" style="width: 160px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enquiries %}
+                    <tr id="rfq-row-{{ item.id }}">
+                        <!-- RFQ Reference -->
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="shopeers-product-avatar">
+                                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="shopeers-id-badge">
+                                        {{ item.reference }}
+                                    </a>
+                                    {% if item.buyer %}
+                                    <div class="mt-0.5">
+                                        <span class="shopeers-meta-pill font-monospace" style="font-size: 0.68rem;">
+                                            <i class="bi bi-person me-1"></i>{{ item.buyer.vendor_id|default:item.buyer.username }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Buyer Details -->
+                        <td>
+                            <div class="fw-semibold text-dark text-truncate" style="font-size: 0.86rem; max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:'Valued Buyer' }}">
+                                {{ item.contact_person|default:item.buyer.full_name|default:"Valued Buyer" }}
+                            </div>
+                            {% if item.company_name and item.company_name|lower != item.contact_person|lower and item.company_name != 'Individual Buyer' %}
+                            <div class="text-muted small text-truncate" style="font-size: 0.74rem; max-width: 230px;" title="{{ item.company_name }}">
+                                <i class="bi bi-building me-1"></i>{{ item.company_name }}
+                            </div>
+                            {% endif %}
+                            <div class="text-muted small text-truncate" style="font-size: 0.74rem; max-width: 230px;" title="{{ item.email }}">
+                                <i class="bi bi-envelope me-1"></i>{{ item.email }}
+                            </div>
+                            {% if item.phone %}
+                            <div class="text-muted small" style="font-size: 0.74rem;">
+                                <i class="bi bi-telephone me-1"></i>{{ item.phone }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Basket Summary -->
+                        <td>
+                            <span class="shopeers-meta-pill font-monospace">
+                                <i class="bi bi-boxes me-1 text-primary"></i>{{ item.items.count }} item{{ item.items.count|pluralize }}
+                            </span>
+                            <div class="text-muted small mt-1" style="font-size: 0.74rem;">
+                                <strong>{{ item.total_units }}</strong> units total
+                            </div>
+                        </td>
+
+                        <!-- Est. Value / Quote -->
+                        <td>
+                            <div class="fw-bold text-dark" style="font-size: 0.90rem;">
+                                {{ item.currency }} {{ item.estimated_value|floatformat:2 }}
+                            </div>
+                            {% if item.proforma_amount %}
+                            <div class="text-success small fw-semibold" style="font-size: 0.74rem;">
+                                <i class="bi bi-check-circle me-1"></i>Quoted: ${{ item.proforma_amount|floatformat:2 }}
+                            </div>
+                            {% else %}
+                            <span class="text-muted small" style="font-size: 0.74rem;">No proforma yet</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Destination -->
+                        <td>
+                            <div class="small fw-semibold text-dark text-truncate" style="max-width: 140px; font-size: 0.78rem;" title="{{ item.destination_port }}">
+                                <i class="bi bi-geo-alt text-danger me-1"></i>{{ item.destination_port|default:"Not specified" }}
+                            </div>
+                            {% if item.business_location or item.country %}
+                            <div class="text-muted small text-truncate" style="font-size: 0.72rem; max-width: 140px;">
+                                {{ item.business_location|default:item.country }}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td style="white-space: nowrap;">
+                            {% if item.status == 'PENDING' %}
+                            <span class="shopeers-status-pill status-pending-pill">
+                                <span class="pulse-dot-sm" style="background: #f59e0b;"></span> Pending
+                            </span>
+                            {% elif item.status == 'QUOTED' %}
+                            <span class="shopeers-status-pill" style="background: #ecfeff; color: #0891b2; border: 1px solid #cffafe;">
+                                <span class="pulse-dot-sm" style="background: #0891b2;"></span> Quoted
+                            </span>
+                            {% elif item.status == 'ACCEPTED' %}
+                            <span class="shopeers-status-pill status-approved-pill">
+                                <span class="pulse-dot-sm pulse-dot-green"></span> Accepted
+                            </span>
+                            {% elif item.status == 'DECLINED' %}
+                            <span class="shopeers-status-pill status-declined-pill">
+                                <span class="pulse-dot-sm" style="background: #f43f5e;"></span> Declined
+                            </span>
+                            {% else %}
+                            <span class="shopeers-status-pill" style="background: #f1f5f9; color: #475569;">
+                                {{ item.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Date -->
+                        <td style="white-space: nowrap;">
+                            <div class="fw-semibold" style="font-size: 0.84rem; color: var(--shopeers-text-dark);">
+                                {{ item.created_at|date:"M d, Y" }}
+                            </div>
+                            <div class="mt-0.5 text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock me-1 opacity-75"></i>{{ item.created_at|date:"h:i A" }}
+                            </div>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-end pe-4" style="white-space: nowrap;">
+                            <div class="d-inline-flex align-items-center gap-1.5">
+                                <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn-rfq-view" title="Review & Quote">
+                                    <i class="bi bi-eye"></i>
+                                    <span>View</span>
+                                </a>
+                                <button type="button" class="btn-rfq-delete" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="py-4">
+                                <div class="shopeers-product-avatar mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                                    <i class="bi bi-file-earmark-spreadsheet text-muted"></i>
+                                </div>
+                                <h5 class="fw-bold" style="font-size: 1.05rem; color: var(--shopeers-text-dark);">No RFQ Requests Found</h5>
+                                <p class="small mb-3" style="color: var(--shopeers-text-sub);">Buyer enquiry baskets submitted from the marketplace store will appear here in real time.</p>
+                                <a href="/admin/rfq-requests/" class="btn-shopeers-ghost">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Shopeers Pagination Footer -->
+        {% if page_obj.has_other_pages %}
+        <div class="shopeers-pagination-footer">
+            <div class="small fw-medium" style="color: var(--shopeers-text-sub);">
+                Showing <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.start_index }}</span> to 
+                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.end_index }}</span> of 
+                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.paginator.count }}</span> quotation requests
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1.5 list-unstyled d-flex">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a class="shopeers-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                            Prev
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="shopeers-page-pill disabled">Prev</span>
+                    </li>
+                    {% endif %}
+
+                    {% for p in page_obj.paginator.page_range %}
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                            {% if p == page_obj.number %}
+                            <li>
+                                <span class="shopeers-page-pill active">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="shopeers-page-pill" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a>
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a class="shopeers-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="shopeers-page-pill disabled">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <script>
