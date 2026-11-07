@@ -428,9 +428,9 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/admin/popup/" class="nav-link {% if request.path == '/admin/popup/' %}active{% endif %}">
-                    <i class="bi bi-camera"></i>
-                    <span>Pop Up</span>
+                <a href="/admin/popup/" class="nav-link {% if '/popup' in request.path or '/email-template' in request.path %}active{% endif %}">
+                    <i class="bi bi-envelope-paper"></i>
+                    <span>Email Templates</span>
                 </a>
             </li>
             <li class="nav-item">

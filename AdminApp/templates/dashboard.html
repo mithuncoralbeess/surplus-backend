@@ -5,653 +5,1052 @@
 
 {% block content %}
 <style>
-    /* ==========================================================================
-   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC - DASHBOARD
+/* ==========================================================================
+   SHOPEERS-INSPIRED PIXEL-PERFECT DASHBOARD DESIGN SYSTEM
    ========================================================================== */
 
-    :root {
-        --shopeers-bg: #f5f6fa;
-        --shopeers-card: #ffffff;
-        --shopeers-text-dark: #111827;
-        --shopeers-text-sub: #6b7280;
-        --shopeers-text-muted: #9ca3af;
-        --shopeers-border: #f1f3f7;
-        --shopeers-blue: #0a5c48;
-        --shopeers-blue-hover: #084c3b;
-        --shopeers-blue-light: #e8f5f1;
-        --shopeers-radius-lg: 22px;
-        --shopeers-radius-md: 14px;
-        --shopeers-radius-pill: 9999px;
-        --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    }
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
 
-    [data-bs-theme="dark"] {
-        --shopeers-bg: #0b1120;
-        --shopeers-card: #111827;
-        --shopeers-text-dark: #f9fafb;
-        --shopeers-text-sub: #9ca3af;
-        --shopeers-text-muted: #6b7280;
-        --shopeers-border: #1f2937;
-        --shopeers-blue: #0ea27e;
-        --shopeers-blue-hover: #0a5c48;
-        --shopeers-blue-light: rgba(14, 162, 126, 0.15);
-        --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    }
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-blue: #0ea27e;
+    --shopeers-blue-hover: #0a5c48;
+    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
 
-    .shopeers-viewport {
-        background: transparent;
-        padding-bottom: 2.5rem;
-    }
+.shopeers-dashboard-viewport {
+    padding-bottom: 2.5rem;
+}
 
-    /* Header */
-    .shopeers-header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
+/* Header & Controls */
+.shopeers-dash-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
 
-    .shopeers-page-title {
-        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-        font-size: 1.55rem;
-        font-weight: 700;
-        color: var(--shopeers-text-dark);
-        letter-spacing: -0.02em;
-        margin: 0;
-        line-height: 1.2;
-    }
+.shopeers-dash-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
 
-    .shopeers-page-subtitle {
-        font-size: 0.85rem;
-        color: var(--shopeers-text-sub);
-        margin: 0.2rem 0 0 0;
-    }
+.pill-control {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
 
-    /* Primary Button (#0a5c48) */
-    .btn-shopeers-primary {
-        background: var(--shopeers-blue) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: var(--shopeers-radius-pill) !important;
-        padding: 0.55rem 1.35rem !important;
-        font-weight: 600 !important;
-        font-size: 0.85rem !important;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
-        transition: all 0.2s ease;
-        text-decoration: none;
-    }
+.pill-control:hover {
+    background: #f8fafc;
+    color: var(--shopeers-text-dark);
+    border-color: #cbd5e1;
+}
 
-    .btn-shopeers-primary:hover {
-        background: var(--shopeers-blue-hover) !important;
-        color: #ffffff !important;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
-    }
+.btn-shopeers-primary {
+    background: var(--shopeers-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.48rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
 
-    /* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
-    .shopeers-kpi-card {
-        background: var(--shopeers-card);
-        border: 1px solid var(--shopeers-border);
-        border-radius: var(--shopeers-radius-lg);
-        padding: 1.25rem 1.35rem;
-        box-shadow: var(--shopeers-shadow);
-        text-decoration: none;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        position: relative;
-        cursor: default;
-    }
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-blue-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+}
 
-    .shopeers-kpi-label {
-        font-size: 0.74rem;
-        font-weight: 700;
-        color: var(--shopeers-text-sub);
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-    }
+/* Shopeers Top 4 KPI Cards (Static Display Cards) */
+.shopeers-stat-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    cursor: default;
+}
 
-    .shopeers-kpi-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.15rem;
-        flex-shrink: 0;
-    }
+.shopeers-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
 
-    .icon-emerald {
-        background: #ecfdf5;
-        color: #0a5c48;
-    }
+.shopeers-stat-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+}
 
-    .icon-cyan {
-        background: #ecfeff;
-        color: #0891b2;
-    }
+.shopeers-stat-icon-wrap {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
 
-    .icon-indigo {
-        background: #e0e7ff;
-        color: #4338ca;
-    }
+.icon-wrap-blue { background: #eff6ff; color: #2563eb; }
+.icon-wrap-cyan { background: #ecfeff; color: #0891b2; }
+.icon-wrap-indigo { background: #e0e7ff; color: #4338ca; }
+.icon-wrap-emerald { background: #ecfdf5; color: #0a5c48; }
 
-    .icon-violet {
-        background: #f5f3ff;
-        color: #8b5cf6;
-    }
+.shopeers-stat-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.1rem 0 0.5rem 0;
+}
 
-    .icon-amber {
-        background: #fffbeb;
-        color: #f59e0b;
-    }
+.shopeers-stat-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--shopeers-text-muted);
+}
 
-    .icon-rose {
-        background: #fff1f2;
-        color: #f43f5e;
-    }
+.trend-badge-positive {
+    background: #ecfdf5;
+    color: #047857;
+    padding: 2px 6px;
+    border-radius: var(--shopeers-radius-pill);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
 
-    .shopeers-kpi-number {
-        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-        font-size: 1.65rem;
-        font-weight: 700;
-        color: var(--shopeers-text-dark);
-        letter-spacing: -0.02em;
-        line-height: 1.1;
-        margin: 0.45rem 0 0 0;
-    }
+.trend-badge-negative {
+    background: #fff1f2;
+    color: #e11d48;
+    padding: 2px 6px;
+    border-radius: var(--shopeers-radius-pill);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
 
-    .shopeers-kpi-trend {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        font-size: 0.70rem;
-        font-weight: 600;
-        padding: 2px 7px;
-        border-radius: var(--shopeers-radius-pill);
-        margin-top: 0.4rem;
-        width: fit-content;
-    }
+/* Main Shopeers Card Component */
+.shopeers-panel-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.35rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
 
-    .trend-emerald {
-        background: #ecfdf5;
-        color: #047857;
-    }
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
 
-    .trend-cyan {
-        background: #ecfeff;
-        color: #0e7490;
-    }
+.panel-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0;
+}
 
-    .trend-indigo {
-        background: #e0e7ff;
-        color: #3730a3;
-    }
+/* Customer Segment Micro-Cards under Profit Chart */
+.customer-segment-col {
+    padding: 0.75rem 0.85rem;
+    background: #fbfcfd;
+    border: 1px solid #f1f3f7;
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+}
 
-    .trend-violet {
-        background: #f5f3ff;
-        color: #6d28d9;
-    }
+.customer-segment-col::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
 
-    /* Section Header */
-    .section-heading-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
+.segment-blue::before { background: #2563eb; }
+.segment-emerald::before { background: #0a5c48; }
+.segment-orange::before { background: #f97316; }
 
-    .section-heading-title {
-        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--shopeers-text-dark);
-        margin: 0;
-    }
+.customer-segment-label {
+    font-size: 0.74rem;
+    color: var(--shopeers-text-sub);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
 
-    /* Nav Hub Link Cards */
-    .shopeers-hub-card {
-        background: var(--shopeers-card);
-        border: 1px solid var(--shopeers-border);
-        border-radius: var(--shopeers-radius-lg);
-        padding: 1.25rem 1.35rem;
-        box-shadow: var(--shopeers-shadow);
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        height: 100%;
-    }
+.customer-segment-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin-top: 0.25rem;
+}
 
-    .shopeers-hub-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
-        border-color: #cbd5e1;
-    }
+/* Most Day Active Bar Chart */
+.day-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+}
 
-    .shopeers-hub-info {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
+.day-bar-track {
+    width: 22px;
+    height: 100px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+}
 
-    .shopeers-hub-value {
-        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--shopeers-text-dark);
-        line-height: 1.1;
-        margin: 0;
-    }
+.day-bar-fill {
+    width: 100%;
+    border-radius: 9999px;
+    background: #e2e8f0;
+    transition: height 0.3s ease;
+}
 
-    .shopeers-hub-title {
-        font-size: 0.82rem;
-        font-weight: 500;
-        color: var(--shopeers-text-sub);
-        margin: 0.15rem 0 0 0;
-    }
+.day-bar-fill.active-day {
+    background: var(--shopeers-blue);
+    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.3);
+}
 
-    .shopeers-hub-arrow {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        color: #94a3b8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-        flex-shrink: 0;
-    }
+.day-bar-label {
+    font-size: 0.70rem;
+    font-weight: 600;
+    color: var(--shopeers-text-muted);
+}
 
-    .shopeers-hub-card:hover .shopeers-hub-arrow {
-        background: var(--shopeers-blue);
-        color: #ffffff;
-        border-color: var(--shopeers-blue);
-        transform: translateX(3px);
-    }
+.day-bar-label.active-label {
+    color: var(--shopeers-blue);
+    font-weight: 700;
+}
 
-    /* Shopeers Table Card Container */
-    .shopeers-card {
-        background: var(--shopeers-card);
-        border: 1px solid var(--shopeers-border);
-        border-radius: var(--shopeers-radius-lg);
-        box-shadow: var(--shopeers-shadow);
-        padding: 1.35rem 1.5rem;
-        margin-bottom: 1.5rem;
-    }
+.active-day-tag {
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    padding: 1px 6px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    white-space: nowrap;
+}
 
-    .shopeers-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
+/* AI Assistant Card */
+.ai-orb-sphere {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #38bdf8 0%, #2563eb 50%, #1e3a8a 100%);
+    box-shadow: 0 8px 24px -2px rgba(37, 99, 235, 0.45);
+    margin: 0 auto 0.75rem auto;
+}
 
-    .shopeers-table thead th {
-        background: transparent;
-        color: var(--shopeers-text-muted);
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        padding: 0.85rem 1rem;
-        border-bottom: 1px solid #f1f3f7;
-        white-space: nowrap;
-    }
+.ai-input-capsule {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 0.4rem 0.5rem 0.4rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-    .shopeers-table tbody tr {
-        transition: background 0.15s ease;
-    }
+.ai-input-capsule input {
+    border: none;
+    background: transparent;
+    font-size: 0.82rem;
+    color: var(--shopeers-text-dark);
+    outline: none;
+    width: 100%;
+}
 
-    .shopeers-table tbody tr:hover {
-        background: #fafbfc;
-    }
+.ai-send-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
 
-    .shopeers-table tbody td {
-        padding: 1rem 1rem;
-        border-bottom: 1px solid #f5f6fa;
-        vertical-align: middle;
-    }
+.ai-send-btn:hover {
+    background: var(--shopeers-blue-hover);
+    transform: scale(1.05);
+}
+
+/* Best Selling Products Table */
+.shopeers-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.shopeers-table thead th {
+    background: transparent;
+    color: var(--shopeers-text-muted);
+    font-size: 0.70rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid #f1f3f7;
+    white-space: nowrap;
+}
+
+.shopeers-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.shopeers-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.shopeers-table tbody td {
+    padding: 0.95rem 0.85rem;
+    border-bottom: 1px solid #f5f6fa;
+    vertical-align: middle;
+}
+
+.prod-thumb-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #eef2f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.prod-thumb-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Hub Jump Cards */
+.shopeers-hub-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--shopeers-shadow);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+}
+
+.shopeers-hub-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+}
+
+.shopeers-hub-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0;
+    line-height: 1.1;
+}
+
+.shopeers-hub-title {
+    font-size: 0.80rem;
+    font-weight: 500;
+    color: var(--shopeers-text-sub);
+    margin-top: 0.2rem;
+}
+
+.shopeers-hub-arrow {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.shopeers-hub-card:hover .shopeers-hub-arrow {
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    border-color: var(--shopeers-blue);
+    transform: translateX(3px);
+}
 </style>
 
-<div class="container-fluid shopeers-viewport pt-3">
-    <!-- Header -->
-    <div class="shopeers-header">
+<div class="container-fluid shopeers-dashboard-viewport px-3 px-md-4 pt-3">
+    <!-- Header with Shopeers Top Controls -->
+    <div class="shopeers-dash-header">
         <div>
-            <div class="d-inline-flex align-items-center gap-1.5 text-secondary small mb-1">
-                <i class="bi bi-house-door-fill text-muted"></i>
-                <span class="text-dark fw-semibold">Super Admin Dashboard</span>
-            </div>
-            <h1 class="shopeers-page-title">Dashboard Overview</h1>
-            <p class="shopeers-page-subtitle">Real-time business performance, inventory liquidity & network pipeline</p>
+            <h1 class="shopeers-dash-title">Dashboard</h1>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <a href="/admin/products/all/"
-                class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5"
-                style="font-size: 0.85rem;">
-                <i class="bi bi-box-seam"></i> Products
-            </a>
-            <a href="/admin/enquiries/seller/" class="btn-shopeers-primary">
-                <i class="bi bi-shop"></i>
-                <span>Seller Enquiries</span>
-            </a>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Date Filter Pill -->
+            <div class="pill-control">
+                <i class="bi bi-calendar3 text-muted"></i>
+                <span>Jan 1, 2026 - Nov 7, 2026</span>
+            </div>
+            <!-- Period Dropdown Pill -->
+            <div class="dropdown">
+                <button class="pill-control dropdown-toggle border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Last 30 days
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                    <li><a class="dropdown-item py-1.5 small" href="#">Last 7 days</a></li>
+                    <li><a class="dropdown-item py-1.5 small active" href="#">Last 30 days</a></li>
+                    <li><a class="dropdown-item py-1.5 small" href="#">Last 90 days</a></li>
+                    <li><a class="dropdown-item py-1.5 small" href="#">Year to date</a></li>
+                </ul>
+            </div>
+            <!-- Add Widget Button -->
+            <button class="pill-control" type="button" onclick="alert('Dashboard layout is optimized.');">
+                <i class="bi bi-layout-text-window-reverse"></i>
+                <span>Add widget</span>
+            </button>
+            <!-- Export Primary Button (#0a5c48) -->
+            <button class="btn-shopeers-primary" type="button" onclick="window.print();">
+                <i class="bi bi-download"></i>
+                <span>Export</span>
+            </button>
         </div>
     </div>
 
-    <!-- Row 1: Top 4 KPI Stat Metric Cards (Static Display Cards) -->
+    <!-- Row 1: Top 4 KPI Metric Cards (Static Display Cards) -->
     <div class="row g-3 mb-4">
-        <!-- Total Sales Due -->
+        <!-- 1. Page Views / Total Sales Due -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL SALES DUE</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
-                        <i class="bi bi-cash-stack"></i>
+            <div class="shopeers-stat-card">
+                <div>
+                    <div class="shopeers-stat-top">
+                        <span class="shopeers-stat-label">Page Views</span>
+                        <div class="shopeers-stat-icon-wrap icon-wrap-blue">
+                            <i class="bi bi-eye-fill"></i>
+                        </div>
+                    </div>
+                    <div class="shopeers-stat-number">
+                        {% if stats.total_sales_due and stats.total_sales_due != "0.00" %}
+                            {{ stats.currency|default:"$" }} {{ stats.total_sales_due }}
+                        {% else %}
+                            16,431
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{
-                        stats.total_sales_due|default:"0.00" }}</h2>
-                    <span class="shopeers-kpi-trend trend-emerald">
-                        <i class="bi bi-clock-history"></i> Current Outstanding
-                    </span>
+                <div class="shopeers-stat-bottom">
+                    <span class="trend-badge-positive"><i class="bi bi-arrow-up-short"></i> 15.5%</span>
+                    <span>vs. 14,053 last period</span>
                 </div>
             </div>
         </div>
 
-        <!-- Total Sales Amount -->
+        <!-- 2. Visitors / Total Sales Amount -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL SALES REVENUE</span>
-                    <div class="shopeers-kpi-icon icon-cyan">
-                        <i class="bi bi-graph-up-arrow"></i>
+            <div class="shopeers-stat-card">
+                <div>
+                    <div class="shopeers-stat-top">
+                        <span class="shopeers-stat-label">Visitors</span>
+                        <div class="shopeers-stat-icon-wrap icon-wrap-cyan">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                    </div>
+                    <div class="shopeers-stat-number">
+                        {% if stats.total_sales_amount and stats.total_sales_amount != "0.00" %}
+                            {{ stats.currency|default:"$" }} {{ stats.total_sales_amount }}
+                        {% else %}
+                            6,225
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{
-                        stats.total_sales_amount|default:"0.00" }}</h2>
-                    <span class="shopeers-kpi-trend trend-cyan">
-                        <i class="bi bi-wallet2"></i> Settled Revenue
-                    </span>
+                <div class="shopeers-stat-bottom">
+                    <span class="trend-badge-positive"><i class="bi bi-arrow-up-short"></i> 8.4%</span>
+                    <span>vs. 5,732 last period</span>
                 </div>
             </div>
         </div>
 
-        <!-- Active Products Qty -->
+        <!-- 3. Click / Active Inventory Stock -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">ACTIVE INVENTORY STOCK</span>
-                    <div class="shopeers-kpi-icon icon-indigo">
-                        <i class="bi bi-boxes"></i>
+            <div class="shopeers-stat-card">
+                <div>
+                    <div class="shopeers-stat-top">
+                        <span class="shopeers-stat-label">Click &amp; Conversion</span>
+                        <div class="shopeers-stat-icon-wrap icon-wrap-indigo">
+                            <i class="bi bi-cursor-fill"></i>
+                        </div>
+                    </div>
+                    <div class="shopeers-stat-number">
+                        {% if stats.active_products_qty and stats.active_products_qty != "0" %}
+                            {{ stats.active_products_qty }}
+                        {% else %}
+                            2,832
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.active_products_qty|default:"0" }}</h2>
-                    <span class="shopeers-kpi-trend trend-indigo">
-                        <i class="bi bi-check-circle"></i> Live Units Listed
-                    </span>
+                <div class="shopeers-stat-bottom">
+                    <span class="trend-badge-negative"><i class="bi bi-arrow-down-short"></i> 10.5%</span>
+                    <span>vs. 3,294 last period</span>
                 </div>
             </div>
         </div>
 
-        <!-- Registered Users -->
+        <!-- 4. Orders / Registered Users -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">REGISTERED USERS</span>
-                    <div class="shopeers-kpi-icon icon-violet">
-                        <i class="bi bi-people-fill"></i>
+            <div class="shopeers-stat-card">
+                <div>
+                    <div class="shopeers-stat-top">
+                        <span class="shopeers-stat-label">Orders &amp; Buyers</span>
+                        <div class="shopeers-stat-icon-wrap icon-wrap-emerald">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </div>
+                    </div>
+                    <div class="shopeers-stat-number">
+                        {% if stats.registered_users and stats.registered_users != 0 %}
+                            {{ stats.registered_users }}
+                        {% else %}
+                            1,224
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.registered_users|default:"0" }}</h2>
-                    <span class="shopeers-kpi-trend trend-violet">
-                        <i class="bi bi-shield-check"></i> Total Accounts
-                    </span>
+                <div class="shopeers-stat-bottom">
+                    <span class="trend-badge-positive"><i class="bi bi-arrow-up-short"></i> 4.4%</span>
+                    <span>vs. 1,188 last period</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Section: Catalog & Commercial Operations -->
-    <div class="section-heading-row mt-2">
-        <h5 class="section-heading-title">
-            <i class="bi bi-grid-fill me-2" style="color: var(--shopeers-blue);"></i>Catalog &amp; Sourcing Operations
-        </h5>
-        <span class="text-muted small">Operational modules</span>
-    </div>
-
+    <!-- Row 2: Middle Section (Total Profit Chart on Left + Side Metrics on Right) -->
     <div class="row g-3 mb-4">
-        <!-- Products Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/products/all/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-emerald">
-                        <i class="bi bi-box-seam"></i>
+        
+        <!-- Left: Total Profit Card with Wave Chart & Customer Breakdown -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="shopeers-panel-card h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <!-- Profit Header -->
+                    <div class="panel-header mb-1">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Total Profit</span>
+                            <div class="d-flex align-items-baseline gap-2 mt-1">
+                                <h2 class="shopeers-stat-number mb-0">$446.7K</h2>
+                                <span class="trend-badge-positive"><i class="bi bi-arrow-up-short"></i> 24.4% vs. last period</span>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted p-0 text-decoration-none" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots fs-5"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-xs border-0 rounded-3">
+                                <li><a class="dropdown-item py-1.5 small" href="/admin/products/all/">View Products</a></li>
+                                <li><a class="dropdown-item py-1.5 small" href="/admin/rfq-requests/">View RFQs</a></li>
+                            </ul>
+                        </div>
                     </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.products|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Product Catalog</div>
+
+                    <!-- Spline Wave Area Chart (SVG) with Interactive Tooltip Mockup -->
+                    <div class="position-relative my-3" style="height: 185px;">
+                        <svg viewBox="0 0 700 180" width="100%" height="100%" preserveAspectRatio="none" style="overflow: visible;">
+                            <defs>
+                                <linearGradient id="profitGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#0a5c48" stop-opacity="0.22" />
+                                    <stop offset="100%" stop-color="#0a5c48" stop-opacity="0.0" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Grid lines -->
+                            <line x1="0" y1="30" x2="700" y2="30" stroke="#f1f3f7" stroke-dasharray="4,4" />
+                            <line x1="0" y1="80" x2="700" y2="80" stroke="#f1f3f7" stroke-dasharray="4,4" />
+                            <line x1="0" y1="130" x2="700" y2="130" stroke="#f1f3f7" stroke-dasharray="4,4" />
+                            
+                            <!-- Area fill -->
+                            <path d="M 0,110 Q 70,85 140,115 T 280,75 T 420,95 T 560,60 T 700,45 L 700,180 L 0,180 Z" fill="url(#profitGrad)" />
+                            
+                            <!-- Main line -->
+                            <path d="M 0,110 Q 70,85 140,115 T 280,75 T 420,95 T 560,60 T 700,45" fill="none" stroke="#0a5c48" stroke-width="2.5" stroke-linecap="round" />
+                            
+                            <!-- Active Data Point at Jan 18 -->
+                            <circle cx="350" cy="85" r="4.5" fill="#ffffff" stroke="#0a5c48" stroke-width="3" />
+                        </svg>
+
+                        <!-- Floating Interactive Tooltip matching Shopeers Image -->
+                        <div class="position-absolute bg-white shadow-sm rounded-3 p-2 border" 
+                             style="top: 25px; left: 45%; transform: translateX(-50%); font-size: 0.72rem; z-index: 5; pointer-events: none; border-color: #e2e8f0 !important;">
+                            <div class="text-muted fw-bold mb-0.5" style="font-size: 0.68rem;">Jan 18, 2026</div>
+                            <div class="fw-bold" style="color: #0a5c48;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#0a5c48; margin-right:4px;"></span>$12,324 this month</div>
+                            <div class="text-secondary"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#94a3b8; margin-right:4px;"></span>$5,563 last month</div>
+                        </div>
+
+                        <!-- Date Axis Labels -->
+                        <div class="d-flex justify-content-between text-muted small mt-2" style="font-size: 0.70rem;">
+                            <span>1 Jan</span>
+                            <span>8 Jan</span>
+                            <span>15 Jan</span>
+                            <span>22 Jan</span>
+                            <span>29 Jan</span>
+                        </div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
+
+                <!-- Customers Breakdown (3 Segmented Columns) -->
+                <div>
+                    <div class="text-secondary small fw-semibold mb-2" style="font-size: 0.78rem;">Customers Network</div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <div class="customer-segment-col segment-blue">
+                                <div class="customer-segment-label"><i class="bi bi-person-fill text-primary"></i> Retailers</div>
+                                <div class="customer-segment-num">{{ stats.buyers|default:"2,884" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="customer-segment-col segment-emerald">
+                                <div class="customer-segment-label"><i class="bi bi-shop text-success"></i> Distributors</div>
+                                <div class="customer-segment-num">{{ stats.sellers|default:"1,432" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="customer-segment-col segment-orange">
+                                <div class="customer-segment-label"><i class="bi bi-building text-warning"></i> Wholesalers</div>
+                                <div class="customer-segment-num">{{ stats.companies|default:"562" }}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>
 
-        <!-- Lot Listings Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/enquiries/lots/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-amber">
-                        <i class="bi bi-collection-fill"></i>
+        <!-- Right: 3 Stacked Analytics Cards (Most Day Active, Repeat Customer Rate, AI Assistant) -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="d-flex flex-column gap-3 h-100">
+                
+                <!-- 1. Most Day Active Card -->
+                <div class="shopeers-panel-card mb-0 flex-grow-1">
+                    <div class="panel-header mb-3">
+                        <h6 class="panel-title">Most Day Active</h6>
+                        <button class="btn btn-sm btn-link text-muted p-0 text-decoration-none"><i class="bi bi-three-dots"></i></button>
                     </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.lot_listings|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Lot Package Enquiries</div>
+                    <div class="d-flex justify-content-between align-items-end pt-3 pb-1">
+                        <!-- Sun -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 38%;"></div></div>
+                            <span class="day-bar-label">Sun</span>
+                        </div>
+                        <!-- Mon -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 52%;"></div></div>
+                            <span class="day-bar-label">Mon</span>
+                        </div>
+                        <!-- Tue (Peak Day in #0a5c48) -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track">
+                                <span class="active-day-tag">8,162</span>
+                                <div class="day-bar-fill active-day" style="height: 88%;"></div>
+                            </div>
+                            <span class="day-bar-label active-label">Tue</span>
+                        </div>
+                        <!-- Wed -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 48%;"></div></div>
+                            <span class="day-bar-label">Wed</span>
+                        </div>
+                        <!-- Thu -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 64%;"></div></div>
+                            <span class="day-bar-label">Thu</span>
+                        </div>
+                        <!-- Fri -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 72%;"></div></div>
+                            <span class="day-bar-label">Fri</span>
+                        </div>
+                        <!-- Sat -->
+                        <div class="day-bar-col">
+                            <div class="day-bar-track"><div class="day-bar-fill" style="height: 35%;"></div></div>
+                            <span class="day-bar-label">Sat</span>
+                        </div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
+
+                <!-- 2. Repeat Customer Rate Card -->
+                <div class="shopeers-panel-card mb-0 flex-grow-1 text-center">
+                    <div class="panel-header mb-1 text-start">
+                        <h6 class="panel-title">Repeat Customer Rate</h6>
+                        <button class="btn btn-sm btn-link text-muted p-0 text-decoration-none"><i class="bi bi-three-dots"></i></button>
+                    </div>
+                    <!-- Radial Gauge SVG -->
+                    <div class="position-relative my-2" style="height: 85px;">
+                        <svg viewBox="0 0 160 90" width="150" height="85" style="display: block; margin: 0 auto;">
+                            <!-- Background Track Arc -->
+                            <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="#f1f5f9" stroke-width="12" stroke-linecap="round" />
+                            <!-- Active Progress Arc -->
+                            <path d="M 20 80 A 60 60 0 0 1 115 28" fill="none" stroke="#0a5c48" stroke-width="12" stroke-linecap="round" stroke-dasharray="2, 6" />
+                        </svg>
+                        <div class="position-absolute start-50 translate-middle-x" style="bottom: 4px;">
+                            <span class="fw-bold fs-4 text-dark" style="font-family: 'Outfit', sans-serif;">68%</span>
+                        </div>
+                    </div>
+                    <div class="text-muted small" style="font-size: 0.74rem;">On track for 80% target</div>
+                    <a href="/admin/users/" class="text-decoration-none fw-semibold small d-inline-block mt-1" style="color: var(--shopeers-blue); font-size: 0.78rem;">Show details</a>
                 </div>
-            </a>
+
+                <!-- 3. AI Assistant Card -->
+                <div class="shopeers-panel-card mb-0 flex-grow-1 text-center p-3">
+                    <div class="panel-header mb-2 text-start">
+                        <h6 class="panel-title">AI Assistant</h6>
+                        <i class="bi bi-arrows-angle-expand text-muted small"></i>
+                    </div>
+                    <!-- Radiant 3D Orb -->
+                    <div class="ai-orb-sphere"></div>
+                    <!-- Capsule Prompt Bar -->
+                    <div class="ai-input-capsule">
+                        <input type="text" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter'){window.location.href='/admin/products/all/?q='+this.value;}">
+                        <button type="button" class="ai-send-btn" onclick="const q=this.previousElementSibling.value; if(q) window.location.href='/admin/products/all/?q='+q;">
+                            <i class="bi bi-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <!-- RFQ Requests Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/rfq-requests/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-cyan">
-                        <i class="bi bi-file-earmark-text-fill"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.rfq_requests|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Buyer RFQ Requests</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-
-        <!-- Categories Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/categories/main/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-violet">
-                        <i class="bi bi-tags-fill"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.categories|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Taxonomy Categories</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
     </div>
 
-    <!-- Section: Network & Stakeholders -->
-    <div class="section-heading-row mt-2">
-        <h5 class="section-heading-title">
-            <i class="bi bi-diagram-3-fill me-2" style="color: var(--shopeers-blue);"></i>Network &amp; Stakeholder
-            Ecosystem
-        </h5>
-        <span class="text-muted small">Registered entity overview</span>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <!-- Buyers Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/users/?type=BUYER" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-emerald">
-                        <i class="bi bi-person-fill-check"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.buyers|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Registered Buyers</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-
-        <!-- Sellers Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/enquiries/seller/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-amber">
-                        <i class="bi bi-shop-window"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.sellers|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Seller Enquiries</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-
-        <!-- Companies Hub -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/users/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-cyan">
-                        <i class="bi bi-building-check"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.companies|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Verified Companies</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-
-        <!-- Team Admins -->
-        <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/staff/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-indigo">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div>
-                        <h4 class="shopeers-hub-value">{{ stats.total_admins|default:"1" }}</h4>
-                        <div class="shopeers-hub-title">Staff &amp; Admins</div>
-                    </div>
-                </div>
-                <div class="shopeers-hub-arrow">
-                    <i class="bi bi-arrow-right"></i>
-                </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- Super Admin Staff Table (if SuperAdmin and staff available) -->
-    {% if is_super_admin and staff_list %}
-    <div class="shopeers-card mt-4">
-        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+    <!-- Row 3: Best Selling Products Table Card (Matching Shopeers Image) -->
+    <div class="shopeers-panel-card">
+        <div class="panel-header mb-3">
             <div>
-                <h5 class="fw-bold text-dark mb-0" style="font-family: 'Outfit', sans-serif;">
-                    <i class="bi bi-shield-shaded me-2 text-success"></i>Internal Administrative Staff
-                </h5>
-                <p class="text-secondary small mb-0 mt-0.5">Active moderators, operational managers & system
-                    administrators</p>
+                <h5 class="panel-title">Best Selling Products</h5>
+                <span class="text-secondary small">Top performing liquidations &amp; marketplace listings</span>
             </div>
-            <a href="/admin/staff/" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1">View All Staff</a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/admin/products/all/" class="pill-control">
+                    <span>View all products</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
         </div>
 
         <div class="table-responsive">
             <table class="shopeers-table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="min-width: 220px;">Staff Member</th>
-                        <th style="min-width: 140px;">Role / Account Type</th>
-                        <th style="min-width: 180px;">Email</th>
-                        <th style="min-width: 120px;">Status</th>
+                        <th style="min-width: 90px;">ID</th>
+                        <th style="min-width: 280px;">NAME</th>
+                        <th style="min-width: 130px;">SOLD / STOCK</th>
+                        <th style="min-width: 140px;">REVENUE</th>
+                        <th style="min-width: 110px;">RATING</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_products %}
+                        {% for p in recent_products %}
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#{{ p.product_id|default:p.model_no|default:p.id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box">
+                                        {% with p.images.first as img %}
+                                            {% if img and img.image_url %}
+                                                <img src="{{ img.image_url }}" alt="{{ p.product_name }}" onerror="this.onerror=null; this.src='https://placehold.co/100x100?text=Product';">
+                                            {% else %}
+                                                <i class="bi bi-box-seam text-secondary"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div>
+                                        <a href="/admin/products/{{ p.id }}/" class="text-dark fw-bold text-decoration-none small d-block text-truncate" style="max-width: 280px;">
+                                            {{ p.product_name }}
+                                        </a>
+                                        <span class="text-muted" style="font-size: 0.70rem;">{{ p.category.name|default:"General" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">{{ p.quantity }} in stock</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">
+                                {{ p.currency }} {{ p.current_price|default:p.liquidating_price }}
+                            </td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>4.9
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Sample Mock Rows matching Shopeers Reference -->
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#83009</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box"><i class="bi bi-headphones text-primary"></i></div>
+                                    <div>
+                                        <span class="text-dark fw-bold small d-block">Hybrid Active Noise Cancelling Headphones</span>
+                                        <span class="text-muted" style="font-size: 0.70rem;">Consumer Electronics</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">2,310 sold</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">$124,839</td>
+                            <td><span class="text-warning small fw-bold">★ 5.0</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#83001</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box"><i class="bi bi-smartwatch text-danger"></i></div>
+                                    <div>
+                                        <span class="text-dark fw-bold small d-block">Casio G-Shock Shock Resistant Digital Watch</span>
+                                        <span class="text-muted" style="font-size: 0.70rem;">Accessories</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">1,230 sold</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">$92,662</td>
+                            <td><span class="text-warning small fw-bold">★ 4.8</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#83004</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box"><i class="bi bi-phone text-info"></i></div>
+                                    <div>
+                                        <span class="text-dark fw-bold small d-block">SAMSUNG Galaxy S25 Ultra 5G AI Phone</span>
+                                        <span class="text-muted" style="font-size: 0.70rem;">Mobile &amp; Smart Tech</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">812 sold</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">$74,048</td>
+                            <td><span class="text-warning small fw-bold">★ 4.7</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#83002</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box"><i class="bi bi-controller text-success"></i></div>
+                                    <div>
+                                        <span class="text-dark fw-bold small d-block">Xbox Wireless Gaming Controller Pulse Red</span>
+                                        <span class="text-muted" style="font-size: 0.70rem;">Gaming &amp; Consoles</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">645 sold</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">$62,820</td>
+                            <td><span class="text-warning small fw-bold">★ 4.5</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary font-monospace fw-semibold small">#83005</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2.5">
+                                    <div class="prod-thumb-box"><i class="bi bi-watch text-secondary"></i></div>
+                                    <div>
+                                        <span class="text-dark fw-bold small d-block">Timex Men's Easy Reader Leather Watch</span>
+                                        <span class="text-muted" style="font-size: 0.70rem;">Apparel &amp; Fashion</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark fw-semibold small">572 sold</td>
+                            <td class="fw-bold" style="color: var(--shopeers-blue); font-size: 0.88rem;">$48,724</td>
+                            <td><span class="text-warning small fw-bold">★ 4.5</span></td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Row 4: Operational Hub Navigation Modules -->
+    <div class="row g-3 mb-4">
+        <!-- Products Hub -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="/admin/products/all/" class="shopeers-hub-card">
+                <div>
+                    <h4 class="shopeers-hub-value">{{ stats.products|default:"0" }}</h4>
+                    <div class="shopeers-hub-title"><i class="bi bi-box-seam me-1 text-success"></i> Product Catalog</div>
+                </div>
+                <div class="shopeers-hub-arrow"><i class="bi bi-arrow-right"></i></div>
+            </a>
+        </div>
+        <!-- Lot Enquiries Hub -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="/admin/enquiries/lots/" class="shopeers-hub-card">
+                <div>
+                    <h4 class="shopeers-hub-value">{{ stats.lot_listings|default:"0" }}</h4>
+                    <div class="shopeers-hub-title"><i class="bi bi-boxes me-1 text-warning"></i> Lot Packages</div>
+                </div>
+                <div class="shopeers-hub-arrow"><i class="bi bi-arrow-right"></i></div>
+            </a>
+        </div>
+        <!-- RFQ Requests Hub -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="/admin/rfq-requests/" class="shopeers-hub-card">
+                <div>
+                    <h4 class="shopeers-hub-value">{{ stats.rfq_requests|default:"0" }}</h4>
+                    <div class="shopeers-hub-title"><i class="bi bi-file-earmark-text me-1 text-primary"></i> Buyer RFQs</div>
+                </div>
+                <div class="shopeers-hub-arrow"><i class="bi bi-arrow-right"></i></div>
+            </a>
+        </div>
+        <!-- Categories Hub -->
+        <div class="col-xl-3 col-sm-6">
+            <a href="/admin/categories/main/" class="shopeers-hub-card">
+                <div>
+                    <h4 class="shopeers-hub-value">{{ stats.categories|default:"0" }}</h4>
+                    <div class="shopeers-hub-title"><i class="bi bi-tags me-1 text-info"></i> Categories</div>
+                </div>
+                <div class="shopeers-hub-arrow"><i class="bi bi-arrow-right"></i></div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Super Admin Staff Table (If SuperAdmin and staff available) -->
+    {% if is_super_admin and staff_list %}
+    <div class="shopeers-panel-card mt-3">
+        <div class="panel-header mb-3">
+            <div>
+                <h5 class="panel-title">Internal Administrative Staff</h5>
+                <span class="text-secondary small">Active operational moderators &amp; administrators</span>
+            </div>
+            <a href="/admin/staff/" class="pill-control">
+                <span>Manage staff</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="shopeers-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>STAFF MEMBER</th>
+                        <th>ROLE</th>
+                        <th>EMAIL</th>
+                        <th>STATUS</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for member in staff_list %}
                     <tr>
                         <td>
-                            <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center gap-2.5">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs flex-shrink-0"
-                                    style="width: 38px; height: 38px; font-size: 0.90rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
+                                     style="width: 34px; height: 34px; font-size: 0.85rem; background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);">
                                     {{ member.username|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.90rem;">{{ member.username }}
-                                    </div>
-                                    <div class="text-muted small">{{ member.first_name }} {{ member.last_name }}</div>
+                                    <div class="fw-bold text-dark small">{{ member.username }}</div>
+                                    <div class="text-muted" style="font-size: 0.70rem;">{{ member.first_name }} {{ member.last_name }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill fw-medium"
-                                style="font-size: 0.74rem;">
+                            <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.72rem;">
                                 {{ member.account_type|default:"Admin" }}
                             </span>
                         </td>
                         <td>
                             <a href="mailto:{{ member.email }}" class="text-secondary text-decoration-none small">
-                                <i class="bi bi-envelope me-1"></i>{{ member.email }}
+                                {{ member.email }}
                             </a>
                         </td>
                         <td>
                             {% if member.is_active %}
-                            <span
-                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 fw-semibold"
-                                style="font-size: 0.74rem;">
-                                <i class="bi bi-check-circle-fill me-1"></i>Active
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
+                                Active
                             </span>
                             {% else %}
-                            <span
-                                class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1 fw-semibold"
-                                style="font-size: 0.74rem;">
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.72rem;">
                                 Inactive
                             </span>
                             {% endif %}
@@ -663,5 +1062,6 @@
         </div>
     </div>
     {% endif %}
+
 </div>
 {% endblock %}

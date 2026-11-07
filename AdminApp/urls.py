@@ -88,6 +88,7 @@ from .views import (
     price_control_rollback_api,
     toggle_maintenance_mode_api,
     popup_view,
+    email_template_preview_raw,
     admin_auctions_view,
     admin_auction_create_view,
     admin_auction_detail_view,
@@ -128,6 +129,9 @@ urlpatterns = [
     path("vendor-index/", adminIndex, name="adminIndex"),
     path("excel-test/", excel_test_view, name="excel_test_view"),
     path("popup/", popup_view, name="popup_view"),
+    path("popup/preview/<str:template_key>/", email_template_preview_raw, name="popup_email_preview_raw"),
+    path("email-templates/", popup_view, name="email_templates_view"),
+    path("email-templates/preview/<str:template_key>/", email_template_preview_raw, name="email_template_preview_raw"),
 
     # Content Manager: Pages
     path("content/pages/", content_pages_view, name="content_pages_view"),

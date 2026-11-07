@@ -667,12 +667,20 @@ def adminDashBoard(request):
 
     pending_admins_display = pending_admins if is_super else 0
 
+    recent_products = []
+    try:
+        from .models import Product
+        recent_products = list(Product.objects.select_related("category").prefetch_related("images").order_by("-id")[:5])
+    except Exception as e:
+        logger.debug("Failed to fetch recent products for dashboard: %s", e)
+
     context = {
         "admin": admin_user,
         "is_super_admin": is_super,
         "staff_list": staff_list,
         "pending_admins_count": pending_admins_display,
         "stats": stats,
+        "recent_products": recent_products,
     }
 
 
@@ -7774,9 +7782,234 @@ def toggle_maintenance_mode_api(request):
     })
 
 
+# ==============================================================================
+# EMAIL TEMPLATES CATALOG & SHOWCASE VIEW (TRANSFORMED FROM POPUP)
+# ==============================================================================
+
+EMAIL_TEMPLATES_CATALOG = [
+    {
+        "id": "surplus-insider-001",
+        "name": "The Surplus Insider (Issue 001)",
+        "category": "newsletter",
+        "category_label": "Marketing & Newsletter",
+        "badge_color": "emerald",
+        "subject": "The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)",
+        "recipient": "Subscribers & Registered Partners",
+        "description": "Monthly executive market briefing spotlighting active liquidation inventory, hidden holding costs, industry updates, and ageing stock tips.",
+        "template_path": "emails/surplus_insider_newsletter.html",
+        "featured": True,
+    },
+    {
+        "id": "product-submitted",
+        "name": "Seller Product Submitted",
+        "category": "products",
+        "category_label": "Seller Product Listings",
+        "badge_color": "blue",
+        "subject": "Your Product Submission Has Been Received - Surplus Market",
+        "recipient": "Seller / Vendor",
+        "description": "Instant acknowledgement sent to seller when a new single product liquidation listing is submitted for editorial review.",
+        "template_path": "FinalTemplates/partials/email_partials/email_product_submitted.html",
+        "featured": False,
+    },
+    {
+        "id": "product-approved",
+        "name": "Seller Product Approved",
+        "category": "products",
+        "category_label": "Seller Product Listings",
+        "badge_color": "emerald",
+        "subject": "Great News! Your Listing is Live on Surplus Market",
+        "recipient": "Seller / Vendor",
+        "description": "Celebratory notification sent when an admin approves a seller product listing to go live on the public catalog.",
+        "template_path": "FinalTemplates/partials/email_partials/email_product_approved.html",
+        "featured": False,
+    },
+    {
+        "id": "product-correction",
+        "name": "Seller Product Correction Requested",
+        "category": "products",
+        "category_label": "Seller Product Listings",
+        "badge_color": "amber",
+        "subject": "Action Required: Update Details for Your Product Listing",
+        "recipient": "Seller / Vendor",
+        "description": "Sent when an admin requests clarifications, additional images, or specs before listing approval.",
+        "template_path": "FinalTemplates/partials/email_partials/email_product_correction.html",
+        "featured": False,
+    },
+    {
+        "id": "product-declined",
+        "name": "Seller Product Declined",
+        "category": "products",
+        "category_label": "Seller Product Listings",
+        "badge_color": "rose",
+        "subject": "Update on Your Product Submission - Surplus Market",
+        "recipient": "Seller / Vendor",
+        "description": "Polite notification sent when a submitted product does not meet marketplace liquidation compliance criteria.",
+        "template_path": "FinalTemplates/partials/email_partials/email_product_declined.html",
+        "featured": False,
+    },
+    {
+        "id": "lot-submitted",
+        "name": "Lot Batch Submitted",
+        "category": "lots",
+        "category_label": "Bulk Lot Packages",
+        "badge_color": "blue",
+        "subject": "Lot Package Submission Received - Surplus Market",
+        "recipient": "Seller / Consignor",
+        "description": "Confirmation sent when a seller submits a bulk wholesale lot or liquidation batch.",
+        "template_path": "FinalTemplates/partials/email_partials/email_lot_submitted.html",
+        "featured": False,
+    },
+    {
+        "id": "lot-approved",
+        "name": "Lot Batch Approved",
+        "category": "lots",
+        "category_label": "Bulk Lot Packages",
+        "badge_color": "emerald",
+        "subject": "Lot Package Approved & Live on Surplus Market",
+        "recipient": "Seller / Consignor",
+        "description": "Notification sent when a high-value lot package is verified and released for buyer bidding and acquisition.",
+        "template_path": "FinalTemplates/partials/email_partials/email_lot_approved.html",
+        "featured": False,
+    },
+    {
+        "id": "lot-correction",
+        "name": "Lot Package Correction",
+        "category": "lots",
+        "category_label": "Bulk Lot Packages",
+        "badge_color": "amber",
+        "subject": "Action Required: Revision Needed for Lot Listing",
+        "recipient": "Seller / Consignor",
+        "description": "Sent when lot inventory spreadsheet or pallet manifests need updates or re-verification.",
+        "template_path": "FinalTemplates/partials/email_partials/email_lot_correction.html",
+        "featured": False,
+    },
+    {
+        "id": "lot-declined",
+        "name": "Lot Package Declined",
+        "category": "lots",
+        "category_label": "Bulk Lot Packages",
+        "badge_color": "rose",
+        "subject": "Update on Your Lot Package Submission",
+        "recipient": "Seller / Consignor",
+        "description": "Notice informing seller that the lot package could not be accepted for listing.",
+        "template_path": "FinalTemplates/partials/email_partials/email_lot_declined.html",
+        "featured": False,
+    },
+    {
+        "id": "rfq-buyer-confirmation",
+        "name": "Buyer RFQ Confirmation",
+        "category": "rfq",
+        "category_label": "Buyer RFQs & Sourcing",
+        "badge_color": "cyan",
+        "subject": "We Received Your Sourcing RFQ - Surplus Market",
+        "recipient": "Prospective Buyer",
+        "description": "Immediate confirmation sent to verified buyers after submitting a Request for Quotation.",
+        "template_path": "FinalTemplates/partials/email_partials/email_rfq_buyer_confirmation.html",
+        "featured": False,
+    },
+    {
+        "id": "rfq-admin-alert",
+        "name": "Buyer RFQ Admin Alert",
+        "category": "rfq",
+        "category_label": "Buyer RFQs & Sourcing",
+        "badge_color": "indigo",
+        "subject": "Urgent: New Buyer RFQ Received on Surplus Market",
+        "recipient": "Procurement Operations Admin",
+        "description": "Internal dispatch notifying the sourcing desk of incoming buyer procurement demands.",
+        "template_path": "FinalTemplates/partials/email_partials/email_rfq_admin_alert.html",
+        "featured": False,
+    },
+    {
+        "id": "contact-us-confirmation",
+        "name": "Contact Us User Confirmation",
+        "category": "general",
+        "category_label": "General & Partnerships",
+        "badge_color": "blue",
+        "subject": "Thank You for Contacting Surplus Market",
+        "recipient": "General Enquirer",
+        "description": "Polite autoreply confirming receipt of client or visitor contact message.",
+        "template_path": "FinalTemplates/partials/email_partials/email_contact_us_user_confirmation.html",
+        "featured": False,
+    },
+    {
+        "id": "partnership-confirmation",
+        "name": "Partnership Proposal Confirmation",
+        "category": "general",
+        "category_label": "General & Partnerships",
+        "badge_color": "violet",
+        "subject": "Partnership Proposal Received - Surplus Market",
+        "recipient": "Strategic Partner Applicant",
+        "description": "Acknowledgment sent to referral networks, GCC logistics partners, and commercial collaborators.",
+        "template_path": "FinalTemplates/partials/email_partials/email_partnership_user_confirmation.html",
+        "featured": False,
+    },
+    {
+        "id": "email-otp",
+        "name": "Account Security OTP",
+        "category": "auth",
+        "category_label": "Auth & Security",
+        "badge_color": "indigo",
+        "subject": "Your Surplus Market Verification Code",
+        "recipient": "User / Admin",
+        "description": "Time-sensitive six-digit one-time password for multi-factor login and verification.",
+        "template_path": "FinalTemplates/partials/email_partials/email_otp.html",
+        "featured": False,
+    },
+    {
+        "id": "email-reset-yes",
+        "name": "Password Reset Success",
+        "category": "auth",
+        "category_label": "Auth & Security",
+        "badge_color": "emerald",
+        "subject": "Your Password Has Been Successfully Reset",
+        "recipient": "User Account",
+        "description": "Security confirmation informing the user that their account credentials were updated.",
+        "template_path": "FinalTemplates/partials/email_partials/email_reset_yes.html",
+        "featured": False,
+    },
+    {
+        "id": "email-signup-yes",
+        "name": "Welcome & Account Activation",
+        "category": "auth",
+        "category_label": "Auth & Security",
+        "badge_color": "emerald",
+        "subject": "Welcome to Surplus Market - Account Activated",
+        "recipient": "New Registered Member",
+        "description": "Onboarding welcome message outlining marketplace features and buying/selling capabilities.",
+        "template_path": "FinalTemplates/partials/email_partials/email_signup_yes.html",
+        "featured": False,
+    },
+    {
+        "id": "vendor-compliance-incomplete",
+        "name": "Vendor Product Incomplete Alert",
+        "category": "vendor",
+        "category_label": "Vendor Lifecycle",
+        "badge_color": "amber",
+        "subject": "Action Needed: Complete Your Listing Details",
+        "recipient": "Vendor / Merchant",
+        "description": "Automated prompt reminding vendor to complete required technical specifications or inventory counts.",
+        "template_path": "FinalTemplates/partials/email_partials/email_vendor_product_info_incomplete.html",
+        "featured": False,
+    },
+    {
+        "id": "vendor-profile-reminder",
+        "name": "Vendor Profile Completion Reminder",
+        "category": "vendor",
+        "category_label": "Vendor Lifecycle",
+        "badge_color": "blue",
+        "subject": "Reminder: Finish Your Vendor Verification on Surplus Market",
+        "recipient": "Onboarding Vendor",
+        "description": "Lifecycle reminder to complete company documentation, tax details, and warehouse addresses.",
+        "template_path": "FinalTemplates/partials/email_partials/email_vendor_profile_completion_reminder.html",
+        "featured": False,
+    },
+]
+
+
 def popup_view(request):
     """
-    Renders and manages Popup Notification settings for the Admin Portal.
+    Renders the Email Templates Design Showcase & Gallery (accessible via /admin/popup/ and /admin/email-templates/),
+    while retaining popup notification setting management.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -7810,12 +8043,80 @@ def popup_view(request):
         messages.success(request, f"Pop Up configuration saved successfully! Re-trigger delay set to {popup_setting.delay_minutes} minute(s).")
         return redirect("popup_view")
 
+    # Counts by category
+    counts = {
+        "total": len(EMAIL_TEMPLATES_CATALOG),
+        "newsletter": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "newsletter"]),
+        "products": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "products"]),
+        "lots": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "lots"]),
+        "rfq": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "rfq"]),
+        "auth": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "auth"]),
+        "general": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "general"]),
+        "vendor": len([t for t in EMAIL_TEMPLATES_CATALOG if t["category"] == "vendor"]),
+    }
+
+    featured = next((t for t in EMAIL_TEMPLATES_CATALOG if t.get("featured")), EMAIL_TEMPLATES_CATALOG[0])
+
     context = {
         "admin": admin_user,
         "is_super_admin": admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com",
         "popup": popup_setting,
+        "email_templates": EMAIL_TEMPLATES_CATALOG,
+        "featured_template": featured,
+        "counts": counts,
+        "page_title": "Email Templates Gallery",
     }
     return render(request, "popup_settings.html", context)
+
+
+def email_template_preview_raw(request, template_key):
+    """
+    Renders raw HTML of any email template with realistic sample data for iframe live previews.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    item = next((t for t in EMAIL_TEMPLATES_CATALOG if t["id"] == template_key), None)
+    if not item:
+        from django.http import HttpResponseNotFound
+        return HttpResponseNotFound("Email template not found.")
+
+    mock_context = {
+        "user_name": "Tariq Mansoor",
+        "first_name": "Tariq",
+        "last_name": "Mansoor",
+        "email": "tariq@example.com",
+        "seller_name": "Ahmed Ali",
+        "buyer_name": "Fatima Al-Mansoor",
+        "product_name": "Schneider Electric 3-Phase Industrial Breakers 400A",
+        "product_id": "PRO-00310",
+        "lot_name": "Commercial HVAC Air Handlers & Compressors Lot",
+        "lot_id": "LOT-00088",
+        "rfq_id": "RFQ-2026-092",
+        "price": "14,800",
+        "currency": "USD",
+        "quantity": "120 Units",
+        "correction_reason": "Please upload high-resolution images of the serial number nameplates and provide warehouse storage location verification.",
+        "rejection_reason": "Listing does not include verified certificate of conformity required for industrial liquidations.",
+        "otp_code": "729401",
+        "otp": "729401",
+        "reset_link": "https://surplusmarket.com/reset-password/?token=demo_token_123",
+        "verification_link": "https://surplusmarket.com/verify/?token=demo_token_123",
+        "company_name": "Gulf Liquidation Partners WLL",
+        "subject": item["subject"],
+        "date": "Nov 07, 2026",
+    }
+
+    from django.template.loader import render_to_string
+    from django.http import HttpResponse
+
+    try:
+        html = render_to_string(item["template_path"], mock_context)
+        return HttpResponse(html, content_type="text/html; charset=utf-8")
+    except Exception as e:
+        logger.exception("Failed to render email preview for %s: %s", template_key, e)
+        return HttpResponse(f"<div style='padding:20px; font-family:sans-serif;'><h4>Failed to render template</h4><p>{e}</p></div>", status=500)
 
 
 # ==============================================================================

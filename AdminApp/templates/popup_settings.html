@@ -1,140 +1,771 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Pop Up Settings - Surplus Admin{% endblock %}
+{% block title %}Email Templates Gallery - Surplus Admin{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-2" style="max-width: 960px; margin: 0 auto;">
-    <!-- Flash Messages -->
+<style>
+/* ==========================================================================
+   SHOPEERS-INSPIRED EMAIL TEMPLATES SHOWCASE DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-blue: #0a5c48;
+    --shopeers-blue-hover: #084c3b;
+    --shopeers-blue-light: #e8f5f1;
+    --shopeers-radius-lg: 22px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
+
+.shopeers-email-viewport {
+    padding-bottom: 2.5rem;
+}
+
+/* Header & Controls */
+.shopeers-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.shopeers-page-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.shopeers-page-subtitle {
+    font-size: 0.85rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.2rem 0 0 0;
+}
+
+/* Static Display KPI Cards */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--shopeers-shadow);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: default;
+}
+
+.shopeers-kpi-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.shopeers-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald { background: #ecfdf5; color: #0a5c48; }
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-amber { background: #fffbeb; color: #d97706; }
+.icon-violet { background: #f5f3ff; color: #7c3aed; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0.35rem 0 0.1rem 0;
+}
+
+/* Segmented Filter Pills */
+.nav-pills-segmented {
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    gap: 3px;
+    border: none;
+    flex-wrap: wrap;
+}
+
+.nav-pills-segmented .nav-link {
+    border: none;
+    background: transparent;
+    color: var(--shopeers-text-sub);
+    font-size: 0.80rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: var(--shopeers-radius-pill);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-pills-segmented .nav-link:hover {
+    color: var(--shopeers-text-dark);
+}
+
+.nav-pills-segmented .nav-link.active {
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+}
+
+/* Search Capsule */
+.search-capsule {
+    position: relative;
+    width: 270px;
+}
+
+.search-capsule i.bi-search {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--shopeers-text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.search-capsule input {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.52rem 1rem 0.52rem 2.45rem;
+    font-size: 0.84rem;
+    width: 100%;
+    color: var(--shopeers-text-dark);
+    transition: all 0.2s ease;
+}
+
+.search-capsule input:focus {
+    border-color: var(--shopeers-blue);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+    outline: none;
+}
+
+/* Featured Newsletter Spotlight Card */
+.featured-spotlight-card {
+    background: linear-gradient(135deg, #0c1d2e 0%, #132b43 100%);
+    border-radius: var(--shopeers-radius-lg);
+    color: #ffffff;
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px -4px rgba(12, 29, 46, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.featured-spotlight-card::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(226, 91, 30, 0.3) 0%, rgba(226, 91, 30, 0) 70%);
+    pointer-events: none;
+}
+
+/* Template Card Item */
+.email-template-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.35rem 1.4rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.email-template-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+}
+
+.category-badge-pill {
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.badge-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.badge-cyan { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
+.badge-indigo { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+.badge-violet { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+.recipient-tag {
+    font-size: 0.72rem;
+    color: var(--shopeers-text-sub);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.email-card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0.6rem 0 0.35rem 0;
+    line-height: 1.3;
+}
+
+.email-card-subject {
+    font-size: 0.78rem;
+    color: var(--shopeers-text-sub);
+    background: #f8fafc;
+    border: 1px solid #eef2f6;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-bottom: 0.65rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.35;
+}
+
+.email-card-desc {
+    font-size: 0.80rem;
+    color: #64748b;
+    line-height: 1.45;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.btn-preview-primary {
+    background: var(--shopeers-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 1.1rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-preview-primary:hover {
+    background: var(--shopeers-blue-hover);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.btn-preview-outline {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.85rem;
+    font-size: 0.80rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-preview-outline:hover {
+    background: #f8fafc;
+    color: var(--shopeers-text-dark);
+    border-color: #cbd5e1;
+}
+
+/* Device Switcher in Preview Modal */
+.device-toggle-group {
+    background: #f1f5f9;
+    border-radius: var(--shopeers-radius-pill);
+    padding: 3px;
+    display: inline-flex;
+    gap: 2px;
+}
+
+.device-toggle-btn {
+    border: none;
+    background: transparent;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: var(--shopeers-radius-pill);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.device-toggle-btn.active {
+    background: #ffffff;
+    color: var(--shopeers-blue);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+</style>
+
+<div class="container-fluid shopeers-email-viewport px-3 px-md-4 pt-3">
+    
+    <!-- Flash Messages (from popup configuration saves) -->
     {% if messages %}
     <div class="mb-3">
         {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
-            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-4 shadow-xs p-3 bg-white border" role="alert">
+            <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i> {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Page Header Bar -->
-    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+    <!-- Header & Breadcrumbs -->
+    <div class="shopeers-header">
         <div>
-            <h1 class="header-title d-flex align-items-center gap-2">
-                <i class="bi bi-camera text-primary"></i> Pop Up Notifications Manager
-            </h1>
-            <p class="header-subtitle">Configure announcement popup message, re-trigger intervals, and banner media.</p>
+            <div class="custom-breadcrumb mb-1">
+                <ol class="breadcrumb-list">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active"><span>Email Templates Gallery</span></li>
+                </ol>
+            </div>
+            <h1 class="shopeers-page-title">Email Templates Gallery</h1>
+            <p class="shopeers-page-subtitle">Inspect, test, and preview all transactional and marketing email template designs</p>
         </div>
-        <div>
-            <span class="badge {% if popup.is_active %}bg-success-subtle text-success border-success-subtle{% else %}bg-secondary-subtle text-secondary border-secondary-subtle{% endif %} border rounded-pill px-3 py-1.5 fs-6">
-                {% if popup.is_active %}● Pop Up Active (Delay: {{ popup.delay_minutes }}m){% else %}○ Pop Up Disabled{% endif %}
-            </span>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5" onclick="window.location.reload();" style="font-size: 0.84rem;">
+                <i class="bi bi-arrow-clockwise"></i> Refresh Catalog
+            </button>
+            <a href="/admin/popup/preview/surplus-insider-001/" target="_blank" class="btn-preview-primary">
+                <i class="bi bi-send-check"></i>
+                <span>Open Newsletter</span>
+            </a>
         </div>
     </div>
 
-    <!-- Main Settings Form Card -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4 mb-4">
-        <form method="POST" action="/admin/popup/" enctype="multipart/form-data" id="popupSettingsForm">
-            {% csrf_token %}
-
-            <!-- Enable Toggle -->
-            <div class="form-check form-switch bg-light p-3 rounded-3 mb-4 d-flex align-items-center justify-content-between">
-                <label class="form-check-label fw-bold text-dark mb-0 ps-2" for="popupActiveSwitch">
-                    <i class="bi bi-power me-1 text-primary"></i> Enable Automatic Admin Pop Up
-                </label>
-                <input class="form-check-input fs-4 m-0" type="checkbox" role="switch" id="popupActiveSwitch" name="is_active" {% if popup.is_active %}checked{% endif %}>
-            </div>
-
-            <div class="row g-3">
-                <!-- Popup Title -->
-                <div class="col-md-8">
-                    <label for="popupTitleInput" class="form-label fw-semibold text-dark small">Popup Title <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control form-control-lg fs-6 fw-bold" id="popupTitleInput" name="title" value="{{ popup.title|default:'Important Admin Notification' }}" required>
-                </div>
-
-                <!-- Popup Type -->
-                <div class="col-md-4">
-                    <label for="popupTypeSelect" class="form-label fw-semibold text-dark small">Popup Visual Style</label>
-                    <select class="form-select form-select-lg fs-6" id="popupTypeSelect" name="popup_type">
-                        <option value="info" {% if popup.popup_type == 'info' %}selected{% endif %}>Info / Announcement</option>
-                        <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning Notice</option>
-                        <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Alert</option>
-                        <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success Banner</option>
-                        <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Special Promotion</option>
-                    </select>
-                </div>
-
-                <!-- Re-trigger Delay (Minutes) -->
-                <div class="col-md-6">
-                    <label for="delayMinutesInput" class="form-label fw-semibold text-dark small">
-                        Re-trigger Interval Delay (Minutes) <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                        <input type="number" min="1" max="1440" class="form-control font-monospace fw-bold" id="delayMinutesInput" name="delay_minutes" value="{{ popup.delay_minutes|default:'1' }}" required>
-                        <span class="input-group-text bg-light text-muted fw-semibold">Minute(s)</span>
-                    </div>
-                    <div class="form-text small text-muted">
-                        <i class="bi bi-clock-history me-1"></i> When closed by an admin, the popup will trigger <strong>again after this specified duration (e.g. 1 minute)</strong>.
+    <!-- Top 4 KPI Metric Cards (Static Display) -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">TOTAL TEMPLATES</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-envelope-paper-heart-fill"></i>
                     </div>
                 </div>
-
-                <!-- Button Label -->
-                <div class="col-md-6">
-                    <label for="buttonLabelInput" class="form-label fw-semibold text-dark small">CTA Action Button Label</label>
-                    <input type="text" class="form-control" id="buttonLabelInput" name="button_label" placeholder="e.g. Got It / View Enquiries" value="{{ popup.button_label|default:'Got It' }}">
-                </div>
-
-                <!-- Button Link -->
-                <div class="col-md-12">
-                    <label for="buttonLinkInput" class="form-label fw-semibold text-dark small">CTA Action Button URL / Path (Optional)</label>
-                    <input type="text" class="form-control font-monospace" id="buttonLinkInput" name="button_link" placeholder="e.g. /admin/enquiries/seller/ or https://example.com" value="{{ popup.button_link|default:'' }}">
-                </div>
-
-                <!-- Popup Message -->
-                <div class="col-12">
-                    <label for="popupMessageInput" class="form-label fw-semibold text-dark small">Popup Message Content <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="popupMessageInput" name="message" rows="4" placeholder="Enter announcement text or notice..." required>{{ popup.message|default:'' }}</textarea>
-                </div>
-
-                <!-- Banner Image -->
-                <div class="col-12">
-                    <label for="bannerImageInput" class="form-label fw-semibold text-dark small">Banner Media Image (Optional)</label>
-                    <input type="file" class="form-control" id="bannerImageInput" name="banner_image" accept="image/*">
-                    {% if popup.banner_image %}
-                    <div class="mt-2 p-2 bg-light rounded border text-center" style="max-width: 240px;">
-                        <img src="{{ popup.banner_image.url }}" class="img-fluid rounded shadow-sm" style="max-height: 120px; object-fit: cover;">
-                    </div>
-                    {% endif %}
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ counts.total }}</h2>
+                    <span class="text-secondary small">Live Design Templates</span>
                 </div>
             </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">MARKETING &amp; NEWS</span>
+                    <div class="shopeers-kpi-icon icon-blue">
+                        <i class="bi bi-newspaper"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-primary">{{ counts.newsletter }}</h2>
+                    <span class="text-secondary small">The Surplus Insider (Issue 001)</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">LISTING TRIGGERS</span>
+                    <div class="shopeers-kpi-icon icon-amber">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-warning">{{ counts.products|add:counts.lots }}</h2>
+                    <span class="text-secondary small">Products &amp; Lot Enquiries</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">WORKFLOW &amp; AUTH</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number text-purple">{{ counts.rfq|add:counts.auth|add:counts.general }}</h2>
+                    <span class="text-secondary small">Buyer RFQs, OTP &amp; Security</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Buttons -->
-            <div class="d-flex align-items-center gap-3 mt-4 pt-3 border-top">
-                <button type="submit" class="btn btn-primary px-4 py-2.5 rounded-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
-                    <i class="bi bi-check2-circle"></i> Save Pop Up Configuration
+    <!-- Featured Spotlight Card: The Surplus Insider (Issue 001) -->
+    <div class="featured-spotlight-card">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                        <i class="bi bi-star-fill me-1"></i>FEATURED TEMPLATE
+                    </span>
+                    <span class="text-light opacity-75 small">Issue 001 · November 2026</span>
+                </div>
+                <h2 class="fw-bold mb-2 text-white" style="font-family: 'Outfit', sans-serif; font-size: 1.7rem;">
+                    The Surplus Insider — Executive Briefing
+                </h2>
+                <p class="text-light opacity-80 mb-3" style="font-size: 0.88rem; line-height: 1.55; max-width: 580px;">
+                    Turn Excess Inventory Into Opportunity. Features warehouse inventory spotlights, hidden capital holding cost breakdowns, monthly industry trends, and inventory ageing tips.
+                </p>
+                <div class="d-flex flex-wrap align-items-center gap-2.5">
+                    <button class="btn btn-light fw-bold rounded-pill px-3.5 py-2 text-dark shadow-xs d-inline-flex align-items-center gap-2" 
+                            onclick="openPreviewModal('surplus-insider-001', 'The Surplus Insider (Issue 001)', 'The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)');"
+                            style="font-size: 0.84rem;">
+                        <i class="bi bi-eye-fill text-success"></i>
+                        <span>Live Interactive Preview</span>
+                    </button>
+                    <a href="/admin/popup/preview/surplus-insider-001/" target="_blank" class="btn btn-outline-light rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Open in Full Screen</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 text-center d-none d-lg-block">
+                <!-- Miniature mockup frame -->
+                <div class="bg-white rounded-3 shadow-lg p-2 d-inline-block text-start border" style="width: 280px; transform: rotate(1deg);">
+                    <div class="d-flex align-items-center justify-content-between pb-1.5 border-bottom mb-1 text-muted" style="font-size: 0.65rem;">
+                        <span><i class="bi bi-circle-fill text-danger me-1"></i>The Surplus Insider</span>
+                        <span class="badge bg-light text-dark">640px</span>
+                    </div>
+                    <div class="p-2 text-white rounded-2 mb-2" style="background: #0c1d2e;">
+                        <div class="fw-bold" style="font-size: 0.72rem;">Turn Excess Inventory Into Opportunity.</div>
+                        <div class="opacity-75" style="font-size: 0.60rem;">Monthly briefing on surplus inventory</div>
+                    </div>
+                    <div class="d-flex gap-1.5 align-items-center text-muted" style="font-size: 0.62rem;">
+                        <i class="bi bi-check2-circle text-success"></i> 100% Fully Responsive Design
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs & Capsule Search Row -->
+    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4">
+        <!-- Filter Tabs -->
+        <ul class="nav nav-pills nav-pills-segmented" id="templateFilterTabs">
+            <li class="nav-item">
+                <button class="nav-link active" data-filter="all">All Templates ({{ counts.total }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="newsletter">Newsletter ({{ counts.newsletter }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="products">Products ({{ counts.products }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="lots">Lots ({{ counts.lots }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="rfq">Buyer RFQs ({{ counts.rfq }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="auth">Auth &amp; Security ({{ counts.auth }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="general">General ({{ counts.general }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-filter="vendor">Vendor ({{ counts.vendor }})</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link text-warning fw-bold" data-bs-toggle="collapse" data-bs-target="#popupSettingsCollapse">
+                    <i class="bi bi-gear-fill me-1"></i>Popup Settings
                 </button>
-                <button type="button" class="btn btn-outline-secondary px-4 py-2.5 rounded-3 fw-semibold d-inline-flex align-items-center gap-2" id="triggerPreviewBtn">
-                    <i class="bi bi-eye"></i> Test Popup Preview Now
-                </button>
+            </li>
+        </ul>
+
+        <!-- Live Filter Search Capsule -->
+        <div class="search-capsule">
+            <i class="bi bi-search"></i>
+            <input type="text" id="templateSearchInput" placeholder="Filter email templates...">
+        </div>
+    </div>
+
+    <!-- Collapsible Popup Notification Settings Drawer (Preserves all previous popup settings functionality!) -->
+    <div class="collapse mb-4" id="popupSettingsCollapse">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Global Website Pop Up Configuration</h5>
+                    <span class="text-secondary small">Configure the modal popup message that triggers for visitors &amp; administrators</span>
+                </div>
+                <span class="badge {% if popup.is_active %}bg-success-subtle text-success border-success-subtle{% else %}bg-secondary-subtle text-secondary border-secondary-subtle{% endif %} border rounded-pill px-3 py-1">
+                    {% if popup.is_active %}Active (Delay: {{ popup.delay_minutes }}m){% else %}Disabled{% endif %}
+                </span>
             </div>
-        </form>
+
+            <form method="POST" action="/admin/popup/" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Popup Title</label>
+                        <input type="text" name="title" class="form-control" value="{{ popup.title|default:'Important Admin Notification' }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Visual Style</label>
+                        <select name="popup_type" class="form-select">
+                            <option value="info" {% if popup.popup_type == 'info' %}selected{% endif %}>Info Notice</option>
+                            <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning</option>
+                            <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Alert</option>
+                            <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success</option>
+                            <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Promotion</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Delay Interval (Minutes)</label>
+                        <input type="number" min="1" max="1440" name="delay_minutes" class="form-control" value="{{ popup.delay_minutes|default:'1' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Button Label</label>
+                        <input type="text" name="button_label" class="form-control" value="{{ popup.button_label|default:'Got It' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small">Button URL / Link</label>
+                        <input type="text" name="button_link" class="form-control" value="{{ popup.button_link|default:'' }}" placeholder="/admin/products/all/">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold small">Message</label>
+                        <textarea name="message" class="form-control" rows="3" required>{{ popup.message|default:'' }}</textarea>
+                    </div>
+                    <div class="col-12 d-flex align-items-center justify-content-between pt-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="activeSw" {% if popup.is_active %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold small" for="activeSw">Enable Website Popup Modal</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Save Pop Up Settings</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grid of Email Template Cards -->
+    <div class="row g-3" id="emailTemplatesGrid">
+        {% for tmpl in email_templates %}
+        <div class="col-xl-4 col-md-6 template-card-item" data-category="{{ tmpl.category }}" data-name="{{ tmpl.name|lower }}" data-subject="{{ tmpl.subject|lower }}">
+            <div class="email-template-card">
+                <div>
+                    <!-- Top Category & Recipient Meta -->
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="category-badge-pill badge-{{ tmpl.badge_color }}">
+                            {{ tmpl.category_label }}
+                        </span>
+                        <span class="recipient-tag">
+                            <i class="bi bi-person-circle"></i> {{ tmpl.recipient }}
+                        </span>
+                    </div>
+
+                    <!-- Template Title -->
+                    <h5 class="email-card-title">{{ tmpl.name }}</h5>
+
+                    <!-- Subject Line -->
+                    <div class="email-card-subject" title="{{ tmpl.subject }}">
+                        <i class="bi bi-envelope text-primary flex-shrink-0 mt-0.5"></i>
+                        <span class="text-truncate">{{ tmpl.subject }}</span>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="email-card-desc">{{ tmpl.description }}</p>
+                </div>
+
+                <!-- Action Footer -->
+                <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                    <span class="text-muted font-monospace" style="font-size: 0.68rem;">ID: {{ tmpl.id }}</span>
+                    <div class="d-flex align-items-center gap-1.5">
+                        <a href="/admin/popup/preview/{{ tmpl.id }}/" target="_blank" class="btn-preview-outline" title="Open in raw browser window">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                        <button type="button" class="btn-preview-primary" 
+                                onclick="openPreviewModal('{{ tmpl.id }}', '{{ tmpl.name|escapejs }}', '{{ tmpl.subject|escapejs }}');">
+                            <i class="bi bi-eye"></i>
+                            <span>Preview</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Interactive Live Preview Modal with Desktop/Mobile Responsive Toggle -->
+<div class="modal fade" id="emailPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 1050px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="modal-header border-bottom py-3 px-4 bg-white d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2" id="modalTemplateTitle" style="font-family: 'Outfit', sans-serif;">
+                        Email Template Preview
+                    </h5>
+                    <span class="text-secondary small" id="modalTemplateSubject" style="font-size: 0.76rem;">Subject preview line</span>
+                </div>
+
+                <!-- Device Width Switcher Controls -->
+                <div class="d-flex align-items-center gap-2">
+                    <div class="device-toggle-group">
+                        <button type="button" class="device-toggle-btn active" id="btnDeviceDesktop" onclick="setPreviewDevice('desktop');">
+                            <i class="bi bi-laptop me-1"></i> Desktop (640px)
+                        </button>
+                        <button type="button" class="device-toggle-btn" id="btnDeviceMobile" onclick="setPreviewDevice('mobile');">
+                            <i class="bi bi-phone me-1"></i> Mobile (375px)
+                        </button>
+                        <button type="button" class="device-toggle-btn" id="btnDeviceFull" onclick="setPreviewDevice('full');">
+                            <i class="bi bi-arrows-fullscreen me-1"></i> Full
+                        </button>
+                    </div>
+
+                    <a href="#" target="_blank" id="modalRawExternalLink" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Open raw in tab">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <!-- Modal Body with Live Iframe -->
+            <div class="modal-body p-0" style="background-color: #f1f3f6; min-height: 580px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div id="previewFrameContainer" style="width: 640px; height: 580px; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.08); background:#ffffff;">
+                    <iframe id="emailPreviewFrame" src="about:blank" style="width: 100%; height: 100%; border: none; display: block;"></iframe>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer py-2 px-4 bg-white border-top justify-content-between">
+                <span class="text-muted small" style="font-size: 0.72rem;">
+                    <i class="bi bi-shield-check text-success me-1"></i> Rendered using Surplus Market email engine with live mock attributes.
+                </span>
+                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Close Preview</button>
+            </div>
+
+        </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const triggerPreviewBtn = document.getElementById('triggerPreviewBtn');
-    if (triggerPreviewBtn) {
-        triggerPreviewBtn.addEventListener('click', () => {
-            if (typeof window.showGlobalAdminPopup === 'function') {
-                window.showGlobalAdminPopup(true);
+    let previewModalInstance = null;
+
+    function openPreviewModal(templateId, name, subject) {
+        document.getElementById('modalTemplateTitle').innerHTML = `<i class="bi bi-envelope-paper text-success me-1"></i> ${name}`;
+        document.getElementById('modalTemplateSubject').textContent = `Subject: ${subject}`;
+        
+        const previewUrl = `/admin/popup/preview/${templateId}/`;
+        document.getElementById('modalRawExternalLink').href = previewUrl;
+        document.getElementById('emailPreviewFrame').src = previewUrl;
+
+        // Reset to desktop view
+        setPreviewDevice('desktop');
+
+        const modalEl = document.getElementById('emailPreviewModal');
+        if (!previewModalInstance) {
+            previewModalInstance = new bootstrap.Modal(modalEl);
+        }
+        previewModalInstance.show();
+    }
+
+    function setPreviewDevice(mode) {
+        const container = document.getElementById('previewFrameContainer');
+        const btnDesktop = document.getElementById('btnDeviceDesktop');
+        const btnMobile = document.getElementById('btnDeviceMobile');
+        const btnFull = document.getElementById('btnDeviceFull');
+
+        [btnDesktop, btnMobile, btnFull].forEach(b => b.classList.remove('active'));
+
+        if (mode === 'mobile') {
+            container.style.width = '375px';
+            btnMobile.classList.add('active');
+        } else if (mode === 'full') {
+            container.style.width = '100%';
+            btnFull.classList.add('active');
+        } else {
+            container.style.width = '640px';
+            btnDesktop.classList.add('active');
+        }
+    }
+
+    // Filter by Category Tabs
+    document.querySelectorAll('#templateFilterTabs .nav-link[data-filter]').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('#templateFilterTabs .nav-link').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.getAttribute('data-filter');
+            const items = document.querySelectorAll('.template-card-item');
+
+            items.forEach(card => {
+                const cat = card.getAttribute('data-category');
+                if (filter === 'all' || cat === filter) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Live Search Filter
+    document.getElementById('templateSearchInput')?.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.template-card-item');
+
+        items.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const subj = card.getAttribute('data-subject');
+            if (name.includes(query) || subj.includes(query)) {
+                card.style.display = '';
             } else {
-                alert('Popup component initialized on template base.');
+                card.style.display = 'none';
             }
         });
-    }
-});
+    });
 </script>
 {% endblock %}
