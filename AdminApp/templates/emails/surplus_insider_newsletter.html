@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="x-apple-disable-message-reformatting">
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-    <title>The Surplus Insider - Issue 001</title>
+    <title>The Surplus Insider · Issue 001</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -17,7 +17,7 @@
     </noscript>
     <style>
         table { border-collapse: collapse; }
-        * { font-family: 'Segoe UI', Arial, sans-serif !important; }
+        * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif !important; }
     </style>
     <![endif]-->
     <style>
@@ -27,14 +27,10 @@
             padding: 0 !important;
             height: 100% !important;
             width: 100% !important;
-            background-color: #f1f3f6;
+            background-color: #f0f2f5;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        div[style*="margin: 16px 0"] {
-            margin: 0 !important;
         }
 
         table, td {
@@ -46,7 +42,6 @@
         table {
             border-spacing: 0 !important;
             border-collapse: collapse !important;
-            table-layout: fixed !important;
             margin: 0 auto !important;
         }
 
@@ -66,129 +61,84 @@
             color: inherit;
         }
 
-        /* Fluid Column Styles */
-        .column {
-            display: inline-block;
-            vertical-align: top;
-            width: 100%;
-        }
-
-        /* Responsive Mobile Breakpoint (620px) */
-        @media only screen and (max-width: 620px) {
+        /* Mobile specific adjustments (under 480px) */
+        @media only screen and (max-width: 480px) {
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;
                 border-radius: 0 !important;
             }
-            .mobile-padding {
+            .mobile-pad {
                 padding-left: 20px !important;
                 padding-right: 20px !important;
             }
-            .mobile-header-padding {
-                padding: 26px 20px 32px 20px !important;
-            }
-            .mobile-hero-title {
+            .hero-title {
                 font-size: 26px !important;
                 line-height: 32px !important;
             }
-            .mobile-hero-sub {
+            .hero-sub {
                 font-size: 13px !important;
                 line-height: 19px !important;
             }
-            /* Stacking 2-col to 1-col */
-            .col-feature-left {
-                max-width: 100% !important;
-                width: 100% !important;
+            .sec1-left {
                 display: block !important;
+                width: 100% !important;
                 padding-right: 0 !important;
-                margin-bottom: 20px !important;
-            }
-            .col-feature-right {
-                max-width: 100% !important;
-                width: 100% !important;
-                display: block !important;
-            }
-            .feature-img {
-                width: 100% !important;
-                max-width: 100% !important;
-                height: auto !important;
-            }
-            /* Full width mobile buttons */
-            .mobile-full-btn {
-                display: block !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-                text-align: center !important;
-                padding: 12px 16px !important;
-            }
-            .mobile-btn-container {
-                width: 100% !important;
-                display: block !important;
-            }
-            /* Article intelligence responsive breakdown */
-            .desktop-read-insight {
-                display: none !important;
-            }
-            .mobile-read-insight {
-                display: block !important;
-                margin-top: 10px !important;
-            }
-            /* Bottom CTA Card Stacking */
-            .cta-col-left {
-                width: 100% !important;
-                display: block !important;
                 margin-bottom: 16px !important;
             }
-            .cta-col-right {
-                width: 100% !important;
+            .sec1-right {
                 display: block !important;
+                width: 100% !important;
+                text-align: center !important;
+            }
+            .sec1-img {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .cta-left {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 14px !important;
+            }
+            .cta-right {
+                display: block !important;
+                width: 100% !important;
                 text-align: left !important;
             }
-            .cta-btn-link {
+            .cta-btn {
                 display: block !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
                 text-align: center !important;
-            }
-            /* Footer mobile layout */
-            .footer-tagline-table {
-                display: block !important;
-            }
-            .footer-line {
-                display: none !important;
             }
         }
     </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f1f3f6; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+<body style="margin: 0; padding: 0; background-color: #f0f2f5; -webkit-font-smoothing: antialiased;">
 
-    <!-- Wrapper Canvas Table -->
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f1f3f6; table-layout: fixed;">
+    <!-- Wrapper Canvas -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f0f2f5; table-layout: fixed;">
         <tr>
-            <td align="center" style="padding: 24px 0 40px 0;">
+            <td align="center" style="padding: 24px 10px 40px 10px;">
 
-                <!-- Email Container (Max 640px) -->
+                <!-- Email Container (640px) -->
                 <!--[if (gte mso 9)|(IE)]>
                 <table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0" width="640">
                 <tr>
                 <td>
                 <![endif]-->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 640px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
                     
                     <!-- ============================================================== -->
-                    <!-- 1. HERO HEADER: Dark Navy & Warehouse Background               -->
+                    <!-- 1. HERO HEADER                                                 -->
                     <!-- ============================================================== -->
                     <tr>
                         <td bgcolor="#0c1d2e" style="background-color: #0c1d2e; padding: 0;">
-                            <!--[if gte mso 9]>
-                            <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width: 640px; height: 320px;">
-                            <v:fill type="frame" src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80" color="#0c1d2e" />
-                            <v:textbox inset="0,0,0,0">
-                            <![endif]-->
-                            <div style="background: linear-gradient(90deg, rgba(12, 29, 46, 0.98) 0%, rgba(12, 29, 46, 0.93) 55%, rgba(12, 29, 46, 0.45) 100%), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80') center right / cover no-repeat;">
-                                <div style="padding: 34px 34px 40px 34px;" class="mobile-header-padding">
+                            <!-- Header background with solid dark left and warehouse racks on the right -->
+                            <div style="background: linear-gradient(90deg, #0c1d2e 0%, #0c1d2e 45%, rgba(12, 29, 46, 0.88) 65%, rgba(12, 29, 46, 0.35) 100%), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80') center right / cover no-repeat;">
+                                <div style="padding: 34px 34px 38px 34px;" class="mobile-pad">
                                     
-                                    <!-- Brand Lockup Row -->
+                                    <!-- Brand Row -->
                                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                         <tr>
                                             <td align="left" valign="middle">
@@ -196,23 +146,23 @@
                                                     <tr>
                                                         <!-- Orange 3-bar slash logo mark -->
                                                         <td valign="middle" style="padding-right: 10px;">
-                                                            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                                                                <path d="M6 8L20 8L16 13L2 13L6 8Z" fill="#e25b1e"/>
-                                                                <path d="M9 15L23 15L19 20L5 20L9 15Z" fill="#e25b1e"/>
-                                                                <path d="M12 22L26 22L22 27L8 27L12 22Z" fill="#e25b1e"/>
+                                                            <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                                                                <path d="M6 7L20 7L16 12L2 12L6 7Z" fill="#e25b1e"/>
+                                                                <path d="M9 14L23 14L19 19L5 19L9 14Z" fill="#e25b1e"/>
+                                                                <path d="M12 21L26 21L22 26L8 26L12 21Z" fill="#e25b1e"/>
                                                             </svg>
                                                         </td>
                                                         <!-- Brand Text -->
-                                                        <td valign="middle" style="padding-right: 16px; line-height: 1.1;">
+                                                        <td valign="middle" style="padding-right: 18px; line-height: 1.15;">
                                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: block;">Surplus</span>
                                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: block;">Market</span>
                                                         </td>
-                                                        <!-- Vertical Divider Line -->
-                                                        <td valign="middle" style="padding-right: 16px; border-left: 1px solid rgba(255, 255, 255, 0.28); height: 32px;">&nbsp;</td>
+                                                        <!-- Thin Vertical Divider Line -->
+                                                        <td valign="middle" style="padding-right: 18px; border-left: 1px solid rgba(255, 255, 255, 0.35); height: 32px;">&nbsp;</td>
                                                         <!-- Newsletter Title & Issue Subtitle -->
                                                         <td valign="middle">
                                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; display: block; line-height: 15px;">THE SURPLUS INSIDER</span>
-                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 600; color: #94a9bf; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin-top: 3px; line-height: 12px;">ISSUE 001 · NOVEMBER 2026</span>
+                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 600; color: #94a9bf; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin-top: 3px; line-height: 12px;">ISSUE 001 &middot; NOVEMBER 2026</span>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -221,17 +171,17 @@
                                     </table>
 
                                     <!-- Headline & Subtitle -->
-                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 34px;">
+                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 32px;">
                                         <tr>
-                                            <td align="left" style="max-width: 440px;">
-                                                <h1 class="mobile-hero-title" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 33px; line-height: 40px; font-weight: 800; color: #ffffff; letter-spacing: -0.8px;">
+                                            <td align="left">
+                                                <h1 class="hero-title" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 33px; line-height: 40px; font-weight: 800; color: #ffffff; letter-spacing: -0.6px;">
                                                     Turn Excess Inventory<br>Into Opportunity.
                                                 </h1>
                                                 
                                                 <!-- Orange Accent Line -->
-                                                <div style="width: 46px; height: 3.5px; background-color: #e25b1e; margin: 15px 0; border-radius: 2px;"></div>
+                                                <div style="width: 44px; height: 3.5px; background-color: #e25b1e; margin: 16px 0; border-radius: 2px;"></div>
                                                 
-                                                <p class="mobile-hero-sub" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 20px; color: #b0c4de; font-weight: 400; max-width: 410px;">
+                                                <p class="hero-sub" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 20px; color: #b8c9dc; font-weight: 400; max-width: 410px;">
                                                     Your monthly briefing on surplus inventory, market opportunities and smarter stock decisions.
                                                 </p>
                                             </td>
@@ -240,75 +190,61 @@
 
                                 </div>
                             </div>
-                            <!--[if gte mso 9]>
-                            </v:textbox>
-                            </v:rect>
-                            <![endif]-->
                         </td>
                     </tr>
 
                     <!-- ============================================================== -->
-                    <!-- 2. SECTION 01: FEATURED OPPORTUNITY (Fluid 2-Column)          -->
+                    <!-- 2. SECTION 01: FEATURED OPPORTUNITY (2-Column Side-by-Side)   -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 34px 34px 28px 34px;" class="mobile-padding">
-                            <!-- Fluid Responsive 2-Column wrapper -->
-                            <div style="font-size: 0; text-align: left;">
-                                <!--[if (gte mso 9)|(IE)]>
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <td style="padding: 34px 34px 30px 34px;" class="mobile-pad">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                <td width="315" valign="middle">
-                                <![endif]-->
-                                <div class="column col-feature-left" style="display: inline-block; width: 100%; max-width: 315px; vertical-align: middle; box-sizing: border-box; padding-right: 18px;">
-                                    
-                                    <!-- Pill Badge -->
-                                    <div style="display: inline-block; background-color: #fef0e7; border-radius: 50px; padding: 4px 12px; margin-bottom: 12px;">
-                                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #c2410c; letter-spacing: 0.2px;">
-                                            01 · Featured opportunity
-                                        </span>
-                                    </div>
+                                    <!-- Left Text & CTA Column -->
+                                    <td valign="middle" class="sec1-left" style="padding-right: 20px;">
+                                        
+                                        <!-- Pill Badge -->
+                                        <div style="display: inline-block; background-color: #fef2ea; border-radius: 50px; padding: 4px 12px; margin-bottom: 12px;">
+                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #c2410c; letter-spacing: 0.2px;">
+                                                01 &middot; Featured opportunity
+                                            </span>
+                                        </div>
 
-                                    <!-- Headline -->
-                                    <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 21px; line-height: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.3px;">
-                                        This month’s inventory spotlight
-                                    </h2>
+                                        <!-- Headline -->
+                                        <h2 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 21px; line-height: 26px; font-weight: 800; color: #0b1a2b; letter-spacing: -0.3px;">
+                                            This month’s inventory spotlight
+                                        </h2>
 
-                                    <!-- Body Description -->
-                                    <p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 19px; color: #475569;">
-                                        Bulk inventory available across selected product categories. Discover quantities, conditions and commercial details.
-                                    </p>
+                                        <!-- Description -->
+                                        <p style="margin: 0 0 18px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 19px; color: #475569;">
+                                            Bulk inventory available across selected product categories. Discover quantities, conditions and commercial details.
+                                        </p>
 
-                                    <!-- CTA Button -->
-                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="mobile-btn-container">
-                                        <tr>
-                                            <td bgcolor="#d8561b" style="border-radius: 6px;">
-                                                <a href="https://surplusmarket.com/inventory" class="mobile-full-btn" style="display: inline-block; padding: 10px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
-                                                    EXPLORE AVAILABLE STOCK &nbsp;&rarr;
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    </table>
+                                        <!-- Button -->
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td bgcolor="#e25b1e" style="border-radius: 6px;">
+                                                    <a href="https://surplusmarket.com/inventory" style="display: inline-block; padding: 11px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                        EXPLORE AVAILABLE STOCK &nbsp;&rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
 
-                                </div>
-                                <!--[if (gte mso 9)|(IE)]>
-                                </td>
-                                <td width="257" valign="middle">
-                                <![endif]-->
-                                <div class="column col-feature-right" style="display: inline-block; width: 100%; max-width: 257px; vertical-align: middle; box-sizing: border-box;">
-                                    <img class="feature-img" src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80" alt="Pallet Inventory Spotlight" width="257" style="width: 100%; max-width: 257px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
-                                </div>
-                                <!--[if (gte mso 9)|(IE)]>
-                                </td>
+                                    </td>
+
+                                    <!-- Right Image Column (Wrapped Pallets in Warehouse) -->
+                                    <td width="248" valign="middle" align="right" class="sec1-right" style="width: 248px;">
+                                        <img class="sec1-img" src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=600&q=80" alt="Warehouse Pallets of Inventory" width="248" style="width: 248px; max-width: 248px; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
+                                    </td>
                                 </tr>
-                                </table>
-                                <![endif]-->
-                            </div>
+                            </table>
                         </td>
                     </tr>
 
                     <!-- Hairline Divider -->
                     <tr>
-                        <td style="padding: 0 34px;" class="mobile-padding">
+                        <td style="padding: 0 34px;" class="mobile-pad">
                             <div style="border-top: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</div>
                         </td>
                     </tr>
@@ -317,29 +253,29 @@
                     <!-- 3. SECTION 02: INVENTORY INTELLIGENCE                          -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 24px 34px 24px 34px;" class="mobile-padding">
+                        <td style="padding: 24px 34px 24px 34px;" class="mobile-pad">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <!-- Left: Orange Isometric Box Icon (54x54) -->
+                                    <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
                                         <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d8561b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                                             </svg>
                                         </div>
                                     </td>
 
-                                    <!-- Middle: Content -->
+                                    <!-- Middle Content -->
                                     <td valign="top">
                                         <!-- Pill Badge -->
-                                        <div style="display: inline-block; background-color: #e6f4fb; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
+                                        <div style="display: inline-block; background-color: #e0f2fe; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 700; color: #0284c7; letter-spacing: 0.2px;">
-                                                02 · Inventory intelligence
+                                                02 &middot; Inventory intelligence
                                             </span>
                                         </div>
 
                                         <!-- Title -->
-                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0f172a;">
+                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0b1a2b;">
                                             Is your inventory generating revenue or consuming capital?
                                         </h3>
 
@@ -347,18 +283,11 @@
                                         <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; line-height: 18px; color: #64748b;">
                                             A short insight into the hidden costs of holding slow-moving stock and what businesses can do about it.
                                         </p>
-
-                                        <!-- Mobile-only Action Link -->
-                                        <div class="mobile-read-insight" style="display: none;">
-                                            <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #d8561b; text-decoration: none; letter-spacing: 0.4px;">
-                                                READ THE INSIGHT &nbsp;&rarr;
-                                            </a>
-                                        </div>
                                     </td>
 
-                                    <!-- Right: Desktop Action Link with Left Border -->
-                                    <td width="115" valign="middle" align="right" class="desktop-read-insight" style="padding-left: 16px; border-left: 1px solid #eef2f6;">
-                                        <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #d8561b; text-decoration: none; letter-spacing: 0.4px; line-height: 15px; display: inline-block; text-align: right;">
+                                    <!-- Right Action Link with Vertical Divider -->
+                                    <td width="115" valign="middle" align="right" style="padding-left: 16px; border-left: 1px solid #e5e7eb;">
+                                        <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; line-height: 15px; display: inline-block; text-align: right;">
                                             READ THE<br>INSIGHT &nbsp;&rarr;
                                         </a>
                                     </td>
@@ -369,7 +298,7 @@
 
                     <!-- Hairline Divider -->
                     <tr>
-                        <td style="padding: 0 34px;" class="mobile-padding">
+                        <td style="padding: 0 34px;" class="mobile-pad">
                             <div style="border-top: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</div>
                         </td>
                     </tr>
@@ -378,13 +307,13 @@
                     <!-- 4. SECTION 03: MARKET WATCH                                    -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 24px 34px 24px 34px;" class="mobile-padding">
+                        <td style="padding: 24px 34px 24px 34px;" class="mobile-pad">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <!-- Left: Orange Trend Chart Icon (54x54) -->
+                                    <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
                                         <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d8561b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <line x1="18" y1="20" x2="18" y2="10"></line>
                                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                                 <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -397,14 +326,14 @@
                                     <!-- Content -->
                                     <td valign="top">
                                         <!-- Pill Badge -->
-                                        <div style="display: inline-block; background-color: #e6f4fb; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
+                                        <div style="display: inline-block; background-color: #e0f2fe; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 700; color: #0284c7; letter-spacing: 0.2px;">
-                                                03 · Market watch
+                                                03 &middot; Market watch
                                             </span>
                                         </div>
 
                                         <!-- Title -->
-                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0f172a;">
+                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0b1a2b;">
                                             What’s changing in the surplus market?
                                         </h3>
 
@@ -420,7 +349,7 @@
 
                     <!-- Hairline Divider -->
                     <tr>
-                        <td style="padding: 0 34px;" class="mobile-padding">
+                        <td style="padding: 0 34px;" class="mobile-pad">
                             <div style="border-top: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</div>
                         </td>
                     </tr>
@@ -429,16 +358,16 @@
                     <!-- 5. SECTION 04: THE INSIDER'S TIP                               -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 24px 34px 28px 34px;" class="mobile-padding">
+                        <td style="padding: 24px 34px 28px 34px;" class="mobile-pad">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <!-- Left: Orange Lightbulb Icon (54x54) -->
+                                    <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
                                         <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d8561b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <path d="M9 18h6"></path>
                                                 <path d="M10 22h4"></path>
-                                                <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path>
+                                                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
                                             </svg>
                                         </div>
                                     </td>
@@ -446,14 +375,14 @@
                                     <!-- Content -->
                                     <td valign="top">
                                         <!-- Pill Badge -->
-                                        <div style="display: inline-block; background-color: #e6f4fb; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
+                                        <div style="display: inline-block; background-color: #e0f2fe; border-radius: 50px; padding: 3px 10px; margin-bottom: 7px;">
                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 700; color: #0284c7; letter-spacing: 0.2px;">
-                                                04 · The insider’s tip
+                                                04 &middot; The insider’s tip
                                             </span>
                                         </div>
 
                                         <!-- Title -->
-                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0f172a;">
+                                        <h3 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; line-height: 22px; font-weight: 800; color: #0b1a2b;">
                                             Inventory tip of the month
                                         </h3>
 
@@ -468,35 +397,38 @@
                     </tr>
 
                     <!-- ============================================================== -->
-                    <!-- 6. CALL-TO-ACTION BANNER (Dark Navy Card, Responsive Stack)    -->
+                    <!-- 6. SECTION 05: BOTTOM CTA BANNER CARD                          -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 6px 34px 28px 34px;" class="mobile-padding">
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#0f2231" style="background-color: #0f2231; border-radius: 12px; overflow: hidden;">
+                        <td style="padding: 6px 34px 28px 34px;" class="mobile-pad">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#112233" style="background-color: #112233; border-radius: 8px;">
                                 <tr>
                                     <td style="padding: 22px 24px;">
-                                        <!-- Responsive Row: stacks on mobile -->
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
-                                                <td valign="middle" class="cta-col-left">
-                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                                <!-- Left Pallet Icon & Headline -->
+                                                <td valign="middle" class="cta-left">
+                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                                                         <tr>
-                                                            <!-- Pallet boxes icon -->
-                                                            <td width="38" valign="middle" style="padding-right: 14px;">
-                                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
-                                                                    <rect x="3" y="10" width="7" height="6" rx="1"/>
-                                                                    <rect x="14" y="10" width="7" height="6" rx="1"/>
-                                                                    <rect x="8" y="4" width="8" height="6" rx="1"/>
-                                                                    <path d="M2 18h20v2H2z"/>
-                                                                    <path d="M5 20v2M12 20v2M19 20v2"/>
+                                                            <td valign="middle" style="padding-right: 16px;">
+                                                                <svg width="36" height="36" viewBox="0 0 40 40" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                                                                    <!-- Pallet base -->
+                                                                    <rect x="4" y="28" width="32" height="4" rx="1"></rect>
+                                                                    <line x1="8" y1="32" x2="8" y2="36"></line>
+                                                                    <line x1="20" y1="32" x2="20" y2="36"></line>
+                                                                    <line x1="32" y1="32" x2="32" y2="36"></line>
+                                                                    <line x1="4" y1="36" x2="36" y2="36"></line>
+                                                                    <!-- Stacked Boxes -->
+                                                                    <rect x="8" y="16" width="11" height="12" rx="1"></rect>
+                                                                    <rect x="21" y="12" width="12" height="16" rx="1"></rect>
+                                                                    <rect x="10" y="6" width="9" height="10" rx="1"></rect>
                                                                 </svg>
                                                             </td>
-                                                            <!-- Text content -->
                                                             <td valign="middle">
-                                                                <h4 style="margin: 0 0 3px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16.5px; line-height: 22px; font-weight: 800; color: #ffffff;">
+                                                                <h4 style="margin: 0 0 3px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px;">
                                                                     Have surplus inventory to move?
                                                                 </h4>
-                                                                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; line-height: 17px; color: #94a3b8;">
+                                                                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #94a9bf;">
                                                                     Let us help you explore the possibilities.
                                                                 </p>
                                                             </td>
@@ -504,13 +436,13 @@
                                                     </table>
                                                 </td>
 
-                                                <!-- Orange Action Button -->
-                                                <td valign="middle" align="right" class="cta-col-right" style="padding-left: 12px;">
-                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-left: auto;">
+                                                <!-- Right CTA Button -->
+                                                <td width="200" valign="middle" align="right" class="cta-right" style="width: 200px;">
+                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 0 0 auto;">
                                                         <tr>
-                                                            <td bgcolor="#d8561b" style="border-radius: 6px;">
-                                                                <a href="https://surplusmarket.com/contact" class="cta-btn-link" style="display: inline-block; padding: 11px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap;">
-                                                                    CONNECT WITH SURPLUS MARKET &nbsp;&rarr;
+                                                            <td bgcolor="#e25b1e" style="border-radius: 6px;">
+                                                                <a href="https://surplusmarket.com/contact" class="cta-btn" style="display: inline-block; padding: 11px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; line-height: 14px; text-align: center;">
+                                                                    CONNECT WITH<br>SURPLUS MARKET &nbsp;&rarr;
                                                                 </a>
                                                             </td>
                                                         </tr>
@@ -524,42 +456,21 @@
                         </td>
                     </tr>
 
+                    <!-- Hairline Divider -->
+                    <tr>
+                        <td style="padding: 0 34px;" class="mobile-pad">
+                            <div style="border-top: 1px solid #e5e7eb; line-height: 0; font-size: 0;">&nbsp;</div>
+                        </td>
+                    </tr>
+
                     <!-- ============================================================== -->
-                    <!-- 7. FOOTER SECTION                                              -->
+                    <!-- 7. FOOTER                                                      -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td align="center" style="padding: 0 34px 34px 34px;" class="mobile-padding">
-                            
-                            <!-- Divider with Centered Tagline -->
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="footer-tagline-table">
-                                <tr>
-                                    <td width="20%" class="footer-line" style="border-bottom: 1px solid #e2e8f0;">&nbsp;</td>
-                                    <td align="center" style="padding: 0 14px; white-space: nowrap;">
-                                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: #1e293b;">
-                                            Surplus Market
-                                        </span>
-                                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 400; color: #64748b;">
-                                            &nbsp;·&nbsp; Where inventory meets opportunity.
-                                        </span>
-                                    </td>
-                                    <td width="20%" class="footer-line" style="border-bottom: 1px solid #e2e8f0;">&nbsp;</td>
-                                </tr>
-                            </table>
-
-                            <!-- Compliance & Preferences Links -->
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 16px;">
-                                <tr>
-                                    <td align="center">
-                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; line-height: 16px; color: #94a3b8;">
-                                            You received this briefing because you are subscribed to Surplus Market insights.<br>
-                                            <a href="https://surplusmarket.com/preferences" style="color: #64748b; text-decoration: underline;">Manage preferences</a> &nbsp;|&nbsp; 
-                                            <a href="https://surplusmarket.com/unsubscribe" style="color: #64748b; text-decoration: underline;">Unsubscribe</a> &nbsp;|&nbsp; 
-                                            <a href="https://surplusmarket.com/privacy" style="color: #64748b; text-decoration: underline;">Privacy Policy</a>
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-
+                        <td style="padding: 20px 34px 28px 34px; text-align: center;" class="mobile-pad">
+                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; color: #64748b; font-weight: 500;">
+                                Surplus Market &nbsp;&middot;&nbsp; Where inventory meets opportunity.
+                            </span>
                         </td>
                     </tr>
 
