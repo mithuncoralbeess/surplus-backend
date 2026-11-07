@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Email Templates Gallery - Surplus Admin{% endblock %}
+{% block title %}Email Templates - Surplus Admin{% endblock %}
 
 {% block content %}
 <style>
 /* ==========================================================================
-   SHOPEERS-INSPIRED EMAIL TEMPLATES SHOWCASE DESIGN SYSTEM
+   SHOPEERS-INSPIRED CLEAN EMAIL TEMPLATES GALLERY
    ========================================================================== */
 
 :root {
@@ -16,21 +16,238 @@
     --shopeers-text-sub: #6b7280;
     --shopeers-text-muted: #9ca3af;
     --shopeers-border: #f1f3f7;
-    --shopeers-blue: #0a5c48;
-    --shopeers-blue-hover: #084c3b;
-    --shopeers-blue-light: #e8f5f1;
-    --shopeers-radius-lg: 22px;
-    --shopeers-radius-md: 14px;
+    --shopeers-border-subtle: #edf0f5;
+    --shopeers-primary: #0a5c48;
+    --shopeers-primary-hover: #084c3b;
+    --shopeers-primary-light: #e8f5f1;
+    --shopeers-radius-lg: 18px;
+    --shopeers-radius-md: 12px;
     --shopeers-radius-pill: 9999px;
     --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
 }
 
-.shopeers-email-viewport {
-    padding-bottom: 2.5rem;
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-border-subtle: #1e293b;
+    --shopeers-primary: #0ea27e;
+    --shopeers-primary-hover: #0a5c48;
+    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
 }
 
-/* Header & Controls */
-.shopeers-header {
+.email-gallery-viewport {
+    background: transparent;
+    padding-bottom: 3rem;
+}
+
+/* Header */
+.gallery-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    padding: 0.3rem 0.85rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    margin-bottom: 0.4rem;
+}
+
+.gallery-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.gallery-count-badge {
+    background: var(--shopeers-primary-light);
+    color: var(--shopeers-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--shopeers-radius-pill);
+    letter-spacing: 0;
+}
+
+.gallery-subtitle {
+    font-size: 0.86rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.25rem 0 0 0;
+}
+
+/* Mode Switcher Pills (Gallery vs Popup Settings) */
+.view-mode-switcher {
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.view-mode-btn {
+    border: none;
+    background: transparent;
+    color: var(--shopeers-text-sub);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.45rem 1.15rem;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.view-mode-btn:hover {
+    color: var(--shopeers-text-dark);
+}
+
+.view-mode-btn.active {
+    background: var(--shopeers-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+}
+
+/* Primary Action Button (#0a5c48) */
+.btn-shopeers-primary {
+    background: var(--shopeers-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.5rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.22);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-primary-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(10, 92, 72, 0.30);
+}
+
+.btn-shopeers-outline {
+    background: #ffffff !important;
+    color: var(--shopeers-text-dark) !important;
+    border: 1px solid var(--shopeers-border) !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.48rem 1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.80rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-shopeers-outline:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: var(--shopeers-text-dark) !important;
+}
+
+/* Hero Spotlight Card - Clean Shopeers Aesthetic */
+.spotlight-card {
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.spotlight-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--shopeers-primary);
+}
+
+.spotlight-badge {
+    background: var(--shopeers-primary-light);
+    color: var(--shopeers-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--shopeers-radius-pill);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.spotlight-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0.5rem 0 0.3rem 0;
+}
+
+.spotlight-desc {
+    color: var(--shopeers-text-sub);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    max-width: 650px;
+}
+
+.spotlight-meta-pill {
+    background: #f8fafc;
+    border: 1px solid var(--shopeers-border-subtle);
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.76rem;
+    color: var(--shopeers-text-sub);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Filter Bar & Capsule Search */
+.filter-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -39,108 +256,53 @@
     margin-bottom: 1.5rem;
 }
 
-.shopeers-page-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    letter-spacing: -0.02em;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.shopeers-page-subtitle {
-    font-size: 0.85rem;
-    color: var(--shopeers-text-sub);
-    margin: 0.2rem 0 0 0;
-}
-
-/* Static Display KPI Cards */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
+.category-tabs-group {
+    background: #ffffff;
     border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    padding: 1.25rem 1.35rem;
-    box-shadow: var(--shopeers-shadow);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    cursor: default;
-}
-
-.shopeers-kpi-label {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-}
-
-.shopeers-kpi-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-
-.icon-emerald { background: #ecfdf5; color: #0a5c48; }
-.icon-blue { background: #eff6ff; color: #2563eb; }
-.icon-amber { background: #fffbeb; color: #d97706; }
-.icon-violet { background: #f5f3ff; color: #7c3aed; }
-
-.shopeers-kpi-number {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.65rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    margin: 0.35rem 0 0.1rem 0;
-}
-
-/* Segmented Filter Pills */
-.nav-pills-segmented {
-    background: #f1f5f9;
     padding: 4px;
     border-radius: var(--shopeers-radius-pill);
     display: inline-flex;
-    gap: 3px;
-    border: none;
+    gap: 4px;
     flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
-.nav-pills-segmented .nav-link {
+.category-tab-btn {
     border: none;
     background: transparent;
     color: var(--shopeers-text-sub);
     font-size: 0.80rem;
     font-weight: 600;
-    padding: 0.4rem 1rem;
+    padding: 0.4rem 0.95rem;
     border-radius: var(--shopeers-radius-pill);
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
-.nav-pills-segmented .nav-link:hover {
+.category-tab-btn:hover {
     color: var(--shopeers-text-dark);
 }
 
-.nav-pills-segmented .nav-link.active {
-    background: var(--shopeers-blue);
+.category-tab-btn.active {
+    background: var(--shopeers-primary);
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+    box-shadow: 0 2px 6px rgba(10, 92, 72, 0.22);
 }
 
-/* Search Capsule */
-.search-capsule {
+.category-tab-btn .tab-count {
+    font-size: 0.70rem;
+    opacity: 0.85;
+}
+
+.search-box {
     position: relative;
-    width: 270px;
+    width: 280px;
 }
 
-.search-capsule i.bi-search {
+.search-box i.bi-search {
     position: absolute;
     left: 1rem;
     top: 50%;
@@ -150,199 +312,195 @@
     pointer-events: none;
 }
 
-.search-capsule input {
+.search-box input {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--shopeers-border);
     border-radius: var(--shopeers-radius-pill);
     padding: 0.52rem 1rem 0.52rem 2.45rem;
     font-size: 0.84rem;
     width: 100%;
     color: var(--shopeers-text-dark);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     transition: all 0.2s ease;
 }
 
-.search-capsule input:focus {
-    border-color: var(--shopeers-blue);
+.search-box input:focus {
+    border-color: var(--shopeers-primary);
     box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
     outline: none;
 }
 
-/* Featured Newsletter Spotlight Card */
-.featured-spotlight-card {
-    background: linear-gradient(135deg, #0c1d2e 0%, #132b43 100%);
-    border-radius: var(--shopeers-radius-lg);
-    color: #ffffff;
-    padding: 1.75rem 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 10px 30px -4px rgba(12, 29, 46, 0.35);
-    position: relative;
-    overflow: hidden;
+/* Template Cards Grid */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.25rem;
 }
 
-.featured-spotlight-card::after {
-    content: '';
-    position: absolute;
-    top: -40px;
-    right: -40px;
-    width: 220px;
-    height: 220px;
-    background: radial-gradient(circle, rgba(226, 91, 30, 0.3) 0%, rgba(226, 91, 30, 0) 70%);
-    pointer-events: none;
-}
-
-/* Template Card Item */
-.email-template-card {
+.tmpl-card {
     background: var(--shopeers-card);
     border: 1px solid var(--shopeers-border);
     border-radius: var(--shopeers-radius-lg);
     box-shadow: var(--shopeers-shadow);
-    padding: 1.35rem 1.4rem;
-    height: 100%;
+    padding: 1.25rem 1.35rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
 }
 
-.email-template-card:hover {
+.tmpl-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--shopeers-shadow-hover);
     border-color: #cbd5e1;
 }
 
-.category-badge-pill {
-    font-size: 0.70rem;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: var(--shopeers-radius-pill);
-    display: inline-flex;
+.tmpl-icon-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
     align-items: center;
-    gap: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
 }
 
-.badge-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-.badge-blue { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.badge-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-.badge-rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
-.badge-cyan { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
-.badge-indigo { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-.badge-violet { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.tmpl-badge-emerald { background: #ecfdf5; color: #0a5c48; }
+.tmpl-badge-cyan    { background: #ecfeff; color: #0891b2; }
+.tmpl-badge-indigo  { background: #e0e7ff; color: #4338ca; }
+.tmpl-badge-violet  { background: #f5f3ff; color: #7c3aed; }
+.tmpl-badge-amber   { background: #fffbeb; color: #d97706; }
+.tmpl-badge-blue    { background: #eff6ff; color: #2563eb; }
 
-.recipient-tag {
+.tmpl-category-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: #f8fafc;
+    color: var(--shopeers-text-sub);
+    border: 1px solid var(--shopeers-border-subtle);
+}
+
+.tmpl-recipient-tag {
     font-size: 0.72rem;
     color: var(--shopeers-text-sub);
     font-weight: 500;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
 }
 
-.email-card-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.05rem;
+.tmpl-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.02rem;
     font-weight: 700;
     color: var(--shopeers-text-dark);
-    margin: 0.6rem 0 0.35rem 0;
-    line-height: 1.3;
+    margin: 0.75rem 0 0.35rem 0;
+    line-height: 1.25;
 }
 
-.email-card-subject {
-    font-size: 0.78rem;
-    color: var(--shopeers-text-sub);
+.tmpl-subject-box {
     background: #f8fafc;
-    border: 1px solid #eef2f6;
-    padding: 5px 10px;
+    border: 1px solid var(--shopeers-border-subtle);
+    padding: 0.45rem 0.75rem;
     border-radius: 8px;
-    margin-bottom: 0.65rem;
+    font-size: 0.76rem;
+    color: var(--shopeers-text-sub);
     display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.35;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.65rem;
 }
 
-.email-card-desc {
+.tmpl-subject-box i {
+    color: var(--shopeers-primary);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.tmpl-desc {
     font-size: 0.80rem;
-    color: #64748b;
+    color: var(--shopeers-text-sub);
     line-height: 1.45;
     margin-bottom: 1rem;
-    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.btn-preview-primary {
-    background: var(--shopeers-blue);
-    color: #ffffff;
-    border: none;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.42rem 1.1rem;
-    font-size: 0.80rem;
-    font-weight: 600;
-    display: inline-flex;
+.tmpl-card-footer {
+    display: flex;
     align-items: center;
-    gap: 5px;
-    transition: all 0.2s ease;
-    text-decoration: none;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--shopeers-border-subtle);
 }
 
-.btn-preview-primary:hover {
-    background: var(--shopeers-blue-hover);
-    color: #ffffff;
-    transform: translateY(-1px);
+.tmpl-id-tag {
+    font-size: 0.68rem;
+    font-family: monospace;
+    color: var(--shopeers-text-muted);
 }
 
-.btn-preview-outline {
+/* Pop-up Settings Section */
+.popup-settings-card {
     background: #ffffff;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.42rem 0.85rem;
-    font-size: 0.80rem;
-    font-weight: 500;
-    display: inline-flex;
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.75rem;
+}
+
+.popup-settings-header {
+    display: flex;
     align-items: center;
-    gap: 4px;
-    transition: all 0.15s ease;
-    text-decoration: none;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--shopeers-border);
+    margin-bottom: 1.5rem;
 }
 
-.btn-preview-outline:hover {
-    background: #f8fafc;
-    color: var(--shopeers-text-dark);
-    border-color: #cbd5e1;
-}
-
-/* Device Switcher in Preview Modal */
-.device-toggle-group {
+/* Modal Responsive Toolbar */
+.device-btn-group {
     background: #f1f5f9;
-    border-radius: var(--shopeers-radius-pill);
     padding: 3px;
+    border-radius: var(--shopeers-radius-pill);
     display: inline-flex;
     gap: 2px;
 }
 
-.device-toggle-btn {
+.device-btn {
     border: none;
     background: transparent;
     padding: 4px 12px;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--shopeers-text-sub);
     border-radius: var(--shopeers-radius-pill);
     cursor: pointer;
     transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
-.device-toggle-btn.active {
+.device-btn.active {
     background: #ffffff;
-    color: var(--shopeers-blue);
+    color: var(--shopeers-primary);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 </style>
 
-<div class="container-fluid shopeers-email-viewport px-3 px-md-4 pt-3">
+<div class="container-fluid email-gallery-viewport px-3 px-md-4 pt-3">
     
-    <!-- Flash Messages (from popup configuration saves) -->
+    <!-- Flash Messages -->
     {% if messages %}
     <div class="mb-3">
         {% for message in messages %}
@@ -354,291 +512,268 @@
     </div>
     {% endif %}
 
-    <!-- Header & Breadcrumbs -->
-    <div class="shopeers-header">
+    <!-- Header -->
+    <div class="gallery-header">
         <div>
-            <div class="custom-breadcrumb mb-1">
-                <ol class="breadcrumb-list">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item active"><span>Email Templates Gallery</span></li>
-                </ol>
+            <div class="breadcrumb-pill">
+                <i class="bi bi-house-door-fill text-muted"></i>
+                <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+                <span class="text-dark">Email Templates</span>
             </div>
-            <h1 class="shopeers-page-title">Email Templates Gallery</h1>
-            <p class="shopeers-page-subtitle">Inspect, test, and preview all transactional and marketing email template designs</p>
+            <h1 class="gallery-title">
+                <span>Email Templates</span>
+                <span class="gallery-count-badge">{{ counts.total }} Designs</span>
+            </h1>
+            <p class="gallery-subtitle">Preview, inspect, and test all transactional notifications and marketing newsletters</p>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5" onclick="window.location.reload();" style="font-size: 0.84rem;">
-                <i class="bi bi-arrow-clockwise"></i> Refresh Catalog
-            </button>
-            <a href="/admin/popup/preview/surplus-insider-001/" target="_blank" class="btn-preview-primary">
-                <i class="bi bi-send-check"></i>
-                <span>Open Newsletter</span>
-            </a>
-        </div>
-    </div>
 
-    <!-- Top 4 KPI Metric Cards (Static Display) -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL TEMPLATES</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
-                        <i class="bi bi-envelope-paper-heart-fill"></i>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="shopeers-kpi-number">{{ counts.total }}</h2>
-                    <span class="text-secondary small">Live Design Templates</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">MARKETING &amp; NEWS</span>
-                    <div class="shopeers-kpi-icon icon-blue">
-                        <i class="bi bi-newspaper"></i>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="shopeers-kpi-number text-primary">{{ counts.newsletter }}</h2>
-                    <span class="text-secondary small">The Surplus Insider (Issue 001)</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">LISTING TRIGGERS</span>
-                    <div class="shopeers-kpi-icon icon-amber">
-                        <i class="bi bi-box-seam-fill"></i>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="shopeers-kpi-number text-warning">{{ counts.products|add:counts.lots }}</h2>
-                    <span class="text-secondary small">Products &amp; Lot Enquiries</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">WORKFLOW &amp; AUTH</span>
-                    <div class="shopeers-kpi-icon icon-violet">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="shopeers-kpi-number text-purple">{{ counts.rfq|add:counts.auth|add:counts.general }}</h2>
-                    <span class="text-secondary small">Buyer RFQs, OTP &amp; Security</span>
-                </div>
+        <!-- Mode Switcher (Email Templates vs Pop-up Settings) -->
+        <div class="d-flex align-items-center gap-2.5">
+            <div class="view-mode-switcher">
+                <button type="button" class="view-mode-btn active" id="tabBtnTemplates" onclick="switchMainView('templates');">
+                    <i class="bi bi-envelope-paper"></i>
+                    <span>Templates Gallery</span>
+                </button>
+                <button type="button" class="view-mode-btn" id="tabBtnPopup" onclick="switchMainView('popup');">
+                    <i class="bi bi-bell"></i>
+                    <span>Pop-up Modal Settings</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Featured Spotlight Card: The Surplus Insider (Issue 001) -->
-    <div class="featured-spotlight-card">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-7">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="badge bg-warning text-dark fw-bold rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
-                        <i class="bi bi-star-fill me-1"></i>FEATURED TEMPLATE
+    <!-- VIEW 1: TEMPLATES GALLERY -->
+    <div id="viewTemplatesSection">
+
+        <!-- Hero Spotlight Card: The Surplus Insider -->
+        <div class="spotlight-card">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <span class="spotlight-badge">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Featured Newsletter · Issue 001</span>
                     </span>
-                    <span class="text-light opacity-75 small">Issue 001 · November 2026</span>
+                    <h2 class="spotlight-title">The Surplus Insider — Executive Briefing</h2>
+                    <p class="spotlight-desc">
+                        Turn Excess Inventory Into Opportunity. Responsive fluid-hybrid marketing newsletter spotlighting active liquidation inventory, capital holding cost insights, industry market trends, and monthly stock ageing tips.
+                    </p>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="spotlight-meta-pill">
+                            <i class="bi bi-phone text-success"></i> Fully Mobile Responsive
+                        </span>
+                        <span class="spotlight-meta-pill">
+                            <i class="bi bi-people text-primary"></i> Subscribers, Buyers &amp; Partners
+                        </span>
+                    </div>
                 </div>
-                <h2 class="fw-bold mb-2 text-white" style="font-family: 'Outfit', sans-serif; font-size: 1.7rem;">
-                    The Surplus Insider — Executive Briefing
-                </h2>
-                <p class="text-light opacity-80 mb-3" style="font-size: 0.88rem; line-height: 1.55; max-width: 580px;">
-                    Turn Excess Inventory Into Opportunity. Features warehouse inventory spotlights, hidden capital holding cost breakdowns, monthly industry trends, and inventory ageing tips.
-                </p>
-                <div class="d-flex flex-wrap align-items-center gap-2.5">
-                    <button class="btn btn-light fw-bold rounded-pill px-3.5 py-2 text-dark shadow-xs d-inline-flex align-items-center gap-2" 
-                            onclick="openPreviewModal('surplus-insider-001', 'The Surplus Insider (Issue 001)', 'The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)');"
-                            style="font-size: 0.84rem;">
-                        <i class="bi bi-eye-fill text-success"></i>
-                        <span>Live Interactive Preview</span>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button type="button" class="btn-shopeers-primary"
+                            onclick="openPreviewModal('surplus-insider-001', 'The Surplus Insider (Issue 001)', 'The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)');">
+                        <i class="bi bi-eye"></i>
+                        <span>Preview Newsletter</span>
                     </button>
-                    <a href="/admin/popup/preview/surplus-insider-001/" target="_blank" class="btn btn-outline-light rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1.5" style="font-size: 0.84rem;">
+                    <a href="/admin/popup/preview/surplus-insider-001/" target="_blank" class="btn-shopeers-outline">
                         <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Open in Full Screen</span>
+                        <span>Open Raw</span>
                     </a>
                 </div>
             </div>
-            <div class="col-lg-5 text-center d-none d-lg-block">
-                <!-- Miniature mockup frame -->
-                <div class="bg-white rounded-3 shadow-lg p-2 d-inline-block text-start border" style="width: 280px; transform: rotate(1deg);">
-                    <div class="d-flex align-items-center justify-content-between pb-1.5 border-bottom mb-1 text-muted" style="font-size: 0.65rem;">
-                        <span><i class="bi bi-circle-fill text-danger me-1"></i>The Surplus Insider</span>
-                        <span class="badge bg-light text-dark">640px</span>
+        </div>
+
+        <!-- Filter Row: Category Tabs & Instant Search -->
+        <div class="filter-row">
+            <div class="category-tabs-group" id="templateFilterTabs">
+                <button class="category-tab-btn active" data-filter="all">
+                    <span>All Templates</span>
+                    <span class="tab-count">({{ counts.total }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="newsletter">
+                    <span>Newsletter</span>
+                    <span class="tab-count">({{ counts.newsletter }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="products">
+                    <span>Products</span>
+                    <span class="tab-count">({{ counts.products }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="lots">
+                    <span>Lots</span>
+                    <span class="tab-count">({{ counts.lots }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="rfq">
+                    <span>Buyer RFQs</span>
+                    <span class="tab-count">({{ counts.rfq }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="auth">
+                    <span>Auth &amp; Security</span>
+                    <span class="tab-count">({{ counts.auth }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="general">
+                    <span>General</span>
+                    <span class="tab-count">({{ counts.general }})</span>
+                </button>
+                <button class="category-tab-btn" data-filter="vendor">
+                    <span>Vendor</span>
+                    <span class="tab-count">({{ counts.vendor }})</span>
+                </button>
+            </div>
+
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="templateSearchInput" placeholder="Search templates by name, keyword...">
+            </div>
+        </div>
+
+        <!-- Template Cards Grid -->
+        <div class="template-grid" id="emailTemplatesGrid">
+            {% for tmpl in email_templates %}
+            <div class="template-card-item" data-category="{{ tmpl.category }}" data-name="{{ tmpl.name|lower }}" data-subject="{{ tmpl.subject|lower }}">
+                <div class="tmpl-card">
+                    <div>
+                        <!-- Card Top Bar -->
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="tmpl-icon-badge tmpl-badge-{{ tmpl.badge_color|default:'emerald' }}">
+                                {% if tmpl.category == 'newsletter' %}
+                                    <i class="bi bi-newspaper"></i>
+                                {% elif tmpl.category == 'products' %}
+                                    <i class="bi bi-box-seam"></i>
+                                {% elif tmpl.category == 'lots' %}
+                                    <i class="bi bi-collection"></i>
+                                {% elif tmpl.category == 'rfq' %}
+                                    <i class="bi bi-file-earmark-text"></i>
+                                {% elif tmpl.category == 'auth' %}
+                                    <i class="bi bi-shield-check"></i>
+                                {% elif tmpl.category == 'vendor' %}
+                                    <i class="bi bi-shop"></i>
+                                {% else %}
+                                    <i class="bi bi-envelope"></i>
+                                {% endif %}
+                            </div>
+                            <span class="tmpl-category-tag">
+                                {{ tmpl.category_label }}
+                            </span>
+                        </div>
+
+                        <!-- Title & Recipient -->
+                        <h4 class="tmpl-title">{{ tmpl.name }}</h4>
+                        <div class="tmpl-recipient-tag">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Sent to: {{ tmpl.recipient }}</span>
+                        </div>
+
+                        <!-- Subject Line Preview -->
+                        <div class="tmpl-subject-box mt-2" title="{{ tmpl.subject }}">
+                            <i class="bi bi-envelope"></i>
+                            <span class="text-truncate">{{ tmpl.subject }}</span>
+                        </div>
+
+                        <!-- Description -->
+                        <p class="tmpl-desc">{{ tmpl.description }}</p>
                     </div>
-                    <div class="p-2 text-white rounded-2 mb-2" style="background: #0c1d2e;">
-                        <div class="fw-bold" style="font-size: 0.72rem;">Turn Excess Inventory Into Opportunity.</div>
-                        <div class="opacity-75" style="font-size: 0.60rem;">Monthly briefing on surplus inventory</div>
-                    </div>
-                    <div class="d-flex gap-1.5 align-items-center text-muted" style="font-size: 0.62rem;">
-                        <i class="bi bi-check2-circle text-success"></i> 100% Fully Responsive Design
+
+                    <!-- Footer with Actions -->
+                    <div class="tmpl-card-footer">
+                        <span class="tmpl-id-tag">{{ tmpl.id }}</span>
+                        <div class="d-flex align-items-center gap-1.5">
+                            <a href="/admin/popup/preview/{{ tmpl.id }}/" target="_blank" class="btn-shopeers-outline" title="Open in raw browser window">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <button type="button" class="btn-shopeers-primary"
+                                    onclick="openPreviewModal('{{ tmpl.id }}', '{{ tmpl.name|escapejs }}', '{{ tmpl.subject|escapejs }}');">
+                                <i class="bi bi-eye"></i>
+                                <span>Preview</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
+
     </div>
 
-    <!-- Filter Tabs & Capsule Search Row -->
-    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4">
-        <!-- Filter Tabs -->
-        <ul class="nav nav-pills nav-pills-segmented" id="templateFilterTabs">
-            <li class="nav-item">
-                <button class="nav-link active" data-filter="all">All Templates ({{ counts.total }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="newsletter">Newsletter ({{ counts.newsletter }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="products">Products ({{ counts.products }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="lots">Lots ({{ counts.lots }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="rfq">Buyer RFQs ({{ counts.rfq }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="auth">Auth &amp; Security ({{ counts.auth }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="general">General ({{ counts.general }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" data-filter="vendor">Vendor ({{ counts.vendor }})</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link text-warning fw-bold" data-bs-toggle="collapse" data-bs-target="#popupSettingsCollapse">
-                    <i class="bi bi-gear-fill me-1"></i>Popup Settings
-                </button>
-            </li>
-        </ul>
-
-        <!-- Live Filter Search Capsule -->
-        <div class="search-capsule">
-            <i class="bi bi-search"></i>
-            <input type="text" id="templateSearchInput" placeholder="Filter email templates...">
-        </div>
-    </div>
-
-    <!-- Collapsible Popup Notification Settings Drawer (Preserves all previous popup settings functionality!) -->
-    <div class="collapse mb-4" id="popupSettingsCollapse">
-        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+    <!-- VIEW 2: POP-UP SETTINGS (Clean Shopeers Form) -->
+    <div id="viewPopupSection" style="display: none;">
+        <div class="popup-settings-card">
+            <div class="popup-settings-header">
                 <div>
-                    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Global Website Pop Up Configuration</h5>
-                    <span class="text-secondary small">Configure the modal popup message that triggers for visitors &amp; administrators</span>
+                    <h4 class="gallery-title" style="font-size: 1.25rem;">
+                        <i class="bi bi-bell-fill" style="color: var(--shopeers-primary);"></i>
+                        <span>Website Pop-up Modal Configuration</span>
+                    </h4>
+                    <span class="text-secondary small">Set the modal banner, title, delay, and target link shown to platform visitors</span>
                 </div>
-                <span class="badge {% if popup.is_active %}bg-success-subtle text-success border-success-subtle{% else %}bg-secondary-subtle text-secondary border-secondary-subtle{% endif %} border rounded-pill px-3 py-1">
-                    {% if popup.is_active %}Active (Delay: {{ popup.delay_minutes }}m){% else %}Disabled{% endif %}
-                </span>
+                <div>
+                    {% if popup.is_active %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Pop-up Enabled ({{ popup.delay_minutes }}m delay)
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
+                            <i class="bi bi-dash-circle me-1"></i> Pop-up Disabled
+                        </span>
+                    {% endif %}
+                </div>
             </div>
 
             <form method="POST" action="/admin/popup/" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold small">Popup Title</label>
-                        <input type="text" name="title" class="form-control" value="{{ popup.title|default:'Important Admin Notification' }}" required>
+                        <label class="form-label fw-semibold small text-dark">Pop-up Title</label>
+                        <input type="text" name="title" class="form-control rounded-3" value="{{ popup.title|default:'Important Notification' }}" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold small">Visual Style</label>
-                        <select name="popup_type" class="form-select">
+                        <label class="form-label fw-semibold small text-dark">Notice Style</label>
+                        <select name="popup_type" class="form-select rounded-3">
                             <option value="info" {% if popup.popup_type == 'info' %}selected{% endif %}>Info Notice</option>
-                            <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning</option>
-                            <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Alert</option>
-                            <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success</option>
-                            <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Promotion</option>
+                            <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning Notice</option>
+                            <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Notice</option>
+                            <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success Notice</option>
+                            <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Promotion / Deal</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold small">Delay Interval (Minutes)</label>
-                        <input type="number" min="1" max="1440" name="delay_minutes" class="form-control" value="{{ popup.delay_minutes|default:'1' }}" required>
+                        <label class="form-label fw-semibold small text-dark">Display Delay (Minutes)</label>
+                        <input type="number" min="1" max="1440" name="delay_minutes" class="form-control rounded-3" value="{{ popup.delay_minutes|default:'1' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold small text-dark">Action Button Label</label>
+                        <input type="text" name="button_label" class="form-control rounded-3" value="{{ popup.button_label|default:'Got It' }}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold small">Button Label</label>
-                        <input type="text" name="button_label" class="form-control" value="{{ popup.button_label|default:'Got It' }}">
+                        <label class="form-label fw-semibold small text-dark">Action Button Link</label>
+                        <input type="text" name="button_link" class="form-control rounded-3" value="{{ popup.button_link|default:'' }}" placeholder="/admin/products/all/">
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small">Button URL / Link</label>
-                        <input type="text" name="button_link" class="form-control" value="{{ popup.button_link|default:'' }}" placeholder="/admin/products/all/">
-                    </div>
+
                     <div class="col-12">
-                        <label class="form-label fw-semibold small">Message</label>
-                        <textarea name="message" class="form-control" rows="3" required>{{ popup.message|default:'' }}</textarea>
+                        <label class="form-label fw-semibold small text-dark">Message Content</label>
+                        <textarea name="message" class="form-control rounded-3" rows="4" required>{{ popup.message|default:'' }}</textarea>
                     </div>
-                    <div class="col-12 d-flex align-items-center justify-content-between pt-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_active" id="activeSw" {% if popup.is_active %}checked{% endif %}>
-                            <label class="form-check-label fw-semibold small" for="activeSw">Enable Website Popup Modal</label>
+
+                    <div class="col-12 d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3">
+                        <div class="form-check form-switch mb-2 mb-md-0">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="popupActiveSwitch" {% if popup.is_active %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold small text-dark" for="popupActiveSwitch">
+                                Enable and trigger website pop-up modal
+                            </label>
                         </div>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4">Save Pop Up Settings</button>
+                        <button type="submit" class="btn-shopeers-primary">
+                            <i class="bi bi-check2"></i>
+                            <span>Save Configuration</span>
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Grid of Email Template Cards -->
-    <div class="row g-3" id="emailTemplatesGrid">
-        {% for tmpl in email_templates %}
-        <div class="col-xl-4 col-md-6 template-card-item" data-category="{{ tmpl.category }}" data-name="{{ tmpl.name|lower }}" data-subject="{{ tmpl.subject|lower }}">
-            <div class="email-template-card">
-                <div>
-                    <!-- Top Category & Recipient Meta -->
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <span class="category-badge-pill badge-{{ tmpl.badge_color }}">
-                            {{ tmpl.category_label }}
-                        </span>
-                        <span class="recipient-tag">
-                            <i class="bi bi-person-circle"></i> {{ tmpl.recipient }}
-                        </span>
-                    </div>
-
-                    <!-- Template Title -->
-                    <h5 class="email-card-title">{{ tmpl.name }}</h5>
-
-                    <!-- Subject Line -->
-                    <div class="email-card-subject" title="{{ tmpl.subject }}">
-                        <i class="bi bi-envelope text-primary flex-shrink-0 mt-0.5"></i>
-                        <span class="text-truncate">{{ tmpl.subject }}</span>
-                    </div>
-
-                    <!-- Description -->
-                    <p class="email-card-desc">{{ tmpl.description }}</p>
-                </div>
-
-                <!-- Action Footer -->
-                <div class="d-flex align-items-center justify-content-between pt-2 border-top">
-                    <span class="text-muted font-monospace" style="font-size: 0.68rem;">ID: {{ tmpl.id }}</span>
-                    <div class="d-flex align-items-center gap-1.5">
-                        <a href="/admin/popup/preview/{{ tmpl.id }}/" target="_blank" class="btn-preview-outline" title="Open in raw browser window">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                        <button type="button" class="btn-preview-primary" 
-                                onclick="openPreviewModal('{{ tmpl.id }}', '{{ tmpl.name|escapejs }}', '{{ tmpl.subject|escapejs }}');">
-                            <i class="bi bi-eye"></i>
-                            <span>Preview</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
 </div>
 
-<!-- Interactive Live Preview Modal with Desktop/Mobile Responsive Toggle -->
+<!-- Interactive Live Preview Modal with Device Toggle -->
 <div class="modal fade" id="emailPreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 1050px;">
+    <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 1060px;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             
             <!-- Modal Header -->
@@ -647,24 +782,24 @@
                     <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2" id="modalTemplateTitle" style="font-family: 'Outfit', sans-serif;">
                         Email Template Preview
                     </h5>
-                    <span class="text-secondary small" id="modalTemplateSubject" style="font-size: 0.76rem;">Subject preview line</span>
+                    <span class="text-secondary small" id="modalTemplateSubject" style="font-size: 0.76rem;">Subject line</span>
                 </div>
 
-                <!-- Device Width Switcher Controls -->
+                <!-- Responsive Device Switcher -->
                 <div class="d-flex align-items-center gap-2">
-                    <div class="device-toggle-group">
-                        <button type="button" class="device-toggle-btn active" id="btnDeviceDesktop" onclick="setPreviewDevice('desktop');">
-                            <i class="bi bi-laptop me-1"></i> Desktop (640px)
+                    <div class="device-btn-group">
+                        <button type="button" class="device-btn active" id="btnDeviceDesktop" onclick="setPreviewDevice('desktop');">
+                            <i class="bi bi-laptop"></i> Desktop (640px)
                         </button>
-                        <button type="button" class="device-toggle-btn" id="btnDeviceMobile" onclick="setPreviewDevice('mobile');">
-                            <i class="bi bi-phone me-1"></i> Mobile (375px)
+                        <button type="button" class="device-btn" id="btnDeviceMobile" onclick="setPreviewDevice('mobile');">
+                            <i class="bi bi-phone"></i> Mobile (375px)
                         </button>
-                        <button type="button" class="device-toggle-btn" id="btnDeviceFull" onclick="setPreviewDevice('full');">
-                            <i class="bi bi-arrows-fullscreen me-1"></i> Full
+                        <button type="button" class="device-btn" id="btnDeviceFull" onclick="setPreviewDevice('full');">
+                            <i class="bi bi-arrows-fullscreen"></i> Full
                         </button>
                     </div>
 
-                    <a href="#" target="_blank" id="modalRawExternalLink" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Open raw in tab">
+                    <a href="#" target="_blank" id="modalRawExternalLink" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Open in raw browser window">
                         <i class="bi bi-box-arrow-up-right"></i>
                     </a>
 
@@ -673,18 +808,18 @@
             </div>
 
             <!-- Modal Body with Live Iframe -->
-            <div class="modal-body p-0" style="background-color: #f1f3f6; min-height: 580px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <div id="previewFrameContainer" style="width: 640px; height: 580px; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0,0,0,0.08); background:#ffffff;">
+            <div class="modal-body p-0" style="background-color: #f1f3f6; min-height: 600px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div id="previewFrameContainer" style="width: 640px; height: 600px; transition: width 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: #ffffff;">
                     <iframe id="emailPreviewFrame" src="about:blank" style="width: 100%; height: 100%; border: none; display: block;"></iframe>
                 </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer py-2 px-4 bg-white border-top justify-content-between">
-                <span class="text-muted small" style="font-size: 0.72rem;">
-                    <i class="bi bi-shield-check text-success me-1"></i> Rendered using Surplus Market email engine with live mock attributes.
+            <div class="modal-footer py-2.5 px-4 bg-white border-top justify-content-between">
+                <span class="text-muted small" style="font-size: 0.75rem;">
+                    <i class="bi bi-shield-check text-success me-1"></i> Surplus Market Email Engine &bull; Rendered with live context
                 </span>
-                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Close Preview</button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
 
         </div>
@@ -694,8 +829,27 @@
 <script>
     let previewModalInstance = null;
 
+    function switchMainView(mode) {
+        const viewTemplates = document.getElementById('viewTemplatesSection');
+        const viewPopup = document.getElementById('viewPopupSection');
+        const btnTemplates = document.getElementById('tabBtnTemplates');
+        const btnPopup = document.getElementById('tabBtnPopup');
+
+        if (mode === 'popup') {
+            viewTemplates.style.display = 'none';
+            viewPopup.style.display = 'block';
+            btnTemplates.classList.remove('active');
+            btnPopup.classList.add('active');
+        } else {
+            viewTemplates.style.display = 'block';
+            viewPopup.style.display = 'none';
+            btnTemplates.classList.add('active');
+            btnPopup.classList.remove('active');
+        }
+    }
+
     function openPreviewModal(templateId, name, subject) {
-        document.getElementById('modalTemplateTitle').innerHTML = `<i class="bi bi-envelope-paper text-success me-1"></i> ${name}`;
+        document.getElementById('modalTemplateTitle').innerHTML = `<i class="bi bi-envelope-paper" style="color: var(--shopeers-primary);"></i> ${name}`;
         document.getElementById('modalTemplateSubject').textContent = `Subject: ${subject}`;
         
         const previewUrl = `/admin/popup/preview/${templateId}/`;
@@ -732,10 +886,10 @@
         }
     }
 
-    // Filter by Category Tabs
-    document.querySelectorAll('#templateFilterTabs .nav-link[data-filter]').forEach(tab => {
+    // Category Tabs Filtering
+    document.querySelectorAll('#templateFilterTabs .category-tab-btn[data-filter]').forEach(tab => {
         tab.addEventListener('click', function() {
-            document.querySelectorAll('#templateFilterTabs .nav-link').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#templateFilterTabs .category-tab-btn').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
 
             const filter = this.getAttribute('data-filter');
@@ -752,7 +906,7 @@
         });
     });
 
-    // Live Search Filter
+    // Instant Search Filter
     document.getElementById('templateSearchInput')?.addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase().trim();
         const items = document.querySelectorAll('.template-card-item');
