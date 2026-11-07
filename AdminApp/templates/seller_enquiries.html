@@ -3,390 +3,1218 @@
 {% block title %}Seller Product Enquiries - Surplus Admin{% endblock %}
 
 {% block content %}
-<!-- Page Header & Action -->
-<div class="page-header-container">
-    <div>
-        <nav class="custom-breadcrumb" aria-label="breadcrumb">
-            <ol class="breadcrumb-list">
-                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item"><span>Enquiries</span></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item active" aria-current="page"><span>Seller Enquiries</span></li>
-            </ol>
-        </nav>
-        <h1 class="header-title">Seller Product Enquiries</h1>
-        <p class="header-subtitle">Review and manage individual product enquiries submitted by sellers</p>
-    </div>
-</div>
+<style>
+/* ==========================================================================
+   GLASSMORPHISM & MODERN AESTHETIC DESIGN SYSTEM - SELLER ENQUIRIES
+   ========================================================================== */
 
-{% if messages %}
-<div class="mb-4">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-check-circle-fill text-success fs-5"></i>
-        <div class="fw-medium">{{ message }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-bg-hover: rgba(255, 255, 255, 0.85);
+    --glass-bg-subtle: rgba(255, 255, 255, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.55);
+    --glass-border-subtle: rgba(226, 232, 240, 0.6);
+    --glass-shadow: 0 12px 36px -10px rgba(15, 23, 42, 0.08), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+    --glass-shadow-hover: 0 20px 40px -12px rgba(15, 23, 42, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+    --glass-blur: blur(18px) saturate(180%);
+    --glass-blur-heavy: blur(24px) saturate(190%);
+}
 
-<!-- KPI Metric Filter Cards -->
-<div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
-    <div class="col">
-        <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">All Enquiries</span>
-                        <h3 class="stat-number text-dark">{{ counts.total|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-indigo">
-                        <i class="bi bi-tag"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Pending Review</span>
-                        <h3 class="stat-number text-warning">{{ counts.pending|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-amber">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'approved' %}border-success shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Approved</span>
-                        <h3 class="stat-number text-success">{{ counts.approved|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-green">
-                        <i class="bi bi-check2-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col">
-        <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'declined' %}border-danger shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Declined</span>
-                        <h3 class="stat-number text-danger">{{ counts.declined|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
-                        <i class="bi bi-x-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
+[data-bs-theme="dark"] {
+    --glass-bg: rgba(30, 41, 59, 0.6);
+    --glass-bg-hover: rgba(30, 41, 59, 0.85);
+    --glass-bg-subtle: rgba(15, 23, 42, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --glass-border-subtle: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --glass-shadow-hover: 0 24px 48px -10px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(0, 0, 0, 0.4);
+}
 
-<!-- Main Table Card with Search & Filter Tabs -->
-<div class="content-table-card">
-    <!-- Card Toolbar -->
-    <div class="table-toolbar">
-        <div class="flex-grow-1" style="max-width: 320px;">
-            <div class="input-group">
-                <input type="text" id="enquirySearch" class="form-control rounded-end-0" placeholder="Search by Product ID, Name, Model, or User Email..." value="{{ search }}">
-                <button class="btn btn-primary rounded-start-0 px-3" type="button" id="enquirySearchBtn">Search</button>
+/* Ambient Background Light Orbs */
+.glass-ambient-container {
+    position: relative;
+    width: 100%;
+}
+
+.glass-ambient-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.45;
+    animation: ambientFloat 18s ease-in-out infinite alternate;
+}
+
+[data-bs-theme="dark"] .glass-ambient-blob {
+    opacity: 0.22;
+}
+
+.blob-indigo {
+    top: -40px;
+    left: 5%;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(99, 102, 241, 0) 70%);
+}
+
+.blob-emerald {
+    top: 40px;
+    right: 8%;
+    width: 360px;
+    height: 360px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(16, 185, 129, 0) 70%);
+    animation-delay: -6s;
+}
+
+.blob-amber {
+    top: 360px;
+    left: 30%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, rgba(245, 158, 11, 0) 70%);
+    animation-delay: -12s;
+}
+
+@keyframes ambientFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.08); }
+    100% { transform: translate(-25px, 25px) scale(0.95); }
+}
+
+/* Page Header Glass Elements */
+.glass-page-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.75rem;
+}
+
+.glass-breadcrumb-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 9999px;
+    padding: 0.35rem 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    margin-bottom: 0.75rem;
+}
+
+.glass-breadcrumb-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.glass-breadcrumb-list a {
+    color: var(--color-text-secondary, #64748b);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.glass-breadcrumb-list a:hover {
+    color: #4f46e5;
+}
+
+.glass-live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.glass-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: glassPulse 2s infinite;
+}
+
+@keyframes glassPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Glass KPI Stat Metric Cards */
+.glass-stat-card {
+    position: relative;
+    z-index: 1;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.25rem 1.15rem;
+    box-shadow: var(--glass-shadow);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.glass-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    transition: all 0.25s ease;
+}
+
+.glass-stat-card:hover {
+    transform: translateY(-4px);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--glass-shadow-hover);
+}
+
+.glass-stat-card.card-active {
+    border-color: rgba(99, 102, 241, 0.6) !important;
+    box-shadow: 0 16px 36px -10px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.3) !important;
+}
+
+.glass-stat-card.card-active::before {
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+}
+
+.stat-icon-capsule {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+[data-bs-theme="dark"] .stat-icon-capsule {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.capsule-indigo { background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(129, 140, 248, 0.08)); color: #6366f1; }
+.capsule-amber { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.08)); color: #d97706; }
+.capsule-emerald { background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.08)); color: #059669; }
+.capsule-violet { background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(192, 132, 252, 0.08)); color: #9333ea; }
+.capsule-rose { background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(251, 113, 133, 0.08)); color: #e11d48; }
+
+.stat-value-display {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-top: 0.35rem;
+    margin-bottom: 0;
+}
+
+.stat-label-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary, #64748b);
+}
+
+/* Glass Main Table Card & Controls */
+.glass-table-wrapper {
+    position: relative;
+    z-index: 1;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur-heavy);
+    -webkit-backdrop-filter: var(--glass-blur-heavy);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: var(--glass-shadow);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* Glass Control Toolbar */
+.glass-toolbar {
+    padding: 1.25rem 1.5rem;
+    background: var(--glass-bg-subtle);
+    border-bottom: 1px solid var(--glass-border-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.glass-search-capsule {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 9999px;
+    padding: 0.2rem 0.3rem 0.2rem 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 360px;
+}
+
+.glass-search-capsule:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18), 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.glass-search-input {
+    border: none !important;
+    background: transparent !important;
+    font-size: 0.88rem;
+    color: var(--color-text-main, #0f172a);
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+}
+
+.glass-search-btn {
+    border-radius: 9999px;
+    padding: 0.4rem 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    border: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.glass-search-btn:hover {
+    background: linear-gradient(135deg, #4338ca, #4f46e5);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    color: #ffffff;
+}
+
+/* Glass Select Menus */
+.glass-select {
+    background-color: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    font-size: 0.85rem !important;
+    font-weight: 500;
+    color: var(--color-text-main, #0f172a) !important;
+    padding: 0.45rem 2.2rem 0.45rem 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+    height: 40px;
+}
+
+.glass-select:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+}
+
+/* Segmented Status Filter Tabs */
+.glass-segmented-tabs {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 3px;
+    border-radius: 9999px;
+    border: 1px solid var(--glass-border-subtle);
+}
+
+[data-bs-theme="dark"] .glass-segmented-tabs {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.glass-segment-pill {
+    padding: 0.35rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    color: var(--color-text-secondary, #64748b);
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+}
+
+.glass-segment-pill:hover {
+    color: var(--color-text-main, #0f172a);
+}
+
+.glass-segment-pill.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] .glass-segment-pill.active {
+    background: #1e293b;
+    color: #f8fafc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.glass-segment-pill.active-amber {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+}
+
+.glass-segment-pill.active-emerald {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+}
+
+.glass-segment-pill.active-violet {
+    background: linear-gradient(135deg, #a855f7, #9333ea);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.35);
+}
+
+.glass-segment-pill.active-rose {
+    background: linear-gradient(135deg, #f43f5e, #e11d48);
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+}
+
+/* Glass Action Buttons */
+.glass-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 12px;
+    padding: 0.45rem 1.15rem;
+    font-size: 0.85rem !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    height: 40px;
+}
+
+.glass-btn-primary:hover {
+    background: linear-gradient(135deg, #047857, #059669);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
+    color: #ffffff !important;
+}
+
+.glass-btn-glass {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-secondary, #64748b) !important;
+    border-radius: 12px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.85rem !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    height: 40px;
+}
+
+.glass-btn-glass:hover {
+    background: var(--glass-bg-hover);
+    color: var(--color-text-main, #0f172a) !important;
+    transform: translateY(-1px);
+}
+
+.glass-btn-danger-soft {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626 !important;
+    border-radius: 12px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.85rem !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    height: 40px;
+}
+
+.glass-btn-danger-soft:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #b91c1c !important;
+    transform: translateY(-1px);
+}
+
+/* Glass Table Styling */
+.table.glass-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.glass-table thead th {
+    background: var(--glass-bg-subtle) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--glass-border-subtle);
+    padding: 0.95rem 1.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #64748b);
+}
+
+.glass-table tbody tr {
+    transition: background 0.18s ease;
+}
+
+.glass-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.035) !important;
+}
+
+[data-bs-theme="dark"] .glass-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.glass-table tbody td {
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--glass-border-subtle);
+    vertical-align: middle;
+}
+
+/* Product Avatar Icon */
+.glass-avatar-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(99, 102, 241, 0.05));
+    color: #4f46e5;
+    font-size: 1.15rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.06);
+    flex-shrink: 0;
+}
+
+[data-bs-theme="dark"] .glass-avatar-icon {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(129, 140, 248, 0.1));
+    color: #818cf8;
+    border-color: rgba(129, 140, 248, 0.25);
+}
+
+/* Status Glass Pills */
+.glass-badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.80rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.badge-approved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-correction {
+    background: rgba(168, 85, 247, 0.12);
+    color: #9333ea;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.badge-declined {
+    background: rgba(244, 63, 94, 0.12);
+    color: #e11d48;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+/* Micro Badges for Metadata */
+.glass-micro-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.70rem;
+    font-weight: 600;
+    border: 1px solid var(--glass-border-subtle);
+    background: var(--glass-bg-subtle);
+    color: var(--color-text-secondary, #64748b);
+}
+
+/* Table Quick Action Glass Buttons */
+.btn-glass-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 10px;
+    font-size: 0.80rem !important;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    border: 1px solid transparent;
+}
+
+.btn-glass-approve {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.btn-glass-approve:hover {
+    background: #10b981;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-glass-correction {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.28);
+}
+
+.btn-glass-correction:hover {
+    background: #f59e0b;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-glass-decline {
+    background: rgba(244, 63, 94, 0.12);
+    color: #e11d48;
+    border-color: rgba(244, 63, 94, 0.25);
+}
+
+.btn-glass-decline:hover {
+    background: #f43f5e;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-glass-more {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-secondary, #64748b);
+    transition: all 0.18s ease;
+}
+
+.btn-glass-more:hover {
+    background: var(--glass-bg-hover);
+    color: var(--color-text-main, #0f172a);
+    transform: translateY(-1px);
+}
+
+/* Glass Dropdown Menu */
+.dropdown-menu.glass-dropdown-menu {
+    background: var(--glass-bg-hover) !important;
+    backdrop-filter: var(--glass-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+    padding: 0.5rem !important;
+    min-width: 210px;
+}
+
+.glass-dropdown-menu .dropdown-item {
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.5rem 0.85rem;
+    transition: all 0.15s ease;
+}
+
+.glass-dropdown-menu .dropdown-item:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* Glass Pagination Footer */
+.glass-pagination-footer {
+    padding: 1.15rem 1.5rem;
+    background: var(--glass-bg-subtle);
+    border-top: 1px solid var(--glass-border-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.glass-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.75rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--color-text-secondary, #64748b);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s ease;
+}
+
+.glass-page-btn:hover:not(.disabled) {
+    background: var(--glass-bg-hover);
+    color: var(--color-text-main, #0f172a);
+    transform: translateY(-1px);
+}
+
+.glass-page-btn.active {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff !important;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.glass-page-btn.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+</style>
+
+<div class="glass-ambient-container">
+    <!-- Ambient Background Color Mesh Orbs -->
+    <div class="glass-ambient-blob blob-indigo" aria-hidden="true"></div>
+    <div class="glass-ambient-blob blob-emerald" aria-hidden="true"></div>
+    <div class="glass-ambient-blob blob-amber" aria-hidden="true"></div>
+
+    <!-- Page Header & Action -->
+    <div class="glass-page-header">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <div class="glass-breadcrumb-pill">
+                    <ol class="glass-breadcrumb-list">
+                        <li><a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a></li>
+                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.65rem;"></i></li>
+                        <li class="text-muted">Enquiries</li>
+                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.65rem;"></i></li>
+                        <li class="fw-semibold text-dark">Seller Enquiries</li>
+                    </ol>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <h1 class="header-title mb-0">Seller Product Enquiries</h1>
+                    <span class="glass-live-indicator">
+                        <span class="glass-pulse-dot"></span>
+                        Live Marketplace Intake
+                    </span>
+                </div>
+                <p class="header-subtitle mt-1">Review, approve, correct, or decline individual product catalogue listings submitted by vendors</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/admin/products/add/" class="glass-btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Add Product</span>
+                </a>
+                <button type="button" class="glass-btn-glass" onclick="window.location.reload()" title="Refresh Table">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Refresh</span>
+                </button>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            <!-- Category Filter -->
-            <select class="form-select form-select-sm filter-select" id="categoryFilter"
-                style="min-width: 170px; max-width: 220px; font-size: 14px !important; height: 38px;">
-                <option value="all">All Categories</option>
-                {% for cat in categories %}
-                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
-                {% endfor %}
-            </select>
+    </div>
 
-            <!-- Country Filter -->
-            <select class="form-select form-select-sm filter-select" id="countryFilter"
-                style="min-width: 160px; max-width: 200px; font-size: 14px !important; height: 38px;">
-                <option value="all">All Countries</option>
-                {% for c in countries %}
-                <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
-                {% endfor %}
-            </select>
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border) !important; border-radius: 16px;">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium text-dark">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-            <select class="form-select form-select-sm filter-select" id="dateFilter" style="width: 130px; font-size: 14px !important; height: 38px;">
-                <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
-                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
-                <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
-            </select>
-            <div class="btn-group" role="group" aria-label="Status filter">
-                <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">All</a>
-                <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Pending</a>
-                <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Approved</a>
-                <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}" style="font-size: 14px !important;">Correction</a>
-                <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-medium{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Declined</a>
-            </div>
-            {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
-            <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 px-2.5 py-1.5" title="Clear All Filters" style="font-size: 14px !important;">
-                <i class="bi bi-x-lg"></i>
-                <span>Clear</span>
+    <!-- 5 Glass KPI Stat Metric Cards -->
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+        <!-- 1. All Enquiries -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="glass-stat-card {% if current_status == 'all' %}card-active{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="stat-label-text">All Enquiries</span>
+                        <div class="stat-icon-capsule capsule-indigo">
+                            <i class="bi bi-tags-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="stat-value-display text-dark">{{ counts.total|default:"0" }}</h3>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-collection"></i> Total Catalogue
+                        </div>
+                    </div>
+                </div>
             </a>
-            {% endif %}
-            <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" onclick="window.location.reload()" title="Refresh Table" style="font-size: 14px !important;">
-                <i class="bi bi-arrow-clockwise"></i>
-                <span>Refresh</span>
-            </button>
-            <a href="/admin/products/add/" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" style="font-size: 14px !important;">
-                <i class="bi bi-plus-lg"></i>
-                <span>Add Product</span>
+        </div>
+
+        <!-- 2. Pending Review -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="glass-stat-card {% if current_status == 'pending' %}card-active{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="stat-label-text">Pending Review</span>
+                        <div class="stat-icon-capsule capsule-amber">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="stat-value-display text-warning">{{ counts.pending|default:"0" }}</h3>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-clock-history"></i> Awaiting Action
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 3. Approved -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="glass-stat-card {% if current_status == 'approved' %}card-active{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="stat-label-text">Approved</span>
+                        <div class="stat-icon-capsule capsule-emerald">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="stat-value-display text-success">{{ counts.approved|default:"0" }}</h3>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-broadcast"></i> Live on Marketplace
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 4. Needs Correction -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="glass-stat-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}card-active{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="stat-label-text">Correction</span>
+                        <div class="stat-icon-capsule capsule-violet">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="stat-value-display text-primary">{{ counts.correction|default:"0" }}</h3>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-envelope-exclamation"></i> Vendor Revision
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 5. Declined -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="glass-stat-card {% if current_status == 'declined' %}card-active{% endif %}">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <span class="stat-label-text">Declined</span>
+                        <div class="stat-icon-capsule capsule-rose">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="stat-value-display text-danger">{{ counts.declined|default:"0" }}</h3>
+                        <div class="small text-muted mt-1 d-flex align-items-center gap-1">
+                            <i class="bi bi-shield-x"></i> Rejected Submissions
+                        </div>
+                    </div>
+                </div>
             </a>
         </div>
     </div>
 
-    <!-- Enquiries Table -->
-    <div class="table-responsive" style="min-height: 250px;">
-        <table class="table content-data-table align-middle mb-0" id="enquiryTable">
-            <thead>
-                <tr class="text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                    <th style="width: 250px; font-weight: 600;">Product ID</th>
-                    <th style="width: 280px; font-weight: 600;">Date &amp; Time</th>
-                    <th style="width: 200px; font-weight: 600;">Status</th>
-                    <th class="text-end pe-4" style="width: 220px; font-weight: 600;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in enquiries %}
-                <tr id="enquiry-row-{{ item.id }}">
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
-                                <i class="bi bi-tag-fill fs-6"></i>
+    <!-- Main Glass Table Card with Search & Filter Tabs -->
+    <div class="glass-table-wrapper">
+        <!-- Card Toolbar -->
+        <div class="glass-toolbar">
+            <!-- Search Pill Capsule -->
+            <div class="glass-search-capsule">
+                <i class="bi bi-search text-muted me-1"></i>
+                <input type="text" id="enquirySearch" class="glass-search-input" placeholder="Search ID, Name, Model, Email..." value="{{ search }}">
+                <button class="glass-search-btn" type="button" id="enquirySearchBtn">Search</button>
+            </div>
+
+            <!-- Segmented Status Tabs -->
+            <div class="glass-segmented-tabs">
+                <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
+                   class="glass-segment-pill {% if current_status == 'all' %}active{% endif %}">All</a>
+                <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
+                   class="glass-segment-pill {% if current_status == 'pending' %}active-amber{% endif %}">Pending</a>
+                <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
+                   class="glass-segment-pill {% if current_status == 'approved' %}active-emerald{% endif %}">Approved</a>
+                <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
+                   class="glass-segment-pill {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-violet{% endif %}">Correction</a>
+                <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
+                   class="glass-segment-pill {% if current_status == 'declined' %}active-rose{% endif %}">Declined</a>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Category Filter -->
+                <select class="form-select glass-select" id="categoryFilter" style="min-width: 160px; max-width: 210px;">
+                    <option value="all">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Country Filter -->
+                <select class="form-select glass-select" id="countryFilter" style="min-width: 150px; max-width: 190px;">
+                    <option value="all">All Countries</option>
+                    {% for c in countries %}
+                    <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Date Filter -->
+                <select class="form-select glass-select" id="dateFilter" style="width: 130px;">
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+                </select>
+
+                {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
+                <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="glass-btn-danger-soft" title="Clear All Filters">
+                    <i class="bi bi-x-lg"></i>
+                    <span>Clear</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Enquiries Table -->
+        <div class="table-responsive" style="min-height: 300px;">
+            <table class="table glass-table align-middle mb-0" id="enquiryTable">
+                <thead>
+                    <tr>
+                        <th style="width: 320px;">Product &amp; Seller Details</th>
+                        <th style="width: 200px;">Date &amp; Time</th>
+                        <th style="width: 180px;">Status</th>
+                        <th class="text-end pe-4" style="width: 240px;">Quick Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enquiries %}
+                    <tr id="enquiry-row-{{ item.id }}">
+                        <!-- Product Details Column -->
+                        <td>
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="glass-avatar-icon">
+                                    <i class="bi bi-box-seam-fill"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="text-decoration-none fw-bold text-dark font-monospace" style="font-size: 0.95rem;">
+                                            {{ item.product_id }}
+                                        </a>
+                                        {% if item.is_featured %}
+                                        <span class="glass-micro-pill text-danger border-danger-subtle bg-danger-subtle" title="Featured Marketplace Listing">
+                                            <i class="bi bi-star-fill text-danger me-0.5" style="font-size: 0.65rem;"></i>Featured
+                                        </span>
+                                        {% endif %}
+                                        {% if item.is_active %}
+                                        <span class="glass-micro-pill text-success border-success-subtle bg-success-subtle" title="Active on Marketplace">
+                                            <i class="bi bi-check-circle-fill text-success me-0.5" style="font-size: 0.65rem;"></i>Active
+                                        </span>
+                                        {% else %}
+                                        <span class="glass-micro-pill text-secondary border-secondary-subtle" title="Inactive / Hidden">
+                                            <i class="bi bi-pause-circle me-0.5" style="font-size: 0.65rem;"></i>Inactive
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="fw-semibold text-secondary text-truncate mt-0.5" style="font-size: 0.85rem; max-width: 280px;" title="{{ item.product_name|default:'Product Enquiry' }}">
+                                        {{ item.product_name|default:'Product Enquiry' }}
+                                    </div>
+
+                                    <!-- Category & Location Pills -->
+                                    <div class="mt-1.5 d-flex align-items-center gap-1.5 flex-wrap">
+                                        {% if item.category %}
+                                        <span class="glass-micro-pill text-primary" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.2);">
+                                            <i class="bi bi-tag-fill me-1 text-primary"></i>{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.inventory_country %}
+                                        <span class="glass-micro-pill" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ item.inventory_country }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- User / Admin Badges -->
+                                    <div class="mt-1 d-flex flex-wrap align-items-center gap-1.5">
+                                        {% if item.vendor %}
+                                        <span class="glass-micro-pill font-monospace" title="Seller: {{ item.vendor.email|default:'N/A' }}">
+                                            <i class="bi bi-person-circle me-1 text-secondary"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.admin %}
+                                        <span class="glass-micro-pill text-indigo font-monospace" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25);" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
+                                            <i class="bi bi-shield-check text-primary me-1"></i>by ADM-{{ item.admin.id|stringformat:"04d" }}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.intake_channel %}
+                                        <span class="glass-micro-pill {% if item.intake_channel|lower == 'whatsapp' %}text-success{% else %}text-info{% endif %}">
+                                            {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1 text-success"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ item.intake_channel }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <span class="fw-bold text-dark font-monospace" style="font-size: 0.92rem;">{{ item.product_id }}</span>
-                                <span class="d-block text-muted small text-truncate" style="font-size: 0.80rem; max-width: 200px;" title="{{ item.product_name|default:'Product Enquiry' }}">
-                                    {{ item.product_name|default:'Product Enquiry' }}
-                                </span>
-                                <div class="mt-1 d-flex align-items-center gap-1 flex-wrap">
-                                    {% if item.category %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5 rounded-pill fw-semibold" style="font-size: 0.68rem;">
-                                        <i class="bi bi-tag-fill me-0.5"></i>{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}
-                                    </span>
-                                    {% endif %}
-                                    {% if item.inventory_country %}
-                                    <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded-pill" style="font-size: 0.68rem;" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
-                                        <i class="bi bi-geo-alt-fill text-danger me-0.5"></i>{{ item.inventory_country }}
-                                    </span>
-                                    {% endif %}
+                        </td>
+
+                        <!-- Date & Time Column -->
+                        <td>
+                            <div class="d-inline-flex flex-column gap-1">
+                                <div class="d-flex align-items-center gap-1.5 text-dark fw-semibold" style="font-size: 0.85rem;">
+                                    <i class="bi bi-calendar-event text-primary opacity-75"></i>
+                                    <span>{{ item.created_at|date:"M d, Y" }}</span>
                                 </div>
-                                {% if item.admin and item.vendor %}
-                                <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                    <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="User: {{ item.vendor.email|default:'N/A' }}">
-                                        <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
-                                    </span>
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-1.5" style="font-size: 0.70rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
-                                        <i class="bi bi-shield-check me-0.5"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
-                                    </span>
-                                    {% if item.intake_channel %}
-                                    <span class="badge {% if item.intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} py-0.5 px-1.5" style="font-size: 0.68rem;">
-                                        {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-0.5"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-0.5"></i>{% else %}<i class="bi bi-telephone me-0.5"></i>{% endif %}{{ item.intake_channel }}
-                                    </span>
-                                    {% endif %}
+                                <div class="d-flex align-items-center gap-1.5 text-muted small" style="font-size: 0.76rem;">
+                                    <i class="bi bi-clock opacity-75"></i>
+                                    <span>{{ item.created_at|date:"H:i" }} IST</span>
                                 </div>
-                                {% elif item.admin %}
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-2 mt-1 d-inline-block" style="font-size: 0.70rem;" title="{{ item.admin.email }}">
-                                    <i class="bi bi-shield-check me-1"></i>by ADM-{{ item.admin.id|stringformat:"04d" }} ({{ item.admin.full_name|default:item.admin.username }})
-                                </span>
-                                {% elif item.vendor %}
-                                <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5 mt-1 d-inline-block" style="font-size: 0.70rem;" title="User: {{ item.vendor.email|default:'N/A' }}">
-                                    <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
-                                </span>
+                            </div>
+                        </td>
+
+                        <!-- Status Column -->
+                        <td>
+                            {% if item.enquiry_status|lower == 'approved' %}
+                            <span class="glass-badge-status badge-approved" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-check-circle-fill"></i> Approved
+                            </span>
+                            {% elif item.enquiry_status|lower == 'declined' %}
+                            <span class="glass-badge-status badge-declined" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-x-circle-fill"></i> Declined
+                            </span>
+                            {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
+                            <span class="glass-badge-status badge-correction" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-pencil-square"></i> Needs Correction
+                            </span>
+                            {% else %}
+                            <span class="glass-badge-status badge-pending" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-hourglass-split"></i> Pending Review
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions Column -->
+                        <td class="text-end pe-4">
+                            <div class="d-flex align-items-center justify-content-end gap-1.5">
+                                {% if item.enquiry_status|lower == 'approved' %}
+                                <button type="button" class="btn-glass-action btn-glass-correction btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> <span>Correction</span>
+                                </button>
+                                <button type="button" class="btn-glass-action btn-glass-decline btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                    <i class="bi bi-x-lg"></i> <span>Decline</span>
+                                </button>
+                                {% elif item.enquiry_status|lower == 'declined' %}
+                                <button type="button" class="btn-glass-action btn-glass-approve btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                    <i class="bi bi-check-lg"></i> <span>Approve</span>
+                                </button>
+                                <button type="button" class="btn-glass-action btn-glass-correction btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> <span>Correction</span>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn-glass-action btn-glass-approve btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                    <i class="bi bi-check-lg"></i> <span>Approve</span>
+                                </button>
+                                <button type="button" class="btn-glass-action btn-glass-correction btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> <span>Correction</span>
+                                </button>
+                                <button type="button" class="btn-glass-action btn-glass-decline btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                    <i class="bi bi-x-lg"></i> <span>Decline</span>
+                                </button>
                                 {% endif %}
 
-                                <!-- Marketplace Collection Badges -->
-                                <div class="mt-1 d-flex gap-1 flex-wrap align-items-center">
-                                    {% if item.is_featured %}
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0.5 px-2" style="font-size: 0.68rem;" title="Featured Deal">
-                                        <i class="bi bi-star-fill me-0.5"></i>Featured
-                                    </span>
-                                    {% endif %}
-
+                                <!-- More Dropdown -->
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn-glass-more" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end glass-dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}">
+                                                <i class="bi bi-eye text-primary me-2"></i> View Details
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-primary" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit">
+                                                <i class="bi bi-pencil-square me-2"></i> Edit Enquiry
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        {% if item.is_active %}
+                                        <li>
+                                            <a class="dropdown-item text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive">
+                                                <i class="bi bi-pause-circle me-2"></i> Mark as Inactive
+                                            </a>
+                                        </li>
+                                        {% elif item.enquiry_status|lower == 'approved' %}
+                                        <li>
+                                            <a class="dropdown-item text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active">
+                                                <i class="bi bi-play-circle-fill me-2"></i> Mark as Active
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        {% if item.enquiry_status != 'pending' %}
+                                        <li>
+                                            <a class="dropdown-item btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending">
+                                                <i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        <li>
+                                            <a class="dropdown-item btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}">
+                                                <i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}">
+                                                <i class="bi bi-trash3 me-2"></i> Delete Enquiry
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 0.85rem;">
-                            <i class="bi bi-calendar3 text-muted"></i>
-                            <span>{{ item.created_at|date:"M d, Y" }}</span>
-                            <span class="text-muted">•</span>
-                            <i class="bi bi-clock text-muted"></i>
-                            <span>{{ item.created_at|date:"H:i" }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        {% if item.enquiry_status|lower == 'approved' %}
-                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
-                            <i class="bi bi-check-circle-fill me-1"></i>Approved
-                        </span>
-                        {% elif item.enquiry_status|lower == 'declined' %}
-                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
-                            <i class="bi bi-x-circle-fill me-1"></i>Declined
-                        </span>
-                        {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
-                            <i class="bi bi-pencil-square me-1"></i>Needs Correction
-                        </span>
-                        {% else %}
-                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold" id="status-badge-{{ item.id }}" style="font-size: 14px;">
-                            <i class="bi bi-hourglass-split me-1"></i>Pending
-                        </span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end pe-4">
-                        <div class="d-flex align-items-center justify-content-end gap-2">
-                            {% if item.enquiry_status|lower == 'approved' %}
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
-                                <i class="bi bi-x-lg"></i> Decline
-                            </button>
-                            {% elif item.enquiry_status|lower == 'declined' %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
-                                <i class="bi bi-check-lg"></i> Approve
-                            </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            {% else %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 14px !important;">
-                                <i class="bi bi-check-lg"></i> Approve
-                            </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 14px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 14px !important;">
-                                <i class="bi bi-x-lg"></i> Decline
-                            </button>
-                            {% endif %}
-                            <div class="dropdown d-inline-block">
-                                <button class="btn btn-outline-secondary btn-sm px-2 py-1" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 0.82rem;">
-                                    <li><a class="dropdown-item py-1.5" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}"><i class="bi bi-eye text-primary me-2"></i> View Details</a></li>
-                                    <li><a class="dropdown-item py-1.5 text-primary" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit"><i class="bi bi-pencil-square me-2"></i> Edit Enquiry</a></li>
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% if item.is_active %}
-                                    <li><a class="dropdown-item py-1.5 text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive"><i class="bi bi-pause-circle me-2"></i> Mark as Inactive</a></li>
-                                    {% elif item.enquiry_status|lower == 'approved' %}
-                                    <li><a class="dropdown-item py-1.5 text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active"><i class="bi bi-play-circle-fill me-2"></i> Mark as Active</a></li>
-                                    {% endif %}
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% if item.enquiry_status != 'pending' %}
-                                    <li><a class="dropdown-item py-1.5 btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending"><i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending</a></li>
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% endif %}
-                                    <!-- Collections Toggles in Dropdown -->
-                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}"><i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}</a></li>
-
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    <li><a class="dropdown-item py-1.5 text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}"><i class="bi bi-trash3 me-2"></i> Delete Enquiry</a></li>
-                                </ul>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="py-4">
+                                <div class="glass-avatar-icon mx-auto mb-3" style="width: 58px; height: 58px; font-size: 1.75rem;">
+                                    <i class="bi bi-inbox text-primary"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">No Seller Enquiries Found</h5>
+                                <p class="text-secondary small mb-3">No individual product enquiries match your selected filters.</p>
+                                <a href="/admin/enquiries/seller/" class="glass-btn-glass">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+                                </a>
                             </div>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center py-5">
-                        <div class="empty-table-state">
-                            <div class="empty-icon text-muted mb-3" style="font-size: 2.5rem;">
-                                <i class="bi bi-inbox"></i>
-                            </div>
-                            <h5 class="fw-bold text-dark mb-1">No Seller Enquiries Found</h5>
-                            <p class="text-secondary small mb-0">No individual product enquiries match your current filter.</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination Footer -->
-    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between px-4 py-3 border-top gap-3 bg-white rounded-bottom">
-        <div class="text-secondary small">
-            Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
-            <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
-            <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
-                        <i class="bi bi-chevron-double-left"></i>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                        Previous
-                    </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
-                </li>
-                {% endif %}
 
-                {% for p in page_obj.paginator.page_range %}
-                    {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
-                        {% if p == page_obj.number %}
-                        <li class="page-item active">
-                            <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
-                        </li>
-                        {% endif %}
+        <!-- Glass Pagination Footer -->
+        <div class="glass-pagination-footer">
+            <div class="text-secondary small fw-medium">
+                Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+            </div>
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1.5 list-unstyled d-flex">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a class="glass-page-btn" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="glass-page-btn" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="glass-page-btn disabled">Previous</span>
+                    </li>
                     {% endif %}
-                {% endfor %}
 
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                        Next
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
-                        <i class="bi bi-chevron-double-right"></i>
-                    </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
+                    {% for p in page_obj.paginator.page_range %}
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                            {% if p == page_obj.number %}
+                            <li>
+                                <span class="glass-page-btn active">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="glass-page-btn" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a class="glass-page-btn" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    <li>
+                        <a class="glass-page-btn" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="glass-page-btn disabled">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -598,6 +1426,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
     // Collection Toggle in Dropdown
     document.querySelectorAll('.btn-action-collection').forEach(btn => {
         btn.addEventListener('click', async () => {
