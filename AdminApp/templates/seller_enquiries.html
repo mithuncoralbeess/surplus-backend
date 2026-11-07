@@ -914,11 +914,10 @@
             <table class="table shopeers-table align-middle mb-0" id="enquiryTable">
                 <thead>
                     <tr>
-                        <th style="min-width: 260px;">Product</th>
-                        <th style="width: 200px;">Category &amp; Location</th>
-                        <th style="width: 170px;">Seller</th>
-                        <th style="width: 140px;">Date &amp; Time</th>
-                        <th style="width: 140px;">Status</th>
+                        <th style="min-width: 280px;">Product</th>
+                        <th style="width: 220px;">Category &amp; Location</th>
+                        <th style="width: 150px;">Date &amp; Time</th>
+                        <th style="width: 150px;">Status</th>
                         <th class="text-end pe-4" style="width: 240px;">Quick Actions</th>
                     </tr>
                 </thead>
@@ -961,36 +960,13 @@
                         <!-- Category & Location -->
                         <td>
                             {% if item.category %}
-                            <div class="shopeers-meta-pill text-truncate mb-1" style="max-width: 190px;" title="{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}">
+                            <div class="shopeers-meta-pill text-truncate mb-1" style="max-width: 200px;" title="{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}">
                                 <i class="bi bi-folder2 me-1 text-primary"></i>{{ item.category.name }}
                             </div>
                             {% endif %}
                             {% if item.inventory_country %}
                             <div class="small text-muted" style="font-size: 0.76rem;" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
                                 <i class="bi bi-geo-alt text-danger me-1"></i>{{ item.inventory_country }}
-                            </div>
-                            {% endif %}
-                        </td>
-
-                        <!-- Seller -->
-                        <td>
-                            {% if item.vendor %}
-                            <div class="fw-semibold font-monospace" style="font-size: 0.82rem; color: var(--shopeers-text-dark);" title="Seller: {{ item.vendor.email|default:'N/A' }}">
-                                <i class="bi bi-person me-1 text-muted"></i>{{ item.vendor.vendor_id }}
-                            </div>
-                            {% if item.vendor.full_name %}
-                            <div class="text-muted text-truncate" style="font-size: 0.74rem; max-width: 150px;">
-                                {{ item.vendor.full_name }}
-                            </div>
-                            {% endif %}
-                            {% else %}
-                            <span class="text-muted small">N/A</span>
-                            {% endif %}
-                            {% if item.admin %}
-                            <div class="mt-1">
-                                <span class="shopeers-meta-pill text-primary font-monospace" style="background: #eff6ff; font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }}">
-                                    <i class="bi bi-shield-check me-1"></i>ADM-{{ item.admin.id|stringformat:"04d" }}
-                                </span>
                             </div>
                             {% endif %}
                         </td>
@@ -1112,7 +1088,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-5">
+                        <td colspan="5" class="text-center py-5">
                             <div class="py-4">
                                 <div class="shopeers-product-avatar mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
                                     <i class="bi bi-inbox text-muted"></i>
