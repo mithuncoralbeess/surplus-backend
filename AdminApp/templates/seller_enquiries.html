@@ -3,436 +3,1238 @@
 {% block title %}Seller Product Enquiries - Surplus Admin{% endblock %}
 
 {% block content %}
-<!-- Page Header & Action -->
-<div class="page-header-container mb-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div>
-            <nav class="custom-breadcrumb" aria-label="breadcrumb">
-                <ol class="breadcrumb-list">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item"><span>Enquiries</span></li>
-                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                    <li class="breadcrumb-item active" aria-current="page"><span>Seller Enquiries</span></li>
-                </ol>
-            </nav>
-            <h1 class="header-title">Seller Product Enquiries</h1>
-            <p class="header-subtitle">Review, approve, correct, and manage individual product listings submitted by sellers</p>
+<style>
+/* ==========================================================================
+   MODERN ENTERPRISE AESTHETIC DESIGN SYSTEM - SELLER ENQUIRIES
+   ========================================================================== */
+
+/* Page Header & Breadcrumb */
+.enquiries-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb-nav-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 3px 12px;
+    margin-bottom: 0.6rem;
+}
+
+.breadcrumb-nav-list {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.breadcrumb-nav-list a {
+    color: #475569;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.breadcrumb-nav-list a:hover {
+    color: #0f172a;
+}
+
+.page-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.main-page-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.live-indicator-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.70rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.pulse-circle {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: livePulse 2s infinite;
+}
+
+@keyframes livePulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.main-page-subtitle {
+    font-size: 0.84rem;
+    color: #64748b;
+    margin: 0.25rem 0 0 0;
+}
+
+/* KPI Metric Cards */
+.kpi-stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1.1rem 1.15rem;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.kpi-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5e1;
+}
+
+.kpi-stat-card.active-card {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 8px 24px -4px rgba(79, 70, 229, 0.15) !important;
+}
+
+.kpi-stat-card.active-card::before {
+    background: #4f46e5;
+}
+
+.kpi-stat-card.active-amber {
+    border-color: #f59e0b !important;
+    box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.15) !important;
+}
+.kpi-stat-card.active-amber::before { background: #f59e0b; }
+
+.kpi-stat-card.active-emerald {
+    border-color: #10b981 !important;
+    box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.15) !important;
+}
+.kpi-stat-card.active-emerald::before { background: #10b981; }
+
+.kpi-stat-card.active-violet {
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 8px 24px -4px rgba(139, 92, 246, 0.15) !important;
+}
+.kpi-stat-card.active-violet::before { background: #8b5cf6; }
+
+.kpi-stat-card.active-rose {
+    border-color: #f43f5e !important;
+    box-shadow: 0 8px 24px -4px rgba(244, 63, 94, 0.15) !important;
+}
+.kpi-stat-card.active-rose::before { background: #f43f5e; }
+
+.kpi-stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.kpi-stat-number {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.35rem 0 0 0;
+}
+
+.kpi-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.box-indigo { background: #eef2ff; color: #4f46e5; }
+.box-amber { background: #fffbeb; color: #d97706; }
+.box-emerald { background: #ecfdf5; color: #059669; }
+.box-violet { background: #f5f3ff; color: #7c3aed; }
+.box-rose { background: #fff1f2; color: #e11d48; }
+
+/* Main Card & Toolbar */
+.aesthetic-main-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 8px 24px -4px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.aesthetic-toolbar {
+    padding: 1rem 1.25rem;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.search-capsule {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 2px 3px 2px 10px;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 340px;
+}
+
+.search-capsule:focus-within {
+    background: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.search-capsule-input {
+    border: none !important;
+    background: transparent !important;
+    font-size: 0.85rem;
+    color: #0f172a;
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    padding: 0.35rem 0.4rem;
+}
+
+.search-capsule-btn {
+    border-radius: 8px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.search-capsule-btn:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+/* Segmented Status Tabs */
+.segmented-status-tabs {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.segment-tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    border-radius: 7px;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.segment-tab-item:hover {
+    color: #0f172a;
+}
+
+.segment-tab-item.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.segment-tab-item.active-amber {
+    background: #fffbeb;
+    color: #b45309;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15);
+}
+
+.segment-tab-item.active-emerald {
+    background: #ecfdf5;
+    color: #047857;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
+}
+
+.segment-tab-item.active-violet {
+    background: #f5f3ff;
+    color: #6d28d9;
+    box-shadow: 0 1px 3px rgba(139, 92, 246, 0.15);
+}
+
+.segment-tab-item.active-rose {
+    background: #fff1f2;
+    color: #be123c;
+    box-shadow: 0 1px 3px rgba(244, 63, 94, 0.15);
+}
+
+.tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.tab-dot-amber { background: #f59e0b; }
+.tab-dot-emerald { background: #10b981; }
+.tab-dot-violet { background: #8b5cf6; }
+.tab-dot-rose { background: #f43f5e; }
+
+/* Custom Filter Selects */
+.aesthetic-select {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500;
+    color: #334155 !important;
+    padding: 0.45rem 2rem 0.45rem 0.75rem !important;
+    height: 38px;
+    transition: all 0.15s ease;
+}
+
+.aesthetic-select:focus {
+    background-color: #ffffff !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* Add Product & Action Buttons */
+.btn-aesthetic-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #0f172a;
+    color: #ffffff !important;
+    border: 1px solid #0f172a;
+    border-radius: 10px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 38px;
+}
+
+.btn-aesthetic-primary:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.btn-aesthetic-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569 !important;
+    border-radius: 10px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 38px;
+}
+
+.btn-aesthetic-ghost:hover {
+    background: #f1f5f9;
+    color: #0f172a !important;
+    border-color: #cbd5e1;
+}
+
+.btn-aesthetic-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #e11d48 !important;
+    border-radius: 10px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 38px;
+}
+
+.btn-aesthetic-clear:hover {
+    background: #ffe4e6;
+    color: #be123c !important;
+}
+
+/* Data Table Grid */
+.aesthetic-table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.aesthetic-table thead th {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.8rem 1.25rem;
+    font-size: 0.70rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.aesthetic-table tbody tr {
+    transition: background-color 0.12s ease;
+}
+
+.aesthetic-table tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.aesthetic-table tbody td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+/* Product Icon Avatar */
+.product-avatar-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 1.05rem;
+    border: 1px solid #e0e7ff;
+    flex-shrink: 0;
+}
+
+/* Typography in Rows */
+.product-id-link {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.product-id-link:hover {
+    color: #4f46e5;
+}
+
+.product-title-text {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 0.15rem;
+    line-height: 1.35;
+    max-width: 380px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Compact Metadata Tags */
+.meta-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.3;
+    border: 1px solid transparent;
+}
+
+.meta-tag-category {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.meta-tag-country {
+    background: #f8fafc;
+    color: #334155;
+    border-color: #e2e8f0;
+}
+
+.meta-tag-vendor {
+    background: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
+    font-family: ui-monospace, monospace;
+    font-size: 0.70rem;
+}
+
+.meta-tag-admin {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #e0e7ff;
+    font-family: ui-monospace, monospace;
+    font-size: 0.70rem;
+}
+
+.meta-tag-channel {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+    font-size: 0.68rem;
+}
+
+/* Active / Inactive Pill */
+.active-pill-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.pill-is-active {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.pill-is-inactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.tiny-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+.tiny-dot-green { background: #10b981; }
+.tiny-dot-gray { background: #94a3b8; }
+
+/* Status Badges */
+.status-badge-refined {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.badge-approved {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-pending {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.badge-correction {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+}
+
+.badge-declined {
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+}
+
+/* Micro Action Buttons */
+.action-btn-refined {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.78rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    cursor: pointer;
+    line-height: 1.25;
+}
+
+.btn-approve-refined {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+.btn-approve-refined:hover {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+    transform: translateY(-1px);
+}
+
+.btn-correction-refined {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
+}
+.btn-correction-refined:hover {
+    background: #d97706;
+    color: #ffffff;
+    border-color: #d97706;
+    transform: translateY(-1px);
+}
+
+.btn-decline-refined {
+    background: #fff1f2;
+    color: #e11d48;
+    border-color: #fecdd3;
+}
+.btn-decline-refined:hover {
+    background: #e11d48;
+    color: #ffffff;
+    border-color: #e11d48;
+    transform: translateY(-1px);
+}
+
+.btn-more-refined {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-more-refined:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+/* Modern Dropdown */
+.dropdown-menu-refined {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
+    padding: 0.4rem !important;
+    min-width: 200px;
+}
+
+.dropdown-menu-refined .dropdown-item {
+    border-radius: 8px;
+    font-size: 0.80rem;
+    font-weight: 500;
+    padding: 0.45rem 0.75rem;
+    color: #334155;
+    transition: all 0.12s ease;
+}
+
+.dropdown-menu-refined .dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Pagination Footer */
+.aesthetic-pagination-footer {
+    padding: 0.85rem 1.25rem;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.page-btn-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.65rem;
+    border-radius: 8px;
+    font-size: 0.80rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+}
+
+.page-btn-item:hover:not(.disabled) {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.page-btn-item.active {
+    background: #0f172a;
+    color: #ffffff !important;
+    border-color: #0f172a;
+}
+
+.page-btn-item.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+</style>
+
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="enquiries-page-header">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <div class="breadcrumb-nav-pill">
+                    <ol class="breadcrumb-nav-list">
+                        <li><a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a></li>
+                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.60rem;"></i></li>
+                        <li class="text-muted">Enquiries</li>
+                        <li class="text-muted"><i class="bi bi-chevron-right" style="font-size: 0.60rem;"></i></li>
+                        <li class="fw-semibold text-dark">Seller Enquiries</li>
+                    </ol>
+                </div>
+                <div class="page-title-group">
+                    <h1 class="main-page-title">Seller Product Enquiries</h1>
+                    <span class="live-indicator-chip">
+                        <span class="pulse-circle"></span>
+                        Live Intake
+                    </span>
+                </div>
+                <p class="main-page-subtitle">Review, approve, request revisions, and manage individual product listings submitted by sellers</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/admin/products/add/" class="btn-aesthetic-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Add Product</span>
+                </a>
+                <button type="button" class="btn-aesthetic-ghost" onclick="window.location.reload()" title="Refresh Table">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>Refresh</span>
+                </button>
+            </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <a href="/admin/products/add/" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" style="font-size: 14px !important;">
-                <i class="bi bi-plus-lg"></i>
-                <span>Add Product</span>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 12px; font-size: 0.88rem;">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium text-dark">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 5 KPI Stat Metric Cards -->
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+        <!-- 1. All Enquiries -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="kpi-stat-card {% if current_status == 'all' %}active-card{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="kpi-stat-label">All Enquiries</span>
+                        <div class="kpi-icon-box box-indigo">
+                            <i class="bi bi-tags-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="kpi-stat-number">{{ counts.total|default:"0" }}</h3>
+                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Total catalogue</div>
+                    </div>
+                </div>
             </a>
-            <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 px-3 py-1.5" onclick="window.location.reload()" title="Refresh Table" style="font-size: 14px !important;">
-                <i class="bi bi-arrow-clockwise"></i>
-                <span>Refresh</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-{% if messages %}
-<div class="mb-4">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-check-circle-fill text-success fs-5"></i>
-        <div class="fw-medium">{{ message }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-<!-- KPI Metric Filter Cards -->
-<div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
-    <!-- All Enquiries -->
-    <div class="col">
-        <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'all' %}border-primary shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">All Enquiries</span>
-                        <h3 class="stat-number text-dark">{{ counts.total|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-indigo">
-                        <i class="bi bi-tags"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Pending Review -->
-    <div class="col">
-        <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'pending' %}border-warning shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Pending Review</span>
-                        <h3 class="stat-number text-warning">{{ counts.pending|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-amber">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Approved -->
-    <div class="col">
-        <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'approved' %}border-success shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Approved</span>
-                        <h3 class="stat-number text-success">{{ counts.approved|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper icon-green">
-                        <i class="bi bi-check2-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Correction Needed -->
-    <div class="col">
-        <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}border-warning shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Correction</span>
-                        <h3 class="stat-number text-warning" style="color: #d97706 !important;">{{ counts.correction|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper" style="background-color: rgba(245, 158, 11, 0.1); color: #d97706;">
-                        <i class="bi bi-pencil-square"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <!-- Declined -->
-    <div class="col">
-        <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
-            <div class="content-stat-card {% if current_status == 'declined' %}border-danger shadow-sm{% endif %}">
-                <div class="stat-card-content">
-                    <div class="stat-meta">
-                        <span class="stat-label">Declined</span>
-                        <h3 class="stat-number text-danger">{{ counts.declined|default:"0" }}</h3>
-                    </div>
-                    <div class="stat-icon-wrapper" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
-                        <i class="bi bi-x-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- Main Table Card with Search & Filter Tabs -->
-<div class="content-table-card shadow-sm border rounded-3 bg-white">
-    <!-- Card Toolbar -->
-    <div class="table-toolbar p-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2.5">
-        <div class="flex-grow-1" style="max-width: 340px;">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                <input type="text" id="enquirySearch" class="form-control border-start-0" placeholder="Search ID, Name, Model, Email..." value="{{ search }}" style="font-size: 14px;">
-                <button class="btn btn-primary px-3 fw-semibold" type="button" id="enquirySearchBtn" style="font-size: 14px;">Search</button>
-            </div>
         </div>
 
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            <!-- Category Filter -->
-            <select class="form-select form-select-sm filter-select" id="categoryFilter"
-                style="min-width: 170px; max-width: 220px; font-size: 14px !important; height: 38px;">
-                <option value="all">All Categories</option>
-                {% for cat in categories %}
-                <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
-                {% endfor %}
-            </select>
+        <!-- 2. Pending Review -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="kpi-stat-card {% if current_status == 'pending' %}active-amber{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="kpi-stat-label">Pending Review</span>
+                        <div class="kpi-icon-box box-amber">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="kpi-stat-number text-warning" style="color: #d97706 !important;">{{ counts.pending|default:"0" }}</h3>
+                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Requires review</div>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-            <!-- Country Filter -->
-            <select class="form-select form-select-sm filter-select" id="countryFilter"
-                style="min-width: 160px; max-width: 200px; font-size: 14px !important; height: 38px;">
-                <option value="all">All Countries</option>
-                {% for c in countries %}
-                <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
-                {% endfor %}
-            </select>
+        <!-- 3. Approved -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="kpi-stat-card {% if current_status == 'approved' %}active-emerald{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="kpi-stat-label">Approved</span>
+                        <div class="kpi-icon-box box-emerald">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="kpi-stat-number text-success" style="color: #059669 !important;">{{ counts.approved|default:"0" }}</h3>
+                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Live on marketplace</div>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-            <!-- Date Filter -->
-            <select class="form-select form-select-sm filter-select" id="dateFilter" style="width: 130px; font-size: 14px !important; height: 38px;">
-                <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
-                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
-                <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
-            </select>
+        <!-- 4. Correction -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="kpi-stat-card {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-violet{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="kpi-stat-label">Needs Correction</span>
+                        <div class="kpi-icon-box box-violet">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="kpi-stat-number" style="color: #7c3aed !important;">{{ counts.correction|default:"0" }}</h3>
+                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Pending vendor edits</div>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-            <!-- Status Segmented Tabs -->
-            <div class="btn-group" role="group" aria-label="Status filter">
+        <!-- 5. Declined -->
+        <div class="col">
+            <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" class="text-decoration-none">
+                <div class="kpi-stat-card {% if current_status == 'declined' %}active-rose{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="kpi-stat-label">Declined</span>
+                        <div class="kpi-icon-box box-rose">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="kpi-stat-number text-danger" style="color: #e11d48 !important;">{{ counts.declined|default:"0" }}</h3>
+                        <div class="small text-muted mt-1" style="font-size: 0.72rem;">Rejected listings</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card Container -->
+    <div class="aesthetic-main-card">
+        <!-- Toolbar -->
+        <div class="aesthetic-toolbar">
+            <!-- Search Box -->
+            <div class="search-capsule">
+                <i class="bi bi-search text-muted me-1" style="font-size: 0.82rem;"></i>
+                <input type="text" id="enquirySearch" class="search-capsule-input" placeholder="Search ID, Name, Model, Email..." value="{{ search }}">
+                <button class="search-capsule-btn" type="button" id="enquirySearchBtn">Search</button>
+            </div>
+
+            <!-- Segmented Status Tabs -->
+            <div class="segmented-status-tabs">
                 <a href="/admin/enquiries/seller/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="btn btn-sm {% if current_status == 'all' %}btn-primary fw-semibold{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">All</a>
+                   class="segment-tab-item {% if current_status == 'all' %}active{% endif %}">
+                    All
+                </a>
                 <a href="/admin/enquiries/seller/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="btn btn-sm {% if current_status == 'pending' %}btn-primary fw-semibold{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Pending</a>
+                   class="segment-tab-item {% if current_status == 'pending' %}active-amber{% endif %}">
+                    <span class="tab-dot tab-dot-amber"></span> Pending
+                </a>
                 <a href="/admin/enquiries/seller/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="btn btn-sm {% if current_status == 'approved' %}btn-primary fw-semibold{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Approved</a>
+                   class="segment-tab-item {% if current_status == 'approved' %}active-emerald{% endif %}">
+                    <span class="tab-dot tab-dot-emerald"></span> Approved
+                </a>
                 <a href="/admin/enquiries/seller/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="btn btn-sm {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}" style="font-size: 14px !important;">Correction</a>
+                   class="segment-tab-item {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active-violet{% endif %}">
+                    <span class="tab-dot tab-dot-violet"></span> Correction
+                </a>
                 <a href="/admin/enquiries/seller/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="btn btn-sm {% if current_status == 'declined' %}btn-primary fw-semibold{% else %}btn-outline-secondary{% endif %}" style="font-size: 14px !important;">Declined</a>
+                   class="segment-tab-item {% if current_status == 'declined' %}active-rose{% endif %}">
+                    <span class="tab-dot tab-dot-rose"></span> Declined
+                </a>
             </div>
 
-            {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
-            <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 px-2.5 py-1.5" title="Clear All Filters" style="font-size: 14px !important;">
-                <i class="bi bi-x-lg"></i>
-                <span>Clear</span>
-            </a>
+            <!-- Filters & Reset Controls -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Category Select -->
+                <select class="form-select aesthetic-select" id="categoryFilter" style="min-width: 150px; max-width: 200px;">
+                    <option value="all">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Country Select -->
+                <select class="form-select aesthetic-select" id="countryFilter" style="min-width: 140px; max-width: 180px;">
+                    <option value="all">All Countries</option>
+                    {% for c in countries %}
+                    <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Date Select -->
+                <select class="form-select aesthetic-select" id="dateFilter" style="width: 125px;">
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+                </select>
+
+                {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
+                <a href="/admin/enquiries/seller/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-aesthetic-clear" title="Clear All Filters">
+                    <i class="bi bi-x-lg"></i>
+                    <span>Clear</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Table Grid -->
+        <div class="table-responsive" style="min-height: 300px;">
+            <table class="table aesthetic-table align-middle mb-0" id="enquiryTable">
+                <thead>
+                    <tr>
+                        <th style="min-width: 320px;">Product &amp; Seller Details</th>
+                        <th style="width: 170px;">Date &amp; Time</th>
+                        <th style="width: 160px;">Status</th>
+                        <th class="text-end pe-4" style="width: 240px;">Quick Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enquiries %}
+                    <tr id="enquiry-row-{{ item.id }}">
+                        <!-- Product Details -->
+                        <td>
+                            <div class="d-flex align-items-start gap-2.5">
+                                <div class="product-avatar-box">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                <div class="min-w-0 flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="product-id-link">
+                                            {{ item.product_id }}
+                                        </a>
+                                        {% if item.is_featured %}
+                                        <span class="meta-tag" style="background: #fff1f2; color: #e11d48; border-color: #fecdd3;" title="Featured Deal">
+                                            <i class="bi bi-star-fill text-danger me-1" style="font-size: 0.65rem;"></i>Featured
+                                        </span>
+                                        {% endif %}
+                                        {% if item.is_active %}
+                                        <span class="active-pill-dot pill-is-active" title="Active on Marketplace">
+                                            <span class="tiny-dot tiny-dot-green"></span> Active
+                                        </span>
+                                        {% else %}
+                                        <span class="active-pill-dot pill-is-inactive" title="Hidden / Inactive">
+                                            <span class="tiny-dot tiny-dot-gray"></span> Inactive
+                                        </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="product-title-text" title="{{ item.product_name|default:'Product Enquiry' }}">
+                                        {{ item.product_name|default:'Product Enquiry' }}
+                                    </div>
+
+                                    <!-- Compact Meta Tags -->
+                                    <div class="d-flex align-items-center gap-1.5 flex-wrap mt-1">
+                                        {% if item.category %}
+                                        <span class="meta-tag meta-tag-category">
+                                            <i class="bi bi-folder2 text-primary me-1"></i>{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.inventory_country %}
+                                        <span class="meta-tag meta-tag-country" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
+                                            <i class="bi bi-geo-alt text-danger me-1"></i>{{ item.inventory_country }}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.vendor %}
+                                        <span class="meta-tag meta-tag-vendor" title="Seller: {{ item.vendor.email|default:'N/A' }}">
+                                            <i class="bi bi-person me-1"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.admin %}
+                                        <span class="meta-tag meta-tag-admin" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
+                                            <i class="bi bi-shield-check text-indigo me-1"></i>ADM-{{ item.admin.id|stringformat:"04d" }}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.intake_channel %}
+                                        <span class="meta-tag meta-tag-channel">
+                                            {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-1 text-success"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-1"></i>{% else %}<i class="bi bi-telephone me-1"></i>{% endif %}{{ item.intake_channel }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Date & Time -->
+                        <td style="white-space: nowrap;">
+                            <div class="fw-semibold text-dark" style="font-size: 0.82rem;">
+                                <i class="bi bi-calendar2 me-1.5 text-muted" style="font-size: 0.78rem;"></i>{{ item.created_at|date:"M d, Y" }}
+                            </div>
+                            <div class="text-muted font-monospace mt-0.5" style="font-size: 0.74rem;">
+                                <i class="bi bi-clock me-1 text-muted" style="font-size: 0.72rem;"></i>{{ item.created_at|date:"H:i" }} IST
+                            </div>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td style="white-space: nowrap;">
+                            {% if item.enquiry_status|lower == 'approved' %}
+                            <span class="status-badge-refined badge-approved" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-check-circle-fill"></i> Approved
+                            </span>
+                            {% elif item.enquiry_status|lower == 'declined' %}
+                            <span class="status-badge-refined badge-declined" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-x-circle-fill"></i> Declined
+                            </span>
+                            {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
+                            <span class="status-badge-refined badge-correction" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-pencil-square"></i> Needs Correction
+                            </span>
+                            {% else %}
+                            <span class="status-badge-refined badge-pending" id="status-badge-{{ item.id }}">
+                                <i class="bi bi-hourglass-split"></i> Pending Review
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Quick Actions -->
+                        <td class="text-end pe-4" style="white-space: nowrap;">
+                            <div class="d-flex align-items-center justify-content-end gap-1.5">
+                                {% if item.enquiry_status|lower == 'approved' %}
+                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> Correction
+                                </button>
+                                <button type="button" class="action-btn-refined btn-decline-refined btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                    <i class="bi bi-x-lg"></i> Decline
+                                </button>
+                                {% elif item.enquiry_status|lower == 'declined' %}
+                                <button type="button" class="action-btn-refined btn-approve-refined btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                    <i class="bi bi-check-lg"></i> Approve
+                                </button>
+                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> Correction
+                                </button>
+                                {% else %}
+                                <button type="button" class="action-btn-refined btn-approve-refined btn-action-status" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry">
+                                    <i class="bi bi-check-lg"></i> Approve
+                                </button>
+                                <button type="button" class="action-btn-refined btn-correction-refined btn-action-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                    <i class="bi bi-pencil-square"></i> Correction
+                                </button>
+                                <button type="button" class="action-btn-refined btn-decline-refined btn-action-status" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry">
+                                    <i class="bi bi-x-lg"></i> Decline
+                                </button>
+                                {% endif %}
+
+                                <!-- More Dropdown -->
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn-more-refined" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-refined">
+                                        <li>
+                                            <a class="dropdown-item" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}">
+                                                <i class="bi bi-eye text-primary me-2"></i> View Details
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-primary" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit">
+                                                <i class="bi bi-pencil-square me-2"></i> Edit Enquiry
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        {% if item.is_active %}
+                                        <li>
+                                            <a class="dropdown-item text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive">
+                                                <i class="bi bi-pause-circle me-2"></i> Mark as Inactive
+                                            </a>
+                                        </li>
+                                        {% elif item.enquiry_status|lower == 'approved' %}
+                                        <li>
+                                            <a class="dropdown-item text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active">
+                                                <i class="bi bi-play-circle-fill me-2"></i> Mark as Active
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        {% if item.enquiry_status != 'pending' %}
+                                        <li>
+                                            <a class="dropdown-item btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending">
+                                                <i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        {% endif %}
+                                        <li>
+                                            <a class="dropdown-item btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}">
+                                                <i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1 opacity-25"></li>
+                                        <li>
+                                            <a class="dropdown-item text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}">
+                                                <i class="bi bi-trash3 me-2"></i> Delete Enquiry
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="py-4">
+                                <div class="product-avatar-box mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                                    <i class="bi bi-inbox text-muted"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1" style="font-size: 1rem;">No Seller Enquiries Found</h5>
+                                <p class="text-secondary small mb-3">No product listings match your selected status or search filter.</p>
+                                <a href="/admin/enquiries/seller/" class="btn-aesthetic-ghost">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div class="aesthetic-pagination-footer">
+            <div class="text-secondary small fw-medium">
+                Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+            </div>
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1 list-unstyled d-flex">
+                    {% if page_obj.has_previous %}
+                    <li>
+                        <a class="page-btn-item" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="page-btn-item" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            Previous
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="page-btn-item disabled">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for p in page_obj.paginator.page_range %}
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                            {% if p == page_obj.number %}
+                            <li>
+                                <span class="page-btn-item active">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="page-btn-item" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
+                            </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li>
+                        <a class="page-btn-item" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            Next
+                        </a>
+                    </li>
+                    <li>
+                        <a class="page-btn-item" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <span class="page-btn-item disabled">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
             {% endif %}
         </div>
-    </div>
-
-    <!-- Enquiries Table -->
-    <div class="table-responsive" style="min-height: 280px;">
-        <table class="table content-data-table align-middle mb-0" id="enquiryTable">
-            <thead>
-                <tr class="text-uppercase text-secondary bg-light" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                    <th style="min-width: 300px; font-weight: 600;">Product ID &amp; Details</th>
-                    <th style="width: 180px; font-weight: 600; white-space: nowrap;">Date &amp; Time</th>
-                    <th style="width: 160px; font-weight: 600; white-space: nowrap;">Status</th>
-                    <th class="text-end pe-4" style="width: 250px; font-weight: 600; white-space: nowrap;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in enquiries %}
-                <tr id="enquiry-row-{{ item.id }}">
-                    <!-- Product Details -->
-                    <td>
-                        <div class="d-flex align-items-start gap-2.5 py-1">
-                            <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0 mt-0.5" style="width: 38px; height: 38px;">
-                                <i class="bi bi-tag-fill fs-6"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="fw-bold text-dark font-monospace text-decoration-none" style="font-size: 0.92rem;">
-                                        {{ item.product_id }}
-                                    </a>
-                                    {% if item.is_featured %}
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0.5 px-1.5" style="font-size: 0.68rem;" title="Featured Deal">
-                                        <i class="bi bi-star-fill me-0.5"></i>Featured
-                                    </span>
-                                    {% endif %}
-                                    {% if item.is_active %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0.5 px-1.5" style="font-size: 0.68rem;">
-                                        <i class="bi bi-check-circle-fill me-0.5"></i>Active
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill py-0.5 px-1.5" style="font-size: 0.68rem;">
-                                        <i class="bi bi-pause-circle me-0.5"></i>Inactive
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                <span class="d-block text-secondary small text-truncate mt-0.5" style="font-size: 0.82rem; max-width: 320px;" title="{{ item.product_name|default:'Product Enquiry' }}">
-                                    {{ item.product_name|default:'Product Enquiry' }}
-                                </span>
-                                <div class="mt-1 d-flex align-items-center gap-1.5 flex-wrap">
-                                    {% if item.category %}
-                                    <span class="badge bg-light text-secondary border px-1.5 py-0.5 rounded fw-medium" style="font-size: 0.70rem;">
-                                        <i class="bi bi-tag me-0.5 text-primary"></i>{{ item.category.name }}{% if item.subcategory %} &rsaquo; {{ item.subcategory.name }}{% endif %}
-                                    </span>
-                                    {% endif %}
-                                    {% if item.inventory_country %}
-                                    <span class="badge bg-light text-dark border px-1.5 py-0.5 rounded" style="font-size: 0.70rem;" title="{{ item.inventory_city }}{% if item.inventory_city and item.inventory_country %}, {% endif %}{{ item.inventory_country }}">
-                                        <i class="bi bi-geo-alt-fill text-danger me-0.5"></i>{{ item.inventory_country }}
-                                    </span>
-                                    {% endif %}
-                                    {% if item.vendor %}
-                                    <span class="badge bg-secondary-subtle text-secondary font-monospace py-0.5 px-1.5 rounded" style="font-size: 0.70rem;" title="User: {{ item.vendor.email|default:'N/A' }}">
-                                        <i class="bi bi-person me-0.5"></i>{{ item.vendor.vendor_id }}{% if item.vendor.full_name %} ({{ item.vendor.full_name }}){% endif %}
-                                    </span>
-                                    {% endif %}
-                                    {% if item.admin %}
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-1.5 rounded" style="font-size: 0.70rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }} ({{ item.admin.email }})">
-                                        <i class="bi bi-shield-check me-0.5"></i>by ADM-{{ item.admin.id|stringformat:"04d" }}
-                                    </span>
-                                    {% endif %}
-                                    {% if item.intake_channel %}
-                                    <span class="badge {% if item.intake_channel|lower == 'whatsapp' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %} py-0.5 px-1.5 rounded" style="font-size: 0.68rem;">
-                                        {% if item.intake_channel|lower == 'whatsapp' %}<i class="bi bi-whatsapp me-0.5"></i>{% elif item.intake_channel|lower == 'email' %}<i class="bi bi-envelope me-0.5"></i>{% else %}<i class="bi bi-telephone me-0.5"></i>{% endif %}{{ item.intake_channel }}
-                                    </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Date & Time -->
-                    <td style="white-space: nowrap;">
-                        <div class="d-flex align-items-center gap-1.5 text-secondary text-nowrap" style="font-size: 0.84rem;">
-                            <i class="bi bi-calendar3 text-muted"></i>
-                            <span>{{ item.created_at|date:"M d, Y" }}</span>
-                            <span class="text-muted">•</span>
-                            <i class="bi bi-clock text-muted"></i>
-                            <span>{{ item.created_at|date:"H:i" }}</span>
-                        </div>
-                    </td>
-
-                    <!-- Status -->
-                    <td style="white-space: nowrap;">
-                        {% if item.enquiry_status|lower == 'approved' %}
-                        <span class="badge bg-success-subtle text-success px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px;">
-                            <i class="bi bi-check-circle-fill me-1"></i>Approved
-                        </span>
-                        {% elif item.enquiry_status|lower == 'declined' %}
-                        <span class="badge bg-danger-subtle text-danger px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px;">
-                            <i class="bi bi-x-circle-fill me-1"></i>Declined
-                        </span>
-                        {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px;">
-                            <i class="bi bi-pencil-square me-1"></i>Needs Correction
-                        </span>
-                        {% else %}
-                        <span class="badge bg-warning-subtle text-warning px-2.5 py-1 rounded-pill fw-semibold text-nowrap" id="status-badge-{{ item.id }}" style="font-size: 13px;">
-                            <i class="bi bi-hourglass-split me-1"></i>Pending
-                        </span>
-                        {% endif %}
-                    </td>
-
-                    <!-- Actions -->
-                    <td class="text-end pe-4" style="white-space: nowrap;">
-                        <div class="d-flex align-items-center justify-content-end gap-1.5 text-nowrap">
-                            {% if item.enquiry_status|lower == 'approved' %}
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 13px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 13px !important;">
-                                <i class="bi bi-x-lg"></i> Decline
-                            </button>
-                            {% elif item.enquiry_status|lower == 'declined' %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 13px !important;">
-                                <i class="bi bi-check-lg"></i> Approve
-                            </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 13px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            {% else %}
-                            <button type="button" class="btn btn-outline-success btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="approved" title="Approve Enquiry" style="font-size: 13px !important;">
-                                <i class="bi bi-check-lg"></i> Approve
-                            </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm text-dark px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction" style="font-size: 13px !important;">
-                                <i class="bi bi-pencil-square"></i> Correction
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm px-2.5 py-1 fw-semibold d-inline-flex align-items-center gap-1 btn-action-status text-nowrap" data-id="{{ item.id }}" data-status="declined" title="Decline Enquiry" style="font-size: 13px !important;">
-                                <i class="bi bi-x-lg"></i> Decline
-                            </button>
-                            {% endif %}
-
-                            <!-- Dropdown Menu -->
-                            <div class="dropdown d-inline-block">
-                                <button class="btn btn-outline-secondary btn-sm px-2 py-1" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 0.82rem;">
-                                    <li><a class="dropdown-item py-1.5" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}"><i class="bi bi-eye text-primary me-2"></i> View Details</a></li>
-                                    <li><a class="dropdown-item py-1.5 text-primary" href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}?action=edit"><i class="bi bi-pencil-square me-2"></i> Edit Enquiry</a></li>
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% if item.is_active %}
-                                    <li><a class="dropdown-item py-1.5 text-secondary btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="inactive"><i class="bi bi-pause-circle me-2"></i> Mark as Inactive</a></li>
-                                    {% elif item.enquiry_status|lower == 'approved' %}
-                                    <li><a class="dropdown-item py-1.5 text-success btn-action-active-status" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active"><i class="bi bi-play-circle-fill me-2"></i> Mark as Active</a></li>
-                                    {% endif %}
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% if item.enquiry_status != 'pending' %}
-                                    <li><a class="dropdown-item py-1.5 btn-action-status" href="javascript:void(0)" data-id="{{ item.id }}" data-status="pending"><i class="bi bi-hourglass-split text-warning me-2"></i> Mark as Pending</a></li>
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    {% endif %}
-                                    <li><a class="dropdown-item py-1.5 btn-action-collection" href="javascript:void(0)" data-id="{{ item.id }}" data-flag="is_featured" data-active="{% if item.is_featured %}true{% else %}false{% endif %}"><i class="bi bi-star-fill text-danger me-2"></i> {% if item.is_featured %}Remove Featured{% else %}Mark as Featured{% endif %}</a></li>
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    <li><a class="dropdown-item py-1.5 text-danger btn-action-delete" href="javascript:void(0)" data-id="{{ item.id }}" data-pid="{{ item.product_id }}"><i class="bi bi-trash3 me-2"></i> Delete Enquiry</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center py-5">
-                        <div class="empty-table-state py-3">
-                            <div class="empty-icon text-muted mb-3" style="font-size: 2.5rem;">
-                                <i class="bi bi-inbox"></i>
-                            </div>
-                            <h5 class="fw-bold text-dark mb-1">No Seller Enquiries Found</h5>
-                            <p class="text-secondary small mb-0">No individual product enquiries match your current filter.</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination Footer -->
-    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between px-4 py-3 border-top gap-3 bg-light rounded-bottom">
-        <div class="text-secondary small">
-            Showing <span class="fw-semibold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
-            <span class="fw-semibold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
-            <span class="fw-semibold text-dark">{{ page_obj.paginator.count|default:0 }}</span> enquiries
-        </div>
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link rounded-circle px-2 py-1" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
-                        <i class="bi bi-chevron-double-left"></i>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                        Previous
-                    </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link rounded-pill px-3 py-1 text-muted">Previous</span>
-                </li>
-                {% endif %}
-
-                {% for p in page_obj.paginator.page_range %}
-                    {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
-                        {% if p == page_obj.number %}
-                        <li class="page-item active">
-                            <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link rounded-circle px-3 py-1" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
-                        </li>
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link rounded-pill px-3 py-1" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                        Next
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link rounded-circle px-2 py-1" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
-                        <i class="bi bi-chevron-double-right"></i>
-                    </a>
-                </li>
-                {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link rounded-pill px-3 py-1 text-muted">Next</span>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -537,7 +1339,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (newStatus && newStatus.toLowerCase() === 'declined') {
                 const tr = btn.closest('tr');
-                const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Product #${id}`) : `Product #${id}`;
+                const title = tr ? (tr.querySelector('.product-id-link')?.textContent || `Product #${id}`) : `Product #${id}`;
                 if (typeof window.openRejectionModal === 'function') {
                     window.openRejectionModal({
                         id: id,
@@ -551,7 +1353,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
                 const tr = btn.closest('tr');
-                const title = tr ? (tr.querySelector('.fw-bold.text-dark')?.textContent || `Product #${id}`) : `Product #${id}`;
+                const title = tr ? (tr.querySelector('.product-id-link')?.textContent || `Product #${id}`) : `Product #${id}`;
                 if (typeof window.openCorrectionModal === 'function') {
                     window.openCorrectionModal({
                         id: id,
