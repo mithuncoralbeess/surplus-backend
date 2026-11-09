@@ -42,21 +42,21 @@ def _get_system_and_popup_settings():
 
 def _get_global_pending_counts():
     """
-    Consolidates 4 separate count queries into a single subquery SQL call.
-    Reduces latency from 30s down to ~0.5s over remote database connections.
+    Consolidates 4 separate count queries into a single index-accelerated subquery SQL call.
+    Uses exact indexed status lookups instead of un-indexed LOWER() function scans.
     Cached for 300s (5 minutes).
     """
-    key = "ctx_pending_counts_v4"
+    key = "ctx_pending_counts_v5"
     counts = cache.get(key)
     if counts is None:
         try:
             with connection.cursor() as cur:
                 cur.execute("""
                     SELECT 
-                        (SELECT COUNT(*) FROM lots WHERE LOWER(enquiry_status) = 'pending'),
-                        (SELECT COUNT(*) FROM products WHERE LOWER(enquiry_status) = 'pending'),
-                        (SELECT COUNT(*) FROM rfq_enquiries WHERE LOWER(status) = 'pending'),
-                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE LOWER(status) = 'pending')
+                        (SELECT COUNT(*) FROM lots WHERE enquiry_status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM products WHERE enquiry_status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM rfq_enquiries WHERE status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE status IN ('pending', 'PENDING'))
                 """)
                 row = cur.fetchone()
                 counts = {
@@ -94,7 +94,7 @@ def _get_admin_notifications_context(admin_user, is_super):
                     Q(admin=admin_user) | (Q(admin__isnull=True) & Q(for_superadmins_only=False))
                 )
 
-            recent_notifs = list(notif_qs.order_by("-created_at")[:12])
+            recent_notifs = list(notif_qs.only('id', 'title', 'message', 'is_read', 'created_at', 'action_url', 'notification_type').order_by("-created_at")[:12])
             unread_count = sum(1 for n in recent_notifs if not n.is_read)
             if unread_count == 0 and len(recent_notifs) == 12:
                 unread_count = notif_qs.filter(is_read=False).count()

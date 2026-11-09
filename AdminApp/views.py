@@ -73,6 +73,7 @@ def _get_authenticated_admin(request):
 
     if not admin_id or session_version is None:
         if getattr(request, "user", None) and request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            request._cached_admin_user = request.user
             return request.user
         return None
 
@@ -2519,7 +2520,10 @@ def seller_enquiry_detail_view(request, enquiry_id):
             product_data[r_key] = r_val
 
     from .models import MainCategory
-    categories = MainCategory.objects.prefetch_related("subcategories").all()
+    categories = cache.get("main_categories_with_subcats")
+    if categories is None:
+        categories = list(MainCategory.objects.prefetch_related("subcategories").all())
+        cache.set("main_categories_with_subcats", categories, timeout=900)
 
     context = {
         "admin": admin_user,
@@ -4693,7 +4697,7 @@ def contact_enquiries_view(request):
 
     search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
     
-    db_contacts = ContactUsEnquiry.objects.all().order_by("-created_at")
+    db_contacts = ContactUsEnquiry.objects.only("id", "full_name", "phone", "email", "created_at", "enquiry_type", "message", "status", "is_blocked").order_by("-created_at")
     
     if search_query:
         db_contacts = db_contacts.filter(
@@ -5397,6 +5401,7 @@ def partnership_enquiries_view(request):
         if action == "update_status" and enquiry_id and new_status:
             PartnershipEnquiry.objects.filter(id=enquiry_id).update(status=new_status.upper())
             cache.delete("partnership_enquiry_counts")
+            cache.delete("admin_partnership_enquiries_list")
             if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True, "message": f"Status updated to {new_status.upper()}"})
             return redirect("partnership_enquiries")
@@ -5404,13 +5409,12 @@ def partnership_enquiries_view(request):
         elif action == "delete" and selected_ids:
             PartnershipEnquiry.objects.filter(id__in=selected_ids).delete()
             cache.delete("partnership_enquiry_counts")
+            cache.delete("admin_partnership_enquiries_list")
             if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True, "message": "Selected enquiry deleted successfully"})
             return redirect("partnership_enquiries")
 
-    db_enquiries = PartnershipEnquiry.objects.all().order_by("-created_at")
-    
-    # Consolidated & Cached Status Counts (1 query cached for 60s instead of 4 sequential queries)
+    # Consolidated & Cached Status Counts (cached for 60s)
     counts = cache.get("partnership_enquiry_counts")
     if not counts:
         data = PartnershipEnquiry.objects.aggregate(
@@ -5429,21 +5433,29 @@ def partnership_enquiries_view(request):
         }
         cache.set("partnership_enquiry_counts", counts, timeout=60)
 
-    enquiries_list = []
-    for item in db_enquiries:
-        enquiries_list.append({
-            "id": item.id,
-            "name": item.name,
-            "email": item.email,
-            "location": item.business_location or "N/A",
-            "interest": item.partnership_interest or "Partnership",
-            "subject": item.subject or "Strategic Proposal",
-            "collaboration_details": item.collaboration_details.strip() if item.collaboration_details else "",
-
-            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
-            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
-            "status": item.status,
-        })
+    # Cached enquiries list (60s) with lean column selection
+    enquiries_list = cache.get("admin_partnership_enquiries_list")
+    if enquiries_list is None:
+        db_enquiries = (
+            PartnershipEnquiry.objects
+            .only("id", "name", "email", "business_location", "partnership_interest", "subject", "collaboration_details", "created_at", "status")
+            .order_by("-created_at")
+        )
+        enquiries_list = []
+        for item in db_enquiries:
+            enquiries_list.append({
+                "id": item.id,
+                "name": item.name,
+                "email": item.email,
+                "location": item.business_location or "N/A",
+                "interest": item.partnership_interest or "Partnership",
+                "subject": item.subject or "Strategic Proposal",
+                "collaboration_details": item.collaboration_details.strip() if item.collaboration_details else "",
+                "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+                "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
+                "status": item.status,
+            })
+        cache.set("admin_partnership_enquiries_list", enquiries_list, timeout=60)
 
     context = {
         "admin": admin_user,
@@ -5580,9 +5592,12 @@ def all_products_view(request):
         all_categories = sorted(list(set(c.strip() for c in (mc_names + prod_cats) if c and c.strip())))
         cache.set("all_products_categories_list", all_categories, timeout=900)
 
-    # Countries list: combining distinct DB inventory countries with standard global countries
-    db_countries = list(Product.objects.exclude(inventory_country="").values_list("inventory_country", flat=True).distinct())
-    all_countries = sorted(list(set(c.strip() for c in (db_countries + STANDARD_COUNTRIES) if c and c.strip())))
+    # Countries list: cached for 15 minutes to eliminate full-table scan on every page request
+    all_countries = cache.get("all_products_countries_list")
+    if all_countries is None:
+        db_countries = list(Product.objects.exclude(inventory_country="").exclude(inventory_country__isnull=True).values_list("inventory_country", flat=True).distinct())
+        all_countries = sorted(list(set(c.strip() for c in (db_countries + STANDARD_COUNTRIES) if c and c.strip())))
+        cache.set("all_products_countries_list", all_countries, timeout=900)
 
     # Filter to show approved products (both active and inactive) with lean column footprint
     products_qs = Product.objects.select_related("category", "subcategory", "vendor").prefetch_related("images").defer(
@@ -7344,7 +7359,7 @@ def product_detail_view(request, product_id):
             if not vendor:
                 from .models import VendorDetails
                 vendor = VendorDetails.objects.filter(email__iexact=str(raw_vid).strip()).first()
-            if vendor:
+            if vendor and product.vendor_id != vendor.id:
                 product.vendor = vendor
                 product.save(update_fields=["vendor"])
 
@@ -7441,7 +7456,10 @@ def product_detail_view(request, product_id):
         }
 
     from .models import MainCategory
-    categories = MainCategory.objects.prefetch_related("subcategories").all()
+    categories = cache.get("main_categories_with_subcats")
+    if categories is None:
+        categories = list(MainCategory.objects.prefetch_related("subcategories").all())
+        cache.set("main_categories_with_subcats", categories, timeout=900)
 
     context = {
         "admin": admin_user,
