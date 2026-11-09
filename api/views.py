@@ -187,14 +187,31 @@ def get_maintenance_status(request):
     """
     Public REST API to get global website maintenance status.
     Endpoint: GET /api/maintenance-status/
+    Cached in-memory for 60 seconds to eliminate DB queries on every frontend page load.
     """
+    from django.core.cache import cache
+    cached_status = cache.get("api_maint_status_v2")
+    if cached_status is not None:
+        return Response(cached_status)
+
     from AdminApp.models import SystemSettings
-    sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
-    return Response({
-        "is_maintenance_mode": sys_settings.is_maintenance_mode,
-        "maintenance_message": sys_settings.maintenance_message or "Website is currently under maintenance. Please check back later.",
-        "status_text": "Maintenance" if sys_settings.is_maintenance_mode else "Live"
-    })
+    try:
+        sys_settings = SystemSettings.objects.filter(id=1).first()
+        if not sys_settings:
+            sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
+        data = {
+            "is_maintenance_mode": sys_settings.is_maintenance_mode,
+            "maintenance_message": sys_settings.maintenance_message or "Website is currently under maintenance. Please check back later.",
+            "status_text": "Maintenance" if sys_settings.is_maintenance_mode else "Live"
+        }
+    except Exception:
+        data = {
+            "is_maintenance_mode": False,
+            "maintenance_message": "Website is currently under maintenance. Please check back later.",
+            "status_text": "Live"
+        }
+    cache.set("api_maint_status_v2", data, timeout=60)
+    return Response(data)
 
 
 
@@ -217,6 +234,13 @@ def get_public_pages_list(request):
     Endpoint: GET /api/pages/
     Query params: ?category=Policy | ?header=true | ?footer=true
     """
+    import hashlib
+    from django.core.cache import cache
+    cache_key = f"api_pub_pages_list_{hashlib.md5(request.get_full_path().encode('utf-8')).hexdigest()}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
     from AdminApp.models import ContentPage
     qs = ContentPage.objects.filter(status="published", is_active=True).order_by("sort_order", "title")
 
@@ -246,11 +270,13 @@ def get_public_pages_list(request):
             "updated_at": p.updated_at.isoformat(),
         })
 
-    return Response({
+    resp = {
         "success": True,
         "count": len(pages),
         "pages": pages,
-    }, status=status.HTTP_200_OK)
+    }
+    cache.set(cache_key, resp, timeout=300)
+    return Response(resp, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -259,14 +285,32 @@ def get_public_categories(request):
     """
     Public REST API to fetch all Main Categories and their nested Sub Categories.
     Endpoint: GET /api/categories/
+    Eliminates N+1 query loops via targeted prefetch and caches in-memory for 300 seconds.
     """
-    from AdminApp.models import MainCategory
-    main_categories = MainCategory.objects.filter(is_active=True).prefetch_related("subcategories").order_by("name")
+    from django.core.cache import cache
+    cache_key = "api_public_categories_v4"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
+    from AdminApp.models import MainCategory, SubCategory
+    from django.db.models import Prefetch
+
+    subcat_prefetch = Prefetch(
+        "subcategories",
+        queryset=SubCategory.objects.filter(is_active=True).order_by("name")
+    )
+    main_categories = (
+        MainCategory.objects.filter(is_active=True)
+        .prefetch_related(subcat_prefetch)
+        .order_by("name")
+    )
 
     categories_data = []
     for main in main_categories:
         subcats = []
-        for sub in main.subcategories.filter(is_active=True):
+        # Uses prefetched in-memory records without firing individual SQL queries
+        for sub in main.subcategories.all():
             sub_img = sub.image.url if sub.image else None
             sub_abs_img = request.build_absolute_uri(sub_img) if sub_img else None
             subcats.append({
@@ -292,11 +336,13 @@ def get_public_categories(request):
             "subcategories": subcats,
         })
 
-    return Response({
+    resp = {
         "success": True,
         "count": len(categories_data),
         "categories": categories_data,
-    }, status=status.HTTP_200_OK)
+    }
+    cache.set(cache_key, resp, timeout=300)
+    return Response(resp, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -359,7 +405,14 @@ def get_public_navigation_menu(request):
     """
     Public REST API providing structured header and footer menus for frontend layouts.
     Endpoint: GET /api/pages/navigation/
+    Cached in-memory for 300 seconds.
     """
+    from django.core.cache import cache
+    cache_key = "api_public_nav_menu_v2"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
     from AdminApp.models import ContentPage
     published_pages = ContentPage.objects.filter(status="published", is_active=True).order_by("sort_order", "title")
 
@@ -383,11 +436,13 @@ def get_public_navigation_menu(request):
                 footer_grouped[cat] = []
             footer_grouped[cat].append(item)
 
-    return Response({
+    resp = {
         "success": True,
         "header_menu": header_items,
         "footer_menu": footer_grouped,
-    }, status=status.HTTP_200_OK)
+    }
+    cache.set(cache_key, resp, timeout=300)
+    return Response(resp, status=status.HTTP_200_OK)
 
 
 # -------------------------------------------------------------
@@ -420,7 +475,15 @@ def get_public_blogs_list(request):
     Public REST API to list published blog posts for frontend rendering.
     Endpoint: GET /api/blogs/
     Query params: ?category=Tech | ?search=query | ?page=1
+    Cached in-memory for 60 seconds.
     """
+    import hashlib
+    from django.core.cache import cache
+    cache_key = f"api_pub_blogs_v2_{hashlib.md5(request.get_full_path().encode('utf-8')).hexdigest()}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
     from AdminApp.models import BlogPost
     from django.db.models import Q
     from django.core.paginator import Paginator
@@ -499,7 +562,7 @@ def get_public_blogs_list(request):
             "updated_at": b.updated_at.isoformat(),
         })
 
-    return Response({
+    resp_data = {
         "success": True,
         "count": paginator.count,
         "total_pages": paginator.num_pages,
@@ -507,7 +570,9 @@ def get_public_blogs_list(request):
         "blogs": blogs_data,
         "results": blogs_data,
         "data": blogs_data,
-    }, status=status.HTTP_200_OK)
+    }
+    cache.set(cache_key, resp_data, timeout=60)
+    return Response(resp_data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -583,7 +648,13 @@ def get_public_blog_categories(request):
     """
     Public REST API to list distinct blog categories with post count.
     Endpoint: GET /api/blog-categories/
+    Cached in-memory for 300 seconds.
     """
+    from django.core.cache import cache
+    cached = cache.get("api_pub_blog_categories_v1")
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
     from AdminApp.models import BlogPost
     from django.db.models import Count
     from django.utils.text import slugify
@@ -605,6 +676,7 @@ def get_public_blog_categories(request):
         }
         for idx, c in enumerate(cats)
     ]
+    cache.set("api_pub_blog_categories_v1", data, timeout=300)
     return Response(data, status=status.HTTP_200_OK)
 
 
@@ -2444,9 +2516,22 @@ def submit_lot_request(request):
     from django.db.models import Q
 
     if request.method == "GET":
-        qs = Lot.objects.defer("raw_data").select_related("vendor").order_by("-created_at")
-        email_param = (request.GET.get("email") or request.GET.get("user_email") or "").strip()
+        import hashlib
+        from django.core.cache import cache
+
         vendor_param = request.GET.get("vendor_id") or request.GET.get("vendor") or request.GET.get("user_id")
+        email_param = (request.GET.get("email") or request.GET.get("user_email") or "").strip()
+
+        # Cache public lot queries (45s TTL)
+        cache_key = None
+        if not vendor_param and not email_param:
+            path_hash = hashlib.md5(request.get_full_path().encode("utf-8")).hexdigest()
+            cache_key = f"api_pub_lots_v2_{path_hash}"
+            cached_resp = cache.get(cache_key)
+            if cached_resp is not None:
+                return Response(cached_resp, status=status.HTTP_200_OK)
+
+        qs = Lot.objects.defer("raw_data").select_related("vendor").order_by("-created_at")
         vendor_obj = None
         if email_param:
             vendor_obj = VendorDetails.objects.filter(email__iexact=email_param).first()
@@ -2513,6 +2598,8 @@ def submit_lot_request(request):
             "current_page": page_obj.number,
             "lots": serializer.data,
         }
+        if cache_key:
+            cache.set(cache_key, resp_data, timeout=45)
         return Response(resp_data, status=status.HTTP_200_OK)
 
     # POST request processing
@@ -3247,6 +3334,16 @@ def get_public_products_list(request):
     status_param = (request.GET.get("status") or "").strip()
     active_param = request.GET.get("active") or request.GET.get("is_active")
 
+    # In-memory query caching for public catalog views (45s TTL)
+    import hashlib
+    cache_key = None
+    if not vendor_param:
+        path_hash = hashlib.md5(request.get_full_path().encode("utf-8")).hexdigest()
+        cache_key = f"api_pub_prods_v2_{path_hash}"
+        cached_resp = cache.get(cache_key)
+        if cached_resp is not None:
+            return Response(cached_resp, status=status.HTTP_200_OK)
+
     if vendor_param:
         vendor_obj = _resolve_vendor_from_param(vendor_param)
         if vendor_obj:
@@ -3327,6 +3424,8 @@ def get_public_products_list(request):
         "collection": collection or "all",
         "products": [_serialize_product_summary(p) for p in page_obj],
     }
+    if cache_key:
+        cache.set(cache_key, resp_data, timeout=45)
     return Response(resp_data, status=status.HTTP_200_OK)
 
 
@@ -3336,10 +3435,16 @@ def get_homepage_collections(request):
     Combined Public REST API returning Featured Deals, Best Selling, and New Arrivals
     in a single lightweight request, pre-sorted by their custom display sequences.
     Endpoint: GET /api/products/collections/
+    Cached in-memory for 60 seconds.
     """
+    from django.core.cache import cache
+    cache_key = "api_pub_homepage_collections_v3"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(cached, status=status.HTTP_200_OK)
+
     from AdminApp.models import Product
     from django.db.models import Case, When, Value, IntegerField
-
     from django.db.models.functions import Coalesce
 
     base_qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
@@ -3348,16 +3453,11 @@ def get_homepage_collections(request):
         p=Case(When(featured_order=0, then=Value(999999)), default="featured_order", output_field=IntegerField())
     ).order_by("p", "-created_at")[:12]
 
-
     best_qs = base_qs.filter(is_best_selling=True).annotate(
         p=Case(When(best_selling_order=0, then=Value(999999)), default="best_selling_order", output_field=IntegerField())
     ).order_by("p", "-created_at")[:12]
 
-
     new_qs = base_qs.annotate(effective_approved_at=Coalesce("date_approved", "created_at")).order_by("-effective_approved_at", "-created_at", "-id")[:12]
-    # Legacy new_qs block removed
-    # Priority and effective_approved_at applied above
-
 
     resp_data = {
         "success": True,
@@ -3365,6 +3465,7 @@ def get_homepage_collections(request):
         "best_selling": [_serialize_product_summary(p) for p in best_qs],
         "new_arrivals": [_serialize_product_summary(p) for p in new_qs],
     }
+    cache.set(cache_key, resp_data, timeout=60)
     return Response(resp_data, status=status.HTTP_200_OK)
 
 
@@ -3843,6 +3944,12 @@ def typesense_suggestions_view(request):
     if len(q) < 2:
         return Response({"success": True, "suggestions": []}, status=status.HTTP_200_OK)
 
+    from django.core.cache import cache
+    cache_key = f"api_sugg_{q.lower()}_{limit}"
+    cached_sugg = cache.get(cache_key)
+    if cached_sugg is not None:
+        return Response(cached_sugg, status=status.HTTP_200_OK)
+
     is_healthy, _ = is_typesense_available()
     if is_healthy:
         try:
@@ -3873,12 +3980,14 @@ def typesense_suggestions_view(request):
                     "url": doc.get("listing_url", ""),
                 })
 
-            return Response({
+            resp_data = {
                 "success": True,
                 "engine": "typesense",
                 "query": q,
                 "suggestions": suggestions,
-            }, status=status.HTTP_200_OK)
+            }
+            cache.set(cache_key, resp_data, timeout=60)
+            return Response(resp_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.warning(f"Typesense suggestions failed: {e}. Falling back to PostgreSQL.")
@@ -3935,12 +4044,14 @@ def typesense_suggestions_view(request):
                 "url": f"/lots/{lot.lot_number or lot.id}",
             })
 
-    return Response({
+    resp_data = {
         "success": True,
         "engine": "postgresql_fallback",
         "query": q,
         "suggestions": suggestions,
-    }, status=status.HTTP_200_OK)
+    }
+    cache.set(cache_key, resp_data, timeout=60)
+    return Response(resp_data, status=status.HTTP_200_OK)
 
 
 # Backwards compatibility alias

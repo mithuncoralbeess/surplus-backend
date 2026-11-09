@@ -946,6 +946,12 @@ class Lot(models.Model):
         # Trigger notifications & emails on status transition to approved, declined, or correction_needed
         if (prev_status != curr_status or has_explicit_decline or has_explicit_correction) and curr_status in ('approved', 'declined', 'correction_needed', 'needs_correction', 'correction'):
             target_vendor = self.vendor
+            if not target_vendor and self.vendor_id:
+                try:
+                    target_vendor = VendorDetails.objects.filter(id=self.vendor_id).first()
+                except Exception:
+                    target_vendor = None
+
             if not target_vendor and hasattr(self, '_user_id') and self._user_id:
                 try:
                     from .models import VendorDetails
@@ -958,17 +964,37 @@ class Lot(models.Model):
                 except Exception:
                     target_vendor = None
 
+            if not target_vendor and isinstance(self.raw_data, dict):
+                raw_vid = self.raw_data.get('vendor_id') or self.raw_data.get('user_id')
+                if raw_vid:
+                    try:
+                        from .models import VendorDetails
+                        u_str = str(raw_vid).strip()
+                        clean_id = u_str[4:].strip() if u_str.upper().startswith("USR-") else u_str
+                        if clean_id.isdigit():
+                            target_vendor = VendorDetails.objects.filter(id=int(clean_id)).first()
+                        if not target_vendor:
+                            target_vendor = VendorDetails.objects.filter(email__iexact=u_str).first()
+                    except Exception:
+                        pass
+
             recipient_email = None
             recipient_name = "Valued Seller"
-            if target_vendor:
-                recipient_email = target_vendor.email
+            if target_vendor and target_vendor.email:
+                recipient_email = str(target_vendor.email).strip()
                 recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
 
             if not recipient_email and isinstance(self.raw_data, dict):
-                recipient_email = self.raw_data.get("user_email") or self.raw_data.get("email")
+                recipient_email = (self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email") or "").strip()
+                if not target_vendor:
+                    recipient_name = self.raw_data.get("user_name") or self.raw_data.get("seller_name") or "Valued Seller"
 
             if not recipient_email and hasattr(self, '_user_email') and self._user_email:
                 recipient_email = str(self._user_email).strip()
+
+            if not recipient_email and self.admin and self.admin.email:
+                recipient_email = str(self.admin.email).strip()
+                recipient_name = self.admin.username or "Admin"
 
             if curr_status == 'approved':
                 profile_info = target_vendor.get_profile_completion_details() if target_vendor else None
@@ -1005,8 +1031,8 @@ class Lot(models.Model):
                             profile_completion_percentage=pct,
                             missing_fields_labels=missing_labels
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Failed to send lot approved email: {e}")
 
             elif curr_status == 'declined':
                 decline_reason = getattr(self, '_decline_reason', '')
@@ -1014,6 +1040,10 @@ class Lot(models.Model):
                     if not isinstance(self.raw_data, dict):
                         self.raw_data = {}
                     self.raw_data['rejection_reason'] = decline_reason
+                    try:
+                        Lot.objects.filter(pk=self.pk).update(raw_data=self.raw_data)
+                    except Exception:
+                        pass
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
@@ -1041,8 +1071,8 @@ class Lot(models.Model):
                             recipient_name=recipient_name,
                             reason=decline_reason
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Failed to send lot declined email: {e}")
 
             elif curr_status in ('correction_needed', 'needs_correction', 'correction'):
                 corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
@@ -1052,6 +1082,10 @@ class Lot(models.Model):
                 self.raw_data['correction_reason'] = corr_reason
                 self.raw_data['correction_suggestion'] = corr_suggestion
                 self.raw_data['rejection_reason'] = corr_reason
+                try:
+                    Lot.objects.filter(pk=self.pk).update(raw_data=self.raw_data)
+                except Exception:
+                    pass
 
                 if target_vendor:
                     try:
@@ -1081,8 +1115,8 @@ class Lot(models.Model):
                             reason=corr_reason,
                             suggestion=corr_suggestion
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Failed to send lot correction email: {e}")
 
         if self.is_active and str(self.enquiry_status).lower() == "approved":
             try:
@@ -1531,16 +1565,20 @@ class Product(models.Model):
 
             recipient_email = None
             recipient_name = "Valued Seller"
-            if target_vendor:
-                recipient_email = target_vendor.email
+            if target_vendor and target_vendor.email:
+                recipient_email = str(target_vendor.email).strip()
                 recipient_name = target_vendor.full_name or target_vendor.company_name or target_vendor.username or "Valued Seller"
-            elif isinstance(getattr(self, 'raw_data', None), dict) and (self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email")):
-                recipient_email = self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email")
-                recipient_name = self.raw_data.get("user_name") or self.raw_data.get("seller_name") or "Valued Seller"
-            elif hasattr(self, '_user_email') and self._user_email:
+
+            if not recipient_email and isinstance(getattr(self, 'raw_data', None), dict):
+                recipient_email = (self.raw_data.get("user_email") or self.raw_data.get("email") or self.raw_data.get("seller_email") or "").strip()
+                if not target_vendor:
+                    recipient_name = self.raw_data.get("user_name") or self.raw_data.get("seller_name") or "Valued Seller"
+
+            if not recipient_email and hasattr(self, '_user_email') and self._user_email:
                 recipient_email = str(self._user_email).strip()
-            elif self.admin:
-                recipient_email = self.admin.email
+
+            if not recipient_email and self.admin and self.admin.email:
+                recipient_email = str(self.admin.email).strip()
                 recipient_name = self.admin.username or "Admin" 
 
             if curr_status == 'APPROVED':
@@ -1577,11 +1615,17 @@ class Product(models.Model):
                             profile_completion_percentage=pct,
                             missing_fields_labels=missing_labels
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Failed to send product approved email: {e}")
 
             elif curr_status == 'DECLINED':
                 decline_reason = getattr(self, '_decline_reason', '')
+                if decline_reason:
+                    if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+                        self._extra_raw_data = {}
+                    if isinstance(self._extra_raw_data, dict):
+                        self._extra_raw_data['rejection_reason'] = decline_reason
+
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
@@ -1609,8 +1653,49 @@ class Product(models.Model):
                             recipient_name=recipient_name,
                             reason=decline_reason
                         )
+                    except Exception as e:
+                        logger.error(f"Failed to send product declined email: {e}")
+
+            elif curr_status in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION'):
+                corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
+                corr_suggestion = getattr(self, '_correction_suggestion', '')
+                if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
+                    self._extra_raw_data = {}
+                if isinstance(self._extra_raw_data, dict):
+                    self._extra_raw_data['correction_reason'] = corr_reason
+                    self._extra_raw_data['correction_suggestion'] = corr_suggestion
+                    self._extra_raw_data['rejection_reason'] = corr_reason
+
+                if target_vendor:
+                    try:
+                        from .services import create_vendor_notification
+                        msg = f"Your product '{self.product_name}' requires corrections before it can be approved."
+                        if corr_reason:
+                            msg += f" Reason: {corr_reason}"
+                        if corr_suggestion:
+                            msg += f" Suggestion: {corr_suggestion}"
+                        create_vendor_notification(
+                            vendor=target_vendor,
+                            title="Listing Needs Correction",
+                            message=msg,
+                            notification_type="LISTING",
+                            action_url="/profile"
+                        )
                     except Exception:
                         pass
+
+                if recipient_email:
+                    try:
+                        from .services import EmailService
+                        EmailService.send_product_correction_email(
+                            to_email=recipient_email,
+                            product=self,
+                            recipient_name=recipient_name,
+                            reason=corr_reason,
+                            suggestion=corr_suggestion
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send product correction email: {e}")
 
         # Auto-sync pgvector embedding for semantic natural language search
         try:
@@ -1619,6 +1704,10 @@ class Product(models.Model):
         except Exception:
             pass
 
+
+    @property
+    def title(self):
+        return self.product_name
 
     @property
     def sku(self):

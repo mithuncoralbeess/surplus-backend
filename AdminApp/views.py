@@ -1954,21 +1954,30 @@ def seller_enquiry_status_api(request, enquiry_id):
             elif new_status.lower() in ("declined", "pending", "correction_needed"):
                 enquiry.is_active = False
 
-            if "reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "rejection_reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "correction_reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("correction_reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "note" in request.data or "notes" in request.data:
-                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
-                enquiry._correction_reason = enquiry._decline_reason
+            decline_r = (
+                request.data.get("rejection_reason")
+                or request.data.get("reason")
+                or request.data.get("decline_reason")
+                or request.data.get("note")
+                or request.data.get("notes")
+                or ""
+            )
+            correction_r = (
+                request.data.get("correction_reason")
+                or request.data.get("reason")
+                or request.data.get("note")
+                or request.data.get("notes")
+                or ""
+            )
+            enquiry._decline_reason = str(decline_r).strip()
+            enquiry._correction_reason = str(correction_r).strip() or enquiry._decline_reason
 
-            if "suggestion" in request.data or "correction_suggestion" in request.data:
-                enquiry._correction_suggestion = str(request.data.get("suggestion") or request.data.get("correction_suggestion") or "").strip()
+            sugg = (
+                request.data.get("correction_suggestion")
+                or request.data.get("suggestion")
+                or ""
+            )
+            enquiry._correction_suggestion = str(sugg).strip()
 
     enquiry.save()
     cache.delete("seller_enquiry_counts")
@@ -2157,9 +2166,9 @@ def seller_enquiry_edit_api(request, enquiry_id):
         # 4. Status Controls
         if "enquiry_status" in data:
             status_val = str(data["enquiry_status"]).upper()
-            if status_val in ("PENDING", "APPROVED", "DECLINED"):
-                product.enquiry_status = status_val
-                if status_val != "APPROVED":
+            if status_val in ("PENDING", "APPROVED", "DECLINED", "CORRECTION_NEEDED", "NEEDS_CORRECTION", "CORRECTION"):
+                product.enquiry_status = "CORRECTION_NEEDED" if status_val in ("CORRECTION_NEEDED", "NEEDS_CORRECTION", "CORRECTION") else status_val
+                if product.enquiry_status != "APPROVED":
                     product.is_active = False
 
         if "reason" in data:
@@ -2780,9 +2789,9 @@ def lot_enquiry_edit_api(request, enquiry_id):
         lot.description = str(data["description"]).strip()
     if "enquiry_status" in data:
         status_val = str(data["enquiry_status"]).lower()
-        if status_val in ("pending", "approved", "declined"):
-            lot.enquiry_status = status_val
-            if status_val != "approved":
+        if status_val in ("pending", "approved", "declined", "correction_needed", "needs_correction", "correction"):
+            lot.enquiry_status = "correction_needed" if status_val in ("correction_needed", "needs_correction", "correction") else status_val
+            if lot.enquiry_status != "approved":
                 lot.is_active = False
                 lot.active_status = "inactive"
 
@@ -3320,21 +3329,30 @@ def lot_enquiry_status_api(request, enquiry_id):
                 enquiry.active_status = "inactive"
                 enquiry.is_active = False
 
-            if "reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "rejection_reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("rejection_reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "correction_reason" in request.data:
-                enquiry._decline_reason = str(request.data.get("correction_reason", "")).strip()
-                enquiry._correction_reason = enquiry._decline_reason
-            elif "note" in request.data or "notes" in request.data:
-                enquiry._decline_reason = str(request.data.get("note") or request.data.get("notes") or "").strip()
-                enquiry._correction_reason = enquiry._decline_reason
+            decline_r = (
+                request.data.get("rejection_reason")
+                or request.data.get("reason")
+                or request.data.get("decline_reason")
+                or request.data.get("note")
+                or request.data.get("notes")
+                or ""
+            )
+            correction_r = (
+                request.data.get("correction_reason")
+                or request.data.get("reason")
+                or request.data.get("note")
+                or request.data.get("notes")
+                or ""
+            )
+            enquiry._decline_reason = str(decline_r).strip()
+            enquiry._correction_reason = str(correction_r).strip() or enquiry._decline_reason
 
-            if "suggestion" in request.data or "correction_suggestion" in request.data:
-                enquiry._correction_suggestion = str(request.data.get("suggestion") or request.data.get("correction_suggestion") or "").strip()
+            sugg = (
+                request.data.get("correction_suggestion")
+                or request.data.get("suggestion")
+                or ""
+            )
+            enquiry._correction_suggestion = str(sugg).strip()
 
     enquiry.save()
     cache.delete("lot_enquiry_counts")

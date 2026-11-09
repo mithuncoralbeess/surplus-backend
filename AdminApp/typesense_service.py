@@ -121,17 +121,25 @@ def get_collection_name() -> str:
 
 def is_typesense_available() -> Tuple[bool, str]:
     """
-    Quick non-blocking healthcheck to determine if Typesense is reachable.
+    Cached healthcheck (20s TTL) to eliminate redundant HTTP pings before every search/suggestion.
     """
+    from django.core.cache import cache
+    cached = cache.get("typesense_health_status")
+    if cached is not None:
+        return cached
+
     try:
         client = get_typesense_client()
         # Ping the /health endpoint or list collections
         client.operations.is_healthy()
-        return True, "Healthy"
+        res = (True, "Healthy")
     except Exception as e:
         err_msg = str(e)
         logger.warning(f"Typesense health check failed: {err_msg}")
-        return False, err_msg
+        res = (False, err_msg)
+
+    cache.set("typesense_health_status", res, timeout=20)
+    return res
 
 
 def get_collection_schema() -> Dict[str, Any]:

@@ -1014,8 +1014,17 @@ class EmailService:
             or (lot.get("lot_number") if isinstance(lot, dict) else "")
             or "LOT-DECLINED"
         )
-        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
-        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        distinct_skus = (
+            getattr(lot, "number_of_distinct_skus", None)
+            or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+            or (lot.raw_data.get("number_of_distinct_skus") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+        )
+        total_units = (
+            getattr(lot, "total_units_quantity", None)
+            or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+            or (lot.raw_data.get("total_units_quantity") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+            or (lot.raw_data.get("total_quantity") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+        )
         currency = getattr(lot, "currency", "USD") or "USD"
 
         context = {
@@ -1078,8 +1087,17 @@ class EmailService:
             or (lot.get("lot_number") if isinstance(lot, dict) else "")
             or "LOT"
         )
-        distinct_skus = getattr(lot, "number_of_distinct_skus", None) or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
-        total_units = getattr(lot, "total_units_quantity", None) or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+        distinct_skus = (
+            getattr(lot, "number_of_distinct_skus", None)
+            or (lot.get("number_of_distinct_skus") if isinstance(lot, dict) else None)
+            or (lot.raw_data.get("number_of_distinct_skus") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+        )
+        total_units = (
+            getattr(lot, "total_units_quantity", None)
+            or (lot.get("total_units_quantity") if isinstance(lot, dict) else None)
+            or (lot.raw_data.get("total_units_quantity") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+            or (lot.raw_data.get("total_quantity") if hasattr(lot, "raw_data") and isinstance(lot.raw_data, dict) else None)
+        )
         currency = getattr(lot, "currency", "USD") or "USD"
 
         context = {
