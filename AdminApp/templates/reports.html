@@ -1,0 +1,906 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Reports & Analytics - Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+/* ==========================================================================
+   SHOPEERS-INSPIRED REPORTS & BUSINESS INTELLIGENCE DASHBOARD
+   ========================================================================== */
+
+:root {
+    --shopeers-bg: #f5f6fa;
+    --shopeers-card: #ffffff;
+    --shopeers-text-dark: #111827;
+    --shopeers-text-sub: #6b7280;
+    --shopeers-text-muted: #9ca3af;
+    --shopeers-border: #f1f3f7;
+    --shopeers-border-subtle: #edf0f5;
+    --shopeers-primary: #0a5c48;
+    --shopeers-primary-hover: #084c3b;
+    --shopeers-primary-light: #e8f5f1;
+    --shopeers-radius-lg: 20px;
+    --shopeers-radius-md: 14px;
+    --shopeers-radius-pill: 9999px;
+    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+}
+
+[data-bs-theme="dark"] {
+    --shopeers-bg: #0b1120;
+    --shopeers-card: #111827;
+    --shopeers-text-dark: #f9fafb;
+    --shopeers-text-sub: #9ca3af;
+    --shopeers-text-muted: #6b7280;
+    --shopeers-border: #1f2937;
+    --shopeers-border-subtle: #1e293b;
+    --shopeers-primary: #0ea27e;
+    --shopeers-primary-hover: #0a5c48;
+    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
+    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+}
+
+.reports-viewport {
+    background: transparent;
+    padding-bottom: 3rem;
+}
+
+/* Header & Breadcrumb */
+.reports-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.breadcrumb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    padding: 0.3rem 0.85rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--shopeers-text-sub);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    margin-bottom: 0.4rem;
+}
+
+.reports-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.reports-subtitle {
+    font-size: 0.86rem;
+    color: var(--shopeers-text-sub);
+    margin: 0.25rem 0 0 0;
+}
+
+/* Period Filter Pills */
+.period-tabs-group {
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    padding: 4px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    gap: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.period-tab-link {
+    border: none;
+    background: transparent;
+    color: var(--shopeers-text-sub);
+    font-size: 0.80rem;
+    font-weight: 600;
+    padding: 0.42rem 1rem;
+    border-radius: var(--shopeers-radius-pill);
+    text-decoration: none;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.period-tab-link:hover {
+    color: var(--shopeers-text-dark);
+}
+
+.period-tab-link.active {
+    background: var(--shopeers-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+}
+
+/* Primary Button (#0a5c48) */
+.btn-shopeers-primary {
+    background: var(--shopeers-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.55rem 1.35rem !important;
+    font-weight: 600 !important;
+    font-size: 0.84rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-shopeers-primary:hover {
+    background: var(--shopeers-primary-hover) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+}
+
+.btn-shopeers-outline {
+    background: #ffffff !important;
+    color: var(--shopeers-text-dark) !important;
+    border: 1px solid var(--shopeers-border) !important;
+    border-radius: var(--shopeers-radius-pill) !important;
+    padding: 0.5rem 1.15rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-shopeers-outline:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: var(--shopeers-text-dark) !important;
+}
+
+/* Static KPI Metric Cards */
+.shopeers-kpi-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    padding: 1.35rem 1.45rem;
+    box-shadow: var(--shopeers-shadow);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: default;
+    user-select: none;
+}
+
+.shopeers-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--shopeers-text-sub);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.shopeers-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.icon-emerald { background: #ecfdf5; color: #0a5c48; }
+.icon-cyan    { background: #ecfeff; color: #0891b2; }
+.icon-indigo  { background: #e0e7ff; color: #4338ca; }
+.icon-violet  { background: #f5f3ff; color: #7c3aed; }
+.icon-amber   { background: #fffbeb; color: #d97706; }
+
+.shopeers-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0.55rem 0 0 0;
+}
+
+.shopeers-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    margin-top: 0.45rem;
+    width: fit-content;
+}
+
+.pill-emerald { background: #ecfdf5; color: #0a5c48; }
+.pill-cyan    { background: #ecfeff; color: #0891b2; }
+.pill-indigo  { background: #e0e7ff; color: #4338ca; }
+.pill-violet  { background: #f5f3ff; color: #7c3aed; }
+
+/* Content Card Container */
+.shopeers-card {
+    background: var(--shopeers-card);
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-lg);
+    box-shadow: var(--shopeers-shadow);
+    padding: 1.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-header-clean {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--shopeers-border);
+}
+
+.card-header-title {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--shopeers-text-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Shopeers Clean Data Table */
+.shopeers-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.shopeers-table thead th {
+    font-size: 0.70rem;
+    font-weight: 700;
+    color: var(--shopeers-text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--shopeers-border);
+    background: transparent;
+    white-space: nowrap;
+}
+
+.shopeers-table tbody td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--shopeers-border-subtle);
+    vertical-align: middle;
+    font-size: 0.86rem;
+    background: transparent;
+}
+
+.shopeers-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.shopeers-table tbody tr:hover td {
+    background: #fafbfc;
+}
+
+/* Category Share Bar */
+.category-share-track {
+    background: #f1f5f9;
+    height: 7px;
+    border-radius: var(--shopeers-radius-pill);
+    overflow: hidden;
+    width: 90px;
+}
+
+.category-share-fill {
+    background: var(--shopeers-primary);
+    height: 100%;
+    border-radius: var(--shopeers-radius-pill);
+}
+
+/* Health Metric Items */
+.health-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.25rem;
+    border-bottom: 1px solid var(--shopeers-border-subtle);
+}
+
+.health-item:last-child {
+    border-bottom: none;
+}
+
+.health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-block;
+}
+
+/* Badges */
+.badge-status-on {
+    background: #ecfdf5;
+    color: #0a5c48;
+    border: 1px solid #d1fae5;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.badge-status-rfq {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--shopeers-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.badge-country-pill {
+    background: #f8fafc;
+    border: 1px solid var(--shopeers-border-subtle);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--shopeers-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--shopeers-text-dark);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Export Download Tiles */
+.export-download-tile {
+    background: #f8fafc;
+    border: 1px solid var(--shopeers-border);
+    border-radius: var(--shopeers-radius-md);
+    padding: 0.95rem 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    margin-bottom: 0.65rem;
+}
+
+.export-download-tile:hover {
+    background: #ffffff;
+    border-color: var(--shopeers-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.12);
+    color: inherit;
+}
+
+.export-download-tile i.download-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--shopeers-radius-pill);
+    background: #ffffff;
+    border: 1px solid var(--shopeers-border);
+    color: var(--shopeers-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.export-download-tile:hover i.download-icon {
+    background: var(--shopeers-primary);
+    color: #ffffff;
+    border-color: var(--shopeers-primary);
+}
+</style>
+
+<div class="container-fluid reports-viewport pt-3">
+
+    <!-- Header -->
+    <div class="reports-header">
+        <div>
+            <div class="breadcrumb-pill">
+                <i class="bi bi-house-door-fill text-muted"></i>
+                <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+                <span class="text-dark">Reports &amp; Analytics</span>
+            </div>
+            <h1 class="reports-title">
+                <i class="bi bi-bar-chart-line" style="color: var(--shopeers-primary);"></i>
+                <span>Reports &amp; Business Intelligence</span>
+            </h1>
+            <p class="reports-subtitle">Real-time catalog valuation, sourcing pipelines &amp; operational downloadable datasets</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2.5">
+            <!-- Time Period Filter Tabs -->
+            <div class="period-tabs-group">
+                <a href="?period=7d" class="period-tab-link {% if period == '7d' %}active{% endif %}">7 Days</a>
+                <a href="?period=30d" class="period-tab-link {% if period == '30d' or not period %}active{% endif %}">30 Days</a>
+                <a href="?period=90d" class="period-tab-link {% if period == '90d' %}active{% endif %}">90 Days</a>
+                <a href="?period=all" class="period-tab-link {% if period == 'all' %}active{% endif %}">All Time</a>
+            </div>
+
+            <!-- Export Dropdown -->
+            <div class="dropdown">
+                <button class="btn-shopeers-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-cloud-arrow-down-fill"></i>
+                    <span>Export Datasets</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3 border py-2" style="font-size: 0.84rem;">
+                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download CSV Reports</h6></li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/products/">
+                            <i class="bi bi-box-seam text-success"></i> Products Inventory Report (.csv)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/rfq/">
+                            <i class="bi bi-file-earmark-text text-primary"></i> Buyer RFQ Demand Report (.csv)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/lots/">
+                            <i class="bi bi-collection text-warning"></i> Wholesale Lots Report (.csv)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/users/">
+                            <i class="bi bi-people text-info"></i> User Network Directory (.csv)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 4 KPI Executive Metric Cards (Static Display Cards) -->
+    <div class="row g-3 mb-4">
+        <!-- Catalog Valuation -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">TOTAL CATALOG VALUATION</span>
+                    <div class="shopeers-kpi-icon icon-emerald">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">${{ kpi.total_valuation|floatformat:2 }}</h2>
+                    <span class="shopeers-kpi-pill pill-emerald">
+                        <i class="bi bi-check-circle"></i> Live Inventory Valuation
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RFQ Sourcing Pipeline -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">RFQ SOURCING PIPELINE</span>
+                    <div class="shopeers-kpi-icon icon-cyan">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">${{ kpi.rfq_pipeline_val|floatformat:2 }}</h2>
+                    <span class="shopeers-kpi-pill pill-cyan">
+                        <i class="bi bi-wallet2"></i> {{ kpi.accepted_rfqs }} Accepted / {{ kpi.quoted_rfqs }} Quoted
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Inventory Stock -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">ACTIVE INVENTORY STOCK</span>
+                    <div class="shopeers-kpi-icon icon-indigo">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ kpi.total_units }}</h2>
+                    <span class="shopeers-kpi-pill pill-indigo">
+                        <i class="bi bi-box-seam"></i> {{ kpi.active_products }} Live Products Listed
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buyer Network Community -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="shopeers-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shopeers-kpi-label">BUYER COMMUNITY</span>
+                    <div class="shopeers-kpi-icon icon-violet">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="shopeers-kpi-number">{{ kpi.total_buyers }}</h2>
+                    <span class="shopeers-kpi-pill pill-violet">
+                        <i class="bi bi-building"></i> {{ kpi.total_companies }} Registered Companies
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Analytics Grid -->
+    <div class="row g-3">
+        
+        <!-- Left Column: Tables & Breakdowns (8 cols) -->
+        <div class="col-xl-8 col-lg-7">
+            
+            <!-- Category Valuation Table -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <div>
+                        <h5 class="card-header-title">
+                            <i class="bi bi-grid-3x3-gap-fill" style="color: var(--shopeers-primary);"></i>
+                            <span>Catalog Breakdown by Category</span>
+                        </h5>
+                        <span class="text-secondary small">Live item counts and unit volumes per taxonomy category</span>
+                    </div>
+                    <a href="/admin/categories/main/" class="btn-shopeers-outline btn-sm">
+                        <span>Manage Categories</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="shopeers-table">
+                        <thead>
+                            <tr>
+                                <th>CATEGORY NAME</th>
+                                <th>LISTED PRODUCTS</th>
+                                <th>TOTAL UNITS</th>
+                                <th>CATALOG SHARE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in cat_data %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-tag-fill text-muted" style="font-size: 0.80rem;"></i>
+                                        <span class="fw-bold text-dark">{{ c.name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">{{ c.product_count }}</span>
+                                    <span class="text-muted small">items</span>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small fw-medium">{{ c.total_units }} units</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="category-share-track">
+                                            <div class="category-share-fill" style="width: {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}{% else %}0{% endif %}%;"></div>
+                                        </div>
+                                        <span class="small text-secondary">
+                                            {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}%{% else %}0%{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted small">
+                                    No category statistics recorded yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Value Inventory Items -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <div>
+                        <h5 class="card-header-title">
+                            <i class="bi bi-gem" style="color: var(--shopeers-primary);"></i>
+                            <span>High-Value Inventory Assets</span>
+                        </h5>
+                        <span class="text-secondary small">Top commercial value products currently listed</span>
+                    </div>
+                    <a href="/admin/products/all/" class="btn-shopeers-outline btn-sm">
+                        <span>All Products</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="shopeers-table">
+                        <thead>
+                            <tr>
+                                <th>PRODUCT NAME</th>
+                                <th>CATEGORY</th>
+                                <th>PRICE</th>
+                                <th>STOCK</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in high_value_items %}
+                            <tr>
+                                <td>
+                                    <a href="/admin/products/{{ p.id }}/" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 250px;">
+                                        {{ p.product_name }}
+                                    </a>
+                                    <span class="text-muted small font-monospace">#{{ p.product_id|default:p.id }}</span>
+                                </td>
+                                <td>
+                                    <span class="small text-secondary">{{ p.category.name|default:"General" }}</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">{{ p.currency|default:"USD" }} {{ p.current_price|default:p.liquidating_price }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small">{{ p.quantity|default:"0" }} units</span>
+                                </td>
+                                <td>
+                                    {% if p.is_active %}
+                                    <span class="badge-status-on"><i class="bi bi-check-circle-fill"></i> Active</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted small">
+                                    No product inventory listed.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent RFQ Demands -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <div>
+                        <h5 class="card-header-title">
+                            <i class="bi bi-file-earmark-text-fill" style="color: var(--shopeers-primary);"></i>
+                            <span>Recent Buyer RFQ Demands</span>
+                        </h5>
+                        <span class="text-secondary small">Latest Requests for Quotation submitted by buyers</span>
+                    </div>
+                    <a href="/admin/rfq-requests/" class="btn-shopeers-outline btn-sm">
+                        <span>All RFQs</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="shopeers-table">
+                        <thead>
+                            <tr>
+                                <th>REFERENCE</th>
+                                <th>PROSPECTIVE BUYER</th>
+                                <th>STATUS</th>
+                                <th>PROFORMA VALUATION</th>
+                                <th>DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in recent_rfqs %}
+                            <tr>
+                                <td>
+                                    <a href="/admin/rfq-requests/{{ r.id }}/" class="fw-bold text-dark text-decoration-none font-monospace">
+                                        {{ r.reference }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark small">{{ r.buyer.full_name|default:r.company_name|default:"Corporate Buyer" }}</div>
+                                    <span class="text-muted" style="font-size: 0.72rem;">{{ r.buyer.email|default:"" }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge-status-rfq">
+                                        {{ r.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">
+                                        {% if r.proforma_amount %}
+                                        {{ r.target_currency|default:"USD" }} {{ r.proforma_amount }}
+                                        {% else %}
+                                        <span class="text-muted small fw-normal">Under Review</span>
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-secondary small">{{ r.created_at|date:"M d, Y" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted small">
+                                    No RFQ inquiries received yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Sourcing Funnel, Stock Health, Geo & Exports (4 cols) -->
+        <div class="col-xl-4 col-lg-5">
+            
+            <!-- Inventory Health Card -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-heart-pulse-fill text-danger"></i>
+                        <span>Inventory Liquidity Health</span>
+                    </h5>
+                    <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ kpi.total_products }} Products</span>
+                </div>
+
+                <div class="health-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="health-dot bg-success"></span>
+                        <span class="small fw-semibold text-dark">In-Stock (> 10 units)</span>
+                    </div>
+                    <span class="fw-bold text-success small">{{ kpi.stock_in }} items</span>
+                </div>
+
+                <div class="health-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="health-dot bg-warning"></span>
+                        <span class="small fw-semibold text-dark">Low-Stock (1-10 units)</span>
+                    </div>
+                    <span class="fw-bold text-warning small">{{ kpi.stock_low }} items</span>
+                </div>
+
+                <div class="health-item">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="health-dot bg-danger"></span>
+                        <span class="small fw-semibold text-dark">Out-of-Stock (0 units)</span>
+                    </div>
+                    <span class="fw-bold text-danger small">{{ kpi.stock_out }} items</span>
+                </div>
+            </div>
+
+            <!-- RFQ Pipeline Conversion Funnel -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-funnel-fill text-primary"></i>
+                        <span>RFQ Demand Funnel</span>
+                    </h5>
+                    <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ kpi.total_rfqs }} Inquiries</span>
+                </div>
+
+                <div class="health-item">
+                    <span class="small fw-semibold text-secondary">Pending Desk Review</span>
+                    <span class="fw-bold text-warning small">{{ kpi.pending_rfqs }}</span>
+                </div>
+
+                <div class="health-item">
+                    <span class="small fw-semibold text-secondary">Quoted / In Negotiation</span>
+                    <span class="fw-bold text-info small">{{ kpi.quoted_rfqs }}</span>
+                </div>
+
+                <div class="health-item">
+                    <span class="small fw-semibold text-secondary">Accepted / Proforma Issued</span>
+                    <span class="fw-bold text-success small">{{ kpi.accepted_rfqs }}</span>
+                </div>
+
+                <div class="health-item">
+                    <span class="small fw-semibold text-secondary">Declined / Unmatched</span>
+                    <span class="fw-bold text-muted small">{{ kpi.declined_rfqs }}</span>
+                </div>
+            </div>
+
+            <!-- Geographic Distribution -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                        <span>Geographic Distribution</span>
+                    </h5>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for g in geo_data %}
+                    <span class="badge-country-pill">
+                        <i class="bi bi-globe2 text-muted"></i>
+                        <span>{{ g.country }}</span>
+                        <span class="badge bg-light text-dark border ms-1" style="font-size: 0.68rem;">{{ g.count }}</span>
+                    </span>
+                    {% empty %}
+                    <span class="text-muted small">No regional inventory records.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Download Export Center -->
+            <div class="shopeers-card">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-download" style="color: var(--shopeers-primary);"></i>
+                        <span>One-Click Data Exports</span>
+                    </h5>
+                </div>
+
+                <a href="/admin/reports/export/products/" class="export-download-tile">
+                    <div>
+                        <div class="fw-bold small text-dark">Catalog Inventory Report</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">CSV dataset of all live products &amp; pricing</div>
+                    </div>
+                    <i class="bi bi-arrow-down-short download-icon"></i>
+                </a>
+
+                <a href="/admin/reports/export/rfq/" class="export-download-tile">
+                    <div>
+                        <div class="fw-bold small text-dark">Buyer RFQ Demands Report</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">Sourcing requests, targets &amp; proformas</div>
+                    </div>
+                    <i class="bi bi-arrow-down-short download-icon"></i>
+                </a>
+
+                <a href="/admin/reports/export/lots/" class="export-download-tile">
+                    <div>
+                        <div class="fw-bold small text-dark">Wholesale Lots Inventory</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">Batch lot packages, types &amp; valuations</div>
+                    </div>
+                    <i class="bi bi-arrow-down-short download-icon"></i>
+                </a>
+
+                <a href="/admin/reports/export/users/" class="export-download-tile">
+                    <div>
+                        <div class="fw-bold small text-dark">User Network Directory</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">Registered buyers, companies &amp; locations</div>
+                    </div>
+                    <i class="bi bi-arrow-down-short download-icon"></i>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+

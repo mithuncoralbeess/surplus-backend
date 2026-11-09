@@ -89,6 +89,8 @@ from .views import (
     toggle_maintenance_mode_api,
     popup_view,
     email_template_preview_raw,
+    reports_dashboard_view,
+    export_report_csv,
     admin_auctions_view,
     admin_auction_create_view,
     admin_auction_detail_view,
@@ -125,6 +127,8 @@ urlpatterns = [
 
     # Dashboards (HTML View & JSON API)
     path("dashboard/", adminDashBoard, name="adminDashBoard"),
+    path("reports/", reports_dashboard_view, name="reports_dashboard"),
+    path("reports/export/<str:report_type>/", export_report_csv, name="export_report_csv"),
     path("xlsx-dashboard/", xlsxDashBoard, name="xlsxDashBoard"),
     path("vendor-index/", adminIndex, name="adminIndex"),
     path("excel-test/", excel_test_view, name="excel_test_view"),

@@ -8783,6 +8783,231 @@ def rfq_request_status_api(request, rfq_id):
     })
 
 
+# ==============================================================================
+# REPORTS & BUSINESS INTELLIGENCE DASHBOARD
+# ==============================================================================
+
+def reports_dashboard_view(request):
+    """
+    Executive Reports & Analytics Dashboard for Surplus Market.
+    Aggregates catalog valuation, inventory health, sourcing pipeline,
+    category distribution, and ready-to-export datasets.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from django.db.models import Count, Sum, F, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    from decimal import Decimal
+    from .models import Product, Lot, RfqEnquiry, VendorDetails, MainCategory
+
+    is_super = admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com"
+    period = request.GET.get("period", "30d")
+
+    now = timezone.now()
+    start_date = None
+    if period == "7d":
+        start_date = now - timedelta(days=7)
+    elif period == "30d":
+        start_date = now - timedelta(days=30)
+    elif period == "90d":
+        start_date = now - timedelta(days=90)
+
+    try:
+        prod_qs = Product.objects.all()
+        rfq_qs = RfqEnquiry.objects.all()
+        user_qs = VendorDetails.objects.all()
+
+        if start_date:
+            prod_filtered = prod_qs.filter(created_at__gte=start_date)
+            rfq_filtered = rfq_qs.filter(created_at__gte=start_date)
+            user_filtered = user_qs.filter(created_at__gte=start_date)
+        else:
+            prod_filtered = prod_qs
+            rfq_filtered = rfq_qs
+            user_filtered = user_qs
+
+        # 1. Executive Top KPI Stats
+        total_products_count = prod_qs.count()
+        active_products_count = prod_qs.filter(is_active=True).count()
+        total_units = prod_qs.filter(is_active=True).aggregate(s=Sum('quantity'))['s'] or 0
+
+        # Calculate approximate catalog valuation across active products
+        total_valuation = Decimal("0.00")
+        sample_prods = prod_qs.filter(is_active=True).values('current_price', 'liquidating_price', 'quantity')[:1000]
+        for p in sample_prods:
+            qty = p.get('quantity') or 0
+            pr = p.get('current_price') or p.get('liquidating_price') or 0
+            try:
+                total_valuation += Decimal(str(pr)) * Decimal(str(qty))
+            except Exception:
+                pass
+
+        # RFQ Pipeline Values
+        total_rfqs = rfq_qs.count()
+        pending_rfqs = rfq_qs.filter(status='pending').count()
+        quoted_rfqs = rfq_qs.filter(status='quoted').count()
+        accepted_rfqs = rfq_qs.filter(status='accepted').count()
+        declined_rfqs = rfq_qs.filter(status='declined').count()
+
+        rfq_pipeline_val = rfq_qs.filter(status__in=['quoted', 'accepted']).aggregate(s=Sum('proforma_amount'))['s'] or Decimal("0.00")
+
+        # Network community
+        total_buyers = user_qs.filter(user_type__in=['BUYER', 'BOTH']).count()
+        total_companies = user_qs.exclude(company_name__isnull=True).exclude(company_name='').count()
+
+        # 2. Stock Liquidity & Health Breakdown
+        stock_in = prod_qs.filter(quantity__gt=10).count()
+        stock_low = prod_qs.filter(quantity__gt=0, quantity__lte=10).count()
+        stock_out = prod_qs.filter(quantity=0).count()
+
+        # 3. Category Breakdown (Top categories by items & units)
+        cat_data = []
+        for cat in MainCategory.objects.all()[:12]:
+            c_prods = prod_qs.filter(category=cat)
+            p_cnt = c_prods.count()
+            if p_cnt > 0:
+                c_units = c_prods.aggregate(s=Sum('quantity'))['s'] or 0
+                cat_data.append({
+                    'id': cat.id,
+                    'name': cat.name,
+                    'product_count': p_cnt,
+                    'total_units': c_units,
+                })
+        cat_data.sort(key=lambda x: x['product_count'], reverse=True)
+
+        # 4. Geographic Distribution (Top 8 countries)
+        geo_data = []
+        geo_counts = prod_qs.exclude(inventory_country__isnull=True).exclude(inventory_country='').values('inventory_country').annotate(total=Count('id'), units=Sum('quantity')).order_by('-total')[:8]
+        for g in geo_counts:
+            geo_data.append({
+                'country': g['inventory_country'],
+                'count': g['total'],
+                'units': g['units'] or 0
+            })
+
+        # 5. Top Value Inventory Items
+        high_value_items = prod_qs.filter(is_active=True).order_by('-current_price')[:5]
+
+        # 6. Latest RFQ Inquiries
+        recent_rfqs = rfq_qs.select_related('buyer').order_by('-created_at')[:5]
+
+    except Exception as e:
+        logger.exception("Failed to compute reports analytics: %s", e)
+        total_products_count = active_products_count = total_units = 0
+        total_valuation = Decimal("0.00")
+        total_rfqs = pending_rfqs = quoted_rfqs = accepted_rfqs = declined_rfqs = 0
+        rfq_pipeline_val = Decimal("0.00")
+        total_buyers = total_companies = 0
+        stock_in = stock_low = stock_out = 0
+        cat_data = []
+        geo_data = []
+        high_value_items = []
+        recent_rfqs = []
+
+    context = {
+        'admin': admin_user,
+        'is_super_admin': is_super,
+        'period': period,
+        'kpi': {
+            'total_valuation': total_valuation,
+            'total_products': total_products_count,
+            'active_products': active_products_count,
+            'total_units': total_units,
+            'total_rfqs': total_rfqs,
+            'rfq_pipeline_val': rfq_pipeline_val,
+            'total_buyers': total_buyers,
+            'total_companies': total_companies,
+            'stock_in': stock_in,
+            'stock_low': stock_low,
+            'stock_out': stock_out,
+            'pending_rfqs': pending_rfqs,
+            'quoted_rfqs': quoted_rfqs,
+            'accepted_rfqs': accepted_rfqs,
+            'declined_rfqs': declined_rfqs,
+        },
+        'cat_data': cat_data,
+        'geo_data': geo_data,
+        'high_value_items': high_value_items,
+        'recent_rfqs': recent_rfqs,
+    }
+    return render(request, "reports.html", context)
+
+
+def export_report_csv(request, report_type):
+    """
+    Direct CSV dataset generation endpoint for reports.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    import csv
+    from django.http import HttpResponse
+    from django.utils import timezone
+    from .models import Product, Lot, RfqEnquiry, VendorDetails
+
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+
+    if report_type == "products":
+        response["Content-Disposition"] = f'attachment; filename="products_inventory_report_{timestamp}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["ID", "Product Name", "SKU", "Category", "Country", "Currency", "Price", "Quantity", "Active", "Created At"])
+        for p in Product.objects.select_related("category").order_by("-id")[:5000]:
+            cat_name = p.category.name if p.category else ""
+            writer.writerow([
+                p.id, p.product_name, p.product_id or "", cat_name,
+                p.inventory_country or "", p.currency or "USD",
+                p.current_price or p.liquidating_price or "",
+                p.quantity or 0, "Active" if p.is_active else "Inactive",
+                p.created_at.strftime("%Y-%m-%d %H:%M") if p.created_at else ""
+            ])
+        return response
+
+    elif report_type == "rfq":
+        response["Content-Disposition"] = f'attachment; filename="rfq_demand_report_{timestamp}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Reference", "Buyer Name", "Buyer Email", "Status", "Target Currency", "Proforma Amount", "Created At"])
+        for r in RfqEnquiry.objects.select_related("buyer").order_by("-id")[:5000]:
+            buyer_name = r.buyer.full_name if r.buyer else (r.company_name or "")
+            buyer_email = r.buyer.email if r.buyer else ""
+            writer.writerow([
+                r.reference, buyer_name, buyer_email, r.status,
+                r.target_currency or "USD", r.proforma_amount or "",
+                r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else ""
+            ])
+        return response
+
+    elif report_type == "lots":
+        response["Content-Disposition"] = f'attachment; filename="wholesale_lots_report_{timestamp}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Lot ID", "Title", "Type", "Status", "Price", "Created At"])
+        for l in Lot.objects.order_by("-id")[:5000]:
+            writer.writerow([
+                l.lot_id or l.id, l.title, l.lot_type or "", l.status,
+                l.total_lot_price or "",
+                l.created_at.strftime("%Y-%m-%d %H:%M") if l.created_at else ""
+            ])
+        return response
+
+    elif report_type == "users":
+        response["Content-Disposition"] = f'attachment; filename="users_network_report_{timestamp}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["ID", "Full Name", "Email", "Company Name", "User Type", "Country", "Created At"])
+        for u in VendorDetails.objects.order_by("-id")[:5000]:
+            writer.writerow([
+                u.id, u.full_name or "", u.email, u.company_name or "",
+                u.user_type, u.country or "",
+                u.created_at.strftime("%Y-%m-%d %H:%M") if hasattr(u, "created_at") and u.created_at else ""
+            ])
+        return response
+
+    return redirect("reports_dashboard")
+
+
 
 
 

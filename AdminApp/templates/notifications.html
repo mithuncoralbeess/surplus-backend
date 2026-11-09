@@ -82,8 +82,7 @@
                             <i class="bi bi-exclamation-circle-fill fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'unread' %}text-white{% else %}text-dark{% endif %}">{{
-                        unread_count|default:"0" }}</h3>
+                    <h3 class="fw-bold mb-0 {% if filter_type == 'unread' %}text-white{% else %}text-dark{% endif %}">{{ unread_count|default:"0" }}</h3>
                     <span
                         class="small mt-1 {% if filter_type == 'unread' %}text-white-50{% else %}text-secondary{% endif %}"
                         style="font-size: 0.72rem;">Requires admin review</span>
@@ -104,8 +103,7 @@
                             <i class="bi bi-file-earmark-text-fill fs-6"></i>
                         </div>
                     </div>
-                    <h3 class="fw-bold mb-0 {% if filter_type == 'rfq' %}text-white{% else %}text-dark{% endif %}">{{
-                        rfq_count|default:"0" }}</h3>
+                    <h3 class="fw-bold mb-0 {% if filter_type == 'rfq' %}text-white{% else %}text-dark{% endif %}">{{ rfq_count|default:"0" }}</h3>
                     <span
                         class="small mt-1 {% if filter_type == 'rfq' %}text-white-50{% else %}text-secondary{% endif %}"
                         style="font-size: 0.72rem;">High-value inquiries</span>
@@ -155,8 +153,7 @@
                     <a href="?filter=unread{% if search_q %}&q={{ search_q }}{% endif %}"
                         class="notif-center-filter-pill {% if filter_type == 'unread' %}active is-unread{% endif %}">
                         <span>Unread</span>
-                        <span class="pill-counter {% if unread_count and unread_count > 0 %}counter-red{% endif %}">{{
-                            unread_count|default:"0" }}</span>
+                        <span class="pill-counter {% if unread_count and unread_count > 0 %}counter-red{% endif %}">{{ unread_count|default:"0" }}</span>
                     </a>
                     <a href="?filter=listing{% if search_q %}&q={{ search_q }}{% endif %}"
                         class="notif-center-filter-pill {% if filter_type == 'listing' %}active is-listing{% endif %}">

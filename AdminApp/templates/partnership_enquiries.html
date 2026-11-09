@@ -742,8 +742,7 @@
                                         <div
                                             class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
                                             <h6 class="fw-bold text-dark mb-0">
-                                                <i class="bi bi-file-earmark-text text-success me-2"></i>Subject: {{
-                                                item.subject }}
+                                                <i class="bi bi-file-earmark-text text-success me-2"></i>Subject: {{ item.subject }}
                                             </h6>
                                             <button class="btn btn-sm btn-outline-secondary rounded-pill px-2.5"
                                                 onclick="navigator.clipboard.writeText('{{ item.collaboration_details|escapejs }}'); showToast('Proposal details copied!');">
