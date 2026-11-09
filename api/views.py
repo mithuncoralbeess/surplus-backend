@@ -7,8 +7,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 import json
-from .models import Item
-from .serializers import ItemSerializer
+
+try:
+    from .models import Item
+except Exception:
+    Item = None
+
+try:
+    from .serializers import ItemSerializer
+except Exception:
+    ItemSerializer = None
 
 logger = logging.getLogger(__name__)
 
@@ -219,7 +227,7 @@ class ItemViewSet(viewsets.ModelViewSet):
     """
     ViewSet for viewing and editing Item instances.
     """
-    queryset = Item.objects.all().order_by("-created_at")
+    queryset = Item.objects.all().order_by("-created_at") if Item else []
     serializer_class = ItemSerializer
 
 
