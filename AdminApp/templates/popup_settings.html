@@ -5,506 +5,530 @@
 
 {% block content %}
 <style>
-/* ==========================================================================
+    /* ==========================================================================
    SHOPEERS-INSPIRED CLEAN EMAIL TEMPLATES GALLERY
    ========================================================================== */
 
-:root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-border-subtle: #edf0f5;
-    --shopeers-primary: #0a5c48;
-    --shopeers-primary-hover: #084c3b;
-    --shopeers-primary-light: #e8f5f1;
-    --shopeers-radius-lg: 18px;
-    --shopeers-radius-md: 12px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
-}
+    :root {
+        --shopeers-bg: #f5f6fa;
+        --shopeers-card: #ffffff;
+        --shopeers-text-dark: #111827;
+        --shopeers-text-sub: #6b7280;
+        --shopeers-text-muted: #9ca3af;
+        --shopeers-border: #f1f3f7;
+        --shopeers-border-subtle: #edf0f5;
+        --shopeers-primary: #0a5c48;
+        --shopeers-primary-hover: #084c3b;
+        --shopeers-primary-light: #e8f5f1;
+        --shopeers-radius-lg: 18px;
+        --shopeers-radius-md: 12px;
+        --shopeers-radius-pill: 9999px;
+        --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+        --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    }
 
-[data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-border-subtle: #1e293b;
-    --shopeers-primary: #0ea27e;
-    --shopeers-primary-hover: #0a5c48;
-    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
-}
+    [data-bs-theme="dark"] {
+        --shopeers-bg: #0b1120;
+        --shopeers-card: #111827;
+        --shopeers-text-dark: #f9fafb;
+        --shopeers-text-sub: #9ca3af;
+        --shopeers-text-muted: #6b7280;
+        --shopeers-border: #1f2937;
+        --shopeers-border-subtle: #1e293b;
+        --shopeers-primary: #0ea27e;
+        --shopeers-primary-hover: #0a5c48;
+        --shopeers-primary-light: rgba(14, 162, 126, 0.15);
+        --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+    }
 
-.email-gallery-viewport {
-    background: transparent;
-    padding-bottom: 3rem;
-}
+    .email-gallery-viewport {
+        background: transparent;
+        padding-bottom: 3rem;
+    }
 
-/* Header */
-.gallery-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
-}
+    /* Header */
+    .gallery-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
 
-.breadcrumb-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    padding: 0.3rem 0.85rem;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--shopeers-text-sub);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    margin-bottom: 0.4rem;
-}
+    .breadcrumb-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        padding: 0.3rem 0.85rem;
+        border-radius: var(--shopeers-radius-pill);
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--shopeers-text-sub);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        margin-bottom: 0.4rem;
+    }
 
-.gallery-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    letter-spacing: -0.02em;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-}
+    .gallery-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+    }
 
-.gallery-count-badge {
-    background: var(--shopeers-primary-light);
-    color: var(--shopeers-primary);
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: var(--shopeers-radius-pill);
-    letter-spacing: 0;
-}
+    .gallery-count-badge {
+        background: var(--shopeers-primary-light);
+        color: var(--shopeers-primary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: var(--shopeers-radius-pill);
+        letter-spacing: 0;
+    }
 
-.gallery-subtitle {
-    font-size: 0.86rem;
-    color: var(--shopeers-text-sub);
-    margin: 0.25rem 0 0 0;
-}
+    .gallery-subtitle {
+        font-size: 0.86rem;
+        color: var(--shopeers-text-sub);
+        margin: 0.25rem 0 0 0;
+    }
 
-/* Mode Switcher Pills (Gallery vs Popup Settings) */
-.view-mode-switcher {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    padding: 4px;
-    border-radius: var(--shopeers-radius-pill);
-    display: inline-flex;
-    gap: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-}
+    /* Mode Switcher Pills (Gallery vs Popup Settings) */
+    .view-mode-switcher {
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        padding: 4px;
+        border-radius: var(--shopeers-radius-pill);
+        display: inline-flex;
+        gap: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
 
-.view-mode-btn {
-    border: none;
-    background: transparent;
-    color: var(--shopeers-text-sub);
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.45rem 1.15rem;
-    border-radius: var(--shopeers-radius-pill);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
+    .view-mode-btn {
+        border: none;
+        background: transparent;
+        color: var(--shopeers-text-sub);
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.45rem 1.15rem;
+        border-radius: var(--shopeers-radius-pill);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
 
-.view-mode-btn:hover {
-    color: var(--shopeers-text-dark);
-}
+    .view-mode-btn:hover {
+        color: var(--shopeers-text-dark);
+    }
 
-.view-mode-btn.active {
-    background: var(--shopeers-primary);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
-}
+    .view-mode-btn.active {
+        background: var(--shopeers-primary);
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+    }
 
-/* Primary Action Button (#0a5c48) */
-.btn-shopeers-primary {
-    background: var(--shopeers-primary) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.5rem 1.25rem !important;
-    font-weight: 600 !important;
-    font-size: 0.82rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.22);
-    transition: all 0.2s ease;
-    text-decoration: none;
-    white-space: nowrap;
-}
+    /* Primary Action Button (#0a5c48) */
+    .btn-shopeers-primary {
+        background: var(--shopeers-primary) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.5rem 1.25rem !important;
+        font-weight: 600 !important;
+        font-size: 0.82rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: 0 4px 12px rgba(10, 92, 72, 0.22);
+        transition: all 0.2s ease;
+        text-decoration: none;
+        white-space: nowrap;
+    }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-primary-hover) !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(10, 92, 72, 0.30);
-}
+    .btn-shopeers-primary:hover {
+        background: var(--shopeers-primary-hover) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(10, 92, 72, 0.30);
+    }
 
-.btn-shopeers-outline {
-    background: #ffffff !important;
-    color: var(--shopeers-text-dark) !important;
-    border: 1px solid var(--shopeers-border) !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.48rem 1rem !important;
-    font-weight: 600 !important;
-    font-size: 0.80rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    transition: all 0.15s ease;
-    text-decoration: none;
-}
+    .btn-shopeers-outline {
+        background: #ffffff !important;
+        color: var(--shopeers-text-dark) !important;
+        border: 1px solid var(--shopeers-border) !important;
+        border-radius: var(--shopeers-radius-pill) !important;
+        padding: 0.48rem 1rem !important;
+        font-weight: 600 !important;
+        font-size: 0.80rem !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
 
-.btn-shopeers-outline:hover {
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-    color: var(--shopeers-text-dark) !important;
-}
+    .btn-shopeers-outline:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+        color: var(--shopeers-text-dark) !important;
+    }
 
-/* Hero Spotlight Card - Clean Shopeers Aesthetic */
-.spotlight-card {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.5rem 1.75rem;
-    margin-bottom: 1.75rem;
-    position: relative;
-    overflow: hidden;
-}
+    /* Hero Spotlight Card - Clean Shopeers Aesthetic */
+    .spotlight-card {
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 1.75rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-.spotlight-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 6px;
-    height: 100%;
-    background: var(--shopeers-primary);
-}
+    .spotlight-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: var(--shopeers-primary);
+    }
 
-.spotlight-badge {
-    background: var(--shopeers-primary-light);
-    color: var(--shopeers-primary);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: var(--shopeers-radius-pill);
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-}
+    .spotlight-badge {
+        background: var(--shopeers-primary-light);
+        color: var(--shopeers-primary);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: var(--shopeers-radius-pill);
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
 
-.spotlight-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    margin: 0.5rem 0 0.3rem 0;
-}
+    .spotlight-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        margin: 0.5rem 0 0.3rem 0;
+    }
 
-.spotlight-desc {
-    color: var(--shopeers-text-sub);
-    font-size: 0.86rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
-    max-width: 650px;
-}
+    .spotlight-desc {
+        color: var(--shopeers-text-sub);
+        font-size: 0.86rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        max-width: 650px;
+    }
 
-.spotlight-meta-pill {
-    background: #f8fafc;
-    border: 1px solid var(--shopeers-border-subtle);
-    padding: 0.35rem 0.85rem;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.76rem;
-    color: var(--shopeers-text-sub);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
+    .spotlight-meta-pill {
+        background: #f8fafc;
+        border: 1px solid var(--shopeers-border-subtle);
+        padding: 0.35rem 0.85rem;
+        border-radius: var(--shopeers-radius-pill);
+        font-size: 0.76rem;
+        color: var(--shopeers-text-sub);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
 
-/* Filter Bar & Capsule Search */
-.filter-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
+    /* Filter Bar & Capsule Search */
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
 
-.category-tabs-group {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    padding: 4px;
-    border-radius: var(--shopeers-radius-pill);
-    display: inline-flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-}
+    .category-tabs-group {
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        padding: 4px;
+        border-radius: var(--shopeers-radius-pill);
+        display: inline-flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
 
-.category-tab-btn {
-    border: none;
-    background: transparent;
-    color: var(--shopeers-text-sub);
-    font-size: 0.80rem;
-    font-weight: 600;
-    padding: 0.4rem 0.95rem;
-    border-radius: var(--shopeers-radius-pill);
-    transition: all 0.15s ease;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-}
+    .category-tab-btn {
+        border: none;
+        background: transparent;
+        color: var(--shopeers-text-sub);
+        font-size: 0.80rem;
+        font-weight: 600;
+        padding: 0.4rem 0.95rem;
+        border-radius: var(--shopeers-radius-pill);
+        transition: all 0.15s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
 
-.category-tab-btn:hover {
-    color: var(--shopeers-text-dark);
-}
+    .category-tab-btn:hover {
+        color: var(--shopeers-text-dark);
+    }
 
-.category-tab-btn.active {
-    background: var(--shopeers-primary);
-    color: #ffffff;
-    box-shadow: 0 2px 6px rgba(10, 92, 72, 0.22);
-}
+    .category-tab-btn.active {
+        background: var(--shopeers-primary);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(10, 92, 72, 0.22);
+    }
 
-.category-tab-btn .tab-count {
-    font-size: 0.70rem;
-    opacity: 0.85;
-}
+    .category-tab-btn .tab-count {
+        font-size: 0.70rem;
+        opacity: 0.85;
+    }
 
-.search-box {
-    position: relative;
-    width: 280px;
-}
+    .search-box {
+        position: relative;
+        width: 280px;
+    }
 
-.search-box i.bi-search {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--shopeers-text-muted);
-    font-size: 0.85rem;
-    pointer-events: none;
-}
+    .search-box i.bi-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--shopeers-text-muted);
+        font-size: 0.85rem;
+        pointer-events: none;
+    }
 
-.search-box input {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.52rem 1rem 0.52rem 2.45rem;
-    font-size: 0.84rem;
-    width: 100%;
-    color: var(--shopeers-text-dark);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    transition: all 0.2s ease;
-}
+    .search-box input {
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-pill);
+        padding: 0.52rem 1rem 0.52rem 2.45rem;
+        font-size: 0.84rem;
+        width: 100%;
+        color: var(--shopeers-text-dark);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease;
+    }
 
-.search-box input:focus {
-    border-color: var(--shopeers-primary);
-    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
-    outline: none;
-}
+    .search-box input:focus {
+        border-color: var(--shopeers-primary);
+        box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+        outline: none;
+    }
 
-/* Template Cards Grid */
-.template-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.25rem;
-}
+    /* Template Cards Grid */
+    .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
+    }
 
-.tmpl-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.25rem 1.35rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    height: 100%;
-}
+    .tmpl-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.25rem 1.35rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+    }
 
-.tmpl-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shopeers-shadow-hover);
-    border-color: #cbd5e1;
-}
+    .tmpl-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shopeers-shadow-hover);
+        border-color: #cbd5e1;
+    }
 
-.tmpl-icon-badge {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    flex-shrink: 0;
-}
+    .tmpl-icon-badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
 
-.tmpl-badge-emerald { background: #ecfdf5; color: #0a5c48; }
-.tmpl-badge-cyan    { background: #ecfeff; color: #0891b2; }
-.tmpl-badge-indigo  { background: #e0e7ff; color: #4338ca; }
-.tmpl-badge-violet  { background: #f5f3ff; color: #7c3aed; }
-.tmpl-badge-amber   { background: #fffbeb; color: #d97706; }
-.tmpl-badge-blue    { background: #eff6ff; color: #2563eb; }
+    .tmpl-badge-emerald {
+        background: #ecfdf5;
+        color: #0a5c48;
+    }
 
-.tmpl-category-tag {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    background: #f8fafc;
-    color: var(--shopeers-text-sub);
-    border: 1px solid var(--shopeers-border-subtle);
-}
+    .tmpl-badge-cyan {
+        background: #ecfeff;
+        color: #0891b2;
+    }
 
-.tmpl-recipient-tag {
-    font-size: 0.72rem;
-    color: var(--shopeers-text-sub);
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    margin-top: 0.35rem;
-}
+    .tmpl-badge-indigo {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
 
-.tmpl-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.02rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    margin: 0.75rem 0 0.35rem 0;
-    line-height: 1.25;
-}
+    .tmpl-badge-violet {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
 
-.tmpl-subject-box {
-    background: #f8fafc;
-    border: 1px solid var(--shopeers-border-subtle);
-    padding: 0.45rem 0.75rem;
-    border-radius: 8px;
-    font-size: 0.76rem;
-    color: var(--shopeers-text-sub);
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin-bottom: 0.65rem;
-}
+    .tmpl-badge-amber {
+        background: #fffbeb;
+        color: #d97706;
+    }
 
-.tmpl-subject-box i {
-    color: var(--shopeers-primary);
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
+    .tmpl-badge-blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
 
-.tmpl-desc {
-    font-size: 0.80rem;
-    color: var(--shopeers-text-sub);
-    line-height: 1.45;
-    margin-bottom: 1rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+    .tmpl-category-tag {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: var(--shopeers-radius-pill);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        background: #f8fafc;
+        color: var(--shopeers-text-sub);
+        border: 1px solid var(--shopeers-border-subtle);
+    }
 
-.tmpl-card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--shopeers-border-subtle);
-}
+    .tmpl-recipient-tag {
+        font-size: 0.72rem;
+        color: var(--shopeers-text-sub);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.35rem;
+    }
 
-.tmpl-id-tag {
-    font-size: 0.68rem;
-    font-family: monospace;
-    color: var(--shopeers-text-muted);
-}
+    .tmpl-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        margin: 0.75rem 0 0.35rem 0;
+        line-height: 1.25;
+    }
 
-/* Pop-up Settings Section */
-.popup-settings-card {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.75rem;
-}
+    .tmpl-subject-box {
+        background: #f8fafc;
+        border: 1px solid var(--shopeers-border-subtle);
+        padding: 0.45rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.76rem;
+        color: var(--shopeers-text-sub);
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.65rem;
+    }
 
-.popup-settings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--shopeers-border);
-    margin-bottom: 1.5rem;
-}
+    .tmpl-subject-box i {
+        color: var(--shopeers-primary);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
 
-/* Modal Responsive Toolbar */
-.device-btn-group {
-    background: #f1f5f9;
-    padding: 3px;
-    border-radius: var(--shopeers-radius-pill);
-    display: inline-flex;
-    gap: 2px;
-}
+    .tmpl-desc {
+        font-size: 0.80rem;
+        color: var(--shopeers-text-sub);
+        line-height: 1.45;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 
-.device-btn {
-    border: none;
-    background: transparent;
-    padding: 4px 12px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--shopeers-text-sub);
-    border-radius: var(--shopeers-radius-pill);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-}
+    .tmpl-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--shopeers-border-subtle);
+    }
 
-.device-btn.active {
-    background: #ffffff;
-    color: var(--shopeers-primary);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
+    .tmpl-id-tag {
+        font-size: 0.68rem;
+        font-family: monospace;
+        color: var(--shopeers-text-muted);
+    }
+
+    /* Pop-up Settings Section */
+    .popup-settings-card {
+        background: #ffffff;
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.75rem;
+    }
+
+    .popup-settings-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--shopeers-border);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Modal Responsive Toolbar */
+    .device-btn-group {
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: var(--shopeers-radius-pill);
+        display: inline-flex;
+        gap: 2px;
+    }
+
+    .device-btn {
+        border: none;
+        background: transparent;
+        padding: 4px 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--shopeers-text-sub);
+        border-radius: var(--shopeers-radius-pill);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .device-btn.active {
+        background: #ffffff;
+        color: var(--shopeers-primary);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
 </style>
 
-<div class="container-fluid email-gallery-viewport px-3 px-md-4 pt-3">
-    
+<div class="container-fluid email-gallery-viewport pt-3">
+
     <!-- Flash Messages -->
     {% if messages %}
     <div class="mb-3">
         {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-4 shadow-xs p-3 bg-white border" role="alert">
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-4 shadow-xs p-3 bg-white border"
+            role="alert">
             <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i> {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -525,13 +549,15 @@
                 <span>Email Templates</span>
                 <span class="gallery-count-badge">{{ counts.total }} Designs</span>
             </h1>
-            <p class="gallery-subtitle">Preview, inspect, and test all transactional notifications and marketing newsletters</p>
+            <p class="gallery-subtitle">Preview, inspect, and test all transactional notifications and marketing
+                newsletters</p>
         </div>
 
         <!-- Mode Switcher (Email Templates vs Pop-up Settings) -->
         <div class="d-flex align-items-center gap-2.5">
             <div class="view-mode-switcher">
-                <button type="button" class="view-mode-btn active" id="tabBtnTemplates" onclick="switchMainView('templates');">
+                <button type="button" class="view-mode-btn active" id="tabBtnTemplates"
+                    onclick="switchMainView('templates');">
                     <i class="bi bi-envelope-paper"></i>
                     <span>Templates Gallery</span>
                 </button>
@@ -556,7 +582,9 @@
                     </span>
                     <h2 class="spotlight-title">The Surplus Insider — Executive Briefing</h2>
                     <p class="spotlight-desc">
-                        Turn Excess Inventory Into Opportunity. Responsive fluid-hybrid marketing newsletter spotlighting active liquidation inventory, capital holding cost insights, industry market trends, and monthly stock ageing tips.
+                        Turn Excess Inventory Into Opportunity. Responsive fluid-hybrid marketing newsletter
+                        spotlighting active liquidation inventory, capital holding cost insights, industry market
+                        trends, and monthly stock ageing tips.
                     </p>
                     <div class="d-flex flex-wrap align-items-center gap-2">
                         <span class="spotlight-meta-pill">
@@ -569,7 +597,7 @@
                 </div>
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <button type="button" class="btn-shopeers-primary"
-                            onclick="openPreviewModal('surplus-insider-001', 'The Surplus Insider (Issue 001)', 'The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)');">
+                        onclick="openPreviewModal('surplus-insider-001', 'The Surplus Insider (Issue 001)', 'The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)');">
                         <i class="bi bi-eye"></i>
                         <span>Preview Newsletter</span>
                     </button>
@@ -627,26 +655,27 @@
         <!-- Template Cards Grid -->
         <div class="template-grid" id="emailTemplatesGrid">
             {% for tmpl in email_templates %}
-            <div class="template-card-item" data-category="{{ tmpl.category }}" data-name="{{ tmpl.name|lower }}" data-subject="{{ tmpl.subject|lower }}">
+            <div class="template-card-item" data-category="{{ tmpl.category }}" data-name="{{ tmpl.name|lower }}"
+                data-subject="{{ tmpl.subject|lower }}">
                 <div class="tmpl-card">
                     <div>
                         <!-- Card Top Bar -->
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="tmpl-icon-badge tmpl-badge-{{ tmpl.badge_color|default:'emerald' }}">
                                 {% if tmpl.category == 'newsletter' %}
-                                    <i class="bi bi-newspaper"></i>
+                                <i class="bi bi-newspaper"></i>
                                 {% elif tmpl.category == 'products' %}
-                                    <i class="bi bi-box-seam"></i>
+                                <i class="bi bi-box-seam"></i>
                                 {% elif tmpl.category == 'lots' %}
-                                    <i class="bi bi-collection"></i>
+                                <i class="bi bi-collection"></i>
                                 {% elif tmpl.category == 'rfq' %}
-                                    <i class="bi bi-file-earmark-text"></i>
+                                <i class="bi bi-file-earmark-text"></i>
                                 {% elif tmpl.category == 'auth' %}
-                                    <i class="bi bi-shield-check"></i>
+                                <i class="bi bi-shield-check"></i>
                                 {% elif tmpl.category == 'vendor' %}
-                                    <i class="bi bi-shop"></i>
+                                <i class="bi bi-shop"></i>
                                 {% else %}
-                                    <i class="bi bi-envelope"></i>
+                                <i class="bi bi-envelope"></i>
                                 {% endif %}
                             </div>
                             <span class="tmpl-category-tag">
@@ -675,11 +704,12 @@
                     <div class="tmpl-card-footer">
                         <span class="tmpl-id-tag">{{ tmpl.id }}</span>
                         <div class="d-flex align-items-center gap-1.5">
-                            <a href="/admin/popup/preview/{{ tmpl.id }}/" target="_blank" class="btn-shopeers-outline" title="Open in raw browser window">
+                            <a href="/admin/popup/preview/{{ tmpl.id }}/" target="_blank" class="btn-shopeers-outline"
+                                title="Open in raw browser window">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a>
                             <button type="button" class="btn-shopeers-primary"
-                                    onclick="openPreviewModal('{{ tmpl.id }}', '{{ tmpl.name|escapejs }}', '{{ tmpl.subject|escapejs }}');">
+                                onclick="openPreviewModal('{{ tmpl.id }}', '{{ tmpl.name|escapejs }}', '{{ tmpl.subject|escapejs }}');">
                                 <i class="bi bi-eye"></i>
                                 <span>Preview</span>
                             </button>
@@ -701,17 +731,22 @@
                         <i class="bi bi-bell-fill" style="color: var(--shopeers-primary);"></i>
                         <span>Website Pop-up Modal Configuration</span>
                     </h4>
-                    <span class="text-secondary small">Set the modal banner, title, delay, and target link shown to platform visitors</span>
+                    <span class="text-secondary small">Set the modal banner, title, delay, and target link shown to
+                        platform visitors</span>
                 </div>
                 <div>
                     {% if popup.is_active %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
-                            <i class="bi bi-check-circle-fill me-1"></i> Pop-up Enabled ({{ popup.delay_minutes }}m delay)
-                        </span>
+                    <span
+                        class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-semibold"
+                        style="font-size: 0.78rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i> Pop-up Enabled ({{ popup.delay_minutes }}m delay)
+                    </span>
                     {% else %}
-                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1.5 fw-semibold" style="font-size: 0.78rem;">
-                            <i class="bi bi-dash-circle me-1"></i> Pop-up Disabled
-                        </span>
+                    <span
+                        class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-1.5 fw-semibold"
+                        style="font-size: 0.78rem;">
+                        <i class="bi bi-dash-circle me-1"></i> Pop-up Disabled
+                    </span>
                     {% endif %}
                 </div>
             </div>
@@ -721,40 +756,52 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-dark">Pop-up Title</label>
-                        <input type="text" name="title" class="form-control rounded-3" value="{{ popup.title|default:'Important Notification' }}" required>
+                        <input type="text" name="title" class="form-control rounded-3"
+                            value="{{ popup.title|default:'Important Notification' }}" required>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small text-dark">Notice Style</label>
                         <select name="popup_type" class="form-select rounded-3">
-                            <option value="info" {% if popup.popup_type == 'info' %}selected{% endif %}>Info Notice</option>
-                            <option value="warning" {% if popup.popup_type == 'warning' %}selected{% endif %}>Warning Notice</option>
-                            <option value="danger" {% if popup.popup_type == 'danger' %}selected{% endif %}>Urgent Notice</option>
-                            <option value="success" {% if popup.popup_type == 'success' %}selected{% endif %}>Success Notice</option>
-                            <option value="promotion" {% if popup.popup_type == 'promotion' %}selected{% endif %}>Promotion / Deal</option>
+                            <option value="info" {% if popup.popup_type=='info' %}selected{% endif %}>Info Notice
+                            </option>
+                            <option value="warning" {% if popup.popup_type=='warning' %}selected{% endif %}>Warning
+                                Notice</option>
+                            <option value="danger" {% if popup.popup_type=='danger' %}selected{% endif %}>Urgent Notice
+                            </option>
+                            <option value="success" {% if popup.popup_type=='success' %}selected{% endif %}>Success
+                                Notice</option>
+                            <option value="promotion" {% if popup.popup_type=='promotion' %}selected{% endif %}>
+                                Promotion / Deal</option>
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small text-dark">Display Delay (Minutes)</label>
-                        <input type="number" min="1" max="1440" name="delay_minutes" class="form-control rounded-3" value="{{ popup.delay_minutes|default:'1' }}" required>
+                        <input type="number" min="1" max="1440" name="delay_minutes" class="form-control rounded-3"
+                            value="{{ popup.delay_minutes|default:'1' }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-dark">Action Button Label</label>
-                        <input type="text" name="button_label" class="form-control rounded-3" value="{{ popup.button_label|default:'Got It' }}">
+                        <input type="text" name="button_label" class="form-control rounded-3"
+                            value="{{ popup.button_label|default:'Got It' }}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold small text-dark">Action Button Link</label>
-                        <input type="text" name="button_link" class="form-control rounded-3" value="{{ popup.button_link|default:'' }}" placeholder="/admin/products/all/">
+                        <input type="text" name="button_link" class="form-control rounded-3"
+                            value="{{ popup.button_link|default:'' }}" placeholder="/admin/products/all/">
                     </div>
 
                     <div class="col-12">
                         <label class="form-label fw-semibold small text-dark">Message Content</label>
-                        <textarea name="message" class="form-control rounded-3" rows="4" required>{{ popup.message|default:'' }}</textarea>
+                        <textarea name="message" class="form-control rounded-3" rows="4"
+                            required>{{ popup.message|default:'' }}</textarea>
                     </div>
 
-                    <div class="col-12 d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3">
+                    <div
+                        class="col-12 d-flex flex-wrap align-items-center justify-content-between pt-3 border-top mt-3">
                         <div class="form-check form-switch mb-2 mb-md-0">
-                            <input class="form-check-input" type="checkbox" name="is_active" id="popupActiveSwitch" {% if popup.is_active %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" name="is_active" id="popupActiveSwitch" {%
+                                if popup.is_active %}checked{% endif %}>
                             <label class="form-check-label fw-semibold small text-dark" for="popupActiveSwitch">
                                 Enable and trigger website pop-up modal
                             </label>
@@ -775,23 +822,28 @@
 <div class="modal fade" id="emailPreviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 1060px;">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            
+
             <!-- Modal Header -->
-            <div class="modal-header border-bottom py-3 px-4 bg-white d-flex align-items-center justify-content-between">
+            <div
+                class="modal-header border-bottom py-3 px-4 bg-white d-flex align-items-center justify-content-between">
                 <div>
-                    <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2" id="modalTemplateTitle" style="font-family: 'Outfit', sans-serif;">
+                    <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2"
+                        id="modalTemplateTitle" style="font-family: 'Outfit', sans-serif;">
                         Email Template Preview
                     </h5>
-                    <span class="text-secondary small" id="modalTemplateSubject" style="font-size: 0.76rem;">Subject line</span>
+                    <span class="text-secondary small" id="modalTemplateSubject" style="font-size: 0.76rem;">Subject
+                        line</span>
                 </div>
 
                 <!-- Responsive Device Switcher -->
                 <div class="d-flex align-items-center gap-2">
                     <div class="device-btn-group">
-                        <button type="button" class="device-btn active" id="btnDeviceDesktop" onclick="setPreviewDevice('desktop');">
+                        <button type="button" class="device-btn active" id="btnDeviceDesktop"
+                            onclick="setPreviewDevice('desktop');">
                             <i class="bi bi-laptop"></i> Desktop (640px)
                         </button>
-                        <button type="button" class="device-btn" id="btnDeviceMobile" onclick="setPreviewDevice('mobile');">
+                        <button type="button" class="device-btn" id="btnDeviceMobile"
+                            onclick="setPreviewDevice('mobile');">
                             <i class="bi bi-phone"></i> Mobile (375px)
                         </button>
                         <button type="button" class="device-btn" id="btnDeviceFull" onclick="setPreviewDevice('full');">
@@ -799,7 +851,8 @@
                         </button>
                     </div>
 
-                    <a href="#" target="_blank" id="modalRawExternalLink" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Open in raw browser window">
+                    <a href="#" target="_blank" id="modalRawExternalLink"
+                        class="btn btn-sm btn-outline-secondary rounded-pill px-2.5" title="Open in raw browser window">
                         <i class="bi bi-box-arrow-up-right"></i>
                     </a>
 
@@ -808,18 +861,23 @@
             </div>
 
             <!-- Modal Body with Live Iframe -->
-            <div class="modal-body p-0" style="background-color: #f0f2f5; height: 75vh; min-height: 640px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                <div id="previewFrameContainer" style="width: 640px; height: 100%; transition: width 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: #ffffff;">
-                    <iframe id="emailPreviewFrame" src="about:blank" style="width: 100%; height: 100%; border: none; display: block;"></iframe>
+            <div class="modal-body p-0"
+                style="background-color: #f0f2f5; height: 75vh; min-height: 640px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div id="previewFrameContainer"
+                    style="width: 640px; height: 100%; transition: width 0.25s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background: #ffffff;">
+                    <iframe id="emailPreviewFrame" src="about:blank"
+                        style="width: 100%; height: 100%; border: none; display: block;"></iframe>
                 </div>
             </div>
 
             <!-- Modal Footer -->
             <div class="modal-footer py-2.5 px-4 bg-white border-top justify-content-between">
                 <span class="text-muted small" style="font-size: 0.75rem;">
-                    <i class="bi bi-shield-check text-success me-1"></i> Surplus Market Email Engine &bull; Rendered with live context
+                    <i class="bi bi-shield-check text-success me-1"></i> Surplus Market Email Engine &bull; Rendered
+                    with live context
                 </span>
-                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary rounded-pill px-4 btn-sm"
+                    data-bs-dismiss="modal">Close</button>
             </div>
 
         </div>
@@ -851,7 +909,7 @@
     function openPreviewModal(templateId, name, subject) {
         document.getElementById('modalTemplateTitle').innerHTML = `<i class="bi bi-envelope-paper" style="color: var(--shopeers-primary);"></i> ${name}`;
         document.getElementById('modalTemplateSubject').textContent = `Subject: ${subject}`;
-        
+
         const previewUrl = `/admin/popup/preview/${templateId}/`;
         document.getElementById('modalRawExternalLink').href = previewUrl;
         document.getElementById('emailPreviewFrame').src = previewUrl;
@@ -888,7 +946,7 @@
 
     // Category Tabs Filtering
     document.querySelectorAll('#templateFilterTabs .category-tab-btn[data-filter]').forEach(tab => {
-        tab.addEventListener('click', function() {
+        tab.addEventListener('click', function () {
             document.querySelectorAll('#templateFilterTabs .category-tab-btn').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
 
@@ -907,7 +965,7 @@
     });
 
     // Instant Search Filter
-    document.getElementById('templateSearchInput')?.addEventListener('input', function(e) {
+    document.getElementById('templateSearchInput')?.addEventListener('input', function (e) {
         const query = e.target.value.toLowerCase().trim();
         const items = document.querySelectorAll('.template-card-item');
 
