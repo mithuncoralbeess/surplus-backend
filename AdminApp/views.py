@@ -8804,141 +8804,182 @@ def reports_dashboard_view(request):
     if not admin_user:
         return redirect("admin_login_page")
 
-    from django.db.models import Count, Sum, F, Q
+    from django.db.models import Count, Sum, F, Q, DecimalField, Value
+    from django.db.models.functions import Coalesce
     from django.utils import timezone
     from datetime import timedelta
     from decimal import Decimal
+    from django.core.cache import cache
     from .models import Product, Lot, RfqEnquiry, VendorDetails, MainCategory
 
     is_super = admin_user.account_type == "SuperAdmin" or admin_user.email == "super@gmail.com"
     period = request.GET.get("period", "30d")
 
-    now = timezone.now()
-    start_date = None
-    if period == "7d":
-        start_date = now - timedelta(days=7)
-    elif period == "30d":
-        start_date = now - timedelta(days=30)
-    elif period == "90d":
-        start_date = now - timedelta(days=90)
+    cache_key = f"reports_dashboard_metrics_{period}"
+    context_data = cache.get(cache_key)
 
-    try:
-        prod_qs = Product.objects.all()
-        rfq_qs = RfqEnquiry.objects.all()
-        user_qs = VendorDetails.objects.all()
+    if context_data is None:
+        now = timezone.now()
+        start_date = None
+        if period == "7d":
+            start_date = now - timedelta(days=7)
+        elif period == "30d":
+            start_date = now - timedelta(days=30)
+        elif period == "90d":
+            start_date = now - timedelta(days=90)
 
-        if start_date:
-            prod_filtered = prod_qs.filter(created_at__gte=start_date)
-            rfq_filtered = rfq_qs.filter(created_at__gte=start_date)
-            user_filtered = user_qs.filter(created_at__gte=start_date)
-        else:
-            prod_filtered = prod_qs
-            rfq_filtered = rfq_qs
-            user_filtered = user_qs
+        try:
+            prod_qs = Product.objects.all()
+            rfq_qs = RfqEnquiry.objects.all()
+            user_qs = VendorDetails.objects.all()
 
-        # 1. Executive Top KPI Stats
-        total_products_count = prod_qs.count()
-        active_products_count = prod_qs.filter(is_active=True).count()
-        total_units = prod_qs.filter(is_active=True).aggregate(s=Sum('quantity'))['s'] or 0
+            if start_date:
+                prod_filtered = prod_qs.filter(created_at__gte=start_date)
+                rfq_filtered = rfq_qs.filter(created_at__gte=start_date)
+                user_filtered = user_qs.filter(created_at__gte=start_date)
+            else:
+                prod_filtered = prod_qs
+                rfq_filtered = rfq_qs
+                user_filtered = user_qs
 
-        # Calculate approximate catalog valuation across active products
-        total_valuation = Decimal("0.00")
-        sample_prods = prod_qs.filter(is_active=True).values('current_price', 'liquidating_price', 'quantity')[:1000]
-        for p in sample_prods:
-            qty = p.get('quantity') or 0
-            pr = p.get('current_price') or p.get('liquidating_price') or 0
-            try:
-                total_valuation += Decimal(str(pr)) * Decimal(str(qty))
-            except Exception:
-                pass
+            # 1. Product Aggregates & Valuation in 1 Single Database Query
+            prod_stats = prod_filtered.aggregate(
+                total_products=Count('id'),
+                active_products=Count('id', filter=Q(is_active=True)),
+                total_units=Sum('quantity', filter=Q(is_active=True)),
+                stock_in=Count('id', filter=Q(is_active=True, quantity__gt=10)),
+                stock_low=Count('id', filter=Q(is_active=True, quantity__gt=0, quantity__lte=10)),
+                stock_out=Count('id', filter=Q(is_active=True, quantity=0)),
+                total_valuation=Sum(
+                    Coalesce('current_price', 'liquidating_price', Value(0), output_field=DecimalField()) * F('quantity'),
+                    filter=Q(is_active=True, quantity__gt=0)
+                )
+            )
 
-        # RFQ Pipeline Values
-        total_rfqs = rfq_qs.count()
-        pending_rfqs = rfq_qs.filter(status='pending').count()
-        quoted_rfqs = rfq_qs.filter(status='quoted').count()
-        accepted_rfqs = rfq_qs.filter(status='accepted').count()
-        declined_rfqs = rfq_qs.filter(status='declined').count()
+            # 2. RFQ Pipeline & Status Funnel in 1 Single Database Query
+            rfq_stats = rfq_filtered.aggregate(
+                total=Count('id'),
+                pending=Count('id', filter=Q(status='pending')),
+                quoted=Count('id', filter=Q(status='quoted')),
+                accepted=Count('id', filter=Q(status='accepted')),
+                declined=Count('id', filter=Q(status='declined')),
+                pipeline_val=Sum('proforma_amount', filter=Q(status__in=['quoted', 'accepted'])),
+            )
 
-        rfq_pipeline_val = rfq_qs.filter(status__in=['quoted', 'accepted']).aggregate(s=Sum('proforma_amount'))['s'] or Decimal("0.00")
+            # 3. Network Community Stats in 1 Single Database Query
+            user_stats = user_filtered.aggregate(
+                total_buyers=Count('id', filter=Q(user_type__in=['BUYER', 'BOTH'])),
+                total_companies=Count('id', filter=~Q(company_name__isnull=True) & ~Q(company_name='')),
+            )
 
-        # Network community
-        total_buyers = user_qs.filter(user_type__in=['BUYER', 'BOTH']).count()
-        total_companies = user_qs.exclude(company_name__isnull=True).exclude(company_name='').count()
+            # 4. Category Breakdown in 1 Grouped Query (Replaces 24 separate round-trip queries)
+            cat_counts = (
+                prod_filtered
+                .filter(category__isnull=False)
+                .values('category_id', 'category__name')
+                .annotate(
+                    product_count=Count('id'),
+                    total_units=Sum('quantity')
+                )
+                .order_by('-product_count')[:10]
+            )
+            cat_data = [
+                {
+                    'id': c['category_id'],
+                    'name': c['category__name'] or 'Uncategorized',
+                    'product_count': c['product_count'],
+                    'total_units': c['total_units'] or 0,
+                }
+                for c in cat_counts
+            ]
 
-        # 2. Stock Liquidity & Health Breakdown
-        stock_in = prod_qs.filter(quantity__gt=10).count()
-        stock_low = prod_qs.filter(quantity__gt=0, quantity__lte=10).count()
-        stock_out = prod_qs.filter(quantity=0).count()
+            # 5. Geographic Distribution in 1 Grouped Query
+            geo_counts = (
+                prod_filtered
+                .exclude(inventory_country__isnull=True)
+                .exclude(inventory_country='')
+                .values('inventory_country')
+                .annotate(total=Count('id'), units=Sum('quantity'))
+                .order_by('-total')[:8]
+            )
+            geo_data = [
+                {
+                    'country': g['inventory_country'],
+                    'count': g['total'],
+                    'units': g['units'] or 0,
+                }
+                for g in geo_counts
+            ]
 
-        # 3. Category Breakdown (Top categories by items & units)
-        cat_data = []
-        for cat in MainCategory.objects.all()[:12]:
-            c_prods = prod_qs.filter(category=cat)
-            p_cnt = c_prods.count()
-            if p_cnt > 0:
-                c_units = c_prods.aggregate(s=Sum('quantity'))['s'] or 0
-                cat_data.append({
-                    'id': cat.id,
-                    'name': cat.name,
-                    'product_count': p_cnt,
-                    'total_units': c_units,
-                })
-        cat_data.sort(key=lambda x: x['product_count'], reverse=True)
+            # 6. Spotlights (Only select required lightweight scalar columns)
+            high_value_items = list(
+                prod_filtered.filter(is_active=True)
+                .only('id', 'product_name', 'current_price', 'currency', 'inventory_country', 'quantity')
+                .order_by('-current_price')[:5]
+            )
+            recent_rfqs = list(
+                rfq_filtered.select_related('buyer')
+                .only('id', 'reference', 'status', 'target_currency', 'proforma_amount', 'created_at', 'buyer__full_name', 'buyer__email', 'company_name')
+                .order_by('-created_at')[:5]
+            )
 
-        # 4. Geographic Distribution (Top 8 countries)
-        geo_data = []
-        geo_counts = prod_qs.exclude(inventory_country__isnull=True).exclude(inventory_country='').values('inventory_country').annotate(total=Count('id'), units=Sum('quantity')).order_by('-total')[:8]
-        for g in geo_counts:
-            geo_data.append({
-                'country': g['inventory_country'],
-                'count': g['total'],
-                'units': g['units'] or 0
-            })
+            context_data = {
+                'kpi': {
+                    'total_valuation': prod_stats['total_valuation'] or Decimal("0.00"),
+                    'total_products': prod_stats['total_products'] or 0,
+                    'active_products': prod_stats['active_products'] or 0,
+                    'total_units': prod_stats['total_units'] or 0,
+                    'total_rfqs': rfq_stats['total'] or 0,
+                    'rfq_pipeline_val': rfq_stats['pipeline_val'] or Decimal("0.00"),
+                    'total_buyers': user_stats['total_buyers'] or 0,
+                    'total_companies': user_stats['total_companies'] or 0,
+                    'stock_in': prod_stats['stock_in'] or 0,
+                    'stock_low': prod_stats['stock_low'] or 0,
+                    'stock_out': prod_stats['stock_out'] or 0,
+                    'pending_rfqs': rfq_stats['pending'] or 0,
+                    'quoted_rfqs': rfq_stats['quoted'] or 0,
+                    'accepted_rfqs': rfq_stats['accepted'] or 0,
+                    'declined_rfqs': rfq_stats['declined'] or 0,
+                },
+                'cat_data': cat_data,
+                'geo_data': geo_data,
+                'high_value_items': high_value_items,
+                'recent_rfqs': recent_rfqs,
+            }
+            # Cache computed analytics for 45 seconds to keep dashboard responsive
+            cache.set(cache_key, context_data, timeout=45)
 
-        # 5. Top Value Inventory Items
-        high_value_items = prod_qs.filter(is_active=True).order_by('-current_price')[:5]
-
-        # 6. Latest RFQ Inquiries
-        recent_rfqs = rfq_qs.select_related('buyer').order_by('-created_at')[:5]
-
-    except Exception as e:
-        logger.exception("Failed to compute reports analytics: %s", e)
-        total_products_count = active_products_count = total_units = 0
-        total_valuation = Decimal("0.00")
-        total_rfqs = pending_rfqs = quoted_rfqs = accepted_rfqs = declined_rfqs = 0
-        rfq_pipeline_val = Decimal("0.00")
-        total_buyers = total_companies = 0
-        stock_in = stock_low = stock_out = 0
-        cat_data = []
-        geo_data = []
-        high_value_items = []
-        recent_rfqs = []
+        except Exception as e:
+            logger.exception("Failed to compute reports analytics: %s", e)
+            context_data = {
+                'kpi': {
+                    'total_valuation': Decimal("0.00"),
+                    'total_products': 0,
+                    'active_products': 0,
+                    'total_units': 0,
+                    'total_rfqs': 0,
+                    'rfq_pipeline_val': Decimal("0.00"),
+                    'total_buyers': 0,
+                    'total_companies': 0,
+                    'stock_in': 0,
+                    'stock_low': 0,
+                    'stock_out': 0,
+                    'pending_rfqs': 0,
+                    'quoted_rfqs': 0,
+                    'accepted_rfqs': 0,
+                    'declined_rfqs': 0,
+                },
+                'cat_data': [],
+                'geo_data': [],
+                'high_value_items': [],
+                'recent_rfqs': [],
+            }
 
     context = {
         'admin': admin_user,
         'is_super_admin': is_super,
         'period': period,
-        'kpi': {
-            'total_valuation': total_valuation,
-            'total_products': total_products_count,
-            'active_products': active_products_count,
-            'total_units': total_units,
-            'total_rfqs': total_rfqs,
-            'rfq_pipeline_val': rfq_pipeline_val,
-            'total_buyers': total_buyers,
-            'total_companies': total_companies,
-            'stock_in': stock_in,
-            'stock_low': stock_low,
-            'stock_out': stock_out,
-            'pending_rfqs': pending_rfqs,
-            'quoted_rfqs': quoted_rfqs,
-            'accepted_rfqs': accepted_rfqs,
-            'declined_rfqs': declined_rfqs,
-        },
-        'cat_data': cat_data,
-        'geo_data': geo_data,
-        'high_value_items': high_value_items,
-        'recent_rfqs': recent_rfqs,
+        **context_data,
     }
     return render(request, "reports.html", context)
 
