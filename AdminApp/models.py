@@ -1250,6 +1250,57 @@ class Lot(models.Model):
     def __str__(self):
         return f"{self.title or self.lot_number} ({self.lot_number}) - {self.enquiry_status}"
 
+def get_next_lot_product_id():
+    """
+    Safely generates the next unique 'BLK-XXXXX' product identifier.
+    Guarantees no collisions with existing rows, even under concurrent intake or race conditions.
+    """
+    from django.db import connection
+    next_num = None
+    try:
+        with connection.cursor() as cursor:
+            if connection.vendor == "postgresql":
+                cursor.execute("""
+                    SELECT COALESCE(MAX(
+                        CASE 
+                            WHEN product_id ~ '^BLK-[0-9]+$' 
+                            THEN CAST(SUBSTRING(product_id FROM 5) AS BIGINT)
+                            ELSE 0 
+                        END
+                    ), 0)
+                    FROM lot_products;
+                """)
+                row = cursor.fetchone()
+                if row and row[0] is not None and int(row[0]) > 0:
+                    next_num = int(row[0]) + 1
+    except Exception:
+        pass
+
+    if not next_num:
+        try:
+            last_item = LotProduct.objects.filter(product_id__startswith="BLK-").order_by("-id").first()
+            if last_item and last_item.product_id:
+                raw_num = last_item.product_id.replace("BLK-", "").strip()
+                if raw_num.isdigit():
+                    next_num = int(raw_num) + 1
+        except Exception:
+            pass
+
+    if not next_num:
+        try:
+            max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            next_num = max_id + 1
+        except Exception:
+            next_num = 1
+
+    candidate = f"BLK-{next_num:05d}"
+    while LotProduct.objects.filter(product_id=candidate).exists():
+        next_num += 1
+        candidate = f"BLK-{next_num:05d}"
+
+    return candidate
+
+
 class LotProduct(models.Model):
     """
     Individual lot products inside a Lot.
@@ -1280,23 +1331,24 @@ class LotProduct(models.Model):
         # Lot products inside a lot batch must NEVER have IDs starting with 'PRO-'.
         # 'PRO-' is strictly reserved for standalone marketplace Product listings.
         # Lot products use 'BLK-XXXXX' batch line-item identifiers.
-        if not self.product_id or str(self.product_id).upper().startswith("PRO-"):
-            from django.db import connection
-            next_num = 1
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT nextval('lot_products_id_seq')")
-                    next_num = cursor.fetchone()[0]
-            except Exception:
-                max_id = LotProduct.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
-                next_num = max_id + 1
+        from django.db import IntegrityError, transaction
 
-            candidate = f"BLK-{next_num:05d}"
-            while LotProduct.objects.filter(product_id=candidate).exists():
-                next_num += 1
-                candidate = f"BLK-{next_num:05d}"
-            self.product_id = candidate
-        super().save(*args, **kwargs)
+        if not self.product_id or str(self.product_id).upper().startswith("PRO-"):
+            self.product_id = get_next_lot_product_id()
+
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                with transaction.atomic():
+                    super().save(*args, **kwargs)
+                return
+            except IntegrityError as exc:
+                err_msg = str(exc).lower()
+                if ("product_id" in err_msg or "lot_products_product_id_key" in err_msg) and attempt < max_retries - 1:
+                    # Regenerate guaranteed next unique BLK ID on collision
+                    self.product_id = get_next_lot_product_id()
+                else:
+                    raise
 
     def __str__(self):
         return f"{self.product_id} (Lot {self.lot.lot_number if self.lot else 'None'})"

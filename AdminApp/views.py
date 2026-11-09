@@ -6949,60 +6949,67 @@ def add_lot_view(request):
             "category_breakdown": ", ".join([f"{c['category_name']} ({c.get('allocation') or c.get('alocation')})" for c in category_allocations]) if category_allocations else "",
         }
 
-        # --- 7. Save Lot Record ---
-        lot = Lot.objects.create(
-            title=title or f"Lot of {key_brands_included or 'Assorted Inventory'}",
-            description=description,
-            vendor=vendor,
-            admin=admin_user,
-            intake_channel=intake_channel,
-            key_brands_included=key_brands_included,
-            category_allocations=category_allocations,
-            condition=condition,
-            source_type=source_type,
-            inventory_stock_age=inventory_stock_age,
-            warehouse_images=warehouse_images,
-            third_party_certificate_available=third_party_certificate_available,
-            third_party_documents=third_party_documents,
-            inventory_country=inventory_country,
-            inventory_location=inventory_location,
-            number_of_distinct_skus=number_of_distinct_skus,
-            total_units_quantity=total_units_quantity,
-            primary_unit_type=primary_unit_type,
-            total_weight=total_weight,
-            load_type=load_type,
-            shipping_size=shipping_size,
-            lot_size=lot_size,
-            pallet_count=pallet_count,
-            shipping_terms=shipping_terms,
-            currency=currency,
-            total_est_retail_value_msrp=total_est_retail_value_msrp,
-            ask_price_surplus_payout=ask_price_surplus_payout,
-            offer=offer_text,
-            excluded_export_countries=excluded_export_countries,
-            sale_method=sale_method,
-            file=manifest_file,
-            enquiry_status="pending",
-            active_status="inactive",
-            is_active=False,
-            raw_data=raw_data,
-        )
+        # --- 7. Save Lot Record & Lot Products (Atomically) ---
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                lot = Lot.objects.create(
+                    title=title or f"Lot of {key_brands_included or 'Assorted Inventory'}",
+                    description=description,
+                    vendor=vendor,
+                    admin=admin_user,
+                    intake_channel=intake_channel,
+                    key_brands_included=key_brands_included,
+                    category_allocations=category_allocations,
+                    condition=condition,
+                    source_type=source_type,
+                    inventory_stock_age=inventory_stock_age,
+                    warehouse_images=warehouse_images,
+                    third_party_certificate_available=third_party_certificate_available,
+                    third_party_documents=third_party_documents,
+                    inventory_country=inventory_country,
+                    inventory_location=inventory_location,
+                    number_of_distinct_skus=number_of_distinct_skus,
+                    total_units_quantity=total_units_quantity,
+                    primary_unit_type=primary_unit_type,
+                    total_weight=total_weight,
+                    load_type=load_type,
+                    shipping_size=shipping_size,
+                    lot_size=lot_size,
+                    pallet_count=pallet_count,
+                    shipping_terms=shipping_terms,
+                    currency=currency,
+                    total_est_retail_value_msrp=total_est_retail_value_msrp,
+                    ask_price_surplus_payout=ask_price_surplus_payout,
+                    offer=offer_text,
+                    excluded_export_countries=excluded_export_countries,
+                    sale_method=sale_method,
+                    file=manifest_file,
+                    enquiry_status="pending",
+                    active_status="inactive",
+                    is_active=False,
+                    raw_data=raw_data,
+                )
 
-        # Create LotProduct records for manifest items
-        for p_item in parsed_items:
-            p_name = p_item.get("product_name") or p_item.get("title") or "Lot Item"
-            try:
-                p_qty = int(p_item.get("quantity") or p_item.get("available_quantity") or 1)
-            except (ValueError, TypeError):
-                p_qty = 1
-            p_cond = p_item.get("condition") or condition
-            LotProduct.objects.create(
-                lot=lot,
-                product_name=p_name,
-                quantity=p_qty,
-                condition=p_cond,
-                raw_data=p_item
-            )
+                # Create LotProduct records for manifest items
+                for p_item in parsed_items:
+                    p_name = p_item.get("product_name") or p_item.get("title") or "Lot Item"
+                    try:
+                        p_qty = int(p_item.get("quantity") or p_item.get("available_quantity") or 1)
+                    except (ValueError, TypeError):
+                        p_qty = 1
+                    p_cond = p_item.get("condition") or condition
+                    LotProduct.objects.create(
+                        lot=lot,
+                        product_name=p_name,
+                        quantity=p_qty,
+                        condition=p_cond,
+                        raw_data=p_item
+                    )
+        except Exception as e:
+            logger.exception("Failed to create lot record: %s", e)
+            messages.error(request, f"Failed to save lot request: {str(e)}")
+            return render(request, "add_lot.html", {**context, "form_data": request.POST})
 
         vendor_name_display = vendor.full_name or vendor.company_name or vendor.username or "Offline Seller"
         messages.success(
