@@ -402,7 +402,7 @@
                             onchange="applyFilters()">
                             <option value="all">All Categories</option>
                             {% for cat in categories %}
-                            <option value="{{ cat }}" {% if category_filter==cat %}selected{% endif %}>{{ cat }}
+                            <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}
                             </option>
                             {% endfor %}
                         </select>
@@ -414,7 +414,7 @@
                             onchange="applyFilters()">
                             <option value="all">All Countries</option>
                             {% for c in countries %}
-                            <option value="{{ c }}" {% if country_filter==c %}selected{% endif %}>{{ c }}</option>
+                            <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -426,8 +426,7 @@
                     </button>
 
                     <!-- Reset Button -->
-                    {% if search_query or category_filter and category_filter != 'all' or country_filter and
-                    country_filter != 'all' %}
+                    {% if search_query or category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}
                     <a href="/admin/products/all/"
                         class="btn btn-outline-danger rounded-pill d-inline-flex align-items-center gap-1.5 px-3"
                         style="height: 38px;" title="Reset All Filters">
@@ -673,16 +672,14 @@
                                     <i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i>
                                     <h5>No Products Found</h5>
                                     <p class="mb-3 text-secondary small">
-                                        {% if category_filter and category_filter != 'all' or country_filter and
-                                        country_filter != 'all' or search_query %}
+                                        {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
                                         No products match your selected filter criteria. Try adjusting or clearing your
                                         filters.
                                         {% else %}
                                         You haven't added any products or approved any enquiries yet.
                                         {% endif %}
                                     </p>
-                                    {% if category_filter and category_filter != 'all' or country_filter and
-                                    country_filter != 'all' or search_query %}
+                                    {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search_query %}
                                     <a href="/admin/products/all/"
                                         class="btn btn-outline-secondary rounded-pill btn-sm px-3">Clear All Filters</a>
                                     {% else %}
@@ -729,9 +726,10 @@
                         {% endif %}
 
                         {% for p in page_obj.paginator.page_range %}
-                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %} {% if p==page_obj.number
-                            %} <li class="page-item active">
-                            <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
+                        {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
+                            {% if p == page_obj.number %}
+                            <li class="page-item active">
+                                <span class="page-link rounded-circle fw-bold px-3 py-1">{{ p }}</span>
                             </li>
                             {% else %}
                             <li class="page-item">
