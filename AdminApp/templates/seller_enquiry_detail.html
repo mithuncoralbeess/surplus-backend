@@ -1027,7 +1027,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Product Code <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control font-monospace" name="product_code" value="{{ enquiry.product_code|default:enquiry.product_id }}" required>
+                                <input type="text" class="form-control font-monospace" name="product_code" value="{{ enquiry.product_code|default:'' }}" placeholder="e.g. 861YWZ" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Brand Name</label>

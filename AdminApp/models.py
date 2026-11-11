@@ -1,6 +1,8 @@
 import uuid
 import hashlib
 import hmac
+import secrets
+import string
 from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.utils import timezone
@@ -1453,8 +1455,18 @@ def get_next_product_id(exclude_pk=None) -> str:
     return _get_next_prefixed_code("products", "product_id", Product, "PRO-", exclude_pk=exclude_pk)
 
 
+def generate_random_product_code() -> str:
+    """Generates a 6-character alphanumeric code formatted as 3 digits + 3 uppercase letters (e.g., 861YWZ)."""
+    digits = "".join(secrets.choice(string.digits) for _ in range(3))
+    letters = "".join(secrets.choice(string.ascii_uppercase) for _ in range(3))
+    return f"{digits}{letters}"
+
+
 def get_next_product_code(preferred: str = "", exclude_pk=None) -> str:
-    """Returns a guaranteed unique e-commerce product_code, preferring the supplied prefix/ID when unused."""
+    """
+    Returns a guaranteed unique e-commerce product_code in '861YWZ' format
+    (3 digits + 3 uppercase letters), honoring an explicit custom preferred code when unused.
+    """
     pref = (preferred or "").strip()
     if pref:
         qs = Product.objects.filter(product_code__iexact=pref)
@@ -1462,7 +1474,14 @@ def get_next_product_code(preferred: str = "", exclude_pk=None) -> str:
             qs = qs.exclude(pk=exclude_pk)
         if not qs.exists():
             return pref
-    return _get_next_prefixed_code("products", "product_code", Product, "PRO-", exclude_pk=exclude_pk)
+
+    while True:
+        candidate = generate_random_product_code()
+        qs = Product.objects.filter(product_code__iexact=candidate)
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        if not qs.exists():
+            return candidate
 
 
 class Product(models.Model):
@@ -1606,7 +1625,7 @@ class Product(models.Model):
         if auto_pid:
             self.product_id = get_next_product_id(exclude_pk=self.pk)
         if auto_pcode:
-            self.product_code = get_next_product_code(preferred=self.product_id, exclude_pk=self.pk)
+            self.product_code = get_next_product_code(exclude_pk=self.pk)
 
         # Calculate current_price = Liquidating Price * 1.10 (our platform markup)
         if self.liquidating_price:

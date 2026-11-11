@@ -2046,7 +2046,7 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 product.product_code = new_code
             else:
                 from .models import get_next_product_code
-                product.product_code = get_next_product_code(preferred=product.product_id, exclude_pk=product.id)
+                product.product_code = get_next_product_code(exclude_pk=product.id)
 
         if "model_no" in data or "model_number" in data:
             product.model_no = str(data.get("model_no") or data.get("model_number")).strip()

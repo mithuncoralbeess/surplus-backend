@@ -67,11 +67,8 @@ def build_product_seo_data(
     # 1. H1 / Product Title: Product Name + Product Code
     h1_title = f"{name} - {code}" if code else name
 
-    # 2. Meta Title: Buy + Product Name + Product Code + Brand | Surplus Market
-    if brand_str:
-        meta_title = f"Buy {h1_title} | {brand_str} | Surplus Market"
-    else:
-        meta_title = f"Buy {h1_title} | Surplus Market"
+    # 2. Meta Title: Buy + Product Name + Product Code | Surplus Market
+    meta_title = f"Buy {h1_title} | Surplus Market"
 
     # 3. URL: /buy/[category]/[brand]-[product-name]-[product-code]
     cat_seg = _seo_slug(category_name or category_slug) or "products"

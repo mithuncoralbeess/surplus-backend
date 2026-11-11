@@ -34,6 +34,7 @@ def _repair_product_code_column(connection):
     creates a unique index, and marks migration 0077 as recorded if absent.
     """
     from django.db.migrations.recorder import MigrationRecorder
+    from .models import generate_random_product_code
 
     with connection.cursor() as cursor:
         if not _products_has_product_code(connection):
@@ -61,13 +62,11 @@ def _repair_product_code_column(connection):
                 pid = candidate
             seen_ids.add(pid.upper())
 
-            pcode = (raw_pcode or "").strip() or pid
-            if pcode.upper() in seen_codes:
-                num = row_id
-                candidate = f"PRO-{num:05d}"
+            pcode = (raw_pcode or "").strip()
+            if not pcode or pcode.upper() in seen_codes:
+                candidate = generate_random_product_code()
                 while candidate.upper() in seen_codes:
-                    num += 1
-                    candidate = f"PRO-{num:05d}"
+                    candidate = generate_random_product_code()
                 pcode = candidate
             seen_codes.add(pcode.upper())
 
