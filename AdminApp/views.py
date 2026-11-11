@@ -1670,6 +1670,7 @@ def seller_enquiries_view(request, status_filter=None):
     if search:
         search_filter = (
             Q(product_id__icontains=search) |
+            Q(product_code__icontains=search) |
             Q(model_no__icontains=search) |
             Q(product_name__icontains=search) |
             Q(brand_name__icontains=search) |
@@ -2033,6 +2034,19 @@ def seller_enquiry_edit_api(request, enquiry_id):
 
         if "brand" in data or "brand_name" in data:
             product.brand_name = str(data.get("brand") or data.get("brand_name")).strip()
+
+        if "product_code" in data:
+            new_code = str(data.get("product_code") or "").strip()
+            if new_code:
+                if Product.objects.filter(product_code__iexact=new_code).exclude(id=product.id).exists():
+                    return Response(
+                        {"success": False, "message": f"Product code '{new_code}' is already assigned to another product."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                product.product_code = new_code
+            else:
+                from .models import get_next_product_code
+                product.product_code = get_next_product_code(preferred=product.product_id, exclude_pk=product.id)
 
         if "model_no" in data or "model_number" in data:
             product.model_no = str(data.get("model_no") or data.get("model_number")).strip()
@@ -5647,6 +5661,7 @@ def all_products_view(request):
         prod_filter = (
             Q(product_name__icontains=search_query) |
             Q(product_id__icontains=search_query) |
+            Q(product_code__icontains=search_query) |
             Q(model_no__icontains=search_query) |
             Q(brand_name__icontains=search_query) |
             Q(vendor__email__icontains=search_query) |
@@ -5800,6 +5815,7 @@ def expired_products_view(request):
         prod_filter = (
             Q(product_name__icontains=search_query) |
             Q(product_id__icontains=search_query) |
+            Q(product_code__icontains=search_query) |
             Q(model_no__icontains=search_query) |
             Q(brand_name__icontains=search_query) |
             Q(vendor__email__icontains=search_query) |
@@ -6244,6 +6260,9 @@ def add_product_view(request):
         "Canceled Project",
     ]
 
+    from .models import get_next_product_code
+    suggested_product_code = get_next_product_code()
+
     if request.method == "POST":
         # 0. Seller / Vendor Contact Information (Assisted Intake via WhatsApp / Email)
         seller_name = request.POST.get("seller_name", "").strip()
@@ -6255,6 +6274,7 @@ def add_product_view(request):
 
         # 1. Product Specifications (Strictly matching SimpleListingModal)
         product_name = (request.POST.get("product_name") or request.POST.get("title") or "").strip()
+        product_code = (request.POST.get("product_code") or "").strip()
         category_id = request.POST.get("category_id") or request.POST.get("category")
         subcategory_id = request.POST.get("subcategory_id") or request.POST.get("subcategory")
         brand_name = (request.POST.get("brand_name") or request.POST.get("brand") or "").strip()
@@ -6348,6 +6368,8 @@ def add_product_view(request):
             errors.append("WhatsApp / Mobile Number is required for the seller.")
         if not product_name:
             errors.append("Product Title / Name is required.")
+        if product_code and Product.objects.filter(product_code__iexact=product_code).exists():
+            errors.append(f"Product Code '{product_code}' is already in use by another product.")
         if not category_id:
             errors.append("Product Category is required.")
         if not subcategory_id:
@@ -6383,6 +6405,7 @@ def add_product_view(request):
                 "currencies": STANDARD_CURRENCIES,
                 "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
                 "form_data": request.POST,
+                "suggested_product_code": suggested_product_code,
                 "page_title": "Add New Product",
             }
             return render(request, "add_product.html", context)
@@ -6470,6 +6493,7 @@ def add_product_view(request):
             vendor=vendor,
             intake_channel=intake_channel,
             raw_data=raw_data_info,
+            product_code=product_code,
             product_name=product_name,
             category=category_obj,
             subcategory=subcategory_obj,
@@ -6526,6 +6550,7 @@ def add_product_view(request):
         "countries": STANDARD_COUNTRIES,
         "currencies": STANDARD_CURRENCIES,
         "reason_to_sell_options": REASON_TO_SELL_OPTIONS,
+        "suggested_product_code": suggested_product_code,
         "page_title": "Add New Product",
     }
     return render(request, "add_product.html", context)
@@ -8878,10 +8903,15 @@ def reports_dashboard_view(request):
                 rfq_filtered = rfq_qs
                 user_filtered = user_qs
 
+            from django.db.models import Avg
+            from .models import RfqEnquiryItem
+
             # 1. Product Aggregates & Valuation in 1 Single Database Query
             prod_stats = prod_filtered.aggregate(
                 total_products=Count('id'),
                 active_products=Count('id', filter=Q(is_active=True)),
+                pending_products=Count('id', filter=Q(enquiry_status__iexact='PENDING')),
+                avg_buyer_price=Avg('current_price'),
                 total_units=Sum('quantity', filter=Q(is_active=True)),
                 stock_in=Count('id', filter=Q(is_active=True, quantity__gt=10)),
                 stock_low=Count('id', filter=Q(is_active=True, quantity__gt=0, quantity__lte=10)),
@@ -8891,24 +8921,30 @@ def reports_dashboard_view(request):
                     filter=Q(is_active=True, quantity__gt=0)
                 )
             )
+            lot_stats = Lot.objects.aggregate(
+                active_lots=Count('id', filter=Q(is_active=True)),
+                pending_lots=Count('id', filter=Q(enquiry_status__iexact='pending')),
+            )
 
-            # 2. RFQ Pipeline & Status Funnel in 1 Single Database Query
+            # 2. RFQ Pipeline & Status Funnel in 1 Single Database Query (case-insensitive status)
             rfq_stats = rfq_filtered.aggregate(
                 total=Count('id'),
-                pending=Count('id', filter=Q(status='pending')),
-                quoted=Count('id', filter=Q(status='quoted')),
-                accepted=Count('id', filter=Q(status='accepted')),
-                declined=Count('id', filter=Q(status='declined')),
-                pipeline_val=Sum('proforma_amount', filter=Q(status__in=['quoted', 'accepted'])),
+                pending=Count('id', filter=Q(status__iexact='PENDING')),
+                quoted=Count('id', filter=Q(status__iexact='QUOTED')),
+                accepted=Count('id', filter=Q(status__iexact='ACCEPTED')),
+                declined=Count('id', filter=Q(status__iexact='DECLINED')),
+                pipeline_val=Sum('proforma_amount', filter=Q(status__in=['QUOTED', 'ACCEPTED', 'quoted', 'accepted'])),
             )
 
             # 3. Network Community Stats in 1 Single Database Query
             user_stats = user_filtered.aggregate(
+                total_users=Count('id'),
                 total_buyers=Count('id', filter=Q(user_type__in=['BUYER', 'BOTH'])),
+                total_sellers=Count('id', filter=Q(user_type__in=['SELLER', 'BOTH'])),
                 total_companies=Count('id', filter=~Q(company_name__isnull=True) & ~Q(company_name='')),
             )
 
-            # 4. Category Breakdown in 1 Grouped Query (Replaces 24 separate round-trip queries)
+            # 4. Category Breakdown + Supply vs Demand
             cat_counts = (
                 prod_filtered
                 .filter(category__isnull=False)
@@ -8929,7 +8965,29 @@ def reports_dashboard_view(request):
                 for c in cat_counts
             ]
 
-            # 5. Geographic Distribution in 1 Grouped Query
+            rfq_cat_counts = {
+                (r['category'] or '').strip().lower(): r['cnt']
+                for r in RfqEnquiryItem.objects.exclude(category='').values('category').annotate(cnt=Count('id'))
+            }
+            supply_demand = []
+            max_sd_count = max([c['product_count'] for c in cat_data[:5]] + [1])
+            for c in cat_data[:5]:
+                rfq_c = rfq_cat_counts.get(c['name'].lower(), 0)
+                if rfq_c > c['product_count'] * 0.7:
+                    gap_label, gap_tone = "Under-supplied", "danger"
+                elif rfq_c < c['product_count'] * 0.2:
+                    gap_label, gap_tone = "Over-supplied", "success"
+                else:
+                    gap_label, gap_tone = "Balanced", "warning"
+                supply_demand.append({
+                    'name': c['name'],
+                    'listings': c['product_count'],
+                    'rfqs': rfq_c,
+                    'gap_label': gap_label,
+                    'gap_tone': gap_tone,
+                })
+
+            # 5. Geographic Distribution + Buyers vs Sellers by Country
             geo_counts = (
                 prod_filtered
                 .exclude(inventory_country__isnull=True)
@@ -8947,7 +9005,42 @@ def reports_dashboard_view(request):
                 for g in geo_counts
             ]
 
-            # 6. Spotlights (Only select required lightweight scalar columns)
+            country_mix_qs = (
+                VendorDetails.objects.exclude(country='')
+                .exclude(country__isnull=True)
+                .values('country')
+                .annotate(
+                    buyers=Count('id', filter=Q(user_type__in=['BUYER', 'BOTH'])),
+                    sellers=Count('id', filter=Q(user_type__in=['SELLER', 'BOTH'])),
+                    total=Count('id'),
+                )
+                .order_by('-total')[:5]
+            )
+            max_cm = max([cm['buyers'] for cm in country_mix_qs] + [cm['sellers'] for cm in country_mix_qs] + [1])
+            country_mix = [
+                {
+                    'country': cm['country'],
+                    'buyers': cm['buyers'],
+                    'sellers': cm['sellers'],
+                    'buyers_pct': int(round(cm['buyers'] / max_cm * 100)),
+                    'sellers_pct': int(round(cm['sellers'] / max_cm * 100)),
+                }
+                for cm in country_mix_qs
+            ]
+
+            # Average approval time (days) for approved products
+            approved_dates = list(
+                Product.objects.filter(date_approved__isnull=False)
+                .values_list('created_at', 'date_approved')
+                .order_by('-date_approved')[:500]
+            )
+            if approved_dates:
+                diffs = [max(0.0, (da - ca).total_seconds() / 86400.0) for ca, da in approved_dates if ca and da]
+                avg_approval_days = round(sum(diffs) / len(diffs), 1) if diffs else 0.0
+            else:
+                avg_approval_days = 0.0
+
+            # 6. Spotlights (Only select required lightweight scalar columns — fixed `currency` field)
             high_value_items = list(
                 prod_filtered.filter(is_active=True)
                 .only('id', 'product_name', 'current_price', 'currency', 'inventory_country', 'quantity')
@@ -8955,19 +9048,26 @@ def reports_dashboard_view(request):
             )
             recent_rfqs = list(
                 rfq_filtered.select_related('buyer')
-                .only('id', 'reference', 'status', 'target_currency', 'proforma_amount', 'created_at', 'buyer__full_name', 'buyer__email', 'company_name')
+                .only('id', 'reference', 'status', 'currency', 'proforma_amount', 'created_at', 'buyer__full_name', 'buyer__email', 'company_name', 'email')
                 .order_by('-created_at')[:5]
             )
+
+            live_listings = (prod_stats['active_products'] or 0) + (lot_stats['active_lots'] or 0)
+            pending_approval = (prod_stats['pending_products'] or 0) + (lot_stats['pending_lots'] or 0)
 
             context_data = {
                 'kpi': {
                     'total_valuation': prod_stats['total_valuation'] or Decimal("0.00"),
                     'total_products': prod_stats['total_products'] or 0,
                     'active_products': prod_stats['active_products'] or 0,
+                    'live_listings': live_listings,
+                    'pending_approval': pending_approval,
                     'total_units': prod_stats['total_units'] or 0,
                     'total_rfqs': rfq_stats['total'] or 0,
                     'rfq_pipeline_val': rfq_stats['pipeline_val'] or Decimal("0.00"),
+                    'total_users': user_stats['total_users'] or 0,
                     'total_buyers': user_stats['total_buyers'] or 0,
+                    'total_sellers': user_stats['total_sellers'] or 0,
                     'total_companies': user_stats['total_companies'] or 0,
                     'stock_in': prod_stats['stock_in'] or 0,
                     'stock_low': prod_stats['stock_low'] or 0,
@@ -8976,9 +9076,13 @@ def reports_dashboard_view(request):
                     'quoted_rfqs': rfq_stats['quoted'] or 0,
                     'accepted_rfqs': rfq_stats['accepted'] or 0,
                     'declined_rfqs': rfq_stats['declined'] or 0,
+                    'avg_buyer_price': round(float(prod_stats['avg_buyer_price'] or 0), 2),
+                    'avg_approval_days': avg_approval_days,
                 },
                 'cat_data': cat_data,
                 'geo_data': geo_data,
+                'country_mix': country_mix,
+                'supply_demand': supply_demand,
                 'high_value_items': high_value_items,
                 'recent_rfqs': recent_rfqs,
             }
@@ -8992,10 +9096,14 @@ def reports_dashboard_view(request):
                     'total_valuation': Decimal("0.00"),
                     'total_products': 0,
                     'active_products': 0,
+                    'live_listings': 0,
+                    'pending_approval': 0,
                     'total_units': 0,
                     'total_rfqs': 0,
                     'rfq_pipeline_val': Decimal("0.00"),
+                    'total_users': 0,
                     'total_buyers': 0,
+                    'total_sellers': 0,
                     'total_companies': 0,
                     'stock_in': 0,
                     'stock_low': 0,
@@ -9004,9 +9112,13 @@ def reports_dashboard_view(request):
                     'quoted_rfqs': 0,
                     'accepted_rfqs': 0,
                     'declined_rfqs': 0,
+                    'avg_buyer_price': 0.0,
+                    'avg_approval_days': 0.0,
                 },
                 'cat_data': [],
                 'geo_data': [],
+                'country_mix': [],
+                'supply_demand': [],
                 'high_value_items': [],
                 'recent_rfqs': [],
             }
@@ -9022,74 +9134,11 @@ def reports_dashboard_view(request):
 
 def export_report_csv(request, report_type):
     """
-    Direct CSV dataset generation endpoint for reports.
+    Direct CSV / Excel (.xlsx via ?format=xlsx) dataset export endpoint for reports.
+    Delegates cleanly to report_views.export_report_data so all exports honor active filters.
     """
-    admin_user = _get_authenticated_admin(request)
-    if not admin_user:
-        return redirect("admin_login_page")
-
-    import csv
-    from django.http import HttpResponse
-    from django.utils import timezone
-    from .models import Product, Lot, RfqEnquiry, VendorDetails
-
-    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-    response = HttpResponse(content_type="text/csv; charset=utf-8")
-
-    if report_type == "products":
-        response["Content-Disposition"] = f'attachment; filename="products_inventory_report_{timestamp}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(["ID", "Product Name", "SKU", "Category", "Country", "Currency", "Price", "Quantity", "Active", "Created At"])
-        for p in Product.objects.select_related("category").order_by("-id")[:5000]:
-            cat_name = p.category.name if p.category else ""
-            writer.writerow([
-                p.id, p.product_name, p.product_id or "", cat_name,
-                p.inventory_country or "", p.currency or "USD",
-                p.current_price or p.liquidating_price or "",
-                p.quantity or 0, "Active" if p.is_active else "Inactive",
-                p.created_at.strftime("%Y-%m-%d %H:%M") if p.created_at else ""
-            ])
-        return response
-
-    elif report_type == "rfq":
-        response["Content-Disposition"] = f'attachment; filename="rfq_demand_report_{timestamp}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(["Reference", "Buyer Name", "Buyer Email", "Status", "Target Currency", "Proforma Amount", "Created At"])
-        for r in RfqEnquiry.objects.select_related("buyer").order_by("-id")[:5000]:
-            buyer_name = r.buyer.full_name if r.buyer else (r.company_name or "")
-            buyer_email = r.buyer.email if r.buyer else ""
-            writer.writerow([
-                r.reference, buyer_name, buyer_email, r.status,
-                r.target_currency or "USD", r.proforma_amount or "",
-                r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else ""
-            ])
-        return response
-
-    elif report_type == "lots":
-        response["Content-Disposition"] = f'attachment; filename="wholesale_lots_report_{timestamp}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(["Lot ID", "Title", "Type", "Status", "Price", "Created At"])
-        for l in Lot.objects.order_by("-id")[:5000]:
-            writer.writerow([
-                l.lot_id or l.id, l.title, l.lot_type or "", l.status,
-                l.total_lot_price or "",
-                l.created_at.strftime("%Y-%m-%d %H:%M") if l.created_at else ""
-            ])
-        return response
-
-    elif report_type == "users":
-        response["Content-Disposition"] = f'attachment; filename="users_network_report_{timestamp}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(["ID", "Full Name", "Email", "Company Name", "User Type", "Country", "Created At"])
-        for u in VendorDetails.objects.order_by("-id")[:5000]:
-            writer.writerow([
-                u.id, u.full_name or "", u.email, u.company_name or "",
-                u.user_type, u.country or "",
-                u.created_at.strftime("%Y-%m-%d %H:%M") if hasattr(u, "created_at") and u.created_at else ""
-            ])
-        return response
-
-    return redirect("reports_dashboard")
+    from .report_views import export_report_data
+    return export_report_data(request, report_type)
 
 
 

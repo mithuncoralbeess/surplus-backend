@@ -417,6 +417,12 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <div class="spec-item">
+                                    <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Product Code</span>
+                                    <span class="text-dark fw-bold font-monospace">{{ enquiry.product_code|default:enquiry.product_id|default:"N/A" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="spec-item">
                                     <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Model No. / Part No.</span>
                                     <span class="text-dark fw-medium">{{ product_data.model_no|default:"N/A" }}</span>
                                 </div>
@@ -1019,11 +1025,15 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Product Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control font-monospace" name="product_code" value="{{ enquiry.product_code|default:enquiry.product_id }}" required>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Brand Name</label>
                                 <input type="text" class="form-control" name="brand" value="{% if enquiry.brand %}{{ enquiry.brand }}{% elif product_data.brand_name %}{{ product_data.brand_name }}{% endif %}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Model / Part No</label>
                                 <input type="text" class="form-control" name="model_no" value="{% if enquiry.model_no %}{{ enquiry.model_no }}{% elif product_data.model_no %}{{ product_data.model_no }}{% endif %}">
                             </div>

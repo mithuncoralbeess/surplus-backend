@@ -447,6 +447,8 @@ def generate_product_semantic_text(product: Product) -> str:
         parts.append(f"Product: {product.product_name}")
     if product.product_id:
         parts.append(f"Listing ID: {product.product_id}")
+    if getattr(product, "product_code", ""):
+        parts.append(f"Product Code: {product.product_code}")
     if product.brand_name:
         parts.append(f"Brand: {product.brand_name}")
     if product.model_no:
@@ -859,7 +861,8 @@ def semantic_product_search(
                 "is_lot": False,
                 "id": prod.id,
                 "product_id": prod.product_id or f"PRO-{prod.id:05d}",
-                "sku": prod.product_id or f"PRO-{prod.id:05d}",
+                "product_code": getattr(prod, "product_code", "") or prod.product_id or f"PRO-{prod.id:05d}",
+                "sku": getattr(prod, "product_code", "") or prod.product_id or f"PRO-{prod.id:05d}",
                 "lot_number": "",
                 "product_name": prod.product_name,
                 "title": prod.product_name,
@@ -1116,6 +1119,7 @@ def semantic_product_search(
         rec = {
             "id": it["id"],
             "product_id": it["product_id"],
+            "product_code": it.get("product_code", ""),
             "sku": it["sku"],
             "lot_number": it["lot_number"],
             "product_name": it["product_name"],

@@ -501,7 +501,7 @@
                                                 style="transition: color 0.15s ease;">{{ product.product_name }}</a>
                                         </div>
                                         <div class="text-secondary font-monospace small mt-0.5">
-                                            ID: <span class="fw-semibold">{{ product.product_id|default:product.model_no|default:"-" }}</span>
+                                            Code: <span class="fw-semibold">{{ product.product_code|default:product.product_id|default:product.model_no|default:"-" }}</span>
                                         </div>
                                     </div>
                                 </div>

@@ -1804,16 +1804,22 @@ def submit_rfq_enquiry(request):
                 if linked_lot and not item_sku:
                     item_sku = getattr(linked_lot, "batch_id", "") or ""
             else:
+                prod_code_raw = it.get("product_code") or it.get("productCode") or prod_id_raw
                 if prod_id_raw:
                     p_str = str(prod_id_raw).strip()
                     if p_str.isdigit():
                         linked_product = Product.objects.filter(id=int(p_str)).first()
-                    elif p_str.upper().startswith("PRO-"):
-                        linked_product = Product.objects.filter(product_id__iexact=p_str).first()
+                    else:
+                        linked_product = (
+                            Product.objects.filter(product_code__iexact=p_str).first()
+                            or Product.objects.filter(product_id__iexact=p_str).first()
+                        )
+                elif prod_code_raw:
+                    linked_product = Product.objects.filter(product_code__iexact=str(prod_code_raw).strip()).first()
                 if linked_product and (not item_title or item_title == "Quotation Item"):
                     item_title = linked_product.title or getattr(linked_product, "name", "") or f"Product {linked_product.product_id}"
                 if linked_product and not item_sku:
-                    item_sku = getattr(linked_product, "sku", "") or getattr(linked_product, "product_id", "") or ""
+                    item_sku = linked_product.product_code or getattr(linked_product, "sku", "") or getattr(linked_product, "product_id", "") or ""
 
             RfqEnquiryItem.objects.create(
                 rfq=rfq,
@@ -1947,6 +1953,7 @@ def submit_product_request(request):
             prods_data.append({
                 "id": p.id,
                 "reference": p.product_id or f"PRD-{p.id}",
+                "product_code": p.product_code or p.product_id or f"PRO-{p.id:05d}",
                 "title": p.product_name,
                 "product_name": p.product_name,
                 "category": p.category.name if p.category else "",
@@ -2172,7 +2179,7 @@ def submit_product_request(request):
     if subcategory_obj and not category_obj:
         category_obj = subcategory_obj.main_category
 
-    # 4. Brand & Model
+    # 4. Brand, Model & Product Code
     brand_name = (data.get('brand_name') or data.get('brand') or data.get('brandName') or '').strip()
     model_no = (
         data.get('model_no') or 
@@ -2181,6 +2188,17 @@ def submit_product_request(request):
         data.get('modelPartNo') or 
         data.get('sku') or ''
     ).strip()
+    product_code = (
+        data.get('product_code') or
+        data.get('productCode') or
+        data.get('code') or ''
+    ).strip()
+    if product_code and Product.objects.filter(product_code__iexact=product_code).exists():
+        return Response({
+            "success": False,
+            "errors": {"product_code": [f"Product code '{product_code}' is already in use."]},
+            "message": f"Product code '{product_code}' is already in use."
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     # 5. Manufacturing Country, Inventory Country & Inventory Location
     inventory_country = (
@@ -2328,6 +2346,7 @@ def submit_product_request(request):
     # 14. Create Product record
     product = Product.objects.create(
         vendor=vendor,
+        product_code=product_code,
         product_name=product_name,
         category=category_obj,
         subcategory=subcategory_obj,
@@ -2416,9 +2435,11 @@ def submit_product_request(request):
         "success": True,
         "message": "Product request submitted successfully and is pending approval.",
         "product_id": product.product_id,
+        "product_code": product.product_code or product.product_id,
         "data": {
             "id": product.id,
             "product_id": product.product_id,
+            "product_code": product.product_code or product.product_id,
             "vendor_id": product.formatted_vendor_id or (f"USR-{product.vendor_id:04d}" if product.vendor_id else None),
             "product_name": product.product_name,
             "category": product.category.name if product.category else None,
@@ -3272,6 +3293,8 @@ def _serialize_product_summary(p):
     return {
         "id": p.id,
         "product_id": p.product_id,
+        "product_code": p.product_code or p.product_id,
+        "sku": p.product_code or p.model_no or p.product_id,
         "product_name": p.product_name,
         "brand": p.brand_name,
         "model_no": p.model_no,
@@ -3390,9 +3413,19 @@ def get_public_products_list(request):
     if cat:
         qs = qs.filter(Q(category__slug=cat) | Q(category__name__iexact=cat))
 
+    product_code_q = request.GET.get("product_code", "").strip()
+    if product_code_q:
+        qs = qs.filter(product_code__iexact=product_code_q)
+
     search = request.GET.get("search", "").strip()
     if search:
-        qs = qs.filter(Q(product_name__icontains=search) | Q(brand_name__icontains=search) | Q(model_no__icontains=search))
+        qs = qs.filter(
+            Q(product_name__icontains=search) |
+            Q(product_code__icontains=search) |
+            Q(product_id__icontains=search) |
+            Q(brand_name__icontains=search) |
+            Q(model_no__icontains=search)
+        )
 
     from django.db.models.functions import Coalesce
     if collection in ("new_arrivals", "new-arrivals", "new_arrival", "new"):
@@ -3518,6 +3551,8 @@ def _format_typesense_hit(hit):
         "description": doc.get("description", ""),
         "brand": brand,
         "model_no": doc.get("model_no", ""),
+        "product_code": (doc.get("product_code") or doc.get("sku") or "") if not is_lot else "",
+        "sku": doc.get("sku", ""),
         "category": category,
         "subcategory": subcategory,
         "condition": condition,

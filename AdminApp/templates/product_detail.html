@@ -370,6 +370,12 @@
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <div class="spec-item">
+                            <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Product Code</span>
+                            <span class="text-dark fw-bold font-monospace">{{ product.product_code|default:product.product_id|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="spec-item">
                             <span class="d-block text-muted small text-uppercase fw-semibold mb-1">Model / Part No</span>
                             <span class="text-dark fw-bold font-monospace">{{ product.model_no|default:"N/A" }}</span>
                         </div>

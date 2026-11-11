@@ -558,9 +558,10 @@ class EmailService:
             or "Product Listing"
         )
         product_id = (
-            getattr(product, "product_id", None)
+            getattr(product, "product_code", None)
+            or getattr(product, "product_id", None)
             or getattr(product, "sku", None)
-            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (product.get("product_code") or product.get("product_id") if isinstance(product, dict) else "")
             or ""
         )
         category_name = ""
@@ -651,9 +652,10 @@ class EmailService:
             or "Product Listing"
         )
         product_id = (
-            getattr(product, "product_id", None)
+            getattr(product, "product_code", None)
+            or getattr(product, "product_id", None)
             or getattr(product, "sku", None)
-            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (product.get("product_code") or product.get("product_id") if isinstance(product, dict) else "")
             or ""
         )
         category_name = ""
@@ -721,9 +723,10 @@ class EmailService:
             or "Product Listing"
         )
         product_id = (
-            getattr(product, "product_id", None)
+            getattr(product, "product_code", None)
+            or getattr(product, "product_id", None)
             or getattr(product, "sku", None)
-            or (product.get("product_id") if isinstance(product, dict) else "")
+            or (product.get("product_code") or product.get("product_id") if isinstance(product, dict) else "")
             or ""
         )
         category_name = ""

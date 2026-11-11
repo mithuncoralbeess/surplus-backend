@@ -304,7 +304,7 @@ def product_to_document(product) -> Optional[Dict[str, Any]]:
         "image": main_img,
         "images": all_imgs,
         "listing_url": f"/product/{product.product_id or product.id}",
-        "sku": product.product_id or "",
+        "sku": getattr(product, "product_code", "") or product.product_id or "",
         "enquiry_status": str(product.enquiry_status).strip().upper(),
         "is_active": bool(product.is_active),
         "created_at": created_epoch,

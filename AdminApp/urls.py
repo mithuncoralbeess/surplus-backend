@@ -1,5 +1,6 @@
 from django.urls import path
 from django.shortcuts import redirect
+from .report_views import report_table_view, report_drilldown_api
 from .views import (
     vendor_login_page,
     vendor_register,
@@ -129,6 +130,8 @@ urlpatterns = [
     path("dashboard/", adminDashBoard, name="adminDashBoard"),
     path("reports/", reports_dashboard_view, name="reports_dashboard"),
     path("reports/export/<str:report_type>/", export_report_csv, name="export_report_csv"),
+    path("reports/api/drilldown/<str:kind>/<int:obj_id>/", report_drilldown_api, name="report_drilldown_api"),
+    path("reports/<str:report_type>/", report_table_view, name="report_table_view"),
     path("xlsx-dashboard/", xlsxDashBoard, name="xlsxDashBoard"),
     path("vendor-index/", adminIndex, name="adminIndex"),
     path("excel-test/", excel_test_view, name="excel_test_view"),

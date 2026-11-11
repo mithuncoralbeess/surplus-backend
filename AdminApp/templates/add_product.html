@@ -802,16 +802,34 @@ textarea.form-control-custom {
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Product Title / Name * -->
-                        <div class="mb-4">
-                            <label class="form-label-custom" for="productNameInput">
-                                <span class="label-title">Product Title / Name <span class="text-danger">*</span></span>
-                                <span class="text-muted font-monospace small" id="titleCharCount">0 characters</span>
-                            </label>
-                            <input type="text" class="form-control form-control-hero" name="product_name"
-                                id="productNameInput" value="{{ form_data.product_name|default:'' }}"
-                                placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU 1214C DC/DC/DC Module" required>
-                            <div class="form-text">Include brand, primary model, and specification for high buyer searchability.</div>
+                        <!-- Product Title / Name * & Product Code * -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8">
+                                <label class="form-label-custom" for="productNameInput">
+                                    <span class="label-title">Product Title / Name <span class="text-danger">*</span></span>
+                                    <span class="text-muted font-monospace small" id="titleCharCount">0 characters</span>
+                                </label>
+                                <input type="text" class="form-control form-control-hero" name="product_name"
+                                    id="productNameInput" value="{{ form_data.product_name|default:'' }}"
+                                    placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU 1214C DC/DC/DC Module" required>
+                                <div class="form-text">Include brand, primary model, and specification for high buyer searchability.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom" for="productCodeInput">
+                                    <span class="label-title">Product Code <span class="text-danger">*</span></span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small fw-semibold"
+                                        onclick="document.getElementById('productCodeInput').value='{{ suggested_product_code|escapejs }}'">
+                                        Auto
+                                    </button>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-primary-subtle text-primary"><i class="bi bi-qr-code"></i></span>
+                                    <input type="text" class="form-control form-control-hero font-monospace" name="product_code"
+                                        id="productCodeInput" value="{{ form_data.product_code|default:suggested_product_code }}"
+                                        placeholder="e.g. {{ suggested_product_code|default:'PRO-00001' }}" required>
+                                </div>
+                                <div class="form-text">Unique e-commerce product code / SKU.</div>
+                            </div>
                         </div>
 
                         <!-- Category & Subcategory Cascading Dropdowns -->

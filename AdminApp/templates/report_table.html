@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ title }} - Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+.rpt-card {
+    background: #ffffff;
+    border: 1px solid #eef1f6;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+.rpt-kpi {
+    background: #ffffff;
+    border: 1px solid #eef1f6;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+}
+.rpt-kpi-label {
+    font-size: 0.70rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+.rpt-kpi-val {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+}
+.rpt-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.rpt-table thead th {
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 0.73rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.72rem 0.85rem;
+    white-space: nowrap;
+    border-bottom: 1px solid #1e293b;
+}
+.rpt-table thead th:first-child { border-top-left-radius: 10px; }
+.rpt-table thead th:last-child { border-top-right-radius: 10px; }
+.rpt-table tbody td {
+    padding: 0.68rem 0.85rem;
+    font-size: 0.81rem;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.rpt-table tbody tr {
+    transition: background-color 0.12s ease;
+    cursor: pointer;
+}
+.rpt-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+.rpt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.rpt-badge-approved, .rpt-badge-live, .rpt-badge-accepted, .rpt-badge-sold, .rpt-badge-contacted {
+    background: #ecfdf5; color: #047857;
+}
+.rpt-badge-pending, .rpt-badge-scheduled, .rpt-badge-quoted, .rpt-badge-reviewed {
+    background: #fffbeb; color: #b45309;
+}
+.rpt-badge-correction_needed, .rpt-badge-needs_correction, .rpt-badge-correction {
+    background: #f5f3ff; color: #6d28d9;
+}
+.rpt-badge-declined, .rpt-badge-reserve_not_met, .rpt-badge-cancelled, .rpt-badge-closed {
+    background: #fff1f2; color: #be123c;
+}
+.rpt-badge-draft, .rpt-badge-ended {
+    background: #f1f5f9; color: #475569;
+}
+</style>
+
+<div class="container-fluid pb-5">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+            <div class="text-uppercase fw-bold small" style="color: #0a5c48; letter-spacing: 0.06em; font-size: 0.72rem;">
+                Surplus Market &middot; Report Module
+            </div>
+            <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+            <p class="text-muted small mb-0">{{ subtitle }}</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Saved Views -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-bookmark me-1"></i> Saved Views
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3 shadow-sm" style="min-width: 260px;">
+                    <div class="fw-bold small text-dark mb-2">Filter Presets ({{ title }})</div>
+                    <div id="savedViewsList" class="d-flex flex-column gap-1 mb-2 small text-muted">
+                        <span>No saved views yet.</span>
+                    </div>
+                    <div class="input-group input-group-sm pt-2 border-top">
+                        <input type="text" id="newViewName" class="form-control" placeholder="View name...">
+                        <button type="button" class="btn btn-success" onclick="saveCurrentView()">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Chooser -->
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-layout-three-columns me-1"></i> Columns
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3 shadow-sm" style="min-width: 220px;">
+                    <div class="fw-bold small text-dark mb-2">Visible Columns</div>
+                    {% for col in columns %}
+                    <div class="form-check form-check-sm">
+                        <input class="form-check-input col-toggle-cb" type="checkbox" value="{{ col.key }}" id="colToggle_{{ col.key }}" checked onchange="toggleReportColumn('{{ col.key }}', this.checked)">
+                        <label class="form-check-label small" for="colToggle_{{ col.key }}">{{ col.label }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Exports -->
+            <a href="/admin/reports/export/{{ report_type }}/{% if base_qs %}?{{ base_qs }}{% endif %}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                <i class="bi bi-filetype-csv me-1"></i> Export CSV
+            </a>
+            <a href="/admin/reports/export/{{ report_type }}/?format=xlsx{% if base_qs %}&{{ base_qs }}{% endif %}" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+            </a>
+        </div>
+    </div>
+
+    {% include "partials/reports_nav.html" %}
+
+    <!-- KPI Strip -->
+    <div class="row g-3 mb-4">
+        {% for k in kpis %}
+        <div class="col-6 col-md-4 col-xl">
+            <div class="rpt-kpi h-100">
+                <div class="rpt-kpi-label">{{ k.label }}</div>
+                <div class="rpt-kpi-val {% if k.tone == 'success' %}text-success{% elif k.tone == 'warning' %}text-warning{% elif k.tone == 'danger' %}text-danger{% elif k.tone == 'primary' %}text-primary{% endif %}">
+                    {{ k.value }}
+                </div>
+                {% if k.sub %}
+                <div class="text-muted" style="font-size: 0.70rem;">{{ k.sub }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Filters -->
+    <form method="get" id="reportFilterForm" class="rpt-card p-3 mb-4">
+        <input type="hidden" name="sort" id="reportSortInput" value="{{ active_sort }}">
+        <div class="row g-2 align-items-end">
+            {% for flt in filters %}
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 0.72rem;">{{ flt.label }}</label>
+                {% if flt.kind == 'select' %}
+                <select name="{{ flt.name }}" class="form-select form-select-sm rounded-3">
+                    <option value="">All</option>
+                    {% for opt_val, opt_lbl in flt.options %}
+                    <option value="{{ opt_val }}" {% if flt.value == opt_val %}selected{% endif %}>{{ opt_lbl }}</option>
+                    {% endfor %}
+                </select>
+                {% elif flt.kind == 'number' %}
+                <input type="number" step="any" name="{{ flt.name }}" value="{{ flt.value }}" class="form-control form-control-sm rounded-3" placeholder="{{ flt.placeholder }}">
+                {% else %}
+                <input type="text" name="{{ flt.name }}" value="{{ flt.value }}" class="form-control form-control-sm rounded-3" placeholder="{{ flt.placeholder }}">
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="col-12 col-md-auto d-flex gap-2 ms-auto">
+                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold">
+                    <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+                </button>
+                <a href="/admin/reports/{{ report_type }}/" class="btn btn-sm btn-light border rounded-pill px-3">
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Data Table -->
+    <div class="rpt-card p-3">
+        <div class="table-responsive">
+            <table class="rpt-table" id="reportDataTable">
+                <thead>
+                    <tr>
+                        {% for col in columns %}
+                        <th data-col-key="{{ col.key }}" class="{% if col.align == 'right' %}text-end{% endif %}">
+                            {% if col.sortable %}
+                            <a href="javascript:void(0)" onclick="applySort('{{ col.next_sort }}')" class="text-white text-decoration-none d-inline-flex align-items-center gap-1">
+                                <span>{{ col.label }}</span>
+                                {% if col.is_asc %}<i class="bi bi-caret-up-fill small"></i>
+                                {% elif col.is_desc %}<i class="bi bi-caret-down-fill small"></i>
+                                {% else %}<i class="bi bi-arrow-down-up opacity-50" style="font-size: 0.65rem;"></i>{% endif %}
+                            </a>
+                            {% else %}
+                            {{ col.label }}
+                            {% endif %}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr onclick="handleRowClick('{{ r.drill_kind }}', '{{ r.id }}', '{{ r.detail_url|escapejs }}')">
+                        {% for cell in r.ordered_cells %}
+                        <td data-col-key="{{ cell.key }}" class="{% if cell.align == 'right' %}text-end{% endif %}">
+                            {% if cell.kind == 'code' %}
+                                <span class="font-monospace fw-bold text-dark">{{ cell.value }}</span>
+                            {% elif cell.kind == 'badge' %}
+                                <span class="rpt-badge rpt-badge-{{ cell.status_raw|default:'draft' }}">{{ cell.value }}</span>
+                            {% else %}
+                                {{ cell.value }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ columns|length }}" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>
+                            No matching records found for the selected filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination & Row Info -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-3 mt-2 border-top small text-muted">
+            <div>
+                Sorted: <span class="font-monospace fw-semibold">{{ active_sort }}</span> &middot;
+                Showing <strong>{{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }}</strong> of <strong>{{ paginator.count|intcomma }}</strong> rows (50 / page)
+            </div>
+            {% if paginator.num_pages > 1 %}
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&lsaquo;</a>
+                    </li>
+                    {% endif %}
+                    {% for num in paginator.page_range %}
+                        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if base_qs %}&{{ base_qs }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&rsaquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if dev_note %}
+    <div class="mt-3 p-3 rounded-3 border small" style="background: #fffbeb; border-color: #fde68a !important; color: #92400e;">
+        <strong>SCHEMA NOTES:</strong> {{ dev_note }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Drill-Down Modal -->
+<div class="modal fade" id="reportDrillModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h6 class="modal-title fw-bold" id="drillModalTitle">Details</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="drillModalBody">
+                <div class="text-center py-4 text-muted">Loading...</div>
+            </div>
+            <div class="modal-footer border-top">
+                <a href="#" id="drillOpenFullBtn" class="btn btn-sm btn-success rounded-pill px-3">Open Full Detail Page &rarr;</a>
+                <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const REPORT_TYPE = "{{ report_type|escapejs }}";
+const COL_STORAGE_KEY = `surplus_rpt_cols_${REPORT_TYPE}`;
+const VIEW_STORAGE_KEY = `surplus_rpt_views_${REPORT_TYPE}`;
+
+function applySort(sortVal) {
+    document.getElementById('reportSortInput').value = sortVal;
+    document.getElementById('reportFilterForm').submit();
+}
+
+function toggleReportColumn(colKey, visible) {
+    document.querySelectorAll(`[data-col-key="${colKey}"]`).forEach(el => {
+        el.style.display = visible ? '' : 'none';
+    });
+    const state = {};
+    document.querySelectorAll('.col-toggle-cb').forEach(cb => {
+        state[cb.value] = cb.checked;
+    });
+    localStorage.setItem(COL_STORAGE_KEY, JSON.stringify(state));
+}
+
+function restoreColumns() {
+    try {
+        const raw = localStorage.getItem(COL_STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        Object.keys(state).forEach(k => {
+            const cb = document.getElementById(`colToggle_${k}`);
+            if (cb) {
+                cb.checked = !!state[k];
+                document.querySelectorAll(`[data-col-key="${k}"]`).forEach(el => {
+                    el.style.display = state[k] ? '' : 'none';
+                });
+            }
+        });
+    } catch (e) {}
+}
+
+function renderSavedViews() {
+    const container = document.getElementById('savedViewsList');
+    if (!container) return;
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    if (!views.length) {
+        container.innerHTML = '<span class="text-muted small">No saved views yet.</span>';
+        return;
+    }
+    container.innerHTML = views.map((v, idx) => `
+        <div class="d-flex align-items-center justify-content-between gap-2">
+            <a href="/admin/reports/${REPORT_TYPE}/${v.qs ? '?' + v.qs : ''}" class="text-decoration-none text-dark fw-semibold text-truncate">${v.name}</a>
+            <button type="button" class="btn btn-link btn-sm text-danger p-0" onclick="deleteSavedView(${idx})"><i class="bi bi-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+function saveCurrentView() {
+    const nameInput = document.getElementById('newViewName');
+    const name = (nameInput.value || '').trim();
+    if (!name) return;
+    const qs = new URLSearchParams(new FormData(document.getElementById('reportFilterForm'))).toString();
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    views.push({ name, qs });
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(views));
+    nameInput.value = '';
+    renderSavedViews();
+}
+
+function deleteSavedView(idx) {
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    views.splice(idx, 1);
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(views));
+    renderSavedViews();
+}
+
+async function handleRowClick(kind, id, detailUrl) {
+    if (!kind) {
+        if (detailUrl) window.location.href = detailUrl;
+        return;
+    }
+    const modalEl = document.getElementById('reportDrillModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    document.getElementById('drillModalTitle').textContent = 'Loading...';
+    document.getElementById('drillModalBody').innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading sub-records...</div>';
+    document.getElementById('drillOpenFullBtn').href = detailUrl || '#';
+    modal.show();
+
+    try {
+        const resp = await fetch(`/admin/reports/api/drilldown/${kind}/${id}/`);
+        const data = await resp.json();
+        if (!data.success) {
+            document.getElementById('drillModalBody').innerHTML = `<div class="alert alert-warning mb-0">${data.message || 'Unable to load details.'}</div>`;
+            return;
+        }
+        document.getElementById('drillModalTitle').textContent = data.title || 'Details';
+        if (data.detail_url) document.getElementById('drillOpenFullBtn').href = data.detail_url;
+
+        let imgsHtml = '';
+        if (data.images && data.images.length) {
+            imgsHtml = '<div class="d-flex flex-wrap gap-2 mb-3">' +
+                data.images.map(u => `<img src="${u}" class="rounded border" style="width:72px;height:72px;object-fit:cover;">`).join('') +
+                '</div>';
+        }
+        if (!data.rows || !data.rows.length) {
+            document.getElementById('drillModalBody').innerHTML = imgsHtml + '<div class="text-muted text-center py-3">No sub-items recorded yet.</div>';
+            return;
+        }
+        const ths = data.headers.map(h => `<th class="small text-uppercase text-muted">${h}</th>`).join('');
+        const trs = data.rows.map(row => '<tr>' + row.map(val => `<td class="small">${val}</td>`).join('') + '</tr>').join('');
+        document.getElementById('drillModalBody').innerHTML = imgsHtml + `<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table></div>`;
+    } catch (err) {
+        document.getElementById('drillModalBody').innerHTML = '<div class="alert alert-danger mb-0">Failed to load drill-down data.</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    restoreColumns();
+    renderSavedViews();
+});
+</script>
+{% endblock %}
+

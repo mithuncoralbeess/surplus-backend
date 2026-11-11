@@ -903,7 +903,7 @@
                                 <div class="min-w-0 flex-grow-1">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <a href="{% url 'seller_enquiry_detail' enquiry_id=item.id %}" class="shopeers-id-badge">
-                                            {{ item.product_id }}
+                                            {{ item.product_code|default:item.product_id }}
                                         </a>
                                         {% if item.is_featured %}
                                         <span class="shopeers-meta-pill text-danger" style="background: #fff1f2; font-weight: 600;" title="Featured Deal">

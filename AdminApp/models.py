@@ -1389,11 +1389,94 @@ class LotProduct(models.Model):
 
 
 
+def _get_next_prefixed_code(table_name: str, field_name: str, model_cls, prefix: str, exclude_pk=None) -> str:
+    """
+    Safely generates the next unique sequential code with the given prefix (e.g. PRO-00001).
+    Checks PostgreSQL max numeric suffix and falls back cleanly on SQLite/ORM.
+    """
+    from django.db import connection
+    next_num = None
+    start_pos = len(prefix) + 1
+    regex = f"^{prefix}[0-9]+$"
+    try:
+        with connection.cursor() as cursor:
+            if connection.vendor == "postgresql":
+                cursor.execute(f"""
+                    SELECT COALESCE(MAX(
+                        CASE
+                            WHEN {field_name} ~ %s
+                            THEN CAST(SUBSTRING({field_name} FROM %s) AS BIGINT)
+                            ELSE 0
+                        END
+                    ), 0)
+                    FROM {table_name};
+                """, [regex, start_pos])
+                row = cursor.fetchone()
+                if row and row[0] is not None and int(row[0]) > 0:
+                    next_num = int(row[0]) + 1
+    except Exception:
+        pass
+
+    if not next_num:
+        try:
+            last_item = model_cls.objects.filter(**{f"{field_name}__startswith": prefix}).order_by("-id").first()
+            val = getattr(last_item, field_name, "") if last_item else ""
+            if val:
+                raw_num = str(val).replace(prefix, "", 1).strip()
+                if raw_num.isdigit():
+                    next_num = int(raw_num) + 1
+        except Exception:
+            pass
+
+    if not next_num:
+        try:
+            max_id = model_cls.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
+            next_num = max_id + 1
+        except Exception:
+            next_num = 1
+
+    candidate = f"{prefix}{next_num:05d}"
+    while True:
+        qs = model_cls.objects.filter(**{f"{field_name}__iexact": candidate})
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        if not qs.exists():
+            break
+        next_num += 1
+        candidate = f"{prefix}{next_num:05d}"
+
+    return candidate
+
+
+def get_next_product_id(exclude_pk=None) -> str:
+    """Generates the next unique 'PRO-XXXXX' product_id."""
+    return _get_next_prefixed_code("products", "product_id", Product, "PRO-", exclude_pk=exclude_pk)
+
+
+def get_next_product_code(preferred: str = "", exclude_pk=None) -> str:
+    """Returns a guaranteed unique e-commerce product_code, preferring the supplied prefix/ID when unused."""
+    pref = (preferred or "").strip()
+    if pref:
+        qs = Product.objects.filter(product_code__iexact=pref)
+        if exclude_pk:
+            qs = qs.exclude(pk=exclude_pk)
+        if not qs.exists():
+            return pref
+    return _get_next_prefixed_code("products", "product_code", Product, "PRO-", exclude_pk=exclude_pk)
+
+
 class Product(models.Model):
     """
     Core Product model for single item listings and seller enquiries.
     """
-    product_id = models.CharField(max_length=30, blank=True, default="", db_index=True)
+    product_id = models.CharField(max_length=30, unique=True, blank=True, default="", db_index=True)
+    product_code = models.CharField(
+        max_length=100,
+        unique=True,
+        blank=True,
+        db_index=True,
+        help_text="Mandatory unique e-commerce product code / SKU (auto-generated if omitted)"
+    )
     admin = models.ForeignKey(
         AdminDetails,
         on_delete=models.SET_NULL,
@@ -1506,6 +1589,8 @@ class Product(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        from django.db import IntegrityError, transaction
+
         is_new = self.pk is None
         old_status = None
         if not is_new:
@@ -1513,10 +1598,16 @@ class Product(models.Model):
             if orig:
                 old_status = orig.get("enquiry_status")
 
-        if not self.product_id:
-            max_id = Product.objects.aggregate(max_id=models.Max("id"))["max_id"] or 0
-            self.product_id = f"PRO-{(max_id + 1):05d}"
-            
+        self.product_id = (self.product_id or "").strip()
+        self.product_code = (self.product_code or "").strip()
+        auto_pid = not bool(self.product_id)
+        auto_pcode = not bool(self.product_code)
+
+        if auto_pid:
+            self.product_id = get_next_product_id(exclude_pk=self.pk)
+        if auto_pcode:
+            self.product_code = get_next_product_code(preferred=self.product_id, exclude_pk=self.pk)
+
         # Calculate current_price = Liquidating Price * 1.10 (our platform markup)
         if self.liquidating_price:
             val = Decimal(str(self.liquidating_price)) * Decimal("1.10")
@@ -1537,7 +1628,23 @@ class Product(models.Model):
             # Enforce rule: Product can ONLY be active if its enquiry_status is 'APPROVED'
             self.is_active = False
 
-        super().save(*args, **kwargs)
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                with transaction.atomic():
+                    super().save(*args, **kwargs)
+                break
+            except IntegrityError as exc:
+                err_msg = str(exc).lower()
+                retried = False
+                if auto_pid and "product_id" in err_msg and attempt < max_retries - 1:
+                    self.product_id = get_next_product_id(exclude_pk=self.pk)
+                    retried = True
+                if auto_pcode and "product_code" in err_msg and attempt < max_retries - 1:
+                    self.product_code = get_next_product_code(preferred="", exclude_pk=self.pk)
+                    retried = True
+                if not retried:
+                    raise
 
         # Trigger notification and email if status transitioned to APPROVED, DECLINED, or CORRECTION_NEEDED
         curr_status = str(self.enquiry_status).upper()
@@ -1711,7 +1818,7 @@ class Product(models.Model):
 
     @property
     def sku(self):
-        return self.model_no or self.product_id
+        return self.product_code or self.model_no or self.product_id
 
     @property
     def brand(self):
@@ -1767,6 +1874,8 @@ class Product(models.Model):
             except Exception:
                 first_url = ""
         data = {
+            "product_id": self.product_id,
+            "product_code": self.product_code or self.product_id,
             "product_name": self.product_name,
             "title": self.product_name,
             "price": self.liquidating_price,

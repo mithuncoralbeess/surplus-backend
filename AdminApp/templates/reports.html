@@ -483,6 +483,122 @@
         </div>
     </div>
 
+    {% include "partials/reports_nav.html" %}
+
+    <!-- Wireframe Executive Strip: Live Listings, Buyers, Sellers, Pending Approval, Avg Price & Approval Speed -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">LIVE LISTINGS</div>
+                <div class="fw-bold fs-4 text-dark">{{ kpi.live_listings|default:0|intcomma }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Products + Bulk Lots</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">BUYERS</div>
+                <div class="fw-bold fs-4 text-dark">{{ kpi.total_buyers|default:0|intcomma }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Buyer + Dual Accounts</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">SELLERS</div>
+                <div class="fw-bold fs-4 text-dark">{{ kpi.total_sellers|default:0|intcomma }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Seller + Dual Accounts</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">PENDING APPROVAL</div>
+                <div class="fw-bold fs-4 text-warning">{{ kpi.pending_approval|default:0|intcomma }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Products + Lots</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">AVG BUYER PRICE</div>
+                <div class="fw-bold fs-4 text-dark">{{ kpi.avg_buyer_price|default:"0.00" }}</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Across Period</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="shopeers-card p-3 mb-0 h-100">
+                <div class="shopeers-kpi-label">AVG APPROVAL TIME</div>
+                <div class="fw-bold fs-4 text-success">{{ kpi.avg_approval_days|default:"0.0" }} d</div>
+                <div class="text-muted" style="font-size: 0.72rem;">Product Review SLA</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wireframe Analytics Row: Buyers vs Sellers by Country & Supply vs Demand -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="shopeers-card mb-0 h-100">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-globe-americas" style="color: var(--shopeers-primary);"></i>
+                        <span>Top Countries &mdash; Buyers vs Sellers</span>
+                    </h5>
+                    <span class="small text-muted">Dark = Buyers &middot; Light = Sellers</span>
+                </div>
+                {% for cm in country_mix %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small fw-semibold mb-1">
+                        <span>{{ cm.country }}</span>
+                        <span class="text-muted">{{ cm.buyers }} Buyers / {{ cm.sellers }} Sellers</span>
+                    </div>
+                    <div class="progress mb-1" style="height: 8px; border-radius: 99px; background: #f1f5f9;">
+                        <div class="progress-bar" style="width: {{ cm.buyers_pct }}%; background: #0a5c48;"></div>
+                    </div>
+                    <div class="progress" style="height: 6px; border-radius: 99px; background: #f1f5f9;">
+                        <div class="progress-bar" style="width: {{ cm.sellers_pct }}%; background: #94a3b8;"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-muted small py-3">No vendor country data available.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="shopeers-card mb-0 h-100">
+                <div class="card-header-clean">
+                    <h5 class="card-header-title">
+                        <i class="bi bi-arrow-left-right" style="color: var(--shopeers-primary);"></i>
+                        <span>Supply vs Demand by Category</span>
+                    </h5>
+                    <span class="small text-muted">Listings vs RFQ Items</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="shopeers-table">
+                        <thead>
+                            <tr>
+                                <th>CATEGORY</th>
+                                <th class="text-end">LISTINGS</th>
+                                <th class="text-end">RFQS</th>
+                                <th>GAP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sd in supply_demand %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ sd.name }}</td>
+                                <td class="text-end">{{ sd.listings }}</td>
+                                <td class="text-end">{{ sd.rfqs }}</td>
+                                <td>
+                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} rounded-pill">{{ sd.gap_label }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted small text-center py-3">No category demand data yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Top 4 KPI Executive Metric Cards (Static Display Cards) -->
     <div class="row g-3 mb-4">
         <!-- Catalog Valuation -->
@@ -741,7 +857,7 @@
                                 <td>
                                     <span class="fw-bold text-dark">
                                         {% if r.proforma_amount %}
-                                        {{ r.target_currency|default:"USD" }} {{ r.proforma_amount }}
+                                        {{ r.currency|default:"USD" }} {{ r.proforma_amount }}
                                         {% else %}
                                         <span class="text-muted small fw-normal">Under Review</span>
                                         {% endif %}

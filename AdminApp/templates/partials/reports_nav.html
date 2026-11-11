@@ -1,0 +1,38 @@
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4 p-1.5 rounded-pill border bg-white shadow-sm" style="width: fit-content; max-width: 100%; overflow-x: auto;">
+    <a href="/admin/reports/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if request.path == '/admin/reports/' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-speedometer2 me-1"></i> Analytics Overview
+    </a>
+    <a href="/admin/reports/products/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'products' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-box-seam me-1"></i> Products
+    </a>
+    <a href="/admin/reports/lots/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'lots' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-boxes me-1"></i> Lots
+    </a>
+    <a href="/admin/reports/users/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'users' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-people me-1"></i> Users / Vendors
+    </a>
+    <a href="/admin/reports/rfqs/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'rfqs' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-file-earmark-text me-1"></i> RFQs
+    </a>
+    <a href="/admin/reports/enquiries/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'enquiries' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-inbox me-1"></i> Enquiries &amp; Leads
+    </a>
+    <a href="/admin/reports/auctions/"
+       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'auctions' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
+       style="font-size: 0.80rem;">
+        <i class="bi bi-hammer me-1"></i> Auctions
+    </a>
+</div>
+
