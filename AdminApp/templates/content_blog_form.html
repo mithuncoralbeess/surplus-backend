@@ -447,7 +447,7 @@
                                 <span class="serp-sitename">Surplus Market</span>
                                 <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplusmarket.com/blog/{{ blog.slug|default:"article-slug" }}</span>
                             </div>
-                            <div class="serp-result-headline" id="serpTitlePreview">{% if blog and blog.meta_title %}{{ blog.meta_title }}{% elif blog and blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %} | Surplus Market Insights</div>
+                            <div class="serp-result-headline" id="serpTitlePreview">{% if blog and blog.meta_title %}{{ blog.meta_title }}{% elif blog and blog.title %}{{ blog.title }}{% else %}Blog Title{% endif %}</div>
                             <p class="serp-result-snippet" id="serpDescPreview">{% if blog and blog.meta_description %}{{ blog.meta_description }}{% elif blog and blog.excerpt %}{{ blog.excerpt }}{% else %}Article description snippet will appear in search results. Write a descriptive summary to maximize click-through rate.{% endif %}</p>
                         </div>
 
@@ -1083,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const words = textOnly ? textOnly.split(/\s+/).length : 0;
 
         // SERP preview updates
-        if (serpTitlePreview) serpTitlePreview.textContent = title + ' | Surplus Market Insights';
+        if (serpTitlePreview) serpTitlePreview.textContent = title;
         if (serpUrlPreview) serpUrlPreview.textContent = 'https://surplusmarket.com/blog/' + slug;
         if (serpDescPreview) serpDescPreview.textContent = desc;
 

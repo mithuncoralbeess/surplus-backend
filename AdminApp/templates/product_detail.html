@@ -758,6 +758,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         id: id,
                         type: 'product',
                         title: "{{ product.product_name|escapejs }}",
+                        initialReason: "{{ product.raw_data.rejection_reason|default:''|escapejs }}",
                         onSuccess: () => window.location.reload()
                     });
                     return;

@@ -644,6 +644,7 @@
                             id: id,
                             type: 'product',
                             title: "{% if enquiry.title %}{{ enquiry.title|escapejs }}{% elif product_data.product_name %}{{ product_data.product_name|escapejs }}{% else %}Product Listing{% endif %}",
+                            initialReason: "{% if enquiry.raw_data.rejection_reason %}{{ enquiry.raw_data.rejection_reason|escapejs }}{% elif product_data.rejection_reason %}{{ product_data.rejection_reason|escapejs }}{% endif %}",
                             onSuccess: () => location.reload()
                         });
                         return;
@@ -852,8 +853,14 @@
             const actSelect = editForm.querySelector('select[name="active_status"]');
             if (enqSelect && actSelect) {
                 const syncActiveState = () => {
-                    const isApproved = enqSelect.value.toLowerCase() === 'approved';
-                    const isDeclined = enqSelect.value.toLowerCase() === 'declined';
+                    const stLower = enqSelect.value.toLowerCase();
+                    const isApproved = stLower === 'approved';
+                    const isDeclined = stLower === 'declined';
+                    const isCorrection = (stLower === 'correction_needed' || stLower === 'needs_correction' || stLower === 'correction');
+                    const corrWrapper = document.getElementById('sellerEditCorrectionWrapper');
+                    if (corrWrapper) {
+                        corrWrapper.style.display = isCorrection ? 'block' : 'none';
+                    }
                     const rejWrapper = document.getElementById('sellerEditRejectionWrapper');
                     if (rejWrapper) {
                         rejWrapper.style.display = isDeclined ? 'block' : 'none';
@@ -968,29 +975,8 @@
                                 <select class="form-select" name="enquiry_status">
                                     <option value="pending" {% if enquiry.enquiry_status|lower == 'pending' %}selected{% endif %}>Pending</option>
                                     <option value="approved" {% if enquiry.enquiry_status|lower == 'approved' %}selected{% endif %}>Approved</option>
-                                    <option value="declined"     {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}
-    <div class="alert alert-warning border border-warning-subtle rounded-4 p-3.5 mb-4 shadow-xs d-flex align-items-start gap-3" style="background-color: #fffbeb;">
-        <i class="bi bi-pencil-square text-warning fs-4 flex-shrink-0 mt-0.5"></i>
-        <div class="flex-grow-1">
-            <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <span>Correction Requested from Seller</span>
-                <span class="badge bg-warning text-dark rounded-pill fw-semibold" style="font-size: 0.72rem;">Pending Seller Update</span>
-            </h6>
-            <p class="mb-1 text-dark small" style="line-height: 1.5;">
-                <strong>Reason:</strong> {% if enquiry.raw_data.correction_reason %}{{ enquiry.raw_data.correction_reason }}{% elif product_data.correction_reason %}{{ product_data.correction_reason }}{% else %}No specific reason recorded.{% endif %}
-            </p>
-            {% if enquiry.raw_data.correction_suggestion or product_data.correction_suggestion %}
-            <p class="mb-0 text-secondary small" style="line-height: 1.5;">
-                <strong>Admin Suggestion:</strong> {% if enquiry.raw_data.correction_suggestion %}{{ enquiry.raw_data.correction_suggestion }}{% else %}{{ product_data.correction_suggestion }}{% endif %}
-            </p>
-            {% endif %}
-        </div>
-        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-3 py-1 fw-semibold rounded-pill btn-action-status flex-shrink-0" data-id="{{ enquiry.id }}" data-status="correction_needed">
-            <i class="bi bi-pencil-square me-1"></i> Update Correction
-        </button>
-    </div>
-    {% endif %}
-    {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
+                                    <option value="correction_needed" {% if enquiry.enquiry_status|lower == 'correction_needed' or enquiry.enquiry_status|lower == 'needs_correction' or enquiry.enquiry_status|lower == 'correction' %}selected{% endif %}>Needs Correction</option>
+                                    <option value="declined" {% if enquiry.enquiry_status|lower == 'declined' %}selected{% endif %}>Declined</option>
                                 </select>
                             </div>
                             <div class="col-md-3">

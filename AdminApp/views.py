@@ -2185,18 +2185,23 @@ def seller_enquiry_edit_api(request, enquiry_id):
                 if product.enquiry_status != "APPROVED":
                     product.is_active = False
 
-        if "reason" in data:
-            product._decline_reason = str(data.get("reason", "")).strip()
-            product._correction_reason = product._decline_reason
-        elif "rejection_reason" in data:
-            product._decline_reason = str(data.get("rejection_reason", "")).strip()
-            product._correction_reason = product._decline_reason
-        elif "correction_reason" in data:
-            product._decline_reason = str(data.get("correction_reason", "")).strip()
-            product._correction_reason = product._decline_reason
+        rej_reason_val = str(data.get("rejection_reason") or data.get("reason") or "").strip()
+        corr_reason_val = str(data.get("correction_reason") or data.get("reason") or "").strip()
+        corr_sugg_val = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
 
+        if "rejection_reason" in data or "reason" in data:
+            product.rejection_reason = rej_reason_val
+            if rej_reason_val:
+                product._decline_reason = rej_reason_val
+        if "correction_reason" in data or "reason" in data:
+            product.correction_reason = corr_reason_val
+            if corr_reason_val:
+                product._correction_reason = corr_reason_val
+                if not getattr(product, "_decline_reason", ""):
+                    product._decline_reason = corr_reason_val
         if "suggestion" in data or "correction_suggestion" in data:
-            product._correction_suggestion = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
+            product.correction_suggestion = corr_sugg_val
+            product._correction_suggestion = corr_sugg_val
 
         if "active_status" in data:
             act_val = str(data["active_status"]).lower()
@@ -2809,18 +2814,23 @@ def lot_enquiry_edit_api(request, enquiry_id):
                 lot.is_active = False
                 lot.active_status = "inactive"
 
-    if "reason" in data:
-        lot._decline_reason = str(data.get("reason", "")).strip()
-        lot._correction_reason = lot._decline_reason
-    elif "rejection_reason" in data:
-        lot._decline_reason = str(data.get("rejection_reason", "")).strip()
-        lot._correction_reason = lot._decline_reason
-    elif "correction_reason" in data:
-        lot._decline_reason = str(data.get("correction_reason", "")).strip()
-        lot._correction_reason = lot._decline_reason
+    rej_reason_val = str(data.get("rejection_reason") or data.get("reason") or "").strip()
+    corr_reason_val = str(data.get("correction_reason") or data.get("reason") or "").strip()
+    corr_sugg_val = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
 
+    if rej_reason_val or corr_reason_val:
+        lot._decline_reason = rej_reason_val or corr_reason_val
+        lot._correction_reason = corr_reason_val or rej_reason_val
+        if not isinstance(lot.raw_data, dict):
+            lot.raw_data = {}
+        if rej_reason_val:
+            lot.raw_data["rejection_reason"] = rej_reason_val
+        if corr_reason_val:
+            lot.raw_data["correction_reason"] = corr_reason_val
     if "suggestion" in data or "correction_suggestion" in data:
-        lot._correction_suggestion = str(data.get("suggestion") or data.get("correction_suggestion") or "").strip()
+        lot._correction_suggestion = corr_sugg_val
+        if isinstance(lot.raw_data, dict):
+            lot.raw_data["correction_suggestion"] = corr_sugg_val
     if "active_status" in data:
         act_val = str(data["active_status"]).lower()
         if act_val in ("active", "true", "1"):

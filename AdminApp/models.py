@@ -590,10 +590,13 @@ class SellerProductEnquiry(models.Model):
             elif curr_status == 'DECLINED':
                 decline_reason = getattr(self, '_decline_reason', '')
                 if decline_reason:
-                    if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
-                        self._extra_raw_data = {}
-                    if isinstance(self._extra_raw_data, dict):
-                        self._extra_raw_data['rejection_reason'] = decline_reason
+                    if not isinstance(self.raw_data, dict):
+                        self.raw_data = {}
+                    self.raw_data['rejection_reason'] = decline_reason
+                    try:
+                        SellerProductEnquiry.objects.filter(pk=self.pk).update(raw_data=self.raw_data)
+                    except Exception:
+                        pass
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
@@ -627,17 +630,20 @@ class SellerProductEnquiry(models.Model):
             elif curr_status in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION'):
                 corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
                 corr_suggestion = getattr(self, '_correction_suggestion', '')
-                if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
-                    self._extra_raw_data = {}
-                if isinstance(self._extra_raw_data, dict):
-                    self._extra_raw_data['correction_reason'] = corr_reason
-                    self._extra_raw_data['correction_suggestion'] = corr_suggestion
-                    self._extra_raw_data['rejection_reason'] = corr_reason
+                if not isinstance(self.raw_data, dict):
+                    self.raw_data = {}
+                self.raw_data['correction_reason'] = corr_reason
+                self.raw_data['correction_suggestion'] = corr_suggestion
+                self.raw_data['rejection_reason'] = corr_reason
+                try:
+                    SellerProductEnquiry.objects.filter(pk=self.pk).update(raw_data=self.raw_data)
+                except Exception:
+                    pass
 
                 if target_vendor:
                     try:
                         from .services import create_vendor_notification
-                        msg = f"Your product '{self.product_name}' requires corrections before it can be approved."
+                        msg = f"Your product '{self.title}' requires corrections before it can be approved."
                         if corr_reason:
                             msg += f" Reason: {corr_reason}"
                         if corr_suggestion:
@@ -1570,6 +1576,9 @@ class Product(models.Model):
     )
     is_active = models.BooleanField(default=False, db_index=True)
     date_approved = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Timestamp when product enquiry status was set to APPROVED")
+    rejection_reason = models.TextField(blank=True, default="", help_text="Recorded reason when product listing is declined")
+    correction_reason = models.TextField(blank=True, default="", help_text="Recorded reason when corrections are requested")
+    correction_suggestion = models.TextField(blank=True, default="", help_text="Recorded admin suggestion when corrections are requested")
     views_count = models.PositiveIntegerField(default=0, db_index=True)
 
     # Collection & Showcase Flags
@@ -1639,13 +1648,26 @@ class Product(models.Model):
             self.offer = (((Decimal(str(self.msrp)) - Decimal(str(self.liquidating_price))) / Decimal(str(self.msrp))) * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         # Auto-set date_approved and enforce active rule
-        if str(self.enquiry_status).upper() == 'APPROVED':
+        curr_status_pre = str(self.enquiry_status).upper()
+        if curr_status_pre == 'APPROVED':
             if not self.date_approved:
                 self.date_approved = timezone.now()
         else:
             self.date_approved = None
             # Enforce rule: Product can ONLY be active if its enquiry_status is 'APPROVED'
             self.is_active = False
+
+        if curr_status_pre == 'DECLINED':
+            decl_r = str(getattr(self, '_decline_reason', '') or '').strip()
+            if decl_r:
+                self.rejection_reason = decl_r
+        elif curr_status_pre in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION'):
+            corr_r = str(getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '') or '').strip()
+            corr_s = str(getattr(self, '_correction_suggestion', '') or '').strip()
+            if corr_r:
+                self.correction_reason = corr_r
+            if corr_s:
+                self.correction_suggestion = corr_s
 
         max_retries = 10
         for attempt in range(max_retries):
@@ -1745,8 +1767,9 @@ class Product(models.Model):
                         logger.error(f"Failed to send product approved email: {e}")
 
             elif curr_status == 'DECLINED':
-                decline_reason = getattr(self, '_decline_reason', '')
+                decline_reason = getattr(self, '_decline_reason', '') or self.rejection_reason
                 if decline_reason:
+                    self.rejection_reason = decline_reason
                     if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
                         self._extra_raw_data = {}
                     if isinstance(self._extra_raw_data, dict):
@@ -1783,8 +1806,10 @@ class Product(models.Model):
                         logger.error(f"Failed to send product declined email: {e}")
 
             elif curr_status in ('CORRECTION_NEEDED', 'NEEDS_CORRECTION', 'CORRECTION'):
-                corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '')
-                corr_suggestion = getattr(self, '_correction_suggestion', '')
+                corr_reason = getattr(self, '_correction_reason', '') or getattr(self, '_decline_reason', '') or self.correction_reason
+                corr_suggestion = getattr(self, '_correction_suggestion', '') or self.correction_suggestion
+                self.correction_reason = corr_reason
+                self.correction_suggestion = corr_suggestion
                 if not hasattr(self, '_extra_raw_data') or self._extra_raw_data is None:
                     self._extra_raw_data = {}
                 if isinstance(self._extra_raw_data, dict):
@@ -1920,9 +1945,15 @@ class Product(models.Model):
             "inventory_country": getattr(self, "inventory_country", "") or "",
             "inventory_city": getattr(self, "inventory_city", "") or "",
             "inventory_location": getattr(self, "inventory_location", "") or "",
+            "rejection_reason": getattr(self, "rejection_reason", "") or "",
+            "correction_reason": getattr(self, "correction_reason", "") or "",
+            "correction_suggestion": getattr(self, "correction_suggestion", "") or "",
         }
         if hasattr(self, '_extra_raw_data') and isinstance(self._extra_raw_data, dict):
-            data.update(self._extra_raw_data)
+            for k, v in self._extra_raw_data.items():
+                if k in ("rejection_reason", "correction_reason", "correction_suggestion") and not v and data.get(k):
+                    continue
+                data[k] = v
         return data
 
     @raw_data.setter
@@ -1933,6 +1964,12 @@ class Product(models.Model):
             self._extra_raw_data.update(value)
             if "intake_channel" in value and value["intake_channel"]:
                 self.intake_channel = str(value["intake_channel"]).strip()
+            if "rejection_reason" in value and value["rejection_reason"] is not None:
+                self.rejection_reason = str(value["rejection_reason"]).strip()
+            if "correction_reason" in value and value["correction_reason"] is not None:
+                self.correction_reason = str(value["correction_reason"]).strip()
+            if "correction_suggestion" in value and value["correction_suggestion"] is not None:
+                self.correction_suggestion = str(value["correction_suggestion"]).strip()
 
     @property
     def condition(self):

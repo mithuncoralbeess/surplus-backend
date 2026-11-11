@@ -176,7 +176,7 @@
                             <span class="serp-sitename">Surplus Marketplace</span>
                             <span class="serp-breadcrumb-url" id="serpUrlPreview">https://surplus.com/{{ page.slug|default:"page-slug" }}/</span>
                         </div>
-                        <div class="serp-result-headline" id="serpTitlePreview">{% if page.meta_title %}{{ page.meta_title }}{% elif page.title %}{{ page.title }}{% else %}Page Title{% endif %} - Surplus</div>
+                        <div class="serp-result-headline" id="serpTitlePreview">{% if page.meta_title %}{{ page.meta_title }}{% elif page.title %}{{ page.title }}{% else %}Page Title{% endif %}</div>
                         <p class="serp-result-snippet" id="serpDescPreview">{{ page.meta_description|default:"Page description snippet will appear in search results. Write a descriptive summary to maximize click-through rate." }}</p>
                     </div>
 
@@ -1529,7 +1529,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const words = combinedText.trim() ? combinedText.trim().split(/\s+/).length : 0;
 
         // Update SERP
-        if (serpTitlePreview) serpTitlePreview.textContent = title + ' - Surplus';
+        if (serpTitlePreview) serpTitlePreview.textContent = title;
         if (serpUrlPreview) serpUrlPreview.textContent = 'https://surplus.com/' + slug + '/';
         if (serpDescPreview) serpDescPreview.textContent = desc;
 
