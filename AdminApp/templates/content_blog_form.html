@@ -1045,6 +1045,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const excerptInput = document.getElementById('blogExcerptInput');
+    const featuredImageUrlInput = document.getElementById('featuredImageUrlInput');
     const focusKeyphraseInput = document.getElementById('focusKeyphraseInput');
     const metaTitleInput = document.getElementById('metaTitleInput');
     const metaDescInput = document.getElementById('metaDescInput');
@@ -1173,11 +1175,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    function getEditorHtmlContent() {
+        const raw = isCodeViewActive ? (htmlSourceTextarea?.value || '') : (quill?.root?.innerHTML || '');
+        const trimmed = raw.trim();
+        if (trimmed === '<p><br></p>' || trimmed === '<p></p>') {
+            return '';
+        }
+        return raw;
+    }
+
+    function syncContentInput() {
+        const contentVal = getEditorHtmlContent();
+        if (hiddenInput) {
+            hiddenInput.value = contentVal;
+        }
+        return contentVal;
+    }
+
     quill.on('text-change', () => {
+        syncContentInput();
         updateYoastSeoAnalysis();
     });
 
     htmlSourceTextarea?.addEventListener('input', () => {
+        syncContentInput();
         updateYoastSeoAnalysis();
     });
 
@@ -1219,10 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const submitBtn = document.getElementById('saveBlogBtn');
 
             // Obtain final HTML content depending on active view mode
-            const finalContent = isCodeViewActive ? htmlSourceTextarea.value : quill.root.innerHTML;
-            if (hiddenInput) {
-                hiddenInput.value = finalContent;
-            }
+            const finalContent = syncContentInput();
 
             const formData = new FormData(form);
             formData.set('title', (document.getElementById('blogTitleInput')?.value || '').trim());
@@ -1275,12 +1293,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: formData
                 });
                 
+                const rawText = await res.text();
                 let data;
                 try {
-                    data = await res.json();
+                    data = JSON.parse(rawText);
                 } catch (parseErr) {
-                    const text = await res.text();
-                    data = { success: false, message: `Server error (${res.status}): ${text.substring(0, 150)}` };
+                    data = { success: false, message: `Server error (${res.status}): ${rawText.substring(0, 150)}` };
                 }
 
                 if (res.ok && data.success) {
