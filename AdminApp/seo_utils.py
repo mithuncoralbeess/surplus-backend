@@ -53,11 +53,12 @@ def build_product_seo_data(
     reason_to_sell: str = "",
 ) -> dict:
     name = _clean_text(product_name) or "Surplus Product"
-    code = _clean_text(product_code)
     brand_str = _clean_text(brand)
     cat_name = _clean_text(category_name)
     sub_name = _clean_text(subcategory_name)
     model_str = _clean_text(model_no)
+    # Inside SEO, prefer Model No. / Part Number whenever available; fall back to product_code
+    code = model_str or _clean_text(product_code)
     desc_clean = _clean_text(description)
     warranty_str = _clean_text(warranty)
     inv_country = _clean_text(inventory_country)
@@ -165,7 +166,7 @@ def get_product_seo(product) -> dict:
             category_name=cat_name,
             category_slug=cat_slug,
             subcategory_name=sub_name,
-            model_no=product.get("model_no") or "",
+            model_no=product.get("model_no") or product.get("model_number") or "",
             description=product.get("description") or "",
             quantity=product.get("quantity"),
             warranty=product.get("warranty") or "",

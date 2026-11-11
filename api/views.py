@@ -3418,16 +3418,29 @@ def get_public_products_list(request):
 
     product_code_q = (request.GET.get("product_code") or request.GET.get("code") or "").strip()
     if product_code_q:
-        qs = qs.filter(Q(product_code__iexact=product_code_q) | Q(product_id__iexact=product_code_q))
+        qs = qs.filter(
+            Q(product_code__iexact=product_code_q) |
+            Q(model_no__iexact=product_code_q) |
+            Q(product_id__iexact=product_code_q)
+        )
 
     slug_q = request.GET.get("slug", "").strip()
     if slug_q:
-        # Match trailing product code segment (e.g. brand-product-name-861ywz -> 861ywz or PRO-00001)
-        tail = slug_q.split("-")[-1].strip()
-        pro_tail = f"PRO-{tail}" if tail.isdigit() else ""
-        slug_filter = Q(product_code__iexact=slug_q) | Q(product_code__iexact=tail) | Q(product_id__iexact=slug_q)
-        if pro_tail:
-            slug_filter |= Q(product_code__iexact=pro_tail) | Q(product_id__iexact=pro_tail)
+        # Match trailing SEO code segment (model_no, product_code, or PRO-XXXXX)
+        parts = [p for p in slug_q.split("-") if p]
+        candidates = {slug_q}
+        if parts:
+            tail = parts[-1].strip()
+            candidates.add(tail)
+            if tail.isdigit():
+                candidates.add(f"PRO-{tail}")
+            if len(parts) >= 2:
+                candidates.add("-".join(parts[-2:]))
+            if len(parts) >= 3:
+                candidates.add("-".join(parts[-3:]))
+        slug_filter = Q()
+        for cand in candidates:
+            slug_filter |= Q(product_code__iexact=cand) | Q(model_no__iexact=cand) | Q(product_id__iexact=cand)
         qs = qs.filter(slug_filter)
 
     search = request.GET.get("search", "").strip()
