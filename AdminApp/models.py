@@ -1821,6 +1821,11 @@ class Product(models.Model):
         return self.product_code or self.model_no or self.product_id
 
     @property
+    def seo(self):
+        from .seo_utils import get_product_seo
+        return get_product_seo(self)
+
+    @property
     def brand(self):
         return self.brand_name
 

@@ -876,6 +876,7 @@ def semantic_product_search(
                 "quantity": prod.quantity or 0,
                 "inventory_location": prod.inventory_location or "",
                 "image": img_url,
+                "seo": prod.seo,
                 "has_warranty": bool(prod.warranty or prod.warranty_attachment),
                 "dist": dist,
                 "final_score": round(final_score, 1),
@@ -1142,6 +1143,8 @@ def semantic_product_search(
         }
         if it.get("is_lot"):
             rec["manifest_items"] = it.get("manifest_items", [])
+        elif it.get("seo"):
+            rec["seo"] = it["seo"]
         formatted_results.append(rec)
 
     products_only = [it for it in formatted_results if not it.get("is_lot")]

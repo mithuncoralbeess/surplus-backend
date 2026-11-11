@@ -1967,6 +1967,7 @@ def submit_product_request(request):
                 "correction_reason": corr_reason,
                 "correction_suggestion": corr_sugg,
                 "rejection_reason": corr_reason,
+                "seo": p.seo,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
             })
         return Response({"success": True, "data": prods_data}, status=status.HTTP_200_OK)
@@ -2473,6 +2474,7 @@ def submit_product_request(request):
             "correction_suggestion": (product.raw_data.get("correction_suggestion") if isinstance(product.raw_data, dict) else ""),
             "rejection_reason": (product.raw_data.get("rejection_reason") if isinstance(product.raw_data, dict) else ""),
             "is_active": product.is_active,
+            "seo": product.seo,
             "created_at": product.created_at.isoformat(),
             "images": [img.url for img in product.images.all()]
         }
@@ -3339,6 +3341,7 @@ def _serialize_product_summary(p):
         "new_arrival_order": p.new_arrival_order,
         "image": main_img,
         "images": all_imgs,
+        "seo": p.seo,
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
     }
@@ -3370,7 +3373,7 @@ def get_public_products_list(request):
     cache_key = None
     if not vendor_param:
         path_hash = hashlib.md5(request.get_full_path().encode("utf-8")).hexdigest()
-        cache_key = f"api_pub_prods_v2_{path_hash}"
+        cache_key = f"api_pub_prods_v3_{path_hash}"
         cached_resp = cache.get(cache_key)
         if cached_resp is not None:
             return Response(cached_resp, status=status.HTTP_200_OK)
@@ -3413,9 +3416,19 @@ def get_public_products_list(request):
     if cat:
         qs = qs.filter(Q(category__slug=cat) | Q(category__name__iexact=cat))
 
-    product_code_q = request.GET.get("product_code", "").strip()
+    product_code_q = (request.GET.get("product_code") or request.GET.get("code") or "").strip()
     if product_code_q:
-        qs = qs.filter(product_code__iexact=product_code_q)
+        qs = qs.filter(Q(product_code__iexact=product_code_q) | Q(product_id__iexact=product_code_q))
+
+    slug_q = request.GET.get("slug", "").strip()
+    if slug_q:
+        # Match trailing product code segment (e.g. brand-product-name-861ywz -> 861ywz or PRO-00001)
+        tail = slug_q.split("-")[-1].strip()
+        pro_tail = f"PRO-{tail}" if tail.isdigit() else ""
+        slug_filter = Q(product_code__iexact=slug_q) | Q(product_code__iexact=tail) | Q(product_id__iexact=slug_q)
+        if pro_tail:
+            slug_filter |= Q(product_code__iexact=pro_tail) | Q(product_id__iexact=pro_tail)
+        qs = qs.filter(slug_filter)
 
     search = request.GET.get("search", "").strip()
     if search:
@@ -3479,7 +3492,7 @@ def get_homepage_collections(request):
     Cached in-memory for 60 seconds.
     """
     from django.core.cache import cache
-    cache_key = "api_pub_homepage_collections_v3"
+    cache_key = "api_pub_homepage_collections_v4"
     cached = cache.get(cache_key)
     if cached is not None:
         return Response(cached, status=status.HTTP_200_OK)
@@ -3541,6 +3554,24 @@ def _format_typesense_hit(hit):
                 highlight_text = h["snippet"]
                 break
 
+    from AdminApp.seo_utils import get_product_seo
+    product_seo = (
+        get_product_seo({
+            "product_name": title,
+            "product_code": doc.get("product_code") or doc.get("sku") or "",
+            "brand": brand,
+            "category": {"name": category, "slug": doc.get("category_slug", "")},
+            "subcategory": {"name": subcategory},
+            "model_no": doc.get("model_no", ""),
+            "description": doc.get("description", ""),
+            "quantity": quantity,
+            "inventory_country": inventory_country,
+            "manufacturing_country": doc.get("manufacturing_country", ""),
+        })
+        if not is_lot
+        else None
+    )
+
     return {
         "id": db_id,
         "typesense_id": doc.get("id"),
@@ -3577,6 +3608,7 @@ def _format_typesense_hit(hit):
         "is_featured": doc.get("is_featured", False),
         "is_best_selling": doc.get("is_best_selling", False),
         "is_new_arrival": doc.get("is_new_arrival", False),
+        "seo": product_seo,
         "highlight": highlight_text,
         "text_match": hit.get("text_match", 0),
     }
@@ -3597,6 +3629,8 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
         if query_text:
             p_qs = p_qs.filter(
                 Q(product_name__icontains=query_text) |
+                Q(product_code__icontains=query_text) |
+                Q(product_id__icontains=query_text) |
                 Q(brand_name__icontains=query_text) |
                 Q(model_no__icontains=query_text) |
                 Q(description__icontains=query_text) |
@@ -3628,6 +3662,8 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "description": p.description or "",
                 "brand": p.brand_name or "",
                 "model_no": p.model_no or "",
+                "product_code": p.product_code or p.product_id or "",
+                "sku": p.product_code or p.model_no or p.product_id or "",
                 "category": p.category.name if p.category else "",
                 "subcategory": p.subcategory.name if p.subcategory else "",
                 "location": p.inventory_location or "",
@@ -3649,6 +3685,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "images": all_imgs,
                 "listing_url": f"/product/{p.product_id or p.id}",
                 "product_id": p.product_id or "",
+                "seo": p.seo,
                 "is_featured": bool(p.is_featured),
                 "is_best_selling": bool(p.is_best_selling),
                 "is_new_arrival": bool(p.is_new_arrival),

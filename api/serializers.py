@@ -125,10 +125,15 @@ class PartnershipEnquirySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    seo = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         exclude = ['is_active', 'enquiry_status']
-        read_only_fields = ['product_id', 'created_at', 'updated_at']
+        read_only_fields = ['product_id', 'seo', 'created_at', 'updated_at']
+
+    def get_seo(self, obj):
+        return obj.seo
 
 class SellerProductEnquirySerializer(ProductSerializer):
     pass
