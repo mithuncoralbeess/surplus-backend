@@ -4119,15 +4119,39 @@ def lot_warehouse_explorer_admin_api(request, enquiry_id):
 
 def manage_users_view(request):
     """
-    Dedicated view for listing registered users (VendorDetails).
-    Does NOT include RFQ or product metrics.
+    Dedicated view for listing registered users (VendorDetails)
+    with per-user RFQ request, Product, and Lot counts.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    from AdminApp.models import VendorDetails
+    from django.db.models import Count
+    from AdminApp.models import Lot, Product, RfqEnquiry, VendorDetails
+
     vendor_queryset = VendorDetails.objects.all().order_by("-created_at")
+
+    product_counts = {
+        row["vendor_id"]: row["c"]
+        for row in Product.objects.filter(vendor_id__isnull=False)
+        .values("vendor_id")
+        .annotate(c=Count("id"))
+    }
+    lot_counts = {
+        row["vendor_id"]: row["c"]
+        for row in Lot.objects.filter(vendor_id__isnull=False)
+        .values("vendor_id")
+        .annotate(c=Count("id"))
+    }
+    rfq_counts_by_vendor_id = {}
+    rfq_unlinked_by_email = {}
+    for buyer_id, rfq_email in RfqEnquiry.objects.values_list("buyer_id", "email"):
+        if buyer_id:
+            rfq_counts_by_vendor_id[buyer_id] = rfq_counts_by_vendor_id.get(buyer_id, 0) + 1
+        elif rfq_email:
+            e_low = rfq_email.strip().lower()
+            if e_low:
+                rfq_unlinked_by_email[e_low] = rfq_unlinked_by_email.get(e_low, 0) + 1
 
     search_query = request.GET.get("q", "").strip()
     type_filter = request.GET.get("type", "").strip()
@@ -4196,6 +4220,10 @@ def manage_users_view(request):
         cat_list = vendor.category_interested_list if hasattr(vendor, "category_interested_list") else []
         cat_display = ", ".join(cat_list) if cat_list else (str(vendor.category_interested) if vendor.category_interested else "-")
 
+        rfq_count = rfq_counts_by_vendor_id.get(vendor.id, 0) + rfq_unlinked_by_email.get(email.strip().lower(), 0)
+        product_count = product_counts.get(vendor.id, 0)
+        lot_count = lot_counts.get(vendor.id, 0)
+
         users_list.append({
             "id": vendor.id,
             "vendor_id": vendor.vendor_id,
@@ -4214,6 +4242,9 @@ def manage_users_view(request):
             "business_address": vendor.business_address or "-",
             "tax_registration_number": vendor.tax_registration_number or "-",
             "category_interested": cat_display,
+            "rfq_count": rfq_count,
+            "product_count": product_count,
+            "lot_count": lot_count,
             "status": "Active" if is_active else "Inactive",
             "joined": vendor.created_at,
         })
