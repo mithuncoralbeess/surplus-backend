@@ -2086,7 +2086,7 @@ def seller_enquiry_edit_api(request, enquiry_id):
             except (MainCategory.DoesNotExist, ValueError):
                 pass
 
-        # Quantity
+        # Quantity & MOQ
         for q_key in ("stock_quantity", "quantity", "stock", "units"):
             if q_key in data and data[q_key] not in (None, ""):
                 try:
@@ -2094,6 +2094,18 @@ def seller_enquiry_edit_api(request, enquiry_id):
                     break
                 except (ValueError, TypeError):
                     pass
+
+        for m_key in ("moq", "min_order_quantity", "minimum_order_quantity"):
+            if m_key in data:
+                raw_m = str(data[m_key] or "").strip()
+                if raw_m == "":
+                    product.moq = None
+                else:
+                    try:
+                        product.moq = max(0, int(raw_m))
+                    except (ValueError, TypeError):
+                        pass
+                break
 
         # 2. Pricing & Financials: ONLY liquidation_price and msrp are editable. Price is strictly auto-calculated.
         if "liquidating_price" in data and data["liquidating_price"] not in (None, ""):
@@ -6362,6 +6374,14 @@ def add_product_view(request):
         except (ValueError, TypeError):
             quantity = 1
 
+        moq_str = (request.POST.get("moq") or "").strip()
+        moq_val = None
+        if moq_str:
+            try:
+                moq_val = max(1, int(moq_str))
+            except (ValueError, TypeError):
+                moq_val = None
+
         currency = (request.POST.get("currency") or "USD").strip().upper()
         if len(currency) > 3 and "-" in currency:
             currency = currency.split("-")[0].strip()
@@ -6570,6 +6590,7 @@ def add_product_view(request):
             expiry_date=expiry_date,
             excluded_countries=excluded_countries,
             quantity=quantity,
+            moq=moq_val,
             currency=currency,
             liquidating_price=liquidating_price,
             msrp=msrp,

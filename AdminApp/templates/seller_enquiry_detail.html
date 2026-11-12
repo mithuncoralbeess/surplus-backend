@@ -811,6 +811,25 @@
             if (currInput) currInput.addEventListener('input', updateSellerPricingCalc);
             updateSellerPricingCalc();
 
+            const stockQtyInput = document.getElementById('edit_stock_quantity');
+            const moqPreviewInput = document.getElementById('edit_moq');
+            if (moqPreviewInput) {
+                moqPreviewInput.addEventListener('input', () => {
+                    moqPreviewInput.dataset.manual = moqPreviewInput.value.trim() ? '1' : '';
+                });
+            }
+            function updateSellerMoqPreview() {
+                if (!stockQtyInput || !moqPreviewInput || moqPreviewInput.dataset.manual === '1') return;
+                const qty = parseInt(stockQtyInput.value || '0', 10) || 0;
+                moqPreviewInput.value = qty <= 0 ? 0 : (qty >= 20 ? 20 : qty);
+            }
+            if (stockQtyInput && moqPreviewInput) {
+                if (moqPreviewInput.value.trim()) {
+                    moqPreviewInput.dataset.manual = '1';
+                }
+                stockQtyInput.addEventListener('input', updateSellerMoqPreview);
+            }
+
             editForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('saveEditBtn');
@@ -1029,7 +1048,7 @@
                                 <label class="form-label small fw-semibold text-dark">Model / Part No</label>
                                 <input type="text" class="form-control" name="model_no" value="{% if enquiry.model_no %}{{ enquiry.model_no }}{% elif product_data.model_no %}{{ product_data.model_no }}{% endif %}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Stock Condition</label>
                                 <select class="form-select" name="condition">
                                     <option value="New / Sealed" {% if enquiry.condition == 'New / Sealed' or product_data.condition == 'New / Sealed' %}selected{% endif %}>New / Sealed</option>
@@ -1039,9 +1058,14 @@
                                     <option value="Refurbished" {% if enquiry.condition == 'Refurbished' or product_data.condition == 'Refurbished' %}selected{% endif %}>Refurbished</option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-dark">Stock Quantity</label>
-                                <input type="number" class="form-control" name="stock_quantity" value="{% if enquiry.stock_quantity %}{{ enquiry.stock_quantity }}{% elif product_data.quantity %}{{ product_data.quantity }}{% endif %}">
+                                <input type="number" class="form-control" name="stock_quantity" id="edit_stock_quantity" value="{% if enquiry.stock_quantity %}{{ enquiry.stock_quantity }}{% elif product_data.quantity %}{{ product_data.quantity }}{% endif %}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">Min Order Quantity (MOQ)</label>
+                                <input type="number" min="0" class="form-control" name="moq" id="edit_moq" value="{{ enquiry.moq|default:'0' }}" placeholder="Auto if blank">
+                                <small class="text-muted" style="font-size: 11px;">Leave blank to auto-set from stock</small>
                             </div>
                         </div>
                     </div>

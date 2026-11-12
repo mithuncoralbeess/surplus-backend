@@ -1034,7 +1034,7 @@ textarea.form-control-custom {
 
                         <div class="row g-3 mb-3">
                             <!-- Available Quantity * -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label-custom" for="quantityInput">
                                     <span class="label-title">Available Inventory Quantity <span class="text-danger">*</span></span>
                                 </label>
@@ -1048,8 +1048,23 @@ textarea.form-control-custom {
                                 <div class="form-text">Total physical units ready in warehouse stock.</div>
                             </div>
 
+                            <!-- Min Order Quantity (MOQ) -->
+                            <div class="col-md-4">
+                                <label class="form-label-custom" for="moqInput">
+                                    <span class="label-title">Min Order Quantity (MOQ)</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text addon-icon bg-amber-subtle text-amber"><i class="bi bi-box-seam"></i></span>
+                                    <input type="number" class="form-control form-control-custom font-monospace" name="moq"
+                                        id="moqInput" min="1" value="{{ form_data.moq|default:'' }}"
+                                        placeholder="Auto (max 20) if blank">
+                                    <span class="input-group-text">Units</span>
+                                </div>
+                                <div class="form-text">Minimum order units per purchase (auto-filled if left blank).</div>
+                            </div>
+
                             <!-- Currency * -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label-custom" for="currencySelect">
                                     <span class="label-title">Currency <span class="text-danger">*</span></span>
                                 </label>

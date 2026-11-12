@@ -2263,6 +2263,19 @@ def submit_product_request(request):
     except (ValueError, TypeError):
         quantity = 0
 
+    raw_moq = (
+        data.get('moq')
+        or data.get('min_order_quantity')
+        or data.get('minOrderQuantity')
+        or data.get('minimum_order_quantity')
+    )
+    moq_val = None
+    if raw_moq is not None and str(raw_moq).strip() != "":
+        try:
+            moq_val = max(1, int(str(raw_moq).strip()))
+        except (ValueError, TypeError):
+            moq_val = None
+
     currency = str(data.get('currency') or 'USD').strip().upper()
 
     lp_val = (
@@ -2362,6 +2375,7 @@ def submit_product_request(request):
         expiry_date=expiry_date,
         excluded_countries=excluded_countries,
         quantity=quantity,
+        moq=moq_val,
         currency=currency,
         liquidating_price=liquidating_price,
         msrp=msrp,
@@ -3290,6 +3304,8 @@ def clear_all_vendor_notifications(request):
 
 
 def _serialize_product_summary(p):
+    from AdminApp.models import compute_product_moq
+
     all_imgs = [img.url for img in p.images.all() if img.url]
     main_img = all_imgs[0] if all_imgs else None
     return {
@@ -3319,7 +3335,7 @@ def _serialize_product_summary(p):
         "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
         "excluded_countries": p.excluded_countries or [],
         "quantity": p.quantity,
-        "moq": p.moq,
+        "moq": p.moq if p.moq is not None else compute_product_moq(p.quantity),
         "currency": p.currency,
         "price": str(p.current_price or p.liquidating_price or "0.00"),
         "liquidation_price": str(p.liquidating_price),
@@ -3612,7 +3628,7 @@ def _format_typesense_hit(hit):
         "currency": currency,
         "quantity": quantity,
         "estQty": quantity,
-        "moq": 1 if is_lot else compute_product_moq(quantity),
+        "moq": 1 if is_lot else (int(doc["moq"]) if doc.get("moq") is not None else compute_product_moq(quantity)),
         "pallet_count": doc.get("pallet_count", 0),
         "pallets": doc.get("pallet_count", 0),
         "distinct_skus": doc.get("distinct_skus", 1),
@@ -3691,7 +3707,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "currency": p.currency or "USD",
                 "quantity": p.quantity or 1,
                 "estQty": p.quantity or 1,
-                "moq": p.moq,
+                "moq": p.moq if p.moq is not None else compute_product_moq(p.quantity),
                 "pallet_count": 0,
                 "pallets": 0,
                 "distinct_skus": 1,

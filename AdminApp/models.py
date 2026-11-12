@@ -1563,6 +1563,7 @@ class Product(models.Model):
     excluded_countries = models.JSONField(default=list, blank=True, help_text="List of excluded country codes")
     
     quantity = models.PositiveIntegerField(default=0, db_index=True)
+    moq = models.PositiveIntegerField(null=True, blank=True, help_text="Minimum Order Quantity (MOQ)")
     currency = models.CharField(max_length=10, default="USD")
     liquidating_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, db_index=True, help_text="Liquidating Price per unit")
     msrp = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="MSRP / Original Retail Price")
@@ -1651,6 +1652,9 @@ class Product(models.Model):
             self.product_id = get_next_product_id(exclude_pk=self.pk)
         if auto_pcode:
             self.product_code = get_next_product_code(exclude_pk=self.pk)
+
+        if self.moq is None:
+            self.moq = compute_product_moq(self.quantity)
 
         # Calculate current_price = Liquidating Price * 1.10 (our platform markup)
         if self.liquidating_price:
@@ -1877,10 +1881,6 @@ class Product(models.Model):
         return self.product_name
 
     @property
-    def moq(self) -> int:
-        return compute_product_moq(self.quantity)
-
-    @property
     def sku(self):
         return self.product_code or self.model_no or self.product_id
 
@@ -1949,7 +1949,7 @@ class Product(models.Model):
             "title": self.product_name,
             "price": self.liquidating_price,
             "quantity": self.quantity,
-            "moq": self.moq,
+            "moq": self.moq if self.moq is not None else compute_product_moq(self.quantity),
             "description": self.description,
             "reason_to_sell": self.reason_to_sell,
             "warranty": self.warranty,
