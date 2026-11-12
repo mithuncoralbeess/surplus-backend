@@ -1490,6 +1490,22 @@ def get_next_product_code(preferred: str = "", exclude_pk=None) -> str:
             return candidate
 
 
+def compute_product_moq(quantity) -> int:
+    """
+    Computes Product MOQ from available quantity:
+    - If quantity > 20 (or == 20): MOQ is 20
+    - If 0 < quantity < 20: MOQ is the max available quantity
+    - If quantity <= 0: MOQ is 0
+    """
+    try:
+        qty = int(quantity or 0)
+    except (TypeError, ValueError):
+        qty = 0
+    if qty <= 0:
+        return 0
+    return 20 if qty >= 20 else qty
+
+
 class Product(models.Model):
     """
     Core Product model for single item listings and seller enquiries.
@@ -1861,6 +1877,10 @@ class Product(models.Model):
         return self.product_name
 
     @property
+    def moq(self) -> int:
+        return compute_product_moq(self.quantity)
+
+    @property
     def sku(self):
         return self.product_code or self.model_no or self.product_id
 
@@ -1929,6 +1949,7 @@ class Product(models.Model):
             "title": self.product_name,
             "price": self.liquidating_price,
             "quantity": self.quantity,
+            "moq": self.moq,
             "description": self.description,
             "reason_to_sell": self.reason_to_sell,
             "warranty": self.warranty,

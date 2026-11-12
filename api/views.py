@@ -3319,6 +3319,7 @@ def _serialize_product_summary(p):
         "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
         "excluded_countries": p.excluded_countries or [],
         "quantity": p.quantity,
+        "moq": p.moq,
         "currency": p.currency,
         "price": str(p.current_price or p.liquidating_price or "0.00"),
         "liquidation_price": str(p.liquidating_price),
@@ -3373,7 +3374,7 @@ def get_public_products_list(request):
     cache_key = None
     if not vendor_param:
         path_hash = hashlib.md5(request.get_full_path().encode("utf-8")).hexdigest()
-        cache_key = f"api_pub_prods_v3_{path_hash}"
+        cache_key = f"api_pub_prods_v4_{path_hash}"
         cached_resp = cache.get(cache_key)
         if cached_resp is not None:
             return Response(cached_resp, status=status.HTTP_200_OK)
@@ -3567,6 +3568,7 @@ def _format_typesense_hit(hit):
                 highlight_text = h["snippet"]
                 break
 
+    from AdminApp.models import compute_product_moq
     from AdminApp.seo_utils import get_product_seo
     product_seo = (
         get_product_seo({
@@ -3610,7 +3612,7 @@ def _format_typesense_hit(hit):
         "currency": currency,
         "quantity": quantity,
         "estQty": quantity,
-        "moq": 1,
+        "moq": 1 if is_lot else compute_product_moq(quantity),
         "pallet_count": doc.get("pallet_count", 0),
         "pallets": doc.get("pallet_count", 0),
         "distinct_skus": doc.get("distinct_skus", 1),
@@ -3689,7 +3691,7 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
                 "currency": p.currency or "USD",
                 "quantity": p.quantity or 1,
                 "estQty": p.quantity or 1,
-                "moq": 1,
+                "moq": p.moq,
                 "pallet_count": 0,
                 "pallets": 0,
                 "distinct_skus": 1,
