@@ -58,6 +58,16 @@ def should_exclude_file(file_name: str) -> bool:
     return False
 
 
+def connect_ftp() -> ftplib.FTP:
+    """
+    Connects and authenticates to the FTP server in passive mode.
+    """
+    ftp = ftplib.FTP(FTP_HOST, timeout=60)
+    ftp.login(FTP_USER, FTP_PASS)
+    ftp.set_pasv(True)
+    return ftp
+
+
 def ensure_remote_dir(ftp: ftplib.FTP, remote_path: str):
     """
     Ensures that a remote directory exists by walking path components.
@@ -73,18 +83,17 @@ def ensure_remote_dir(ftp: ftplib.FTP, remote_path: str):
                 ftp.mkd(current)
             except Exception:
                 pass
-            try:
-                ftp.cwd(current)
-            except Exception:
-                pass
+            ftp.cwd(current)
 
 
 def upload_directory(ftp: ftplib.FTP, local_root: str, remote_root: str):
     """
-    Recursively uploads files from local_root to remote_root.
+    Recursively uploads files from local_root to remote_root with reconnect/retry.
+    Returns (total_uploaded, total_skipped, failed_files, ftp).
     """
     total_uploaded = 0
     total_skipped = 0
+    failed_files = []
 
     print(f"[*] Starting upload from: {local_root}")
     print(f"[*] Remote target directory: {remote_root}")
@@ -102,11 +111,12 @@ def upload_directory(ftp: ftplib.FTP, local_root: str, remote_root: str):
         else:
             curr_remote_dir = remote_root + "/" + rel_path.replace("\\", "/")
 
-        ensure_remote_dir(ftp, curr_remote_dir)
         try:
+            ensure_remote_dir(ftp, curr_remote_dir)
             ftp.cwd(curr_remote_dir)
         except Exception as e:
             print(f"[!] Could not enter remote dir {curr_remote_dir}: {e}", file=sys.stderr)
+            failed_files.append(curr_remote_dir)
             continue
 
         for f in files:
@@ -115,27 +125,58 @@ def upload_directory(ftp: ftplib.FTP, local_root: str, remote_root: str):
                 continue
 
             local_file_path = os.path.join(root, f)
-            try:
-                with open(local_file_path, "rb") as fp:
-                    ftp.storbinary(f"STOR {f}", fp)
+            rel_file = os.path.join(rel_path, f)
+            uploaded_ok = False
+            last_err = None
+
+            for attempt in range(1, 4):
+                try:
+                    with open(local_file_path, "rb") as fp:
+                        ftp.storbinary(f"STOR {f}", fp)
+                    uploaded_ok = True
+                    break
+                except Exception as err:
+                    last_err = err
+                    print(
+                        f"  [!] Attempt {attempt}/3 failed for {rel_file}: {err}",
+                        file=sys.stderr,
+                    )
+                    try:
+                        ftp.close()
+                    except Exception:
+                        pass
+                    if attempt < 3:
+                        time.sleep(1)
+                        try:
+                            ftp = connect_ftp()
+                            ensure_remote_dir(ftp, curr_remote_dir)
+                            ftp.cwd(curr_remote_dir)
+                        except Exception as reconn_err:
+                            last_err = reconn_err
+
+            if uploaded_ok:
                 total_uploaded += 1
-                print(f"  -> Uploaded: {os.path.join(rel_path, f)}")
-            except Exception as err:
-                print(f"  [!] Failed to upload {f}: {err}", file=sys.stderr)
+                print(f"  -> Uploaded: {rel_file}")
+            else:
+                print(f"  [!] Failed to upload {rel_file}: {last_err}", file=sys.stderr)
+                failed_files.append(rel_file)
 
-    return total_uploaded, total_skipped
+    return total_uploaded, total_skipped, failed_files, ftp
 
 
-def restart_passenger(ftp: ftplib.FTP):
+def restart_passenger(ftp: ftplib.FTP, app_dir: str):
     """
-    Touches /tmp/restart.txt to reload Passenger WSGI on cPanel.
+    Touches <app_dir>/tmp/restart.txt to reload Passenger WSGI on cPanel.
     """
+    tmp_dir = f"{app_dir.rstrip('/')}/tmp"
     try:
+        ensure_remote_dir(ftp, tmp_dir)
+        ftp.cwd(tmp_dir)
         ts = str(time.time()).encode("utf-8")
-        ftp.storbinary("STOR /tmp/restart.txt", io.BytesIO(ts))
-        print("[*] Successfully touched /tmp/restart.txt (Passenger WSGI reloaded)")
+        ftp.storbinary("STOR restart.txt", io.BytesIO(ts))
+        print(f"[*] Successfully touched {tmp_dir}/restart.txt (Passenger WSGI reloaded)")
     except Exception as e:
-        print(f"[!] Warning: Could not touch /tmp/restart.txt: {e}")
+        print(f"[!] Warning: Could not touch {tmp_dir}/restart.txt: {e}")
 
 
 def ensure_passenger_htaccess(ftp: ftplib.FTP, app_dir: str):
@@ -168,17 +209,25 @@ def main():
     print("=" * 60)
 
     try:
-        ftp = ftplib.FTP(FTP_HOST, timeout=30)
-        ftp.login(FTP_USER, FTP_PASS)
+        ftp = connect_ftp()
         print("[+] Logged into FTP server successfully.")
     except Exception as e:
         print(f"[FATAL] Failed to connect or authenticate to FTP: {e}", file=sys.stderr)
         sys.exit(1)
 
     try:
-        uploaded, skipped = upload_directory(ftp, PROJECT_ROOT, FTP_BASE)
+        uploaded, skipped, failed_files, ftp = upload_directory(ftp, PROJECT_ROOT, FTP_BASE)
         print("=" * 60)
-        print(f"[+] Upload complete! {uploaded} files uploaded, {skipped} files skipped.")
+        print(
+            f"[+] Upload finished: {uploaded} uploaded, {skipped} skipped, {len(failed_files)} failed."
+        )
+
+        if failed_files:
+            print(
+                f"[FATAL] {len(failed_files)} item(s) failed to upload: {failed_files[:10]}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
         # Ensure .htaccess has Passenger configuration
         ensure_passenger_htaccess(ftp, FTP_BASE)
@@ -191,7 +240,7 @@ def main():
             print("[+] Successfully uploaded production .env to server from environment secrets.")
 
         # Reload Passenger WSGI
-        restart_passenger(ftp)
+        restart_passenger(ftp, FTP_BASE)
 
         print("[+] Deployment completed successfully!")
     except Exception as e:
