@@ -7211,7 +7211,7 @@ def add_buyer_rfq_view(request):
                 if isinstance(lot.category_allocations, list) and lot.category_allocations and isinstance(lot.category_allocations[0], dict)
                 else ""
             ),
-            "price": str(lot.ask_price_surplus_payout or lot.total_price or Decimal("0.00")),
+            "price": str(lot.ask_price_surplus_payout or lot.total_est_retail_value_msrp or Decimal("0.00")),
             "currency": lot.currency or "USD",
             "quantity": lot.total_units_quantity or 1,
         }
@@ -7291,7 +7291,7 @@ def add_buyer_rfq_view(request):
                 lot_obj = Lot.objects.filter(id=int(raw_id_str)).first()
                 if not lot_obj:
                     continue
-                unit_p = lot_obj.ask_price_surplus_payout or lot_obj.total_price or Decimal("0.00")
+                unit_p = lot_obj.ask_price_surplus_payout or lot_obj.total_est_retail_value_msrp or Decimal("0.00")
                 cat_name = ""
                 if isinstance(lot_obj.category_allocations, list) and lot_obj.category_allocations and isinstance(lot_obj.category_allocations[0], dict):
                     cat_name = lot_obj.category_allocations[0].get("category_name", "")
