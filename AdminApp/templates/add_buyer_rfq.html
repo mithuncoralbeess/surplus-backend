@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Buyer RFQ | Surplus Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rfq-intake-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .rfq-section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.1rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .rfq-line-row {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.85rem;
+        position: relative;
+    }
+    .rfq-summary-strip {
+        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-person-plus-fill text-primary"></i>
+                <span>Add Buyer &amp; Create RFQ</span>
+            </h3>
+            <p class="text-muted small mb-0">
+                Assisted Buyer Intake ({{ admin_uid }}) &mdash; Select or register a buyer and submit an RFQ for Products and/or Lots.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/rfq-requests/" class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-semibold">
+                <i class="bi bi-file-earmark-text me-1"></i> View All RFQs
+            </a>
+            <a href="/admin/users/" class="btn btn-outline-primary btn-sm rounded-3 px-3 py-2 fw-semibold">
+                <i class="bi bi-people me-1"></i> Manage Users
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show rounded-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/admin/buyers/add/" id="addBuyerRfqForm">
+        {% csrf_token %}
+
+        <!-- 1. Buyer Details -->
+        <div class="rfq-intake-card">
+            <div class="rfq-section-title">
+                <i class="bi bi-person-badge text-primary fs-5"></i>
+                <span>1. Buyer Account &amp; Assisted Intake Details</span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="existingBuyerSelect" class="form-label small fw-semibold text-dark">
+                        Select Existing Buyer (Optional &mdash; leave blank to auto-register a new Buyer)
+                    </label>
+                    <select class="form-select" id="existingBuyerSelect" name="existing_buyer_id">
+                        <option value="">-- Register New Buyer / Match by Email or Phone --</option>
+                        {% for b in buyers_list %}
+                        <option value="{{ b.id }}" {% if form_data.existing_buyer_id|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                            {{ b.vendor_id }} &mdash; {{ b.name }}{% if b.company %} ({{ b.company }}){% endif %}{% if b.email %} &bull; {{ b.email }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="intakeChannelSelect" class="form-label small fw-semibold text-dark">Intake Channel</label>
+                    <select class="form-select" id="intakeChannelSelect" name="intake_channel">
+                        <option value="WhatsApp" {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}selected{% endif %}>WhatsApp</option>
+                        <option value="Email" {% if form_data.intake_channel == 'Email' %}selected{% endif %}>Email</option>
+                        <option value="Phone Call" {% if form_data.intake_channel == 'Phone Call' %}selected{% endif %}>Phone Call</option>
+                        <option value="Direct / Walk-in" {% if form_data.intake_channel == 'Direct / Walk-in' %}selected{% endif %}>Direct / Walk-in</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="contactPersonInput" class="form-label small fw-semibold text-dark">Buyer Contact Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="contactPersonInput" name="contact_person" value="{{ form_data.contact_person|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="buyerEmailInput" class="form-label small fw-semibold text-dark">Buyer Email</label>
+                    <input type="email" class="form-control" id="buyerEmailInput" name="email" value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
+                </div>
+                <div class="col-md-4">
+                    <label for="buyerPhoneInput" class="form-label small fw-semibold text-dark">Phone / WhatsApp</label>
+                    <input type="text" class="form-control" id="buyerPhoneInput" name="phone" value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000">
+                </div>
+                <div class="col-md-4">
+                    <label for="buyerCompanyInput" class="form-label small fw-semibold text-dark">Company Name</label>
+                    <input type="text" class="form-control" id="buyerCompanyInput" name="company_name" value="{{ form_data.company_name|default:'' }}" placeholder="e.g. Gulf Trading LLC">
+                </div>
+                <div class="col-md-4">
+                    <label for="buyerCountrySelect" class="form-label small fw-semibold text-dark">Country</label>
+                    <select class="form-select" id="buyerCountrySelect" name="country">
+                        <option value="">-- Select Country --</option>
+                        {% for c in countries %}
+                        <option value="{{ c }}" {% if form_data.country == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="buyerLocationInput" class="form-label small fw-semibold text-dark">Business Location / City</label>
+                    <input type="text" class="form-control" id="buyerLocationInput" name="business_location" value="{{ form_data.business_location|default:'' }}" placeholder="e.g. Dubai, UAE">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Select Products & Lots for RFQ -->
+        <div class="rfq-intake-card">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
+                <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 1rem;">
+                    <i class="bi bi-boxes text-primary fs-5"></i>
+                    <span>2. Select Products &amp; Lots for RFQ</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" id="addProductRowBtn">
+                        <i class="bi bi-plus-lg me-1"></i> Add Product
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 fw-semibold" id="addLotRowBtn">
+                        <i class="bi bi-plus-lg me-1"></i> Add Lot
+                    </button>
+                </div>
+            </div>
+
+            <div id="rfqItemsContainer"></div>
+
+            <div class="rfq-summary-strip d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3">
+                <div class="d-flex flex-wrap gap-4">
+                    <div>
+                        <span class="text-muted small d-block">Selected Line Items</span>
+                        <strong class="fs-5 text-dark" id="summaryLineCount">0</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Total Units</span>
+                        <strong class="fs-5 text-primary" id="summaryTotalUnits">0</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Estimated RFQ Value</span>
+                        <strong class="fs-5 text-success" id="summaryEstValue">0.00</strong>
+                    </div>
+                </div>
+                <span class="text-muted small">Mix and match single Products and bulk Lots in the same RFQ.</span>
+            </div>
+        </div>
+
+        <!-- 3. Logistics, Terms & Notes -->
+        <div class="rfq-intake-card">
+            <div class="rfq-section-title">
+                <i class="bi bi-truck text-primary fs-5"></i>
+                <span>3. Delivery Terms, Status &amp; Notes</span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="destinationPortInput" class="form-label small fw-semibold text-dark">Destination Port / City</label>
+                    <input type="text" class="form-control" id="destinationPortInput" name="destination_port" value="{{ form_data.destination_port|default:'' }}" placeholder="e.g. Jebel Ali / Doha">
+                </div>
+                <div class="col-md-3">
+                    <label for="incotermSelect" class="form-label small fw-semibold text-dark">Incoterm</label>
+                    <select class="form-select" id="incotermSelect" name="incoterm">
+                        {% for val, label in incoterms %}
+                        <option value="{{ val }}" {% if form_data.incoterm == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="paymentMethodSelect" class="form-label small fw-semibold text-dark">Payment Method</label>
+                    <select class="form-select" id="paymentMethodSelect" name="payment_method">
+                        {% for val, label in payment_methods %}
+                        <option value="{{ val }}" {% if form_data.payment_method == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="rfqCurrencySelect" class="form-label small fw-semibold text-dark">Currency</label>
+                    <select class="form-select" id="rfqCurrencySelect" name="currency">
+                        {% for cur in currencies %}
+                        <option value="{{ cur }}" {% if form_data.currency == cur or not form_data.currency and cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="rfqStatusSelect" class="form-label small fw-semibold text-dark">Initial Status</label>
+                    <select class="form-select" id="rfqStatusSelect" name="status">
+                        <option value="PENDING" {% if form_data.status == 'PENDING' or not form_data.status %}selected{% endif %}>Pending Review</option>
+                        <option value="QUOTED" {% if form_data.status == 'QUOTED' %}selected{% endif %}>Quoted</option>
+                        <option value="ACCEPTED" {% if form_data.status == 'ACCEPTED' %}selected{% endif %}>Accepted</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="additionalNotesInput" class="form-label small fw-semibold text-dark">Buyer Requirements / Additional Notes</label>
+                    <textarea class="form-control" id="additionalNotesInput" name="additional_notes" rows="3" placeholder="Packaging requests, target delivery timeline, inspection notes...">{{ form_data.additional_notes|default:'' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="adminNotesInput" class="form-label small fw-semibold text-dark">Internal Admin Notes</label>
+                    <textarea class="form-control" id="adminNotesInput" name="admin_notes" rows="3" placeholder="Internal sourcing notes or sales context...">{{ form_data.admin_notes|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a href="/admin/rfq-requests/" class="btn btn-outline-secondary rounded-3 px-4 py-2 fw-semibold">Cancel</a>
+            <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> Submit Buyer RFQ
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const buyersData = {{ buyers_json|safe }};
+    const productsData = {{ products_json|safe }};
+    const lotsData = {{ lots_json|safe }};
+
+    const buyersMap = new Map(buyersData.map(b => [String(b.id), b]));
+    const productsMap = new Map(productsData.map(p => [String(p.id), p]));
+    const lotsMap = new Map(lotsData.map(l => [String(l.id), l]));
+
+    const existingBuyerSelect = document.getElementById('existingBuyerSelect');
+    const contactInput = document.getElementById('contactPersonInput');
+    const emailInput = document.getElementById('buyerEmailInput');
+    const phoneInput = document.getElementById('buyerPhoneInput');
+    const companyInput = document.getElementById('buyerCompanyInput');
+    const countrySelect = document.getElementById('buyerCountrySelect');
+    const locationInput = document.getElementById('buyerLocationInput');
+
+    if (existingBuyerSelect) {
+        existingBuyerSelect.addEventListener('change', function () {
+            const b = buyersMap.get(String(this.value));
+            if (!b) return;
+            if (contactInput && b.name) contactInput.value = b.name;
+            if (emailInput) emailInput.value = b.email || '';
+            if (phoneInput) phoneInput.value = b.phone || '';
+            if (companyInput) companyInput.value = b.company || '';
+            if (countrySelect && b.country) countrySelect.value = b.country;
+            if (locationInput) locationInput.value = b.location || '';
+        });
+    }
+
+    const container = document.getElementById('rfqItemsContainer');
+    const summaryLineCount = document.getElementById('summaryLineCount');
+    const summaryTotalUnits = document.getElementById('summaryTotalUnits');
+    const summaryEstValue = document.getElementById('summaryEstValue');
+    const rfqCurrencySelect = document.getElementById('rfqCurrencySelect');
+
+    function populateItemSelect(selectEl, itemType) {
+        const list = (itemType === 'lot') ? lotsData : productsData;
+        selectEl.innerHTML = `<option value="">-- Select ${itemType === 'lot' ? 'Lot' : 'Product'} --</option>`;
+        list.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = `[${item.code}] ${item.title} (${item.currency} ${Number(item.price || 0).toFixed(2)} | Stock: ${item.quantity})`;
+            selectEl.appendChild(opt);
+        });
+    }
+
+    function updateSummary() {
+        const rows = container.querySelectorAll('.rfq-line-row');
+        let validCount = 0;
+        let totalUnits = 0;
+        let totalVal = 0;
+
+        rows.forEach(row => {
+            const typeSel = row.querySelector('.item-type-select');
+            const idSel = row.querySelector('.item-id-select');
+            const qtyInput = row.querySelector('.item-qty-input');
+            const itemType = typeSel ? typeSel.value : 'product';
+            const itemId = idSel ? String(idSel.value) : '';
+            const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
+
+            if (itemId) {
+                const map = (itemType === 'lot') ? lotsMap : productsMap;
+                const rec = map.get(itemId);
+                const price = rec ? (parseFloat(rec.price) || 0) : 0;
+                validCount += 1;
+                totalUnits += qty;
+                totalVal += price * qty;
+            }
+        });
+
+        const cur = rfqCurrencySelect ? rfqCurrencySelect.value : 'USD';
+        if (summaryLineCount) summaryLineCount.textContent = String(validCount);
+        if (summaryTotalUnits) summaryTotalUnits.textContent = String(totalUnits);
+        if (summaryEstValue) summaryEstValue.textContent = `${cur} ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function addLineRow(defaultType = 'product') {
+        const row = document.createElement('div');
+        row.className = 'rfq-line-row';
+        row.innerHTML = `
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-dark mb-1">Type</label>
+                    <select class="form-select form-select-sm item-type-select" name="item_type[]">
+                        <option value="product" ${defaultType === 'product' ? 'selected' : ''}>Product</option>
+                        <option value="lot" ${defaultType === 'lot' ? 'selected' : ''}>Lot</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-dark mb-1">Select Product / Lot <span class="text-danger">*</span></label>
+                    <select class="form-select form-select-sm item-id-select" name="item_id[]" required></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-dark mb-1">Quantity</label>
+                    <input type="number" class="form-control form-control-sm item-qty-input" name="item_quantity[]" min="1" value="1" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-dark mb-1">Target Price</label>
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="item_target_price[]" placeholder="Optional">
+                </div>
+                <div class="col-md-2 d-flex gap-1 align-items-end">
+                    <div class="flex-grow-1">
+                        <label class="form-label small fw-semibold text-dark mb-1">Notes</label>
+                        <input type="text" class="form-control form-control-sm" name="item_notes[]" placeholder="Note...">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Remove Item">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const typeSelect = row.querySelector('.item-type-select');
+        const idSelect = row.querySelector('.item-id-select');
+        const qtyInput = row.querySelector('.item-qty-input');
+        const removeBtn = row.querySelector('.btn-remove-row');
+
+        populateItemSelect(idSelect, defaultType);
+
+        typeSelect.addEventListener('change', () => {
+            populateItemSelect(idSelect, typeSelect.value);
+            updateSummary();
+        });
+        idSelect.addEventListener('change', updateSummary);
+        qtyInput.addEventListener('input', updateSummary);
+        removeBtn.addEventListener('click', () => {
+            if (container.querySelectorAll('.rfq-line-row').length > 1) {
+                row.remove();
+                updateSummary();
+            } else {
+                idSelect.value = '';
+                qtyInput.value = '1';
+                updateSummary();
+            }
+        });
+
+        container.appendChild(row);
+        updateSummary();
+    }
+
+    document.getElementById('addProductRowBtn')?.addEventListener('click', () => addLineRow('product'));
+    document.getElementById('addLotRowBtn')?.addEventListener('click', () => addLineRow('lot'));
+    rfqCurrencySelect?.addEventListener('change', updateSummary);
+
+    // Start with 1 empty Product row
+    addLineRow('product');
+});
+</script>
+{% endblock %}
+

@@ -78,6 +78,7 @@ from .views import (
     expired_products_view,
     similar_products_view,
     add_product_view,
+    add_buyer_rfq_view,
     price_control_view,
     update_charge_percentage,
     price_control_apply,
@@ -227,6 +228,8 @@ urlpatterns = [
     path("partnership/", partnership_enquiries_view, name="partnership_enquiries_alias"),
 
     # Buyer RFQ Requests / Quotations (Frontend Cart & RFQ Basket)
+    path("buyers/add/", add_buyer_rfq_view, name="add_buyer_rfq"),
+    path("rfq-requests/add/", add_buyer_rfq_view, name="add_rfq_request"),
     path("rfq-requests/", rfq_requests_view, name="rfq_requests_list"),
     path("rfq-requests/<int:rfq_id>/detail/", rfq_request_detail_view, name="rfq_request_detail"),
     path("rfq-requests/<str:status_filter>/", rfq_requests_view, name="rfq_requests_filtered"),

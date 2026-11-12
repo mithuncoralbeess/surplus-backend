@@ -7142,6 +7142,295 @@ def add_lot_view(request):
     return render(request, "add_lot.html", context)
 
 
+def add_buyer_rfq_view(request):
+    """
+    Admin Assisted Buyer RFQ Intake view (analogous to Add Product & Add Lot).
+    Lets Admin select an existing buyer or register a new buyer account on the fly,
+    and submit an RFQ enquiry containing one or more Products and/or Lots.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    from django.db import transaction
+    from .models import Lot, Product, RfqEnquiry, RfqEnquiryItem, VendorDetails
+    import random
+    import re
+    import time
+
+    admin_uid = f"ADM-{admin_user.id:04d}"
+
+    buyers_qs = VendorDetails.objects.all().order_by("-created_at")
+    buyers_payload = [
+        {
+            "id": v.id,
+            "vendor_id": v.vendor_id,
+            "name": v.full_name or v.username or v.email or "",
+            "email": v.email or "",
+            "phone": v.mobile_number or "",
+            "company": v.company_name or "",
+            "country": getattr(v, "country", "") or "",
+            "location": getattr(v, "business_location", "") or "",
+        }
+        for v in buyers_qs
+    ]
+
+    products_qs = (
+        Product.objects.filter(enquiry_status__iexact="APPROVED")
+        .select_related("category")
+        .order_by("-created_at")
+    )
+    if not products_qs.exists():
+        products_qs = Product.objects.exclude(enquiry_status__iexact="DECLINED").select_related("category").order_by("-created_at")
+
+    products_payload = [
+        {
+            "id": p.id,
+            "code": p.product_code or p.product_id or f"PRO-{p.id:05d}",
+            "product_id": p.product_id or f"PRO-{p.id:05d}",
+            "title": p.product_name,
+            "category": p.category.name if p.category else "",
+            "price": str(p.current_price or p.liquidating_price or Decimal("0.00")),
+            "currency": p.currency or "USD",
+            "quantity": p.quantity or 1,
+        }
+        for p in products_qs
+    ]
+
+    lots_qs = Lot.objects.filter(enquiry_status__iexact="approved").order_by("-created_at")
+    if not lots_qs.exists():
+        lots_qs = Lot.objects.exclude(enquiry_status__iexact="declined").order_by("-created_at")
+
+    lots_payload = [
+        {
+            "id": lot.id,
+            "code": lot.lot_number or f"BLK-{lot.id:05d}",
+            "title": lot.title or lot.lot_number or f"Lot #{lot.id}",
+            "category": (
+                lot.category_allocations[0].get("category_name", "")
+                if isinstance(lot.category_allocations, list) and lot.category_allocations and isinstance(lot.category_allocations[0], dict)
+                else ""
+            ),
+            "price": str(lot.ask_price_surplus_payout or lot.total_price or Decimal("0.00")),
+            "currency": lot.currency or "USD",
+            "quantity": lot.total_units_quantity or 1,
+        }
+        for lot in lots_qs
+    ]
+
+    context = {
+        "admin": admin_user,
+        "admin_uid": admin_uid,
+        "buyers_list": buyers_payload,
+        "buyers_json": json.dumps(buyers_payload),
+        "products_json": json.dumps(products_payload),
+        "lots_json": json.dumps(lots_payload),
+        "countries": STANDARD_COUNTRIES,
+        "currencies": STANDARD_CURRENCIES,
+        "incoterms": RfqEnquiry.INCOTERM_CHOICES,
+        "payment_methods": RfqEnquiry.PAYMENT_CHOICES,
+        "page_title": "Add Buyer RFQ",
+    }
+
+    if request.method == "POST":
+        existing_buyer_id = (request.POST.get("existing_buyer_id") or "").strip()
+        contact_person = (request.POST.get("contact_person") or "").strip()
+        email = (request.POST.get("email") or "").strip().lower()
+        phone = (request.POST.get("phone") or "").strip()
+        company_name = (request.POST.get("company_name") or "").strip()
+        country = (request.POST.get("country") or "").strip()
+        business_location = (request.POST.get("business_location") or "").strip()
+        intake_channel = (request.POST.get("intake_channel") or "WhatsApp").strip()
+        destination_port = (request.POST.get("destination_port") or "").strip()
+        incoterm = (request.POST.get("incoterm") or "EXW").strip()
+        payment_method = (request.POST.get("payment_method") or "Escrow").strip()
+        currency = (request.POST.get("currency") or "USD").strip().upper()[:10]
+        rfq_status = (request.POST.get("status") or "PENDING").strip().upper()
+        if rfq_status not in ("PENDING", "QUOTED", "ACCEPTED", "DECLINED", "CLOSED"):
+            rfq_status = "PENDING"
+        additional_notes = (request.POST.get("additional_notes") or "").strip()
+        admin_notes = (request.POST.get("admin_notes") or "").strip()
+
+        item_types = request.POST.getlist("item_type[]")
+        item_ids = request.POST.getlist("item_id[]")
+        item_qtys = request.POST.getlist("item_quantity[]")
+        item_targets = request.POST.getlist("item_target_price[]")
+        item_notes_list = request.POST.getlist("item_notes[]")
+
+        errors = []
+        if not contact_person and not existing_buyer_id:
+            errors.append("Buyer Contact Name is required.")
+        if not email and not phone and not existing_buyer_id:
+            errors.append("Please provide at least Buyer Email or Phone Number.")
+
+        parsed_lines = []
+        for idx, raw_id in enumerate(item_ids):
+            raw_id_str = str(raw_id or "").strip()
+            if not raw_id_str.isdigit():
+                continue
+            itype = str(item_types[idx] if idx < len(item_types) else "product").strip().lower()
+            if itype not in ("product", "lot"):
+                itype = "product"
+
+            try:
+                qty = max(1, int(item_qtys[idx] if idx < len(item_qtys) else 1))
+            except (ValueError, TypeError):
+                qty = 1
+
+            t_price = None
+            raw_tp = str(item_targets[idx] if idx < len(item_targets) else "").strip()
+            if raw_tp:
+                try:
+                    t_price = Decimal(raw_tp)
+                except Exception:
+                    t_price = None
+
+            note_val = str(item_notes_list[idx] if idx < len(item_notes_list) else "").strip()
+
+            if itype == "lot":
+                lot_obj = Lot.objects.filter(id=int(raw_id_str)).first()
+                if not lot_obj:
+                    continue
+                unit_p = lot_obj.ask_price_surplus_payout or lot_obj.total_price or Decimal("0.00")
+                cat_name = ""
+                if isinstance(lot_obj.category_allocations, list) and lot_obj.category_allocations and isinstance(lot_obj.category_allocations[0], dict):
+                    cat_name = lot_obj.category_allocations[0].get("category_name", "")
+                parsed_lines.append({
+                    "item_type": "lot",
+                    "product": None,
+                    "lot": lot_obj,
+                    "title": lot_obj.title or lot_obj.lot_number or f"Lot #{lot_obj.id}",
+                    "sku": lot_obj.lot_number or f"BLK-{lot_obj.id:05d}",
+                    "category": cat_name,
+                    "quantity": qty,
+                    "unit_price": unit_p,
+                    "target_price": t_price,
+                    "notes": note_val,
+                })
+            else:
+                prod_obj = Product.objects.select_related("category").filter(id=int(raw_id_str)).first()
+                if not prod_obj:
+                    continue
+                unit_p = prod_obj.current_price or prod_obj.liquidating_price or Decimal("0.00")
+                parsed_lines.append({
+                    "item_type": "product",
+                    "product": prod_obj,
+                    "lot": None,
+                    "title": prod_obj.product_name,
+                    "sku": prod_obj.product_code or prod_obj.product_id or f"PRO-{prod_obj.id:05d}",
+                    "category": prod_obj.category.name if prod_obj.category else "",
+                    "quantity": qty,
+                    "unit_price": unit_p,
+                    "target_price": t_price,
+                    "notes": note_val,
+                })
+
+        if not parsed_lines:
+            errors.append("Please select at least one Product or Lot to create the RFQ.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
+
+        # Resolve or create VendorDetails (BUYER)
+        buyer_vendor = None
+        if existing_buyer_id.isdigit():
+            buyer_vendor = VendorDetails.objects.filter(id=int(existing_buyer_id)).first()
+
+        clean_mobile = re.sub(r"[^\d+]", "", phone).strip() if phone else ""
+        if not buyer_vendor and email:
+            buyer_vendor = VendorDetails.objects.filter(email__iexact=email).first()
+        if not buyer_vendor and clean_mobile:
+            buyer_vendor = VendorDetails.objects.filter(mobile_number__iexact=clean_mobile).first()
+
+        if not buyer_vendor:
+            if not email:
+                phone_digits = re.sub(r"[^\d]", "", clean_mobile) if clean_mobile else str(int(time.time()))
+                email = f"buyer_{phone_digits}@buyer.surplus"
+
+            base_uname = (email.split("@")[0] or "buyer")[:40]
+            uname = base_uname
+            counter = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname}{counter}"
+                counter += 1
+
+            buyer_vendor = VendorDetails.objects.create(
+                username=uname,
+                email=email,
+                full_name=contact_person or uname,
+                mobile_number=clean_mobile,
+                company_name=company_name,
+                country=country,
+                business_location=business_location,
+                category_interested=[],
+                business_type="",
+                user_type="BUYER",
+                status=True,
+            )
+        else:
+            if not contact_person:
+                contact_person = buyer_vendor.full_name or buyer_vendor.username
+            if not email:
+                email = buyer_vendor.email
+            if not phone:
+                phone = buyer_vendor.mobile_number
+            if not company_name:
+                company_name = buyer_vendor.company_name
+            if not country:
+                country = getattr(buyer_vendor, "country", "") or ""
+            if not business_location:
+                business_location = getattr(buyer_vendor, "business_location", "") or ""
+
+        year_str = timezone.now().strftime("%Y")
+        ref = f"RFQ-{year_str}-{random.randint(100000, 999999)}"
+        while RfqEnquiry.objects.filter(reference=ref).exists():
+            ref = f"RFQ-{year_str}-{random.randint(100000, 999999)}"
+
+        total_units = sum(item["quantity"] for item in parsed_lines)
+        estimated_value = sum(item["unit_price"] * item["quantity"] for item in parsed_lines)
+        intake_prefix = f"[Assisted Intake via {intake_channel} by {admin_uid}]"
+        merged_admin_notes = f"{intake_prefix}\n{admin_notes}".strip() if admin_notes else intake_prefix
+
+        try:
+            with transaction.atomic():
+                rfq = RfqEnquiry.objects.create(
+                    reference=ref,
+                    buyer=buyer_vendor,
+                    contact_person=contact_person or "Buyer",
+                    company_name=company_name,
+                    email=email,
+                    phone=phone,
+                    country=country,
+                    business_location=business_location,
+                    destination_port=destination_port,
+                    incoterm=incoterm,
+                    payment_method=payment_method,
+                    additional_notes=additional_notes,
+                    admin_notes=merged_admin_notes,
+                    total_units=total_units,
+                    estimated_value=estimated_value,
+                    currency=currency,
+                    status=rfq_status,
+                )
+                for line in parsed_lines:
+                    RfqEnquiryItem.objects.create(rfq=rfq, **line)
+        except Exception as exc:
+            logger.exception("Failed to create assisted buyer RFQ: %s", exc)
+            messages.error(request, f"Failed to create buyer RFQ: {str(exc)}")
+            return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
+
+        cache.delete("rfq_enquiry_counts")
+        messages.success(
+            request,
+            f"RFQ '{rfq.reference}' created for buyer '{rfq.contact_person}' with {len(parsed_lines)} item(s)."
+        )
+        return redirect("rfq_request_detail", rfq_id=rfq.id)
+
+    return render(request, "add_buyer_rfq.html", context)
+
+
 def download_lot_manifest_template_view(request):
     """
     Serves official Surplus Market manifest templates (XLSX and CSV) for download.
