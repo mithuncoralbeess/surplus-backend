@@ -812,6 +812,17 @@
         </div>
 
         <!-- Toolbar -->
+        {% if selected_user %}
+        <div class="alert alert-primary border border-primary-subtle rounded-3 px-3 py-2 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="small">
+                <i class="bi bi-person-check-fill me-1"></i>
+                Showing Products for <strong>{{ selected_user.full_name|default:selected_user.username }}</strong>
+                <span class="text-muted">({{ selected_user.vendor_id }} &bull; {{ selected_user.email }})</span>
+            </div>
+            <a href="/admin/enquiries/seller/" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0.5 fw-semibold">Show All Products</a>
+        </div>
+        {% endif %}
+
         <div class="shopeers-toolbar">
             <!-- Search Capsule -->
             <div class="shopeers-search-capsule">

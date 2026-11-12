@@ -657,6 +657,19 @@
         <!-- Toolbar -->
         <div class="shopeers-toolbar">
             <form method="GET" action="/admin/rfq-requests/" class="d-flex flex-wrap gap-2 align-items-center w-100 justify-content-between">
+                {% if selected_user %}
+                <input type="hidden" name="user_id" value="{{ selected_user.id }}">
+                {% endif %}
+                {% if selected_user %}
+                <div class="w-100 alert alert-primary border border-primary-subtle rounded-3 px-3 py-2 mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="small">
+                        <i class="bi bi-person-check-fill me-1"></i>
+                        Showing RFQ Requests for <strong>{{ selected_user.full_name|default:selected_user.username }}</strong>
+                        <span class="text-muted">({{ selected_user.vendor_id }} &bull; {{ selected_user.email }})</span>
+                    </div>
+                    <a href="/admin/rfq-requests/" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0.5 fw-semibold">Show All RFQs</a>
+                </div>
+                {% endif %}
                 <!-- Search Capsule -->
                 <div class="shopeers-search-capsule">
                     <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
@@ -748,8 +761,8 @@
 
                         <!-- Buyer Details -->
                         <td>
-                            <div class="fw-semibold text-dark text-truncate" style="font-size: 0.86rem; max-width: 230px;" title="{{ item.contact_person|default:item.buyer.full_name|default:'Valued Buyer' }}">
-                                {{ item.contact_person|default:item.buyer.full_name|default:"Valued Buyer" }}
+                            <div class="fw-semibold text-dark text-truncate" style="font-size: 0.86rem; max-width: 230px;" title="{% if item.contact_person %}{{ item.contact_person }}{% elif item.buyer and item.buyer.full_name %}{{ item.buyer.full_name }}{% else %}Valued Buyer{% endif %}">
+                                {% if item.contact_person %}{{ item.contact_person }}{% elif item.buyer and item.buyer.full_name %}{{ item.buyer.full_name }}{% else %}Valued Buyer{% endif %}
                             </div>
                             {% if item.company_name and item.company_name|lower != item.contact_person|lower and item.company_name != 'Individual Buyer' %}
                             <div class="text-muted small text-truncate" style="font-size: 0.74rem; max-width: 230px;" title="{{ item.company_name }}">

@@ -167,13 +167,13 @@
                                 <span class="text-secondary">{{ user.phone }}</span>
                             </td>
                             <td class="py-3 text-center">
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold">{{ user.rfq_count }}</span>
+                                <a href="/admin/rfq-requests/?user_id={{ user.id }}" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1 fw-semibold text-decoration-none" title="View {{ user.name }}'s RFQ Requests">{{ user.rfq_count }}</a>
                             </td>
                             <td class="py-3 text-center">
-                                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1 fw-semibold">{{ user.product_count }}</span>
+                                <a href="/admin/enquiries/seller/?user_id={{ user.id }}" class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill px-2.5 py-1 fw-semibold text-decoration-none" title="View {{ user.name }}'s Products">{{ user.product_count }}</a>
                             </td>
                             <td class="py-3 text-center">
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold">{{ user.lot_count }}</span>
+                                <a href="/admin/enquiries/lots/?user_id={{ user.id }}" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2.5 py-1 fw-semibold text-decoration-none" title="View {{ user.name }}'s Lots">{{ user.lot_count }}</a>
                             </td>
                             <td class="py-3">
                                 {% if user.status == 'Active' %}
@@ -241,22 +241,22 @@
                                     <div class="modal-body p-4 bg-light">
                                         <div class="row g-2 mb-3">
                                             <div class="col-4">
-                                                <div class="bg-white p-2.5 rounded-3 border shadow-sm text-center">
+                                                <a href="/admin/rfq-requests/?user_id={{ user.id }}" class="d-block bg-white p-2.5 rounded-3 border shadow-sm text-center text-decoration-none">
                                                     <div class="text-muted small fw-semibold">RFQ Requests</div>
                                                     <div class="fs-5 fw-bold text-primary">{{ user.rfq_count }}</div>
-                                                </div>
+                                                </a>
                                             </div>
                                             <div class="col-4">
-                                                <div class="bg-white p-2.5 rounded-3 border shadow-sm text-center">
+                                                <a href="/admin/enquiries/seller/?user_id={{ user.id }}" class="d-block bg-white p-2.5 rounded-3 border shadow-sm text-center text-decoration-none">
                                                     <div class="text-muted small fw-semibold">Products</div>
                                                     <div class="fs-5 fw-bold text-info">{{ user.product_count }}</div>
-                                                </div>
+                                                </a>
                                             </div>
                                             <div class="col-4">
-                                                <div class="bg-white p-2.5 rounded-3 border shadow-sm text-center">
+                                                <a href="/admin/enquiries/lots/?user_id={{ user.id }}" class="d-block bg-white p-2.5 rounded-3 border shadow-sm text-center text-decoration-none">
                                                     <div class="text-muted small fw-semibold">Lots</div>
                                                     <div class="fs-5 fw-bold text-warning-emphasis">{{ user.lot_count }}</div>
-                                                </div>
+                                                </a>
                                             </div>
                                         </div>
                                         <div class="row g-3">

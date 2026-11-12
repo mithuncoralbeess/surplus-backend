@@ -1565,6 +1565,15 @@ def blog_upload_image_api(request):
 # ENQUIRIES: SELLER & LOT INQUIRIES MANAGEMENT VIEWS
 # =============================================================
 
+def _resolve_selected_vendor(request):
+    """Resolves optional ?user_id=<id> query filter into a VendorDetails instance (or None)."""
+    raw_uid = (request.GET.get("user_id") or "").strip()
+    if raw_uid.isdigit():
+        from .models import VendorDetails
+        return VendorDetails.objects.filter(id=int(raw_uid)).first()
+    return None
+
+
 def seller_enquiries_view(request, status_filter=None):
     """
     Renders the Seller Product Enquiries dashboard table.
@@ -1621,6 +1630,10 @@ def seller_enquiries_view(request, status_filter=None):
     qs = Product.objects.all().select_related("admin", "vendor", "category", "subcategory").defer(
         "description", "reason_to_sell", "warranty_attachment", "third_party_documents"
     ).order_by("-created_at")
+
+    selected_user = _resolve_selected_vendor(request)
+    if selected_user:
+        qs = qs.filter(vendor_id=selected_user.id)
 
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
@@ -1709,6 +1722,7 @@ def seller_enquiries_view(request, status_filter=None):
         "country_filter": country_filter,
         "categories": all_categories,
         "countries": ALL_COUNTRIES,
+        "selected_user": selected_user,
         "counts": {
             "total": total_count,
             "pending": pending_count,
@@ -1782,6 +1796,10 @@ def lot_enquiries_view(request, status_filter=None):
         "raw_data", "warehouse_images", "third_party_documents", "description", "key_brands_included"
     ).order_by("-created_at")
 
+    selected_user = _resolve_selected_vendor(request)
+    if selected_user:
+        qs = qs.filter(vendor_id=selected_user.id)
+
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
     elif date_filter == "7days":
@@ -1847,6 +1865,7 @@ def lot_enquiries_view(request, status_filter=None):
         "country_filter": country_filter,
         "categories": all_categories,
         "countries": ALL_COUNTRIES,
+        "selected_user": selected_user,
         "counts": {
             "total": total_count,
             "pending": pending_count,
@@ -5678,6 +5697,9 @@ def all_products_view(request):
     ).filter(
         Q(enquiry_status__iexact="APPROVED") | Q(enquiry_status__iexact="approved")
     ).order_by("-created_at")
+    selected_user = _resolve_selected_vendor(request)
+    if selected_user:
+        products_qs = products_qs.filter(vendor_id=selected_user.id)
     approved_enquiries = SellerProductEnquiry.objects.none()
 
     # Category Wise Filter
@@ -8686,6 +8708,16 @@ def rfq_requests_view(request, status_filter=None):
 
     qs = RfqEnquiry.objects.prefetch_related("items").select_related("buyer").order_by("-created_at")
 
+    selected_user = _resolve_selected_vendor(request)
+    if selected_user:
+        if selected_user.email:
+            qs = qs.filter(
+                Q(buyer_id=selected_user.id)
+                | (Q(buyer__isnull=True) & Q(email__iexact=selected_user.email.strip()))
+            )
+        else:
+            qs = qs.filter(buyer_id=selected_user.id)
+
     if date_filter == "today":
         qs = qs.filter(created_at__date=timezone.now().date())
     elif date_filter == "7days":
@@ -8742,6 +8774,7 @@ def rfq_requests_view(request, status_filter=None):
         "current_status": current_status.lower(),
         "search": search,
         "date_filter": date_filter,
+        "selected_user": selected_user,
         "counts": {
             "total": total_count,
             "pending": pending_count,
