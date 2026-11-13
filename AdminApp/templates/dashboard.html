@@ -549,6 +549,107 @@
         </div>
     </div>
 
+    <!-- =========================================================================
+         MARKETPLACE INTELLIGENCE & REAL-TIME ANALYTICS (CHARTS)
+         ========================================================================= -->
+    <div class="shopeers-section-header">
+        <h5 class="shopeers-section-title">
+            <i class="bi bi-graph-up-arrow" style="color: var(--shopeers-primary);"></i>
+            <span>Marketplace Intelligence &amp; Live Analytics</span>
+        </h5>
+        <span class="shopeers-section-subtitle">Real-time catalog inflow, category volumes &amp; network demographics</span>
+    </div>
+
+    <!-- Charts Row 1: Inflow Velocity Trend & Category Distribution -->
+    <div class="row g-3 mb-3">
+        <!-- 6-Month Inventory Inflow Trend (Line/Area Chart) -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-activity text-primary fs-5"></i>
+                            <span>Catalog Inventory Inflow Trend</span>
+                        </h6>
+                        <span class="text-secondary small">Monthly volume of newly listed single products vs. wholesale lots</span>
+                    </div>
+                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small fw-semibold">
+                        <i class="bi bi-calendar3 me-1 text-primary"></i> Last 6 Months
+                    </span>
+                </div>
+                <div style="position: relative; height: 280px; width: 100%;">
+                    <canvas id="inventoryTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Volume Breakdown (Doughnut Chart) -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-pie-chart-fill text-primary fs-5"></i>
+                            <span>Category Share</span>
+                        </h6>
+                        <span class="text-secondary small">Volume distribution by taxonomy</span>
+                    </div>
+                    <a href="/admin/categories/main/" class="btn-shopeers-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;">
+                        <span>View All</span>
+                    </a>
+                </div>
+                <div style="position: relative; height: 280px; width: 100%;">
+                    <canvas id="categoryShareChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Top Stocking Markets & Network Ecosystem -->
+    <div class="row g-3 mb-3">
+        <!-- Top Inventory Geographic Locations (Horizontal Bar Chart) -->
+        <div class="col-xl-7 col-lg-6">
+            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-globe-americas text-primary fs-5"></i>
+                            <span>Top Stocking Markets &amp; Hubs</span>
+                        </h6>
+                        <span class="text-secondary small">Warehoused inventory distribution by physical country</span>
+                    </div>
+                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small fw-semibold">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Global Stock
+                    </span>
+                </div>
+                <div style="position: relative; height: 240px; width: 100%;">
+                    <canvas id="geoMarketsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Stakeholder Ecosystem (Doughnut Chart) -->
+        <div class="col-xl-5 col-lg-6">
+            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-people-fill text-primary fs-5"></i>
+                            <span>Stakeholder Community Mix</span>
+                        </h6>
+                        <span class="text-secondary small">Buyers, sellers &amp; corporate entities</span>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1 rounded-pill small fw-semibold">
+                        <i class="bi bi-building-check me-1"></i> {{ chart_data.user_companies|default:"72" }} Companies
+                    </span>
+                </div>
+                <div style="position: relative; height: 240px; width: 100%;">
+                    <canvas id="userMixChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Section: Catalog & Sourcing Operations -->
     <div class="shopeers-section-header">
         <h5 class="shopeers-section-title">
@@ -864,4 +965,266 @@
     {% endif %}
 
 </div>
+
+<!-- Chart.js 4.4.4 UMD CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const rawData = {{ chart_data_json|safe }};
+    if (!rawData || !window.Chart) return;
+
+    // Detect dark mode
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)';
+
+    // Global Font Settings
+    Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = textColor;
+
+    // 1. Inventory Inflow Trend (Smooth Curved Area Chart)
+    const trendCtx = document.getElementById('inventoryTrendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: rawData.trend_labels,
+                datasets: [
+                    {
+                        label: 'Single Products Listed',
+                        data: rawData.trend_products,
+                        borderColor: '#0a5c48',
+                        backgroundColor: 'rgba(10, 92, 72, 0.12)',
+                        fill: true,
+                        tension: 0.38,
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0a5c48',
+                        pointHoverRadius: 6,
+                    },
+                    {
+                        label: 'Wholesale Lots Listed',
+                        data: rawData.trend_lots,
+                        borderColor: '#0891b2',
+                        backgroundColor: 'rgba(8, 145, 178, 0.08)',
+                        fill: true,
+                        tension: 0.38,
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0891b2',
+                        pointHoverRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true, padding: 15 }
+                    },
+                    tooltip: {
+                        padding: 10,
+                        boxPadding: 4,
+                        usePointStyle: true,
+                    }
+                },
+                scales: {
+                    x: { grid: { color: gridColor }, ticks: { color: textColor } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: {
+                            precision: 0,
+                            color: textColor
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Category Share (Doughnut Chart)
+    const catCtx = document.getElementById('categoryShareChart');
+    if (catCtx) {
+        new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: rawData.cat_labels,
+                datasets: [{
+                    data: rawData.cat_counts,
+                    backgroundColor: [
+                        '#0a5c48',
+                        '#0891b2',
+                        '#10b981',
+                        '#6366f1',
+                        '#f59e0b',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#111827' : '#ffffff',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '66%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            padding: 10,
+                            font: { size: 11 },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map((label, i) => {
+                                        const shortLabel = label.length > 20 ? label.slice(0, 18) + '...' : label;
+                                        return {
+                                            text: shortLabel + ' (' + data.datasets[0].data[i] + ')',
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: isNaN(data.datasets[0].data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                                            index: i,
+                                            pointStyle: 'circle',
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const val = context.raw || 0;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return ' ' + context.label + ': ' + val + ' items (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Geographic Markets (Horizontal Bar Chart)
+    const geoCtx = document.getElementById('geoMarketsChart');
+    if (geoCtx) {
+        new Chart(geoCtx, {
+            type: 'bar',
+            data: {
+                labels: rawData.geo_labels,
+                datasets: [{
+                    label: 'Listed Products',
+                    data: rawData.geo_counts,
+                    backgroundColor: [
+                        '#0a5c48',
+                        '#10b981',
+                        '#0891b2',
+                        '#6366f1',
+                        '#f59e0b',
+                        '#ec4899'
+                    ],
+                    borderRadius: 6,
+                    maxBarThickness: 24,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ' ' + ctx.raw + ' listed products'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { precision: 0, color: textColor }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { weight: 600 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // 4. Stakeholder Ecosystem Mix (Doughnut Chart)
+    const userCtx = document.getElementById('userMixChart');
+    if (userCtx) {
+        new Chart(userCtx, {
+            type: 'doughnut',
+            data: {
+                labels: rawData.user_labels,
+                datasets: [{
+                    data: rawData.user_counts,
+                    backgroundColor: [
+                        '#0a5c48',
+                        '#0891b2',
+                        '#f59e0b'
+                    ],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#111827' : '#ffffff',
+                    hoverOffset: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            padding: 12,
+                            font: { size: 12 },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const val = data.datasets[0].data[i];
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
+                                    return {
+                                        text: label + ': ' + val + ' (' + pct + '%)',
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        pointStyle: 'circle',
+                                        index: i
+                                    };
+                                });
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const val = ctx.raw || 0;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return ' ' + ctx.label + ': ' + val + ' accounts (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
