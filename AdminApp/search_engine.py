@@ -522,12 +522,14 @@ def get_word_variants(word: str) -> Set[str]:
     elif w.endswith("ves") and len(w) > 4:
         variants.add(w[:-3] + "f")
         variants.add(w[:-3] + "fe")
-    elif (w.endswith("ses") or w.endswith("shes") or w.endswith("ches") or w.endswith("xes")) and len(w) > 4:
+    elif (w.endswith("ses") or w.endswith("shes") or w.endswith("ches") or w.endswith("xes") or w.endswith("zes")) and len(w) > 4:
         variants.add(w[:-2])
-    elif w.endswith("es") and len(w) > 3:
+    elif w.endswith("oes") and len(w) >= 4:
+        variants.add(w[:-1])  # shoes -> shoe, tomatoes -> tomato
+    elif w.endswith("es") and len(w) > 4:
         variants.add(w[:-2])
         variants.add(w[:-1])
-    elif w.endswith("s") and not w.endswith("ss") and len(w) > 3:
+    elif w.endswith("s") and not w.endswith("ss") and len(w) >= 4:
         variants.add(w[:-1])
 
     # Singular to plural rules
@@ -543,7 +545,13 @@ def get_word_variants(word: str) -> Set[str]:
         if v in SPELLING_ALTERNATIVES:
             variants.update(SPELLING_ALTERNATIVES[v])
 
-    return variants
+    # Discard any over-truncated stems (e.g. "sho" from "shoes") that cause false positives
+    clean_variants = set()
+    for v in variants:
+        if len(v) >= 4 or v == w:
+            clean_variants.add(v)
+
+    return clean_variants
 
 
 # ==============================================================================

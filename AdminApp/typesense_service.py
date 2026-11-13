@@ -9,7 +9,11 @@ from decimal import Decimal
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
-import typesense
+try:
+    import typesense
+    import typesense.exceptions
+except ImportError:
+    typesense = None
 from django.conf import settings
 from django.db import transaction
 
@@ -63,7 +67,7 @@ def from_usd(amount_usd: Optional[Any], target_currency: Optional[str]) -> float
         return float(amount_usd)
 
 
-_typesense_client: Optional[typesense.Client] = None
+_typesense_client: Optional[Any] = None
 
 # Circuit breaker: when Typesense is unreachable, skip network calls for a cooldown
 # window instead of blocking every request with connection timeouts/retries.
@@ -87,12 +91,15 @@ def _ts_reset() -> None:
     _TS_DOWN_UNTIL = 0.0
 
 
-def get_typesense_client() -> typesense.Client:
+def get_typesense_client() -> Any:
     """
     Singleton factory for official Typesense Python Client.
     Configured via Django settings (backed by environment variables).
     """
     global _typesense_client
+    if typesense is None:
+        raise RuntimeError("Typesense Python library is not installed.")
+
     if _typesense_client is None:
         host = getattr(settings, "TYPESENSE_HOST", "localhost")
         port = str(getattr(settings, "TYPESENSE_PORT", 8108))
@@ -123,6 +130,9 @@ def is_typesense_available() -> Tuple[bool, str]:
     """
     Cached healthcheck (20s TTL) to eliminate redundant HTTP pings before every search/suggestion.
     """
+    if typesense is None:
+        return (False, "Typesense Python library is not installed.")
+
     from django.core.cache import cache
     cached = cache.get("typesense_health_status")
     if cached is not None:
@@ -462,9 +472,9 @@ def delete_product(product_id: int) -> bool:
         client.collections[coll_name].documents[doc_id].delete()
         logger.debug(f"Typesense deleted product doc: {doc_id}")
         return True
-    except typesense.exceptions.ObjectNotFound:
-        return True
     except Exception as e:
+        if typesense and isinstance(e, getattr(typesense.exceptions, "ObjectNotFound", ())):
+            return True
         err = str(e)
         logger.warning(f"Failed deleting product #{product_id} from Typesense: {err}")
         enqueue_sync("product", product_id, "delete", err)
@@ -505,9 +515,9 @@ def delete_lot(lot_id: int) -> bool:
         client.collections[coll_name].documents[doc_id].delete()
         logger.debug(f"Typesense deleted lot doc: {doc_id}")
         return True
-    except typesense.exceptions.ObjectNotFound:
-        return True
     except Exception as e:
+        if typesense and isinstance(e, getattr(typesense.exceptions, "ObjectNotFound", ())):
+            return True
         err = str(e)
         logger.warning(f"Failed deleting lot #{lot_id} from Typesense: {err}")
         enqueue_sync("lot", lot_id, "delete", err)

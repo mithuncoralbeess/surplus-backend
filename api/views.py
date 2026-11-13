@@ -3462,13 +3462,24 @@ def get_public_products_list(request):
 
     search = request.GET.get("search", "").strip()
     if search:
-        qs = qs.filter(
-            Q(product_name__icontains=search) |
-            Q(product_code__icontains=search) |
-            Q(product_id__icontains=search) |
-            Q(brand_name__icontains=search) |
-            Q(model_no__icontains=search)
-        )
+        from AdminApp.search_engine import get_word_variants
+        search_terms = {search.lower()}
+        for t in search.split():
+            search_terms.update(get_word_variants(t))
+
+        search_q = Q()
+        for term in search_terms:
+            search_q |= (
+                Q(product_name__icontains=term) |
+                Q(product_code__icontains=term) |
+                Q(product_id__icontains=term) |
+                Q(brand_name__icontains=term) |
+                Q(model_no__icontains=term) |
+                Q(description__icontains=term) |
+                Q(category__name__icontains=term) |
+                Q(subcategory__name__icontains=term)
+            )
+        qs = qs.filter(search_q)
 
     from django.db.models.functions import Coalesce
     if collection in ("new_arrivals", "new-arrivals", "new_arrival", "new"):
