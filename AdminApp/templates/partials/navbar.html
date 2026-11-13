@@ -12,10 +12,6 @@
         transform: scale(1.06);
     }
 
-    .notif-bell-btn.has-unread i {
-        color: var(--bs-primary, #2563eb);
-    }
-
     /* Bell Shake Animation when new notification arrives */
     @keyframes notifBellWobble {
         0% {
@@ -802,18 +798,20 @@
         <!-- Messages / Enquiries Chat Bubble with Red Notification Dot -->
         <a href="/admin/enquiries/" class="header-action-icon-btn position-relative" title="Enquiries & Messages" aria-label="Enquiries & Messages">
             <i class="bi bi-chat-dots"></i>
-            <span class="header-badge-dot"></span>
+            {% if pending_seller_enquiries_count or pending_general_enquiries_count or pending_rfqs_count %}
+            <span class="header-badge-dot" title="Pending enquiries"></span>
+            {% endif %}
         </a>
 
         <!-- Real-Time Admin Notifications Flyout -->
         <div class="dropdown" id="adminNotificationDropdownWrapper">
             <button
-                class="header-action-icon-btn position-relative notif-bell-btn {% if admin_unread_notifications_count and admin_unread_notifications_count > 0 %}has-unread{% endif %}"
+                class="header-action-icon-btn position-relative notif-bell-btn"
                 id="adminNotificationBellBtn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
                 aria-expanded="false" title="Notifications Center">
                 <i class="bi bi-bell" id="navbarBellIcon"></i>
                 <span
-                    class="header-badge-dot notif-badge-pill {% if not admin_unread_notifications_count or admin_unread_notifications_count == 0 %}d-none{% endif %}"
+                    class="header-badge-dot {% if not admin_unread_notifications_count or admin_unread_notifications_count == 0 %}d-none{% endif %}"
                     id="navbarNotifBadge">
                 </span>
             </button>
@@ -1391,10 +1389,12 @@
                 const count = this.unreadCount;
                 if (this.dom.badge) {
                     if (count > 0) {
-                        this.dom.badge.textContent = count > 99 ? '99+' : count;
+                        this.dom.badge.textContent = '';
+                        this.dom.badge.setAttribute('title', `${count} unread notifications`);
                         this.dom.badge.classList.remove('d-none');
                         if (this.dom.bellBtn) this.dom.bellBtn.classList.add('has-unread');
                     } else {
+                        this.dom.badge.textContent = '';
                         this.dom.badge.classList.add('d-none');
                         if (this.dom.bellBtn) this.dom.bellBtn.classList.remove('has-unread');
                     }
