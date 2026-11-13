@@ -150,7 +150,28 @@ def _build_products_report(request, for_export=False):
     min_qty = _parse_int(request.GET.get("min_qty"))
     max_qty = _parse_int(request.GET.get("max_qty"))
 
-    qs = Product.objects.select_related("category", "subcategory", "vendor").all()
+    qs = Product.objects.select_related("category", "vendor").only(
+        "id",
+        "product_code",
+        "product_id",
+        "product_name",
+        "brand_name",
+        "quantity",
+        "msrp",
+        "current_price",
+        "offer",
+        "inventory_country",
+        "currency",
+        "views_count",
+        "enquiry_status",
+        "created_at",
+        "category__id",
+        "category__name",
+        "vendor__id",
+        "vendor__company_name",
+        "vendor__full_name",
+        "vendor__username",
+    )
 
     if q:
         qs = qs.filter(
@@ -343,7 +364,26 @@ def _build_lots_report(request, for_export=False):
     max_ask = _parse_decimal(request.GET.get("max_ask"))
     min_units = _parse_int(request.GET.get("min_units"))
 
-    qs = Lot.objects.select_related("vendor").all()
+    qs = Lot.objects.select_related("vendor").only(
+        "id",
+        "lot_number",
+        "title",
+        "condition",
+        "source_type",
+        "number_of_distinct_skus",
+        "total_units_quantity",
+        "total_est_retail_value_msrp",
+        "ask_price_surplus_payout",
+        "inventory_country",
+        "sale_method",
+        "enquiry_status",
+        "is_active",
+        "currency",
+        "created_at",
+        "vendor__id",
+        "vendor__company_name",
+        "vendor__email",
+    )
 
     if q:
         qs = qs.filter(
@@ -524,7 +564,20 @@ def _build_users_report(request, for_export=False):
     has_comp_f = request.GET.get("has_company", "").strip()
     period_f = request.GET.get("period", "all").strip()
 
-    qs = VendorDetails.objects.all()
+    qs = VendorDetails.objects.only(
+        "id",
+        "username",
+        "full_name",
+        "email",
+        "mobile_number",
+        "user_type",
+        "account_entity_type",
+        "company_name",
+        "country",
+        "category_interested",
+        "status",
+        "created_at",
+    )
     if q:
         qs = qs.filter(
             Q(username__icontains=q)
@@ -676,7 +729,25 @@ def _build_rfqs_report(request, for_export=False):
     max_val = _parse_decimal(request.GET.get("max_val"))
     period_f = request.GET.get("period", "all").strip()
 
-    qs = RfqEnquiry.objects.select_related("buyer").annotate(
+    qs = RfqEnquiry.objects.select_related("buyer").only(
+        "id",
+        "reference",
+        "company_name",
+        "contact_person",
+        "email",
+        "country",
+        "destination_port",
+        "incoterm",
+        "total_units",
+        "estimated_value",
+        "payment_method",
+        "status",
+        "currency",
+        "created_at",
+        "buyer__id",
+        "buyer__company_name",
+        "buyer__email",
+    ).annotate(
         items_count=Count("items", distinct=True)
     )
 
@@ -840,10 +911,23 @@ def _build_enquiries_report(request, for_export=False):
 
     start_dt = _parse_period_start(period_f)
 
-    prod_qs = Product.objects.select_related("vendor", "category").all()
-    lot_qs = Lot.objects.select_related("vendor").all()
-    part_qs = PartnershipEnquiry.objects.all()
-    cont_qs = ContactUsEnquiry.objects.all()
+    prod_qs = Product.objects.select_related("vendor", "category").only(
+        "id", "product_name", "product_code", "product_id", "liquidating_price", "quantity",
+        "currency", "enquiry_status", "created_at",
+        "vendor__id", "vendor__email", "vendor__mobile_number",
+        "category__id", "category__name",
+    )
+    lot_qs = Lot.objects.select_related("vendor").only(
+        "id", "lot_number", "title", "number_of_distinct_skus", "total_units_quantity",
+        "ask_price_surplus_payout", "currency", "enquiry_status", "created_at",
+        "vendor__id", "vendor__email", "vendor__mobile_number",
+    )
+    part_qs = PartnershipEnquiry.objects.only(
+        "id", "name", "email", "subject", "partnership_interest", "status", "created_at"
+    )
+    cont_qs = ContactUsEnquiry.objects.only(
+        "id", "full_name", "email", "phone", "enquiry_type", "message", "is_blocked", "status", "created_at"
+    )
 
     if start_dt:
         prod_qs = prod_qs.filter(created_at__gte=start_dt)
@@ -875,7 +959,7 @@ def _build_enquiries_report(request, for_export=False):
     cont_cnt = cont_qs.count()
 
     rows = []
-    limit_each = 1000 if for_export else 250
+    limit_each = 1000 if for_export else 150
 
     if type_f in ("", "seller_product") and not blocked_f:
         for p in prod_qs.order_by("-created_at")[:limit_each]:
@@ -1025,7 +1109,28 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
     max_bid = _parse_decimal(request.GET.get("max_bid"))
     period_f = request.GET.get("period", "all").strip()
 
-    qs = Auction.objects.select_related("category", "vendor", "winner").all()
+    qs = Auction.objects.select_related("category", "vendor", "winner").only(
+        "id",
+        "auction_id",
+        "title",
+        "item_type",
+        "starting_bid",
+        "current_bid",
+        "reserve_price",
+        "total_bids",
+        "views_count",
+        "currency",
+        "status",
+        "end_time",
+        "created_at",
+        "category__id",
+        "category__name",
+        "vendor__id",
+        "vendor__company_name",
+        "winner__id",
+        "winner__username",
+        "winner__email",
+    )
 
     if q:
         qs = qs.filter(

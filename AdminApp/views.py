@@ -9261,6 +9261,8 @@ def reports_dashboard_view(request):
     period = request.GET.get("period", "30d")
 
     cache_key = f"reports_dashboard_metrics_{period}"
+    if request.GET.get("refresh") == "1" or request.GET.get("fresh") == "1":
+        cache.delete(cache_key)
     context_data = cache.get(cache_key)
 
     if context_data is None:
@@ -9416,7 +9418,7 @@ def reports_dashboard_view(request):
             approved_dates = list(
                 Product.objects.filter(date_approved__isnull=False)
                 .values_list('created_at', 'date_approved')
-                .order_by('-date_approved')[:500]
+                .order_by('-date_approved')[:100]
             )
             if approved_dates:
                 diffs = [max(0.0, (da - ca).total_seconds() / 86400.0) for ca, da in approved_dates if ca and da]
@@ -9424,10 +9426,23 @@ def reports_dashboard_view(request):
             else:
                 avg_approval_days = 0.0
 
-            # 6. Spotlights (Only select required lightweight scalar columns — fixed `currency` field)
+            # 6. Spotlights (Include all template-rendered fields to prevent deferred N+1 roundtrips)
             high_value_items = list(
                 prod_filtered.filter(is_active=True)
-                .only('id', 'product_name', 'current_price', 'currency', 'inventory_country', 'quantity')
+                .select_related('category')
+                .only(
+                    'id',
+                    'product_id',
+                    'product_name',
+                    'current_price',
+                    'liquidating_price',
+                    'currency',
+                    'inventory_country',
+                    'quantity',
+                    'is_active',
+                    'category__id',
+                    'category__name',
+                )
                 .order_by('-current_price')[:5]
             )
             recent_rfqs = list(
@@ -9470,8 +9485,8 @@ def reports_dashboard_view(request):
                 'high_value_items': high_value_items,
                 'recent_rfqs': recent_rfqs,
             }
-            # Cache computed analytics for 45 seconds to keep dashboard responsive
-            cache.set(cache_key, context_data, timeout=45)
+            # Cache computed analytics for 5 minutes (300 seconds) to keep dashboard responsive
+            cache.set(cache_key, context_data, timeout=300)
 
         except Exception as e:
             logger.exception("Failed to compute reports analytics: %s", e)
