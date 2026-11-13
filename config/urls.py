@@ -9,9 +9,40 @@ from django.conf.urls.static import static
 from django.shortcuts import redirect
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.generic.base import RedirectView
+from django.http import HttpResponse
 from api import views as api_views
 
+
+def robots_txt_view(request):
+    """
+    Blocks Googlebot and all search engine crawlers from indexing dev.surplusmarket.com
+    and administrative/internal backend routes.
+    """
+    host = (request.get_host() or "").lower()
+    if (
+        "dev.surplusmarket.com" in host
+        or host.startswith("dev.")
+        or "staging" in host
+        or "localhost" in host
+        or "127.0.0.1" in host
+    ):
+        content = "User-agent: *\nDisallow: /\n"
+    else:
+        content = (
+            "User-agent: *\n"
+            "Disallow: /admin/\n"
+            "Disallow: /django-admin/\n"
+            "Disallow: /api/\n"
+        )
+    response = HttpResponse(content, content_type="text/plain; charset=utf-8")
+    response["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
+    return response
+
+
 urlpatterns = [
+    # Search Engine Exclusion / Robots.txt
+    path("robots.txt", robots_txt_view, name="robots_txt"),
+
     # Favicon route
     path("favicon.ico", RedirectView.as_view(url=staticfiles_storage.url("images/favicon.ico"))),
 

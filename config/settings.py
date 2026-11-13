@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # High-priority CORS handling (must be first)
     "django.middleware.security.SecurityMiddleware",
+    "AdminApp.middleware.SearchEngineRobotsMiddleware",  # Blocks search engines from indexing dev domains & admin
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Must precede GZip and app middleware for static assets
     "django.middleware.gzip.GZipMiddleware",  # High-performance dynamic response compression (Gzip)
     "django.contrib.sessions.middleware.SessionMiddleware",

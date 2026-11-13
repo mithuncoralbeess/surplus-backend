@@ -147,6 +147,39 @@ def _ensure_product_code_schema():
             logger.error(f"[DatabaseFailoverMiddleware] Auto-migration check failed: {exc}")
 
 
+class SearchEngineRobotsMiddleware:
+    """
+    Prevents search engines (Googlebot, Bingbot, etc.) from crawling or indexing
+    dev.surplusmarket.com, development/staging environments, and administrative endpoints.
+    Injects:
+        X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+    into every HTTP response served on dev domains or admin routes.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        try:
+            host = (request.get_host() or "").lower()
+            path = request.path
+
+            if (
+                "dev.surplusmarket.com" in host
+                or host.startswith("dev.")
+                or "staging" in host
+                or "localhost" in host
+                or "127.0.0.1" in host
+                or path.startswith("/admin/")
+                or path.startswith("/django-admin/")
+            ):
+                response["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet"
+        except Exception:
+            pass
+
+        return response
+
+
 class DatabaseFailoverMiddleware:
     """
     Resilience & Failover Middleware:
