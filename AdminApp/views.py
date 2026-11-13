@@ -668,12 +668,24 @@ def adminDashBoard(request):
 
     pending_admins_display = pending_admins if is_super else 0
 
-    recent_products = []
-    try:
-        from .models import Product
-        recent_products = list(Product.objects.select_related("category").prefetch_related("images").order_by("-id")[:5])
-    except Exception as e:
-        logger.debug("Failed to fetch recent products for dashboard: %s", e)
+    recent_products = cache.get("admin_dashboard_recent_products")
+    if recent_products is None:
+        try:
+            from .models import Product
+            recent_products = list(
+                Product.objects.select_related("category")
+                .prefetch_related("images")
+                .only(
+                    "id", "product_id", "product_name", "brand_name",
+                    "current_price", "liquidating_price", "currency", "quantity", "is_active",
+                    "enquiry_status", "created_at", "category__id", "category__name"
+                )
+                .order_by("-id")[:5]
+            )
+            cache.set("admin_dashboard_recent_products", recent_products, timeout=60)
+        except Exception as e:
+            logger.debug("Failed to fetch recent products for dashboard: %s", e)
+            recent_products = []
 
     context = {
         "admin": admin_user,
@@ -1668,7 +1680,7 @@ def seller_enquiries_view(request, status_filter=None):
             declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
             correction=Count("id", filter=Q(enquiry_status__in=["CORRECTION_NEEDED", "correction_needed", "needs_correction", "correction"])),
         )
-        cache.set("seller_enquiry_counts", counts_data, timeout=60)
+        cache.set("seller_enquiry_counts", counts_data, timeout=300)
     total_count = counts_data.get("total") or 0
     pending_count = counts_data.get("pending") or 0
     approved_count = counts_data.get("approved") or 0
@@ -1793,7 +1805,7 @@ def lot_enquiries_view(request, status_filter=None):
 
     # Critical optimization: defer raw_data and large manifests/images (prevents downloading 40MB of raw spreadsheets per page)
     qs = Lot.objects.all().select_related("vendor", "admin").defer(
-        "raw_data", "warehouse_images", "third_party_documents", "description", "key_brands_included"
+        "raw_data", "warehouse_images", "third_party_documents", "description", "key_brands_included", "excluded_export_countries"
     ).order_by("-created_at")
 
     selected_user = _resolve_selected_vendor(request)
@@ -1830,7 +1842,7 @@ def lot_enquiries_view(request, status_filter=None):
             declined=Count("id", filter=Q(enquiry_status__iexact="declined")),
             correction=Count("id", filter=Q(enquiry_status__in=["correction_needed", "needs_correction", "correction", "CORRECTION_NEEDED"])),
         )
-        cache.set("lot_enquiry_counts", lot_counts_data, timeout=60)
+        cache.set("lot_enquiry_counts", lot_counts_data, timeout=300)
     total_count = lot_counts_data.get("total") or 0
     pending_count = lot_counts_data.get("pending") or 0
     approved_count = lot_counts_data.get("approved") or 0
@@ -7492,14 +7504,20 @@ def price_control_view(request):
     from .models import PriceAdjustmentLog, Brand
     sys_settings, _ = SystemSettings.objects.get_or_create(id=1)
 
-    categories = SubCategory.objects.all()
+    categories = cache.get("price_control_subcategories")
+    if categories is None:
+        categories = list(SubCategory.objects.select_related("main_category").all().order_by("main_category__name", "name"))
+        cache.set("price_control_subcategories", categories, timeout=900)
     
-    # Get distinct brands from Brand model and Product table
-    product_brands = list(Product.objects.exclude(brand_name="").values_list("brand_name", flat=True).distinct())
-    brand_model_names = list(Brand.objects.values_list("name", flat=True).distinct())
-    all_brands = sorted(list(set(product_brands + brand_model_names)))
+    # Get distinct brands from Brand model and Product table (cached for 15 minutes)
+    all_brands = cache.get("price_control_brands")
+    if all_brands is None:
+        product_brands = list(Product.objects.exclude(brand_name="").values_list("brand_name", flat=True).distinct())
+        brand_model_names = list(Brand.objects.values_list("name", flat=True).distinct())
+        all_brands = sorted(list(set(product_brands + brand_model_names)))
+        cache.set("price_control_brands", all_brands, timeout=900)
 
-    logs = PriceAdjustmentLog.objects.all().order_by("-created_at")[:50]
+    logs = list(PriceAdjustmentLog.objects.all().order_by("-created_at")[:50])
 
     context = {
         "admin": admin_user,
@@ -8591,23 +8609,26 @@ def admin_auctions_view(request):
             Q(item_reference_id__icontains=search_query)
         )
 
-    # Sync temporal statuses for list display
-    for auc in qs[:50]:
-        auc.sync_status()
-
-    # KPI Statistics
-    now = timezone.now()
-    stats = {
-        "total_auctions": Auction.objects.count(),
-        "live_auctions": Auction.objects.filter(status="live").count(),
-        "scheduled_auctions": Auction.objects.filter(status="scheduled").count(),
-        "sold_auctions": Auction.objects.filter(status="sold").count(),
-        "total_bids": AuctionBid.objects.count(),
-    }
+    # KPI Statistics in 1 single consolidated query (cached for 60s)
+    stats = cache.get("admin_auctions_stats_kpi")
+    if stats is None:
+        agg = Auction.objects.aggregate(
+            total_auctions=Count("id"),
+            live_auctions=Count("id", filter=Q(status="live")),
+            scheduled_auctions=Count("id", filter=Q(status="scheduled")),
+            sold_auctions=Count("id", filter=Q(status="sold")),
+        )
+        agg["total_bids"] = AuctionBid.objects.count()
+        stats = agg
+        cache.set("admin_auctions_stats_kpi", stats, timeout=60)
 
     paginator = Paginator(qs, 12)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
+
+    # Sync temporal statuses for active page items only
+    for auc in page_obj.object_list:
+        auc.sync_status()
 
     context = {
         "admin": admin_user,
