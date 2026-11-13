@@ -1,38 +1,105 @@
-<div class="d-flex flex-wrap align-items-center gap-2 mb-4 p-1.5 rounded-pill border bg-white shadow-sm" style="width: fit-content; max-width: 100%; overflow-x: auto;">
+<!-- Dashkit Modern Reports Sub-Navigation Tabs Component -->
+<style>
+.dash-reports-nav-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px;
+    background: #f1f5f9;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 14px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.5rem;
+}
+
+.dash-reports-nav-container::-webkit-scrollbar {
+    display: none;
+}
+
+[data-bs-theme="dark"] .dash-reports-nav-container {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dash-reports-tab-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 10px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+
+.dash-reports-tab-link:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+[data-bs-theme="dark"] .dash-reports-tab-link {
+    color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .dash-reports-tab-link:hover {
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dash-reports-tab-link.active {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+}
+
+[data-bs-theme="dark"] .dash-reports-tab-link.active {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+}
+</style>
+
+<div class="dash-reports-nav-container">
     <a href="/admin/reports/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if request.path == '/admin/reports/' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-speedometer2 me-1"></i> Analytics Overview
+       class="dash-reports-tab-link {% if request.path == '/admin/reports/' %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i>
+        <span>Analytics Overview</span>
     </a>
     <a href="/admin/reports/products/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'products' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-box-seam me-1"></i> Products
+       class="dash-reports-tab-link {% if report_type == 'products' %}active{% endif %}">
+        <i class="bi bi-box-seam"></i>
+        <span>Products</span>
     </a>
     <a href="/admin/reports/lots/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'lots' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-boxes me-1"></i> Lots
+       class="dash-reports-tab-link {% if report_type == 'lots' %}active{% endif %}">
+        <i class="bi bi-boxes"></i>
+        <span>Lots</span>
     </a>
     <a href="/admin/reports/users/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'users' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-people me-1"></i> Users / Vendors
+       class="dash-reports-tab-link {% if report_type == 'users' %}active{% endif %}">
+        <i class="bi bi-people"></i>
+        <span>Users / Vendors</span>
     </a>
     <a href="/admin/reports/rfqs/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'rfqs' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-file-earmark-text me-1"></i> RFQs
+       class="dash-reports-tab-link {% if report_type == 'rfqs' %}active{% endif %}">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>RFQs</span>
     </a>
     <a href="/admin/reports/enquiries/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'enquiries' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-inbox me-1"></i> Enquiries &amp; Leads
+       class="dash-reports-tab-link {% if report_type == 'enquiries' %}active{% endif %}">
+        <i class="bi bi-inbox"></i>
+        <span>Enquiries &amp; Leads</span>
     </a>
     <a href="/admin/reports/auctions/"
-       class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold {% if report_type == 'auctions' %}btn-success text-white{% else %}btn-light text-secondary bg-transparent border-0{% endif %}"
-       style="font-size: 0.80rem;">
-        <i class="bi bi-hammer me-1"></i> Auctions
+       class="dash-reports-tab-link {% if report_type == 'auctions' %}active{% endif %}">
+        <i class="bi bi-hammer"></i>
+        <span>Auctions</span>
     </a>
 </div>
-

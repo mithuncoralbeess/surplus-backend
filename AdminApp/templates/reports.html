@@ -6,43 +6,46 @@
 {% block content %}
 <style>
 /* ==========================================================================
-   SHOPEERS-INSPIRED REPORTS & BUSINESS INTELLIGENCE DASHBOARD
+   DASHKIT / FULL-VERSION BUSINESS INTELLIGENCE & REPORTS DESIGN SYSTEM
    ========================================================================== */
 
 :root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-border-subtle: #edf0f5;
-    --shopeers-primary: #0a5c48;
-    --shopeers-primary-hover: #084c3b;
-    --shopeers-primary-light: #e8f5f1;
-    --shopeers-radius-lg: 20px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    --dash-bg: #fafafd;
+    --dash-card: #ffffff;
+    --dash-text-dark: #0f172a;
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-border: rgba(226, 232, 240, 0.85);
+    --dash-border-subtle: #f1f5f9;
+    --dash-primary: #6366f1;
+    --dash-primary-hover: #4f46e5;
+    --dash-primary-light: rgba(99, 102, 241, 0.1);
+    --dash-radius-xl: 18px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-border-subtle: #1e293b;
-    --shopeers-primary: #0ea27e;
-    --shopeers-primary-hover: #0a5c48;
-    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+    --dash-bg: #0f172a;
+    --dash-card: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-border: #334155;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
+    --dash-primary: #818cf8;
+    --dash-primary-hover: #6366f1;
+    --dash-primary-light: rgba(129, 140, 248, 0.15);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.reports-viewport {
+.reports-container {
     background: transparent;
     padding-bottom: 3rem;
 }
@@ -54,110 +57,114 @@
     align-items: center;
     justify-content: space-between;
     gap: 1.25rem;
-    margin-bottom: 1.75rem;
+    margin-bottom: 1.5rem;
 }
 
-.breadcrumb-pill {
+.dash-breadcrumb-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
     padding: 0.3rem 0.85rem;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     font-size: 0.76rem;
     font-weight: 600;
-    color: var(--shopeers-text-sub);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    color: var(--dash-text-sub);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     margin-bottom: 0.4rem;
 }
 
 .reports-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.65rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.65rem;
+    line-height: 1.2;
 }
 
 .reports-subtitle {
     font-size: 0.86rem;
-    color: var(--shopeers-text-sub);
+    color: var(--dash-text-sub);
     margin: 0.25rem 0 0 0;
 }
 
-/* Period Filter Pills */
-.period-tabs-group {
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
+/* Period Filter Tabs (Dashkit Radix Style) */
+.dash-period-tabs {
+    background: #f1f5f9;
+    border: 1px solid var(--dash-border);
     padding: 4px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: 12px;
     display: inline-flex;
     gap: 3px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
-.period-tab-link {
+[data-bs-theme="dark"] .dash-period-tabs {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.dash-period-link {
     border: none;
     background: transparent;
-    color: var(--shopeers-text-sub);
+    color: var(--dash-text-sub);
     font-size: 0.80rem;
     font-weight: 600;
-    padding: 0.42rem 1rem;
-    border-radius: var(--shopeers-radius-pill);
+    padding: 0.42rem 0.95rem;
+    border-radius: 8px;
     text-decoration: none;
     transition: all 0.15s ease;
     display: inline-flex;
     align-items: center;
 }
 
-.period-tab-link:hover {
-    color: var(--shopeers-text-dark);
+.dash-period-link:hover {
+    color: var(--dash-text-dark);
 }
 
-.period-tab-link.active {
-    background: var(--shopeers-primary);
+.dash-period-link.active {
+    background: #6366f1;
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
-/* Primary Button (#0a5c48) */
-.btn-shopeers-primary {
-    background: var(--shopeers-primary) !important;
+/* Action Buttons */
+.btn-dash-primary {
+    background: #6366f1 !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: var(--shopeers-radius-pill) !important;
+    border-radius: var(--dash-radius-pill) !important;
     padding: 0.55rem 1.35rem !important;
     font-weight: 600 !important;
     font-size: 0.84rem !important;
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
     transition: all 0.2s ease;
     text-decoration: none;
     white-space: nowrap;
 }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-primary-hover) !important;
+.btn-dash-primary:hover {
+    background: #4f46e5 !important;
     color: #ffffff !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
 }
 
-.btn-shopeers-outline {
-    background: #ffffff !important;
-    color: var(--shopeers-text-dark) !important;
-    border: 1px solid var(--shopeers-border) !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.5rem 1.15rem !important;
+.btn-dash-outline {
+    background: var(--dash-card) !important;
+    color: var(--dash-text-dark) !important;
+    border: 1px solid var(--dash-border) !important;
+    border-radius: var(--dash-radius-pill) !important;
+    padding: 0.48rem 1.15rem !important;
     font-weight: 600 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.80rem !important;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -165,299 +172,408 @@
     text-decoration: none;
 }
 
-.btn-shopeers-outline:hover {
-    background: #f8fafc !important;
+.btn-dash-outline:hover {
+    background: var(--dash-border-subtle) !important;
     border-color: #cbd5e1 !important;
-    color: var(--shopeers-text-dark) !important;
+    color: var(--dash-text-dark) !important;
 }
 
-/* Static KPI Metric Cards */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
+/* ==========================================================================
+   DASHKIT KPI METRIC CARDS
+   ========================================================================== */
+.dash-kpi-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
     padding: 1.35rem 1.45rem;
-    box-shadow: var(--shopeers-shadow);
+    box-shadow: var(--dash-shadow-card);
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: default;
-    user-select: none;
 }
 
-.shopeers-kpi-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+.dash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
 }
 
-.shopeers-kpi-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+.dash-kpi-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--dash-text-sub);
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
+}
+
+.dash-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     flex-shrink: 0;
 }
 
-.icon-emerald { background: #ecfdf5; color: #0a5c48; }
-.icon-cyan    { background: #ecfeff; color: #0891b2; }
-.icon-indigo  { background: #e0e7ff; color: #4338ca; }
-.icon-violet  { background: #f5f3ff; color: #7c3aed; }
-.icon-amber   { background: #fffbeb; color: #d97706; }
+.dash-kpi-icon.icon-emerald { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.dash-kpi-icon.icon-indigo  { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.dash-kpi-icon.icon-amber   { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.dash-kpi-icon.icon-violet  { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.dash-kpi-icon.icon-cyan    { background: rgba(6, 182, 212, 0.12);  color: #06b6d4; }
 
-.shopeers-kpi-number {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.65rem;
+.dash-kpi-number {
+    font-size: 1.7rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     line-height: 1.1;
-    margin: 0.55rem 0 0 0;
+    margin: 0.65rem 0 0 0;
 }
 
-.shopeers-kpi-pill {
+.dash-kpi-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    font-size: 0.72rem;
+    gap: 0.35rem;
+    font-size: 0.74rem;
     font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
-    margin-top: 0.45rem;
+    padding: 4px 9px;
+    border-radius: var(--dash-radius-pill);
+    margin-top: 0.55rem;
     width: fit-content;
 }
 
-.pill-emerald { background: #ecfdf5; color: #0a5c48; }
-.pill-cyan    { background: #ecfeff; color: #0891b2; }
-.pill-indigo  { background: #e0e7ff; color: #4338ca; }
-.pill-violet  { background: #f5f3ff; color: #7c3aed; }
+.dash-kpi-pill.pill-emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.dash-kpi-pill.pill-indigo  { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+.dash-kpi-pill.pill-amber   { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.dash-kpi-pill.pill-violet  { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
+.dash-kpi-pill.pill-cyan    { background: rgba(6, 182, 212, 0.1);  color: #0891b2; }
 
-/* Content Card Container */
-.shopeers-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
-    padding: 1.4rem;
-    margin-bottom: 1.5rem;
+/* Executive Strip Stat Tiles */
+.dash-strip-tile {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: var(--dash-shadow-card);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.18s ease;
 }
 
-.card-header-clean {
+.dash-strip-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
+}
+
+.dash-strip-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dash-text-sub);
+    margin-bottom: 0.35rem;
+}
+
+.dash-strip-val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dash-text-dark);
+    line-height: 1.2;
+}
+
+.dash-strip-sub {
+    font-size: 0.74rem;
+    color: var(--dash-text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   DASHKIT CONTENT CARDS & TABLES
+   ========================================================================== */
+.dash-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
+    padding: 1.4rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1.25rem;
     padding-bottom: 0.85rem;
-    border-bottom: 1px solid var(--shopeers-border);
+    border-bottom: 1px solid var(--dash-border-subtle);
 }
 
-.card-header-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
+.dash-card-title {
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--dash-text-dark);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    letter-spacing: -0.01em;
 }
 
-/* Shopeers Clean Data Table */
-.shopeers-table {
+/* Polished Table */
+.dash-table {
     width: 100%;
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
 }
 
-.shopeers-table thead th {
-    font-size: 0.70rem;
-    font-weight: 700;
-    color: var(--shopeers-text-muted);
-    letter-spacing: 0.5px;
+.dash-table thead th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--dash-text-sub);
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--shopeers-border);
-    background: transparent;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border);
+    background: rgba(248, 250, 252, 0.85);
     white-space: nowrap;
 }
 
-.shopeers-table tbody td {
-    padding: 0.95rem 1rem;
-    border-bottom: 1px solid var(--shopeers-border-subtle);
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom-color: var(--dash-border);
+}
+
+.dash-table tbody td {
+    padding: 0.95rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
     vertical-align: middle;
     font-size: 0.86rem;
     background: transparent;
+    color: var(--dash-text-body);
 }
 
-.shopeers-table tbody tr:last-child td {
+.dash-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.shopeers-table tbody tr:hover td {
-    background: #fafbfc;
+.dash-table tbody tr:hover td {
+    background: rgba(248, 250, 252, 0.95);
+}
+
+[data-bs-theme="dark"] .dash-table tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.6);
 }
 
 /* Category Share Bar */
-.category-share-track {
+.dash-share-track {
     background: #f1f5f9;
     height: 7px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     overflow: hidden;
     width: 90px;
 }
 
-.category-share-fill {
-    background: var(--shopeers-primary);
+.dash-share-fill {
+    background: #6366f1;
     height: 100%;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
 }
 
-/* Health Metric Items */
-.health-item {
+/* Health / Funnel Metric Items */
+.dash-health-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 0.25rem;
-    border-bottom: 1px solid var(--shopeers-border-subtle);
+    padding: 0.85rem 0.5rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
 }
 
-.health-item:last-child {
+.dash-health-item:last-child {
     border-bottom: none;
 }
 
-.health-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: var(--shopeers-radius-pill);
+.dash-health-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--dash-radius-pill);
     display: inline-block;
 }
 
-/* Badges */
-.badge-status-on {
-    background: #ecfdf5;
-    color: #0a5c48;
-    border: 1px solid #d1fae5;
+/* Dashkit Status Badges */
+.dash-badge-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
     font-size: 0.72rem;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-.badge-status-rfq {
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+.dash-badge-rfq {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.2);
     font-size: 0.72rem;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-.badge-country-pill {
-    background: #f8fafc;
-    border: 1px solid var(--shopeers-border-subtle);
-    padding: 0.35rem 0.75rem;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.75rem;
+.dash-badge-country {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.76rem;
     font-weight: 600;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 /* Export Download Tiles */
-.export-download-tile {
-    background: #f8fafc;
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-md);
-    padding: 0.95rem 1.1rem;
+.dash-export-tile {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-md);
+    padding: 1rem 1.15rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     text-decoration: none;
     color: inherit;
     transition: all 0.2s ease;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.75rem;
 }
 
-.export-download-tile:hover {
-    background: #ffffff;
-    border-color: var(--shopeers-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.12);
+.dash-export-tile:hover {
+    background: var(--dash-card);
+    border-color: #6366f1;
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
     color: inherit;
 }
 
-.export-download-tile i.download-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--shopeers-radius-pill);
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
-    color: var(--shopeers-primary);
+.dash-export-tile i.download-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--dash-radius-pill);
+    background: #f1f5f9;
+    border: 1px solid var(--dash-border);
+    color: #6366f1;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.88rem;
+    font-size: 0.95rem;
     transition: all 0.2s ease;
 }
 
-.export-download-tile:hover i.download-icon {
-    background: var(--shopeers-primary);
+.dash-export-tile:hover i.download-icon {
+    background: #6366f1;
     color: #ffffff;
-    border-color: var(--shopeers-primary);
+    border-color: #6366f1;
+}
+
+/* ==========================================================================
+   FULL-VERSION ACCORDION STYLING
+   ========================================================================== */
+.dash-accordion {
+    border: none;
+}
+
+.dash-accordion .accordion-item {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg) !important;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    box-shadow: var(--dash-shadow-card);
+    transition: box-shadow 0.2s ease;
+}
+
+.dash-accordion .accordion-item:hover {
+    box-shadow: var(--dash-shadow-hover);
+}
+
+.dash-accordion .accordion-button {
+    background: transparent;
+    color: var(--dash-text-dark);
+    font-weight: 600;
+    font-size: 0.98rem;
+    padding: 1.15rem 1.4rem;
+    box-shadow: none !important;
+}
+
+.dash-accordion .accordion-button:not(.collapsed) {
+    background: rgba(99, 102, 241, 0.05);
+    color: #6366f1;
+    border-bottom: 1px solid var(--dash-border);
+}
+
+[data-bs-theme="dark"] .dash-accordion .accordion-button:not(.collapsed) {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+}
+
+.dash-accordion .accordion-body {
+    padding: 1.4rem;
+    background: var(--dash-card);
 }
 </style>
 
-<div class="container-fluid reports-viewport pt-3">
+<div class="container-fluid reports-container pt-2">
 
-    <!-- Header -->
+    <!-- Header & Period Filter Controls -->
     <div class="reports-header">
         <div>
-            <div class="breadcrumb-pill">
-                <i class="bi bi-house-door-fill text-muted"></i>
+            <div class="dash-breadcrumb-pill">
+                <i class="bi bi-grid-1x2 text-muted"></i>
                 <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
                 <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
                 <span class="text-dark">Reports &amp; Analytics</span>
             </div>
             <h1 class="reports-title">
-                <i class="bi bi-bar-chart-line" style="color: var(--shopeers-primary);"></i>
+                <i class="bi bi-bar-chart-line" style="color: #6366f1;"></i>
                 <span>Reports &amp; Business Intelligence</span>
             </h1>
             <p class="reports-subtitle">Real-time catalog valuation, sourcing pipelines &amp; operational downloadable datasets</p>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-2.5">
-            <!-- Time Period Filter Tabs -->
-            <div class="period-tabs-group">
-                <a href="?period=7d" class="period-tab-link {% if period == '7d' %}active{% endif %}">7 Days</a>
-                <a href="?period=30d" class="period-tab-link {% if period == '30d' or not period %}active{% endif %}">30 Days</a>
-                <a href="?period=90d" class="period-tab-link {% if period == '90d' %}active{% endif %}">90 Days</a>
-                <a href="?period=all" class="period-tab-link {% if period == 'all' %}active{% endif %}">All Time</a>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <!-- Time Period Filter Tabs (Dashkit Tabs Style) -->
+            <div class="dash-period-tabs">
+                <a href="?period=7d" class="dash-period-link {% if period == '7d' %}active{% endif %}">7 Days</a>
+                <a href="?period=30d" class="dash-period-link {% if period == '30d' or not period %}active{% endif %}">30 Days</a>
+                <a href="?period=90d" class="dash-period-link {% if period == '90d' %}active{% endif %}">90 Days</a>
+                <a href="?period=all" class="dash-period-link {% if period == 'all' %}active{% endif %}">All Time</a>
             </div>
 
             <!-- Export Dropdown -->
             <div class="dropdown">
-                <button class="btn-shopeers-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn-dash-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-cloud-arrow-down-fill"></i>
                     <span>Export Datasets</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm rounded-3 border py-2" style="font-size: 0.84rem;">
-                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download CSV Reports</h6></li>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-3 border-0 py-2" style="font-size: 0.85rem; min-width: 230px;">
+                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download CSV Datasets</h6></li>
                     <li>
                         <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/products/">
                             <i class="bi bi-box-seam text-success"></i> Products Inventory Report (.csv)
@@ -483,136 +599,69 @@
         </div>
     </div>
 
+    <!-- Reports Sub-Navigation Tabs Component -->
     {% include "partials/reports_nav.html" %}
 
-    <!-- Wireframe Executive Strip: Live Listings, Buyers, Sellers, Pending Approval, Avg Price & Approval Speed -->
+    <!-- Row 1: Executive KPI Strip (Spacious 6-Tile Grid with Proper Gap) -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">LIVE LISTINGS</div>
-                <div class="fw-bold fs-4 text-dark">{{ kpi.live_listings|default:0|intcomma }}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Products + Bulk Lots</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Live Listings</div>
+                <div class="dash-strip-val">{{ kpi.live_listings|default:0|intcomma }}</div>
+                <div class="dash-strip-sub">Products + Wholesale Lots</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">BUYERS</div>
-                <div class="fw-bold fs-4 text-dark">{{ kpi.total_buyers|default:0|intcomma }}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Buyer + Dual Accounts</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Buyers</div>
+                <div class="dash-strip-val text-primary">{{ kpi.total_buyers|default:0|intcomma }}</div>
+                <div class="dash-strip-sub">Buyer + Dual Accounts</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">SELLERS</div>
-                <div class="fw-bold fs-4 text-dark">{{ kpi.total_sellers|default:0|intcomma }}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Seller + Dual Accounts</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Sellers</div>
+                <div class="dash-strip-val text-info">{{ kpi.total_sellers|default:0|intcomma }}</div>
+                <div class="dash-strip-sub">Seller + Dual Accounts</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">PENDING APPROVAL</div>
-                <div class="fw-bold fs-4 text-warning">{{ kpi.pending_approval|default:0|intcomma }}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Products + Lots</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Pending Approval</div>
+                <div class="dash-strip-val text-warning">{{ kpi.pending_approval|default:0|intcomma }}</div>
+                <div class="dash-strip-sub">Products + Lots</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">AVG BUYER PRICE</div>
-                <div class="fw-bold fs-4 text-dark">{{ kpi.avg_buyer_price|default:"0.00" }}</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Across Period</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Avg Buyer Price</div>
+                <div class="dash-strip-val">${{ kpi.avg_buyer_price|default:"0.00" }}</div>
+                <div class="dash-strip-sub">Across Active Period</div>
             </div>
         </div>
         <div class="col-6 col-md-4 col-xl-2">
-            <div class="shopeers-card p-3 mb-0 h-100">
-                <div class="shopeers-kpi-label">AVG APPROVAL TIME</div>
-                <div class="fw-bold fs-4 text-success">{{ kpi.avg_approval_days|default:"0.0" }} d</div>
-                <div class="text-muted" style="font-size: 0.72rem;">Product Review SLA</div>
+            <div class="dash-strip-tile">
+                <div class="dash-strip-label">Avg Approval SLA</div>
+                <div class="dash-strip-val text-success">{{ kpi.avg_approval_days|default:"0.0" }} d</div>
+                <div class="dash-strip-sub">Product Review SLA</div>
             </div>
         </div>
     </div>
 
-    <!-- Wireframe Analytics Row: Buyers vs Sellers by Country & Supply vs Demand -->
-    <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-            <div class="shopeers-card mb-0 h-100">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-globe-americas" style="color: var(--shopeers-primary);"></i>
-                        <span>Top Countries &mdash; Buyers vs Sellers</span>
-                    </h5>
-                    <span class="small text-muted">Dark = Buyers &middot; Light = Sellers</span>
-                </div>
-                {% for cm in country_mix %}
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between small fw-semibold mb-1">
-                        <span>{{ cm.country }}</span>
-                        <span class="text-muted">{{ cm.buyers }} Buyers / {{ cm.sellers }} Sellers</span>
-                    </div>
-                    <div class="progress mb-1" style="height: 8px; border-radius: 99px; background: #f1f5f9;">
-                        <div class="progress-bar" style="width: {{ cm.buyers_pct }}%; background: #0a5c48;"></div>
-                    </div>
-                    <div class="progress" style="height: 6px; border-radius: 99px; background: #f1f5f9;">
-                        <div class="progress-bar" style="width: {{ cm.sellers_pct }}%; background: #94a3b8;"></div>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="text-muted small py-3">No vendor country data available.</div>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="shopeers-card mb-0 h-100">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-arrow-left-right" style="color: var(--shopeers-primary);"></i>
-                        <span>Supply vs Demand by Category</span>
-                    </h5>
-                    <span class="small text-muted">Listings vs RFQ Items</span>
-                </div>
-                <div class="table-responsive">
-                    <table class="shopeers-table">
-                        <thead>
-                            <tr>
-                                <th>CATEGORY</th>
-                                <th class="text-end">LISTINGS</th>
-                                <th class="text-end">RFQS</th>
-                                <th>GAP</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sd in supply_demand %}
-                            <tr>
-                                <td class="fw-semibold text-dark">{{ sd.name }}</td>
-                                <td class="text-end">{{ sd.listings }}</td>
-                                <td class="text-end">{{ sd.rfqs }}</td>
-                                <td>
-                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} rounded-pill">{{ sd.gap_label }}</span>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-muted small text-center py-3">No category demand data yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top 4 KPI Executive Metric Cards (Static Display Cards) -->
+    <!-- Row 2: Top 4 KPI Metric Cards (Full-Version Dashkit Icon Bubbles) -->
     <div class="row g-3 mb-4">
         <!-- Catalog Valuation -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL CATALOG VALUATION</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
+                    <span class="dash-kpi-label">Total Catalog Valuation</span>
+                    <div class="dash-kpi-icon icon-emerald">
                         <i class="bi bi-cash-stack"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">${{ kpi.total_valuation|floatformat:2 }}</h2>
-                    <span class="shopeers-kpi-pill pill-emerald">
+                    <h2 class="dash-kpi-number">${{ kpi.total_valuation|floatformat:2 }}</h2>
+                    <span class="dash-kpi-pill pill-emerald">
                         <i class="bi bi-check-circle"></i> Live Inventory Valuation
                     </span>
                 </div>
@@ -621,16 +670,16 @@
 
         <!-- RFQ Sourcing Pipeline -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">RFQ SOURCING PIPELINE</span>
-                    <div class="shopeers-kpi-icon icon-cyan">
+                    <span class="dash-kpi-label">RFQ Sourcing Pipeline</span>
+                    <div class="dash-kpi-icon icon-indigo">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">${{ kpi.rfq_pipeline_val|floatformat:2 }}</h2>
-                    <span class="shopeers-kpi-pill pill-cyan">
+                    <h2 class="dash-kpi-number">${{ kpi.rfq_pipeline_val|floatformat:2 }}</h2>
+                    <span class="dash-kpi-pill pill-indigo">
                         <i class="bi bi-wallet2"></i> {{ kpi.accepted_rfqs }} Accepted / {{ kpi.quoted_rfqs }} Quoted
                     </span>
                 </div>
@@ -639,34 +688,34 @@
 
         <!-- Active Inventory Stock -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">ACTIVE INVENTORY STOCK</span>
-                    <div class="shopeers-kpi-icon icon-indigo">
+                    <span class="dash-kpi-label">Active Inventory Stock</span>
+                    <div class="dash-kpi-icon icon-amber">
                         <i class="bi bi-boxes"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ kpi.total_units }}</h2>
-                    <span class="shopeers-kpi-pill pill-indigo">
+                    <h2 class="dash-kpi-number">{{ kpi.total_units }}</h2>
+                    <span class="dash-kpi-pill pill-amber">
                         <i class="bi bi-box-seam"></i> {{ kpi.active_products }} Live Products Listed
                     </span>
                 </div>
             </div>
         </div>
 
-        <!-- Buyer Network Community -->
+        <!-- Buyer Community -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">BUYER COMMUNITY</span>
-                    <div class="shopeers-kpi-icon icon-violet">
+                    <span class="dash-kpi-label">Buyer Community</span>
+                    <div class="dash-kpi-icon icon-violet">
                         <i class="bi bi-people-fill"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ kpi.total_buyers }}</h2>
-                    <span class="shopeers-kpi-pill pill-violet">
+                    <h2 class="dash-kpi-number">{{ kpi.total_buyers }}</h2>
+                    <span class="dash-kpi-pill pill-violet">
                         <i class="bi bi-building"></i> {{ kpi.total_companies }} Registered Companies
                     </span>
                 </div>
@@ -674,349 +723,452 @@
         </div>
     </div>
 
-    <!-- Main Analytics Grid -->
-    <div class="row g-3">
-        
-        <!-- Left Column: Tables & Breakdowns (8 cols) -->
-        <div class="col-xl-8 col-lg-7">
-            
-            <!-- Category Valuation Table -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
+    <!-- Row 3: Visual Analytics (Buyers vs Sellers by Country & Supply vs Demand by Category) -->
+    <div class="row g-4 mb-4">
+        <!-- Top Countries: Buyers vs Sellers -->
+        <div class="col-lg-6">
+            <div class="dash-card">
+                <div class="dash-card-header">
                     <div>
-                        <h5 class="card-header-title">
-                            <i class="bi bi-grid-3x3-gap-fill" style="color: var(--shopeers-primary);"></i>
-                            <span>Catalog Breakdown by Category</span>
+                        <h5 class="dash-card-title">
+                            <i class="bi bi-globe-americas" style="color: #6366f1;"></i>
+                            <span>Top Countries &mdash; Buyers vs Sellers</span>
                         </h5>
-                        <span class="text-secondary small">Live item counts and unit volumes per taxonomy category</span>
+                        <span class="small text-muted">Indigo = Buyers &middot; Slate = Sellers</span>
                     </div>
-                    <a href="/admin/categories/main/" class="btn-shopeers-outline btn-sm">
-                        <span>Manage Categories</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </a>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="shopeers-table">
-                        <thead>
-                            <tr>
-                                <th>CATEGORY NAME</th>
-                                <th>LISTED PRODUCTS</th>
-                                <th>TOTAL UNITS</th>
-                                <th>CATALOG SHARE</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for c in cat_data %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-tag-fill text-muted" style="font-size: 0.80rem;"></i>
-                                        <span class="fw-bold text-dark">{{ c.name }}</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold text-dark">{{ c.product_count }}</span>
-                                    <span class="text-muted small">items</span>
-                                </td>
-                                <td>
-                                    <span class="text-secondary small fw-medium">{{ c.total_units }} units</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="category-share-track">
-                                            <div class="category-share-fill" style="width: {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}{% else %}0{% endif %}%;"></div>
-                                        </div>
-                                        <span class="small text-secondary">
-                                            {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}%{% else %}0%{% endif %}
-                                        </span>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted small">
-                                    No category statistics recorded yet.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Top Value Inventory Items -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <div>
-                        <h5 class="card-header-title">
-                            <i class="bi bi-gem" style="color: var(--shopeers-primary);"></i>
-                            <span>High-Value Inventory Assets</span>
-                        </h5>
-                        <span class="text-secondary small">Top commercial value products currently listed</span>
-                    </div>
-                    <a href="/admin/products/all/" class="btn-shopeers-outline btn-sm">
-                        <span>All Products</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </a>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="shopeers-table">
-                        <thead>
-                            <tr>
-                                <th>PRODUCT NAME</th>
-                                <th>CATEGORY</th>
-                                <th>PRICE</th>
-                                <th>STOCK</th>
-                                <th>STATUS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in high_value_items %}
-                            <tr>
-                                <td>
-                                    <a href="/admin/products/{{ p.id }}/" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 250px;">
-                                        {{ p.product_name }}
-                                    </a>
-                                    <span class="text-muted small font-monospace">#{{ p.product_id|default:p.id }}</span>
-                                </td>
-                                <td>
-                                    <span class="small text-secondary">{{ p.category.name|default:"General" }}</span>
-                                </td>
-                                <td>
-                                    <span class="fw-bold text-dark">{{ p.currency|default:"USD" }} {{ p.current_price|default:p.liquidating_price }}</span>
-                                </td>
-                                <td>
-                                    <span class="text-secondary small">{{ p.quantity|default:"0" }} units</span>
-                                </td>
-                                <td>
-                                    {% if p.is_active %}
-                                    <span class="badge-status-on"><i class="bi bi-check-circle-fill"></i> Active</span>
-                                    {% else %}
-                                    <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">Inactive</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted small">
-                                    No product inventory listed.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Recent RFQ Demands -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <div>
-                        <h5 class="card-header-title">
-                            <i class="bi bi-file-earmark-text-fill" style="color: var(--shopeers-primary);"></i>
-                            <span>Recent Buyer RFQ Demands</span>
-                        </h5>
-                        <span class="text-secondary small">Latest Requests for Quotation submitted by buyers</span>
-                    </div>
-                    <a href="/admin/rfq-requests/" class="btn-shopeers-outline btn-sm">
-                        <span>All RFQs</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </a>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="shopeers-table">
-                        <thead>
-                            <tr>
-                                <th>REFERENCE</th>
-                                <th>PROSPECTIVE BUYER</th>
-                                <th>STATUS</th>
-                                <th>PROFORMA VALUATION</th>
-                                <th>DATE</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in recent_rfqs %}
-                            <tr>
-                                <td>
-                                    <a href="/admin/rfq-requests/{{ r.id }}/" class="fw-bold text-dark text-decoration-none font-monospace">
-                                        {{ r.reference }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold text-dark small">{{ r.buyer.full_name|default:r.company_name|default:"Corporate Buyer" }}</div>
-                                    <span class="text-muted" style="font-size: 0.72rem;">{{ r.buyer.email|default:"" }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge-status-rfq">
-                                        {{ r.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="fw-bold text-dark">
-                                        {% if r.proforma_amount %}
-                                        {{ r.currency|default:"USD" }} {{ r.proforma_amount }}
-                                        {% else %}
-                                        <span class="text-muted small fw-normal">Under Review</span>
-                                        {% endif %}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="text-secondary small">{{ r.created_at|date:"M d, Y" }}</span>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted small">
-                                    No RFQ inquiries received yet.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Right Column: Sourcing Funnel, Stock Health, Geo & Exports (4 cols) -->
-        <div class="col-xl-4 col-lg-5">
-            
-            <!-- Inventory Health Card -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-heart-pulse-fill text-danger"></i>
-                        <span>Inventory Liquidity Health</span>
-                    </h5>
-                    <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ kpi.total_products }} Products</span>
-                </div>
-
-                <div class="health-item">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="health-dot bg-success"></span>
-                        <span class="small fw-semibold text-dark">In-Stock (> 10 units)</span>
-                    </div>
-                    <span class="fw-bold text-success small">{{ kpi.stock_in }} items</span>
-                </div>
-
-                <div class="health-item">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="health-dot bg-warning"></span>
-                        <span class="small fw-semibold text-dark">Low-Stock (1-10 units)</span>
-                    </div>
-                    <span class="fw-bold text-warning small">{{ kpi.stock_low }} items</span>
-                </div>
-
-                <div class="health-item">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="health-dot bg-danger"></span>
-                        <span class="small fw-semibold text-dark">Out-of-Stock (0 units)</span>
-                    </div>
-                    <span class="fw-bold text-danger small">{{ kpi.stock_out }} items</span>
-                </div>
-            </div>
-
-            <!-- RFQ Pipeline Conversion Funnel -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-funnel-fill text-primary"></i>
-                        <span>RFQ Demand Funnel</span>
-                    </h5>
-                    <span class="badge bg-light text-dark border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">{{ kpi.total_rfqs }} Inquiries</span>
-                </div>
-
-                <div class="health-item">
-                    <span class="small fw-semibold text-secondary">Pending Desk Review</span>
-                    <span class="fw-bold text-warning small">{{ kpi.pending_rfqs }}</span>
-                </div>
-
-                <div class="health-item">
-                    <span class="small fw-semibold text-secondary">Quoted / In Negotiation</span>
-                    <span class="fw-bold text-info small">{{ kpi.quoted_rfqs }}</span>
-                </div>
-
-                <div class="health-item">
-                    <span class="small fw-semibold text-secondary">Accepted / Proforma Issued</span>
-                    <span class="fw-bold text-success small">{{ kpi.accepted_rfqs }}</span>
-                </div>
-
-                <div class="health-item">
-                    <span class="small fw-semibold text-secondary">Declined / Unmatched</span>
-                    <span class="fw-bold text-muted small">{{ kpi.declined_rfqs }}</span>
-                </div>
-            </div>
-
-            <!-- Geographic Distribution -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-geo-alt-fill text-danger"></i>
-                        <span>Geographic Distribution</span>
-                    </h5>
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    {% for g in geo_data %}
-                    <span class="badge-country-pill">
-                        <i class="bi bi-globe2 text-muted"></i>
-                        <span>{{ g.country }}</span>
-                        <span class="badge bg-light text-dark border ms-1" style="font-size: 0.68rem;">{{ g.count }}</span>
+                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small fw-semibold">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Regional Mix
                     </span>
+                </div>
+                <div class="d-flex flex-column gap-3 py-1">
+                    {% for cm in country_mix %}
+                    <div>
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span class="text-dark">{{ cm.country }}</span>
+                            <span class="text-secondary small">{{ cm.buyers }} Buyers / {{ cm.sellers }} Sellers</span>
+                        </div>
+                        <div class="progress mb-1" style="height: 7px; border-radius: 99px; background: #f1f5f9;">
+                            <div class="progress-bar" style="width: {{ cm.buyers_pct }}%; background: #6366f1; border-radius: 99px;"></div>
+                        </div>
+                        <div class="progress" style="height: 5px; border-radius: 99px; background: #f1f5f9;">
+                            <div class="progress-bar" style="width: {{ cm.sellers_pct }}%; background: #94a3b8; border-radius: 99px;"></div>
+                        </div>
+                    </div>
                     {% empty %}
-                    <span class="text-muted small">No regional inventory records.</span>
+                    <div class="text-muted small py-3 text-center">No vendor country data available.</div>
                     {% endfor %}
                 </div>
             </div>
+        </div>
 
-            <!-- Quick Download Export Center -->
-            <div class="shopeers-card">
-                <div class="card-header-clean">
-                    <h5 class="card-header-title">
-                        <i class="bi bi-download" style="color: var(--shopeers-primary);"></i>
-                        <span>One-Click Data Exports</span>
-                    </h5>
+        <!-- Supply vs Demand by Category -->
+        <div class="col-lg-6">
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <div>
+                        <h5 class="dash-card-title">
+                            <i class="bi bi-arrow-left-right" style="color: #6366f1;"></i>
+                            <span>Supply vs Demand by Category</span>
+                        </h5>
+                        <span class="small text-muted">Live Listings vs Active RFQ Demands</span>
+                    </div>
+                    <a href="/admin/categories/main/" class="btn-dash-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;">
+                        <span>View All</span>
+                    </a>
                 </div>
+                <div class="table-responsive">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>CATEGORY</th>
+                                <th class="text-end">LISTINGS</th>
+                                <th class="text-end">RFQS</th>
+                                <th>STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sd in supply_demand %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ sd.name }}</td>
+                                <td class="text-end font-monospace">{{ sd.listings }}</td>
+                                <td class="text-end font-monospace">{{ sd.rfqs }}</td>
+                                <td>
+                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} border border-{{ sd.gap_tone }}-subtle rounded-pill px-2.5 py-1">
+                                        {{ sd.gap_label }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted small text-center py-4">No category demand data available yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <a href="/admin/reports/export/products/" class="export-download-tile">
-                    <div>
-                        <div class="fw-bold small text-dark">Catalog Inventory Report</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">CSV dataset of all live products &amp; pricing</div>
-                    </div>
-                    <i class="bi bi-arrow-down-short download-icon"></i>
-                </a>
+    <!-- Row 4: Detailed Operational Breakdowns & Pipeline Audits (Full-Version Accordion Component) -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-layers-half text-primary fs-5"></i>
+                    <span>Operational Audits &amp; Data Breakdowns</span>
+                </h5>
+                <span class="text-secondary small">Click to expand detailed tables, sourcing inventory and liquidity conversions</span>
+            </div>
+        </div>
 
-                <a href="/admin/reports/export/rfq/" class="export-download-tile">
-                    <div>
-                        <div class="fw-bold small text-dark">Buyer RFQ Demands Report</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">Sourcing requests, targets &amp; proformas</div>
+        <div class="accordion dash-accordion" id="reportsAuditAccordion">
+            
+            <!-- Accordion Item 1: Catalog Breakdown by Category -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingCategoryAudit">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategoryAudit" aria-expanded="true" aria-controls="collapseCategoryAudit">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+                            <span>Catalog Breakdown by Category ({{ cat_data|length }} Taxonomies)</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseCategoryAudit" class="accordion-collapse collapse show" aria-labelledby="headingCategoryAudit" data-bs-parent="#reportsAuditAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>CATEGORY NAME</th>
+                                        <th>LISTED PRODUCTS</th>
+                                        <th>TOTAL UNITS</th>
+                                        <th>CATALOG SHARE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for c in cat_data %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="bi bi-tag-fill text-muted" style="font-size: 0.80rem;"></i>
+                                                <span class="fw-bold text-dark">{{ c.name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-semibold text-dark">{{ c.product_count }}</span>
+                                            <span class="text-muted small">items</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-secondary small fw-medium">{{ c.total_units }} units</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="dash-share-track">
+                                                    <div class="dash-share-fill" style="width: {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}{% else %}0{% endif %}%;"></div>
+                                                </div>
+                                                <span class="small text-secondary font-monospace">
+                                                    {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}%{% else %}0%{% endif %}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted small">
+                                            No category statistics recorded yet.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <i class="bi bi-arrow-down-short download-icon"></i>
-                </a>
+                </div>
+            </div>
 
-                <a href="/admin/reports/export/lots/" class="export-download-tile">
-                    <div>
-                        <div class="fw-bold small text-dark">Wholesale Lots Inventory</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">Batch lot packages, types &amp; valuations</div>
+            <!-- Accordion Item 2: High-Value Commercial Assets -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingHighValue">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHighValue" aria-expanded="false" aria-controls="collapseHighValue">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <i class="bi bi-gem text-primary"></i>
+                            <span>High-Value Inventory Assets (Top Listed Items)</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseHighValue" class="accordion-collapse collapse" aria-labelledby="headingHighValue" data-bs-parent="#reportsAuditAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>PRODUCT NAME</th>
+                                        <th>CATEGORY</th>
+                                        <th>PRICE</th>
+                                        <th>STOCK</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in high_value_items %}
+                                    <tr>
+                                        <td>
+                                            <a href="/admin/products/{{ p.id }}/" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 280px;">
+                                                {{ p.product_name }}
+                                            </a>
+                                            <span class="text-muted small font-monospace">#{{ p.product_id|default:p.id }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="small text-secondary">{{ p.category.name|default:"General" }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark">{{ p.currency|default:"USD" }} {{ p.current_price|default:p.liquidating_price }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-secondary small">{{ p.quantity|default:"0" }} units</span>
+                                        </td>
+                                        <td>
+                                            {% if p.is_active %}
+                                            <span class="dash-badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                                            {% else %}
+                                            <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted small">
+                                            No product inventory listed.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <i class="bi bi-arrow-down-short download-icon"></i>
-                </a>
+                </div>
+            </div>
 
-                <a href="/admin/reports/export/users/" class="export-download-tile">
-                    <div>
-                        <div class="fw-bold small text-dark">User Network Directory</div>
-                        <div class="text-muted" style="font-size: 0.72rem;">Registered buyers, companies &amp; locations</div>
+            <!-- Accordion Item 3: Recent Buyer RFQ Demands -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRecentRfqs">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentRfqs" aria-expanded="false" aria-controls="collapseRecentRfqs">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <i class="bi bi-file-earmark-text-fill text-primary"></i>
+                            <span>Recent Buyer RFQ Demands (Sourcing Inquiries)</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseRecentRfqs" class="accordion-collapse collapse" aria-labelledby="headingRecentRfqs" data-bs-parent="#reportsAuditAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>REFERENCE</th>
+                                        <th>PROSPECTIVE BUYER</th>
+                                        <th>STATUS</th>
+                                        <th>PROFORMA VALUATION</th>
+                                        <th>DATE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in recent_rfqs %}
+                                    <tr>
+                                        <td>
+                                            <a href="/admin/rfq-requests/{{ r.id }}/" class="fw-bold text-dark text-decoration-none font-monospace">
+                                                {{ r.reference }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold text-dark small">{{ r.buyer.full_name|default:r.company_name|default:"Corporate Buyer" }}</div>
+                                            <span class="text-muted" style="font-size: 0.72rem;">{{ r.buyer.email|default:"" }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="dash-badge-rfq">
+                                                {{ r.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark">
+                                                {% if r.proforma_amount %}
+                                                {{ r.currency|default:"USD" }} {{ r.proforma_amount }}
+                                                {% else %}
+                                                <span class="text-muted small fw-normal">Under Review</span>
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-secondary small">{{ r.created_at|date:"M d, Y" }}</span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted small">
+                                            No RFQ inquiries received yet.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <i class="bi bi-arrow-down-short download-icon"></i>
-                </a>
+                </div>
+            </div>
+
+            <!-- Accordion Item 4: Liquidity Health & Conversion Funnel -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingLiquidityFunnel">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLiquidityFunnel" aria-expanded="false" aria-controls="collapseLiquidityFunnel">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <i class="bi bi-funnel-fill text-primary"></i>
+                            <span>Inventory Liquidity Health &amp; RFQ Conversion Funnel</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseLiquidityFunnel" class="accordion-collapse collapse" aria-labelledby="headingLiquidityFunnel" data-bs-parent="#reportsAuditAccordion">
+                    <div class="accordion-body">
+                        <div class="row g-4">
+                            <!-- Stock Health -->
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-heart-pulse-fill text-danger"></i>
+                                    <span>Stock Velocity &amp; Availability</span>
+                                </h6>
+                                <div class="dash-health-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="dash-health-dot bg-success"></span>
+                                        <span class="small fw-semibold text-dark">In-Stock (> 10 units)</span>
+                                    </div>
+                                    <span class="fw-bold text-success small font-monospace">{{ kpi.stock_in }} items</span>
+                                </div>
+                                <div class="dash-health-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="dash-health-dot bg-warning"></span>
+                                        <span class="small fw-semibold text-dark">Low-Stock (1-10 units)</span>
+                                    </div>
+                                    <span class="fw-bold text-warning small font-monospace">{{ kpi.stock_low }} items</span>
+                                </div>
+                                <div class="dash-health-item">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="dash-health-dot bg-danger"></span>
+                                        <span class="small fw-semibold text-dark">Out-of-Stock (0 units)</span>
+                                    </div>
+                                    <span class="fw-bold text-danger small font-monospace">{{ kpi.stock_out }} items</span>
+                                </div>
+                            </div>
+
+                            <!-- RFQ Funnel -->
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-filter-circle-fill text-primary"></i>
+                                    <span>RFQ Sourcing Pipeline Status</span>
+                                </h6>
+                                <div class="dash-health-item">
+                                    <span class="small fw-semibold text-secondary">Pending Desk Review</span>
+                                    <span class="fw-bold text-warning small font-monospace">{{ kpi.pending_rfqs }}</span>
+                                </div>
+                                <div class="dash-health-item">
+                                    <span class="small fw-semibold text-secondary">Quoted / In Negotiation</span>
+                                    <span class="fw-bold text-info small font-monospace">{{ kpi.quoted_rfqs }}</span>
+                                </div>
+                                <div class="dash-health-item">
+                                    <span class="small fw-semibold text-secondary">Accepted / Proforma Issued</span>
+                                    <span class="fw-bold text-success small font-monospace">{{ kpi.accepted_rfqs }}</span>
+                                </div>
+                                <div class="dash-health-item">
+                                    <span class="small fw-semibold text-secondary">Declined / Unmatched</span>
+                                    <span class="fw-bold text-muted small font-monospace">{{ kpi.declined_rfqs }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion Item 5: Regional Distribution & One-Click Exports -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingExportsGeo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExportsGeo" aria-expanded="false" aria-controls="collapseExportsGeo">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <i class="bi bi-download text-primary"></i>
+                            <span>One-Click Dataset Exports &amp; Geographic Distribution</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseExportsGeo" class="accordion-collapse collapse" aria-labelledby="headingExportsGeo" data-bs-parent="#reportsAuditAccordion">
+                    <div class="accordion-body">
+                        <div class="row g-4">
+                            <!-- Regional Badges -->
+                            <div class="col-md-5">
+                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                                    <span>Regional Inventory Stocking</span>
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for g in geo_data %}
+                                    <span class="dash-badge-country">
+                                        <i class="bi bi-globe2 text-muted"></i>
+                                        <span>{{ g.country }}</span>
+                                        <span class="badge bg-light text-dark border ms-1 font-monospace" style="font-size: 0.68rem;">{{ g.count }}</span>
+                                    </span>
+                                    {% empty %}
+                                    <span class="text-muted small">No regional inventory records.</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Export Tiles -->
+                            <div class="col-md-7">
+                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-file-earmark-spreadsheet text-success"></i>
+                                    <span>Downloadable Operational Datasets</span>
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <a href="/admin/reports/export/products/" class="dash-export-tile mb-0">
+                                            <div>
+                                                <div class="fw-bold small text-dark">Catalog Inventory</div>
+                                                <div class="text-muted" style="font-size: 0.72rem;">CSV dataset of all live products</div>
+                                            </div>
+                                            <i class="bi bi-arrow-down-short download-icon"></i>
+                                        </a>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <a href="/admin/reports/export/rfq/" class="dash-export-tile mb-0">
+                                            <div>
+                                                <div class="fw-bold small text-dark">Buyer RFQ Demands</div>
+                                                <div class="text-muted" style="font-size: 0.72rem;">Sourcing requests &amp; proformas</div>
+                                            </div>
+                                            <i class="bi bi-arrow-down-short download-icon"></i>
+                                        </a>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <a href="/admin/reports/export/lots/" class="dash-export-tile mb-0">
+                                            <div>
+                                                <div class="fw-bold small text-dark">Wholesale Lots</div>
+                                                <div class="text-muted" style="font-size: 0.72rem;">Batch lot packages &amp; values</div>
+                                            </div>
+                                            <i class="bi bi-arrow-down-short download-icon"></i>
+                                        </a>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <a href="/admin/reports/export/users/" class="dash-export-tile mb-0">
+                                            <div>
+                                                <div class="fw-bold small text-dark">User Network</div>
+                                                <div class="text-muted" style="font-size: 0.72rem;">Registered buyers &amp; companies</div>
+                                            </div>
+                                            <i class="bi bi-arrow-down-short download-icon"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
-
     </div>
 
 </div>
 {% endblock %}
-
