@@ -1,12 +1,4 @@
 from django.contrib import admin
 
-try:
-    from .models import Item
+# Models are registered in AdminApp/admin.py
 
-    @admin.register(Item)
-    class ItemAdmin(admin.ModelAdmin):
-        list_display = ("id", "title", "quantity", "is_active", "created_at")
-        list_filter = ("is_active", "created_at")
-        search_fields = ("title", "description")
-except Exception:
-    pass

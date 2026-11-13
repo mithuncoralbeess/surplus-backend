@@ -8,6 +8,7 @@ and bulk wholesale lot intent from conversational buyer queries without external
 import re
 from typing import Dict, Any, List, Optional, Tuple
 from .typesense_service import to_usd, RATES_TO_USD
+from .search_engine import extract_search_intent
 
 # Common conversational stop words to strip
 STOP_WORDS = {
@@ -206,12 +207,34 @@ class TypesenseQueryParser:
         if parsed["max_price"] is not None:
             parsed["max_price_usd"] = to_usd(parsed["max_price"], curr)
 
-        # 4. Extract Location
-        for loc in KNOWN_LOCATIONS:
-            if re.search(r'\b' + re.escape(loc) + r'\b', q_lower):
-                parsed["location"] = loc.title()
-                parsed["has_filters"] = True
-                break
+        # 4. Semantic Search Intent & Geographic Normalization
+        semantic_intent = extract_search_intent(raw_query)
+        if semantic_intent.get("location_detected"):
+            parsed["location"] = semantic_intent["location_detected"]
+            parsed["market"] = semantic_intent["market"]
+            parsed["target_countries"] = semantic_intent["target_countries"]
+            parsed["target_cities"] = semantic_intent["target_cities"]
+            parsed["has_filters"] = True
+        else:
+            parsed["market"] = None
+            parsed["target_countries"] = []
+            parsed["target_cities"] = []
+
+        parsed["tokens"] = semantic_intent.get("tokens", [])
+        parsed["token_variants"] = semantic_intent.get("token_variants", [])
+        parsed["inferred_categories"] = semantic_intent.get("inferred_categories", [])
+        parsed["expanded_terms"] = semantic_intent.get("expanded_terms", [])
+
+        if not parsed["category"] and parsed["inferred_categories"]:
+            parsed["category"] = parsed["inferred_categories"][0]
+
+        # Fallback location detection if not caught by search_engine
+        if not parsed["location"]:
+            for loc in KNOWN_LOCATIONS:
+                if re.search(r'\b' + re.escape(loc) + r'\b', q_lower):
+                    parsed["location"] = loc.title()
+                    parsed["has_filters"] = True
+                    break
 
         if not parsed["location"]:
             loc_match = re.search(
@@ -281,6 +304,11 @@ class TypesenseQueryParser:
 
         # Extract tokens and discard pure stop words
         tokens = [t for t in re.findall(r'[a-zA-Z0-9]+', cleaned) if t not in STOP_WORDS and len(t) > 1]
-        parsed["cleaned_query"] = " ".join(tokens) if tokens else raw_query
+        if tokens:
+            parsed["cleaned_query"] = " ".join(tokens)
+        elif semantic_intent.get("cleaned_query"):
+            parsed["cleaned_query"] = semantic_intent["cleaned_query"]
+        else:
+            parsed["cleaned_query"] = raw_query
 
         return parsed

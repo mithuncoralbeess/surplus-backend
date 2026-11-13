@@ -3648,39 +3648,142 @@ def _format_typesense_hit(hit):
 def _fallback_postgresql_search(query_text, entity_type, page, limit, category, subcategory, brand, condition, country, min_usd, max_usd, sort_by):
     """
     Zero-downtime PostgreSQL source-of-truth fallback when Typesense is unavailable.
+    Enhanced with enterprise semantic intent extraction, location market matching
+    (Dubai, UAE, Saudi Arabia, KSA, India), synonym cluster expansion, and multi-field ranking.
     """
     from AdminApp.models import Product, Lot
+    from AdminApp.search_engine import extract_search_intent
     from django.db.models import Q
 
     results = []
 
+    # Parse search intent from query
+    intent = extract_search_intent(query_text) if query_text else {
+        "tokens": [], "token_variants": [], "target_countries": [],
+        "target_cities": [], "inferred_categories": [], "cleaned_query": "",
+        "location_detected": None, "is_lot": False
+    }
+
+    product_tokens = intent.get("tokens", [])
+    token_variants = intent.get("token_variants", [])
+    inferred_categories = intent.get("inferred_categories", [])
+    target_countries = intent.get("target_countries", [])
+    target_cities = intent.get("target_cities", [])
+    cleaned_query = intent.get("cleaned_query", "")
+
+    # Build location query
+    loc_q = Q()
+    if country:
+        loc_q |= Q(inventory_country__icontains=country) | Q(inventory_location__icontains=country)
+    for c in target_countries:
+        loc_q |= Q(inventory_country__icontains=c) | Q(inventory_location__icontains=c)
+    for city in target_cities:
+        loc_q |= Q(inventory_location__icontains=city)
+
+    # Build product text search query
+    def build_text_q(tokens_to_match, is_lot_model=False):
+        t_q = Q()
+        if not tokens_to_match:
+            return t_q
+
+        for tok in tokens_to_match:
+            if is_lot_model:
+                t_q |= (
+                    Q(title__icontains=tok) |
+                    Q(description__icontains=tok) |
+                    Q(key_brands_included__icontains=tok) |
+                    Q(lot_number__icontains=tok)
+                )
+            else:
+                t_q |= (
+                    Q(product_name__icontains=tok) |
+                    Q(product_code__icontains=tok) |
+                    Q(product_id__icontains=tok) |
+                    Q(brand_name__icontains=tok) |
+                    Q(model_no__icontains=tok) |
+                    Q(description__icontains=tok) |
+                    Q(category__name__icontains=tok) |
+                    Q(subcategory__name__icontains=tok)
+                )
+        return t_q
+
     # 1. Products
     if entity_type in ("all", "product"):
-        p_qs = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
-        if query_text:
-            p_qs = p_qs.filter(
-                Q(product_name__icontains=query_text) |
-                Q(product_code__icontains=query_text) |
-                Q(product_id__icontains=query_text) |
-                Q(brand_name__icontains=query_text) |
-                Q(model_no__icontains=query_text) |
-                Q(description__icontains=query_text) |
-                Q(inventory_location__icontains=query_text)
-            )
-        if category:
-            p_qs = p_qs.filter(Q(category__name__icontains=category) | Q(category__slug__iexact=category))
-        if subcategory:
-            p_qs = p_qs.filter(Q(subcategory__name__icontains=subcategory) | Q(subcategory__slug__iexact=subcategory))
-        if brand:
-            p_qs = p_qs.filter(brand_name__icontains=brand)
-        if country:
-            p_qs = p_qs.filter(Q(inventory_country__icontains=country) | Q(inventory_location__icontains=country))
-        if min_usd is not None:
-            p_qs = p_qs.filter(liquidating_price__gte=min_usd)
-        if max_usd is not None:
-            p_qs = p_qs.filter(liquidating_price__lte=max_usd)
+        base_p = Product.objects.filter(is_active=True, enquiry_status__iexact="APPROVED").select_related("category", "subcategory").prefetch_related("images")
 
-        for p in p_qs[:100]:
+        # Explicit filters
+        if category:
+            base_p = base_p.filter(Q(category__name__icontains=category) | Q(category__slug__iexact=category))
+        if subcategory:
+            base_p = base_p.filter(Q(subcategory__name__icontains=subcategory) | Q(subcategory__slug__iexact=subcategory))
+        if brand:
+            base_p = base_p.filter(brand_name__icontains=brand)
+        if condition:
+            base_p = base_p.filter(condition__icontains=condition)
+        if min_usd is not None:
+            base_p = base_p.filter(liquidating_price__gte=min_usd)
+        if max_usd is not None:
+            base_p = base_p.filter(liquidating_price__lte=max_usd)
+
+        # Matched product IDs in priority order
+        seen_p_ids = set()
+        ranked_products = []
+
+        if query_text:
+            text_q = build_text_q(product_tokens + token_variants[:10], is_lot_model=False)
+
+            # Priority 1: Matches BOTH product terms AND target location
+            if text_q and loc_q:
+                p1_qs = base_p.filter(text_q & loc_q)
+                for p in p1_qs[:80]:
+                    if p.id not in seen_p_ids:
+                        seen_p_ids.add(p.id)
+                        ranked_products.append(p)
+
+            # Priority 2: Matches product terms directly
+            if text_q:
+                p2_qs = base_p.filter(text_q)
+                for p in p2_qs[:80]:
+                    if p.id not in seen_p_ids:
+                        seen_p_ids.add(p.id)
+                        ranked_products.append(p)
+
+            # Priority 3: Matches inferred categories AND target location
+            if inferred_categories and loc_q:
+                cat_q = Q()
+                for c_name in inferred_categories:
+                    cat_q |= Q(category__name__icontains=c_name)
+                p3_qs = base_p.filter(cat_q & loc_q)
+                for p in p3_qs[:50]:
+                    if p.id not in seen_p_ids:
+                        seen_p_ids.add(p.id)
+                        ranked_products.append(p)
+
+            # Priority 4: If location was searched alone (e.g. "Dubai" or "UAE")
+            if loc_q and not product_tokens:
+                p4_qs = base_p.filter(loc_q)
+                for p in p4_qs[:80]:
+                    if p.id not in seen_p_ids:
+                        seen_p_ids.add(p.id)
+                        ranked_products.append(p)
+
+            # Fallback exact raw query substring match if still empty
+            if not ranked_products and cleaned_query:
+                fallback_qs = base_p.filter(
+                    Q(product_name__icontains=cleaned_query) |
+                    Q(description__icontains=cleaned_query)
+                )
+                for p in fallback_qs[:50]:
+                    if p.id not in seen_p_ids:
+                        seen_p_ids.add(p.id)
+                        ranked_products.append(p)
+        else:
+            p_qs = base_p
+            if loc_q:
+                p_qs = p_qs.filter(loc_q)
+            ranked_products = list(p_qs[:100])
+
+        for p in ranked_products[:100]:
             all_imgs = [img.url for img in p.images.all() if getattr(img, "url", None)]
             main_img = all_imgs[0] if all_imgs else ""
             results.append({
@@ -3726,22 +3829,61 @@ def _fallback_postgresql_search(query_text, entity_type, page, limit, category, 
 
     # 2. Lots
     if entity_type in ("all", "lot"):
-        l_qs = Lot.objects.filter(is_active=True, enquiry_status__iexact="approved")
-        if query_text:
-            l_qs = l_qs.filter(
-                Q(title__icontains=query_text) |
-                Q(description__icontains=query_text) |
-                Q(key_brands_included__icontains=query_text) |
-                Q(inventory_location__icontains=query_text)
-            )
-        if brand:
-            l_qs = l_qs.filter(key_brands_included__icontains=brand)
-        if condition:
-            l_qs = l_qs.filter(condition__icontains=condition)
-        if country:
-            l_qs = l_qs.filter(Q(inventory_country__icontains=country) | Q(inventory_location__icontains=country))
+        base_l = Lot.objects.filter(is_active=True, enquiry_status__iexact="approved")
 
-        for lot in l_qs[:100]:
+        if brand:
+            base_l = base_l.filter(key_brands_included__icontains=brand)
+        if condition:
+            base_l = base_l.filter(condition__icontains=condition)
+
+        seen_l_ids = set()
+        ranked_lots = []
+
+        if query_text:
+            text_q_l = build_text_q(product_tokens + token_variants[:10], is_lot_model=True)
+
+            # Priority 1: Text match & location match
+            if text_q_l and loc_q:
+                l1_qs = base_l.filter(text_q_l & loc_q)
+                for lot in l1_qs[:50]:
+                    if lot.id not in seen_l_ids:
+                        seen_l_ids.add(lot.id)
+                        ranked_lots.append(lot)
+
+            # Priority 2: Text match
+            if text_q_l:
+                l2_qs = base_l.filter(text_q_l)
+                for lot in l2_qs[:50]:
+                    if lot.id not in seen_l_ids:
+                        seen_l_ids.add(lot.id)
+                        ranked_lots.append(lot)
+
+            # Priority 3: Location match
+            if loc_q and not product_tokens:
+                l3_qs = base_l.filter(loc_q)
+                for lot in l3_qs[:50]:
+                    if lot.id not in seen_l_ids:
+                        seen_l_ids.add(lot.id)
+                        ranked_lots.append(lot)
+
+            # Fallback
+            if not ranked_lots and cleaned_query:
+                fallback_l = base_l.filter(
+                    Q(title__icontains=cleaned_query) |
+                    Q(description__icontains=cleaned_query) |
+                    Q(key_brands_included__icontains=cleaned_query)
+                )
+                for lot in fallback_l[:50]:
+                    if lot.id not in seen_l_ids:
+                        seen_l_ids.add(lot.id)
+                        ranked_lots.append(lot)
+        else:
+            l_qs = base_l
+            if loc_q:
+                l_qs = l_qs.filter(loc_q)
+            ranked_lots = list(l_qs[:100])
+
+        for lot in ranked_lots[:100]:
             imgs = [str(x) for x in lot.warehouse_images] if isinstance(lot.warehouse_images, list) else []
             main_img = imgs[0] if imgs else ""
             results.append({
@@ -3923,11 +4065,26 @@ def typesense_search_view(request):
                 escaped_cond = active_cond.replace("`", "")
                 filter_clauses.append(f"condition:={escaped_cond}")
 
-            if active_country:
+            # Location market & country filters
+            target_countries = parsed_intent.get("target_countries", [])
+            target_cities = parsed_intent.get("target_cities", [])
+            if target_countries or target_cities:
+                loc_filters = []
+                for c in target_countries:
+                    escaped_c = c.replace("`", "")
+                    loc_filters.append(f"country:={escaped_c}")
+                    loc_filters.append(f"inventory_country:={escaped_c}")
+                for city in target_cities:
+                    escaped_city = city.replace("`", "")
+                    loc_filters.append(f"city:={escaped_city}")
+                    loc_filters.append(f"location:={escaped_city}")
+                if loc_filters:
+                    filter_clauses.append(f"({' || '.join(loc_filters)})")
+            elif active_country:
                 escaped_country = active_country.replace("`", "")
-                filter_clauses.append(f"country:={escaped_country}")
+                filter_clauses.append(f"(country:={escaped_country} || inventory_country:={escaped_country})")
 
-            if active_city:
+            if active_city and not target_cities:
                 escaped_city = active_city.replace("`", "")
                 filter_clauses.append(f"city:={escaped_city}")
 
