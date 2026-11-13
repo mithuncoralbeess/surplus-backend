@@ -776,34 +776,45 @@
 </style>
 
 <header class="top-navbar">
-    <!-- Left: Mobile Toggle & Product Search Pill -->
-    <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-outline-secondary d-lg-none p-1 px-2 border" id="sidebarToggleBtn" type="button"
+    <!-- Left: Mobile Toggle & Minimalist Search -->
+    <div class="d-flex align-items-center gap-2 gap-md-3">
+        <button class="btn btn-outline-secondary d-lg-none p-1 px-2 border-0 rounded-circle text-secondary" id="sidebarToggleBtn" type="button"
             aria-label="Toggle sidebar">
             <i class="bi bi-list fs-5"></i>
         </button>
 
-        <div class="navbar-search-pill">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" class="form-control pill-input" placeholder="Products Search"
-                aria-label="Products Search">
-        </div>
+        <form class="navbar-search-clean" method="GET" action="/admin/products/">
+            <i class="bi bi-search search-icon me-2"></i>
+            <input type="text" name="q" class="search-input" placeholder="Search..."
+                aria-label="Search" value="{{ request.GET.q|default:'' }}">
+        </form>
     </div>
 
-    <!-- Right: Notifications, Theme Switcher, Fullscreen & User Profile Dropdown -->
+    <!-- Right: Theme Switcher (Moon), Messages (Chat), Notifications (Bell), User Profile Avatar -->
     <div class="d-flex align-items-center gap-2 gap-md-3">
+
+        <!-- Theme Switching Button (Moon Icon) -->
+        <button class="header-action-icon-btn" id="themeSwitchBtn" type="button" title="Switch Theme (Light / Dark)"
+            aria-label="Switch Theme">
+            <i class="bi bi-moon" id="themeIcon"></i>
+        </button>
+
+        <!-- Messages / Enquiries Chat Bubble with Red Notification Dot -->
+        <a href="/admin/enquiries/" class="header-action-icon-btn position-relative" title="Enquiries & Messages" aria-label="Enquiries & Messages">
+            <i class="bi bi-chat-dots"></i>
+            <span class="header-badge-dot"></span>
+        </a>
 
         <!-- Real-Time Admin Notifications Flyout -->
         <div class="dropdown" id="adminNotificationDropdownWrapper">
             <button
-                class="navbar-action-btn position-relative notif-bell-btn {% if admin_unread_notifications_count and admin_unread_notifications_count > 0 %}has-unread{% endif %}"
+                class="header-action-icon-btn position-relative notif-bell-btn {% if admin_unread_notifications_count and admin_unread_notifications_count > 0 %}has-unread{% endif %}"
                 id="adminNotificationBellBtn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
                 aria-expanded="false" title="Notifications Center">
-                <i class="bi bi-bell-fill" id="navbarBellIcon"></i>
+                <i class="bi bi-bell" id="navbarBellIcon"></i>
                 <span
-                    class="position-absolute mx-lg-1 top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white notif-badge-pill {% if not admin_unread_notifications_count or admin_unread_notifications_count == 0 %}d-none{% endif %}"
+                    class="header-badge-dot notif-badge-pill {% if not admin_unread_notifications_count or admin_unread_notifications_count == 0 %}d-none{% endif %}"
                     id="navbarNotifBadge">
-                    {{ admin_unread_notifications_count|default:"0" }}
                 </span>
             </button>
 
@@ -948,32 +959,21 @@
             </div>
         </div>
 
-        <!-- Theme Switching Button (Gear Icon) -->
-        <button class="navbar-action-btn" id="themeSwitchBtn" type="button" title="Switch Theme (Light / Dark)"
-            aria-label="Switch Theme">
-            <i class="bi bi-gear-fill" id="themeIcon"></i>
-        </button>
-
-        <!-- Fullscreen Button -->
-        <button class="navbar-action-btn" id="fullscreenToggleBtn" type="button" title="Toggle Fullscreen"
-            aria-label="Toggle Fullscreen">
-            <i class="bi bi-fullscreen" id="fullscreenIcon"></i>
-        </button>
-
-        <!-- User Profile Dropdown -->
+        <!-- User Profile Avatar with Purple Ring -->
         <div class="dropdown user-profile-dropdown">
-            <button class="btn user-profile-btn d-flex align-items-center gap-2 p-1 text-start" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <div>
-                    <div class="d-flex align-items-center gap-1">
-                        <span class="user-display-name fw-semibold" id="userProfileName">{{ admin.full_name|default:admin.username|default:"MainAdmin" }}</span>
-                        <i class="bi bi-chevron-down text-secondary" style="font-size: 0.75rem;"></i>
+            <button class="user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ admin.full_name|default:admin.username|default:'Admin Profile' }}">
+                <div class="user-avatar-ring">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"
+                         alt="{{ admin.full_name|default:admin.username|default:'Admin' }}"
+                         class="user-avatar-img"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="user-avatar-fallback rounded-circle bg-primary text-white fw-bold" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 0.85rem;">
+                        {{ admin.username|default:"A"|slice:":1"|upper }}
                     </div>
-                    <div class="user-display-role text-secondary small">{{ admin.account_type|default:"Super Admin" }}</div>
                 </div>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border rounded-3 mt-2 py-2">
-                <li class="px-3 py-1 mb-1 border-bottom pb-2">
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" style="min-width: 220px;">
+                <li class="px-3 py-2 mb-1 border-bottom pb-2">
                     <div class="d-flex align-items-center justify-content-between gap-2">
                         <span class="fw-bold d-block small user-dropdown-header-name">{{ admin.full_name|default:admin.username }}</span>
                         {% if admin.id %}
@@ -981,6 +981,7 @@
                         {% endif %}
                     </div>
                     <span class="text-secondary small text-truncate d-block" style="max-width: 180px;">{{ admin.email }}</span>
+                    <span class="badge bg-secondary-subtle text-secondary mt-1" style="font-size: 0.65rem;">{{ admin.account_type|default:"Super Admin" }}</span>
                 </li>
                 <li>
                     <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="/admin/dashboard/">
@@ -995,6 +996,11 @@
                 <li>
                     <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="/admin/notifications/">
                         <i class="bi bi-bell text-secondary"></i> Notification Center
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="/admin/enquiries/">
+                        <i class="bi bi-chat-dots text-secondary"></i> Messages & Enquiries
                     </a>
                 </li>
                 <li>
@@ -1038,14 +1044,14 @@
                 htmlElement.setAttribute('data-bs-theme', 'dark');
                 document.body.classList.remove('bg-light', 'text-dark');
                 document.body.classList.add('bg-dark', 'text-light');
-                if (themeIcon) themeIcon.className = 'bi bi-moon-stars-fill text-warning';
+                if (themeIcon) themeIcon.className = 'bi bi-sun-fill text-warning';
                 if (themeToggleText) themeToggleText.textContent = 'Switch to Light Theme';
                 if (themeBtn) themeBtn.setAttribute('title', 'Theme: Dark Mode (Click to switch to Light)');
             } else {
                 htmlElement.setAttribute('data-bs-theme', 'light');
                 document.body.classList.remove('bg-dark', 'text-light');
                 document.body.classList.add('bg-light', 'text-dark');
-                if (themeIcon) themeIcon.className = 'bi bi-gear-fill';
+                if (themeIcon) themeIcon.className = 'bi bi-moon';
                 if (themeToggleText) themeToggleText.textContent = 'Switch to Dark Theme';
                 if (themeBtn) themeBtn.setAttribute('title', 'Theme: Light Mode (Click to switch to Dark)');
             }

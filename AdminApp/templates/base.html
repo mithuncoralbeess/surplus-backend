@@ -101,39 +101,173 @@
             padding-bottom: 2.5rem;
         }
 
-        /* Top Navbar Shopeers Polish */
+        /* Modern Floating Island Top Navbar */
         .top-navbar {
             background-color: #ffffff !important;
-            border-bottom: 1px solid #f1f3f7 !important;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
+            border: 1px solid rgba(226, 232, 240, 0.85) !important;
+            border-radius: 16px !important;
+            margin: 1.25rem 1.75rem 0.75rem 1.75rem !important;
+            padding: 0.65rem 1.35rem !important;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            position: sticky !important;
+            top: 1rem !important;
+            z-index: 1020 !important;
+            backdrop-filter: blur(8px) !important;
+        }
+
+        @media (max-width: 991.98px) {
+            .top-navbar {
+                margin: 0.75rem 1rem 0.5rem 1rem !important;
+                padding: 0.5rem 0.95rem !important;
+                border-radius: 14px !important;
+                top: 0.5rem !important;
+            }
         }
 
         [data-bs-theme="dark"] .top-navbar {
             background-color: #111827 !important;
-            border-bottom: 1px solid #1f2937 !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+            border-color: #1f2937 !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
         }
 
-        .top-navbar .navbar-search-pill .pill-input {
-            background-color: #f5f6fa !important;
-            border: 1px solid #eef2f6 !important;
-            border-radius: 9999px !important;
-            font-size: 0.84rem !important;
-            color: #111827 !important;
-            transition: all 0.2s ease !important;
+        /* Minimalist Search */
+        .top-navbar .navbar-search-clean {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
-        .top-navbar .navbar-search-pill .pill-input:focus {
-            background-color: #ffffff !important;
-            border-color: #0a5c48 !important;
-            box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
+        .top-navbar .navbar-search-clean .search-icon {
+            color: #94a3b8 !important;
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+
+        .top-navbar .navbar-search-clean .search-input {
+            background: transparent !important;
+            border: none !important;
             outline: none !important;
+            box-shadow: none !important;
+            color: #1e293b !important;
+            font-size: 0.92rem !important;
+            padding: 0.25rem 0.4rem !important;
+            width: 200px;
+            transition: width 0.25s ease;
         }
 
-        [data-bs-theme="dark"] .top-navbar .navbar-search-pill .pill-input {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-            color: #f8fafc !important;
+        .top-navbar .navbar-search-clean .search-input::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+            font-weight: 400;
+        }
+
+        .top-navbar .navbar-search-clean .search-input:focus {
+            width: 260px;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .navbar-search-clean .search-input {
+            color: #f1f5f9 !important;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .navbar-search-clean .search-icon {
+            color: #64748b !important;
+        }
+
+        /* Minimalist Action Icon Buttons */
+        .top-navbar .header-action-icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: transparent !important;
+            border: none !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 1.15rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+            line-height: 1;
+            position: relative;
+        }
+
+        .top-navbar .header-action-icon-btn:hover {
+            background: rgba(148, 163, 184, 0.12) !important;
+            color: #1e293b;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .header-action-icon-btn {
+            color: #94a3b8;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .header-action-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #f8fafc;
+        }
+
+        .top-navbar .header-badge-dot {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-sizing: content-box;
+            font-size: 0;
+            pointer-events: none;
+        }
+
+        [data-bs-theme="dark"] .top-navbar .header-badge-dot {
+            border-color: #111827;
+        }
+
+        /* User Profile Avatar with Distinct Indigo/Purple Ring */
+        .top-navbar .user-avatar-btn {
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .top-navbar .user-avatar-ring {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            padding: 2px;
+            border: 2px solid #6366f1; /* Purple / indigo outline from reference image */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .top-navbar .user-avatar-ring:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        [data-bs-theme="dark"] .top-navbar .user-avatar-ring {
+            background: #111827;
+        }
+
+        .top-navbar .user-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
         }
 
         /* Global Buttons Polish (#0a5c48) */
