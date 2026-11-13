@@ -1,246 +1,909 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Add Buyer RFQ | Surplus Admin{% endblock %}
-
-{% block extra_css %}
-<style>
-    .rfq-intake-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .rfq-section-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #0f172a;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding-bottom: 0.75rem;
-        margin-bottom: 1.1rem;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    .rfq-line-row {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 0.85rem;
-        position: relative;
-    }
-    .rfq-summary-strip {
-        background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-        border: 1px solid #dbeafe;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-    }
-</style>
-{% endblock %}
+{% block title %}Add Buyer RFQ | Surplus Admin Portal{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <!-- Header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+<div class="container-fluid pb-5">
+<style>
+/* =============================================================
+   SURPLUS ADMIN PORTAL: PREMIUM RFQ INTAKE FORM DESIGN SYSTEM
+   Strict Uniform Alignment & Visual Standards
+   ============================================================= */
+
+/* Admin Submitter Status Verification Banner */
+.admin-verification-banner {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
+    border: 1.5px solid rgba(37, 99, 235, 0.22);
+}
+
+[data-bs-theme="dark"] .admin-verification-banner {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.admin-avatar-pill {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* Cards & Container Shells with Color-Coded Section Tops */
+.admin-form-card {
+    border-radius: 1rem !important;
+    border: 1.5px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
+    margin-bottom: 2rem !important;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-form-card .card-header {
+    padding: 1.15rem 1.65rem !important;
+    background-color: #ffffff !important;
+    border-bottom: 1.5px solid #f1f5f9 !important;
+}
+
+.admin-form-card .card-body {
+    padding: 1.85rem !important;
+}
+
+/* Color-Coded Card Top Accent Strips */
+.card-section-0 { border-top: 4px solid #10b981 !important; }
+.card-section-1 { border-top: 4px solid #2563eb !important; }
+.card-section-2 { border-top: 4px solid #6366f1 !important; }
+.card-sidebar-preview { border-top: 4px solid #0f172a !important; }
+.card-sidebar-readiness { border-top: 4px solid #3b82f6 !important; }
+.card-sidebar-action { border-top: 4px solid #2563eb !important; }
+
+/* Color Accent System Utilities */
+.bg-emerald-subtle { background-color: #ecfdf5 !important; }
+.text-emerald { color: #059669 !important; }
+.border-emerald-subtle { border-color: #a7f3d0 !important; }
+
+.bg-primary-subtle { background-color: #eff6ff !important; }
+.text-primary { color: #2563eb !important; }
+.border-primary-subtle { border-color: #bfdbfe !important; }
+
+.bg-indigo-subtle { background-color: #eef2ff !important; }
+.text-indigo { color: #4f46e5 !important; }
+.border-indigo-subtle { border-color: #c7d2fe !important; }
+
+.bg-amber-subtle { background-color: #fffbeb !important; }
+.text-amber { color: #d97706 !important; }
+.border-amber-subtle { border-color: #fde68a !important; }
+
+.section-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Labels: Strict 24px height prevents any vertical misalignment across columns */
+.form-label-custom {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 0.45rem !important;
+    font-size: 0.825rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    letter-spacing: -0.01em !important;
+}
+
+[data-bs-theme="dark"] .form-label-custom {
+    color: #cbd5e1 !important;
+}
+
+.form-label-custom .label-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    white-space: nowrap !important;
+    font-weight: 600 !important;
+    color: inherit !important;
+}
+
+.form-label-custom .badge-optional {
+    font-size: 0.68rem !important;
+    font-weight: 600 !important;
+    padding: 0.15rem 0.55rem !important;
+    border-radius: 999px !important;
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+
+/* Controls: Strict 46px height across Inputs, Selects, and Input-Groups */
+.form-control-custom,
+.form-select-custom,
+.input-group-text,
+.input-group .form-control-custom,
+.input-group .form-select-custom,
+.input-group .form-control,
+.input-group .form-select {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    line-height: 44px !important;
+    font-size: 0.895rem !important;
+}
+
+.form-control-custom,
+.form-select-custom {
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 0.65rem !important;
+    padding: 0 0.95rem !important;
+    font-weight: 500 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control-custom:hover,
+.form-select-custom:hover {
+    border-color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+}
+
+.form-control-custom:focus,
+.form-select-custom:focus {
+    border-color: #2563eb !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.15) !important;
+    outline: none !important;
+}
+
+textarea.form-control-custom {
+    height: auto !important;
+    min-height: 95px !important;
+    max-height: none !important;
+    line-height: 1.55 !important;
+    padding: 0.8rem 1rem !important;
+}
+
+/* Input Groups */
+.input-group {
+    border-radius: 0.65rem !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    position: relative;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+}
+
+.addon-icon {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    font-size: 1.05rem !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-right: none !important;
+    border-top-left-radius: 0.65rem !important;
+    border-bottom-left-radius: 0.65rem !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.input-group > .form-control-custom:not(:first-child),
+.input-group > .form-select-custom:not(:first-child) {
+    border-left: none !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 0.65rem !important;
+    border-bottom-right-radius: 0.65rem !important;
+}
+
+.input-group:focus-within .addon-icon {
+    border-color: #2563eb !important;
+}
+
+.input-group:focus-within > .form-control-custom,
+.input-group:focus-within > .form-select-custom {
+    border-color: #2563eb !important;
+}
+
+/* Channel Selection Cards */
+.channel-box {
+    height: 82px !important;
+    min-height: 82px !important;
+    max-height: 82px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.85rem !important;
+    padding: 0.65rem 0.5rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.channel-box:hover {
+    border-color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.channel-radio-card input:checked + .channel-box {
+    background-color: #eff6ff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px #2563eb, 0 4px 14px rgba(37, 99, 235, 0.12) !important;
+}
+
+.channel-radio-card input:checked + .channel-box .channel-label {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+}
+
+/* Line Item Row Cards */
+.rfq-item-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.85rem;
+    padding: 1.15rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rfq-item-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.rfq-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.65rem;
+    margin-bottom: 0.85rem;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.rfq-metrics-terminal {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 1rem !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+.metric-kpi-tile {
+    background: #ffffff !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem 1.25rem !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-kpi-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    border-color: #cbd5e1 !important;
+}
+
+/* Sticky Action & Preview */
+.sticky-preview-card,
+.sticky-action-box {
+    position: sticky;
+    top: 1.5rem;
+    z-index: 5;
+}
+
+/* Dark Mode Overrides */
+[data-bs-theme="dark"] .admin-form-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .admin-form-card .card-header {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .form-control-custom,
+[data-bs-theme="dark"] .form-select-custom {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-bs-theme="dark"] .addon-icon {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #94a3b8 !important;
+}
+
+[data-bs-theme="dark"] .channel-box,
+[data-bs-theme="dark"] .rfq-item-card,
+[data-bs-theme="dark"] .metric-kpi-tile {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-bs-theme="dark"] .rfq-metrics-terminal {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+</style>
+
+    <!-- Page Header & Breadcrumb -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
         <div>
-            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-                <i class="bi bi-person-plus-fill text-primary"></i>
-                <span>Add Buyer &amp; Create RFQ</span>
-            </h3>
-            <p class="text-muted small mb-0">
-                Assisted Buyer Intake ({{ admin_uid }}) &mdash; Select or register a buyer and submit an RFQ for Products and/or Lots.
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list list-unstyled d-flex align-items-center gap-2 mb-1 p-0 small text-muted">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/" class="text-decoration-none text-muted"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
+                    <li class="breadcrumb-item"><a href="/admin/rfq-requests/" class="text-decoration-none text-muted">RFQ Requests</a></li>
+                    <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
+                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><span>Add Buyer &amp; Create RFQ</span></li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                <h1 class="header-title mb-0 fs-3 fw-bold text-dark">Add Buyer &amp; Create RFQ</h1>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-person-plus-fill me-1"></i>Assisted Buyer Intake
+                </span>
+                <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle rounded-pill px-3 py-1 fw-semibold small">
+                    <i class="bi bi-basket3-fill me-1"></i>Consolidated RFQ Creation
+                </span>
+            </div>
+            <p class="header-subtitle mt-1 mb-0 text-muted small">
+                Assisted Buyer Intake ({{ admin_uid }}) &mdash; Register or select a buyer and submit an RFQ enquiry for Products and/or Lots.
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/rfq-requests/" class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-semibold">
-                <i class="bi bi-file-earmark-text me-1"></i> View All RFQs
+            <a href="/admin/rfq-requests/" class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
+                <i class="bi bi-arrow-left"></i> View All RFQs
             </a>
-            <a href="/admin/users/" class="btn btn-outline-primary btn-sm rounded-3 px-3 py-2 fw-semibold">
+            <a href="/admin/users/" class="btn btn-outline-primary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
                 <i class="bi bi-people me-1"></i> Manage Users
             </a>
+            <button type="submit" form="addBuyerRfqForm" id="btnSubmitTop"
+                class="btn btn-primary px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm">
+                <i class="bi bi-check-circle-fill fs-6"></i> Submit Buyer RFQ
+            </button>
         </div>
     </div>
 
+    <!-- Flash Error / Notification Messages -->
     {% if messages %}
-    <div class="mb-3">
+    <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show rounded-3" role="alert">
-            {{ message }}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3 p-3"
+            role="alert">
+            {% if message.tags == 'error' %}
+            <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+            {% else %}
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            {% endif %}
+            <div class="fw-medium">{{ message }}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <form method="POST" action="/admin/buyers/add/" id="addBuyerRfqForm">
+    <!-- Admin Submitter Status Strip -->
+    <div class="admin-verification-banner mb-4 p-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
+        <div class="d-flex align-items-center gap-3">
+            <div class="admin-avatar-pill d-flex align-items-center justify-content-center text-white flex-shrink-0">
+                <i class="bi bi-shield-fill-check fs-4"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Buyer Intake by Verified Admin:</span>
+                    <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
+                    <span class="text-secondary small fw-medium">
+                        ({% if admin.full_name %}{{ admin.full_name }} &bull; {% elif admin.username and admin.username != admin.email %}{{ admin.username }} &bull; {% endif %}{{ admin.email|default:admin.username }})
+                    </span>
+                    {% if admin.account_type %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-2" style="font-size: 0.72rem;">{{ admin.account_type }}</span>
+                    {% endif %}
+                </div>
+                <div class="text-secondary small mt-1">
+                    This RFQ will be logged in <strong>RFQ Basket Enquiries</strong> with verified admin audit attribution and real-time inventory matching.
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-patch-check-fill me-1"></i>Verified Sourcing
+            </span>
+        </div>
+    </div>
+
+    <!-- MAIN FORM -->
+    <form method="POST" action="/admin/buyers/add/" id="addBuyerRfqForm" novalidate>
         {% csrf_token %}
 
-        <!-- 1. Buyer Details -->
-        <div class="rfq-intake-card">
-            <div class="rfq-section-title">
-                <i class="bi bi-person-badge text-primary fs-5"></i>
-                <span>1. Buyer Account &amp; Assisted Intake Details</span>
-            </div>
+        <div class="row g-4">
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-8">
-                    <label for="existingBuyerSelect" class="form-label small fw-semibold text-dark">
-                        Select Existing Buyer (Optional &mdash; leave blank to auto-register a new Buyer)
-                    </label>
-                    <select class="form-select" id="existingBuyerSelect" name="existing_buyer_id">
-                        <option value="">-- Register New Buyer / Match by Email or Phone --</option>
-                        {% for b in buyers_list %}
-                        <option value="{{ b.id }}" {% if form_data.existing_buyer_id|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
-                            {{ b.vendor_id }} &mdash; {{ b.name }}{% if b.company %} ({{ b.company }}){% endif %}{% if b.email %} &bull; {{ b.email }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="intakeChannelSelect" class="form-label small fw-semibold text-dark">Intake Channel</label>
-                    <select class="form-select" id="intakeChannelSelect" name="intake_channel">
-                        <option value="WhatsApp" {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}selected{% endif %}>WhatsApp</option>
-                        <option value="Email" {% if form_data.intake_channel == 'Email' %}selected{% endif %}>Email</option>
-                        <option value="Phone Call" {% if form_data.intake_channel == 'Phone Call' %}selected{% endif %}>Phone Call</option>
-                        <option value="Direct / Walk-in" {% if form_data.intake_channel == 'Direct / Walk-in' %}selected{% endif %}>Direct / Walk-in</option>
-                    </select>
-                </div>
-            </div>
+            <!-- LEFT COLUMN (Form Sections 1 to 3) -->
+            <div class="col-lg-8">
 
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label for="contactPersonInput" class="form-label small fw-semibold text-dark">Buyer Contact Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="contactPersonInput" name="contact_person" value="{{ form_data.contact_person|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
-                </div>
-                <div class="col-md-4">
-                    <label for="buyerEmailInput" class="form-label small fw-semibold text-dark">Buyer Email</label>
-                    <input type="email" class="form-control" id="buyerEmailInput" name="email" value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
-                </div>
-                <div class="col-md-4">
-                    <label for="buyerPhoneInput" class="form-label small fw-semibold text-dark">Phone / WhatsApp</label>
-                    <input type="text" class="form-control" id="buyerPhoneInput" name="phone" value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000">
-                </div>
-                <div class="col-md-4">
-                    <label for="buyerCompanyInput" class="form-label small fw-semibold text-dark">Company Name</label>
-                    <input type="text" class="form-control" id="buyerCompanyInput" name="company_name" value="{{ form_data.company_name|default:'' }}" placeholder="e.g. Gulf Trading LLC">
-                </div>
-                <div class="col-md-4">
-                    <label for="buyerCountrySelect" class="form-label small fw-semibold text-dark">Country</label>
-                    <select class="form-select" id="buyerCountrySelect" name="country">
-                        <option value="">-- Select Country --</option>
-                        {% for c in countries %}
-                        <option value="{{ c }}" {% if form_data.country == c %}selected{% endif %}>{{ c }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="buyerLocationInput" class="form-label small fw-semibold text-dark">Business Location / City</label>
-                    <input type="text" class="form-control" id="buyerLocationInput" name="business_location" value="{{ form_data.business_location|default:'' }}" placeholder="e.g. Dubai, UAE">
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. Select Products & Lots for RFQ -->
-        <div class="rfq-intake-card">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-                <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 1rem;">
-                    <i class="bi bi-boxes text-primary fs-5"></i>
-                    <span>2. Select Products &amp; Lots for RFQ</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" id="addProductRowBtn">
-                        <i class="bi bi-plus-lg me-1"></i> Add Product
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 fw-semibold" id="addLotRowBtn">
-                        <i class="bi bi-plus-lg me-1"></i> Add Lot
-                    </button>
-                </div>
-            </div>
-
-            <div id="rfqItemsContainer"></div>
-
-            <div class="rfq-summary-strip d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3">
-                <div class="d-flex flex-wrap gap-4">
-                    <div>
-                        <span class="text-muted small d-block">Selected Line Items</span>
-                        <strong class="fs-5 text-dark" id="summaryLineCount">0</strong>
+                <!-- 1. Buyer Account & Assisted Intake Details -->
+                <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-emerald-subtle text-emerald">
+                                <i class="bi bi-person-vcard"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">1. Buyer Account &amp; Assisted Intake Details</h6>
+                                <div class="text-muted small">Select an existing verified buyer or auto-register a new buyer profile on the fly</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-person-check-fill me-1"></i>Assisted Offline Intake
+                        </span>
                     </div>
-                    <div>
-                        <span class="text-muted small d-block">Total Units</span>
-                        <strong class="fs-5 text-primary" id="summaryTotalUnits">0</strong>
+
+                    <div class="card-body p-4">
+
+                        <!-- Intake Channel Quick-Select Cards -->
+                        <div class="mb-4">
+                            <label class="form-label-custom">
+                                <span class="label-title">Intake Submission Channel <span class="text-danger">*</span></span>
+                                <span class="text-muted small">How buyer submitted their request</span>
+                            </label>
+                            <div class="row g-3 intake-channel-grid mt-0.5">
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="WhatsApp" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}checked{% endif %}>
+                                        <div class="channel-box text-center">
+                                            <i class="bi bi-whatsapp fs-4 text-success mb-1"></i>
+                                            <div class="channel-label small fw-semibold text-dark">WhatsApp</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Email" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Email' %}checked{% endif %}>
+                                        <div class="channel-box text-center">
+                                            <i class="bi bi-envelope-fill fs-4 text-primary mb-1"></i>
+                                            <div class="channel-label small fw-semibold text-dark">Email</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Phone Call" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Phone Call' %}checked{% endif %}>
+                                        <div class="channel-box text-center">
+                                            <i class="bi bi-telephone-fill fs-4 text-info mb-1"></i>
+                                            <div class="channel-label small fw-semibold text-dark">Phone Call</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <label class="channel-radio-card d-block cursor-pointer">
+                                        <input type="radio" name="intake_channel" value="Direct / Walk-in" class="d-none intake-radio"
+                                            {% if form_data.intake_channel == 'Direct / Walk-in' %}checked{% endif %}>
+                                        <div class="channel-box text-center">
+                                            <i class="bi bi-person-walking fs-4 text-warning mb-1"></i>
+                                            <div class="channel-label small fw-semibold text-dark">Direct / Walk-in</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Buyer Quick-Select Bar -->
+                        <div class="p-3 mb-4 rounded-3 border" style="background-color: #f8fafc;">
+                            <label for="existingBuyerSelect" class="form-label-custom">
+                                <span class="label-title">
+                                    <i class="bi bi-person-check me-1 text-primary"></i>Quick-Select Existing Buyer Directory
+                                </span>
+                                <span class="badge-optional">Optional</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="addon-icon"><i class="bi bi-search"></i></span>
+                                <select class="form-select form-select-custom" id="existingBuyerSelect" name="existing_buyer_id">
+                                    <option value="">-- Auto-Register New Buyer Profile / Select to Auto-Fill --</option>
+                                    {% for b in buyers_list %}
+                                    <option value="{{ b.id }}" {% if form_data.existing_buyer_id|stringformat:"s" == b.id|stringformat:"s" %}selected{% endif %}>
+                                        [{{ b.vendor_id }}] {{ b.name }}{% if b.company %} &bull; {{ b.company }}{% endif %}{% if b.email %} ({{ b.email }}){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="text-muted small mt-2 d-flex align-items-center gap-1">
+                                <i class="bi bi-info-circle text-primary"></i>
+                                <span>Selecting an existing buyer auto-fills the profile fields below. Leaving blank automatically creates a new buyer record.</span>
+                            </div>
+                        </div>
+
+                        <!-- Buyer Contact Details Inputs -->
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="contactPersonInput" class="form-label-custom">
+                                    <span class="label-title">Buyer Contact Name <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="contactPersonInput" name="contact_person"
+                                        value="{{ form_data.contact_person|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="buyerEmailInput" class="form-label-custom">
+                                    <span class="label-title">Buyer Email</span>
+                                    <span class="badge-optional">Recommended</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
+                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="buyerPhoneInput" class="form-label-custom">
+                                    <span class="label-title">Phone / WhatsApp</span>
+                                    <span class="badge-optional">Recommended</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="buyerPhoneInput" name="phone"
+                                        value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="buyerCompanyInput" class="form-label-custom">
+                                    <span class="label-title">Company Name</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-building"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="buyerCompanyInput" name="company_name"
+                                        value="{{ form_data.company_name|default:'' }}" placeholder="e.g. Gulf Trading LLC">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="buyerCountrySelect" class="form-label-custom">
+                                    <span class="label-title">Country</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-globe"></i></span>
+                                    <select class="form-select form-select-custom" id="buyerCountrySelect" name="country">
+                                        <option value="">-- Select Country --</option>
+                                        {% for c in countries %}
+                                        <option value="{{ c }}" {% if form_data.country == c %}selected{% endif %}>{{ c }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="buyerLocationInput" class="form-label-custom">
+                                    <span class="label-title">Business Location / City</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="buyerLocationInput" name="business_location"
+                                        value="{{ form_data.business_location|default:'' }}" placeholder="e.g. Dubai, UAE">
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                    <div>
-                        <span class="text-muted small d-block">Estimated RFQ Value</span>
-                        <strong class="fs-5 text-success" id="summaryEstValue">0.00</strong>
+                </div>
+
+                <!-- 2. Products & Lots Sourcing Basket -->
+                <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-primary-subtle text-primary">
+                                <i class="bi bi-boxes"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">2. Products &amp; Lots Sourcing Basket</h6>
+                                <div class="text-muted small">Select the surplus items requested by buyer. Supports single SKU Products &amp; bulk Lots.</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-xs" id="addProductRowBtn">
+                                <i class="bi bi-plus-circle me-1"></i> Add Product
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 fw-semibold shadow-xs" id="addLotRowBtn">
+                                <i class="bi bi-plus-circle me-1"></i> Add Bulk Lot
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <!-- Line Items Container -->
+                        <div id="rfqItemsContainer"></div>
+
+                        <!-- Sourcing Basket Metrics Terminal -->
+                        <div class="rfq-metrics-terminal mt-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calculator-fill text-primary fs-5"></i>
+                                    <strong class="text-dark">Sourcing Basket Summary</strong>
+                                </div>
+                                <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill small">
+                                    Live Price Valuation
+                                </span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile">
+                                        <div class="text-muted small fw-semibold text-uppercase">Line Items</div>
+                                        <div class="fs-4 fw-bold text-dark mt-1" id="summaryLineCount">0</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile">
+                                        <div class="text-muted small fw-semibold text-uppercase">Total Units / Qty</div>
+                                        <div class="fs-4 fw-bold text-primary mt-1" id="summaryTotalUnits">0</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="metric-kpi-tile">
+                                        <div class="text-muted small fw-semibold text-uppercase">Est. Basket Value</div>
+                                        <div class="fs-4 fw-bold text-success font-monospace mt-1" id="summaryEstValue">USD 0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-                <span class="text-muted small">Mix and match single Products and bulk Lots in the same RFQ.</span>
-            </div>
-        </div>
 
-        <!-- 3. Logistics, Terms & Notes -->
-        <div class="rfq-intake-card">
-            <div class="rfq-section-title">
-                <i class="bi bi-truck text-primary fs-5"></i>
-                <span>3. Delivery Terms, Status &amp; Notes</span>
+                <!-- 3. Delivery Terms, Logistics & Notes -->
+                <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-indigo-subtle text-indigo">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">3. Commercial Terms, Logistics &amp; Notes</h6>
+                                <div class="text-muted small">Specify Incoterms, payment method, initial status, and special handling instructions</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-shield-check me-1"></i>Trade Terms
+                        </span>
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label for="destinationPortInput" class="form-label-custom">
+                                    <span class="label-title">Destination Port / City</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="destinationPortInput" name="destination_port"
+                                        value="{{ form_data.destination_port|default:'' }}" placeholder="e.g. Jebel Ali / Doha">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="incotermSelect" class="form-label-custom">
+                                    <span class="label-title">Incoterm</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-file-earmark-check"></i></span>
+                                    <select class="form-select form-select-custom" id="incotermSelect" name="incoterm">
+                                        {% for val, label in incoterms %}
+                                        <option value="{{ val }}" {% if form_data.incoterm == val %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="paymentMethodSelect" class="form-label-custom">
+                                    <span class="label-title">Payment Method</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-credit-card"></i></span>
+                                    <select class="form-select form-select-custom" id="paymentMethodSelect" name="payment_method">
+                                        {% for val, label in payment_methods %}
+                                        <option value="{{ val }}" {% if form_data.payment_method == val %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="rfqCurrencySelect" class="form-label-custom">
+                                    <span class="label-title">Currency</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-cash-stack"></i></span>
+                                    <select class="form-select form-select-custom" id="rfqCurrencySelect" name="currency">
+                                        {% for cur in currencies %}
+                                        <option value="{{ cur }}" {% if form_data.currency == cur or not form_data.currency and cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="rfqStatusSelect" class="form-label-custom">
+                                    <span class="label-title">Initial Status</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-flag"></i></span>
+                                    <select class="form-select form-select-custom" id="rfqStatusSelect" name="status">
+                                        <option value="PENDING" {% if form_data.status == 'PENDING' or not form_data.status %}selected{% endif %}>Pending</option>
+                                        <option value="QUOTED" {% if form_data.status == 'QUOTED' %}selected{% endif %}>Quoted</option>
+                                        <option value="ACCEPTED" {% if form_data.status == 'ACCEPTED' %}selected{% endif %}>Accepted</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="additionalNotesInput" class="form-label-custom">
+                                    <span class="label-title">Buyer Requirements &amp; Notes</span>
+                                    <span class="badge-optional">Optional</span>
+                                </label>
+                                <textarea class="form-control form-control-custom" id="additionalNotesInput" name="additional_notes" rows="3"
+                                    placeholder="Packaging requests, target delivery timeline, inspection requirements...">{{ form_data.additional_notes|default:'' }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="adminNotesInput" class="form-label-custom">
+                                    <span class="label-title">Internal Admin Notes</span>
+                                    <span class="badge-optional">Confidential</span>
+                                </label>
+                                <textarea class="form-control form-control-custom" id="adminNotesInput" name="admin_notes" rows="3"
+                                    placeholder="Internal sourcing context, supplier contact notes, target margin...">{{ form_data.admin_notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
 
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label for="destinationPortInput" class="form-label small fw-semibold text-dark">Destination Port / City</label>
-                    <input type="text" class="form-control" id="destinationPortInput" name="destination_port" value="{{ form_data.destination_port|default:'' }}" placeholder="e.g. Jebel Ali / Doha">
-                </div>
-                <div class="col-md-3">
-                    <label for="incotermSelect" class="form-label small fw-semibold text-dark">Incoterm</label>
-                    <select class="form-select" id="incotermSelect" name="incoterm">
-                        {% for val, label in incoterms %}
-                        <option value="{{ val }}" {% if form_data.incoterm == val %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="paymentMethodSelect" class="form-label small fw-semibold text-dark">Payment Method</label>
-                    <select class="form-select" id="paymentMethodSelect" name="payment_method">
-                        {% for val, label in payment_methods %}
-                        <option value="{{ val }}" {% if form_data.payment_method == val %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="rfqCurrencySelect" class="form-label small fw-semibold text-dark">Currency</label>
-                    <select class="form-select" id="rfqCurrencySelect" name="currency">
-                        {% for cur in currencies %}
-                        <option value="{{ cur }}" {% if form_data.currency == cur or not form_data.currency and cur == 'USD' %}selected{% endif %}>{{ cur }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="rfqStatusSelect" class="form-label small fw-semibold text-dark">Initial Status</label>
-                    <select class="form-select" id="rfqStatusSelect" name="status">
-                        <option value="PENDING" {% if form_data.status == 'PENDING' or not form_data.status %}selected{% endif %}>Pending Review</option>
-                        <option value="QUOTED" {% if form_data.status == 'QUOTED' %}selected{% endif %}>Quoted</option>
-                        <option value="ACCEPTED" {% if form_data.status == 'ACCEPTED' %}selected{% endif %}>Accepted</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label for="additionalNotesInput" class="form-label small fw-semibold text-dark">Buyer Requirements / Additional Notes</label>
-                    <textarea class="form-control" id="additionalNotesInput" name="additional_notes" rows="3" placeholder="Packaging requests, target delivery timeline, inspection notes...">{{ form_data.additional_notes|default:'' }}</textarea>
-                </div>
-                <div class="col-md-6">
-                    <label for="adminNotesInput" class="form-label small fw-semibold text-dark">Internal Admin Notes</label>
-                    <textarea class="form-control" id="adminNotesInput" name="admin_notes" rows="3" placeholder="Internal sourcing notes or sales context...">{{ form_data.admin_notes|default:'' }}</textarea>
-                </div>
-            </div>
-        </div>
+            <!-- RIGHT COLUMN (Sticky Live Preview, Readiness & Actions) -->
+            <div class="col-lg-4">
 
-        <div class="d-flex justify-content-end gap-2 mb-4">
-            <a href="/admin/rfq-requests/" class="btn btn-outline-secondary rounded-3 px-4 py-2 fw-semibold">Cancel</a>
-            <button type="submit" class="btn btn-primary rounded-3 px-4 py-2 fw-semibold shadow-sm">
-                <i class="bi bi-check2-circle me-1"></i> Submit Buyer RFQ
-            </button>
+                <!-- 1. Live RFQ Preview & Buyer Snapshot Card -->
+                <div class="card admin-form-card card-sidebar-preview mb-4 border-0 shadow-sm sticky-preview-card">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-receipt-cutoff text-primary"></i>
+                            <span>RFQ Live Summary</span>
+                        </h6>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill small" id="previewStatusBadge">PENDING</span>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <!-- Valuation Hero Tile -->
+                        <div class="p-3 rounded-3 mb-4 text-center border" style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
+                            <div class="text-muted small fw-semibold text-uppercase mb-1">Total Estimated Value</div>
+                            <div class="fs-2 fw-bold text-success font-monospace" id="sidebarEstValue">$0.00</div>
+                            <div class="d-flex justify-content-center gap-3 mt-2 pt-2 border-top small text-muted">
+                                <span><i class="bi bi-list-check me-1 text-primary"></i><strong id="sidebarLineCount" class="text-dark">0</strong> Items</span>
+                                <span><i class="bi bi-box-seam me-1 text-primary"></i><strong id="sidebarTotalUnits" class="text-dark">0</strong> Units</span>
+                            </div>
+                        </div>
+
+                        <!-- Buyer Profile Snapshot -->
+                        <div class="p-3 rounded-3 border bg-light mb-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 34px; height: 34px; font-size: 0.85rem;" id="buyerAvatarIcon">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold text-dark text-truncate" id="sidebarBuyerName">New Buyer Profile</div>
+                                    <div class="text-muted small text-truncate" id="sidebarBuyerCompany">Company: Not specified</div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-1 small text-secondary pt-2 border-top">
+                                <div><i class="bi bi-envelope me-1 text-muted"></i><span id="sidebarBuyerEmail">--</span></div>
+                                <div><i class="bi bi-telephone me-1 text-muted"></i><span id="sidebarBuyerPhone">--</span></div>
+                                <div><i class="bi bi-geo-alt me-1 text-muted"></i><span id="sidebarBuyerLocation">--</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Intake Channel & Terms -->
+                        <div class="small text-muted d-flex flex-column gap-1 p-2.5 rounded-3 border bg-white">
+                            <div class="d-flex justify-content-between">
+                                <span>Intake Channel:</span>
+                                <strong class="text-dark" id="sidebarChannel">WhatsApp</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Incoterm:</span>
+                                <strong class="text-dark" id="sidebarIncoterm">EXW</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Payment:</span>
+                                <strong class="text-dark" id="sidebarPayment">Escrow</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Intake Readiness Checklist -->
+                <div class="card admin-form-card card-sidebar-readiness mb-4 border-0 shadow-sm p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-2">
+                            <i class="bi bi-check2-circle text-primary fs-6"></i> Intake Readiness
+                        </h6>
+                        <span class="fw-bold font-monospace text-primary small" id="checklistProgressPct">0%</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 6px; border-radius: 999px;">
+                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
+                    </div>
+                    <div class="checklist-items d-flex flex-column gap-2.5 small text-secondary">
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkContactName">
+                            <i class="bi bi-circle text-muted"></i> <span>Buyer Contact Name</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkContactMethod">
+                            <i class="bi bi-circle text-muted"></i> <span>Contact Info (Email or Phone)</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkItemsSelected">
+                            <i class="bi bi-circle text-muted"></i> <span>At least 1 Product / Lot Selected</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkItemQuantities">
+                            <i class="bi bi-circle text-muted"></i> <span>Valid Item Quantities</span>
+                        </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkTerms">
+                            <i class="bi bi-circle text-muted"></i> <span>Commercial Terms &amp; Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Sticky Action Box -->
+                <div class="card admin-form-card card-sidebar-action border-0 shadow-sm p-4 sticky-action-box">
+                    <div class="d-grid gap-3">
+                        <button type="submit" form="addBuyerRfqForm" id="btnSubmitBottom"
+                            class="btn btn-primary btn-lg py-3 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
+                            <i class="bi bi-check-circle-fill"></i> Submit Buyer RFQ
+                        </button>
+                        <a href="/admin/rfq-requests/"
+                            class="btn btn-outline-secondary py-2.5 rounded-3 text-decoration-none text-center fw-medium">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel &amp; Return
+                        </a>
+                    </div>
+                    <div class="text-center text-muted small mt-3 pt-3 border-top">
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        Saved with verified Admin ID <strong>{{ admin_uid }}</strong>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </form>
 </div>
@@ -255,6 +918,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const productsMap = new Map(productsData.map(p => [String(p.id), p]));
     const lotsMap = new Map(lotsData.map(l => [String(l.id), l]));
 
+    // Buyer Inputs
     const existingBuyerSelect = document.getElementById('existingBuyerSelect');
     const contactInput = document.getElementById('contactPersonInput');
     const emailInput = document.getElementById('buyerEmailInput');
@@ -262,6 +926,55 @@ document.addEventListener('DOMContentLoaded', function () {
     const companyInput = document.getElementById('buyerCompanyInput');
     const countrySelect = document.getElementById('buyerCountrySelect');
     const locationInput = document.getElementById('buyerLocationInput');
+
+    // Sidebar Preview Elements
+    const sidebarBuyerName = document.getElementById('sidebarBuyerName');
+    const sidebarBuyerCompany = document.getElementById('sidebarBuyerCompany');
+    const sidebarBuyerEmail = document.getElementById('sidebarBuyerEmail');
+    const sidebarBuyerPhone = document.getElementById('sidebarBuyerPhone');
+    const sidebarBuyerLocation = document.getElementById('sidebarBuyerLocation');
+    const sidebarChannel = document.getElementById('sidebarChannel');
+    const sidebarIncoterm = document.getElementById('sidebarIncoterm');
+    const sidebarPayment = document.getElementById('sidebarPayment');
+    const previewStatusBadge = document.getElementById('previewStatusBadge');
+    const sidebarEstValue = document.getElementById('sidebarEstValue');
+    const sidebarLineCount = document.getElementById('sidebarLineCount');
+    const sidebarTotalUnits = document.getElementById('sidebarTotalUnits');
+
+    // Checklist Elements
+    const checklistProgressBar = document.getElementById('checklistProgressBar');
+    const checklistProgressPct = document.getElementById('checklistProgressPct');
+    const checkContactName = document.getElementById('checkContactName');
+    const checkContactMethod = document.getElementById('checkContactMethod');
+    const checkItemsSelected = document.getElementById('checkItemsSelected');
+    const checkItemQuantities = document.getElementById('checkItemQuantities');
+    const checkTerms = document.getElementById('checkTerms');
+
+    // Currency & Terms Elements
+    const rfqCurrencySelect = document.getElementById('rfqCurrencySelect');
+    const incotermSelect = document.getElementById('incotermSelect');
+    const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    const rfqStatusSelect = document.getElementById('rfqStatusSelect');
+    const container = document.getElementById('rfqItemsContainer');
+    const summaryLineCount = document.getElementById('summaryLineCount');
+    const summaryTotalUnits = document.getElementById('summaryTotalUnits');
+    const summaryEstValue = document.getElementById('summaryEstValue');
+
+    function updateBuyerPreview() {
+        const name = contactInput?.value.trim() || 'New Buyer Profile';
+        const company = companyInput?.value.trim() || 'Company: Not specified';
+        const email = emailInput?.value.trim() || '--';
+        const phone = phoneInput?.value.trim() || '--';
+        const loc = [locationInput?.value.trim(), countrySelect?.value.trim()].filter(Boolean).join(', ') || '--';
+
+        if (sidebarBuyerName) sidebarBuyerName.textContent = name;
+        if (sidebarBuyerCompany) sidebarBuyerCompany.textContent = company;
+        if (sidebarBuyerEmail) sidebarBuyerEmail.textContent = email;
+        if (sidebarBuyerPhone) sidebarBuyerPhone.textContent = phone;
+        if (sidebarBuyerLocation) sidebarBuyerLocation.textContent = loc;
+
+        updateChecklist();
+    }
 
     if (existingBuyerSelect) {
         existingBuyerSelect.addEventListener('change', function () {
@@ -273,36 +986,63 @@ document.addEventListener('DOMContentLoaded', function () {
             if (companyInput) companyInput.value = b.company || '';
             if (countrySelect && b.country) countrySelect.value = b.country;
             if (locationInput) locationInput.value = b.location || '';
+            updateBuyerPreview();
         });
     }
 
-    const container = document.getElementById('rfqItemsContainer');
-    const summaryLineCount = document.getElementById('summaryLineCount');
-    const summaryTotalUnits = document.getElementById('summaryTotalUnits');
-    const summaryEstValue = document.getElementById('summaryEstValue');
-    const rfqCurrencySelect = document.getElementById('rfqCurrencySelect');
+    [contactInput, emailInput, phoneInput, companyInput, countrySelect, locationInput].forEach(el => {
+        el?.addEventListener('input', updateBuyerPreview);
+        el?.addEventListener('change', updateBuyerPreview);
+    });
+
+    // Channel Radios
+    document.querySelectorAll('.intake-radio').forEach(r => {
+        r.addEventListener('change', () => {
+            if (sidebarChannel) sidebarChannel.textContent = r.value;
+        });
+    });
+
+    incotermSelect?.addEventListener('change', () => {
+        if (sidebarIncoterm) sidebarIncoterm.textContent = incotermSelect.value;
+    });
+
+    paymentMethodSelect?.addEventListener('change', () => {
+        if (sidebarPayment) sidebarPayment.textContent = paymentMethodSelect.value;
+    });
+
+    rfqStatusSelect?.addEventListener('change', () => {
+        if (previewStatusBadge) previewStatusBadge.textContent = rfqStatusSelect.value;
+    });
 
     function populateItemSelect(selectEl, itemType) {
         const list = (itemType === 'lot') ? lotsData : productsData;
-        selectEl.innerHTML = `<option value="">-- Select ${itemType === 'lot' ? 'Lot' : 'Product'} --</option>`;
+        selectEl.innerHTML = `<option value="">-- Select ${itemType === 'lot' ? 'Bulk Lot' : 'Product Listing'} --</option>`;
         list.forEach(item => {
             const opt = document.createElement('option');
             opt.value = item.id;
-            opt.textContent = `[${item.code}] ${item.title} (${item.currency} ${Number(item.price || 0).toFixed(2)} | Stock: ${item.quantity})`;
+            opt.textContent = `[${item.code}] ${item.title} (${item.currency} ${Number(item.price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | Stock: ${item.quantity})`;
             selectEl.appendChild(opt);
         });
     }
 
     function updateSummary() {
-        const rows = container.querySelectorAll('.rfq-line-row');
+        const rows = container.querySelectorAll('.rfq-item-card');
         let validCount = 0;
         let totalUnits = 0;
         let totalVal = 0;
 
-        rows.forEach(row => {
+        rows.forEach((row, idx) => {
+            const numBadge = row.querySelector('.item-num-badge');
+            if (numBadge) numBadge.textContent = `#${idx + 1}`;
+
             const typeSel = row.querySelector('.item-type-select');
             const idSel = row.querySelector('.item-id-select');
             const qtyInput = row.querySelector('.item-qty-input');
+            const targetPriceInput = row.querySelector('.item-target-price-input');
+            const unitPriceBadge = row.querySelector('.item-unit-price-badge');
+            const lineSubtotalBadge = row.querySelector('.item-subtotal-badge');
+            const stockBadge = row.querySelector('.item-stock-badge');
+
             const itemType = typeSel ? typeSel.value : 'product';
             const itemId = idSel ? String(idSel.value) : '';
             const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10) || 1);
@@ -311,79 +1051,192 @@ document.addEventListener('DOMContentLoaded', function () {
                 const map = (itemType === 'lot') ? lotsMap : productsMap;
                 const rec = map.get(itemId);
                 const price = rec ? (parseFloat(rec.price) || 0) : 0;
+                const recCur = rec?.currency || 'USD';
+                const stock = rec?.quantity || 1;
+
                 validCount += 1;
                 totalUnits += qty;
                 totalVal += price * qty;
+
+                if (unitPriceBadge) unitPriceBadge.textContent = `Unit Price: ${recCur} ${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                if (stockBadge) stockBadge.textContent = `Avail: ${stock} units`;
+                if (lineSubtotalBadge) lineSubtotalBadge.textContent = `Subtotal: ${recCur} ${(price * qty).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            } else {
+                if (unitPriceBadge) unitPriceBadge.textContent = 'Unit Price: --';
+                if (stockBadge) stockBadge.textContent = 'Avail: --';
+                if (lineSubtotalBadge) lineSubtotalBadge.textContent = 'Subtotal: --';
             }
         });
 
         const cur = rfqCurrencySelect ? rfqCurrencySelect.value : 'USD';
+        const formattedVal = `${cur} ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
         if (summaryLineCount) summaryLineCount.textContent = String(validCount);
         if (summaryTotalUnits) summaryTotalUnits.textContent = String(totalUnits);
-        if (summaryEstValue) summaryEstValue.textContent = `${cur} ${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (summaryEstValue) summaryEstValue.textContent = formattedVal;
+
+        if (sidebarLineCount) sidebarLineCount.textContent = String(validCount);
+        if (sidebarTotalUnits) sidebarTotalUnits.textContent = String(totalUnits);
+        if (sidebarEstValue) sidebarEstValue.textContent = formattedVal;
+
+        updateChecklist(validCount > 0, totalUnits > 0);
+    }
+
+    function setCheckState(itemEl, isDone) {
+        if (!itemEl) return;
+        const icon = itemEl.querySelector('i');
+        if (isDone) {
+            itemEl.classList.remove('text-secondary', 'text-muted');
+            itemEl.classList.add('text-success', 'fw-semibold');
+            if (icon) {
+                icon.className = 'bi bi-check-circle-fill text-success';
+            }
+        } else {
+            itemEl.classList.remove('text-success', 'fw-semibold');
+            itemEl.classList.add('text-secondary');
+            if (icon) {
+                icon.className = 'bi bi-circle text-muted';
+            }
+        }
+    }
+
+    function updateChecklist(hasValidItems = false, hasValidQty = false) {
+        const hasName = Boolean(contactInput?.value.trim());
+        const hasContact = Boolean(emailInput?.value.trim() || phoneInput?.value.trim() || existingBuyerSelect?.value);
+        const hasTerms = Boolean(incotermSelect?.value && paymentMethodSelect?.value);
+
+        setCheckState(checkContactName, hasName);
+        setCheckState(checkContactMethod, hasContact);
+        setCheckState(checkItemsSelected, hasValidItems);
+        setCheckState(checkItemQuantities, hasValidQty);
+        setCheckState(checkTerms, hasTerms);
+
+        let completed = 0;
+        if (hasName) completed++;
+        if (hasContact) completed++;
+        if (hasValidItems) completed++;
+        if (hasValidQty) completed++;
+        if (hasTerms) completed++;
+
+        const pct = Math.round((completed / 5) * 100);
+        if (checklistProgressBar) checklistProgressBar.style.width = `${pct}%`;
+        if (checklistProgressPct) checklistProgressPct.textContent = `${pct}%`;
     }
 
     function addLineRow(defaultType = 'product') {
-        const row = document.createElement('div');
-        row.className = 'rfq-line-row';
-        row.innerHTML = `
-            <div class="row g-2 align-items-end">
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-dark mb-1">Type</label>
-                    <select class="form-select form-select-sm item-type-select" name="item_type[]">
-                        <option value="product" ${defaultType === 'product' ? 'selected' : ''}>Product</option>
-                        <option value="lot" ${defaultType === 'lot' ? 'selected' : ''}>Lot</option>
+        const count = container.querySelectorAll('.rfq-item-card').length + 1;
+        const card = document.createElement('div');
+        card.className = 'rfq-item-card';
+        card.innerHTML = `
+            <div class="rfq-item-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark border font-monospace item-num-badge">#${count}</span>
+                    <span class="badge ${defaultType === 'lot' ? 'bg-amber-subtle text-amber border border-amber-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle'} rounded-pill px-2.5 py-0.5 item-type-badge small fw-semibold">
+                        ${defaultType === 'lot' ? 'Bulk Lot' : 'Single Product'}
+                    </span>
+                    <span class="text-muted small item-title-snippet">Select an item below</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger border-0 p-1 rounded-2 btn-remove-row" title="Remove Item">
+                    <i class="bi bi-trash3 fs-6"></i>
+                </button>
+            </div>
+
+            <div class="row g-3 align-items-start">
+                <div class="col-md-3">
+                    <label class="form-label-custom">
+                        <span class="label-title">Inventory Type</span>
+                    </label>
+                    <select class="form-select form-select-custom item-type-select" name="item_type[]">
+                        <option value="product" ${defaultType === 'product' ? 'selected' : ''}>Single Product</option>
+                        <option value="lot" ${defaultType === 'lot' ? 'selected' : ''}>Bulk Lot</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label small fw-semibold text-dark mb-1">Select Product / Lot <span class="text-danger">*</span></label>
-                    <select class="form-select form-select-sm item-id-select" name="item_id[]" required></select>
+
+                <div class="col-md-5">
+                    <label class="form-label-custom">
+                        <span class="label-title">Select Item <span class="text-danger">*</span></span>
+                    </label>
+                    <select class="form-select form-select-custom item-id-select" name="item_id[]" required></select>
                 </div>
+
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-dark mb-1">Quantity</label>
-                    <input type="number" class="form-control form-control-sm item-qty-input" name="item_quantity[]" min="1" value="1" required>
+                    <label class="form-label-custom">
+                        <span class="label-title">Quantity <span class="text-danger">*</span></span>
+                    </label>
+                    <input type="number" class="form-control form-control-custom item-qty-input" name="item_quantity[]" min="1" value="1" required>
                 </div>
+
                 <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-dark mb-1">Target Price</label>
-                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="item_target_price[]" placeholder="Optional">
+                    <label class="form-label-custom">
+                        <span class="label-title">Target Price</span>
+                        <span class="badge-optional">Opt</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" class="form-control form-control-custom item-target-price-input" name="item_target_price[]" placeholder="e.g. 150.00">
                 </div>
-                <div class="col-md-2 d-flex gap-1 align-items-end">
-                    <div class="flex-grow-1">
-                        <label class="form-label small fw-semibold text-dark mb-1">Notes</label>
-                        <input type="text" class="form-control form-control-sm" name="item_notes[]" placeholder="Note...">
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Remove Item">
-                        <i class="bi bi-trash3"></i>
-                    </button>
+
+                <div class="col-12">
+                    <label class="form-label-custom">
+                        <span class="label-title">Item Requirements / Custom Line Notes</span>
+                        <span class="badge-optional">Optional</span>
+                    </label>
+                    <input type="text" class="form-control form-control-custom" name="item_notes[]" placeholder="Special packing, delivery timeline, or inspection notes for this item...">
                 </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3 pt-2 border-top small text-muted">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="item-unit-price-badge"><i class="bi bi-tag me-1 text-primary"></i>Unit Price: --</span>
+                    <span class="badge bg-light text-secondary border item-stock-badge">Avail: --</span>
+                </div>
+                <div class="fw-bold text-success font-monospace item-subtotal-badge">Subtotal: --</div>
             </div>
         `;
 
-        const typeSelect = row.querySelector('.item-type-select');
-        const idSelect = row.querySelector('.item-id-select');
-        const qtyInput = row.querySelector('.item-qty-input');
-        const removeBtn = row.querySelector('.btn-remove-row');
+        const typeSelect = card.querySelector('.item-type-select');
+        const idSelect = card.querySelector('.item-id-select');
+        const qtyInput = card.querySelector('.item-qty-input');
+        const targetPriceInput = card.querySelector('.item-target-price-input');
+        const removeBtn = card.querySelector('.btn-remove-row');
+        const typeBadge = card.querySelector('.item-type-badge');
+        const snippet = card.querySelector('.item-title-snippet');
 
         populateItemSelect(idSelect, defaultType);
 
         typeSelect.addEventListener('change', () => {
+            const isLot = typeSelect.value === 'lot';
             populateItemSelect(idSelect, typeSelect.value);
+            if (typeBadge) {
+                typeBadge.className = `badge ${isLot ? 'bg-amber-subtle text-amber border border-amber-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle'} rounded-pill px-2.5 py-0.5 item-type-badge small fw-semibold`;
+                typeBadge.textContent = isLot ? 'Bulk Lot' : 'Single Product';
+            }
+            if (snippet) snippet.textContent = 'Select an item below';
             updateSummary();
         });
-        idSelect.addEventListener('change', updateSummary);
+
+        idSelect.addEventListener('change', () => {
+            const selOpt = idSelect.options[idSelect.selectedIndex];
+            if (snippet) {
+                snippet.textContent = selOpt && selOpt.value ? selOpt.textContent : 'Select an item below';
+            }
+            updateSummary();
+        });
+
         qtyInput.addEventListener('input', updateSummary);
+        targetPriceInput?.addEventListener('input', updateSummary);
+
         removeBtn.addEventListener('click', () => {
-            if (container.querySelectorAll('.rfq-line-row').length > 1) {
-                row.remove();
+            if (container.querySelectorAll('.rfq-item-card').length > 1) {
+                card.remove();
                 updateSummary();
             } else {
                 idSelect.value = '';
                 qtyInput.value = '1';
+                if (snippet) snippet.textContent = 'Select an item below';
                 updateSummary();
             }
         });
 
-        container.appendChild(row);
+        container.appendChild(card);
         updateSummary();
     }
 
@@ -391,9 +1244,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('addLotRowBtn')?.addEventListener('click', () => addLineRow('lot'));
     rfqCurrencySelect?.addEventListener('change', updateSummary);
 
-    // Start with 1 empty Product row
+    // Initial 1 empty Product row
     addLineRow('product');
+    updateBuyerPreview();
 });
 </script>
 {% endblock %}
-
