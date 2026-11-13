@@ -6,50 +6,52 @@
 {% block content %}
 <style>
 /* ==========================================================================
-   SHOPEERS-INSPIRED CLEAN MODERN DASHBOARD
+   DASHKIT / FULL-VERSION MODERN DASHBOARD DESIGN SYSTEM
    ========================================================================== */
 
 :root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-border-subtle: #edf0f5;
-    --shopeers-primary: #0a5c48;
-    --shopeers-primary-hover: #084c3b;
-    --shopeers-primary-light: #e8f5f1;
-    --shopeers-radius-lg: 20px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-sm: 10px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    --shopeers-shadow-hover: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    --dash-bg: #fafafd;
+    --dash-card: #ffffff;
+    --dash-text-dark: #0f172a;
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-border: rgba(226, 232, 240, 0.85);
+    --dash-border-subtle: #f1f5f9;
+    --dash-primary: #6366f1;
+    --dash-primary-hover: #4f46e5;
+    --dash-primary-light: rgba(99, 102, 241, 0.1);
+    --dash-radius-xl: 18px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-border-subtle: #1e293b;
-    --shopeers-primary: #0ea27e;
-    --shopeers-primary-hover: #0a5c48;
-    --shopeers-primary-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --shopeers-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.45);
+    --dash-bg: #0f172a;
+    --dash-card: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-border: #334155;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
+    --dash-primary: #818cf8;
+    --dash-primary-hover: #6366f1;
+    --dash-primary-light: rgba(129, 140, 248, 0.15);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.shopeers-dashboard {
+.dash-container {
     background: transparent;
     padding-bottom: 2.5rem;
 }
 
-/* Header */
-.shopeers-header {
+/* Header Section */
+.dash-header {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -58,69 +60,67 @@
     margin-bottom: 1.75rem;
 }
 
-.shopeers-breadcrumb-pill {
+.dash-breadcrumb-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: #ffffff;
-    border: 1px solid var(--shopeers-border);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
     padding: 0.3rem 0.85rem;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     font-size: 0.76rem;
     font-weight: 600;
-    color: var(--shopeers-text-sub);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    color: var(--dash-text-sub);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     margin-bottom: 0.4rem;
 }
 
-.shopeers-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.6rem;
+.dash-title {
+    font-size: 1.65rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     margin: 0;
     line-height: 1.2;
 }
 
-.shopeers-subtitle {
+.dash-subtitle {
     font-size: 0.86rem;
-    color: var(--shopeers-text-sub);
+    color: var(--dash-text-sub);
     margin: 0.25rem 0 0 0;
 }
 
-/* Primary Action Button (#0a5c48) */
-.btn-shopeers-primary {
-    background: var(--shopeers-primary) !important;
+.btn-dash-primary {
+    background: var(--dash-primary) !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: var(--shopeers-radius-pill) !important;
+    border-radius: var(--dash-radius-pill) !important;
     padding: 0.55rem 1.35rem !important;
     font-weight: 600 !important;
     font-size: 0.85rem !important;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
     transition: all 0.2s ease;
     text-decoration: none;
 }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-primary-hover) !important;
+.btn-dash-primary:hover {
+    background: var(--dash-primary-hover) !important;
     color: #ffffff !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.32);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
 }
 
-.btn-shopeers-outline {
-    background: #ffffff !important;
-    color: var(--shopeers-text-dark) !important;
-    border: 1px solid var(--shopeers-border) !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    padding: 0.52rem 1.15rem !important;
+.btn-dash-outline {
+    background: var(--dash-card) !important;
+    color: var(--dash-text-dark) !important;
+    border: 1px solid var(--dash-border) !important;
+    border-radius: var(--dash-radius-pill) !important;
+    padding: 0.5rem 1.15rem !important;
     font-weight: 600 !important;
-    font-size: 0.84rem !important;
+    font-size: 0.82rem !important;
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
@@ -129,158 +129,218 @@
     text-decoration: none;
 }
 
-.btn-shopeers-outline:hover {
-    background: #f8fafc !important;
+.btn-dash-outline:hover {
+    background: var(--dash-border-subtle) !important;
     border-color: #cbd5e1 !important;
-    color: var(--shopeers-text-dark) !important;
+    color: var(--dash-text-dark) !important;
 }
 
-/* Static Top KPI Metric Cards (No cursor pointer, no click, no active border) */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    padding: 1.3rem 1.4rem;
-    box-shadow: var(--shopeers-shadow-card);
+/* ==========================================================================
+   DASHKIT TOP KPI METRIC CARDS
+   ========================================================================== */
+.dash-kpi-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    padding: 1.35rem 1.4rem;
+    box-shadow: var(--dash-shadow-card);
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: default;
-    user-select: none;
-    position: relative;
-    overflow: hidden;
 }
 
-.shopeers-kpi-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+.dash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
 }
 
-.shopeers-kpi-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+.dash-kpi-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--dash-text-sub);
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
+}
+
+.dash-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     flex-shrink: 0;
 }
 
-.icon-emerald { background: #ecfdf5; color: #0a5c48; }
-.icon-cyan    { background: #ecfeff; color: #0891b2; }
-.icon-indigo  { background: #e0e7ff; color: #4338ca; }
-.icon-violet  { background: #f5f3ff; color: #7c3aed; }
-.icon-amber   { background: #fffbeb; color: #d97706; }
+.dash-kpi-icon.icon-indigo  { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.dash-kpi-icon.icon-emerald { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.dash-kpi-icon.icon-amber   { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.dash-kpi-icon.icon-violet  { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.dash-kpi-icon.icon-cyan    { background: rgba(6, 182, 212, 0.12);  color: #06b6d4; }
 
-.shopeers-kpi-number {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.65rem;
+.dash-kpi-number {
+    font-size: 1.7rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     line-height: 1.1;
-    margin: 0.55rem 0 0 0;
+    margin: 0.65rem 0 0 0;
 }
 
-.shopeers-kpi-pill {
+.dash-kpi-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    font-size: 0.72rem;
+    gap: 0.35rem;
+    font-size: 0.74rem;
     font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
-    margin-top: 0.45rem;
+    padding: 4px 9px;
+    border-radius: var(--dash-radius-pill);
+    margin-top: 0.55rem;
     width: fit-content;
 }
 
-.pill-emerald { background: #ecfdf5; color: #0a5c48; }
-.pill-cyan    { background: #ecfeff; color: #0891b2; }
-.pill-indigo  { background: #e0e7ff; color: #4338ca; }
-.pill-violet  { background: #f5f3ff; color: #7c3aed; }
+.dash-kpi-pill.pill-indigo  { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+.dash-kpi-pill.pill-emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.dash-kpi-pill.pill-amber   { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.dash-kpi-pill.pill-violet  { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
+.dash-kpi-pill.pill-cyan    { background: rgba(6, 182, 212, 0.1);  color: #0891b2; }
 
-/* Operational Modules Section */
-.shopeers-section-header {
+[data-bs-theme="dark"] .dash-kpi-pill.pill-indigo  { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+[data-bs-theme="dark"] .dash-kpi-pill.pill-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+[data-bs-theme="dark"] .dash-kpi-pill.pill-amber   { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+[data-bs-theme="dark"] .dash-kpi-pill.pill-violet  { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+[data-bs-theme="dark"] .dash-kpi-pill.pill-cyan    { background: rgba(6, 182, 212, 0.2);  color: #22d3ee; }
+
+/* ==========================================================================
+   DASHKIT SECTION HEADERS & CONTENT CARDS
+   ========================================================================== */
+.dash-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1.75rem;
-    margin-bottom: 0.9rem;
+    margin-top: 1.85rem;
+    margin-bottom: 0.95rem;
 }
 
-.shopeers-section-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+.dash-section-title {
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    letter-spacing: -0.01em;
+}
+
+.dash-section-subtitle {
+    font-size: 0.78rem;
+    color: var(--dash-text-sub);
+}
+
+.dash-content-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
+    padding: 1.45rem;
+    margin-top: 1.85rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.95rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
+}
+
+.dash-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--dash-text-dark);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    letter-spacing: -0.01em;
 }
 
-.shopeers-section-subtitle {
-    font-size: 0.78rem;
-    color: var(--shopeers-text-sub);
+.dash-card-link {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--dash-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.15s ease;
 }
 
-/* Hub Module Navigation Cards */
-.shopeers-hub-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-md);
-    padding: 1.1rem 1.25rem;
-    box-shadow: var(--shopeers-shadow-card);
+.dash-card-link:hover {
+    color: var(--dash-primary-hover);
+    transform: translateX(2px);
+}
+
+/* ==========================================================================
+   DASHKIT HUB MODULE NAVIGATION CARDS
+   ========================================================================== */
+.dash-hub-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    padding: 1.15rem 1.35rem;
+    box-shadow: var(--dash-shadow-card);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
     text-decoration: none;
     color: inherit;
-    transition: all 0.2s ease;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     height: 100%;
 }
 
-.shopeers-hub-card:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: var(--shopeers-shadow-hover);
+.dash-hub-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-3px);
+    box-shadow: var(--dash-shadow-hover);
     color: inherit;
 }
 
-.shopeers-hub-info {
+.dash-hub-info {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.95rem;
 }
 
-.shopeers-hub-value {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.35rem;
+.dash-hub-value {
+    font-size: 1.4rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     margin: 0;
     line-height: 1.1;
 }
 
-.shopeers-hub-title {
-    font-size: 0.78rem;
-    color: var(--shopeers-text-sub);
+.dash-hub-title {
+    font-size: 0.8rem;
+    color: var(--dash-text-sub);
     font-weight: 500;
     margin-top: 0.15rem;
 }
 
-.shopeers-hub-arrow {
+.dash-hub-arrow {
     width: 32px;
     height: 32px;
-    border-radius: var(--shopeers-radius-pill);
-    background: #f8fafc;
-    color: var(--shopeers-text-muted);
+    border-radius: var(--dash-radius-pill);
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -289,124 +349,89 @@
     flex-shrink: 0;
 }
 
-.shopeers-hub-card:hover .shopeers-hub-arrow {
-    background: var(--shopeers-primary);
+.dash-hub-card:hover .dash-hub-arrow {
+    background: var(--dash-primary);
     color: #ffffff;
-    transform: translateX(2px);
+    transform: translateX(3px);
 }
 
-/* Standard Shopeers Content Card Container */
-.shopeers-content-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow-card);
-    padding: 1.4rem;
-    margin-top: 1.75rem;
-}
-
-.shopeers-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.85rem;
-    border-bottom: 1px solid var(--shopeers-border);
-}
-
-.shopeers-card-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.shopeers-card-link {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--shopeers-primary);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    transition: color 0.15s ease;
-}
-
-.shopeers-card-link:hover {
-    color: var(--shopeers-primary-hover);
-    text-decoration: underline;
-}
-
-/* Shopeers Clean Data Table */
-.shopeers-table {
+/* ==========================================================================
+   DASHKIT POLISHED DATA TABLES
+   ========================================================================== */
+.dash-table {
     width: 100%;
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
 }
 
-.shopeers-table thead th {
-    font-size: 0.70rem;
-    font-weight: 700;
-    color: var(--shopeers-text-muted);
-    letter-spacing: 0.5px;
+.dash-table thead th {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--dash-text-sub);
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--shopeers-border);
-    background: transparent;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border);
+    background: rgba(248, 250, 252, 0.8);
     white-space: nowrap;
 }
 
-.shopeers-table tbody td {
-    padding: 0.95rem 1rem;
-    border-bottom: 1px solid var(--shopeers-border-subtle);
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom-color: var(--dash-border);
+}
+
+.dash-table tbody td {
+    padding: 0.95rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
     vertical-align: middle;
     font-size: 0.86rem;
     background: transparent;
+    color: var(--dash-text-body);
 }
 
-.shopeers-table tbody tr:last-child td {
+.dash-table tbody tr:last-child td {
     border-bottom: none;
 }
 
-.shopeers-table tbody tr:hover td {
-    background: #fafbfc;
+.dash-table tbody tr:hover td {
+    background: rgba(248, 250, 252, 0.9);
 }
 
-/* Table Item Elements */
+[data-bs-theme="dark"] .dash-table tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.6);
+}
+
 .product-thumb {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: #f1f5f9;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--dash-radius-md);
+    background: var(--dash-border-subtle);
     object-fit: cover;
     flex-shrink: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--dash-border);
 }
 
 .product-thumb-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: #f1f5f9;
-    color: #94a3b8;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--dash-radius-md);
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     flex-shrink: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--dash-border);
 }
 
 .staff-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--shopeers-radius-pill);
-    background: linear-gradient(135deg, #0a5c48 0%, #10b981 100%);
+    width: 38px;
+    height: 38px;
+    border-radius: var(--dash-radius-pill);
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     color: #ffffff;
     font-weight: 700;
     font-size: 0.88rem;
@@ -416,78 +441,95 @@
     flex-shrink: 0;
 }
 
-.badge-tag {
-    background: #f1f5f9;
-    color: #475569;
-    font-size: 0.72rem;
+.dash-tag {
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    font-size: 0.74rem;
     font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    padding: 3px 9px;
+    border-radius: var(--dash-radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-.badge-status-on {
-    background: #ecfdf5;
-    color: #0a5c48;
-    border: 1px solid #d1fae5;
+[data-bs-theme="dark"] .dash-tag {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.dash-badge-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
     font-size: 0.72rem;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-.badge-status-off {
-    background: #f8fafc;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
+[data-bs-theme="dark"] .dash-badge-active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.dash-badge-inactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
     font-size: 0.72rem;
     font-weight: 600;
     padding: 3px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+}
+
+[data-bs-theme="dark"] .dash-badge-inactive {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
 }
 </style>
 
-<div class="container-fluid shopeers-dashboard pt-3">
+<div class="container-fluid dash-container pt-2">
     <!-- Header -->
-    <div class="shopeers-header">
+    <div class="dash-header">
         <div>
-            <div class="shopeers-breadcrumb-pill">
-                <i class="bi bi-house-door-fill text-muted"></i>
+            <div class="dash-breadcrumb-pill">
+                <i class="bi bi-grid-1x2 text-muted"></i>
                 <span>Admin Dashboard</span>
             </div>
-            <h1 class="shopeers-title">Dashboard Overview</h1>
-            <p class="shopeers-subtitle">Real-time catalog performance, inventory liquidity &amp; network pipeline</p>
+            <h1 class="dash-title">Dashboard Overview</h1>
+            <p class="dash-subtitle">Real-time catalog performance, inventory liquidity &amp; network pipeline</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/products/all/" class="btn-shopeers-primary">
+            <a href="/admin/products/all/" class="btn-dash-primary">
                 <i class="bi bi-box-seam"></i>
                 <span>Manage Products</span>
             </a>
         </div>
     </div>
 
-    <!-- Row 1: Top 4 KPI Stat Metric Cards (Static Display Cards) -->
+    <!-- Row 1: Top 4 KPI Stat Metric Cards (Full-Version Dashkit Style) -->
     <div class="row g-3 mb-2">
         <!-- Total Sales Due -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL SALES DUE</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
-                        <i class="bi bi-cash-stack"></i>
+                    <span class="dash-kpi-label">Total Sales Due</span>
+                    <div class="dash-kpi-icon icon-indigo">
+                        <i class="bi bi-wallet2"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_due|default:"0.00" }}</h2>
-                    <span class="shopeers-kpi-pill pill-emerald">
+                    <h2 class="dash-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_due|default:"0.00" }}</h2>
+                    <span class="dash-kpi-pill pill-indigo">
                         <i class="bi bi-clock-history"></i> Current Outstanding
                     </span>
                 </div>
@@ -496,17 +538,17 @@
 
         <!-- Total Sales Revenue -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">TOTAL SALES REVENUE</span>
-                    <div class="shopeers-kpi-icon icon-cyan">
+                    <span class="dash-kpi-label">Total Sales Revenue</span>
+                    <div class="dash-kpi-icon icon-emerald">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_amount|default:"0.00" }}</h2>
-                    <span class="shopeers-kpi-pill pill-cyan">
-                        <i class="bi bi-wallet2"></i> Settled Revenue
+                    <h2 class="dash-kpi-number">{{ stats.currency|default:"USD" }} {{ stats.total_sales_amount|default:"0.00" }}</h2>
+                    <span class="dash-kpi-pill pill-emerald">
+                        <i class="bi bi-cash-stack"></i> Settled Revenue
                     </span>
                 </div>
             </div>
@@ -514,16 +556,16 @@
 
         <!-- Active Inventory Stock -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">ACTIVE INVENTORY STOCK</span>
-                    <div class="shopeers-kpi-icon icon-indigo">
+                    <span class="dash-kpi-label">Active Inventory Stock</span>
+                    <div class="dash-kpi-icon icon-amber">
                         <i class="bi bi-boxes"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.active_products_qty|default:"0" }}</h2>
-                    <span class="shopeers-kpi-pill pill-indigo">
+                    <h2 class="dash-kpi-number">{{ stats.active_products_qty|default:"0" }}</h2>
+                    <span class="dash-kpi-pill pill-amber">
                         <i class="bi bi-check-circle"></i> Live Units Listed
                     </span>
                 </div>
@@ -532,16 +574,16 @@
 
         <!-- Registered Users -->
         <div class="col-xl-3 col-sm-6">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="shopeers-kpi-label">REGISTERED USERS</span>
-                    <div class="shopeers-kpi-icon icon-violet">
+                    <span class="dash-kpi-label">Registered Users</span>
+                    <div class="dash-kpi-icon icon-violet">
                         <i class="bi bi-people-fill"></i>
                     </div>
                 </div>
                 <div>
-                    <h2 class="shopeers-kpi-number">{{ stats.registered_users|default:"0" }}</h2>
-                    <span class="shopeers-kpi-pill pill-violet">
+                    <h2 class="dash-kpi-number">{{ stats.registered_users|default:"0" }}</h2>
+                    <span class="dash-kpi-pill pill-violet">
                         <i class="bi bi-shield-check"></i> Total Accounts
                     </span>
                 </div>
@@ -552,19 +594,19 @@
     <!-- =========================================================================
          MARKETPLACE INTELLIGENCE & REAL-TIME ANALYTICS (CHARTS)
          ========================================================================= -->
-    <div class="shopeers-section-header">
-        <h5 class="shopeers-section-title">
-            <i class="bi bi-graph-up-arrow" style="color: var(--shopeers-primary);"></i>
+    <div class="dash-section-header">
+        <h5 class="dash-section-title">
+            <i class="bi bi-graph-up" style="color: var(--dash-primary);"></i>
             <span>Marketplace Intelligence &amp; Live Analytics</span>
         </h5>
-        <span class="shopeers-section-subtitle">Real-time catalog inflow, category volumes &amp; network demographics</span>
+        <span class="dash-section-subtitle">Real-time catalog inflow, category volumes &amp; network demographics</span>
     </div>
 
     <!-- Charts Row 1: Inflow Velocity Trend & Category Distribution -->
     <div class="row g-3 mb-3">
         <!-- 6-Month Inventory Inflow Trend (Line/Area Chart) -->
         <div class="col-xl-8 col-lg-7">
-            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+            <div class="dash-content-card p-4 h-100 mb-0 mt-0">
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                     <div>
                         <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
@@ -585,7 +627,7 @@
 
         <!-- Category Volume Breakdown (Doughnut Chart) -->
         <div class="col-xl-4 col-lg-5">
-            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+            <div class="dash-content-card p-4 h-100 mb-0 mt-0">
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                     <div>
                         <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
@@ -594,7 +636,7 @@
                         </h6>
                         <span class="text-secondary small">Volume distribution by taxonomy</span>
                     </div>
-                    <a href="/admin/categories/main/" class="btn-shopeers-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;">
+                    <a href="/admin/categories/main/" class="btn-dash-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;">
                         <span>View All</span>
                     </a>
                 </div>
@@ -609,7 +651,7 @@
     <div class="row g-3 mb-3">
         <!-- Top Inventory Geographic Locations (Horizontal Bar Chart) -->
         <div class="col-xl-7 col-lg-6">
-            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+            <div class="dash-content-card p-4 h-100 mb-0 mt-0">
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                     <div>
                         <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
@@ -630,7 +672,7 @@
 
         <!-- Network Stakeholder Ecosystem (Doughnut Chart) -->
         <div class="col-xl-5 col-lg-6">
-            <div class="shopeers-content-card p-4 h-100 mb-0 mt-0">
+            <div class="dash-content-card p-4 h-100 mb-0 mt-0">
                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                     <div>
                         <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
@@ -651,28 +693,28 @@
     </div>
 
     <!-- Section: Catalog & Sourcing Operations -->
-    <div class="shopeers-section-header">
-        <h5 class="shopeers-section-title">
-            <i class="bi bi-grid-fill" style="color: var(--shopeers-primary);"></i>
+    <div class="dash-section-header">
+        <h5 class="dash-section-title">
+            <i class="bi bi-grid-fill" style="color: var(--dash-primary);"></i>
             <span>Catalog &amp; Sourcing Operations</span>
         </h5>
-        <span class="shopeers-section-subtitle">Operational modules</span>
+        <span class="dash-section-subtitle">Operational modules</span>
     </div>
 
     <div class="row g-3">
         <!-- Products Hub -->
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/products/all/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-emerald">
+            <a href="/admin/products/all/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-emerald">
                         <i class="bi bi-box-seam"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.products|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Product Catalog</div>
+                        <h4 class="dash-hub-value">{{ stats.products|default:"0" }}</h4>
+                        <div class="dash-hub-title">Product Catalog</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -680,17 +722,17 @@
 
         <!-- Lot Listings Hub -->
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/enquiries/lots/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-amber">
+            <a href="/admin/enquiries/lots/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-amber">
                         <i class="bi bi-collection-fill"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.lot_listings|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Lot Package Enquiries</div>
+                        <h4 class="dash-hub-value">{{ stats.lot_listings|default:"0" }}</h4>
+                        <div class="dash-hub-title">Lot Package Enquiries</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -698,17 +740,17 @@
 
         <!-- RFQ Requests Hub -->
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/rfq-requests/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-cyan">
+            <a href="/admin/rfq-requests/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-cyan">
                         <i class="bi bi-file-earmark-text-fill"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.rfq_requests|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Buyer RFQ Requests</div>
+                        <h4 class="dash-hub-value">{{ stats.rfq_requests|default:"0" }}</h4>
+                        <div class="dash-hub-title">Buyer RFQ Requests</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -716,17 +758,17 @@
 
         <!-- Categories Hub -->
         <div class="col-xl-3 col-lg-6 col-md-6">
-            <a href="/admin/categories/main/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-violet">
+            <a href="/admin/categories/main/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-violet">
                         <i class="bi bi-tags-fill"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.categories|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Taxonomy Categories</div>
+                        <h4 class="dash-hub-value">{{ stats.categories|default:"0" }}</h4>
+                        <div class="dash-hub-title">Taxonomy Categories</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -734,28 +776,28 @@
     </div>
 
     <!-- Section: Network & Stakeholders -->
-    <div class="shopeers-section-header">
-        <h5 class="shopeers-section-title">
-            <i class="bi bi-diagram-3-fill" style="color: var(--shopeers-primary);"></i>
+    <div class="dash-section-header">
+        <h5 class="dash-section-title">
+            <i class="bi bi-diagram-3-fill" style="color: var(--dash-primary);"></i>
             <span>Network &amp; Stakeholder Ecosystem</span>
         </h5>
-        <span class="shopeers-section-subtitle">Registered community overview</span>
+        <span class="dash-section-subtitle">Registered community overview</span>
     </div>
 
     <div class="row g-3">
         <!-- Buyers Hub -->
         <div class="col-xl-4 col-md-4">
-            <a href="/admin/users/?type=BUYER" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-emerald">
+            <a href="/admin/users/?type=BUYER" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-emerald">
                         <i class="bi bi-person-fill-check"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.buyers|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Registered Buyers</div>
+                        <h4 class="dash-hub-value">{{ stats.buyers|default:"0" }}</h4>
+                        <div class="dash-hub-title">Registered Buyers</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -763,17 +805,17 @@
 
         <!-- Companies Hub -->
         <div class="col-xl-4 col-md-4">
-            <a href="/admin/users/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-cyan">
+            <a href="/admin/users/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-cyan">
                         <i class="bi bi-building-check"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.companies|default:"0" }}</h4>
-                        <div class="shopeers-hub-title">Verified Companies</div>
+                        <h4 class="dash-hub-value">{{ stats.companies|default:"0" }}</h4>
+                        <div class="dash-hub-title">Verified Companies</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
@@ -781,41 +823,41 @@
 
         <!-- Team Admins -->
         <div class="col-xl-4 col-md-4">
-            <a href="/admin/staff/" class="shopeers-hub-card">
-                <div class="shopeers-hub-info">
-                    <div class="shopeers-kpi-icon icon-indigo">
+            <a href="/admin/staff/" class="dash-hub-card">
+                <div class="dash-hub-info">
+                    <div class="dash-kpi-icon icon-indigo">
                         <i class="bi bi-shield-lock-fill"></i>
                     </div>
                     <div>
-                        <h4 class="shopeers-hub-value">{{ stats.total_admins|default:"1" }}</h4>
-                        <div class="shopeers-hub-title">Staff &amp; Admins</div>
+                        <h4 class="dash-hub-value">{{ stats.total_admins|default:"1" }}</h4>
+                        <div class="dash-hub-title">Staff &amp; Admins</div>
                     </div>
                 </div>
-                <div class="shopeers-hub-arrow">
+                <div class="dash-hub-arrow">
                     <i class="bi bi-arrow-right"></i>
                 </div>
             </a>
         </div>
     </div>
 
-    <!-- Recent Products Table (Real Products) -->
-    <div class="shopeers-content-card">
-        <div class="shopeers-card-header">
+    <!-- Recent Products Table (Dashkit Table Style) -->
+    <div class="dash-content-card">
+        <div class="dash-card-header">
             <div>
-                <h5 class="shopeers-card-title">
-                    <i class="bi bi-box-seam" style="color: var(--shopeers-primary);"></i>
+                <h5 class="dash-card-title">
+                    <i class="bi bi-box-seam" style="color: var(--dash-primary);"></i>
                     <span>Recently Added Products</span>
                 </h5>
                 <span class="text-secondary small">Latest items listed on the marketplace</span>
             </div>
-            <a href="/admin/products/all/" class="shopeers-card-link">
+            <a href="/admin/products/all/" class="dash-card-link">
                 <span>View all products</span>
                 <i class="bi bi-arrow-right"></i>
             </a>
         </div>
 
         <div class="table-responsive">
-            <table class="shopeers-table">
+            <table class="dash-table">
                 <thead>
                     <tr>
                         <th style="min-width: 250px;">PRODUCT</th>
@@ -829,7 +871,7 @@
                     {% for product in recent_products %}
                     <tr>
                         <td>
-                            <div class="d-flex align-items-center gap-2.5">
+                            <div class="d-flex align-items-center gap-3">
                                 {% with product.images.first as img %}
                                     {% if img and img.image_url %}
                                         <img src="{{ img.image_url }}" alt="{{ product.product_name }}" class="product-thumb">
@@ -852,7 +894,7 @@
                         </td>
                         <td>
                             {% if product.category %}
-                                <span class="badge-tag">
+                                <span class="dash-tag">
                                     <i class="bi bi-tag-fill"></i> {{ product.category.name }}
                                 </span>
                             {% else %}
@@ -871,11 +913,11 @@
                         </td>
                         <td>
                             {% if product.is_active %}
-                                <span class="badge-status-on">
+                                <span class="dash-badge-active">
                                     <i class="bi bi-check-circle-fill"></i> Active
                                 </span>
                             {% else %}
-                                <span class="badge-status-off">
+                                <span class="dash-badge-inactive">
                                     <i class="bi bi-dash-circle"></i> Inactive
                                 </span>
                             {% endif %}
@@ -896,23 +938,23 @@
 
     <!-- Super Admin Staff Table (if SuperAdmin and staff available) -->
     {% if is_super_admin and staff_list %}
-    <div class="shopeers-content-card">
-        <div class="shopeers-card-header">
+    <div class="dash-content-card">
+        <div class="dash-card-header">
             <div>
-                <h5 class="shopeers-card-title">
-                    <i class="bi bi-shield-check" style="color: var(--shopeers-primary);"></i>
+                <h5 class="dash-card-title">
+                    <i class="bi bi-shield-check" style="color: var(--dash-primary);"></i>
                     <span>Internal Administrative Staff</span>
                 </h5>
                 <span class="text-secondary small">Active operational moderators &amp; administrators</span>
             </div>
-            <a href="/admin/staff/" class="shopeers-card-link">
+            <a href="/admin/staff/" class="dash-card-link">
                 <span>Manage staff</span>
                 <i class="bi bi-arrow-right"></i>
             </a>
         </div>
 
         <div class="table-responsive">
-            <table class="shopeers-table">
+            <table class="dash-table">
                 <thead>
                     <tr>
                         <th style="min-width: 220px;">STAFF MEMBER</th>
@@ -925,7 +967,7 @@
                     {% for member in staff_list %}
                     <tr>
                         <td>
-                            <div class="d-flex align-items-center gap-2.5">
+                            <div class="d-flex align-items-center gap-3">
                                 <div class="staff-avatar">
                                     {{ member.username|slice:":1"|upper }}
                                 </div>
@@ -936,7 +978,7 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge-tag">
+                            <span class="dash-tag">
                                 {{ member.account_type|default:"Admin" }}
                             </span>
                         </td>
@@ -947,11 +989,11 @@
                         </td>
                         <td>
                             {% if member.is_active %}
-                            <span class="badge-status-on">
+                            <span class="dash-badge-active">
                                 <i class="bi bi-check-circle-fill"></i> Active
                             </span>
                             {% else %}
-                            <span class="badge-status-off">
+                            <span class="dash-badge-inactive">
                                 <i class="bi bi-dash-circle"></i> Inactive
                             </span>
                             {% endif %}
@@ -978,12 +1020,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const textColor = isDark ? '#94a3b8' : '#64748b';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.05)';
 
-    // Global Font Settings
-    Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+    // Global Font Settings matching Dashkit
+    Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     Chart.defaults.font.size = 12;
     Chart.defaults.color = textColor;
 
-    // 1. Inventory Inflow Trend (Smooth Curved Area Chart)
+    // 1. Inventory Inflow Trend (Smooth Curved Area Chart - Dashkit Indigo/Cyan)
     const trendCtx = document.getElementById('inventoryTrendChart');
     if (trendCtx) {
         new Chart(trendCtx, {
@@ -994,25 +1036,25 @@ document.addEventListener("DOMContentLoaded", function() {
                     {
                         label: 'Single Products Listed',
                         data: rawData.trend_products,
-                        borderColor: '#0a5c48',
-                        backgroundColor: 'rgba(10, 92, 72, 0.12)',
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.12)',
                         fill: true,
                         tension: 0.38,
                         borderWidth: 2.5,
                         pointRadius: 4,
-                        pointBackgroundColor: '#0a5c48',
+                        pointBackgroundColor: '#6366f1',
                         pointHoverRadius: 6,
                     },
                     {
                         label: 'Wholesale Lots Listed',
                         data: rawData.trend_lots,
-                        borderColor: '#0891b2',
-                        backgroundColor: 'rgba(8, 145, 178, 0.08)',
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.08)',
                         fill: true,
                         tension: 0.38,
                         borderWidth: 2.5,
                         pointRadius: 4,
-                        pointBackgroundColor: '#0891b2',
+                        pointBackgroundColor: '#06b6d4',
                         pointHoverRadius: 6,
                     }
                 ]
@@ -1031,6 +1073,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         padding: 10,
                         boxPadding: 4,
                         usePointStyle: true,
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#ffffff' : '#0f172a',
+                        bodyColor: isDark ? '#cbd5e1' : '#334155',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1,
                     }
                 },
                 scales: {
@@ -1058,15 +1105,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 datasets: [{
                     data: rawData.cat_counts,
                     backgroundColor: [
-                        '#0a5c48',
-                        '#0891b2',
-                        '#10b981',
                         '#6366f1',
+                        '#06b6d4',
+                        '#10b981',
                         '#f59e0b',
+                        '#ec4899',
                         '#8b5cf6'
                     ],
                     borderWidth: 2,
-                    borderColor: isDark ? '#111827' : '#ffffff',
+                    borderColor: isDark ? '#1e293b' : '#ffffff',
                     hoverOffset: 6,
                 }]
             },
@@ -1101,21 +1148,21 @@ document.addEventListener("DOMContentLoaded", function() {
                         }
                     },
                     tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const val = context.raw || 0;
-                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                                return ' ' + context.label + ': ' + val + ' items (' + pct + '%)';
-                            }
-                        }
+                        padding: 10,
+                        boxPadding: 4,
+                        usePointStyle: true,
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#ffffff' : '#0f172a',
+                        bodyColor: isDark ? '#cbd5e1' : '#334155',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1,
                     }
                 }
             }
         });
     }
 
-    // 3. Geographic Markets (Horizontal Bar Chart)
+    // 3. Top Geographic Locations (Horizontal Bar Chart)
     const geoCtx = document.getElementById('geoMarketsChart');
     if (geoCtx) {
         new Chart(geoCtx, {
@@ -1123,18 +1170,12 @@ document.addEventListener("DOMContentLoaded", function() {
             data: {
                 labels: rawData.geo_labels,
                 datasets: [{
-                    label: 'Listed Products',
+                    label: 'Products Stocked',
                     data: rawData.geo_counts,
-                    backgroundColor: [
-                        '#0a5c48',
-                        '#10b981',
-                        '#0891b2',
-                        '#6366f1',
-                        '#f59e0b',
-                        '#ec4899'
-                    ],
+                    backgroundColor: '#6366f1',
                     borderRadius: 6,
-                    maxBarThickness: 24,
+                    borderSkipped: false,
+                    barPercentage: 0.65,
                 }]
             },
             options: {
@@ -1144,49 +1185,59 @@ document.addEventListener("DOMContentLoaded", function() {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        callbacks: {
-                            label: (ctx) => ' ' + ctx.raw + ' listed products'
-                        }
+                        padding: 10,
+                        usePointStyle: true,
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#ffffff' : '#0f172a',
+                        bodyColor: isDark ? '#cbd5e1' : '#334155',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1,
                     }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
                         grid: { color: gridColor },
-                        ticks: { precision: 0, color: textColor }
+                        ticks: {
+                            precision: 0,
+                            color: textColor
+                        }
                     },
                     y: {
                         grid: { display: false },
-                        ticks: { color: textColor, font: { weight: 600 } }
+                        ticks: {
+                            color: textColor,
+                            font: { weight: '600' }
+                        }
                     }
                 }
             }
         });
     }
 
-    // 4. Stakeholder Ecosystem Mix (Doughnut Chart)
+    // 4. Stakeholder Ecosystem Mix (Donut Chart)
     const userCtx = document.getElementById('userMixChart');
     if (userCtx) {
         new Chart(userCtx, {
             type: 'doughnut',
             data: {
-                labels: rawData.user_labels,
+                labels: rawData.user_mix_labels,
                 datasets: [{
-                    data: rawData.user_counts,
+                    data: rawData.user_mix_counts,
                     backgroundColor: [
-                        '#0a5c48',
-                        '#0891b2',
-                        '#f59e0b'
+                        '#10b981',
+                        '#6366f1',
+                        '#8b5cf6'
                     ],
                     borderWidth: 2,
-                    borderColor: isDark ? '#111827' : '#ffffff',
+                    borderColor: isDark ? '#1e293b' : '#ffffff',
                     hoverOffset: 6,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '62%',
+                cutout: '70%',
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -1194,32 +1245,17 @@ document.addEventListener("DOMContentLoaded", function() {
                             boxWidth: 10,
                             boxHeight: 10,
                             padding: 12,
-                            font: { size: 12 },
-                            generateLabels: function(chart) {
-                                const data = chart.data;
-                                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                return data.labels.map((label, i) => {
-                                    const val = data.datasets[0].data[i];
-                                    const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
-                                    return {
-                                        text: label + ': ' + val + ' (' + pct + '%)',
-                                        fillStyle: data.datasets[0].backgroundColor[i],
-                                        pointStyle: 'circle',
-                                        index: i
-                                    };
-                                });
-                            }
+                            font: { size: 11 }
                         }
                     },
                     tooltip: {
-                        callbacks: {
-                            label: function(ctx) {
-                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const val = ctx.raw || 0;
-                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                                return ' ' + ctx.label + ': ' + val + ' accounts (' + pct + '%)';
-                            }
-                        }
+                        padding: 10,
+                        usePointStyle: true,
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#ffffff' : '#0f172a',
+                        bodyColor: isDark ? '#cbd5e1' : '#334155',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1,
                     }
                 }
             }
