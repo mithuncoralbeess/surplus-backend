@@ -64,8 +64,8 @@
             color: inherit;
         }
 
-        /* Mobile specific adjustments (under 480px) */
-        @media only screen and (max-width: 480px) {
+        /* Mobile specific adjustments (under 600px) */
+        @media only screen and (max-width: 600px) {
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -91,8 +91,21 @@
                 padding-bottom: 18px !important;
                 margin-bottom: 0 !important;
             }
-            .sec1-left table {
-                float: none !important;
+            .sec1-btn-table {
+                width: 100% !important;
+                margin: 0 auto !important;
+            }
+            .sec1-btn-cell {
+                width: 100% !important;
+                display: block !important;
+                text-align: center !important;
+            }
+            .sec1-btn {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                text-align: center !important;
+                padding: 13px 18px !important;
             }
             .sec1-right {
                 display: block !important;
@@ -102,53 +115,68 @@
                 padding-top: 6px !important;
                 text-align: center !important;
             }
-            .sec2-icon {
-                display: block !important;
-                width: 100% !important;
-                padding-right: 0 !important;
-                margin-bottom: 12px !important;
-            }
-            .sec2-content {
-                display: block !important;
-                width: 100% !important;
-            }
-            .sec2-action {
-                display: block !important;
-                width: 100% !important;
-                padding-left: 0 !important;
-                padding-top: 12px !important;
-                margin-top: 14px !important;
-                border-left: none !important;
-                border-top: 1px solid #e5e7eb !important;
-                text-align: left !important;
-            }
-            .sec2-action-link {
-                text-align: left !important;
-            }
-            .mobile-hide-br {
-                display: none !important;
-            }
             .sec1-img {
                 width: 100% !important;
                 max-width: 100% !important;
                 height: 200px !important;
                 object-fit: cover !important;
             }
+            .sec2-content {
+                display: block !important;
+                width: 100% !important;
+                padding-right: 0 !important;
+            }
+            .sec2-desktop-action {
+                display: none !important;
+            }
+            .sec2-mobile-action {
+                display: block !important;
+            }
+            .mobile-hide-br {
+                display: none !important;
+            }
+            .cta-card-td {
+                padding: 20px 18px !important;
+            }
             .cta-left {
                 display: block !important;
                 width: 100% !important;
-                margin-bottom: 14px !important;
+                margin-bottom: 16px !important;
+                padding-bottom: 0 !important;
+            }
+            .cta-title-table {
+                width: 100% !important;
             }
             .cta-right {
                 display: block !important;
                 width: 100% !important;
-                text-align: left !important;
+                text-align: center !important;
+                padding: 0 !important;
+            }
+            .cta-btn-table {
+                width: 100% !important;
+                margin: 0 auto !important;
+                float: none !important;
+            }
+            .cta-btn-cell {
+                width: 100% !important;
+                display: block !important;
+                text-align: center !important;
+                border-radius: 6px !important;
+                background-color: #e25b1e !important;
             }
             .cta-btn {
                 display: block !important;
                 width: 100% !important;
-                box-sizing: border-box !important;
+                padding: 13px 16px !important;
+                font-size: 11.5px !important;
+                line-height: 16px !important;
                 text-align: center !important;
+                box-sizing: border-box !important;
+                letter-spacing: 0.5px !important;
+            }
+            .cta-btn-br {
+                display: none !important;
             }
         }
     </style>
@@ -260,10 +288,10 @@
                                         </p>
 
                                         <!-- Button -->
-                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" style="margin: 0 !important; margin-left: 0 !important;">
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" class="sec1-btn-table" style="margin: 0 !important; margin-left: 0 !important;">
                                             <tr>
-                                                <td bgcolor="#e25b1e" style="border-radius: 6px;">
-                                                    <a href="https://surplusmarket.com/inventory" style="display: inline-block; padding: 12px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                <td bgcolor="#e25b1e" style="border-radius: 6px;" class="sec1-btn-cell">
+                                                    <a href="https://surplusmarket.com/inventory" class="sec1-btn" style="display: inline-block; padding: 12px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
                                                         EXPLORE AVAILABLE STOCK &nbsp;&rarr;
                                                     </a>
                                                 </td>
@@ -296,7 +324,7 @@
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <!-- Left Icon (54x54) -->
-                                    <td width="58" valign="top" class="sec2-icon" style="padding-right: 16px;">
+                                    <td width="58" valign="top" style="padding-right: 16px;">
                                         <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
                                             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -319,15 +347,22 @@
                                         </h3>
 
                                         <!-- Description -->
-                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; line-height: 18px; color: #64748b;">
+                                        <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; line-height: 18px; color: #64748b;">
                                             A short insight into the hidden costs of holding slow-moving stock and what businesses can do about it.
                                         </p>
+
+                                        <!-- Mobile Action Link -->
+                                        <div class="sec2-mobile-action" style="display: none; padding-top: 4px;">
+                                            <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                READ THE INSIGHT &nbsp;&rarr;
+                                            </a>
+                                        </div>
                                     </td>
 
                                     <!-- Right Action Link with Vertical Divider -->
-                                    <td width="115" valign="middle" align="right" class="sec2-action" style="padding-left: 16px; border-left: 1px solid #e5e7eb;">
-                                        <a href="https://surplusmarket.com/insight" class="sec2-action-link" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; line-height: 15px; display: inline-block; text-align: right;">
-                                            READ THE<br class="mobile-hide-br"> INSIGHT &nbsp;&rarr;
+                                    <td width="115" valign="middle" align="right" class="sec2-desktop-action" style="padding-left: 16px; border-left: 1px solid #e5e7eb;">
+                                        <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; line-height: 15px; display: inline-block; text-align: right;">
+                                            READ THE<br> INSIGHT &nbsp;&rarr;
                                         </a>
                                     </td>
                                 </tr>
@@ -442,14 +477,14 @@
                         <td style="padding: 6px 34px 28px 34px;" class="mobile-pad">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#112233" style="background-color: #112233; border-radius: 8px;">
                                 <tr>
-                                    <td style="padding: 22px 24px;">
+                                    <td style="padding: 22px 24px;" class="cta-card-td">
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <!-- Left Pallet Icon & Headline -->
                                                 <td valign="middle" class="cta-left">
-                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" style="margin: 0 !important; margin-left: 0 !important;">
+                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" class="cta-title-table" style="margin: 0 !important; margin-left: 0 !important;">
                                                         <tr>
-                                                            <td valign="middle" style="padding-right: 16px;">
+                                                            <td valign="middle" width="48" style="width: 48px; padding-right: 14px;">
                                                                 <svg width="36" height="36" viewBox="0 0 40 40" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
                                                                     <!-- Pallet base -->
                                                                     <rect x="4" y="28" width="32" height="4" rx="1"></rect>
@@ -464,10 +499,10 @@
                                                                 </svg>
                                                             </td>
                                                             <td valign="middle">
-                                                                <h4 style="margin: 0 0 3px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px;">
+                                                                <h4 style="margin: 0 0 3px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px; line-height: 20px;">
                                                                     Have surplus inventory to move?
                                                                 </h4>
-                                                                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #94a9bf;">
+                                                                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #94a9bf; line-height: 16px;">
                                                                     Let us help you explore the possibilities.
                                                                 </p>
                                                             </td>
@@ -477,11 +512,11 @@
 
                                                 <!-- Right CTA Button -->
                                                 <td width="200" valign="middle" align="right" class="cta-right" style="width: 200px;">
-                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 0 0 auto;">
+                                                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="cta-btn-table" style="margin: 0 0 0 auto;">
                                                         <tr>
-                                                            <td bgcolor="#e25b1e" style="border-radius: 6px;">
+                                                            <td bgcolor="#e25b1e" style="border-radius: 6px;" class="cta-btn-cell">
                                                                 <a href="https://surplusmarket.com/contact" class="cta-btn" style="display: inline-block; padding: 11px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; line-height: 14px; text-align: center;">
-                                                                    CONNECT WITH<br>SURPLUS MARKET &nbsp;&rarr;
+                                                                    CONNECT WITH<br class="cta-btn-br"> SURPLUS MARKET &nbsp;&rarr;
                                                                 </a>
                                                             </td>
                                                         </tr>

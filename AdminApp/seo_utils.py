@@ -71,7 +71,7 @@ def build_product_seo_data(
     # 2. Meta Title: Buy + Product Name + Product Code | Surplus Market
     meta_title = f"Buy {h1_title} | Surplus Market"
 
-    # 3. URL: /buy/[category]/[brand]-[product-name]-[product-code]
+    # 3. URL: /buy/product/[category]/[brand]-[product-name]-[product-code]
     cat_seg = _seo_slug(category_slug or category_name) or "products"
     slug_parts = []
     brand_norm = re.sub(r"[^a-z0-9]", "", brand_str.lower())
@@ -82,7 +82,7 @@ def build_product_seo_data(
     if code and code.lower() not in name.lower():
         slug_parts.append(code)
     item_slug = _seo_slug(" ".join(slug_parts)) or _seo_slug(code) or "product"
-    seo_url = f"/buy/{cat_seg}/{item_slug}"
+    seo_url = f"/buy/product/{cat_seg}/{item_slug}"
 
     # 4. Short Product Description (1-2 sentences with product name, key feature, brand, and code)
     lead_name = f"{brand_str} {name}" if (brand_str and (not brand_norm or not name_norm.startswith(brand_norm))) else name
