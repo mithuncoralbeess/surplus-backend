@@ -641,6 +641,13 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="/admin/buyers/add/"
+                    class="nav-link {% if request.path == '/admin/buyers/add/' or request.path == '/admin/rfq-requests/add/' %}active{% endif %}">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Add Buyer RFQ</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="/admin/admins/"
                     class="nav-link d-flex justify-content-between align-items-center {% if '/admin/admins/' in request.path %}active{% endif %}">
                     <div class="d-flex align-items-center gap-2">
@@ -689,13 +696,6 @@
                     class="nav-link {% if request.path == '/admin/lots/add/' %}active{% endif %}">
                     <i class="bi bi-plus-square-dotted"></i>
                     <span>Add Lot Batch</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="/admin/buyers/add/"
-                    class="nav-link {% if request.path == '/admin/buyers/add/' or request.path == '/admin/rfq-requests/add/' %}active{% endif %}">
-                    <i class="bi bi-person-plus"></i>
-                    <span>Add Buyer RFQ</span>
                 </a>
             </li>
 
