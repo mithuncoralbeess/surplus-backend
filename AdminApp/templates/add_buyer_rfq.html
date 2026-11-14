@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Add Buyer | Surplus Admin Portal{% endblock %}
+{% block title %}Register Buyer | Surplus Admin Portal{% endblock %}
 
 {% block content %}
 <div class="container-fluid pb-5">
 <style>
 /* =============================================================
-   SURPLUS ADMIN PORTAL: PREMIUM BUYER INTAKE FORM DESIGN SYSTEM
+   SURPLUS ADMIN PORTAL: BUYER REGISTRATION BY ADMIN
    Strict Uniform Alignment & Dashkit Visual Standards
    ============================================================= */
 
@@ -55,6 +55,7 @@
 .card-section-0 { border-top: 4px solid #10b981 !important; }
 .card-section-1 { border-top: 4px solid #2563eb !important; }
 .card-section-2 { border-top: 4px solid #6366f1 !important; }
+.card-section-3 { border-top: 4px solid #f59e0b !important; }
 .card-sidebar-preview { border-top: 4px solid #0f172a !important; }
 .card-sidebar-readiness { border-top: 4px solid #3b82f6 !important; }
 .card-sidebar-action { border-top: 4px solid #2563eb !important; }
@@ -229,53 +230,17 @@ textarea.form-control-custom {
     border-color: #2563eb !important;
 }
 
-/* Channel Selection Cards */
-.channel-box {
-    height: 76px !important;
-    min-height: 76px !important;
-    background: #ffffff !important;
-    border: 1.5px solid #e2e8f0 !important;
-    border-radius: 0.85rem !important;
-    padding: 0.5rem 0.5rem !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-    position: relative;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.channel-radio-card input:checked + .channel-box {
-    border-color: #2563eb !important;
-    background: #f0f7ff !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15) !important;
-    transform: translateY(-2px);
-}
-
-.channel-radio-card input:checked + .channel-box::after {
-    content: "\F272";
-    font-family: "bootstrap-icons";
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    color: #2563eb;
-    font-size: 0.85rem;
-    font-weight: bold;
-}
-
 /* Entity Type Toggle Pills */
 .entity-toggle-btn {
     border: 1.5px solid #e2e8f0;
     border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1rem;
     cursor: pointer;
     transition: all 0.15s ease;
     background: #ffffff;
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.75rem;
 }
 
 .entity-toggle-btn:hover {
@@ -321,6 +286,26 @@ textarea.form-control-custom {
     box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
 }
 
+/* Password eye button */
+.btn-password-toggle {
+    border: 1.5px solid #cbd5e1;
+    border-left: none;
+    background-color: #f8fafc;
+    color: #64748b;
+    border-top-right-radius: 0.65rem;
+    border-bottom-right-radius: 0.65rem;
+    padding: 0 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.btn-password-toggle:hover {
+    color: #2563eb;
+    background-color: #ffffff;
+}
+
 /* Sticky Action Sidebar */
 .sticky-preview-card {
     position: sticky;
@@ -344,29 +329,29 @@ textarea.form-control-custom {
                     <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
                     <li class="breadcrumb-item"><a href="/admin/users/" class="text-decoration-none text-muted">User Management</a></li>
                     <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
-                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><span>Add Buyer</span></li>
+                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><span>Register Buyer</span></li>
                 </ol>
             </nav>
             <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
-                <h1 class="header-title mb-0 fs-3 fw-bold text-dark">Add Buyer</h1>
+                <h1 class="header-title mb-0 fs-3 fw-bold text-dark">Register Buyer</h1>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
-                    <i class="bi bi-person-plus-fill me-1"></i>Directory Onboarding
+                    <i class="bi bi-person-check-fill me-1"></i>Admin Registration Desk
                 </span>
                 <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle rounded-pill px-3 py-1 fw-semibold small">
-                    <i class="bi bi-shield-check me-1"></i>Verified Sourcing
+                    <i class="bi bi-shield-check me-1"></i>Verified Buyer Account
                 </span>
             </div>
             <p class="header-subtitle mt-1 mb-0 text-muted small">
-                Admin Assisted Intake &mdash; Register and onboard a new buyer profile into the marketplace directory.
+                Admin Assisted Registration &mdash; Register and activate a new buyer profile directly into the Surplus marketplace directory.
             </p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="/admin/users/" class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
                 <i class="bi bi-arrow-left"></i> Manage Users
             </a>
-            <button type="submit" form="addBuyerForm" id="btnSubmitTop"
+            <button type="submit" form="registerBuyerForm" id="btnSubmitTop"
                 class="btn btn-primary px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm">
-                <i class="bi bi-person-check-fill fs-6"></i> Add Buyer
+                <i class="bi bi-person-plus-fill fs-6"></i> Register Buyer
             </button>
         </div>
     </div>
@@ -397,7 +382,7 @@ textarea.form-control-custom {
             </div>
             <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Buyer Intake by Verified Admin:</span>
+                    <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Buyer Registration by Verified Admin:</span>
                     <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
                     <span class="text-secondary small fw-medium">
                         ({% if admin.full_name %}{{ admin.full_name }} &bull; {% elif admin.username and admin.username != admin.email %}{{ admin.username }} &bull; {% endif %}{{ admin.email|default:admin.username }})
@@ -407,100 +392,178 @@ textarea.form-control-custom {
                     {% endif %}
                 </div>
                 <div class="text-secondary small mt-1">
-                    This buyer profile will be created in <strong>User Management (Buyers)</strong> with verified admin audit attribution and immediate procurement access.
+                    The newly registered buyer will be created in <strong>User Management (Buyers)</strong> with verified admin audit attribution and login credentials.
                 </div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
-                <i class="bi bi-patch-check-fill me-1"></i>Verified Sourcing
+                <i class="bi bi-patch-check-fill me-1"></i>Direct Registration
             </span>
         </div>
     </div>
 
     <!-- MAIN FORM -->
-    <form method="POST" action="/admin/buyers/add/" id="addBuyerForm" novalidate>
+    <form method="POST" action="/admin/buyers/add/" id="registerBuyerForm" novalidate>
         {% csrf_token %}
 
         <div class="row g-4">
 
-            <!-- LEFT COLUMN (Buyer Details Sections) -->
+            <!-- LEFT COLUMN (Buyer Registration Sections) -->
             <div class="col-lg-8">
 
-                <!-- 1. Buyer Contact & Account Details -->
+                <!-- 1. Account Credentials & Login Details -->
                 <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
                             <div class="section-icon-badge bg-emerald-subtle text-emerald">
-                                <i class="bi bi-person-vcard"></i>
+                                <i class="bi bi-key"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">1. Buyer Contact &amp; Account Identity</h6>
-                                <div class="text-muted small">Enter the primary buyer contact person and organization details</div>
+                                <h6 class="fw-bold mb-0 text-dark">1. Account Credentials &amp; Login Details</h6>
+                                <div class="text-muted small">Set up primary credentials, username, and account login password for the buyer</div>
                             </div>
                         </div>
                         <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle px-3 py-1 rounded-pill fw-semibold small">
-                            <i class="bi bi-person-check-fill me-1"></i>Primary Contact
+                            <i class="bi bi-shield-lock-fill me-1"></i>Authentication
                         </span>
                     </div>
 
                     <div class="card-body p-4">
 
-                        <!-- Intake Channel Quick-Select Cards -->
-                        <div class="mb-4">
-                            <label class="form-label-custom">
-                                <span class="label-title">Intake Submission Channel <span class="text-danger">*</span></span>
-                                <span class="text-muted small">How buyer initiated contact</span>
-                            </label>
-                            <div class="row g-3 intake-channel-grid mt-0.5">
-                                <div class="col-6 col-sm-3">
-                                    <label class="channel-radio-card d-block cursor-pointer">
-                                        <input type="radio" name="intake_channel" value="WhatsApp" class="d-none intake-radio"
-                                            {% if form_data.intake_channel == 'WhatsApp' or not form_data.intake_channel %}checked{% endif %}>
-                                        <div class="channel-box text-center">
-                                            <i class="bi bi-whatsapp fs-4 text-success mb-1"></i>
-                                            <div class="channel-label small fw-semibold text-dark">WhatsApp</div>
-                                        </div>
-                                    </label>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="fullNameInput" class="form-label-custom">
+                                    <span class="label-title">Full Name / Contact Person <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="fullNameInput" name="full_name"
+                                        value="{{ form_data.full_name|default:form_data.contact_person|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
                                 </div>
-                                <div class="col-6 col-sm-3">
-                                    <label class="channel-radio-card d-block cursor-pointer">
-                                        <input type="radio" name="intake_channel" value="Email" class="d-none intake-radio"
-                                            {% if form_data.intake_channel == 'Email' %}checked{% endif %}>
-                                        <div class="channel-box text-center">
-                                            <i class="bi bi-envelope-fill fs-4 text-primary mb-1"></i>
-                                            <div class="channel-label small fw-semibold text-dark">Email</div>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <label class="channel-radio-card d-block cursor-pointer">
-                                        <input type="radio" name="intake_channel" value="Phone Call" class="d-none intake-radio"
-                                            {% if form_data.intake_channel == 'Phone Call' %}checked{% endif %}>
-                                        <div class="channel-box text-center">
-                                            <i class="bi bi-telephone-fill fs-4 text-info mb-1"></i>
-                                            <div class="channel-label small fw-semibold text-dark">Phone Call</div>
-                                        </div>
-                                    </label>
-                                </div>
-                                <div class="col-6 col-sm-3">
-                                    <label class="channel-radio-card d-block cursor-pointer">
-                                        <input type="radio" name="intake_channel" value="Direct / Walk-in" class="d-none intake-radio"
-                                            {% if form_data.intake_channel == 'Direct / Walk-in' %}checked{% endif %}>
-                                        <div class="channel-box text-center">
-                                            <i class="bi bi-person-walking fs-4 text-warning mb-1"></i>
-                                            <div class="channel-label small fw-semibold text-dark">Direct / Walk-in</div>
-                                        </div>
-                                    </label>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="usernameInput" class="form-label-custom">
+                                    <span class="label-title">Username</span>
+                                    <span class="badge-optional">Auto-generated if empty</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon">@</span>
+                                    <input type="text" class="form-control form-control-custom font-monospace" id="usernameInput" name="username"
+                                        value="{{ form_data.username|default:'' }}" placeholder="e.g. ahmed_mansoor">
                                 </div>
                             </div>
                         </div>
 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="buyerEmailInput" class="form-label-custom">
+                                    <span class="label-title">Login Email Address <span class="text-danger">*</span></span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
+                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="buyerPhoneInput" class="form-label-custom">
+                                    <span class="label-title">Mobile / WhatsApp Number <span class="text-danger">*</span></span>
+                                    <span class="badge-optional">Intl. Format</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control form-control-custom" id="buyerPhoneInput" name="phone"
+                                        value="{{ form_data.phone|default:form_data.mobile_number|default:'' }}" placeholder="+971 50 000 0000" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Section with Generator -->
+                        <div class="p-3 rounded-3 border mb-3" style="background-color: #f8fafc;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="fw-semibold text-dark small mb-0 d-flex align-items-center gap-1.5">
+                                    <i class="bi bi-lock-fill text-primary"></i> Buyer Password Setup
+                                </label>
+                                <button type="button" class="btn btn-sm btn-link text-primary text-decoration-none p-0 fw-semibold" id="btnGenPassword">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Generate Secure Password
+                                </button>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="passwordInput" class="form-label-custom">
+                                        <span class="label-title">Account Password</span>
+                                        <span class="badge-optional">Min 6 chars</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="addon-icon"><i class="bi bi-shield-lock"></i></span>
+                                        <input type="password" class="form-control form-control-custom" id="passwordInput" name="password"
+                                            placeholder="Enter password or auto-generate">
+                                        <button type="button" class="btn btn-password-toggle" id="togglePasswordBtn" title="Show/Hide">
+                                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="confirmPasswordInput" class="form-label-custom">
+                                        <span class="label-title">Confirm Password</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="addon-icon"><i class="bi bi-shield-check"></i></span>
+                                        <input type="password" class="form-control form-control-custom" id="confirmPasswordInput" name="confirm_password"
+                                            placeholder="Repeat password">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text small text-muted mt-2 d-flex align-items-center gap-1">
+                                <i class="bi bi-info-circle text-primary"></i>
+                                <span>Leaving password blank auto-generates a secure temporary password.</span>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox & Status Options -->
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input cursor-pointer" type="checkbox" name="status" id="buyerStatusToggle" value="1" checked>
+                                <label class="form-check-label fw-semibold text-dark small cursor-pointer" for="buyerStatusToggle">
+                                    Activate Account Immediately (Active Status)
+                                </label>
+                            </div>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input cursor-pointer" type="checkbox" name="send_welcome_email" id="sendWelcomeEmailCheck" value="1" checked>
+                                <label class="form-check-label fw-semibold text-dark small cursor-pointer" for="sendWelcomeEmailCheck">
+                                    <i class="bi bi-envelope-paper-heart text-primary me-1"></i> Send welcome email &amp; confirmation
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 2. Business Profile & Entity Type -->
+                <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="section-icon-badge bg-primary-subtle text-primary">
+                                <i class="bi bi-building"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">2. Business Profile &amp; Entity Type</h6>
+                                <div class="text-muted small">Specify corporate trade classification, entity type, and company credentials</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-briefcase-fill me-1"></i>Business Info
+                        </span>
+                    </div>
+
+                    <div class="card-body p-4">
+
                         <!-- Entity Type Selector -->
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span class="label-title">Account Entity Type</span>
-                                <span class="badge-optional">Organization Type</span>
+                                <span class="label-title">Account Entity Classification</span>
+                                <span class="badge-optional">Legal Entity</span>
                             </label>
                             <div class="row g-3">
                                 <div class="col-sm-6">
@@ -508,10 +571,10 @@ textarea.form-control-custom {
                                         <input type="radio" name="account_entity_type" value="COMPANY" class="d-none" id="entityCompany"
                                             {% if form_data.account_entity_type != 'INDIVIDUAL' %}checked{% endif %}>
                                         <div class="entity-toggle-btn">
-                                            <i class="bi bi-building fs-5 text-primary"></i>
+                                            <i class="bi bi-buildings fs-4 text-primary"></i>
                                             <div>
                                                 <div class="fw-bold small text-dark">Company / Corporate Entity</div>
-                                                <div class="text-muted" style="font-size: 0.75rem;">Wholesaler, retailer, distributor, commercial entity</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">Wholesaler, retailer, distributor, commercial enterprise</div>
                                             </div>
                                         </div>
                                     </label>
@@ -521,10 +584,10 @@ textarea.form-control-custom {
                                         <input type="radio" name="account_entity_type" value="INDIVIDUAL" class="d-none" id="entityIndividual"
                                             {% if form_data.account_entity_type == 'INDIVIDUAL' %}checked{% endif %}>
                                         <div class="entity-toggle-btn">
-                                            <i class="bi bi-person fs-5 text-secondary"></i>
+                                            <i class="bi bi-person-badge fs-4 text-secondary"></i>
                                             <div>
                                                 <div class="fw-bold small text-dark">Individual / Independent Trader</div>
-                                                <div class="text-muted" style="font-size: 0.75rem;">Sole proprietor or personal account</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">Sole proprietor or independent personal buyer</div>
                                             </div>
                                         </div>
                                     </label>
@@ -532,44 +595,12 @@ textarea.form-control-custom {
                             </div>
                         </div>
 
-                        <!-- Buyer Contact Details Inputs -->
+                        <!-- Business Profile Inputs -->
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label for="contactPersonInput" class="form-label-custom">
-                                    <span class="label-title">Full Name / Contact Person <span class="text-danger">*</span></span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="contactPersonInput" name="contact_person"
-                                        value="{{ form_data.contact_person|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="buyerEmailInput" class="form-label-custom">
-                                    <span class="label-title">Buyer Email <span class="text-danger">*</span></span>
-                                    <span class="badge-optional">Login &amp; Alerts</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
-                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="buyerPhoneInput" class="form-label-custom">
-                                    <span class="label-title">Mobile / WhatsApp <span class="text-danger">*</span></span>
-                                    <span class="badge-optional">Intake Comms</span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-telephone"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="buyerPhoneInput" name="phone"
-                                        value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000">
-                                </div>
-                            </div>
                             <div class="col-md-4" id="companyFieldCol">
                                 <label for="buyerCompanyInput" class="form-label-custom">
                                     <span class="label-title">Company Name</span>
-                                    <span class="badge-optional">Trade Name</span>
+                                    <span class="badge-optional">Commercial Name</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="addon-icon"><i class="bi bi-building"></i></span>
@@ -580,7 +611,7 @@ textarea.form-control-custom {
                             <div class="col-md-4">
                                 <label for="buyerBusinessTypeSelect" class="form-label-custom">
                                     <span class="label-title">Business Type</span>
-                                    <span class="badge-optional">Classification</span>
+                                    <span class="badge-optional">Industry Sector</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="addon-icon"><i class="bi bi-briefcase"></i></span>
@@ -608,20 +639,20 @@ textarea.form-control-custom {
                     </div>
                 </div>
 
-                <!-- 2. Location & Address Details -->
-                <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm">
+                <!-- 3. Geographic Location & Address -->
+                <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary-subtle text-primary">
+                            <div class="section-icon-badge bg-indigo-subtle text-indigo">
                                 <i class="bi bi-geo-alt"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">2. Geographic Location &amp; Address</h6>
-                                <div class="text-muted small">Buyer dispatch destination, operational jurisdiction, and shipping facility</div>
+                                <h6 class="fw-bold mb-0 text-dark">3. Geographic Location &amp; Address</h6>
+                                <div class="text-muted small">Registered location, country jurisdiction, and dispatch destination</div>
                             </div>
                         </div>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold small">
-                            <i class="bi bi-pin-map-fill me-1"></i>Delivery Hub
+                        <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-pin-map-fill me-1"></i>Location
                         </span>
                     </div>
 
@@ -643,8 +674,8 @@ textarea.form-control-custom {
                             </div>
                             <div class="col-md-6">
                                 <label for="buyerLocationInput" class="form-label-custom">
-                                    <span class="label-title">City / Business Location</span>
-                                    <span class="badge-optional">Hub City</span>
+                                    <span class="label-title">City / Business Hub</span>
+                                    <span class="badge-optional">City</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="addon-icon"><i class="bi bi-buildings"></i></span>
@@ -664,20 +695,20 @@ textarea.form-control-custom {
                     </div>
                 </div>
 
-                <!-- 3. Buyer Sourcing Preferences & Categories -->
-                <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
+                <!-- 4. Interested Product Categories & Notes -->
+                <div class="card admin-form-card card-section-3 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-indigo-subtle text-indigo">
+                            <div class="section-icon-badge bg-amber-subtle text-amber">
                                 <i class="bi bi-tags"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">3. Categories &amp; Sourcing Preferences</h6>
-                                <div class="text-muted small">Select interested inventory categories and record buyer procurement specifications</div>
+                                <h6 class="fw-bold mb-0 text-dark">4. Interested Product Categories</h6>
+                                <div class="text-muted small">Select the surplus categories the buyer is interested in purchasing</div>
                             </div>
                         </div>
-                        <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle px-3 py-1 rounded-pill fw-semibold small">
-                            <i class="bi bi-heart-pulse-fill me-1"></i>Demand Match
+                        <span class="badge bg-amber-subtle text-amber border border-amber-subtle px-3 py-1 rounded-pill fw-semibold small">
+                            <i class="bi bi-star-fill me-1"></i>Sourcing Interests
                         </span>
                     </div>
 
@@ -685,7 +716,7 @@ textarea.form-control-custom {
 
                         <div class="mb-4">
                             <label class="form-label-custom">
-                                <span class="label-title">Interested Marketplace Categories</span>
+                                <span class="label-title">Marketplace Categories of Interest</span>
                                 <span class="badge-optional">Multi-Select</span>
                             </label>
                             <div class="d-flex flex-wrap gap-2 mt-1">
@@ -702,23 +733,13 @@ textarea.form-control-custom {
                             </div>
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="additionalNotesInput" class="form-label-custom">
-                                    <span class="label-title">Procurement Notes &amp; Target Specifications</span>
-                                    <span class="badge-optional">Sourcing Needs</span>
-                                </label>
-                                <textarea class="form-control form-control-custom" id="additionalNotesInput" name="additional_notes" rows="3"
-                                    placeholder="Target items, budget ranges, brand preferences, packaging requests...">{{ form_data.additional_notes|default:'' }}</textarea>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="adminNotesInput" class="form-label-custom">
-                                    <span class="label-title">Internal Admin Notes</span>
-                                    <span class="badge-optional">Confidential</span>
-                                </label>
-                                <textarea class="form-control form-control-custom" id="adminNotesInput" name="admin_notes" rows="3"
-                                    placeholder="Verification details, referral source, credit terms, internal comments...">{{ form_data.admin_notes|default:'' }}</textarea>
-                            </div>
+                        <div>
+                            <label for="adminNotesInput" class="form-label-custom">
+                                <span class="label-title">Internal Admin Registration Notes</span>
+                                <span class="badge-optional">Confidential</span>
+                            </label>
+                            <textarea class="form-control form-control-custom" id="adminNotesInput" name="admin_notes" rows="2"
+                                placeholder="Registration channel, credit rating, internal verification notes, or referral source...">{{ form_data.admin_notes|default:'' }}</textarea>
                         </div>
 
                     </div>
@@ -726,7 +747,7 @@ textarea.form-control-custom {
 
             </div>
 
-            <!-- RIGHT COLUMN (Sticky Live Profile Snapshot & Action Box) -->
+            <!-- RIGHT COLUMN (Sticky Live Profile Preview & Action Box) -->
             <div class="col-lg-4">
 
                 <!-- 1. Live Buyer Profile Preview Card -->
@@ -734,9 +755,9 @@ textarea.form-control-custom {
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
                         <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                             <i class="bi bi-person-badge text-primary"></i>
-                            <span>Buyer Profile Preview</span>
+                            <span>Buyer Account Preview</span>
                         </h6>
-                        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold">ACTIVE</span>
+                        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold" id="previewStatusBadge">ACTIVE</span>
                     </div>
 
                     <div class="card-body p-4">
@@ -744,14 +765,14 @@ textarea.form-control-custom {
                         <!-- Buyer Profile Snapshot Hero -->
                         <div class="p-3 rounded-3 mb-3 text-center border" style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold mx-auto mb-2 shadow-sm"
-                                style="width: 56px; height: 56px; font-size: 1.35rem;" id="buyerAvatarIcon">
+                                style="width: 58px; height: 58px; font-size: 1.45rem;" id="buyerAvatarIcon">
                                 B
                             </div>
-                            <div class="fw-bold fs-5 text-dark text-truncate" id="sidebarBuyerName">New Buyer Profile</div>
-                            <div class="text-secondary small text-truncate mt-0.5" id="sidebarBuyerCompany">Company: Not specified</div>
+                            <div class="fw-bold fs-5 text-dark text-truncate" id="sidebarBuyerName">New Buyer</div>
+                            <div class="text-muted font-monospace small" id="sidebarBuyerUsername">@buyer</div>
+                            <div class="text-secondary small text-truncate mt-1" id="sidebarBuyerCompany">Company: Not specified</div>
                             <div class="d-flex justify-content-center gap-2 mt-2 pt-2 border-top">
-                                <span class="badge bg-primary text-white px-3 py-1 rounded-pill small">Buyer Account</span>
-                                <span class="badge bg-light text-secondary border px-2.5 py-1 rounded-pill small" id="sidebarChannel">WhatsApp</span>
+                                <span class="badge bg-primary text-white px-3 py-1 rounded-pill small">BUYER ACCOUNT</span>
                             </div>
                         </div>
 
@@ -784,7 +805,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-sidebar-readiness mb-4 border-0 shadow-sm p-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-2">
-                            <i class="bi bi-check2-circle text-primary fs-6"></i> Profile Completion
+                            <i class="bi bi-check2-circle text-primary fs-6"></i> Registration Readiness
                         </h6>
                         <span class="fw-bold font-monospace text-primary small" id="checklistProgressPct">0%</span>
                     </div>
@@ -793,16 +814,19 @@ textarea.form-control-custom {
                     </div>
                     <div class="checklist-items d-flex flex-column gap-2.5 small text-secondary">
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkContactName">
-                            <i class="bi bi-circle text-muted"></i> <span>Buyer Contact Person</span>
+                            <i class="bi bi-circle text-muted"></i> <span>Buyer Full Name</span>
                         </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkContactEmail">
-                            <i class="bi bi-circle text-muted"></i> <span>Buyer Email Address</span>
+                            <i class="bi bi-circle text-muted"></i> <span>Login Email Address</span>
                         </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkContactPhone">
                             <i class="bi bi-circle text-muted"></i> <span>Mobile / WhatsApp Number</span>
                         </div>
+                        <div class="checklist-item d-flex align-items-center gap-2" id="checkPassword">
+                            <i class="bi bi-circle text-muted"></i> <span>Password Configured</span>
+                        </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkLocation">
-                            <i class="bi bi-circle text-muted"></i> <span>Country &amp; Business City</span>
+                            <i class="bi bi-circle text-muted"></i> <span>Country / Hub City</span>
                         </div>
                         <div class="checklist-item d-flex align-items-center gap-2" id="checkCategories">
                             <i class="bi bi-circle text-muted"></i> <span>Interested Categories</span>
@@ -813,9 +837,9 @@ textarea.form-control-custom {
                 <!-- 3. Sticky Action Box -->
                 <div class="card admin-form-card card-sidebar-action border-0 shadow-sm p-4 sticky-action-box">
                     <div class="d-grid gap-3">
-                        <button type="submit" form="addBuyerForm" id="btnSubmitBottom"
+                        <button type="submit" form="registerBuyerForm" id="btnSubmitBottom"
                             class="btn btn-primary btn-lg py-3 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
-                            <i class="bi bi-person-check-fill"></i> Add Buyer
+                            <i class="bi bi-person-plus-fill"></i> Register Buyer
                         </button>
                         <a href="/admin/users/"
                             class="btn btn-outline-secondary py-2.5 rounded-3 text-decoration-none text-center fw-medium">
@@ -824,7 +848,7 @@ textarea.form-control-custom {
                     </div>
                     <div class="text-center text-muted small mt-3 pt-3 border-top">
                         <i class="bi bi-shield-check text-success me-1"></i>
-                        Saved with verified Admin ID <strong>{{ admin_uid }}</strong>
+                        Registered by Admin ID <strong>{{ admin_uid }}</strong>
                     </div>
                 </div>
 
@@ -836,27 +860,30 @@ textarea.form-control-custom {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const contactInput = document.getElementById('contactPersonInput');
+    const fullNameInput = document.getElementById('fullNameInput');
+    const usernameInput = document.getElementById('usernameInput');
     const emailInput = document.getElementById('buyerEmailInput');
     const phoneInput = document.getElementById('buyerPhoneInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const confirmPasswordInput = document.getElementById('confirmPasswordInput');
     const companyInput = document.getElementById('buyerCompanyInput');
     const countrySelect = document.getElementById('buyerCountrySelect');
     const locationInput = document.getElementById('buyerLocationInput');
     const businessTypeSelect = document.getElementById('buyerBusinessTypeSelect');
     const entityCompany = document.getElementById('entityCompany');
     const entityIndividual = document.getElementById('entityIndividual');
-    const companyFieldCol = document.getElementById('companyFieldCol');
-    const taxFieldCol = document.getElementById('taxFieldCol');
+    const buyerStatusToggle = document.getElementById('buyerStatusToggle');
 
     // Sidebar Preview Elements
     const buyerAvatarIcon = document.getElementById('buyerAvatarIcon');
     const sidebarBuyerName = document.getElementById('sidebarBuyerName');
+    const sidebarBuyerUsername = document.getElementById('sidebarBuyerUsername');
     const sidebarBuyerCompany = document.getElementById('sidebarBuyerCompany');
     const sidebarBuyerEmail = document.getElementById('sidebarBuyerEmail');
     const sidebarBuyerPhone = document.getElementById('sidebarBuyerPhone');
     const sidebarBuyerLocation = document.getElementById('sidebarBuyerLocation');
     const sidebarBusinessType = document.getElementById('sidebarBusinessType');
-    const sidebarChannel = document.getElementById('sidebarChannel');
+    const previewStatusBadge = document.getElementById('previewStatusBadge');
 
     // Checklist Elements
     const checklistProgressBar = document.getElementById('checklistProgressBar');
@@ -864,11 +891,55 @@ document.addEventListener('DOMContentLoaded', function () {
     const checkContactName = document.getElementById('checkContactName');
     const checkContactEmail = document.getElementById('checkContactEmail');
     const checkContactPhone = document.getElementById('checkContactPhone');
+    const checkPassword = document.getElementById('checkPassword');
     const checkLocation = document.getElementById('checkLocation');
     const checkCategories = document.getElementById('checkCategories');
 
+    // Password generation & toggle
+    const btnGenPassword = document.getElementById('btnGenPassword');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+    function generateRandomPassword() {
+        const length = 12;
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+        let pass = "";
+        for (let i = 0; i < length; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return pass;
+    }
+
+    if (btnGenPassword) {
+        btnGenPassword.addEventListener('click', function () {
+            const p = generateRandomPassword();
+            if (passwordInput) passwordInput.value = p;
+            if (confirmPasswordInput) confirmPasswordInput.value = p;
+            if (passwordInput) passwordInput.type = 'text';
+            if (confirmPasswordInput) confirmPasswordInput.type = 'text';
+            if (togglePasswordIcon) togglePasswordIcon.className = 'bi bi-eye-slash';
+            updateChecklist();
+        });
+    }
+
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function () {
+            if (!passwordInput) return;
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            if (confirmPasswordInput) confirmPasswordInput.type = isPassword ? 'text' : 'password';
+            if (togglePasswordIcon) togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
+
     function updateBuyerPreview() {
-        const name = contactInput?.value.trim() || 'New Buyer Profile';
+        const name = fullNameInput?.value.trim() || 'New Buyer';
+        let uname = usernameInput?.value.trim();
+        if (!uname && emailInput?.value.trim()) {
+            uname = emailInput.value.trim().split('@')[0];
+        }
+        uname = uname ? `@${uname}` : '@buyer';
+
         const company = companyInput?.value.trim() || (entityIndividual?.checked ? 'Individual Account' : 'Company: Not specified');
         const email = emailInput?.value.trim() || '--';
         const phone = phoneInput?.value.trim() || '--';
@@ -876,11 +947,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const bType = businessTypeSelect?.value || 'General Buyer';
 
         if (sidebarBuyerName) sidebarBuyerName.textContent = name;
+        if (sidebarBuyerUsername) sidebarBuyerUsername.textContent = uname;
         if (sidebarBuyerCompany) sidebarBuyerCompany.textContent = company;
         if (sidebarBuyerEmail) sidebarBuyerEmail.textContent = email;
         if (sidebarBuyerPhone) sidebarBuyerPhone.textContent = phone;
         if (sidebarBuyerLocation) sidebarBuyerLocation.textContent = loc;
         if (sidebarBusinessType) sidebarBusinessType.textContent = bType;
+
+        if (previewStatusBadge && buyerStatusToggle) {
+            previewStatusBadge.textContent = buyerStatusToggle.checked ? 'ACTIVE' : 'INACTIVE';
+            previewStatusBadge.className = buyerStatusToggle.checked
+                ? 'badge bg-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold'
+                : 'badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill small fw-semibold';
+        }
 
         // Avatar Initial
         if (buyerAvatarIcon) {
@@ -907,24 +986,27 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateChecklist() {
-        let total = 5;
+        let total = 6;
         let score = 0;
 
-        const hasName = Boolean(contactInput?.value.trim().length >= 2);
+        const hasName = Boolean(fullNameInput?.value.trim().length >= 2);
         const hasEmail = Boolean(emailInput?.value.trim().includes('@'));
         const hasPhone = Boolean(phoneInput?.value.trim().length >= 6);
+        const hasPassword = Boolean(passwordInput?.value.trim().length >= 6 || !passwordInput?.value.trim()); // blank is auto-generated
         const hasLoc = Boolean(locationInput?.value.trim().length >= 2 || countrySelect?.value);
         const hasCats = document.querySelectorAll('.category-checkbox:checked').length > 0;
 
         if (hasName) score++;
         if (hasEmail) score++;
         if (hasPhone) score++;
+        if (hasPassword) score++;
         if (hasLoc) score++;
         if (hasCats) score++;
 
         setCheckState(checkContactName, hasName);
         setCheckState(checkContactEmail, hasEmail);
         setCheckState(checkContactPhone, hasPhone);
+        setCheckState(checkPassword, hasPassword);
         setCheckState(checkLocation, hasLoc);
         setCheckState(checkCategories, hasCats);
 
@@ -943,24 +1025,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Attach listeners
-    [contactInput, emailInput, phoneInput, companyInput, countrySelect, locationInput, businessTypeSelect].forEach(el => {
+    [fullNameInput, usernameInput, emailInput, phoneInput, passwordInput, confirmPasswordInput, companyInput, countrySelect, locationInput, businessTypeSelect].forEach(el => {
         el?.addEventListener('input', updateBuyerPreview);
         el?.addEventListener('change', updateBuyerPreview);
     });
 
-    // Channel Radios
-    document.querySelectorAll('.intake-radio').forEach(r => {
-        r.addEventListener('change', () => {
-            if (sidebarChannel) sidebarChannel.textContent = r.value;
-        });
-    });
-
-    // Entity toggle
-    function onEntityChange() {
-        updateBuyerPreview();
-    }
-    entityCompany?.addEventListener('change', onEntityChange);
-    entityIndividual?.addEventListener('change', onEntityChange);
+    buyerStatusToggle?.addEventListener('change', updateBuyerPreview);
+    entityCompany?.addEventListener('change', updateBuyerPreview);
+    entityIndividual?.addEventListener('change', updateBuyerPreview);
 
     // Category pills toggle
     document.querySelectorAll('.category-checkbox').forEach(cb => {
@@ -976,14 +1048,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             updateChecklist();
         });
-        // Initial state
         if (cb.checked) {
             const label = cb.closest('label')?.querySelector('.category-pill-label');
             label?.querySelector('.check-icon')?.classList.remove('d-none');
         }
     });
 
-    // Initial calculation
     updateBuyerPreview();
 });
 </script>

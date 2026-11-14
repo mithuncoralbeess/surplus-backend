@@ -7269,8 +7269,9 @@ def add_lot_view(request):
 
 def add_buyer_rfq_view(request):
     """
-    Admin Assisted Buyer Intake view (under User Management).
-    Allows Admin to register/onboard new buyer profiles directly into VendorDetails.
+    Admin Buyer Registration View (under User Management).
+    Allows Admin to register new buyer accounts directly into VendorDetails
+    with credentials, profile, and automatic onboarding notifications.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
@@ -7278,6 +7279,8 @@ def add_buyer_rfq_view(request):
 
     from .models import MainCategory, VendorDetails
     import re
+    import secrets
+    import string
     import time
 
     admin_uid = f"ADM-{admin_user.id:04d}"
@@ -7303,13 +7306,16 @@ def add_buyer_rfq_view(request):
         "countries": STANDARD_COUNTRIES,
         "categories_list": categories_list,
         "business_types": business_types,
-        "page_title": "Add Buyer",
+        "page_title": "Register Buyer",
     }
 
     if request.method == "POST":
-        contact_person = (request.POST.get("contact_person") or request.POST.get("full_name") or "").strip()
+        full_name = (request.POST.get("full_name") or request.POST.get("contact_person") or "").strip()
+        custom_username = (request.POST.get("username") or "").strip()
         email = (request.POST.get("email") or "").strip().lower()
         phone = (request.POST.get("phone") or request.POST.get("mobile_number") or "").strip()
+        password = (request.POST.get("password") or "").strip()
+        confirm_password = (request.POST.get("confirm_password") or "").strip()
         account_entity_type = (request.POST.get("account_entity_type") or "COMPANY").strip().upper()
         if account_entity_type not in ("COMPANY", "INDIVIDUAL"):
             account_entity_type = "COMPANY"
@@ -7320,43 +7326,65 @@ def add_buyer_rfq_view(request):
         business_location = (request.POST.get("business_location") or "").strip()
         business_address = (request.POST.get("business_address") or "").strip()
         selected_categories = request.POST.getlist("category_interested") or []
-        intake_channel = (request.POST.get("intake_channel") or "WhatsApp").strip()
+        is_active = request.POST.get("status") in ("1", "true", "True", "on", True, None)
+        send_welcome = request.POST.get("send_welcome_email") in ("1", "true", "True", "on", True)
         admin_notes = (request.POST.get("admin_notes") or "").strip()
 
         errors = []
-        if not contact_person:
-            errors.append("Buyer Full Name / Contact Person is required.")
-        if not email and not phone:
-            errors.append("Please provide at least Buyer Email or Mobile / WhatsApp number.")
+        if not full_name:
+            errors.append("Buyer Full Name is required.")
+        if not email:
+            errors.append("Valid Buyer Email is required for account login.")
+        if not phone:
+            errors.append("Mobile / WhatsApp Number is required.")
 
         clean_mobile = re.sub(r"[^\d+]", "", phone).strip() if phone else ""
         if email and VendorDetails.objects.filter(email__iexact=email).exists():
-            errors.append(f"A user with email '{email}' already exists.")
+            errors.append(f"An account with email '{email}' is already registered.")
         if clean_mobile and VendorDetails.objects.filter(mobile_number=clean_mobile).exists():
-            errors.append(f"A user with mobile number '{clean_mobile}' already exists.")
+            errors.append(f"An account with mobile number '{clean_mobile}' is already registered.")
+
+        if custom_username:
+            clean_username = re.sub(r"[^\w.@+-]", "", custom_username)
+            if VendorDetails.objects.filter(username__iexact=clean_username).exists():
+                errors.append(f"Username '{custom_username}' is already taken.")
+        else:
+            clean_username = ""
+
+        if password or confirm_password:
+            if password != confirm_password:
+                errors.append("Passwords do not match.")
+            elif len(password) < 6:
+                errors.append("Password must be at least 6 characters.")
 
         if errors:
             for err in errors:
                 messages.error(request, err)
             return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
 
-        if not email:
-            phone_digits = re.sub(r"[^\d]", "", clean_mobile) if clean_mobile else str(int(time.time()))
-            email = f"buyer_{phone_digits}@buyer.surplus"
+        if clean_username:
+            uname = clean_username
+        else:
+            base_uname = (email.split("@")[0] or "buyer")[:35]
+            uname = base_uname
+            counter = 1
+            while VendorDetails.objects.filter(username=uname).exists():
+                uname = f"{base_uname}{counter}"
+                counter += 1
 
-        base_uname = (email.split("@")[0] or "buyer")[:40]
-        uname = base_uname
-        counter = 1
-        while VendorDetails.objects.filter(username=uname).exists():
-            uname = f"{base_uname}{counter}"
-            counter += 1
+        if not password:
+            alphabet = string.ascii_letters + string.digits + "!@#$"
+            password = "".join(secrets.choice(alphabet) for _ in range(12))
+
+        hashed_password = VendorDetails.hash_password(password)
 
         try:
             buyer_vendor = VendorDetails.objects.create(
                 username=uname,
                 email=email,
-                full_name=contact_person,
+                full_name=full_name,
                 mobile_number=clean_mobile,
+                pass_word=hashed_password,
                 account_entity_type=account_entity_type,
                 company_name=company_name,
                 country=country,
@@ -7366,16 +7394,25 @@ def add_buyer_rfq_view(request):
                 business_type=business_type,
                 category_interested=selected_categories,
                 user_type="BUYER",
-                status=True,
+                status=is_active,
+                session_version=1,
             )
+
+            if send_welcome:
+                try:
+                    from AdminApp.services import notify_new_user_registration
+                    notify_new_user_registration(buyer_vendor)
+                except Exception as notif_exc:
+                    logger.warning("Could not dispatch welcome notifications for registered buyer: %s", notif_exc)
+
             messages.success(
                 request,
-                f"Buyer '{buyer_vendor.full_name or buyer_vendor.username}' [{buyer_vendor.vendor_id}] successfully added under User Management."
+                f"Buyer account '{buyer_vendor.full_name}' ({buyer_vendor.email}) [{buyer_vendor.vendor_id}] successfully registered by admin."
             )
             return redirect("manage_users")
         except Exception as exc:
-            logger.exception("Failed to create buyer: %s", exc)
-            messages.error(request, f"Failed to create buyer: {str(exc)}")
+            logger.exception("Failed to register buyer: %s", exc)
+            messages.error(request, f"Failed to register buyer account: {str(exc)}")
             return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
 
     return render(request, "add_buyer_rfq.html", context)
