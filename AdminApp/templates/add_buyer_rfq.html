@@ -56,9 +56,6 @@
 .card-section-1 { border-top: 4px solid #2563eb !important; }
 .card-section-2 { border-top: 4px solid #6366f1 !important; }
 .card-section-3 { border-top: 4px solid #f59e0b !important; }
-.card-sidebar-preview { border-top: 4px solid #0f172a !important; }
-.card-sidebar-readiness { border-top: 4px solid #3b82f6 !important; }
-.card-sidebar-action { border-top: 4px solid #2563eb !important; }
 
 /* Color Accent System Utilities */
 .bg-emerald-subtle { background-color: #ecfdf5 !important; }
@@ -305,19 +302,6 @@ textarea.form-control-custom {
     color: #2563eb;
     background-color: #ffffff;
 }
-
-/* Sticky Action Sidebar */
-.sticky-preview-card {
-    position: sticky;
-    top: 90px;
-    z-index: 10;
-}
-
-.sticky-action-box {
-    position: sticky;
-    top: 540px;
-    z-index: 9;
-}
 </style>
 
     <!-- Page Header & Breadcrumb -->
@@ -407,10 +391,10 @@ textarea.form-control-custom {
     <form method="POST" action="/admin/buyers/add/" id="registerBuyerForm" novalidate>
         {% csrf_token %}
 
-        <div class="row g-4">
+        <div class="row justify-content-center">
 
-            <!-- LEFT COLUMN (Buyer Registration Sections) -->
-            <div class="col-lg-8">
+            <!-- MAIN FORM COLUMN -->
+            <div class="col-xl-9 col-lg-10">
 
                 <!-- 1. Account Credentials & Login Details -->
                 <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
@@ -756,157 +740,34 @@ textarea.form-control-custom {
                     </div>
                 </div>
 
-            </div>
-
-            <!-- RIGHT COLUMN (Sticky Live Profile Preview & Action Box) -->
-            <div class="col-lg-4">
-
-                <!-- 1. Live Buyer Profile Preview Card -->
-                <div class="card admin-form-card card-sidebar-preview mb-4 border-0 shadow-sm sticky-preview-card">
-                    <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
-                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                            <i class="bi bi-person-badge text-primary"></i>
-                            <span>Buyer Account Preview</span>
-                        </h6>
-                        <span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold" id="previewStatusBadge">ACTIVE</span>
-                    </div>
-
-                    <div class="card-body p-4">
-
-                        <!-- Buyer Profile Snapshot Hero -->
-                        <div class="p-3 rounded-3 mb-3 text-center border" style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold mx-auto mb-2 shadow-sm"
-                                style="width: 58px; height: 58px; font-size: 1.45rem;" id="buyerAvatarIcon">
-                                B
-                            </div>
-                            <div class="fw-bold fs-5 text-dark text-truncate" id="sidebarBuyerName">New Buyer</div>
-                            <div class="text-muted font-monospace small" id="sidebarBuyerUsername">@buyer</div>
-                            <div class="text-secondary small text-truncate mt-1" id="sidebarBuyerCompany">Company: Not specified</div>
-                            <div class="d-flex justify-content-center gap-2 mt-2 pt-2 border-top">
-                                <span class="badge bg-primary text-white px-3 py-1 rounded-pill small">BUYER ACCOUNT</span>
-                            </div>
-                        </div>
-
-                        <!-- Buyer Profile Key Meta -->
-                        <div class="p-3 rounded-3 border bg-light mb-3">
-                            <div class="d-flex flex-column gap-2 small text-secondary">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="text-muted"><i class="bi bi-envelope me-1.5 text-primary"></i>Email:</span>
-                                    <strong class="text-dark text-truncate ms-2" id="sidebarBuyerEmail">--</strong>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="text-muted"><i class="bi bi-telephone me-1.5 text-primary"></i>Phone:</span>
-                                    <strong class="text-dark text-truncate ms-2" id="sidebarBuyerPhone">--</strong>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="text-muted"><i class="bi bi-geo-alt me-1.5 text-primary"></i>Location:</span>
-                                    <strong class="text-dark text-truncate ms-2" id="sidebarBuyerLocation">United Arab Emirates</strong>
-                                </div>
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="text-muted"><i class="bi bi-briefcase me-1.5 text-primary"></i>Type:</span>
-                                    <strong class="text-dark text-truncate ms-2" id="sidebarBusinessType">General Buyer</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- 2. Profile Readiness Checklist -->
-                <div class="card admin-form-card card-sidebar-readiness mb-4 border-0 shadow-sm p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h6 class="fw-bold mb-0 small text-uppercase text-secondary d-flex align-items-center gap-2">
-                            <i class="bi bi-check2-circle text-primary fs-6"></i> Registration Readiness
-                        </h6>
-                        <span class="fw-bold font-monospace text-primary small" id="checklistProgressPct">0%</span>
-                    </div>
-                    <div class="progress mb-3" style="height: 6px; border-radius: 999px;">
-                        <div class="progress-bar bg-primary" id="checklistProgressBar" role="progressbar" style="width: 0%; border-radius: 999px;"></div>
-                    </div>
-                    <div class="checklist-items d-flex flex-column gap-2.5 small text-secondary">
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkContactName">
-                            <i class="bi bi-circle text-muted"></i> <span>Buyer Full Name</span>
-                        </div>
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkContactEmail">
-                            <i class="bi bi-circle text-muted"></i> <span>Login Email Address</span>
-                        </div>
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkContactPhone">
-                            <i class="bi bi-circle text-muted"></i> <span>Mobile / WhatsApp Number</span>
-                        </div>
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkPassword">
-                            <i class="bi bi-circle text-muted"></i> <span>Password Configured</span>
-                        </div>
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkLocation">
-                            <i class="bi bi-circle text-muted"></i> <span>Country / Hub City</span>
-                        </div>
-                        <div class="checklist-item d-flex align-items-center gap-2" id="checkCategories">
-                            <i class="bi bi-circle text-muted"></i> <span>Interested Categories (1 - 3)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. Sticky Action Box -->
-                <div class="card admin-form-card card-sidebar-action border-0 shadow-sm p-4 sticky-action-box">
-                    <div class="d-grid gap-3">
-                        <button type="submit" form="registerBuyerForm" id="btnSubmitBottom"
-                            class="btn btn-primary btn-lg py-3 rounded-3 fw-bold d-inline-flex align-items-center justify-content-center gap-2 shadow-sm">
-                            <i class="bi bi-person-plus-fill"></i> Register Buyer
-                        </button>
+                <!-- 5. Form Submission Action Bar -->
+                <div class="card admin-form-card border-0 shadow-sm p-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                         <a href="/admin/users/"
-                            class="btn btn-outline-secondary py-2.5 rounded-3 text-decoration-none text-center fw-medium">
-                            <i class="bi bi-arrow-left me-1"></i> Cancel &amp; Return
+                            class="btn btn-outline-secondary px-4 py-2.5 rounded-3 text-decoration-none fw-medium d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-arrow-left"></i> Cancel &amp; Return
                         </a>
-                    </div>
-                    <div class="text-center text-muted small mt-3 pt-3 border-top">
-                        <i class="bi bi-shield-check text-success me-1"></i>
-                        Registered by Admin ID <strong>{{ admin_uid }}</strong>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-muted small d-none d-sm-inline">
+                                <i class="bi bi-shield-check text-success me-1"></i> Registered by Admin ID <strong>{{ admin_uid }}</strong>
+                            </span>
+                            <button type="submit" form="registerBuyerForm" id="btnSubmitBottom"
+                                class="btn btn-primary btn-lg px-5 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                                <i class="bi bi-person-plus-fill"></i> Register Buyer
+                            </button>
+                        </div>
                     </div>
                 </div>
 
             </div>
-
         </div>
     </form>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const fullNameInput = document.getElementById('fullNameInput');
-    const usernameInput = document.getElementById('usernameInput');
-    const emailInput = document.getElementById('buyerEmailInput');
-    const phoneInput = document.getElementById('buyerPhoneInput');
     const passwordInput = document.getElementById('passwordInput');
     const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-    const companyInput = document.getElementById('buyerCompanyInput');
-    const countrySelect = document.getElementById('buyerCountrySelect');
-    const locationInput = document.getElementById('buyerLocationInput');
-    const businessTypeSelect = document.getElementById('buyerBusinessTypeSelect');
-    const entityCompany = document.getElementById('entityCompany');
-    const entityIndividual = document.getElementById('entityIndividual');
-    const buyerStatusToggle = document.getElementById('buyerStatusToggle');
-
-    // Sidebar Preview Elements
-    const buyerAvatarIcon = document.getElementById('buyerAvatarIcon');
-    const sidebarBuyerName = document.getElementById('sidebarBuyerName');
-    const sidebarBuyerUsername = document.getElementById('sidebarBuyerUsername');
-    const sidebarBuyerCompany = document.getElementById('sidebarBuyerCompany');
-    const sidebarBuyerEmail = document.getElementById('sidebarBuyerEmail');
-    const sidebarBuyerPhone = document.getElementById('sidebarBuyerPhone');
-    const sidebarBuyerLocation = document.getElementById('sidebarBuyerLocation');
-    const sidebarBusinessType = document.getElementById('sidebarBusinessType');
-    const previewStatusBadge = document.getElementById('previewStatusBadge');
-
-    // Checklist Elements
-    const checklistProgressBar = document.getElementById('checklistProgressBar');
-    const checklistProgressPct = document.getElementById('checklistProgressPct');
-    const checkContactName = document.getElementById('checkContactName');
-    const checkContactEmail = document.getElementById('checkContactEmail');
-    const checkContactPhone = document.getElementById('checkContactPhone');
-    const checkPassword = document.getElementById('checkPassword');
-    const checkLocation = document.getElementById('checkLocation');
-    const checkCategories = document.getElementById('checkCategories');
-
-    // Password generation & toggle
     const btnGenPassword = document.getElementById('btnGenPassword');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const togglePasswordIcon = document.getElementById('togglePasswordIcon');
@@ -929,7 +790,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (passwordInput) passwordInput.type = 'text';
             if (confirmPasswordInput) confirmPasswordInput.type = 'text';
             if (togglePasswordIcon) togglePasswordIcon.className = 'bi bi-eye-slash';
-            updateChecklist();
         });
     }
 
@@ -942,109 +802,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (togglePasswordIcon) togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
         });
     }
-
-    function updateBuyerPreview() {
-        const name = fullNameInput?.value.trim() || 'New Buyer';
-        let uname = usernameInput?.value.trim();
-        if (!uname && emailInput?.value.trim()) {
-            uname = emailInput.value.trim().split('@')[0];
-        }
-        uname = uname ? `@${uname}` : '@buyer';
-
-        const company = companyInput?.value.trim() || (entityIndividual?.checked ? 'Individual Account' : 'Company: Not specified');
-        const email = emailInput?.value.trim() || '--';
-        const phone = phoneInput?.value.trim() || '--';
-        const loc = [locationInput?.value.trim(), countrySelect?.value.trim()].filter(Boolean).join(', ') || 'United Arab Emirates';
-        const bType = businessTypeSelect?.value || 'General Buyer';
-
-        if (sidebarBuyerName) sidebarBuyerName.textContent = name;
-        if (sidebarBuyerUsername) sidebarBuyerUsername.textContent = uname;
-        if (sidebarBuyerCompany) sidebarBuyerCompany.textContent = company;
-        if (sidebarBuyerEmail) sidebarBuyerEmail.textContent = email;
-        if (sidebarBuyerPhone) sidebarBuyerPhone.textContent = phone;
-        if (sidebarBuyerLocation) sidebarBuyerLocation.textContent = loc;
-        if (sidebarBusinessType) sidebarBusinessType.textContent = bType;
-
-        if (previewStatusBadge && buyerStatusToggle) {
-            previewStatusBadge.textContent = buyerStatusToggle.checked ? 'ACTIVE' : 'INACTIVE';
-            previewStatusBadge.className = buyerStatusToggle.checked
-                ? 'badge bg-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold'
-                : 'badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill small fw-semibold';
-        }
-
-        // Avatar Initial
-        if (buyerAvatarIcon) {
-            const firstLetter = name.trim().charAt(0).toUpperCase();
-            buyerAvatarIcon.textContent = firstLetter.match(/[A-Z]/) ? firstLetter : 'B';
-        }
-
-        updateChecklist();
-    }
-
-    function setCheckState(el, isOk) {
-        if (!el) return;
-        const icon = el.querySelector('i');
-        if (!icon) return;
-        if (isOk) {
-            icon.className = 'bi bi-check-circle-fill text-success';
-            el.classList.add('text-dark', 'fw-medium');
-            el.classList.remove('text-secondary');
-        } else {
-            icon.className = 'bi bi-circle text-muted';
-            el.classList.remove('text-dark', 'fw-medium');
-            el.classList.add('text-secondary');
-        }
-    }
-
-    function updateChecklist() {
-        let total = 6;
-        let score = 0;
-
-        const hasName = Boolean(fullNameInput?.value.trim().length >= 2);
-        const hasEmail = Boolean(emailInput?.value.trim().includes('@'));
-        const hasPhone = Boolean(phoneInput?.value.trim().length >= 6);
-        const hasPassword = Boolean(passwordInput?.value.trim().length >= 6 || !passwordInput?.value.trim()); // blank is auto-generated
-        const hasLoc = Boolean(locationInput?.value.trim().length >= 2 || countrySelect?.value);
-        const categoryCount = Array.from(document.querySelectorAll('.category-checkbox')).filter(cb => cb.checked).length;
-        const hasCats = categoryCount >= 1 && categoryCount <= 3;
-
-        if (hasName) score++;
-        if (hasEmail) score++;
-        if (hasPhone) score++;
-        if (hasPassword) score++;
-        if (hasLoc) score++;
-        if (hasCats) score++;
-
-        setCheckState(checkContactName, hasName);
-        setCheckState(checkContactEmail, hasEmail);
-        setCheckState(checkContactPhone, hasPhone);
-        setCheckState(checkPassword, hasPassword);
-        setCheckState(checkLocation, hasLoc);
-        setCheckState(checkCategories, hasCats);
-
-        const pct = Math.round((score / total) * 100);
-        if (checklistProgressPct) checklistProgressPct.textContent = `${pct}%`;
-        if (checklistProgressBar) {
-            checklistProgressBar.style.width = `${pct}%`;
-            if (pct >= 80) {
-                checklistProgressBar.className = 'progress-bar bg-success';
-            } else if (pct >= 50) {
-                checklistProgressBar.className = 'progress-bar bg-primary';
-            } else {
-                checklistProgressBar.className = 'progress-bar bg-warning';
-            }
-        }
-    }
-
-    // Attach listeners
-    [fullNameInput, usernameInput, emailInput, phoneInput, passwordInput, confirmPasswordInput, companyInput, countrySelect, locationInput, businessTypeSelect].forEach(el => {
-        el?.addEventListener('input', updateBuyerPreview);
-        el?.addEventListener('change', updateBuyerPreview);
-    });
-
-    buyerStatusToggle?.addEventListener('change', updateBuyerPreview);
-    entityCompany?.addEventListener('change', updateBuyerPreview);
-    entityIndividual?.addEventListener('change', updateBuyerPreview);
 
     // Category pills min 1, max 3 limit handling
     const MAX_CATEGORIES = 3;
@@ -1106,7 +863,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (categoryLimitAlert) categoryLimitAlert.classList.add('d-none');
             }
             syncCategoryState();
-            updateChecklist();
         });
 
         if (cb.checked) {
@@ -1136,7 +892,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     syncCategoryState();
-    updateBuyerPreview();
 });
 </script>
 {% endblock %}
