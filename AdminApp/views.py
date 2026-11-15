@@ -7300,6 +7300,24 @@ def add_buyer_rfq_view(request):
         "Other",
     ]
 
+    default_form_data = {
+        "full_name": "",
+        "contact_person": "",
+        "username": "",
+        "email": "",
+        "phone": "",
+        "mobile_number": "",
+        "account_entity_type": "COMPANY",
+        "company_name": "",
+        "business_type": "",
+        "tax_registration_number": "",
+        "country": "United Arab Emirates",
+        "business_location": "",
+        "business_address": "",
+        "category_interested": [],
+        "admin_notes": "",
+    }
+
     context = {
         "admin": admin_user,
         "admin_uid": admin_uid,
@@ -7307,6 +7325,7 @@ def add_buyer_rfq_view(request):
         "categories_list": categories_list,
         "business_types": business_types,
         "page_title": "Register Buyer",
+        "form_data": default_form_data,
     }
 
     if request.method == "POST":
@@ -7329,6 +7348,12 @@ def add_buyer_rfq_view(request):
         is_active = request.POST.get("status") in ("1", "true", "True", "on", True, None)
         send_welcome = request.POST.get("send_welcome_email") in ("1", "true", "True", "on", True)
         admin_notes = (request.POST.get("admin_notes") or "").strip()
+
+        post_form_data = {
+            **default_form_data,
+            **request.POST.dict(),
+            "category_interested": selected_categories,
+        }
 
         errors = []
         if not full_name:
@@ -7360,7 +7385,7 @@ def add_buyer_rfq_view(request):
         if errors:
             for err in errors:
                 messages.error(request, err)
-            return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
+            return render(request, "add_buyer_rfq.html", {**context, "form_data": post_form_data})
 
         if clean_username:
             uname = clean_username
@@ -7413,7 +7438,7 @@ def add_buyer_rfq_view(request):
         except Exception as exc:
             logger.exception("Failed to register buyer: %s", exc)
             messages.error(request, f"Failed to register buyer account: {str(exc)}")
-            return render(request, "add_buyer_rfq.html", {**context, "form_data": request.POST})
+            return render(request, "add_buyer_rfq.html", {**context, "form_data": post_form_data})
 
     return render(request, "add_buyer_rfq.html", context)
 
