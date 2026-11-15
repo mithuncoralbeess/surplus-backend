@@ -761,45 +761,62 @@
             </div>
         </div>
 
-        <!-- Supply vs Demand by Category -->
+        <!-- Supply vs Demand by Category & Subcategory -->
         <div class="col-lg-6">
             <div class="dash-card">
                 <div class="dash-card-header">
                     <div>
                         <h5 class="dash-card-title">
                             <i class="bi bi-arrow-left-right" style="color: #6366f1;"></i>
-                            <span>Supply vs Demand by Category</span>
+                            <span>Supply vs Demand by Category &amp; Subcategory</span>
                         </h5>
-                        <span class="small text-muted">Live Listings vs Active RFQ Demands</span>
+                        <span class="small text-muted">Live Listings vs Active RFQ Demands across taxonomies</span>
                     </div>
-                    <a href="/admin/categories/main/" class="btn-dash-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;">
-                        <span>View All</span>
-                    </a>
+                    <div class="d-flex align-items-center gap-1.5">
+                        <a href="/admin/categories/sub/" class="btn-dash-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;" title="Manage Subcategories">
+                            <span>Subcategories</span>
+                        </a>
+                        <a href="/admin/categories/main/" class="btn-dash-outline btn-sm py-1 px-2.5" style="font-size: 0.74rem;" title="Manage Categories">
+                            <span>Categories</span>
+                        </a>
+                    </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="dash-table">
+                    <table class="dash-table align-middle">
                         <thead>
                             <tr>
-                                <th>CATEGORY</th>
-                                <th class="text-end">LISTINGS</th>
-                                <th class="text-end">RFQS</th>
-                                <th>STATUS</th>
+                                <th style="min-width: 140px;">CATEGORY</th>
+                                <th style="min-width: 130px;">SUBCATEGORY</th>
+                                <th class="text-end" style="min-width: 75px;">LISTINGS</th>
+                                <th class="text-end" style="min-width: 65px;">RFQS</th>
+                                <th class="text-center" style="min-width: 110px;">STATUS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for sd in supply_demand %}
                             <tr>
-                                <td class="fw-semibold text-dark">{{ sd.name }}</td>
-                                <td class="text-end font-monospace">{{ sd.listings }}</td>
-                                <td class="text-end font-monospace">{{ sd.rfqs }}</td>
                                 <td>
-                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} border border-{{ sd.gap_tone }}-subtle rounded-pill px-2.5 py-1">
+                                    <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width: 170px;" title="{{ sd.category_name }}">
+                                        <i class="bi bi-folder2 text-primary" style="font-size: 0.82rem;"></i>
+                                        <span class="text-dark fw-medium small text-truncate">{{ sd.category_name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width: 160px;" title="{{ sd.subcategory_name }}">
+                                        <i class="bi bi-arrow-return-right text-muted" style="font-size: 0.75rem;"></i>
+                                        <span class="fw-semibold text-dark small text-truncate">{{ sd.subcategory_name|default:"General / All" }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-end font-monospace fw-semibold">{{ sd.listings }}</td>
+                                <td class="text-end font-monospace">{{ sd.rfqs }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} border border-{{ sd.gap_tone }}-subtle rounded-pill px-2.5 py-1" style="font-size: 0.70rem;">
                                         {{ sd.gap_label }}
                                     </span>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="4" class="text-muted small text-center py-4">No category demand data available yet.</td></tr>
+                            <tr><td colspan="5" class="text-muted small text-center py-4">No category and subcategory demand data available yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

@@ -9331,7 +9331,7 @@ def reports_dashboard_view(request):
                 total_companies=Count('id', filter=~Q(company_name__isnull=True) & ~Q(company_name='')),
             )
 
-            # 4. Category Breakdown + Supply vs Demand
+            # 4. Category Breakdown + Supply vs Demand by Category & Subcategory
             cat_counts = (
                 prod_filtered
                 .filter(category__isnull=False)
@@ -9352,23 +9352,62 @@ def reports_dashboard_view(request):
                 for c in cat_counts
             ]
 
-            rfq_cat_counts = {
-                (r['category'] or '').strip().lower(): r['cnt']
-                for r in RfqEnquiryItem.objects.exclude(category='').values('category').annotate(cnt=Count('id'))
-            }
+            # Supply listings grouped by Category and SubCategory
+            subcat_supply_qs = (
+                prod_filtered
+                .filter(category__isnull=False)
+                .values('category_id', 'category__name', 'subcategory_id', 'subcategory__name')
+                .annotate(
+                    product_count=Count('id'),
+                    total_units=Sum('quantity')
+                )
+                .order_by('-product_count')[:12]
+            )
+
+            # Demand from RFQ Enquiry Items
+            # A) Demand linked to specific products
+            rfq_subcat_counts = {}
+            for r in RfqEnquiryItem.objects.filter(product__isnull=False).values(
+                'product__category__name', 'product__subcategory__name'
+            ).annotate(cnt=Count('id')):
+                c_key = (r['product__category__name'] or '').strip().lower()
+                s_key = (r['product__subcategory__name'] or '').strip().lower()
+                rfq_subcat_counts[(c_key, s_key)] = rfq_subcat_counts.get((c_key, s_key), 0) + r['cnt']
+
+            # B) Demand with free-text category / subcategory
+            rfq_text_counts = {}
+            for r in RfqEnquiryItem.objects.exclude(category='').values('category').annotate(cnt=Count('id')):
+                c_txt = (r['category'] or '').strip().lower()
+                rfq_text_counts[c_txt] = rfq_text_counts.get(c_txt, 0) + r['cnt']
+
             supply_demand = []
-            max_sd_count = max([c['product_count'] for c in cat_data[:5]] + [1])
-            for c in cat_data[:5]:
-                rfq_c = rfq_cat_counts.get(c['name'].lower(), 0)
-                if rfq_c > c['product_count'] * 0.7:
+            for sc in subcat_supply_qs[:7]:
+                c_name = sc['category__name'] or 'Uncategorized'
+                s_name = sc['subcategory__name'] or 'General / All'
+                c_key = c_name.strip().lower()
+                s_key = s_name.strip().lower()
+
+                # Match RFQ demand
+                rfq_c = rfq_subcat_counts.get((c_key, s_key), 0)
+                if rfq_c == 0:
+                    rfq_c = rfq_text_counts.get(s_key, 0) or rfq_text_counts.get(c_key, 0)
+
+                listings = sc['product_count']
+                if rfq_c > 0 and rfq_c >= listings * 0.7:
                     gap_label, gap_tone = "Under-supplied", "danger"
-                elif rfq_c < c['product_count'] * 0.2:
+                elif rfq_c == 0 or rfq_c < listings * 0.2:
                     gap_label, gap_tone = "Over-supplied", "success"
                 else:
                     gap_label, gap_tone = "Balanced", "warning"
+
                 supply_demand.append({
-                    'name': c['name'],
-                    'listings': c['product_count'],
+                    'name': f"{c_name} — {s_name}",
+                    'category_name': c_name,
+                    'subcategory_name': s_name,
+                    'category_id': sc['category_id'],
+                    'subcategory_id': sc['subcategory_id'],
+                    'listings': listings,
+                    'units': sc['total_units'] or 0,
                     'rfqs': rfq_c,
                     'gap_label': gap_label,
                     'gap_tone': gap_tone,
