@@ -7333,8 +7333,6 @@ def add_buyer_rfq_view(request):
         custom_username = (request.POST.get("username") or "").strip()
         email = (request.POST.get("email") or "").strip().lower()
         phone = (request.POST.get("phone") or request.POST.get("mobile_number") or "").strip()
-        password = (request.POST.get("password") or "").strip()
-        confirm_password = (request.POST.get("confirm_password") or "").strip()
         account_entity_type = (request.POST.get("account_entity_type") or "COMPANY").strip().upper()
         if account_entity_type not in ("COMPANY", "INDIVIDUAL"):
             account_entity_type = "COMPANY"
@@ -7358,8 +7356,6 @@ def add_buyer_rfq_view(request):
         errors = []
         if not full_name:
             errors.append("Buyer Full Name is required.")
-        if not email:
-            errors.append("Valid Buyer Email is required for account login.")
         if not phone:
             errors.append("Mobile / WhatsApp Number is required.")
         if len(selected_categories) < 1:
@@ -7380,16 +7376,19 @@ def add_buyer_rfq_view(request):
         else:
             clean_username = ""
 
-        if password or confirm_password:
-            if password != confirm_password:
-                errors.append("Passwords do not match.")
-            elif len(password) < 6:
-                errors.append("Password must be at least 6 characters.")
-
         if errors:
             for err in errors:
                 messages.error(request, err)
             return render(request, "add_buyer_rfq.html", {**context, "form_data": post_form_data})
+
+        # Resolve email (generate unique placeholder if optional email was omitted)
+        if not email:
+            phone_digits = re.sub(r"[^\d]", "", clean_mobile)[-8:] if clean_mobile else str(int(time.time()))
+            email = f"buyer_{phone_digits}@buyer.surplus"
+            counter = 1
+            while VendorDetails.objects.filter(email__iexact=email).exists():
+                email = f"buyer_{phone_digits}_{counter}@buyer.surplus"
+                counter += 1
 
         if clean_username:
             uname = clean_username
@@ -7401,11 +7400,9 @@ def add_buyer_rfq_view(request):
                 uname = f"{base_uname}{counter}"
                 counter += 1
 
-        if not password:
-            alphabet = string.ascii_letters + string.digits + "!@#$"
-            password = "".join(secrets.choice(alphabet) for _ in range(12))
-
-        hashed_password = VendorDetails.hash_password(password)
+        # Auto-generate secure password for the buyer account
+        auto_password = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(14))
+        hashed_password = VendorDetails.hash_password(auto_password)
 
         try:
             buyer_vendor = VendorDetails.objects.create(
@@ -7427,7 +7424,7 @@ def add_buyer_rfq_view(request):
                 session_version=1,
             )
 
-            if send_welcome:
+            if send_welcome and not email.endswith("@buyer.surplus"):
                 try:
                     from AdminApp.services import notify_new_user_registration
                     notify_new_user_registration(buyer_vendor)

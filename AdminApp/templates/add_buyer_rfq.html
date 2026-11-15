@@ -283,25 +283,6 @@ textarea.form-control-custom {
     box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
 }
 
-/* Password eye button */
-.btn-password-toggle {
-    border: 1.5px solid #cbd5e1;
-    border-left: none;
-    background-color: #f8fafc;
-    color: #64748b;
-    border-top-right-radius: 0.65rem;
-    border-bottom-right-radius: 0.65rem;
-    padding: 0 1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-}
-
-.btn-password-toggle:hover {
-    color: #2563eb;
-    background-color: #ffffff;
-}
 </style>
 
     <!-- Page Header & Breadcrumb -->
@@ -396,20 +377,20 @@ textarea.form-control-custom {
             <!-- MAIN FORM COLUMN -->
             <div class="col-xl-9 col-lg-10">
 
-                <!-- 1. Account Credentials & Login Details -->
+                <!-- 1. Buyer Contact & Account Details -->
                 <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
                             <div class="section-icon-badge bg-emerald-subtle text-emerald">
-                                <i class="bi bi-key"></i>
+                                <i class="bi bi-person-badge"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">1. Account Credentials &amp; Login Details</h6>
-                                <div class="text-muted small">Set up primary credentials, username, and account login password for the buyer</div>
+                                <h6 class="fw-bold mb-0 text-dark">1. Buyer Contact &amp; Account Details</h6>
+                                <div class="text-muted small">Enter the primary buyer contact information and account username</div>
                             </div>
                         </div>
                         <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle px-3 py-1 rounded-pill fw-semibold small">
-                            <i class="bi bi-shield-lock-fill me-1"></i>Authentication
+                            <i class="bi bi-person-check-fill me-1"></i>Primary Contact
                         </span>
                     </div>
 
@@ -441,16 +422,6 @@ textarea.form-control-custom {
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label for="buyerEmailInput" class="form-label-custom">
-                                    <span class="label-title">Login Email Address <span class="text-danger">*</span></span>
-                                </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
-                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
                                 <label for="buyerPhoneInput" class="form-label-custom">
                                     <span class="label-title">Mobile / WhatsApp Number <span class="text-danger">*</span></span>
                                     <span class="badge-optional">Intl. Format</span>
@@ -461,47 +432,16 @@ textarea.form-control-custom {
                                         value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000" required>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Password Section with Generator -->
-                        <div class="p-3 rounded-3 border mb-3" style="background-color: #f8fafc;">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="fw-semibold text-dark small mb-0 d-flex align-items-center gap-1.5">
-                                    <i class="bi bi-lock-fill text-primary"></i> Buyer Password Setup
+                            <div class="col-md-6">
+                                <label for="buyerEmailInput" class="form-label-custom">
+                                    <span class="label-title">Email Address</span>
+                                    <span class="badge-optional">Optional</span>
                                 </label>
-                                <button type="button" class="btn btn-sm btn-link text-primary text-decoration-none p-0 fw-semibold" id="btnGenPassword">
-                                    <i class="bi bi-arrow-repeat me-1"></i>Generate Secure Password
-                                </button>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="passwordInput" class="form-label-custom">
-                                        <span class="label-title">Account Password</span>
-                                        <span class="badge-optional">Min 6 chars</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="addon-icon"><i class="bi bi-shield-lock"></i></span>
-                                        <input type="password" class="form-control form-control-custom" id="passwordInput" name="password"
-                                            placeholder="Enter password or auto-generate">
-                                        <button type="button" class="btn btn-password-toggle" id="togglePasswordBtn" title="Show/Hide">
-                                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
-                                        </button>
-                                    </div>
+                                <div class="input-group">
+                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
+                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="confirmPasswordInput" class="form-label-custom">
-                                        <span class="label-title">Confirm Password</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="addon-icon"><i class="bi bi-shield-check"></i></span>
-                                        <input type="password" class="form-control form-control-custom" id="confirmPasswordInput" name="confirm_password"
-                                            placeholder="Repeat password">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-text small text-muted mt-2 d-flex align-items-center gap-1">
-                                <i class="bi bi-info-circle text-primary"></i>
-                                <span>Leaving password blank auto-generates a secure temporary password.</span>
                             </div>
                         </div>
 
@@ -516,7 +456,7 @@ textarea.form-control-custom {
                             <div class="form-check mb-0">
                                 <input class="form-check-input cursor-pointer" type="checkbox" name="send_welcome_email" id="sendWelcomeEmailCheck" value="1" checked>
                                 <label class="form-check-label fw-semibold text-dark small cursor-pointer" for="sendWelcomeEmailCheck">
-                                    <i class="bi bi-envelope-paper-heart text-primary me-1"></i> Send welcome email &amp; confirmation
+                                    <i class="bi bi-envelope-paper-heart text-primary me-1"></i> Send welcome email (if email provided)
                                 </label>
                             </div>
                         </div>
@@ -766,43 +706,6 @@ textarea.form-control-custom {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const passwordInput = document.getElementById('passwordInput');
-    const confirmPasswordInput = document.getElementById('confirmPasswordInput');
-    const btnGenPassword = document.getElementById('btnGenPassword');
-    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
-
-    function generateRandomPassword() {
-        const length = 12;
-        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
-        let pass = "";
-        for (let i = 0; i < length; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return pass;
-    }
-
-    if (btnGenPassword) {
-        btnGenPassword.addEventListener('click', function () {
-            const p = generateRandomPassword();
-            if (passwordInput) passwordInput.value = p;
-            if (confirmPasswordInput) confirmPasswordInput.value = p;
-            if (passwordInput) passwordInput.type = 'text';
-            if (confirmPasswordInput) confirmPasswordInput.type = 'text';
-            if (togglePasswordIcon) togglePasswordIcon.className = 'bi bi-eye-slash';
-        });
-    }
-
-    if (togglePasswordBtn) {
-        togglePasswordBtn.addEventListener('click', function () {
-            if (!passwordInput) return;
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            if (confirmPasswordInput) confirmPasswordInput.type = isPassword ? 'text' : 'password';
-            if (togglePasswordIcon) togglePasswordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
-        });
-    }
-
     // Category pills min 1, max 3 limit handling
     const MAX_CATEGORIES = 3;
     const MIN_CATEGORIES = 1;
