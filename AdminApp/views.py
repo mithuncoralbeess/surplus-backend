@@ -7362,6 +7362,10 @@ def add_buyer_rfq_view(request):
             errors.append("Valid Buyer Email is required for account login.")
         if not phone:
             errors.append("Mobile / WhatsApp Number is required.")
+        if len(selected_categories) < 1:
+            errors.append("Please select at least 1 interested product category (maximum 3).")
+        elif len(selected_categories) > 3:
+            errors.append("You can select a maximum of 3 interested product categories.")
 
         clean_mobile = re.sub(r"[^\d+]", "", phone).strip() if phone else ""
         if email and VendorDetails.objects.filter(email__iexact=email).exists():
@@ -7417,7 +7421,7 @@ def add_buyer_rfq_view(request):
                 business_address=business_address,
                 tax_registration_number=tax_registration_number,
                 business_type=business_type,
-                category_interested=selected_categories,
+                category_interested=selected_categories[:3],
                 user_type="BUYER",
                 status=is_active,
                 session_version=1,
