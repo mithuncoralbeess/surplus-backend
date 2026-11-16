@@ -1676,7 +1676,7 @@ def submit_rfq_enquiry(request):
     ).strip()
     destination_port = str(payload.get("destination_port") or payload.get("destinationPort") or "").strip()
     incoterm = str(payload.get("incoterm") or "EXW").strip().upper()
-    payment_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "Escrow").strip()
+    payment_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "").strip()
     additional_notes = str(payload.get("additional_notes") or payload.get("additionalNotes") or payload.get("notes") or "").strip()
     currency = str(payload.get("currency") or "USD").strip().upper()
 

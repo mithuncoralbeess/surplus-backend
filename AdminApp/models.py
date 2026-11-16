@@ -2739,7 +2739,7 @@ class RfqEnquiry(models.Model):
     business_location = models.CharField(max_length=255, blank=True, default="")
     destination_port = models.CharField(max_length=255, blank=True, default="")
     incoterm = models.CharField(max_length=20, default="EXW")
-    payment_method = models.CharField(max_length=50, default="Escrow")
+    payment_method = models.CharField(max_length=50, blank=True, default="")
     additional_notes = models.TextField(blank=True, default="")
 
     total_units = models.PositiveIntegerField(default=0)
