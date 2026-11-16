@@ -9115,7 +9115,7 @@ def rfq_request_detail_view(request, rfq_id):
     rfq = RfqEnquiry.objects.prefetch_related(
         "items__product__vendor",
         "items__product__images",
-        "items__lot",
+        "items__lot__vendor",
     ).select_related("buyer").filter(
         Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))
     ).first()
@@ -9159,6 +9159,40 @@ def rfq_request_detail_view(request, rfq_id):
         if item.target_price:
             total_target_val += (item.target_price * item.quantity)
 
+    # Resolve distinct sellers associated with items in this RFQ
+    sellers = []
+    seen_seller_ids = set()
+    for item in items:
+        seller_obj = None
+        if item.product and getattr(item.product, "vendor", None):
+            seller_obj = item.product.vendor
+        elif item.lot and getattr(item.lot, "vendor", None):
+            seller_obj = item.lot.vendor
+
+        if seller_obj:
+            s_name = seller_obj.full_name or seller_obj.company_name or seller_obj.username
+            s_id_str = getattr(seller_obj, "vendor_id", None) or (f"USR-{seller_obj.id:04d}" if hasattr(seller_obj, "id") else "")
+            if seller_obj.id not in seen_seller_ids:
+                seen_seller_ids.add(seller_obj.id)
+                sellers.append({
+                    "id": seller_obj.id,
+                    "vendor_id": s_id_str,
+                    "username": seller_obj.username,
+                    "name": s_name,
+                    "company_name": seller_obj.company_name or "",
+                    "email": seller_obj.email or "",
+                    "phone": seller_obj.mobile_number or getattr(seller_obj, "phone", "") or "",
+                    "country": seller_obj.country or "",
+                    "location": seller_obj.business_location or getattr(seller_obj, "business_address", "") or "",
+                    "product_titles": [item.title],
+                })
+            else:
+                for s in sellers:
+                    if s["id"] == seller_obj.id:
+                        if item.title not in s["product_titles"]:
+                            s["product_titles"].append(item.title)
+                        break
+
     buyer_obj = rfq.buyer if hasattr(rfq, "buyer") and rfq.buyer else None
     buyer_name = rfq.contact_person or (buyer_obj.full_name if buyer_obj else "") or "Valued Buyer"
     buyer_email = rfq.email or (buyer_obj.email if buyer_obj else "")
@@ -9178,6 +9212,7 @@ def rfq_request_detail_view(request, rfq_id):
         "buyer_phone": buyer_phone,
         "buyer_country": buyer_country,
         "buyer_location": buyer_location,
+        "sellers": sellers,
     }
     return render(request, "rfq_request_detail.html", context)
 
