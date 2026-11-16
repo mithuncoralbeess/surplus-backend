@@ -9156,6 +9156,13 @@ def rfq_request_detail_view(request, rfq_id):
             except Exception as e:
                 print(f"[rfq_request_detail_view] Vendor notification error: {e}")
 
+        # Send quotation status update email to user
+        try:
+            from .services import EmailService
+            EmailService.send_rfq_status_update_email(rfq)
+        except Exception as e:
+            print(f"[rfq_request_detail_view] Buyer status email error: {e}")
+
         return redirect("rfq_request_detail", rfq_id=rfq.id)
 
     items = rfq.items.all()
@@ -9243,6 +9250,13 @@ def rfq_request_status_api(request, rfq_id):
             )
         except Exception:
             pass
+
+    # Send quotation status update email to user
+    try:
+        from .services import EmailService
+        EmailService.send_rfq_status_update_email(rfq)
+    except Exception as e:
+        print(f"[rfq_request_status_api] Buyer status email error: {e}")
 
     return Response({
         "success": True,

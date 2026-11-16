@@ -527,6 +527,117 @@ class EmailService:
         return cls.send_email(to_email, subject, html_content, "RFQBuyerConfirm", context=context)
 
     @classmethod
+    def send_rfq_status_update_email(
+        cls,
+        rfq,
+        to_email: str = None,
+        recipient_name: str = None,
+    ) -> bool:
+        """
+        Sends an official RFQ quotation status update email to the buyer whenever the status
+        changes (e.g. QUOTED, ACCEPTED, DECLINED, CLOSED, PENDING).
+        """
+        target_email = to_email or getattr(rfq, "email", "") or (rfq.buyer.email if getattr(rfq, "buyer", None) else "")
+        if not target_email:
+            logger.warning("send_rfq_status_update_email skipped: recipient email is missing.")
+            return False
+
+        frontend_base = cls.get_frontend_url()
+        action_url = f"{frontend_base}/profile"
+
+        ref = getattr(rfq, "reference", "") or "RFQ-PENDING"
+        company_name = getattr(rfq, "company_name", "") or ""
+        status_val = (getattr(rfq, "status", "") or "PENDING").upper()
+        status_display = getattr(rfq, "get_status_display", lambda: status_val)()
+
+        name = recipient_name or getattr(rfq, "contact_person", "") or (rfq.buyer.full_name if getattr(rfq, "buyer", None) else "") or "Valued Buyer"
+
+        # Dynamic branding, message, and subject per quotation status
+        if status_val == "QUOTED":
+            header_gradient = "linear-gradient(135deg, #0891b2, #06b6d4)"
+            status_color = "#0891b2"
+            status_badge_bg = "rgba(8, 145, 178, 0.15)"
+            status_message = "A formal commercial quotation / proforma has been prepared and issued for your RFQ request. Please review the proforma amount, commercial terms, and line items below."
+            subject = f"Proforma Quotation Issued: RFQ [{ref}] - Surplus Market"
+        elif status_val == "ACCEPTED":
+            header_gradient = "linear-gradient(135deg, #059669, #10b981)"
+            status_color = "#059669"
+            status_badge_bg = "rgba(5, 150, 105, 0.15)"
+            status_message = "Your quotation order has been accepted. Our commercial fulfillment desk will coordinate payment confirmation and logistics handover with you."
+            subject = f"Quotation Accepted: RFQ [{ref}] - Surplus Market"
+        elif status_val == "DECLINED":
+            header_gradient = "linear-gradient(135deg, #dc2626, #ef4444)"
+            status_color = "#dc2626"
+            status_badge_bg = "rgba(220, 38, 38, 0.12)"
+            status_message = "We regret to inform you that your RFQ could not be accepted at the requested terms at this time. Please see the notes below or explore other wholesale inventory on our catalog."
+            subject = f"Quotation Declined: RFQ [{ref}] - Surplus Market"
+        elif status_val == "CLOSED":
+            header_gradient = "linear-gradient(135deg, #475569, #64748b)"
+            status_color = "#475569"
+            status_badge_bg = "rgba(71, 85, 105, 0.15)"
+            status_message = "This quotation enquiry has been closed. If you require further assistance or wish to submit a new inquiry, please visit our platform or contact support."
+            subject = f"Quotation Closed: RFQ [{ref}] - Surplus Market"
+        else:  # PENDING
+            header_gradient = "linear-gradient(135deg, #d97706, #f59e0b)"
+            status_color = "#d97706"
+            status_badge_bg = "rgba(217, 119, 6, 0.15)"
+            status_message = "Your quotation request is currently under commercial review by our sourcing desk. We are verifying availability and pricing."
+            subject = f"Under Review: RFQ [{ref}] - Surplus Market"
+
+        items = list(rfq.items.all()) if hasattr(rfq, "items") else []
+        has_target = any(bool(getattr(it, "target_price", None)) for it in items)
+
+        proforma_amt = None
+        if getattr(rfq, "proforma_amount", None):
+            try:
+                proforma_amt = f"{float(rfq.proforma_amount):,.2f}"
+            except (ValueError, TypeError):
+                proforma_amt = str(rfq.proforma_amount)
+
+        context = {
+            "rfq": rfq,
+            "ref": ref,
+            "status": status_val,
+            "status_display": status_display,
+            "status_message": status_message,
+            "header_gradient": header_gradient,
+            "status_color": status_color,
+            "status_badge_bg": status_badge_bg,
+            "contact_person": name,
+            "company_name": company_name,
+            "total_units": getattr(rfq, "total_units", 0),
+            "estimated_value": getattr(rfq, "estimated_value", "0.00"),
+            "currency": getattr(rfq, "currency", "USD"),
+            "proforma_amount": proforma_amt,
+            "admin_notes": getattr(rfq, "admin_notes", ""),
+            "items": items,
+            "has_target_price": has_target,
+            "action_url": action_url,
+            "subject": subject,
+        }
+
+        try:
+            html_content = render_to_string(
+                "FinalTemplates/partials/email_partials/email_rfq_status_update.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for rfq status update email, using fallback HTML: {e}")
+            proforma_line = f"<p><strong>Proforma Amount:</strong> {getattr(rfq, 'currency', 'USD')} {proforma_amt}</p>" if proforma_amt else ""
+            notes_line = f"<p><strong>Notes:</strong> {rfq.admin_notes}</p>" if getattr(rfq, "admin_notes", None) else ""
+            html_content = (
+                f"<h2>RFQ Status Update: {status_display}</h2>"
+                f"<p>Hello {name},</p>"
+                f"<p>{status_message}</p>"
+                f"<p>Reference: <strong>{ref}</strong></p>"
+                f"{proforma_line}"
+                f"{notes_line}"
+                f"<p><a href='{action_url}'>View RFQ Details in Profile</a></p>"
+            )
+
+        return cls.send_email(target_email, subject, html_content, "RFQStatusUpdate", context=context)
+
+    @classmethod
     def send_product_approved_email(
         cls,
         to_email: str,
