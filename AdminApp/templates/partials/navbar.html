@@ -959,11 +959,9 @@
 
         <!-- User Profile Avatar with Name Initial -->
         <div class="dropdown user-profile-dropdown">
-            <button class="user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{% if admin.full_name %}{{ admin.full_name }}{% elif admin.username %}{{ admin.username }}{% else %}Admin Profile{% endif %}">
-                <div class="user-avatar-ring">
-                    <div class="user-avatar-initials">
-                        {% if admin.full_name %}{{ admin.full_name|slice:":1"|upper }}{% elif admin.username %}{{ admin.username|slice:":1"|upper }}{% else %}A{% endif %}
-                    </div>
+            <button class="user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{% if admin.full_name %}{{ admin.full_name }}{% elif admin.username %}{{ admin.username }}{% else %}Admin Profile{% endif %}" style="background: transparent !important; border: none !important; padding: 0 !important; outline: none !important; cursor: pointer; display: flex; align-items: center;">
+                <div class="user-avatar-initials" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; text-transform: uppercase; box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35); border: 2px solid #ffffff; user-select: none;">
+                    {% if admin.full_name %}{{ admin.full_name|slice:":1"|upper }}{% elif admin.username %}{{ admin.username|slice:":1"|upper }}{% else %}A{% endif %}
                 </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" style="min-width: 220px;">
