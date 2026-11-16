@@ -5,539 +5,631 @@
 {% block content %}
 <style>
 /* ==========================================================================
-   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC DESIGN SYSTEM - BUYER RFQS
+   DASHKIT / FULL-VERSION MODERN DESIGN SYSTEM - BUYER RFQ REQUESTS
+   Aligned with full-version components: Cards, Badges, Tables, Inputs, Buttons
    ========================================================================== */
 
 :root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-blue: #0a5c48;
-    --shopeers-blue-hover: #084c3b;
-    --shopeers-blue-light: #e8f5f1;
-    --shopeers-radius-lg: 22px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    --shopeers-shadow-hover: 0 10px 28px -4px rgba(15, 23, 42, 0.08), 0 3px 8px -2px rgba(15, 23, 42, 0.03);
+    --dash-bg: #fafafd;
+    --dash-card: #ffffff;
+    --dash-text-dark: #0f172a;
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-border: rgba(226, 232, 240, 0.85);
+    --dash-border-subtle: #f1f5f9;
+    --dash-primary: #0a5c48;
+    --dash-primary-hover: #084c3b;
+    --dash-primary-light: #e8f5f1;
+    --dash-radius-xl: 18px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-blue: #0ea27e;
-    --shopeers-blue-hover: #0a5c48;
-    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --shopeers-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --dash-bg: #0f172a;
+    --dash-card: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-border: #334155;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
+    --dash-primary: #10b981;
+    --dash-primary-hover: #0a5c48;
+    --dash-primary-light: rgba(16, 185, 129, 0.15);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.shopeers-viewport {
+.rfq-container {
     background: transparent;
-    padding-bottom: 2rem;
+    padding-bottom: 2.5rem;
 }
 
-/* Header & Breadcrumb */
-.shopeers-header {
+/* Full-Version Header & Breadcrumb */
+.dash-header {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
 }
 
-.shopeers-breadcrumb-nav {
+.dash-breadcrumb-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    font-size: 0.78rem;
-    color: var(--shopeers-text-muted);
-    margin-bottom: 0.35rem;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    padding: 0.32rem 0.90rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--dash-text-sub);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    margin-bottom: 0.45rem;
+    text-decoration: none;
 }
 
-.shopeers-breadcrumb-nav a {
-    color: var(--shopeers-text-sub);
+.dash-breadcrumb-pill a {
+    color: inherit;
     text-decoration: none;
-    font-weight: 500;
     transition: color 0.15s ease;
 }
 
-.shopeers-breadcrumb-nav a:hover {
-    color: var(--shopeers-blue);
+.dash-breadcrumb-pill a:hover {
+    color: var(--dash-primary);
 }
 
-.shopeers-page-title {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.55rem;
+.dash-title {
+    font-size: 1.65rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     margin: 0;
     line-height: 1.2;
 }
 
-.shopeers-page-subtitle {
-    font-size: 0.85rem;
-    color: var(--shopeers-text-sub);
-    margin: 0.2rem 0 0 0;
+.dash-subtitle {
+    font-size: 0.86rem;
+    color: var(--dash-text-sub);
+    margin: 0.25rem 0 0 0;
 }
 
-/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
+/* Full-Version Buttons */
+.btn-dash-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--dash-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--dash-radius-lg) !important;
+    padding: 0.52rem 1.15rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    transition: all 0.18s ease;
+    text-decoration: none !important;
+    box-shadow: 0 3px 10px rgba(10, 92, 72, 0.2);
+}
+
+.btn-dash-primary:hover {
+    background: var(--dash-primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(10, 92, 72, 0.28);
+}
+
+.btn-dash-light {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text-body) !important;
+    border-radius: var(--dash-radius-lg);
+    padding: 0.48rem 1.05rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.btn-dash-light:hover {
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-dark) !important;
+    border-color: #cbd5e1;
+}
+
+.btn-dash-icon-danger {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--dash-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-dash-icon-danger:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    transform: scale(1.05);
+}
+
+/* Full-Version Dashspace 5 KPI Stat Metric Cards */
+.dash-kpi-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
     padding: 1.25rem 1.35rem;
-    box-shadow: var(--shopeers-shadow);
+    box-shadow: var(--dash-shadow-card);
     text-decoration: none;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    position: relative;
-    cursor: default;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.shopeers-kpi-label {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.2px;
+.dash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
 }
 
-.shopeers-kpi-icon {
-    width: 38px;
-    height: 38px;
+.dash-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--dash-text-sub);
+}
+
+.dash-icon-bubble {
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
-.icon-emerald-theme { background: #e8f5f1; color: #0a5c48; }
-.icon-amber { background: #fffbeb; color: #f59e0b; }
-.icon-cyan { background: #ecfeff; color: #0891b2; }
-.icon-emerald { background: #ecfdf5; color: #10b981; }
-.icon-violet { background: #f5f3ff; color: #8b5cf6; }
+.dash-kpi-card:hover .dash-icon-bubble {
+    transform: scale(1.06);
+}
 
-.shopeers-kpi-number {
-    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+.bubble-emerald { background: #e8f5f1; color: #0a5c48; }
+.bubble-amber   { background: #fffbeb; color: #d97706; }
+.bubble-cyan    { background: #ecfeff; color: #0891b2; }
+.bubble-green   { background: #ecfdf5; color: #059669; }
+.bubble-indigo  { background: #eef2ff; color: #4f46e5; }
+
+[data-bs-theme="dark"] .bubble-emerald { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+[data-bs-theme="dark"] .bubble-amber   { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+[data-bs-theme="dark"] .bubble-cyan    { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
+[data-bs-theme="dark"] .bubble-green   { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+[data-bs-theme="dark"] .bubble-indigo  { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+
+.dash-kpi-val {
     font-size: 1.65rem;
-    font-weight: 700;
-    color: var(--shopeers-text-dark);
+    font-weight: 800;
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
-    line-height: 1.1;
+    line-height: 1.15;
     margin: 0.45rem 0 0 0;
 }
 
-.shopeers-kpi-trend {
+.dash-kpi-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
     font-size: 0.70rem;
     font-weight: 600;
-    padding: 2px 7px;
-    border-radius: var(--shopeers-radius-pill);
-    margin-top: 0.4rem;
+    padding: 3px 9px;
+    border-radius: var(--dash-radius-pill);
+    margin-top: 0.5rem;
     width: fit-content;
+    border: 1px solid transparent;
 }
 
-.trend-all { background: #f1f5f9; color: #475569; }
-.trend-pending { background: #fffbeb; color: #b45309; }
-.trend-quoted { background: #ecfeff; color: #0e7490; }
-.trend-accepted { background: #ecfdf5; color: #047857; }
-.trend-pipeline { background: #e8f5f1; color: #0a5c48; }
+.badge-all       { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.badge-pending   { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.badge-quoted    { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+.badge-accepted  { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.badge-pipeline  { background: #e8f5f1; color: #0a5c48; border-color: #bbf7d0; }
 
-/* Main Table Container Card */
-.shopeers-main-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
+[data-bs-theme="dark"] .badge-all      { background: #1e293b; color: #94a3b8; border-color: #334155; }
+[data-bs-theme="dark"] .badge-pending  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+[data-bs-theme="dark"] .badge-quoted   { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border-color: rgba(6, 182, 212, 0.3); }
+[data-bs-theme="dark"] .badge-accepted { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+[data-bs-theme="dark"] .badge-pipeline { background: rgba(10, 92, 72, 0.25); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+
+/* Full-Version Main Table Container Card */
+.dash-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
-/* Toolbar Bar */
-.shopeers-toolbar {
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--shopeers-border);
+    border-bottom: 1px solid var(--dash-border-subtle);
+    background: var(--dash-card);
+}
+
+.dash-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--dash-text-dark);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.dash-card-subtitle {
+    font-size: 0.82rem;
+    color: var(--dash-text-sub);
+    margin: 0.15rem 0 0 0;
+}
+
+/* Full-Version Toolbar */
+.dash-toolbar {
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--dash-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    background: rgba(248, 250, 252, 0.5);
 }
 
-/* Capsule Search Bar */
-.shopeers-search-capsule {
+[data-bs-theme="dark"] .dash-toolbar {
+    background: rgba(15, 23, 42, 0.4);
+}
+
+/* Capsule Search Bar (Full-Version) */
+.dash-search-capsule {
     display: flex;
     align-items: center;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 2px 6px 2px 14px;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-pill);
+    padding: 3px 6px 3px 14px;
     min-width: 260px;
     max-width: 420px;
     flex-grow: 1;
     transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
-[data-bs-theme="dark"] .shopeers-search-capsule {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-.shopeers-search-capsule:focus-within {
-    background: #ffffff;
-    border-color: var(--shopeers-blue);
+.dash-search-capsule:focus-within {
+    border-color: var(--dash-primary);
     box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
 }
 
-.shopeers-search-input {
+.dash-search-input {
     border: none !important;
     background: transparent !important;
     font-size: 0.85rem;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     outline: none !important;
     box-shadow: none !important;
     width: 100%;
     padding: 0.35rem 0.4rem;
 }
 
-.shopeers-search-btn {
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.4rem 0.95rem;
+.dash-search-btn {
+    border-radius: var(--dash-radius-pill);
+    padding: 0.38rem 0.95rem;
     font-size: 0.80rem;
     font-weight: 600;
-    background: var(--shopeers-blue);
+    background: var(--dash-primary);
     color: #ffffff;
     border: none;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
-.shopeers-search-btn:hover {
-    background: var(--shopeers-blue-hover);
+.dash-search-btn:hover {
+    background: var(--dash-primary-hover);
     color: #ffffff;
 }
 
-/* Segmented Status Tabs */
-.shopeers-segmented-pills {
+/* Segmented Status Tabs (Full-Version) */
+.dash-segmented-pills {
     display: inline-flex;
     align-items: center;
-    background: #f1f5f9;
+    background: var(--dash-border-subtle);
     padding: 4px;
-    border-radius: var(--shopeers-radius-pill);
-    border: 1px solid var(--shopeers-border);
-    gap: 2px;
+    border-radius: var(--dash-radius-pill);
+    border: 1px solid var(--dash-border);
+    gap: 3px;
 }
 
-[data-bs-theme="dark"] .shopeers-segmented-pills {
-    background: #1e293b;
+[data-bs-theme="dark"] .dash-segmented-pills {
+    background: #0f172a;
+    border-color: #334155;
 }
 
-.shopeers-pill-tab {
-    padding: 0.35rem 0.95rem;
-    font-size: 0.82rem;
+.dash-pill-tab {
+    padding: 0.32rem 0.95rem;
+    font-size: 0.80rem;
     font-weight: 600;
-    border-radius: var(--shopeers-radius-pill);
-    color: var(--shopeers-text-sub);
+    border-radius: var(--dash-radius-pill);
+    color: var(--dash-text-sub);
     text-decoration: none;
-    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
 }
 
-.shopeers-pill-tab:hover {
-    color: var(--shopeers-text-dark);
+.dash-pill-tab:hover {
+    color: var(--dash-text-dark);
 }
 
-.shopeers-pill-tab.active {
-    background: #ffffff;
-    color: var(--shopeers-text-dark);
+.dash-pill-tab.active {
+    background: var(--dash-card);
+    color: var(--dash-text-dark);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-[data-bs-theme="dark"] .shopeers-pill-tab.active {
-    background: #0f172a;
+[data-bs-theme="dark"] .dash-pill-tab.active {
+    background: #1e293b;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.shopeers-select {
-    background-color: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: var(--shopeers-radius-pill) !important;
+.dash-select {
+    background-color: var(--dash-card) !important;
+    border: 1px solid var(--dash-border) !important;
+    border-radius: var(--dash-radius-pill) !important;
     font-size: 0.82rem !important;
     font-weight: 500;
-    color: var(--shopeers-text-dark) !important;
+    color: var(--dash-text-dark) !important;
     padding: 0.42rem 2.2rem 0.42rem 0.95rem !important;
     height: 38px;
     transition: all 0.15s ease;
 }
 
-[data-bs-theme="dark"] .shopeers-select {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
-}
-
-.shopeers-select:focus {
-    background-color: #ffffff !important;
-    border-color: var(--shopeers-blue) !important;
+.dash-select:focus {
+    border-color: var(--dash-primary) !important;
     box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
 }
 
-.btn-shopeers-ghost {
+.btn-dash-clear {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: var(--shopeers-text-sub) !important;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.42rem 0.95rem;
-    font-size: 0.82rem !important;
-    font-weight: 600;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    height: 38px;
-}
-
-.btn-shopeers-ghost:hover {
-    background: #f1f5f9;
-    color: var(--shopeers-text-dark) !important;
-    border-color: #cbd5e1;
-}
-
-.btn-shopeers-clear {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    color: #f43f5e !important;
-    border-radius: var(--shopeers-radius-pill);
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444 !important;
+    border-radius: var(--dash-radius-pill);
     padding: 0.42rem 0.85rem;
-    font-size: 0.82rem !important;
+    font-size: 0.80rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
     text-decoration: none;
     height: 38px;
 }
 
-.btn-shopeers-clear:hover {
-    background: #ffe4e6;
-    color: #e11d48 !important;
+.btn-dash-clear:hover {
+    background: #ef4444;
+    color: #ffffff !important;
 }
 
-/* Shopeers Table Grid */
-.shopeers-table {
+/* Full-Version Data Table (Matching _table.scss) */
+.dash-table {
+    width: 100%;
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
-    width: 100%;
 }
 
-.shopeers-table thead th {
-    background: transparent;
-    border-bottom: 1px solid var(--shopeers-border);
-    padding: 1rem 1.5rem;
+.dash-table thead th {
+    background: rgba(248, 250, 252, 0.85);
+    border-bottom: 1px solid var(--dash-border);
+    padding: 0.90rem 1.25rem;
     font-size: 0.70rem;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--shopeers-text-muted);
+    color: var(--dash-text-sub);
+    white-space: nowrap;
 }
 
-.shopeers-table tbody tr {
-    transition: background-color 0.12s ease;
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.6);
+    border-bottom-color: var(--dash-border);
 }
 
-.shopeers-table tbody tr:hover {
-    background-color: #f8fafc;
+.dash-table tbody tr {
+    transition: background-color 0.15s ease;
 }
 
-[data-bs-theme="dark"] .shopeers-table tbody tr:hover {
-    background-color: #1e293b;
+.dash-table tbody tr:hover {
+    background-color: rgba(248, 250, 252, 0.75);
 }
 
-.shopeers-table tbody td {
-    padding: 1.15rem 1.5rem;
-    border-bottom: 1px solid var(--shopeers-border);
+[data-bs-theme="dark"] .dash-table tbody tr:hover {
+    background-color: rgba(30, 41, 59, 0.6);
+}
+
+.dash-table tbody td {
+    padding: 1.05rem 1.25rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
     vertical-align: middle;
+    font-size: 0.85rem;
+    color: var(--dash-text-body);
 }
 
-/* Avatar Box */
-.shopeers-product-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+[data-bs-theme="dark"] .dash-table tbody td {
+    border-bottom-color: rgba(51, 65, 85, 0.5);
+}
+
+/* Full-Version Avatar Thumbnail */
+.dash-rfq-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--dash-radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
-    color: #1e293b;
-    font-size: 1.15rem;
+    background: var(--dash-border-subtle);
+    color: var(--dash-primary);
+    font-size: 1.2rem;
     flex-shrink: 0;
-    border: 1px solid var(--shopeers-border);
+    border: 1px solid var(--dash-border);
 }
 
-[data-bs-theme="dark"] .shopeers-product-avatar {
-    background: #1e293b;
-    color: #f8fafc;
-}
-
-.shopeers-id-badge {
+.dash-id-badge {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 0.90rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-.shopeers-id-badge:hover {
-    color: var(--shopeers-blue);
+.dash-id-badge:hover {
+    color: var(--dash-primary);
 }
 
-.shopeers-meta-pill {
+.dash-meta-tag {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid #e2e8f0;
+    font-size: 0.70rem;
+    font-weight: 600;
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-sub);
+    border: 1px solid var(--dash-border);
 }
 
-/* Status Badges */
-.shopeers-status-pill {
+/* Full-Version Status Badges (Soft Color with Pulse Dot) */
+.dash-status-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 4px 12px;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    padding: 4px 11px;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
 }
 
-.pulse-dot-sm {
-    width: 6px;
-    height: 6px;
+.pulse-dot {
+    width: 6.5px;
+    height: 6.5px;
     border-radius: 50%;
+    display: inline-block;
 }
 
-.btn-rfq-view {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: var(--shopeers-blue);
-    color: #ffffff !important;
-    border: none;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.35rem 0.95rem;
-    font-size: 0.78rem !important;
-    font-weight: 600;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.2);
-}
+.status-pending  { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-pending .pulse-dot { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25); }
 
-.btn-rfq-view:hover {
-    background: var(--shopeers-blue-hover);
-    color: #ffffff !important;
-    transform: translateY(-1px);
-}
+.status-quoted   { background: #ecfeff; color: #0891b2; border-color: #a5f3fc; }
+.status-quoted .pulse-dot { background: #06b6d4; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25); }
 
-.btn-rfq-delete {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    color: #f43f5e;
-    transition: all 0.15s ease;
-    cursor: pointer;
-}
+.status-accepted { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.status-accepted .pulse-dot { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25); }
 
-.btn-rfq-delete:hover {
-    background: #ffe4e6;
-    color: #e11d48;
-}
+.status-declined { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+.status-declined .pulse-dot { background: #f43f5e; box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.25); }
 
-/* Pagination Footer */
-.shopeers-pagination-footer {
+.status-closed   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.status-closed .pulse-dot { background: #94a3b8; }
+
+[data-bs-theme="dark"] .status-pending  { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+[data-bs-theme="dark"] .status-quoted   { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; border-color: rgba(6, 182, 212, 0.3); }
+[data-bs-theme="dark"] .status-accepted { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+[data-bs-theme="dark"] .status-declined { background: rgba(244, 63, 94, 0.15);  color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+[data-bs-theme="dark"] .status-closed   { background: #1e293b; color: #94a3b8; border-color: #334155; }
+
+/* Full-Version Pagination */
+.dash-pagination-footer {
     padding: 1.15rem 1.5rem;
-    border-top: 1px solid var(--shopeers-border);
+    border-top: 1px solid var(--dash-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
+    background: var(--dash-card);
 }
 
-.shopeers-page-pill {
+.dash-page-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 34px;
     height: 34px;
     padding: 0 0.75rem;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-md);
     font-size: 0.80rem;
     font-weight: 600;
     text-decoration: none;
-    color: var(--shopeers-text-sub);
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    color: var(--dash-text-sub);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
     transition: all 0.15s ease;
 }
 
-.shopeers-page-pill.active {
-    background: var(--shopeers-blue);
-    color: #ffffff !important;
-    border-color: var(--shopeers-blue);
-    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.3);
+.dash-page-pill:hover {
+    color: var(--dash-primary);
+    border-color: var(--dash-primary);
+    background: var(--dash-border-subtle);
 }
 
-.shopeers-page-pill.disabled {
+.dash-page-pill.active {
+    background: var(--dash-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--dash-primary) !important;
+    box-shadow: 0 3px 10px rgba(10, 92, 72, 0.25);
+}
+
+.dash-page-pill.disabled {
     opacity: 0.4;
     pointer-events: none;
 }
 </style>
 
-<div class="shopeers-viewport">
-    <!-- Header -->
-    <div class="shopeers-header">
+<div class="rfq-container">
+    <!-- Header with Dashspace Pill Breadcrumbs -->
+    <div class="dash-header">
         <div>
-            <div class="shopeers-breadcrumb-nav">
+            <div class="dash-breadcrumb-pill">
                 <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
-                <span>&rsaquo;</span>
+                <span class="text-muted">&rsaquo;</span>
                 <span>Enquiries</span>
-                <span>&rsaquo;</span>
-                <span class="text-dark fw-semibold">Buyer RFQ Requests</span>
+                <span class="text-muted">&rsaquo;</span>
+                <span class="text-dark fw-bold">Buyer RFQ Requests</span>
             </div>
-            <h1 class="shopeers-page-title">Buyer RFQ &amp; Quotation Requests</h1>
-            <p class="shopeers-page-subtitle">Review, issue proforma quotes, and manage consolidated RFQs submitted by marketplace buyers</p>
+            <h1 class="dash-title">Buyer RFQ &amp; Quotation Requests</h1>
+            <p class="dash-subtitle">Review, issue proforma quotes, and manage consolidated RFQs submitted by marketplace buyers</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/rfq-requests/" class="btn-shopeers-ghost" title="Refresh Table">
+            <a href="/admin/rfq-requests/" class="btn-dash-light" title="Refresh Table">
                 <i class="bi bi-arrow-clockwise"></i>
                 <span>Refresh</span>
             </a>
@@ -547,7 +639,7 @@
     {% if messages %}
     <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 16px; background: #ffffff;">
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: var(--dash-radius-lg); background: var(--dash-card); border: 1px solid var(--dash-border) !important;">
             <i class="bi bi-check-circle-fill text-success fs-5"></i>
             <div class="fw-medium text-dark">{{ message }}</div>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -556,154 +648,153 @@
     </div>
     {% endif %}
 
-    <!-- 5 Shopeers Top Stat Metric Cards (Static Display Cards) -->
+    <!-- 5 Dashspace Full-Version KPI Metric Stat Cards -->
     <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
         <!-- 1. All RFQs -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">All RFQs</span>
-                    <div class="shopeers-kpi-icon icon-emerald-theme">
+                    <span class="dash-kpi-label">All RFQs</span>
+                    <div class="dash-icon-bubble bubble-emerald">
                         <i class="bi bi-file-earmark-text"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-all">Total Requests</span>
+                    <h3 class="dash-kpi-val">{{ counts.total|default:"0" }}</h3>
+                    <span class="dash-kpi-badge badge-all">Total Requests</span>
                 </div>
             </div>
         </div>
 
         <!-- 2. Pending Quotes -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Pending Quotes</span>
-                    <div class="shopeers-kpi-icon icon-amber">
+                    <span class="dash-kpi-label">Pending Quotes</span>
+                    <div class="dash-icon-bubble bubble-amber">
                         <i class="bi bi-hourglass-split"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-pending">Requires Proforma</span>
+                    <h3 class="dash-kpi-val">{{ counts.pending|default:"0" }}</h3>
+                    <span class="dash-kpi-badge badge-pending">Requires Proforma</span>
                 </div>
             </div>
         </div>
 
         <!-- 3. Quoted -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Proforma Issued</span>
-                    <div class="shopeers-kpi-icon icon-cyan">
+                    <span class="dash-kpi-label">Proforma Issued</span>
+                    <div class="dash-icon-bubble bubble-cyan">
                         <i class="bi bi-receipt"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.quoted|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-quoted">Awaiting Buyer</span>
+                    <h3 class="dash-kpi-val">{{ counts.quoted|default:"0" }}</h3>
+                    <span class="dash-kpi-badge badge-quoted">Awaiting Buyer</span>
                 </div>
             </div>
         </div>
 
         <!-- 4. Accepted Deals -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Accepted Deals</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
+                    <span class="dash-kpi-label">Accepted Deals</span>
+                    <div class="dash-icon-bubble bubble-green">
                         <i class="bi bi-check-circle"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.accepted|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-accepted">Confirmed Deals</span>
+                    <h3 class="dash-kpi-val">{{ counts.accepted|default:"0" }}</h3>
+                    <span class="dash-kpi-badge badge-accepted">Confirmed Deals</span>
                 </div>
             </div>
         </div>
 
         <!-- 5. Pipeline Value -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <div class="dash-kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Pipeline Value</span>
-                    <div class="shopeers-kpi-icon icon-emerald-theme">
+                    <span class="dash-kpi-label">Pipeline Value</span>
+                    <div class="dash-icon-bubble bubble-indigo">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">${{ counts.pipeline_value|floatformat:0 }}</h3>
-                    <span class="shopeers-kpi-trend trend-pipeline">Gross Pipeline</span>
+                    <h3 class="dash-kpi-val">${{ counts.pipeline_value|floatformat:0 }}</h3>
+                    <span class="dash-kpi-badge badge-pipeline">Gross Pipeline</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Shopeers Main Table Card Container -->
-    <div class="shopeers-main-card">
-        <!-- Card Title Bar (Shopeers Style) -->
-        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-1">
+    <!-- Full-Version Main Table Container Card -->
+    <div class="dash-card">
+        <!-- Card Header -->
+        <div class="dash-card-header">
             <div>
-                <h5 class="fw-bold mb-0 text-dark" style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Quotation Requests</h5>
-                <p class="text-muted small mb-0 mt-0.5">Live buyer inquiry baskets and negotiation workflow</p>
+                <h5 class="dash-card-title">Quotation Requests</h5>
+                <p class="dash-card-subtitle">Live buyer inquiry baskets and negotiation workflow</p>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <span class="badge rounded-pill text-secondary bg-light border px-2.5 py-1.5" style="font-size: 0.72rem; font-weight: 600;">
+                <span class="dash-meta-tag">
                     <i class="bi bi-record-circle text-success me-1"></i>Live Sync
                 </span>
             </div>
         </div>
 
-        <!-- Toolbar -->
-        <div class="shopeers-toolbar">
+        <!-- Toolbar (Capsule Search, Segmented Status Tabs, Date Filter) -->
+        <div class="dash-toolbar">
             <form method="GET" action="/admin/rfq-requests/" class="d-flex flex-wrap gap-2 align-items-center w-100 justify-content-between">
                 {% if selected_user %}
                 <input type="hidden" name="user_id" value="{{ selected_user.id }}">
-                {% endif %}
-                {% if selected_user %}
-                <div class="w-100 alert alert-primary border border-primary-subtle rounded-3 px-3 py-2 mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="w-100 alert alert-primary border border-primary-subtle rounded-3 px-3 py-2 mb-2 d-flex flex-wrap align-items-center justify-content-between gap-2" style="border-radius: var(--dash-radius-md);">
                     <div class="small">
                         <i class="bi bi-person-check-fill me-1"></i>
                         Showing RFQ Requests for <strong>{{ selected_user.full_name|default:selected_user.username }}</strong>
                         <span class="text-muted">({{ selected_user.vendor_id }} &bull; {{ selected_user.email }})</span>
                     </div>
-                    <a href="/admin/rfq-requests/" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0.5 fw-semibold">Show All RFQs</a>
+                    <a href="/admin/rfq-requests/" class="btn-dash-light px-3 py-0.5">Show All RFQs</a>
                 </div>
                 {% endif %}
-                <!-- Search Capsule -->
-                <div class="shopeers-search-capsule">
+
+                <!-- Full-Version Capsule Search -->
+                <div class="dash-search-capsule">
                     <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
-                    <input type="text" name="search" class="shopeers-search-input" placeholder="Search reference, company, email, destination..." value="{{ search }}">
-                    <button class="shopeers-search-btn" type="submit">Search</button>
+                    <input type="text" name="search" class="dash-search-input" placeholder="Search reference, company, email, destination..." value="{{ search }}">
+                    <button class="dash-search-btn" type="submit">Search</button>
                 </div>
 
-                <!-- Segmented Status Tabs -->
-                <div class="shopeers-segmented-pills">
+                <!-- Full-Version Segmented Status Tabs -->
+                <div class="dash-segmented-pills">
                     <a href="/admin/rfq-requests/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
-                       class="shopeers-pill-tab {% if current_status == 'all' %}active{% endif %}">
+                       class="dash-pill-tab {% if current_status == 'all' %}active{% endif %}">
                         All
                     </a>
                     <a href="/admin/rfq-requests/pending/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
-                       class="shopeers-pill-tab {% if current_status == 'pending' %}active active-pending{% endif %}">
+                       class="dash-pill-tab {% if current_status == 'pending' %}active{% endif %}">
                         Pending
                     </a>
                     <a href="/admin/rfq-requests/quoted/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
-                       class="shopeers-pill-tab {% if current_status == 'quoted' %}active active-approved{% endif %}">
+                       class="dash-pill-tab {% if current_status == 'quoted' %}active{% endif %}">
                         Quoted
                     </a>
                     <a href="/admin/rfq-requests/accepted/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
-                       class="shopeers-pill-tab {% if current_status == 'accepted' %}active active-approved{% endif %}">
+                       class="dash-pill-tab {% if current_status == 'accepted' %}active{% endif %}">
                         Accepted
                     </a>
                     <a href="/admin/rfq-requests/declined/{% if date_filter and date_filter != 'all' %}?date_filter={{ date_filter }}{% endif %}" 
-                       class="shopeers-pill-tab {% if current_status == 'declined' %}active active-declined{% endif %}">
+                       class="dash-pill-tab {% if current_status == 'declined' %}active{% endif %}">
                         Declined
                     </a>
                 </div>
 
-                <!-- Filters -->
+                <!-- Date Filter & Clear Controls -->
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <select name="date_filter" onchange="this.form.submit()" class="form-select shopeers-select" style="width: 140px;">
+                    <select name="date_filter" onchange="this.form.submit()" class="form-select dash-select" style="width: 140px;">
                         <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
                         <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
                         <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
@@ -711,7 +802,7 @@
                     </select>
 
                     {% if search or date_filter and date_filter != 'all' %}
-                    <a href="/admin/rfq-requests/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-shopeers-clear" title="Clear Filters">
+                    <a href="/admin/rfq-requests/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-dash-clear" title="Clear Filters">
                         <i class="bi bi-x-lg"></i>
                         <span>Clear</span>
                     </a>
@@ -720,9 +811,9 @@
             </form>
         </div>
 
-        <!-- RFQs Data Table -->
+        <!-- Full-Version Styled Data Table -->
         <div class="table-responsive" style="min-height: 320px;">
-            <table class="table shopeers-table align-middle mb-0" id="rfqTable">
+            <table class="table dash-table align-middle mb-0" id="rfqTable">
                 <thead>
                     <tr>
                         <th style="min-width: 200px;">RFQ Reference</th>
@@ -741,16 +832,16 @@
                         <!-- RFQ Reference -->
                         <td>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="shopeers-product-avatar">
+                                <div class="dash-rfq-avatar">
                                     <i class="bi bi-file-earmark-spreadsheet"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="shopeers-id-badge">
+                                    <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="dash-id-badge">
                                         {{ item.reference }}
                                     </a>
                                     {% if item.buyer %}
                                     <div class="mt-0.5">
-                                        <span class="shopeers-meta-pill font-monospace" style="font-size: 0.68rem;">
+                                        <span class="dash-meta-tag font-monospace">
                                             <i class="bi bi-person me-1"></i>{{ item.buyer.vendor_id|default:item.buyer.username }}
                                         </span>
                                     </div>
@@ -781,7 +872,7 @@
 
                         <!-- Basket Summary -->
                         <td>
-                            <span class="shopeers-meta-pill font-monospace">
+                            <span class="dash-meta-tag font-monospace">
                                 <i class="bi bi-boxes me-1 text-primary"></i>{{ item.items.count }} item{{ item.items.count|pluralize }}
                             </span>
                             <div class="text-muted small mt-1" style="font-size: 0.74rem;">
@@ -815,34 +906,34 @@
                             {% endif %}
                         </td>
 
-                        <!-- Status Badge -->
+                        <!-- Status Badge (Soft Color Full-Version Badge) -->
                         <td style="white-space: nowrap;">
                             {% if item.status == 'PENDING' %}
-                            <span class="shopeers-status-pill status-pending-pill">
-                                <span class="pulse-dot-sm" style="background: #f59e0b;"></span> Pending
+                            <span class="dash-status-pill status-pending">
+                                <span class="pulse-dot"></span> Pending
                             </span>
                             {% elif item.status == 'QUOTED' %}
-                            <span class="shopeers-status-pill" style="background: #ecfeff; color: #0891b2; border: 1px solid #cffafe;">
-                                <span class="pulse-dot-sm" style="background: #0891b2;"></span> Quoted
+                            <span class="dash-status-pill status-quoted">
+                                <span class="pulse-dot"></span> Quoted
                             </span>
                             {% elif item.status == 'ACCEPTED' %}
-                            <span class="shopeers-status-pill status-approved-pill">
-                                <span class="pulse-dot-sm pulse-dot-green"></span> Accepted
+                            <span class="dash-status-pill status-accepted">
+                                <span class="pulse-dot"></span> Accepted
                             </span>
                             {% elif item.status == 'DECLINED' %}
-                            <span class="shopeers-status-pill status-declined-pill">
-                                <span class="pulse-dot-sm" style="background: #f43f5e;"></span> Declined
+                            <span class="dash-status-pill status-declined">
+                                <span class="pulse-dot"></span> Declined
                             </span>
                             {% else %}
-                            <span class="shopeers-status-pill" style="background: #f1f5f9; color: #475569;">
-                                {{ item.status }}
+                            <span class="dash-status-pill status-closed">
+                                <span class="pulse-dot"></span> {{ item.status }}
                             </span>
                             {% endif %}
                         </td>
 
                         <!-- Date -->
                         <td style="white-space: nowrap;">
-                            <div class="fw-semibold" style="font-size: 0.84rem; color: var(--shopeers-text-dark);">
+                            <div class="fw-semibold" style="font-size: 0.84rem; color: var(--dash-text-dark);">
                                 {{ item.created_at|date:"M d, Y" }}
                             </div>
                             <div class="mt-0.5 text-muted" style="font-size: 0.75rem;">
@@ -850,14 +941,14 @@
                             </div>
                         </td>
 
-                        <!-- Actions -->
+                        <!-- Actions (Full-Version Action Buttons) -->
                         <td class="text-end pe-4" style="white-space: nowrap;">
                             <div class="d-inline-flex align-items-center gap-1.5">
-                                <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn-rfq-view" title="Review & Quote">
+                                <a href="/admin/rfq-requests/{{ item.id }}/detail/" class="btn-dash-primary" title="Review & Quote">
                                     <i class="bi bi-eye"></i>
                                     <span>View</span>
                                 </a>
-                                <button type="button" class="btn-rfq-delete" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
+                                <button type="button" class="btn-dash-icon-danger" onclick="deleteRfq('{{ item.id }}', '{{ item.reference|escapejs }}')" title="Delete RFQ">
                                     <i class="bi bi-trash3"></i>
                                 </button>
                             </div>
@@ -867,12 +958,12 @@
                     <tr>
                         <td colspan="8" class="text-center py-5">
                             <div class="py-4">
-                                <div class="shopeers-product-avatar mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                                <div class="dash-rfq-avatar mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
                                     <i class="bi bi-file-earmark-spreadsheet text-muted"></i>
                                 </div>
-                                <h5 class="fw-bold" style="font-size: 1.05rem; color: var(--shopeers-text-dark);">No RFQ Requests Found</h5>
-                                <p class="small mb-3" style="color: var(--shopeers-text-sub);">Buyer enquiry baskets submitted from the marketplace store will appear here in real time.</p>
-                                <a href="/admin/rfq-requests/" class="btn-shopeers-ghost">
+                                <h5 class="fw-bold" style="font-size: 1.05rem; color: var(--dash-text-dark);">No RFQ Requests Found</h5>
+                                <p class="small mb-3" style="color: var(--dash-text-sub);">Buyer enquiry baskets submitted from the marketplace store will appear here in real time.</p>
+                                <a href="/admin/rfq-requests/" class="btn-dash-light">
                                     <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
                                 </a>
                             </div>
@@ -883,25 +974,25 @@
             </table>
         </div>
 
-        <!-- Shopeers Pagination Footer -->
+        <!-- Full-Version Pagination Footer -->
         {% if page_obj.has_other_pages %}
-        <div class="shopeers-pagination-footer">
-            <div class="small fw-medium" style="color: var(--shopeers-text-sub);">
-                Showing <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.start_index }}</span> to 
-                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.end_index }}</span> of 
-                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.paginator.count }}</span> quotation requests
+        <div class="dash-pagination-footer">
+            <div class="small fw-medium" style="color: var(--dash-text-sub);">
+                Showing <span class="fw-bold" style="color: var(--dash-text-dark);">{{ page_obj.start_index }}</span> to 
+                <span class="fw-bold" style="color: var(--dash-text-dark);">{{ page_obj.end_index }}</span> of 
+                <span class="fw-bold" style="color: var(--dash-text-dark);">{{ page_obj.paginator.count }}</span> quotation requests
             </div>
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0 align-items-center gap-1.5 list-unstyled d-flex">
                     {% if page_obj.has_previous %}
                     <li>
-                        <a class="shopeers-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                        <a class="dash-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
                             Prev
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="shopeers-page-pill disabled">Prev</span>
+                        <span class="dash-page-pill disabled">Prev</span>
                     </li>
                     {% endif %}
 
@@ -909,11 +1000,11 @@
                         {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
                             {% if p == page_obj.number %}
                             <li>
-                                <span class="shopeers-page-pill active">{{ p }}</span>
+                                <span class="dash-page-pill active">{{ p }}</span>
                             </li>
                             {% else %}
                             <li>
-                                <a class="shopeers-page-pill" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a>
+                                <a class="dash-page-pill" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">{{ p }}</a>
                             </li>
                             {% endif %}
                         {% endif %}
@@ -921,13 +1012,13 @@
 
                     {% if page_obj.has_next %}
                     <li>
-                        <a class="shopeers-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                        <a class="dash-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
                             Next
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="shopeers-page-pill disabled">Next</span>
+                        <span class="dash-page-pill disabled">Next</span>
                     </li>
                     {% endif %}
                 </ul>
