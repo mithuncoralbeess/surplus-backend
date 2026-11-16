@@ -9160,6 +9160,13 @@ def rfq_request_detail_view(request, rfq_id):
         if item.target_price:
             total_target_val += (item.target_price * item.quantity)
 
+    buyer_obj = rfq.buyer if hasattr(rfq, "buyer") and rfq.buyer else None
+    buyer_name = rfq.contact_person or (buyer_obj.full_name if buyer_obj else "") or "Valued Buyer"
+    buyer_email = rfq.email or (buyer_obj.email if buyer_obj else "")
+    buyer_phone = rfq.phone or (buyer_obj.mobile_number if buyer_obj else "")
+    buyer_country = rfq.country or (buyer_obj.country if buyer_obj else "") or "N/A"
+    buyer_location = rfq.business_location or (buyer_obj.business_location if buyer_obj else "")
+
     context = {
         "admin": admin_user,
         "is_super_admin": getattr(admin_user, "account_type", "") == "SuperAdmin" or getattr(admin_user, "email", "") == "super@gmail.com",
@@ -9167,6 +9174,11 @@ def rfq_request_detail_view(request, rfq_id):
         "items": items,
         "items_count": items.count(),
         "total_target_val": total_target_val,
+        "buyer_name": buyer_name,
+        "buyer_email": buyer_email,
+        "buyer_phone": buyer_phone,
+        "buyer_country": buyer_country,
+        "buyer_location": buyer_location,
     }
     return render(request, "rfq_request_detail.html", context)
 

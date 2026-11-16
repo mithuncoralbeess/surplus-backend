@@ -216,7 +216,17 @@
             <div class="card-body p-4">
                 <div class="mb-3">
                     <span class="text-secondary small d-block">Buyer Name</span>
-                    <strong class="text-dark fs-6">{{ rfq.contact_person|default:rfq.buyer.full_name|default:"Valued Buyer" }}</strong>
+                    <strong class="text-dark fs-6">
+                        {% if rfq.contact_person %}
+                            {{ rfq.contact_person }}
+                        {% elif rfq.buyer and rfq.buyer.full_name %}
+                            {{ rfq.buyer.full_name }}
+                        {% elif buyer_name %}
+                            {{ buyer_name }}
+                        {% else %}
+                            Valued Buyer
+                        {% endif %}
+                    </strong>
                 </div>
 
                 {% if rfq.company_name and rfq.company_name|lower != rfq.contact_person|lower and rfq.company_name != 'Individual Buyer' %}
@@ -228,9 +238,17 @@
 
                 <div class="mb-3">
                     <span class="text-secondary small d-block">Email</span>
-                    {% if rfq.email or rfq.buyer.email %}
-                    <a href="mailto:{{ rfq.email|default:rfq.buyer.email }}" class="text-primary text-decoration-none fw-medium">
-                        <i class="bi bi-envelope me-1"></i>{{ rfq.email|default:rfq.buyer.email }}
+                    {% if rfq.email %}
+                    <a href="mailto:{{ rfq.email }}" class="text-primary text-decoration-none fw-medium">
+                        <i class="bi bi-envelope me-1"></i>{{ rfq.email }}
+                    </a>
+                    {% elif rfq.buyer and rfq.buyer.email %}
+                    <a href="mailto:{{ rfq.buyer.email }}" class="text-primary text-decoration-none fw-medium">
+                        <i class="bi bi-envelope me-1"></i>{{ rfq.buyer.email }}
+                    </a>
+                    {% elif buyer_email %}
+                    <a href="mailto:{{ buyer_email }}" class="text-primary text-decoration-none fw-medium">
+                        <i class="bi bi-envelope me-1"></i>{{ buyer_email }}
                     </a>
                     {% else %}
                     <span class="text-muted small">N/A</span>
@@ -239,9 +257,17 @@
 
                 <div class="mb-3">
                     <span class="text-secondary small d-block">Phone</span>
-                    {% if rfq.phone or rfq.buyer.mobile_number %}
-                    <a href="tel:{{ rfq.phone|default:rfq.buyer.mobile_number }}" class="text-dark text-decoration-none fw-medium">
-                        <i class="bi bi-telephone me-1"></i>{{ rfq.phone|default:rfq.buyer.mobile_number }}
+                    {% if rfq.phone %}
+                    <a href="tel:{{ rfq.phone }}" class="text-dark text-decoration-none fw-medium">
+                        <i class="bi bi-telephone me-1"></i>{{ rfq.phone }}
+                    </a>
+                    {% elif rfq.buyer and rfq.buyer.mobile_number %}
+                    <a href="tel:{{ rfq.buyer.mobile_number }}" class="text-dark text-decoration-none fw-medium">
+                        <i class="bi bi-telephone me-1"></i>{{ rfq.buyer.mobile_number }}
+                    </a>
+                    {% elif buyer_phone %}
+                    <a href="tel:{{ buyer_phone }}" class="text-dark text-decoration-none fw-medium">
+                        <i class="bi bi-telephone me-1"></i>{{ buyer_phone }}
                     </a>
                     {% else %}
                     <span class="text-muted small">N/A</span>
@@ -250,7 +276,17 @@
 
                 <div class="mb-3">
                     <span class="text-secondary small d-block">Country</span>
-                    <span class="text-dark">{{ rfq.country|default:rfq.buyer.country|default:"N/A" }}</span>
+                    <span class="text-dark">
+                        {% if rfq.country %}
+                            {{ rfq.country }}
+                        {% elif rfq.buyer and rfq.buyer.country %}
+                            {{ rfq.buyer.country }}
+                        {% elif buyer_country %}
+                            {{ buyer_country }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </span>
                 </div>
 
                 <div>
@@ -258,11 +294,15 @@
                     <span class="text-dark">
                         {% if rfq.business_location %}
                             {{ rfq.business_location }}
-                        {% elif rfq.buyer.business_location %}
+                        {% elif rfq.buyer and rfq.buyer.business_location %}
                             {{ rfq.buyer.business_location }}
+                        {% elif buyer_location %}
+                            {{ buyer_location }}
                         {% else %}
                             <span class="text-muted small">N/A</span>
                         {% endif %}
+                    </span>
+                </div>
                     </span>
                 </div>
             </div>

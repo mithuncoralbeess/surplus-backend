@@ -267,7 +267,7 @@
             border-color: #111827 !important;
         }
 
-        /* User Profile Avatar with Distinct Indigo/Purple Ring */
+        /* User Profile Avatar with Distinct Indigo/Purple Ring & Name Initial */
         .top-navbar .user-avatar-btn {
             background: transparent !important;
             border: none !important;
@@ -284,7 +284,7 @@
             height: 38px;
             border-radius: 50%;
             padding: 2px;
-            border: 2px solid #6366f1; /* Purple / indigo outline from reference image */
+            border: 2px solid #6366f1; /* Purple / indigo outline */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -302,11 +302,19 @@
             background: #111827;
         }
 
-        .top-navbar .user-avatar-img {
+        .top-navbar .user-avatar-initials {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            object-fit: cover;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            user-select: none;
         }
 
         /* Global Buttons Polish (#0a5c48) */

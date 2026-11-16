@@ -957,29 +957,33 @@
             </div>
         </div>
 
-        <!-- User Profile Avatar with Purple Ring -->
+        <!-- User Profile Avatar with Name Initial -->
         <div class="dropdown user-profile-dropdown">
-            <button class="user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ admin.full_name|default:admin.username|default:'Admin Profile' }}">
+            <button class="user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{% if admin.full_name %}{{ admin.full_name }}{% elif admin.username %}{{ admin.username }}{% else %}Admin Profile{% endif %}">
                 <div class="user-avatar-ring">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80"
-                         alt="{{ admin.full_name|default:admin.username|default:'Admin' }}"
-                         class="user-avatar-img"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="user-avatar-fallback rounded-circle bg-primary text-white fw-bold" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 0.85rem;">
-                        {{ admin.username|default:"A"|slice:":1"|upper }}
+                    <div class="user-avatar-initials">
+                        {% if admin.full_name %}{{ admin.full_name|slice:":1"|upper }}{% elif admin.username %}{{ admin.username|slice:":1"|upper }}{% else %}A{% endif %}
                     </div>
                 </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" style="min-width: 220px;">
                 <li class="px-3 py-2 mb-1 border-bottom pb-2">
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <span class="fw-bold d-block small user-dropdown-header-name">{{ admin.full_name|default:admin.username }}</span>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                            style="width: 32px; height: 32px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); font-size: 0.85rem; flex-shrink: 0;">
+                            {% if admin.full_name %}{{ admin.full_name|slice:":1"|upper }}{% elif admin.username %}{{ admin.username|slice:":1"|upper }}{% else %}A{% endif %}
+                        </div>
+                        <div class="min-w-0 flex-grow-1">
+                            <span class="fw-bold d-block small user-dropdown-header-name text-truncate">{% if admin.full_name %}{{ admin.full_name }}{% else %}{{ admin.username|default:"Admin User" }}{% endif %}</span>
+                            <span class="text-secondary small text-truncate d-block" style="font-size: 0.72rem;">{{ admin.email }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.65rem;">{{ admin.account_type|default:"Super Admin" }}</span>
                         {% if admin.id %}
                         <span class="badge bg-primary text-white font-monospace" style="font-size: 0.65rem;">ADM-{{ admin.id|stringformat:"04d" }}</span>
                         {% endif %}
                     </div>
-                    <span class="text-secondary small text-truncate d-block" style="max-width: 180px;">{{ admin.email }}</span>
-                    <span class="badge bg-secondary-subtle text-secondary mt-1" style="font-size: 0.65rem;">{{ admin.account_type|default:"Super Admin" }}</span>
                 </li>
                 <li>
                     <a class="dropdown-item small py-2 d-flex align-items-center gap-2" href="/admin/dashboard/">
