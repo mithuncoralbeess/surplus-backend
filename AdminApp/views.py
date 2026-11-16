@@ -8549,33 +8549,67 @@ def email_template_preview_raw(request, template_key):
 
     if template_key == "surplus-insider-001":
         from .models import BlogPost
-        published_blogs = list(
+        import re
+        from django.utils.html import strip_tags
+
+        # Fetch the latest published active blog post (prioritizing one with an excerpt if available)
+        featured_blog_post = (
             BlogPost.objects.filter(status="published", is_active=True)
             .exclude(excerpt__isnull=True)
             .exclude(excerpt__exact="")
-            .order_by("-id")[:4]
+            .order_by("-id")
+            .first()
         )
-        if not published_blogs:
-            published_blogs = list(BlogPost.objects.filter(status="published", is_active=True).order_by("-id")[:4])
+        if not featured_blog_post:
+            featured_blog_post = BlogPost.objects.filter(status="published", is_active=True).order_by("-id").first()
 
-        if published_blogs:
-            b1 = published_blogs[0]
-            mock_context["blog_1"] = {
+        if featured_blog_post:
+            b1 = featured_blog_post
+            raw_text = re.sub(r"\s+", " ", strip_tags(b1.content or "")).strip()
+            excerpt = (
+                b1.excerpt
+                or b1.meta_description
+                or (raw_text[:170] + "..." if len(raw_text) > 170 else raw_text)
+                or "Practical insights on managing surplus inventory, minimizing holding costs, and freeing trapped capital."
+            )
+
+            # Determine best image URL
+            img_url = ""
+            if b1.image:
+                try:
+                    if os.path.exists(b1.image.path):
+                        img_url = request.build_absolute_uri(b1.image.url) if request else f"https://surplusmarket.com{b1.image.url}"
+                except Exception:
+                    pass
+
+            if not img_url and b1.featured_image_url:
+                if b1.featured_image_url.startswith("http"):
+                    img_url = b1.featured_image_url
+                else:
+                    clean_path = b1.featured_image_url if b1.featured_image_url.startswith("/") else f"/{b1.featured_image_url}"
+                    local_test = os.path.join(str(settings.MEDIA_ROOT), clean_path.lstrip("/media/").replace("/", os.sep))
+                    if os.path.exists(local_test):
+                        img_url = request.build_absolute_uri(clean_path) if request else f"https://surplusmarket.com{clean_path}"
+
+            if not img_url:
+                img_url = "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80"
+
+            blog_url = f"https://surplusmarket.com/blog/{b1.slug}"
+
+            blog_data = {
                 "title": b1.title,
-                "excerpt": b1.excerpt or b1.meta_description or "Practical insights on managing surplus inventory, minimizing holding costs, and freeing trapped capital.",
-                "url": f"https://surplusmarket.com/blog/{b1.slug}",
+                "excerpt": excerpt,
+                "url": blog_url,
                 "category": b1.category_name or "Inventory Intelligence",
+                "category_name": b1.category_name or "Inventory Intelligence",
+                "image_url": img_url,
                 "read_time": getattr(b1, "read_time", 4) or 4,
             }
-            if len(published_blogs) > 1:
-                b2 = published_blogs[1]
-                mock_context["blog_2"] = {
-                    "title": b2.title,
-                    "excerpt": b2.excerpt or b2.meta_description or "Learn how to compare wholesale liquidation deals, manage risk, and identify resale opportunities.",
-                    "url": f"https://surplusmarket.com/blog/{b2.slug}",
-                    "category": b2.category_name or "Market Watch",
-                    "read_time": getattr(b2, "read_time", 5) or 5,
-                }
+
+            mock_context["blog"] = blog_data
+            mock_context["blog_1"] = blog_data
+            mock_context["featured_blog"] = blog_data
+
         mock_context["frontend_url"] = "https://surplusmarket.com"
         mock_context["inventory_url"] = "https://surplusmarket.com/lots"
         mock_context["contact_url"] = "https://surplusmarket.com/contact"

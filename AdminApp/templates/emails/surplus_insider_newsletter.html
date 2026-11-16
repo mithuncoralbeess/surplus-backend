@@ -228,7 +228,7 @@
                     </tr>
 
                     <!-- ============================================================== -->
-                    <!-- 2. SECTION 01: FEATURED OPPORTUNITY (2-Column Side-by-Side)   -->
+                    <!-- 2. SECTION 01: FEATURED BLOG POST SPOTLIGHT                   -->
                     <!-- ============================================================== -->
                     <tr>
                         <td style="padding: 34px 34px 30px 34px;" class="mobile-pad">
@@ -240,26 +240,28 @@
                                         <!-- Pill Badge -->
                                         <div style="display: inline-block; background-color: #e8f5f1; border-radius: 50px; padding: 5px 12px; margin-bottom: 14px; border: 1px solid #bbf7d0;">
                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #0a5c48; letter-spacing: 0.2px;">
-                                                01 &middot; Featured opportunity
+                                                01 &middot; {{ blog.category|default:blog_1.category|default:"Featured Article" }}
                                             </span>
                                         </div>
 
                                         <!-- Headline -->
                                         <h2 style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 21px; line-height: 27px; font-weight: 800; color: #0b1a2b; letter-spacing: -0.3px;">
-                                            This month’s inventory spotlight
+                                            <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="color: #0b1a2b; text-decoration: none;">
+                                                {{ blog.title|default:blog_1.title|default:"7 Industries Most Affected by Overstock Problems" }}
+                                            </a>
                                         </h2>
 
                                         <!-- Description -->
                                         <p style="margin: 0 0 22px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 20px; color: #475569;">
-                                            Bulk inventory available across selected product categories. Discover quantities, conditions and commercial details.
+                                            {{ blog.excerpt|default:blog_1.excerpt|default:"Industries prone to overstock problems, why excess inventory builds up, and practical ways businesses can clear surplus stock." }}
                                         </p>
 
                                         <!-- Button -->
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" class="sec1-btn-table" style="margin: 0 !important; margin-left: 0 !important;">
                                             <tr>
                                                 <td bgcolor="#0a5c48" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(10, 92, 72, 0.25);" class="sec1-btn-cell">
-                                                    <a href="{{ inventory_url|default:'https://surplusmarket.com/lots' }}" class="sec1-btn" style="display: inline-block; padding: 12px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 500; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
-                                                        EXPLORE AVAILABLE LOTS &nbsp;&rarr;
+                                                    <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" class="sec1-btn" style="display: inline-block; padding: 12px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 500; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
+                                                        READ FULL ARTICLE &nbsp;&rarr;
                                                     </a>
                                                 </td>
                                             </tr>
@@ -267,9 +269,11 @@
 
                                     </td>
 
-                                    <!-- Right Image Column (Wrapped Pallets in Warehouse) -->
+                                    <!-- Right Image Column -->
                                     <td width="240" height="235" valign="top" align="right" class="sec1-right" style="width: 240px; height: 235px; vertical-align: top;">
-                                        <img class="sec1-img" src="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80" alt="Warehouse Pallets of Inventory" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
+                                        <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="text-decoration: none; display: block;">
+                                            <img class="sec1-img" src="{{ blog.image_url|default:blog_1.image_url|default:'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80' }}" alt="{{ blog.title|default:blog_1.title|default:'Featured Article' }}" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
+                                        </a>
                                     </td>
                                 </tr>
                             </table>
