@@ -472,7 +472,6 @@ def _build_lots_report(request, for_export=False):
     web_columns = [
         _col("lot_number", "Lot #", kind="code"),
         _col("title", "Title"),
-        _col("number_of_distinct_skus", "SKUs", align="right"),
         _col("total_units_quantity", "Units", align="right"),
         _col("total_est_retail_value_msrp", "Est. Retail", align="right"),
         _col("ask_price_surplus_payout", "Ask Price", align="right"),
