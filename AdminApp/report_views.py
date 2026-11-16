@@ -98,7 +98,10 @@ def _fmt_money(amount, currency="USD"):
         return "—"
     try:
         val = float(amount)
-        return f"{currency or 'USD'} {val:,.2f}"
+        cur = (currency or "USD").strip()
+        if "-" in cur:
+            cur = cur.split("-")[0].strip()
+        return f"{cur} {val:,.2f}"
     except (ValueError, TypeError):
         return "—"
 
@@ -466,7 +469,18 @@ def _build_lots_report(request, for_export=False):
         _kpi_card("AVG % OF RETAIL", avg_pct, "neutral"),
     ]
 
-    columns = [
+    web_columns = [
+        _col("lot_number", "Lot #", kind="code"),
+        _col("title", "Title"),
+        _col("number_of_distinct_skus", "SKUs", align="right"),
+        _col("total_units_quantity", "Units", align="right"),
+        _col("total_est_retail_value_msrp", "Est. Retail", align="right"),
+        _col("ask_price_surplus_payout", "Ask Price", align="right"),
+        _col("inventory_country", "Country"),
+        _col("enquiry_status", "Status", kind="badge"),
+    ]
+
+    export_columns = [
         _col("lot_number", "Lot #", kind="code"),
         _col("title", "Title"),
         _col("condition", "Condition"),
@@ -476,11 +490,13 @@ def _build_lots_report(request, for_export=False):
         _col("total_est_retail_value_msrp", "Est. Retail", align="right"),
         _col("ask_price_surplus_payout", "Ask Price", align="right"),
         _col("pct_retail", "% Retail", align="right", sortable=False),
-        _col("inventory_country", "Inv. Country"),
+        _col("inventory_country", "Country"),
         _col("sale_method", "Sale"),
         _col("enquiry_status", "Status", kind="badge"),
         _col("created_at", "Created"),
     ]
+
+    columns = export_columns if for_export else web_columns
 
     countries = cache.get("rpt_lot_countries")
     if countries is None:
@@ -518,7 +534,7 @@ def _build_lots_report(request, for_export=False):
         return {
             "id": l.id,
             "drill_kind": "lot",
-            "detail_url": f"/admin/enquiries/lots/{l.id}/",
+            "detail_url": f"/admin/enquiries/lots/{l.id}/detail/",
             "cells": {
                 "lot_number": l.lot_number,
                 "title": l.title or f"Lot {l.lot_number}",
@@ -1351,7 +1367,7 @@ def report_drilldown_api(request, kind: str, obj_id: int):
         return JsonResponse({
             "success": True,
             "title": f"Lot Manifest: {lot.lot_number} — {lot.title}",
-            "detail_url": f"/admin/enquiries/lots/{lot.id}/",
+            "detail_url": f"/admin/enquiries/lots/{lot.id}/detail/",
             "headers": ["Product ID", "Product Name", "Quantity", "Condition"],
             "rows": [
                 [it.product_id, it.product_name or "—", f"{it.quantity:,}", it.condition or "—"]

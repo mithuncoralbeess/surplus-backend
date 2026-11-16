@@ -152,6 +152,17 @@
     line-height: 1.2;
 }
 
+.dash-table-title {
+    max-width: 320px;
+    font-weight: 600;
+    color: var(--dash-text-dark);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .dash-badge-approved, .dash-badge-live, .dash-badge-accepted, .dash-badge-sold, .dash-badge-contacted {
     background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2);
 }
@@ -351,11 +362,13 @@
                     {% for r in rows %}
                     <tr onclick="handleRowClick('{{ r.drill_kind }}', '{{ r.id }}', '{{ r.detail_url|escapejs }}')">
                         {% for cell in r.ordered_cells %}
-                        <td data-col-key="{{ cell.key }}" class="{% if cell.align == 'right' %}text-end{% endif %}">
+                        <td data-col-key="{{ cell.key }}" class="{% if cell.align == 'right' %}text-end text-nowrap{% endif %}">
                             {% if cell.kind == 'code' %}
-                                <span class="font-monospace fw-bold text-dark">{{ cell.value }}</span>
+                                <span class="font-monospace fw-bold text-dark text-nowrap">{{ cell.value }}</span>
                             {% elif cell.kind == 'badge' %}
                                 <span class="dash-badge dash-badge-{{ cell.status_raw|default:'draft' }}">{{ cell.value }}</span>
+                            {% elif cell.key == 'title' or cell.key == 'product_name' %}
+                                <div class="dash-table-title" title="{{ cell.value }}">{{ cell.value }}</div>
                             {% else %}
                                 {{ cell.value }}
                             {% endif %}
