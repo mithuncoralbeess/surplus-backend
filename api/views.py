@@ -1707,6 +1707,15 @@ def submit_rfq_enquiry(request):
     if not buyer_vendor:
         buyer_vendor = VendorDetails.objects.filter(email__iexact=email).first()
 
+    if not buyer_vendor:
+        return Response(
+            {
+                "success": False,
+                "message": "Authentication required. You must be logged in as a registered buyer to submit an RFQ.",
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
     if not contact_person:
         if buyer_vendor and buyer_vendor.full_name:
             contact_person = buyer_vendor.full_name.strip()
