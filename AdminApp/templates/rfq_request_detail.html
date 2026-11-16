@@ -844,96 +844,99 @@
                     </span>
                 </div>
 
-                <!-- Invoice Line Items Table -->
-                <div class="table-responsive">
-                    <table class="table dash-table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th style="min-width: 280px;">Item Description</th>
-                                <th style="width: 100px;">Quantity</th>
-                                <th style="width: 130px;">Unit Price</th>
-                                <th style="width: 140px;">Buyer Target</th>
-                                <th class="text-end pe-4" style="width: 140px;">Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in items %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        {% if item.product and item.product.images.first %}
-                                        <img src="{{ item.product.images.first.url }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 46px; height: 46px; object-fit: cover;">
-                                        {% elif item.lot and item.lot.warehouse_images %}
-                                        <img src="{{ item.lot.warehouse_images.0 }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 46px; height: 46px; object-fit: cover;">
+                <!-- Itemized Basket Cards (No horizontal scroll table) -->
+                <div class="p-3 p-md-4">
+                    {% for item in items %}
+                    <div class="p-3 p-md-3 mb-3" style="background: var(--dash-border-subtle); border-radius: var(--dash-radius-lg); border: 1px solid var(--dash-border); transition: all 0.2s ease;">
+                        <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between gap-3">
+                            <!-- Left: Product Image & Details -->
+                            <div class="d-flex align-items-start gap-3 flex-grow-1">
+                                {% if item.product and item.product.images.first %}
+                                <img src="{{ item.product.images.first.url }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;">
+                                {% elif item.lot and item.lot.warehouse_images %}
+                                <img src="{{ item.lot.warehouse_images.0 }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.4rem;">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                {% endif %}
+                                <div class="min-w-0 flex-grow-1">
+                                    <h6 class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">
+                                        {% if item.product %}
+                                        <a href="/admin/products/{{ item.product.id }}/" class="text-dark text-decoration-none">
+                                            {{ item.title }}
+                                        </a>
+                                        {% elif item.lot %}
+                                        <a href="/admin/enquiries/lots/{{ item.lot.id }}/detail/" class="text-dark text-decoration-none">
+                                            {{ item.title }}
+                                        </a>
                                         {% else %}
-                                        <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 46px; height: 46px;">
-                                            <i class="bi bi-box-seam fs-5"></i>
-                                        </div>
+                                        {{ item.title }}
                                         {% endif %}
-                                        <div class="min-w-0">
-                                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.90rem; max-width: 270px;" title="{{ item.title }}">
-                                                {% if item.product %}
-                                                <a href="/admin/products/{{ item.product.id }}/" class="text-dark text-decoration-none">
-                                                    {{ item.title }}
-                                                </a>
-                                                {% elif item.lot %}
-                                                <a href="/admin/enquiries/lots/{{ item.lot.id }}/detail/" class="text-dark text-decoration-none">
-                                                    {{ item.title }}
-                                                </a>
-                                                {% else %}
-                                                {{ item.title }}
-                                                {% endif %}
-                                            </div>
-                                            <div class="d-flex flex-wrap align-items-center gap-1.5 mt-1">
-                                                {% if item.sku %}
-                                                <span class="dash-meta-tag font-monospace" style="font-size: 0.68rem;">SKU: {{ item.sku }}</span>
-                                                {% endif %}
-                                                {% if item.category %}
-                                                <span class="dash-meta-tag" style="font-size: 0.68rem;">{{ item.category }}</span>
-                                                {% endif %}
-                                                {% if item.product and item.product.vendor %}
-                                                <span class="dash-meta-tag text-success" style="font-size: 0.68rem;">
-                                                    <i class="bi bi-shop me-1"></i>{{ item.product.vendor.company_name|default:item.product.vendor.full_name|default:item.product.vendor.username }}
-                                                </span>
-                                                {% elif item.lot and item.lot.vendor %}
-                                                <span class="dash-meta-tag text-success" style="font-size: 0.68rem;">
-                                                    <i class="bi bi-shop me-1"></i>{{ item.lot.vendor.company_name|default:item.lot.vendor.full_name|default:item.lot.vendor.username }}
-                                                </span>
-                                                {% endif %}
-                                            </div>
-                                            {% if item.notes %}
-                                            <div class="mt-1.5 p-2 bg-light rounded text-muted small" style="font-size: 0.76rem;">
-                                                <i class="bi bi-chat-left-text me-1 text-primary"></i>{{ item.notes }}
-                                            </div>
-                                            {% endif %}
-                                        </div>
+                                    </h6>
+                                    <div class="d-flex flex-wrap align-items-center gap-1.5 mt-1">
+                                        {% if item.sku %}
+                                        <span class="dash-meta-tag font-monospace" style="font-size: 0.70rem;">SKU: {{ item.sku }}</span>
+                                        {% endif %}
+                                        {% if item.category %}
+                                        <span class="dash-meta-tag" style="font-size: 0.70rem;">{{ item.category }}</span>
+                                        {% endif %}
+                                        {% if item.product and item.product.vendor %}
+                                        <span class="dash-meta-tag text-success" style="font-size: 0.70rem;">
+                                            <i class="bi bi-shop me-1"></i>{{ item.product.vendor.company_name|default:item.product.vendor.full_name|default:item.product.vendor.username }}
+                                        </span>
+                                        {% elif item.lot and item.lot.vendor %}
+                                        <span class="dash-meta-tag text-success" style="font-size: 0.70rem;">
+                                            <i class="bi bi-shop me-1"></i>{{ item.lot.vendor.company_name|default:item.lot.vendor.full_name|default:item.lot.vendor.username }}
+                                        </span>
+                                        {% endif %}
                                     </div>
-                                </td>
-                                <td>
-                                    <span class="fw-bold text-dark font-monospace">{{ item.quantity }}</span>
-                                    <span class="text-muted small d-block">units</span>
-                                </td>
-                                <td>
-                                    <span class="fw-bold text-dark">${{ item.unit_price|floatformat:2 }}</span>
-                                    <span class="text-muted small d-block">per unit</span>
-                                </td>
-                                <td>
-                                    {% if item.target_price %}
-                                    <span class="fw-bold text-primary font-monospace">${{ item.target_price|floatformat:2 }}</span>
-                                    <span class="dash-status-pill status-pending d-block mt-1" style="font-size: 0.65rem; padding: 1px 6px; width: fit-content;">
-                                        Counter Offer
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted small">Standard</span>
+                                    {% if item.notes %}
+                                    <div class="mt-2 p-2 bg-white rounded text-muted small border" style="font-size: 0.76rem;">
+                                        <i class="bi bi-chat-left-text me-1 text-primary"></i><strong>Buyer Note:</strong> {{ item.notes }}
+                                    </div>
                                     {% endif %}
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <span class="fw-bold text-dark font-monospace">${{ item.total_estimated_value|floatformat:2 }}</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Right: Commercial Pricing & Quantity Grid -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-end gap-3 gap-md-4 w-100 w-lg-auto pt-2 pt-lg-0 border-top border-top-lg-0">
+                                <!-- Qty -->
+                                <div class="text-start text-lg-center">
+                                    <span class="dash-field-label">Quantity</span>
+                                    <strong class="font-monospace text-dark fs-6">{{ item.quantity }}</strong>
+                                    <span class="text-muted small d-block" style="font-size: 0.70rem;">units</span>
+                                </div>
+
+                                <!-- Unit Price -->
+                                <div class="text-start text-lg-center">
+                                    <span class="dash-field-label">Unit Price</span>
+                                    <strong class="font-monospace text-dark fs-6">${{ item.unit_price|floatformat:2 }}</strong>
+                                    <span class="text-muted small d-block" style="font-size: 0.70rem;">per unit</span>
+                                </div>
+
+                                <!-- Buyer Target -->
+                                <div class="text-start text-lg-center">
+                                    <span class="dash-field-label">Buyer Target</span>
+                                    {% if item.target_price %}
+                                    <strong class="font-monospace text-primary fs-6">${{ item.target_price|floatformat:2 }}</strong>
+                                    <span class="dash-status-pill status-pending d-block mt-0.5" style="font-size: 0.65rem; padding: 1px 6px;">Counter Offer</span>
+                                    {% else %}
+                                    <span class="text-muted small font-monospace">Standard</span>
+                                    <span class="text-muted small d-block" style="font-size: 0.70rem;">no target</span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Subtotal -->
+                                <div class="text-end ps-2" style="min-width: 120px;">
+                                    <span class="dash-field-label">Subtotal</span>
+                                    <div class="font-monospace text-dark fw-bold fs-5">${{ item.total_estimated_value|floatformat:2 }}</div>
+                                    <span class="text-muted small" style="font-size: 0.70rem;">Estimated Total</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
 
                 <!-- InvoiceTable Summary Calculation Box (InvoiceTable.jsx style) -->
