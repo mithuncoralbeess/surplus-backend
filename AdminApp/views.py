@@ -8547,6 +8547,40 @@ def email_template_preview_raw(request, template_key):
         "date": "Nov 07, 2026",
     }
 
+    if template_key == "surplus-insider-001":
+        from .models import BlogPost
+        published_blogs = list(
+            BlogPost.objects.filter(status="published", is_active=True)
+            .exclude(excerpt__isnull=True)
+            .exclude(excerpt__exact="")
+            .order_by("-id")[:4]
+        )
+        if not published_blogs:
+            published_blogs = list(BlogPost.objects.filter(status="published", is_active=True).order_by("-id")[:4])
+
+        if published_blogs:
+            b1 = published_blogs[0]
+            mock_context["blog_1"] = {
+                "title": b1.title,
+                "excerpt": b1.excerpt or b1.meta_description or "Practical insights on managing surplus inventory, minimizing holding costs, and freeing trapped capital.",
+                "url": f"https://surplusmarket.com/blog/{b1.slug}",
+                "category": b1.category_name or "Inventory Intelligence",
+                "read_time": getattr(b1, "read_time", 4) or 4,
+            }
+            if len(published_blogs) > 1:
+                b2 = published_blogs[1]
+                mock_context["blog_2"] = {
+                    "title": b2.title,
+                    "excerpt": b2.excerpt or b2.meta_description or "Learn how to compare wholesale liquidation deals, manage risk, and identify resale opportunities.",
+                    "url": f"https://surplusmarket.com/blog/{b2.slug}",
+                    "category": b2.category_name or "Market Watch",
+                    "read_time": getattr(b2, "read_time", 5) or 5,
+                }
+        mock_context["frontend_url"] = "https://surplusmarket.com"
+        mock_context["inventory_url"] = "https://surplusmarket.com/lots"
+        mock_context["contact_url"] = "https://surplusmarket.com/contact"
+        mock_context["blog_list_url"] = "https://surplusmarket.com/blog"
+
     from django.template.loader import render_to_string
     from django.http import HttpResponse
 
