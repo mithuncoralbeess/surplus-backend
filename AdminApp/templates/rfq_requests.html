@@ -818,8 +818,6 @@
                     <tr>
                         <th style="min-width: 200px;">RFQ Reference</th>
                         <th style="min-width: 240px;">Buyer Details</th>
-                        <th style="width: 160px;">Basket Summary</th>
-                        <th style="width: 170px;">Est. Value / Quote</th>
                         <th style="width: 160px;">Destination</th>
                         <th style="width: 140px;">Status</th>
                         <th style="width: 140px;">Date</th>
@@ -867,30 +865,6 @@
                             <div class="text-muted small" style="font-size: 0.74rem;">
                                 <i class="bi bi-telephone me-1"></i>{{ item.phone }}
                             </div>
-                            {% endif %}
-                        </td>
-
-                        <!-- Basket Summary -->
-                        <td>
-                            <span class="dash-meta-tag font-monospace">
-                                <i class="bi bi-boxes me-1 text-primary"></i>{{ item.items.count }} item{{ item.items.count|pluralize }}
-                            </span>
-                            <div class="text-muted small mt-1" style="font-size: 0.74rem;">
-                                <strong>{{ item.total_units }}</strong> units total
-                            </div>
-                        </td>
-
-                        <!-- Est. Value / Quote -->
-                        <td>
-                            <div class="fw-bold text-dark" style="font-size: 0.90rem;">
-                                {{ item.currency }} {{ item.estimated_value|floatformat:2 }}
-                            </div>
-                            {% if item.proforma_amount %}
-                            <div class="text-success small fw-semibold" style="font-size: 0.74rem;">
-                                <i class="bi bi-check-circle me-1"></i>Quoted: ${{ item.proforma_amount|floatformat:2 }}
-                            </div>
-                            {% else %}
-                            <span class="text-muted small" style="font-size: 0.74rem;">No proforma yet</span>
                             {% endif %}
                         </td>
 
@@ -956,7 +930,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <div class="py-4">
                                 <div class="dash-rfq-avatar mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.5rem;">
                                     <i class="bi bi-file-earmark-spreadsheet text-muted"></i>
