@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -181,9 +182,9 @@
                     <!-- 1. HERO HEADER                                                 -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td bgcolor="#0c1d2e" style="background-color: #0c1d2e; padding: 0;">
-                            <!-- Header background with solid dark left and warehouse racks on the right -->
-                            <div style="background: linear-gradient(90deg, #0c1d2e 0%, #0c1d2e 45%, rgba(12, 29, 46, 0.88) 65%, rgba(12, 29, 46, 0.35) 100%), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80') center right / cover no-repeat;">
+                        <td bgcolor="#062d23" style="background-color: #062d23; padding: 0;">
+                            <!-- Header background with deep brand forest green left and warehouse racks on the right -->
+                            <div style="background: linear-gradient(90deg, #062d23 0%, #0a5c48 45%, rgba(10, 92, 72, 0.90) 65%, rgba(6, 45, 35, 0.40) 100%), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80') center right / cover no-repeat;">
                                 <div style="padding: 34px 34px 38px 34px;" class="mobile-pad">
                                     
                                     <!-- Brand Row -->
@@ -192,25 +193,20 @@
                                             <td align="left" valign="middle">
                                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" style="margin: 0 !important; margin-left: 0 !important;">
                                                     <tr>
-                                                        <!-- Orange 3-bar slash logo mark -->
-                                                        <td valign="middle" style="padding-right: 10px; line-height: 0;">
-                                                            <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                                                                <path d="M6 7L20 7L16 12L2 12L6 7Z" fill="#e25b1e"/>
-                                                                <path d="M9 14L23 14L19 19L5 19L9 14Z" fill="#e25b1e"/>
-                                                                <path d="M12 21L26 21L22 26L8 26L12 21Z" fill="#e25b1e"/>
-                                                            </svg>
-                                                        </td>
-                                                        <!-- Brand Text -->
-                                                        <td valign="middle" style="padding-right: 18px; line-height: 1.15;">
-                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: block;">Surplus</span>
-                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px; display: block;">Market</span>
+                                                        <!-- Official Surplus Market Brand Logo -->
+                                                        <td valign="middle" style="padding-right: 16px; line-height: 0;">
+                                                            <a href="https://surplusmarket.com" target="_blank" style="text-decoration: none; display: inline-block;">
+                                                                <div style="background-color: #ffffff; padding: 6px 14px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);">
+                                                                    <img src="{% static 'images/surplus_main_logo.png' %}" alt="Surplus Market" style="height: 28px; width: auto; max-width: 150px; display: block; object-fit: contain; border: 0;">
+                                                                </div>
+                                                            </a>
                                                         </td>
                                                         <!-- Thin Vertical Divider Line -->
-                                                        <td valign="middle" style="padding-right: 18px; border-left: 1px solid rgba(255, 255, 255, 0.35); height: 32px;">&nbsp;</td>
+                                                        <td valign="middle" style="padding-right: 16px; border-left: 1px solid rgba(255, 255, 255, 0.30); height: 36px;">&nbsp;</td>
                                                         <!-- Newsletter Title & Issue Subtitle -->
                                                         <td valign="middle">
                                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: 0.8px; text-transform: uppercase; display: block; line-height: 15px;">THE SURPLUS INSIDER</span>
-                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 600; color: #94a9bf; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin-top: 3px; line-height: 12px;">ISSUE 001 &middot; NOVEMBER 2026</span>
+                                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 600; color: #a7f3d0; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin-top: 3px; line-height: 12px;">ISSUE 001 &middot; NOVEMBER 2026</span>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -226,10 +222,10 @@
                                                     Turn Excess Inventory<br>Into Opportunity.
                                                 </h1>
                                                 
-                                                <!-- Orange Accent Line -->
-                                                <div style="width: 44px; height: 3.5px; background-color: #e25b1e; margin: 16px 0; border-radius: 2px;"></div>
+                                                <!-- Theme Emerald Accent Line -->
+                                                <div style="width: 44px; height: 3.5px; background-color: #10b981; margin: 16px 0; border-radius: 2px;"></div>
                                                 
-                                                <p class="hero-sub" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 20px; color: #b8c9dc; font-weight: 400; max-width: 410px;">
+                                                <p class="hero-sub" style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; line-height: 20px; color: #d1fae5; font-weight: 400; max-width: 410px;">
                                                     Your monthly briefing on surplus inventory, market opportunities and smarter stock decisions.
                                                 </p>
                                             </td>
@@ -252,8 +248,8 @@
                                     <td valign="top" height="235" class="sec1-left" style="padding-right: 22px; height: 235px; vertical-align: top;">
                                         
                                         <!-- Pill Badge -->
-                                        <div style="display: inline-block; background-color: #fef2ea; border-radius: 50px; padding: 5px 12px; margin-bottom: 14px;">
-                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #c2410c; letter-spacing: 0.2px;">
+                                        <div style="display: inline-block; background-color: #e8f5f1; border-radius: 50px; padding: 5px 12px; margin-bottom: 14px; border: 1px solid #bbf7d0;">
+                                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #0a5c48; letter-spacing: 0.2px;">
                                                 01 &middot; Featured opportunity
                                             </span>
                                         </div>
@@ -271,7 +267,7 @@
                                         <!-- Button -->
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" class="sec1-btn-table" style="margin: 0 !important; margin-left: 0 !important;">
                                             <tr>
-                                                <td bgcolor="#e25b1e" style="border-radius: 6px;" class="sec1-btn-cell">
+                                                <td bgcolor="#0a5c48" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(10, 92, 72, 0.25);" class="sec1-btn-cell">
                                                     <a href="https://surplusmarket.com/inventory" class="sec1-btn" style="display: inline-block; padding: 12px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
                                                         EXPLORE AVAILABLE STOCK &nbsp;&rarr;
                                                     </a>
@@ -306,8 +302,8 @@
                                 <tr>
                                     <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
-                                        <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                        <div style="width: 54px; height: 54px; background-color: #e8f5f1; border-radius: 12px; border: 1px solid #bbf7d0; text-align: center; line-height: 54px;">
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0a5c48" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                                             </svg>
                                         </div>
@@ -334,7 +330,7 @@
 
                                         <!-- Mobile Action Link -->
                                         <div class="sec2-mobile-action" style="display: none; padding-top: 4px;">
-                                            <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
+                                            <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #0a5c48; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase;">
                                                 READ THE INSIGHT &nbsp;&rarr;
                                             </a>
                                         </div>
@@ -342,7 +338,7 @@
 
                                     <!-- Right Action Link with Vertical Divider -->
                                     <td width="115" valign="middle" align="right" class="sec2-desktop-action" style="padding-left: 16px; border-left: 1px solid #e5e7eb;">
-                                        <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #e25b1e; text-decoration: none; letter-spacing: 0.5px; line-height: 15px; display: inline-block; text-align: right;">
+                                        <a href="https://surplusmarket.com/insight" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #0a5c48; text-decoration: none; letter-spacing: 0.5px; line-height: 15px; display: inline-block; text-align: right;">
                                             READ THE<br> INSIGHT &nbsp;&rarr;
                                         </a>
                                     </td>
@@ -367,8 +363,8 @@
                                 <tr>
                                     <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
-                                        <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                        <div style="width: 54px; height: 54px; background-color: #e8f5f1; border-radius: 12px; border: 1px solid #bbf7d0; text-align: center; line-height: 54px;">
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0a5c48" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <line x1="18" y1="20" x2="18" y2="10"></line>
                                                 <line x1="12" y1="20" x2="12" y2="4"></line>
                                                 <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -418,8 +414,8 @@
                                 <tr>
                                     <!-- Left Icon (54x54) -->
                                     <td width="58" valign="top" style="padding-right: 16px;">
-                                        <div style="width: 54px; height: 54px; background-color: #fff6ee; border-radius: 12px; border: 1px solid #fed7aa; text-align: center; line-height: 54px;">
-                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e25b1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                        <div style="width: 54px; height: 54px; background-color: #e8f5f1; border-radius: 12px; border: 1px solid #bbf7d0; text-align: center; line-height: 54px;">
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0a5c48" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
                                                 <path d="M9 18h6"></path>
                                                 <path d="M10 22h4"></path>
                                                 <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
@@ -456,7 +452,7 @@
                     <!-- ============================================================== -->
                     <tr>
                         <td style="padding: 6px 34px 28px 34px;" class="mobile-pad">
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#112233" style="background-color: #112233; border-radius: 8px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#062d23" style="background-color: #062d23; background: linear-gradient(135deg, #062d23 0%, #0a5c48 100%); border-radius: 8px;">
                                 <tr>
                                     <td style="padding: 22px 24px;" class="cta-card-td">
                                         
@@ -485,7 +481,7 @@
                                                         <h4 style="margin: 0 0 3px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px; line-height: 20px;">
                                                             Have surplus inventory to move?
                                                         </h4>
-                                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #94a9bf; line-height: 16px;">
+                                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12.5px; color: #d1fae5; line-height: 16px;">
                                                             Let us help you explore the possibilities.
                                                         </p>
                                                     </td>
@@ -494,7 +490,7 @@
                                                     <td width="200" valign="middle" align="right" style="width: 200px;">
                                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 0 0 auto;">
                                                             <tr>
-                                                                <td bgcolor="#e25b1e" style="border-radius: 6px;">
+                                                                <td bgcolor="#10b981" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
                                                                     <a href="https://surplusmarket.com/contact" style="display: inline-block; padding: 11px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; line-height: 14px; text-align: center; white-space: nowrap;">
                                                                         CONNECT WITH<br> SURPLUS MARKET &nbsp;&rarr;
                                                                     </a>
@@ -534,7 +530,7 @@
                                                         <h4 style="margin: 0 0 5px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 17px; font-weight: 800; color: #ffffff; letter-spacing: -0.2px; line-height: 22px;">
                                                             Have surplus inventory to move?
                                                         </h4>
-                                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #94a9bf; line-height: 18px;">
+                                                        <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #d1fae5; line-height: 18px;">
                                                             Let us help you explore the possibilities.
                                                         </p>
                                                     </td>
@@ -545,7 +541,7 @@
                                                     <td align="center">
                                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                                             <tr>
-                                                                <td bgcolor="#e25b1e" style="border-radius: 6px; text-align: center;">
+                                                                <td bgcolor="#10b981" style="border-radius: 6px; text-align: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
                                                                     <a href="https://surplusmarket.com/contact" class="cta-mobile-btn" style="display: block; width: 100%; box-sizing: border-box; padding: 13px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 800; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; line-height: 16px; text-align: center;">
                                                                         CONNECT WITH SURPLUS MARKET &nbsp;&rarr;
                                                                     </a>
