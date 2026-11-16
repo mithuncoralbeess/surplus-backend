@@ -9144,24 +9144,12 @@ def rfq_request_detail_view(request, rfq_id):
         rfq.save()
         messages.success(request, f"RFQ '{rfq.reference}' has been updated to status {rfq.status}.")
 
-        if rfq.buyer:
-            try:
-                create_vendor_notification(
-                    vendor=rfq.buyer,
-                    title=f"Update on RFQ {rfq.reference}",
-                    message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
-                    notification_type="RFQ",
-                    action_url="/profile"
-                )
-            except Exception as e:
-                print(f"[rfq_request_detail_view] Vendor notification error: {e}")
-
-        # Send quotation status update email to user
+        # Trigger unified in-app notifications and email to buyer and admin
         try:
-            from .services import EmailService
-            EmailService.send_rfq_status_update_email(rfq)
+            from .services import notify_rfq_status_change
+            notify_rfq_status_change(rfq, updated_by_admin=admin_user)
         except Exception as e:
-            print(f"[rfq_request_detail_view] Buyer status email error: {e}")
+            print(f"[rfq_request_detail_view] Status notification error: {e}")
 
         return redirect("rfq_request_detail", rfq_id=rfq.id)
 
@@ -9239,24 +9227,12 @@ def rfq_request_status_api(request, rfq_id):
     rfq.save()
     cache.delete("rfq_enquiry_counts")
 
-    if rfq.buyer:
-        try:
-            create_vendor_notification(
-                vendor=rfq.buyer,
-                title=f"Update on RFQ {rfq.reference}",
-                message=f"Your quotation request status is now '{rfq.get_status_display()}'.",
-                notification_type="RFQ",
-                action_url="/profile"
-            )
-        except Exception:
-            pass
-
-    # Send quotation status update email to user
+    # Trigger unified in-app notifications and email to buyer and admin
     try:
-        from .services import EmailService
-        EmailService.send_rfq_status_update_email(rfq)
+        from .services import notify_rfq_status_change
+        notify_rfq_status_change(rfq, updated_by_admin=admin_user)
     except Exception as e:
-        print(f"[rfq_request_status_api] Buyer status email error: {e}")
+        print(f"[rfq_request_status_api] Status notification error: {e}")
 
     return Response({
         "success": True,

@@ -1856,4 +1856,80 @@ def align_vendor_sequence():
         return None
 
 
+def notify_rfq_status_change(rfq, updated_by_admin=None):
+    """
+    Centralized dispatcher when an RFQ quotation status changes (QUOTED, ACCEPTED, DECLINED, CLOSED, PENDING).
+    Ensures:
+    1. In-app notification to the frontend user (buyer)
+    2. Official status update email to the frontend user (buyer)
+    3. In-app notification to Admin staff for audit trail & notification dropdown
+    """
+    from .models import VendorDetails
+
+    status_val = (getattr(rfq, "status", "") or "PENDING").upper()
+    ref = getattr(rfq, "reference", "") or f"RFQ #{rfq.id}"
+    buyer_target = getattr(rfq, "buyer", None) or VendorDetails.objects.filter(email__iexact=getattr(rfq, "email", "")).first()
+
+    proforma_amt = None
+    if getattr(rfq, "proforma_amount", None):
+        try:
+            proforma_amt = f"{rfq.currency or 'USD'} {float(rfq.proforma_amount):,.2f}"
+        except (ValueError, TypeError):
+            proforma_amt = str(rfq.proforma_amount)
+
+    # 1. User In-app Notification Message
+    if status_val == "QUOTED":
+        notif_title = f"Proforma Quotation Issued: {ref}"
+        if proforma_amt:
+            notif_msg = f"A proforma quotation of {proforma_amt} has been issued for your RFQ {ref}. Please review the terms in your profile."
+        else:
+            notif_msg = f"Your quotation request {ref} has been quoted. Please review the proforma details in your profile."
+    elif status_val == "ACCEPTED":
+        notif_title = f"Quotation Accepted: {ref}"
+        notif_msg = f"Your quotation order {ref} has been accepted. Our commercial team will coordinate payment confirmation & fulfillment."
+    elif status_val == "DECLINED":
+        notif_title = f"Quotation Declined: {ref}"
+        notes = getattr(rfq, "admin_notes", "")
+        notif_msg = f"Your RFQ {ref} was declined." + (f" Note: {notes}" if notes else " Please explore alternative wholesale lots.")
+    elif status_val == "CLOSED":
+        notif_title = f"Quotation Closed: {ref}"
+        notif_msg = f"Your quotation request {ref} has been closed."
+    else:  # PENDING
+        notif_title = f"RFQ {ref} Under Commercial Review"
+        notif_msg = f"Your quotation request {ref} is currently under review by our sourcing desk."
+
+    # Dispatch in-app notification to buyer
+    if buyer_target:
+        try:
+            create_vendor_notification(
+                vendor=buyer_target,
+                title=notif_title,
+                message=notif_msg,
+                notification_type="RFQ",
+                action_url="/profile"
+            )
+        except Exception as e:
+            logger.warning(f"Error creating buyer in-app notification for RFQ {ref}: {e}")
+
+    # Dispatch official status update email to buyer
+    try:
+        EmailService.send_rfq_status_update_email(rfq)
+    except Exception as e:
+        logger.warning(f"Error sending buyer status update email for RFQ {ref}: {e}")
+
+    # 2. Admin In-app Notification for Audit / Notification Dropdown
+    try:
+        admin_actor = getattr(updated_by_admin, "email", None) or getattr(updated_by_admin, "username", None) or "Admin"
+        status_display = getattr(rfq, "get_status_display", lambda: status_val)()
+        create_admin_notification(
+            title=f"RFQ {ref} Status Updated to {status_display}",
+            message=f"RFQ {ref} ({rfq.contact_person or rfq.email}) was updated to '{status_display}' by {admin_actor}." + (f" Proforma: {proforma_amt}" if proforma_amt else ""),
+            notification_type="RFQ",
+            action_url=f"/admin/rfq-requests/{rfq.id}/detail/"
+        )
+    except Exception as e:
+        logger.warning(f"Error creating admin notification for RFQ {ref}: {e}")
+
+
+
 
