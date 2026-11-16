@@ -199,6 +199,8 @@ urlpatterns = [
 
     # Admin Notifications System
     path("notifications/", admin_notifications_page, name="admin_notifications"),
+    path("notification/", admin_notifications_page, name="admin_notification_alias"),
+    path("enquiries/", lambda request: redirect("admin_notifications"), name="admin_enquiries_redirect"),
     path("api/notifications/", admin_notifications_api, name="admin_notifications_api"),
     path("api/notifications/<int:notification_id>/read/", admin_mark_notification_read_api, name="admin_mark_notification_read_api"),
     path("api/notifications/read-all/", admin_mark_all_notifications_read_api, name="admin_mark_all_notifications_read_api"),
