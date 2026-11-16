@@ -234,6 +234,7 @@ urlpatterns = [
     path("rfq-requests/add/", add_buyer_rfq_view, name="add_rfq_request"),
     path("rfq-requests/", rfq_requests_view, name="rfq_requests_list"),
     path("rfq-requests/<int:rfq_id>/detail/", rfq_request_detail_view, name="rfq_request_detail"),
+    path("rfq-requests/<int:rfq_id>/", rfq_request_detail_view, name="rfq_request_detail_no_suffix"),
     path("rfq-requests/<str:status_filter>/", rfq_requests_view, name="rfq_requests_filtered"),
     path("api/rfq-requests/<int:rfq_id>/status/", rfq_request_status_api, name="rfq_request_status_api"),
     path("enquiries/rfq/", rfq_requests_view, name="enquiries_rfq_alias"),

@@ -150,7 +150,7 @@ def _build_products_report(request, for_export=False):
     min_qty = _parse_int(request.GET.get("min_qty"))
     max_qty = _parse_int(request.GET.get("max_qty"))
 
-    qs = Product.objects.select_related("category", "vendor").only(
+    qs = Product.objects.select_related("category", "subcategory", "vendor").only(
         "id",
         "product_code",
         "product_id",
@@ -167,6 +167,8 @@ def _build_products_report(request, for_export=False):
         "created_at",
         "category__id",
         "category__name",
+        "subcategory__id",
+        "subcategory__name",
         "vendor__id",
         "vendor__company_name",
         "vendor__full_name",
@@ -225,6 +227,7 @@ def _build_products_report(request, for_export=False):
         "product_code": "product_code",
         "product_name": "product_name",
         "category": "category__name",
+        "subcategory": "subcategory__name",
         "brand_name": "brand_name",
         "quantity": "quantity",
         "msrp": "msrp",
@@ -256,6 +259,7 @@ def _build_products_report(request, for_export=False):
         _col("product_code", "Product Code", kind="code"),
         _col("product_name", "Name"),
         _col("category", "Category"),
+        _col("subcategory", "Subcategory"),
         _col("brand_name", "Brand"),
         _col("quantity", "Qty", align="right"),
         _col("msrp", "MSRP", align="right"),
@@ -312,6 +316,7 @@ def _build_products_report(request, for_export=False):
                 "product_code": p.product_code or p.product_id or f"PRO-{p.id:05d}",
                 "product_name": p.product_name,
                 "category": p.category.name if p.category else "—",
+                "subcategory": p.subcategory.name if p.subcategory else "—",
                 "brand_name": p.brand_name or "—",
                 "quantity": f"{p.quantity:,}",
                 "msrp": _fmt_money(p.msrp, curr) if p.msrp is not None else "—",

@@ -9344,6 +9344,12 @@ def reports_dashboard_view(request):
             )
 
             # 4. Category Breakdown + Supply vs Demand by Category & Subcategory
+            from .models import SubCategory
+            subcat_counts_map = {
+                sc['main_category_id']: sc['cnt']
+                for sc in SubCategory.objects.values('main_category_id').annotate(cnt=Count('id'))
+            }
+
             cat_counts = (
                 prod_filtered
                 .filter(category__isnull=False)
@@ -9360,11 +9366,12 @@ def reports_dashboard_view(request):
                     'name': c['category__name'] or 'Uncategorized',
                     'product_count': c['product_count'],
                     'total_units': c['total_units'] or 0,
+                    'subcategories_count': subcat_counts_map.get(c['category_id'], 0),
                 }
                 for c in cat_counts
             ]
 
-            # Supply listings grouped by Category and SubCategory
+            # Supply listings grouped by Category and SubCategory (diverse top categories)
             subcat_supply_qs = (
                 prod_filtered
                 .filter(category__isnull=False)
@@ -9373,7 +9380,7 @@ def reports_dashboard_view(request):
                     product_count=Count('id'),
                     total_units=Sum('quantity')
                 )
-                .order_by('-product_count')[:12]
+                .order_by('-product_count')
             )
 
             # Demand from RFQ Enquiry Items
@@ -9392,8 +9399,19 @@ def reports_dashboard_view(request):
                 c_txt = (r['category'] or '').strip().lower()
                 rfq_text_counts[c_txt] = rfq_text_counts.get(c_txt, 0) + r['cnt']
 
+            # Select distinct leading categories with their most active subcategory
+            seen_categories = set()
+            top_cat_subcats = []
+            for sc in subcat_supply_qs:
+                cat_id = sc['category_id']
+                if cat_id not in seen_categories:
+                    seen_categories.add(cat_id)
+                    top_cat_subcats.append(sc)
+                    if len(top_cat_subcats) >= 6:
+                        break
+
             supply_demand = []
-            for sc in subcat_supply_qs[:7]:
+            for sc in top_cat_subcats:
                 c_name = sc['category__name'] or 'Uncategorized'
                 s_name = sc['subcategory__name'] or 'General / All'
                 c_key = c_name.strip().lower()
