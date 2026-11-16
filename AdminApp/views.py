@@ -9112,7 +9112,11 @@ def rfq_request_detail_view(request, rfq_id):
     from .services import create_vendor_notification
     from decimal import Decimal, InvalidOperation
 
-    rfq = RfqEnquiry.objects.prefetch_related("items__product", "items__lot").select_related("buyer").filter(
+    rfq = RfqEnquiry.objects.prefetch_related(
+        "items__product__vendor",
+        "items__product__images",
+        "items__lot",
+    ).select_related("buyer").filter(
         Q(id=rfq_id) | Q(reference__iexact=str(rfq_id))
     ).first()
 
