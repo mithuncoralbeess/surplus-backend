@@ -6,594 +6,342 @@
 {% block content %}
 <style>
 /* ==========================================================================
-   DASHSPACE / FULL-VERSION REPORT TABLE DESIGN SYSTEM
+   DASHKIT / FULL-VERSION REPORT TABLE & KPI DESIGN SYSTEM
    ========================================================================== */
 
 :root {
-    --rt-bg: #f8fafc;
-    --rt-card: #ffffff;
-    --rt-text-dark: #0f172a;
-    --rt-text-body: #334155;
-    --rt-text-sub: #64748b;
-    --rt-text-muted: #94a3b8;
-    --rt-border: #e2e8f0;
-    --rt-border-subtle: #f1f5f9;
-    --rt-emerald: #059669;
-    --rt-emerald-hover: #047857;
-    --rt-radius-xl: 16px;
-    --rt-radius-lg: 12px;
-    --rt-radius-md: 8px;
-    --rt-radius-pill: 9999px;
-    --rt-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    --dash-bg: #fafafd;
+    --dash-card: #ffffff;
+    --dash-text-dark: #0f172a;
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-border: rgba(226, 232, 240, 0.85);
+    --dash-border-subtle: #f1f5f9;
+    --dash-primary: #6366f1;
+    --dash-primary-hover: #4f46e5;
+    --dash-primary-light: rgba(99, 102, 241, 0.1);
+    --dash-radius-xl: 18px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --rt-bg: #0b1120;
-    --rt-card: #1e293b;
-    --rt-text-dark: #f8fafc;
-    --rt-text-body: #cbd5e1;
-    --rt-text-sub: #94a3b8;
-    --rt-text-muted: #64748b;
-    --rt-border: #334155;
-    --rt-border-subtle: #1e293b;
+    --dash-bg: #0f172a;
+    --dash-card: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-border: #334155;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
+    --dash-primary: #818cf8;
+    --dash-primary-hover: #6366f1;
+    --dash-primary-light: rgba(129, 140, 248, 0.15);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.report-table-wrap {
-    max-width: 1480px;
-    margin: 0 auto;
-    padding-bottom: 3.5rem;
+.report-table-container {
+    background: transparent;
+    padding-bottom: 3rem;
 }
 
-/* Eyebrow & Titles */
-.rt-eyebrow {
+.dash-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
+    transition: box-shadow 0.2s ease;
+}
+
+/* KPI Strip Stat Cards */
+.dash-kpi-tile {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: var(--dash-shadow-card);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.18s ease;
+}
+
+.dash-kpi-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
+}
+
+.dash-kpi-tile-label {
     font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--dash-text-sub);
     margin-bottom: 0.25rem;
 }
 
-.rt-title {
-    font-size: 1.85rem;
+.dash-kpi-tile-val {
+    font-size: 1.55rem;
     font-weight: 800;
-    color: var(--rt-text-dark);
-    letter-spacing: -0.03em;
-    line-height: 1.15;
-    margin: 0;
+    color: var(--dash-text-dark);
+    line-height: 1.2;
 }
 
-.rt-subtitle {
-    font-size: 0.88rem;
-    color: var(--rt-text-sub);
-    margin-top: 0.3rem;
-}
-
-/* Action Buttons Header */
-.rt-btn-outline {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #334155;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.42rem 1rem;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-
-.rt-btn-outline:hover {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
-}
-
-[data-bs-theme="dark"] .rt-btn-outline {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
-}
-
-.rt-btn-primary {
-    background: #0f766e;
-    border: 1px solid #0f766e;
-    color: #ffffff !important;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.42rem 1.15rem;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-}
-
-.rt-btn-primary:hover {
-    background: #0d9488;
-}
-
-/* Segment Tabs */
-.rt-segment-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 1rem;
-}
-
-.rt-segment-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0.45rem 1rem;
-    border-radius: 9px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #64748b;
-    background: #f1f5f9;
-    border: 1px solid transparent;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-
-[data-bs-theme="dark"] .rt-segment-link {
-    background: #1e293b;
-    color: #94a3b8;
-}
-
-.rt-segment-link:hover {
-    color: #0f172a;
-    background: #e2e8f0;
-}
-
-.rt-segment-link.active {
-    background: #0f766e !important;
-    color: #ffffff !important;
-    font-weight: 700;
-}
-
-.rt-segment-badge {
-    background: #b91c1c;
-    color: #ffffff;
-    font-size: 0.70rem;
-    font-weight: 700;
-    padding: 0.1rem 0.45rem;
-    border-radius: var(--rt-radius-pill);
-}
-
-.rt-segment-link.active .rt-segment-badge {
-    background: #ffffff;
-    color: #0f766e;
-}
-
-/* Filter Card */
-.rt-filter-card {
-    background: var(--rt-card);
-    border: 1px solid var(--rt-border);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
-    box-shadow: var(--rt-shadow);
-}
-
-.rt-search-input {
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 0.45rem 0.85rem;
-    font-size: 0.84rem;
+/* Polished Table */
+.dash-table {
     width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-.rt-select-pill {
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
-    background-color: #ffffff;
-    color: #334155;
-    font-weight: 500;
-}
-
-[data-bs-theme="dark"] .rt-search-input,
-[data-bs-theme="dark"] .rt-select-pill {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
-}
-
-.rt-more-toggle {
-    font-size: 0.78rem;
-    color: #0f766e;
+.dash-table thead th {
+    font-size: 0.72rem;
     font-weight: 600;
-    text-decoration: none;
+    color: var(--dash-text-sub);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border);
+    background: rgba(248, 250, 252, 0.85);
+    white-space: nowrap;
+}
+
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom-color: var(--dash-border);
+}
+
+.dash-table tbody td {
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
+    vertical-align: middle;
+    font-size: 0.84rem;
+    background: transparent;
+    color: var(--dash-text-body);
+}
+
+.dash-table tbody tr {
+    transition: background-color 0.15s ease;
     cursor: pointer;
 }
 
-.rt-more-toggle:hover {
-    text-decoration: underline;
+.dash-table tbody tr:hover td {
+    background: rgba(248, 250, 252, 0.95);
 }
 
-/* Table Card */
-.rt-table-card {
-    background: var(--rt-card);
-    border: 1px solid var(--rt-border);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--rt-shadow);
-    margin-bottom: 1.5rem;
+[data-bs-theme="dark"] .dash-table tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.6);
 }
 
-.rt-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0;
-}
-
-.rt-table thead th {
-    background: #f8fafc;
-    color: #475569;
-    font-size: 0.70rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--rt-border);
-    white-space: nowrap;
-}
-
-[data-bs-theme="dark"] .rt-table thead th {
-    background: #0f172a;
-    color: #94a3b8;
-}
-
-.rt-table tbody td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--rt-border-subtle);
-    font-size: 0.84rem;
-    color: var(--rt-text-body);
-    vertical-align: middle;
-}
-
-.rt-table tbody tr:hover td {
-    background: rgba(248, 250, 252, 0.75);
-}
-
-[data-bs-theme="dark"] .rt-table tbody tr:hover td {
-    background: rgba(30, 41, 59, 0.5);
-}
-
-/* Row Formatting Components */
-.rt-item-title {
-    font-weight: 700;
-    color: var(--rt-text-dark);
-    line-height: 1.25;
-}
-
-.rt-item-sub {
-    font-size: 0.75rem;
-    color: var(--rt-text-sub);
-    margin-top: 0.15rem;
-}
-
-/* Waiting Badges */
-.waiting-badge {
-    font-size: 0.75rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-.waiting-danger { color: #dc2626; font-weight: 800; }
-.waiting-warning { color: #d97706; font-weight: 700; }
-.waiting-neutral { color: #64748b; }
-
-/* Status Pills */
-.status-pill {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.2rem 0.65rem;
-    border-radius: var(--rt-radius-pill);
-    text-transform: capitalize;
-}
-
-.pill-pending { background: #fef3c7; color: #92400e; }
-.pill-approved, .pill-live, .pill-active { background: #dcfce7; color: #166534; }
-.pill-declined, .pill-blocked { background: #fee2e2; color: #991b1b; }
-.pill-unquoted { background: #fef3c7; color: #92400e; }
-.pill-quoted { background: #e0f2fe; color: #0369a1; }
-.pill-accepted { background: #dcfce7; color: #166534; }
-.pill-belowreserve { background: #fef3c7; color: #92400e; }
-.pill-reservemet { background: #dcfce7; color: #166534; }
-
-/* Role / Type Chips */
-.type-chip {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.2rem 0.6rem;
-    border-radius: 6px;
-}
-.type-buyer { background: #dbeafe; color: #1e40af; }
-.type-seller { background: #dcfce7; color: #166534; }
-.type-both { background: #ffedd5; color: #9a3412; }
-.type-lot { background: #e0e7ff; color: #3730a3; }
-.type-product { background: #f3e8ff; color: #6b21a8; }
-
-/* Table Action Buttons */
-.btn-act-approve {
-    background: #059669;
-    color: #ffffff !important;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 0.3rem 0.75rem;
-    border-radius: 6px;
-    border: none;
-    text-decoration: none;
-    display: inline-block;
-    transition: background-color 0.15s ease;
-}
-.btn-act-approve:hover { background: #047857; }
-
-.btn-act-decline {
-    background: transparent;
-    color: #dc2626 !important;
-    border: 1px solid #f87171;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.28rem 0.7rem;
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.15s ease;
-}
-.btn-act-decline:hover { background: #fef2f2; border-color: #dc2626; }
-
-.btn-act-view {
-    background: transparent;
-    color: #475569 !important;
-    border: 1px solid #cbd5e1;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.28rem 0.7rem;
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.15s ease;
-}
-.btn-act-view:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
-
-.btn-act-quote {
-    background: #059669;
-    color: #ffffff !important;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 0.3rem 0.85rem;
-    border-radius: 6px;
-    border: none;
-    text-decoration: none;
-    display: inline-block;
-}
-.btn-act-quote:hover { background: #047857; }
-
-/* Table Footer */
-.rt-table-footer {
-    display: flex;
-    flex-wrap: wrap;
+/* Status Badges */
+.dash-badge {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.9rem 1.25rem;
-    background: #f8fafc;
-    border-top: 1px solid var(--rt-border);
-    font-size: 0.82rem;
-    color: #475569;
-}
-
-[data-bs-theme="dark"] .rt-table-footer {
-    background: #0f172a;
-    color: #94a3b8;
-}
-
-.btn-bulk-approve {
-    background: #059669;
-    color: #ffffff !important;
-    font-size: 0.80rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.72rem;
     font-weight: 700;
-    padding: 0.42rem 1.15rem;
-    border-radius: 8px;
-    border: none;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.dash-table-title {
+    max-width: 320px;
+    font-weight: 600;
+    color: var(--dash-text-dark);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.dash-badge-approved, .dash-badge-live, .dash-badge-accepted, .dash-badge-sold, .dash-badge-contacted {
+    background: rgba(16, 185, 129, 0.1); color: #059669; border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.dash-badge-pending, .dash-badge-scheduled, .dash-badge-quoted, .dash-badge-reviewed {
+    background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.dash-badge-correction_needed, .dash-badge-needs_correction, .dash-badge-correction {
+    background: rgba(99, 102, 241, 0.1); color: #4f46e5; border: 1px solid rgba(99, 102, 241, 0.2);
+}
+.dash-badge-declined, .dash-badge-reserve_not_met, .dash-badge-cancelled, .dash-badge-closed {
+    background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.2);
+}
+.dash-badge-draft, .dash-badge-ended {
+    background: rgba(100, 116, 139, 0.1); color: #475569; border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* Custom Buttons */
+.btn-dash-primary {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--dash-radius-pill) !important;
+    padding: 0.45rem 1.15rem !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-}
-.btn-bulk-approve:hover { background: #047857; }
-
-/* Decision Cue Callout Banner */
-.rt-decision-cue {
-    background: #ffffff;
-    border: 1px solid var(--rt-border);
-    border-radius: 12px;
-    padding: 1rem 1.35rem;
-    margin-top: 1.5rem;
-    box-shadow: var(--rt-shadow);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
+    transition: all 0.2s ease;
+    text-decoration: none;
 }
 
-[data-bs-theme="dark"] .rt-decision-cue {
-    background: #1e293b;
-    border-color: #334155;
+.btn-dash-primary:hover {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 }
 
-.rt-decision-cue p {
-    font-size: 0.82rem;
-    color: var(--rt-text-sub);
-    line-height: 1.5;
-    margin: 0;
+.btn-dash-outline {
+    background: var(--dash-card) !important;
+    color: var(--dash-text-dark) !important;
+    border: 1px solid var(--dash-border) !important;
+    border-radius: var(--dash-radius-pill) !important;
+    padding: 0.42rem 1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.80rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
 }
 
-.rt-decision-cue strong {
-    color: var(--rt-text-dark);
+.btn-dash-outline:hover {
+    background: var(--dash-border-subtle) !important;
+    border-color: #cbd5e1 !important;
+    color: var(--dash-text-dark) !important;
 }
 </style>
 
-<div class="container-fluid report-table-wrap pt-3">
-
-    <!-- Top Sub-Navigation Tabs -->
-    {% include "partials/reports_nav.html" %}
-
-    <!-- Header & Action Buttons -->
+<div class="container-fluid report-table-container pt-2">
+    <!-- Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
         <div>
-            <div class="rt-eyebrow">
-                {% if report_type == 'products' %}REPORTS · PRODUCTS
-                {% elif report_type == 'lots' %}REPORTS · LOTS
-                {% elif report_type == 'users' %}REPORTS · USERS / VENDORS
-                {% elif report_type == 'rfqs' %}REPORTS · RFQS (DEMAND)
-                {% elif report_type == 'enquiries' %}REPORTS · ENQUIRIES &amp; LEADS
-                {% elif report_type == 'auctions' %}REPORTS · AUCTIONS
-                {% else %}REPORTS · {{ title|upper }}
-                {% endif %}
+            <div class="text-uppercase fw-bold small" style="color: #6366f1; letter-spacing: 0.06em; font-size: 0.72rem;">
+                Surplus Market &middot; Report Intelligence
             </div>
-            <h1 class="rt-title">{{ title }}</h1>
-            <p class="rt-subtitle">{{ subtitle }}</p>
+            <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+            <p class="text-muted small mb-0">{{ subtitle }}</p>
         </div>
 
-        <div class="d-flex align-items-center gap-2">
-            <!-- Columns chooser button -->
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Saved Views -->
             <div class="dropdown">
-                <button class="rt-btn-outline dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                <button class="btn-dash-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-bookmark"></i>
+                    <span>Saved Views</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border-0 rounded-3" style="min-width: 260px;">
+                    <div class="fw-bold small text-dark mb-2">Filter Presets ({{ title }})</div>
+                    <div id="savedViewsList" class="d-flex flex-column gap-1 mb-2 small text-muted">
+                        <span>No saved views yet.</span>
+                    </div>
+                    <div class="input-group input-group-sm pt-2 border-top">
+                        <input type="text" id="newViewName" class="form-control rounded-start-pill" placeholder="View name...">
+                        <button type="button" class="btn btn-primary rounded-end-pill" style="background: #6366f1 !important; border-color: #6366f1 !important;" onclick="saveCurrentView()">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Chooser -->
+            <div class="dropdown">
+                <button class="btn-dash-outline dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-layout-three-columns"></i>
                     <span>Columns</span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0 rounded-3" style="min-width: 220px; font-size: 0.82rem;">
-                    <div class="fw-bold text-dark mb-2">Visible Columns</div>
+                <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border-0 rounded-3" style="min-width: 220px;">
+                    <div class="fw-bold small text-dark mb-2">Visible Columns</div>
                     {% for col in columns %}
-                    <div class="form-check mb-1">
-                        <input class="form-check-input col-toggle-cb" type="checkbox" value="{{ col.key }}" id="col_{{ col.key }}" checked onchange="toggleReportColumn('{{ col.key }}', this.checked)">
-                        <label class="form-check-label" for="col_{{ col.key }}">{{ col.label }}</label>
+                    <div class="form-check form-check-sm mb-1">
+                        <input class="form-check-input col-toggle-cb" type="checkbox" value="{{ col.key }}" id="colToggle_{{ col.key }}" checked onchange="toggleReportColumn('{{ col.key }}', this.checked)">
+                        <label class="form-check-label small" for="colToggle_{{ col.key }}">{{ col.label }}</label>
                     </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- Saved Views button -->
-            <div class="dropdown">
-                <button class="rt-btn-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <span>Saved views</span>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0 rounded-3" style="min-width: 240px; font-size: 0.82rem;">
-                    <div class="fw-bold text-dark mb-2">Filter Presets</div>
-                    <div id="savedViewsList" class="text-muted small mb-2">No saved views yet.</div>
-                    <div class="input-group input-group-sm">
-                        <input type="text" id="newViewName" class="form-control" placeholder="Preset name...">
-                        <button class="btn btn-outline-secondary" type="button" onclick="saveCurrentView()">Save</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Export button -->
-            <div class="dropdown">
-                <button class="rt-btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <span>Export</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" style="font-size: 0.82rem;">
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/{{ report_type }}/{% if base_qs %}?{{ base_qs }}{% endif %}"><i class="bi bi-filetype-csv me-2 text-success"></i>Export CSV</a></li>
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/{{ report_type }}/?format=xlsx{% if base_qs %}&{{ base_qs }}{% endif %}"><i class="bi bi-file-earmark-excel me-2 text-primary"></i>Export Excel (.xlsx)</a></li>
-                </ul>
-            </div>
+            <!-- Exports -->
+            <a href="/admin/reports/export/{{ report_type }}/{% if base_qs %}?{{ base_qs }}{% endif %}" class="btn-dash-outline">
+                <i class="bi bi-filetype-csv text-success"></i>
+                <span>CSV</span>
+            </a>
+            <a href="/admin/reports/export/{{ report_type }}/?format=xlsx{% if base_qs %}&{{ base_qs }}{% endif %}" class="btn-dash-primary">
+                <i class="bi bi-file-earmark-excel"></i>
+                <span>Excel</span>
+            </a>
         </div>
     </div>
 
-    <!-- Segment Tabs with Badges -->
-    {% if segments %}
-    <div class="rt-segment-bar">
-        {% for seg in segments %}
-        <a href="?segment={{ seg.key }}{% if filter_query_str %}&{{ filter_query_str }}{% endif %}" class="rt-segment-link {% if seg.is_active %}active{% endif %}">
-            <span>{{ seg.label }}</span>
-            {% if seg.count is not None %}
-            <span class="rt-segment-badge">{{ seg.count }}</span>
-            {% endif %}
-        </a>
+    {% include "partials/reports_nav.html" %}
+
+    <!-- KPI Strip (Proper Gap) -->
+    <div class="row g-3 mb-4">
+        {% for k in kpis %}
+        <div class="col-6 col-md-4 col-xl">
+            <div class="dash-kpi-tile">
+                <div class="dash-kpi-tile-label">{{ k.label }}</div>
+                <div class="dash-kpi-tile-val {% if k.tone == 'success' %}text-success{% elif k.tone == 'warning' %}text-warning{% elif k.tone == 'danger' %}text-danger{% elif k.tone == 'primary' %}text-primary{% endif %}">
+                    {{ k.value }}
+                </div>
+                {% if k.sub %}
+                <div class="dash-strip-sub">{{ k.sub }}</div>
+                {% endif %}
+            </div>
+        </div>
         {% endfor %}
     </div>
-    {% endif %}
 
-    <!-- Filter Bar Card -->
-    <form method="get" id="reportFilterForm" class="rt-filter-card">
-        <input type="hidden" name="segment" value="{{ active_segment|default:'' }}">
+    <!-- Filters (Dashkit Card Style) -->
+    <form method="get" id="reportFilterForm" class="dash-card p-4 mb-4">
         <input type="hidden" name="sort" id="reportSortInput" value="{{ active_sort }}">
-
-        <div class="row g-2 align-items-center">
-            <!-- Search Input -->
-            <div class="col-12 col-md-4 col-xl-3">
-                <input type="text" name="q" value="{{ request.GET.q }}" class="rt-search-input" placeholder="{% if report_type == 'products' %}Search name, code, SKU, brand…{% elif report_type == 'lots' %}Search lot #, title, brands…{% elif report_type == 'users' %}Search name, email, company…{% elif report_type == 'rfqs' %}Search ref, company, email…{% elif report_type == 'enquiries' %}Search name, email, subject…{% elif report_type == 'auctions' %}Search auction #, title…{% else %}Search records…{% endif %}">
-            </div>
-
-            <!-- Quick dropdown filters (Status, Created, Category, Country) -->
-            {% for flt in filters|slice:":4" %}
-            <div class="col-6 col-md-2">
+        <div class="row g-3 align-items-end">
+            {% for flt in filters %}
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-semibold text-muted mb-1" style="font-size: 0.74rem;">{{ flt.label }}</label>
                 {% if flt.kind == 'select' %}
-                <select name="{{ flt.name }}" class="form-select rt-select-pill">
-                    <option value="">{{ flt.label }}: All ▾</option>
+                <select name="{{ flt.name }}" class="form-select form-select-sm rounded-3">
+                    <option value="">All</option>
                     {% for opt_val, opt_lbl in flt.options %}
                     <option value="{{ opt_val }}" {% if flt.value == opt_val %}selected{% endif %}>{{ opt_lbl }}</option>
                     {% endfor %}
                 </select>
                 {% elif flt.kind == 'number' %}
-                <input type="number" step="any" name="{{ flt.name }}" value="{{ flt.value }}" class="rt-search-input" placeholder="{{ flt.label }}">
+                <input type="number" step="any" name="{{ flt.name }}" value="{{ flt.value }}" class="form-control form-control-sm rounded-3" placeholder="{{ flt.placeholder }}">
+                {% else %}
+                <input type="text" name="{{ flt.name }}" value="{{ flt.value }}" class="form-control form-control-sm rounded-3" placeholder="{{ flt.placeholder }}">
                 {% endif %}
             </div>
             {% endfor %}
-
-            <div class="col-auto ms-auto d-flex gap-2">
-                <button type="submit" class="rt-btn-primary" style="padding: 0.42rem 0.95rem;">Filter</button>
-                <a href="/admin/reports/{{ report_type }}/" class="rt-btn-outline" style="padding: 0.42rem 0.85rem;">Reset</a>
+            <div class="col-12 col-md-auto d-flex gap-2 ms-auto pt-2">
+                <button type="submit" class="btn-dash-primary">
+                    <i class="bi bi-funnel-fill"></i>
+                    <span>Apply Filters</span>
+                </button>
+                <a href="/admin/reports/{{ report_type }}/" class="btn-dash-outline">
+                    Reset
+                </a>
             </div>
         </div>
-
-        <!-- Secondary collapsible filters -->
-        {% if filters|length > 4 %}
-        <div class="pt-2 mt-2 border-top">
-            <a class="rt-more-toggle" data-bs-toggle="collapse" href="#moreFiltersDrawer" role="button" aria-expanded="false">
-                + more: {% for flt in filters|slice:"4:" %}{{ flt.label|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}
-            </a>
-            <div class="collapse pt-2" id="moreFiltersDrawer">
-                <div class="row g-2">
-                    {% for flt in filters|slice:"4:" %}
-                    <div class="col-6 col-md-2">
-                        <label class="form-label small text-muted mb-1" style="font-size: 0.72rem;">{{ flt.label }}</label>
-                        {% if flt.kind == 'select' %}
-                        <select name="{{ flt.name }}" class="form-select rt-select-pill">
-                            <option value="">All</option>
-                            {% for opt_val, opt_lbl in flt.options %}
-                            <option value="{{ opt_val }}" {% if flt.value == opt_val %}selected{% endif %}>{{ opt_lbl }}</option>
-                            {% endfor %}
-                        </select>
-                        {% elif flt.kind == 'number' %}
-                        <input type="number" step="any" name="{{ flt.name }}" value="{{ flt.value }}" class="rt-search-input" placeholder="{{ flt.placeholder|default:flt.label }}">
-                        {% else %}
-                        <input type="text" name="{{ flt.name }}" value="{{ flt.value }}" class="rt-search-input" placeholder="{{ flt.placeholder|default:flt.label }}">
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </form>
 
     <!-- Data Table Card -->
-    <div class="rt-table-card">
+    <div class="dash-card p-4">
         <div class="table-responsive">
-            <table class="rt-table" id="reportDataTable">
+            <table class="dash-table" id="reportDataTable">
                 <thead>
                     <tr>
-                        {% if report_type == 'products' or report_type == 'lots' %}
-                        <th style="width: 38px;">
-                            <input class="form-check-input" type="checkbox" id="selectAllRows">
-                        </th>
-                        {% endif %}
                         {% for col in columns %}
                         <th data-col-key="{{ col.key }}" class="{% if col.align == 'right' %}text-end{% endif %}">
                             {% if col.sortable %}
@@ -608,240 +356,30 @@
                             {% endif %}
                         </th>
                         {% endfor %}
-                        <th class="text-end">ACTION</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for r in rows %}
-                    <tr>
-                        {% if report_type == 'products' or report_type == 'lots' %}
-                        <td>
-                            <input class="form-check-input row-select-cb" type="checkbox" value="{{ r.id }}">
-                        </td>
-                        {% endif %}
-
-                        <!-- Report-Specific Column Layouts -->
-                        {% if report_type == 'products' %}
-                            <!-- PRODUCT -->
-                            <td data-col-key="product_name">
-                                <div class="rt-item-title">{{ r.cells.product_name }}</div>
-                                <div class="rt-item-sub">{{ r.cells.product_code }} · {{ r.cells.brand_name }} · {{ r.cells.inventory_country }}</div>
-                            </td>
-                            <!-- SELLER -->
-                            <td data-col-key="vendor">{{ r.cells.vendor }}</td>
-                            <!-- CATEGORY -->
-                            <td data-col-key="category">{{ r.cells.category }}</td>
-                            <!-- QTY -->
-                            <td data-col-key="quantity" class="text-end fw-semibold">{{ r.cells.quantity }}</td>
-                            <!-- BUYER PRICE -->
-                            <td data-col-key="current_price" class="text-end">
-                                <span class="fw-bold">{{ r.cells.current_price }}</span>
-                                {% if r.cells.msrp and r.cells.msrp != '—' %}
-                                <span class="text-decoration-line-through text-muted small ms-1">{{ r.cells.msrp }}</span>
-                                {% endif %}
-                            </td>
-                            <!-- WAITING -->
-                            <td data-col-key="waiting">
-                                <span class="waiting-badge {% if '3 days' in r.cells.waiting or '2 days' in r.cells.waiting %}waiting-danger{% elif '1 day' in r.cells.waiting %}waiting-warning{% else %}waiting-neutral{% endif %}">
-                                    {{ r.cells.waiting|default:"1 day" }}
-                                </span>
-                            </td>
-                            <!-- STATUS -->
-                            <td data-col-key="enquiry_status">
-                                <span class="status-pill pill-{{ r.cells.status_raw|default:'pending' }}">
-                                    {{ r.cells.enquiry_status }}
-                                </span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="/admin/products/approve/{{ r.id }}/" class="btn-act-approve me-1">Approve</a>
-                                <a href="/admin/products/decline/{{ r.id }}/" class="btn-act-decline me-1">Decline</a>
-                                <a href="{{ r.detail_url }}" class="btn-act-view">View</a>
-                            </td>
-
-                        {% elif report_type == 'lots' %}
-                            <!-- LOT -->
-                            <td data-col-key="title">
-                                <div class="rt-item-title">{{ r.cells.title }}</div>
-                                <div class="rt-item-sub">{{ r.cells.lot_number }} · {{ r.cells.number_of_distinct_skus|default:0 }} SKUs · {{ r.cells.condition|default:'Overstock' }}</div>
-                            </td>
-                            <!-- CONDITION -->
-                            <td data-col-key="condition">{{ r.cells.condition|default:"New Surplus" }}</td>
-                            <!-- UNITS -->
-                            <td data-col-key="total_units_quantity" class="text-end fw-semibold">{{ r.cells.total_units_quantity }}</td>
-                            <!-- EST. RETAIL -->
-                            <td data-col-key="total_est_retail_value_msrp" class="text-end">{{ r.cells.total_est_retail_value_msrp }}</td>
-                            <!-- ASK -->
-                            <td data-col-key="ask_price_surplus_payout" class="text-end fw-bold">{{ r.cells.ask_price_surplus_payout }}</td>
-                            <!-- %RET -->
-                            <td data-col-key="pct_of_retail" class="text-end fw-bold text-dark">{{ r.cells.pct_of_retail }}</td>
-                            <!-- COUNTRY -->
-                            <td data-col-key="inventory_country">{{ r.cells.inventory_country }}</td>
-                            <!-- WAITING -->
-                            <td data-col-key="waiting">
-                                <span class="waiting-badge {% if '4 days' in r.cells.waiting or '3 days' in r.cells.waiting %}waiting-danger{% elif '1 day' in r.cells.waiting %}waiting-warning{% else %}waiting-neutral{% endif %}">
-                                    {{ r.cells.waiting|default:"1 day" }}
-                                </span>
-                            </td>
-                            <!-- STATUS -->
-                            <td data-col-key="enquiry_status">
-                                <span class="status-pill pill-{{ r.cells.status_raw|default:'pending' }}">
-                                    {{ r.cells.enquiry_status }}
-                                </span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="/admin/lots/approve/{{ r.id }}/" class="btn-act-approve me-1">Approve</a>
-                                <a href="/admin/lots/decline/{{ r.id }}/" class="btn-act-decline me-1">Decline</a>
-                                <button type="button" class="btn-act-view" onclick="openLotManifest('{{ r.id }}')">Manifest</button>
-                            </td>
-
-                        {% elif report_type == 'users' %}
-                            <!-- USER -->
-                            <td data-col-key="full_name">
-                                <div class="rt-item-title">{{ r.cells.full_name }}</div>
-                                <div class="rt-item-sub">{{ r.cells.username }} · {{ r.cells.email }}</div>
-                            </td>
-                            <!-- TYPE -->
-                            <td data-col-key="user_type">
-                                <span class="type-chip {% if r.cells.user_type == 'BUYER' %}type-buyer{% elif r.cells.user_type == 'SELLER' %}type-seller{% else %}type-both{% endif %}">
-                                    {{ r.cells.user_type }}
-                                </span>
-                            </td>
-                            <!-- ENTITY -->
-                            <td data-col-key="account_entity_type">{{ r.cells.account_entity_type|default:"Company" }}</td>
-                            <!-- COMPANY -->
-                            <td data-col-key="company_name">{{ r.cells.company_name|default:"—" }}</td>
-                            <!-- COUNTRY -->
-                            <td data-col-key="country">{{ r.cells.country|default:"—" }}</td>
-                            <!-- CATEGORIES INTERESTED -->
-                            <td data-col-key="category_interested">{{ r.cells.category_interested|default:"—" }}</td>
-                            <!-- STATUS -->
-                            <td data-col-key="status">
-                                <span class="status-pill {% if r.cells.status == 'Active' %}pill-active{% else %}pill-declined{% endif %}">
-                                    {{ r.cells.status }}
-                                </span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="{{ r.detail_url }}" class="btn-act-view">View</a>
-                            </td>
-
-                        {% elif report_type == 'rfqs' %}
-                            <!-- REFERENCE -->
-                            <td data-col-key="reference">
-                                <div class="rt-item-title">{{ r.cells.reference }}</div>
-                                <div class="rt-item-sub">{{ r.cells.company_name }} · {{ r.cells.email }}</div>
-                            </td>
-                            <!-- BUYER / COMPANY -->
-                            <td data-col-key="company_name">{{ r.cells.company_name }}</td>
-                            <!-- COUNTRY -->
-                            <td data-col-key="country">{{ r.cells.country|default:"—" }}</td>
-                            <!-- DEST. PORT -->
-                            <td data-col-key="destination_port">{{ r.cells.destination_port|default:"—" }}</td>
-                            <!-- ITEMS -->
-                            <td data-col-key="total_units" class="text-end fw-semibold">{{ r.cells.total_units }}</td>
-                            <!-- EST. VALUE -->
-                            <td data-col-key="estimated_value" class="text-end fw-bold">{{ r.cells.estimated_value }}</td>
-                            <!-- WAITING -->
-                            <td data-col-key="waiting">
-                                <span class="waiting-badge {% if '2 days' in r.cells.waiting or 'days' in r.cells.waiting %}waiting-danger{% else %}waiting-neutral{% endif %}">
-                                    {{ r.cells.waiting|default:"14 hrs" }}
-                                </span>
-                            </td>
-                            <!-- STATUS -->
-                            <td data-col-key="status">
-                                <span class="status-pill pill-{{ r.cells.status_raw|default:'unquoted' }}">
-                                    {{ r.cells.status }}
-                                </span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="/admin/rfq-requests/{{ r.id }}/detail/" class="btn-act-quote me-1">Send quote</a>
-                                <button type="button" class="btn-act-view" onclick="openRfqItems('{{ r.id }}')">Items</button>
-                            </td>
-
-                        {% elif report_type == 'enquiries' %}
-                            <!-- TYPE -->
-                            <td data-col-key="type">
-                                <span class="type-chip type-lot">{{ r.cells.type|default:"Product" }}</span>
-                            </td>
-                            <!-- FROM -->
-                            <td data-col-key="name">
-                                <div class="rt-item-title">{{ r.cells.name }}</div>
-                                <div class="rt-item-sub">{{ r.cells.email }}</div>
-                            </td>
-                            <!-- SUBJECT / INTEREST -->
-                            <td data-col-key="category">{{ r.cells.category|default:"General Inquiry" }}</td>
-                            <!-- VALUE -->
-                            <td data-col-key="value" class="text-end fw-bold">{{ r.cells.value|default:"—" }}</td>
-                            <!-- WAITING -->
-                            <td data-col-key="waiting">
-                                <span class="waiting-badge waiting-neutral">{{ r.cells.waiting|default:"1 day" }}</span>
-                            </td>
-                            <!-- STATUS -->
-                            <td data-col-key="status">
-                                <span class="status-pill pill-{{ r.cells.status_raw|default:'pending' }}">{{ r.cells.status }}</span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="{{ r.detail_url }}" class="btn-act-view me-1">Review</a>
-                                <a href="{{ r.detail_url }}" class="btn-act-view">View</a>
-                            </td>
-
-                        {% elif report_type == 'auctions' %}
-                            <!-- AUCTION -->
-                            <td data-col-key="title">
-                                <div class="rt-item-title">{{ r.cells.title }}</div>
-                                <div class="rt-item-sub">{{ r.cells.auction_id }} · {{ r.cells.category }}</div>
-                            </td>
-                            <!-- TYPE -->
-                            <td data-col-key="item_type">
-                                <span class="type-chip {% if r.cells.item_type == 'lot' %}type-lot{% else %}type-product{% endif %}">
-                                    {{ r.cells.item_type|capfirst }}
-                                </span>
-                            </td>
-                            <!-- CURRENT BID -->
-                            <td data-col-key="current_bid" class="text-end fw-bold">{{ r.cells.current_bid }}</td>
-                            <!-- RESERVE -->
-                            <td data-col-key="reserve_price" class="text-end">{{ r.cells.reserve_price|default:"—" }}</td>
-                            <!-- BIDS -->
-                            <td data-col-key="total_bids" class="text-end">{{ r.cells.total_bids }}</td>
-                            <!-- ENDS IN -->
-                            <td data-col-key="ends_in">
-                                <span class="fw-bold {% if '1h' in r.cells.ends_in or '4h' in r.cells.ends_in %}text-danger{% else %}text-dark{% endif %}">
-                                    {{ r.cells.ends_in|default:"22h" }}
-                                </span>
-                            </td>
-                            <!-- STATUS -->
-                            <td data-col-key="status">
-                                <span class="status-pill {% if 'met' in r.cells.status|lower %}pill-reservemet{% else %}pill-belowreserve{% endif %}">
-                                    {{ r.cells.status }}
-                                </span>
-                            </td>
-                            <!-- ACTION -->
-                            <td class="text-end text-nowrap">
-                                <a href="{{ r.detail_url }}" class="btn-act-view me-1">View</a>
-                                <button type="button" class="btn-act-view" onclick="openAuctionBids('{{ r.id }}')">Bids</button>
-                            </td>
-
-                        {% else %}
-                            <!-- Generic Fallback for Other Report Types -->
-                            {% for cell in r.ordered_cells %}
-                            <td data-col-key="{{ cell.key }}" class="{% if cell.align == 'right' %}text-end{% endif %}">
+                    <tr onclick="handleRowClick('{{ r.drill_kind }}', '{{ r.id }}', '{{ r.detail_url|escapejs }}')">
+                        {% for cell in r.ordered_cells %}
+                        <td data-col-key="{{ cell.key }}" class="{% if cell.align == 'right' %}text-end text-nowrap{% endif %}">
+                            {% if cell.kind == 'code' %}
+                                <span class="font-monospace fw-bold text-dark text-nowrap">{{ cell.value }}</span>
+                            {% elif cell.kind == 'badge' %}
+                                <span class="dash-badge dash-badge-{{ cell.status_raw|default:'draft' }}">{{ cell.value }}</span>
+                            {% elif cell.key == 'title' or cell.key == 'product_name' %}
+                                <div class="dash-table-title" title="{{ cell.value }}">{{ cell.value }}</div>
+                            {% else %}
                                 {{ cell.value }}
-                            </td>
-                            {% endfor %}
-                            <td class="text-end text-nowrap">
-                                <a href="{{ r.detail_url }}" class="btn-act-view">View</a>
-                            </td>
-                        {% endif %}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="12" class="text-center py-5 text-muted">
+                        <td colspan="{{ columns|length }}" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>
-                            No records found matching the active segment &amp; filters.
+                            No matching records found for the selected filters.
                         </td>
                     </tr>
                     {% endfor %}
@@ -849,94 +387,59 @@
             </table>
         </div>
 
-        <!-- Table Footer Strip -->
-        <div class="rt-table-footer">
+        <!-- Pagination & Row Info (Dashkit Pagination Style) -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 mt-3 border-top small text-muted">
             <div>
-                {% if report_type == 'products' %}
-                    <strong>{{ paginator.count }} awaiting approval</strong> · oldest 3 days
-                {% elif report_type == 'lots' %}
-                    <strong>{{ paginator.count }} pending</strong> · oldest 4 days · $9.1M retail waiting
-                {% elif report_type == 'users' %}
-                    <strong>{{ paginator.count }} new this period</strong> · 3,480 total
-                {% elif report_type == 'rfqs' %}
-                    <strong>{{ paginator.count }} unquoted</strong> · oldest 2 days · $3,950 open
-                {% elif report_type == 'enquiries' %}
-                    <strong>{{ paginator.count }} open</strong> · oldest 3 days
-                {% elif report_type == 'auctions' %}
-                    <strong>{{ paginator.count }} live</strong> · 2 below reserve · 2 ending within 2h
-                {% else %}
-                    Showing {{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }} of {{ paginator.count }} rows
-                {% endif %}
+                Sorted: <span class="font-monospace fw-semibold">{{ active_sort }}</span> &middot;
+                Showing <strong>{{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }}</strong> of <strong>{{ paginator.count|intcomma }}</strong> rows (50 / page)
             </div>
-
-            <div>
-                {% if report_type == 'products' or report_type == 'lots' %}
-                    <button type="button" class="btn-bulk-approve" onclick="bulkApproveSelected()">
-                        Bulk approve selected
-                    </button>
-                {% elif report_type == 'users' %}
-                    <span class="text-muted">Buyers 2,140 · Sellers 890 · Both 450</span>
-                {% elif report_type == 'rfqs' %}
-                    <span class="text-muted fw-semibold">SLA target: quote within 24h</span>
-                {% elif report_type == 'enquiries' %}
-                    <span class="text-muted">Seller 410 · Lot batch 96 · Partnership 84 · Contact 152</span>
-                {% elif report_type == 'auctions' %}
-                    <span class="text-muted">Reserve is admin-only</span>
-                {% else %}
-                    {% if paginator.num_pages > 1 %}
-                    <nav>
-                        <ul class="pagination pagination-sm mb-0">
-                            {% if page_obj.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&lsaquo;</a></li>
-                            {% endif %}
-                            <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span></li>
-                            {% if page_obj.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&rsaquo;</a></li>
-                            {% endif %}
-                        </ul>
-                    </nav>
+            {% if paginator.num_pages > 1 %}
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link rounded-2" href="?page={{ page_obj.previous_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&lsaquo;</a>
+                    </li>
                     {% endif %}
-                {% endif %}
-            </div>
+                    {% for num in paginator.page_range %}
+                        {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link rounded-2" href="?page={{ num }}{% if base_qs %}&{{ base_qs }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link rounded-2" href="?page={{ page_obj.next_page_number }}{% if base_qs %}&{{ base_qs }}{% endif %}">&rsaquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Decision Cue Callout Banner -->
-    <div class="rt-decision-cue">
-        <p>
-            {% if report_type == 'products' %}
-                <strong>vs old table:</strong> defaults to the actionable queue (18), one line per product (code/brand/origin under the name), numbers right-aligned, age colour-coded, inline Approve/Decline, bulk action. 20 filters collapse to the 3 that matter.
-            {% elif report_type == 'lots' %}
-                <strong>Decision cue:</strong> %ret (ask &divide; retail) flags mispriced lots at a glance; rows missing an ask price (&mdash;) need the seller to set one before approval.
-            {% elif report_type == 'users' %}
-                <strong>Decision cue:</strong> type chips make the buyer/seller balance scannable &mdash; the segment counts in the footer tell you which side to recruit.
-            {% elif report_type == 'rfqs' %}
-                <strong>Decision cue:</strong> the queue is tiny because demand is the bottleneck &mdash; but every unquoted RFQ past 24h is red, because a slow quote is a lost buyer. "Send quote" opens the line items + proforma.
-            {% elif report_type == 'enquiries' %}
-                <strong>Decision cue:</strong> four sources, one queue &mdash; the Type chip + unhandled-first ordering means nothing sits ignored. Seller-product and lot-batch enquiries carry a value so you can triage the big ones first.
-            {% elif report_type == 'auctions' %}
-                <strong>Decision cue:</strong> "ends in" turns red in the final window and "below reserve" is flagged &mdash; so you can intervene (extend, promote) before a lot closes unsold.
-            {% endif %}
-        </p>
+    {% if dev_note %}
+    <div class="mt-3 p-3 rounded-3 border small" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25) !important; color: #b45309;">
+        <strong>SCHEMA NOTES:</strong> {{ dev_note }}
     </div>
-
+    {% endif %}
 </div>
 
-<!-- Manifest / Items Drill-Down Modal -->
+<!-- Drill-Down Modal -->
 <div class="modal fade" id="reportDrillModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow-lg">
             <div class="modal-header border-bottom">
-                <h6 class="modal-title fw-bold" id="drillModalTitle">Manifest / Line Items</h6>
+                <h6 class="modal-title fw-bold" id="drillModalTitle">Details</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0" id="drillModalBody">
-                <div class="text-center py-5 text-muted">
-                    <div class="spinner-border spinner-border-sm text-secondary me-2"></div> Loading items...
-                </div>
+            <div class="modal-body" id="drillModalBody">
+                <div class="text-center py-4 text-muted">Loading...</div>
             </div>
             <div class="modal-footer border-top">
-                <button type="button" class="rt-btn-outline" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="drillOpenFullBtn" class="btn-dash-primary">Open Full Detail Page &rarr;</a>
+                <button type="button" class="btn-dash-outline" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -944,96 +447,124 @@
 
 <script>
 const REPORT_TYPE = "{{ report_type|escapejs }}";
+const COL_STORAGE_KEY = `surplus_rpt_cols_${REPORT_TYPE}`;
+const VIEW_STORAGE_KEY = `surplus_rpt_views_${REPORT_TYPE}`;
 
 function applySort(sortVal) {
-    const input = document.getElementById("reportSortInput");
-    if (input) {
-        input.value = sortVal;
-        document.getElementById("reportFilterForm").submit();
-    }
+    document.getElementById('reportSortInput').value = sortVal;
+    document.getElementById('reportFilterForm').submit();
 }
 
-// Select All Checkbox Handler
-document.getElementById("selectAllRows")?.addEventListener("change", function() {
-    const checked = this.checked;
-    document.querySelectorAll(".row-select-cb").forEach(cb => cb.checked = checked);
-});
+function toggleReportColumn(colKey, visible) {
+    document.querySelectorAll(`[data-col-key="${colKey}"]`).forEach(el => {
+        el.style.display = visible ? '' : 'none';
+    });
+    const state = {};
+    document.querySelectorAll('.col-toggle-cb').forEach(cb => {
+        state[cb.value] = cb.checked;
+    });
+    localStorage.setItem(COL_STORAGE_KEY, JSON.stringify(state));
+}
 
-// Bulk Approve Selected Handler
-function bulkApproveSelected() {
-    const selected = Array.from(document.querySelectorAll(".row-select-cb:checked")).map(cb => cb.value);
-    if (!selected.length) {
-        alert("Please select at least one item to approve.");
+function restoreColumns() {
+    try {
+        const raw = localStorage.getItem(COL_STORAGE_KEY);
+        if (!raw) return;
+        const state = JSON.parse(raw);
+        Object.keys(state).forEach(k => {
+            const cb = document.getElementById(`colToggle_${k}`);
+            if (cb) {
+                cb.checked = !!state[k];
+                document.querySelectorAll(`[data-col-key="${k}"]`).forEach(el => {
+                    el.style.display = state[k] ? '' : 'none';
+                });
+            }
+        });
+    } catch (e) {}
+}
+
+function renderSavedViews() {
+    const container = document.getElementById('savedViewsList');
+    if (!container) return;
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    if (!views.length) {
+        container.innerHTML = '<span class="text-muted small">No saved views yet.</span>';
         return;
     }
-    if (confirm(`Approve ${selected.length} selected items?`)) {
-        alert(`Bulk approval action submitted for ${selected.length} items.`);
+    container.innerHTML = views.map((v, i) => `
+        <div class="d-flex align-items-center justify-content-between p-1 rounded hover-bg">
+            <a href="${v.url}" class="text-decoration-none text-dark fw-semibold small text-truncate" style="max-width: 170px;">${v.name}</a>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="deleteSavedView(${i})">&times;</button>
+        </div>
+    `).join('');
+}
+
+function saveCurrentView() {
+    const input = document.getElementById('newViewName');
+    const name = (input.value || '').trim();
+    if (!name) return alert('Please enter a view name.');
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    views.push({ name, url: window.location.search || '?' });
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(views));
+    input.value = '';
+    renderSavedViews();
+}
+
+function deleteSavedView(idx) {
+    let views = [];
+    try { views = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) || '[]'); } catch (e) { views = []; }
+    views.splice(idx, 1);
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(views));
+    renderSavedViews();
+}
+
+function handleRowClick(drillKind, id, detailUrl) {
+    const modalEl = document.getElementById('reportDrillModal');
+    if (!modalEl) return;
+    const modal = new bootstrap.Modal(modalEl);
+    document.getElementById('drillModalTitle').innerText = `${drillKind.toUpperCase()} #${id}`;
+    document.getElementById('drillModalBody').innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border text-primary spinner-border-sm me-2"></div>Loading details...</div>';
+    const fullBtn = document.getElementById('drillOpenFullBtn');
+    if (detailUrl) {
+        fullBtn.href = detailUrl;
+        fullBtn.style.display = '';
+    } else {
+        fullBtn.style.display = 'none';
     }
-}
-
-// Open Lot Manifest Drilldown Modal
-function openLotManifest(lotId) {
-    const modalEl = document.getElementById("reportDrillModal");
-    const modal = new bootstrap.Modal(modalEl);
-    document.getElementById("drillModalTitle").innerText = `Lot #${lotId} Manifest Items`;
-    const body = document.getElementById("drillModalBody");
-    body.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading manifest...</div>';
     modal.show();
 
-    fetch(`/api/reports/lots/${lotId}/items/`)
+    fetch(`/admin/reports/drill/${drillKind}/${id}/`)
         .then(r => r.json())
-        .then(data => {
-            const items = data.rows || data.results || data || [];
-            if (!items.length) {
-                body.innerHTML = '<div class="text-center py-5 text-muted">No manifest items found for this lot.</div>';
+        .then(res => {
+            if (!res.success) {
+                document.getElementById('drillModalBody').innerHTML = `<div class="text-danger small">${res.message || 'Failed to load details.'}</div>`;
                 return;
             }
-            let html = '<table class="table table-sm table-hover mb-0" style="font-size:0.82rem;"><thead class="table-light"><tr><th>SKU / ID</th><th>Product Description</th><th class="text-end">Qty</th><th>Condition</th></tr></thead><tbody>';
-            items.forEach(it => {
-                html += `<tr><td>${it.product_id || it.sku || '—'}</td><td>${it.product_name || it.title || '—'}</td><td class="text-end fw-bold">${it.quantity || 1}</td><td>${it.condition || 'New'}</td></tr>`;
+            const d = res.data;
+            let html = '<div class="row g-3">';
+            Object.keys(d).forEach(k => {
+                const val = d[k];
+                if (val === null || val === undefined) return;
+                html += `
+                    <div class="col-sm-6">
+                        <div class="text-muted text-uppercase small" style="font-size: 0.68rem; letter-spacing: 0.04em;">${k.replace(/_/g, ' ')}</div>
+                        <div class="fw-semibold text-dark small text-truncate" title="${String(val)}">${String(val)}</div>
+                    </div>
+                `;
             });
-            html += '</tbody></table>';
-            body.innerHTML = html;
+            html += '</div>';
+            document.getElementById('drillModalBody').innerHTML = html;
         })
         .catch(err => {
-            body.innerHTML = '<div class="text-danger p-4">Failed to load manifest items.</div>';
+            document.getElementById('drillModalBody').innerHTML = `<div class="text-danger small">Network error: ${err}</div>`;
         });
 }
 
-// Open RFQ Items Drilldown Modal
-function openRfqItems(rfqId) {
-    const modalEl = document.getElementById("reportDrillModal");
-    const modal = new bootstrap.Modal(modalEl);
-    document.getElementById("drillModalTitle").innerText = `RFQ #${rfqId} Item Lines`;
-    const body = document.getElementById("drillModalBody");
-    body.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading items...</div>';
-    modal.show();
-
-    fetch(`/api/reports/rfqs/${rfqId}/items/`)
-        .then(r => r.json())
-        .then(data => {
-            const items = data.rows || data.results || data || [];
-            if (!items.length) {
-                body.innerHTML = '<div class="text-center py-5 text-muted">No line items found for this RFQ.</div>';
-                return;
-            }
-            let html = '<table class="table table-sm table-hover mb-0" style="font-size:0.82rem;"><thead class="table-light"><tr><th>Item / Title</th><th>Category</th><th class="text-end">Qty</th><th class="text-end">Unit Price</th><th class="text-end">Target Price</th></tr></thead><tbody>';
-            items.forEach(it => {
-                html += `<tr><td>${it.title || '—'}</td><td>${it.category || '—'}</td><td class="text-end fw-bold">${it.quantity || 1}</td><td class="text-end">$${it.unit_price || '—'}</td><td class="text-end">$${it.target_price || '—'}</td></tr>`;
-            });
-            html += '</tbody></table>';
-            body.innerHTML = html;
-        })
-        .catch(err => {
-            body.innerHTML = '<div class="text-danger p-4">Failed to load RFQ items.</div>';
-        });
-}
-
-// Toggle column visibility
-function toggleReportColumn(colKey, isVisible) {
-    document.querySelectorAll(`[data-col-key="${colKey}"]`).forEach(el => {
-        el.style.display = isVisible ? "" : "none";
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    restoreColumns();
+    renderSavedViews();
+});
 </script>
 {% endblock %}
