@@ -852,9 +852,9 @@
                             <!-- Left: Product Image & Details -->
                             <div class="d-flex align-items-start gap-3 flex-grow-1">
                                 {% if item.product and item.product.images.first %}
-                                <img src="{{ item.product.images.first.url }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;">
+                                <img src="{{ item.product.images.first.url }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=120&q=80';">
                                 {% elif item.lot and item.lot.warehouse_images %}
-                                <img src="{{ item.lot.warehouse_images.0 }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;">
+                                <img src="{{ item.lot.warehouse_images.0 }}" alt="{{ item.title }}" class="rounded-3 border flex-shrink-0" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=120&q=80';">
                                 {% else %}
                                 <div class="rounded-3 bg-light border d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.4rem;">
                                     <i class="bi bi-box-seam"></i>

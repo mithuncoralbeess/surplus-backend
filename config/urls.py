@@ -139,7 +139,10 @@ def robust_media_serve(request, path, document_root=None, show_indexes=False):
             except Exception:
                 pass
 
-    raise Http404("Media file not found")
+    # Remote fallback to live production/CDN media when running in local development
+    clean_path = path.replace("\\", "/").lstrip("/")
+    from django.shortcuts import redirect
+    return redirect(f"https://surplusmarket.com/media/{clean_path}")
 
 urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", robust_media_serve, {"document_root": settings.MEDIA_ROOT}),
