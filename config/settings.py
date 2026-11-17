@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Local apps
     "api.apps.ApiConfig",
     "AdminApp.apps.AdminappConfig",
+    "reports",
 ]
 
 MIDDLEWARE = [

@@ -134,6 +134,9 @@ urlpatterns = [
     path("notifications/<int:pk>/", delete_vendor_notification, name="vendor_notification_delete_direct"),
     path("notifications/<int:pk>/delete/", delete_vendor_notification, name="vendor_notification_delete"),
 
+    # Reports API Module (Endpoints, Drill-downs & Command Center Summary)
+    path("reports/", include("reports.urls")),
+
     # Additional user endpoints (Wishlist, RFQ) will be added here
     path("", include(router.urls)),
 ]
