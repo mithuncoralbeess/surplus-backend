@@ -554,6 +554,164 @@
 .cc-why-banner strong {
     color: var(--cc-text-dark);
 }
+
+/* Catalog Breakdown by Category & Subcategories */
+.cat-breakdown-card {
+    background: #ffffff;
+    border: 1px solid var(--cc-border);
+    border-radius: 14px;
+    padding: 1.35rem 1.5rem;
+    box-shadow: var(--cc-shadow);
+    margin-top: 1.75rem;
+}
+
+[data-bs-theme="dark"] .cat-breakdown-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.cat-breakdown-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.cat-breakdown-table thead th {
+    background: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cc-text-sub);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--cc-border);
+    white-space: nowrap;
+}
+
+[data-bs-theme="dark"] .cat-breakdown-table thead th {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.cat-main-row {
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.cat-main-row:hover {
+    background: rgba(241, 245, 249, 0.7);
+}
+
+[data-bs-theme="dark"] .cat-main-row:hover {
+    background: rgba(51, 65, 85, 0.4);
+}
+
+.cat-main-row td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--cc-border-subtle);
+    vertical-align: middle;
+}
+
+.cat-chevron-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: var(--cc-border-subtle);
+    border: 1px solid var(--cc-border);
+    color: var(--cc-text-sub);
+    font-size: 0.78rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.cat-chevron-btn:hover {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: #0f766e;
+}
+
+.cat-chevron-btn.expanded i {
+    transform: rotate(90deg);
+}
+
+.cat-chevron-btn i {
+    transition: transform 0.2s ease;
+}
+
+.cat-sub-drawer {
+    background: #fafbfd;
+    border-bottom: 1px solid var(--cc-border);
+}
+
+[data-bs-theme="dark"] .cat-sub-drawer {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.subcat-box {
+    padding: 1.1rem 1.25rem 1.25rem 2.5rem;
+}
+
+.subcat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0.75rem;
+}
+
+.subcat-item-card {
+    background: #ffffff;
+    border: 1px solid var(--cc-border);
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+[data-bs-theme="dark"] .subcat-item-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.subcat-item-card:hover {
+    border-color: #0f766e;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.subcat-item-card.has-products {
+    border-left: 3.5px solid #0f766e;
+}
+
+.subcat-item-card.empty-cat {
+    opacity: 0.75;
+}
+
+.cat-share-bar-wrap {
+    width: 90px;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+[data-bs-theme="dark"] .cat-share-bar-wrap {
+    background: #334155;
+}
+
+.cat-share-bar-fill {
+    height: 100%;
+    background: #0f766e;
+    border-radius: 999px;
+}
 </style>
 
 <div class="container-fluid command-center-wrap pt-3">
@@ -932,6 +1090,154 @@
         </div>
     </div>
 
+    <!-- Catalog Breakdown by Category & Subcategories (10 Taxonomies) -->
+    <div class="cat-breakdown-card" id="catalogTaxonomiesSection">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
+                        <i class="bi bi-grid-3x3-gap-fill" style="font-size: 1.15rem;"></i>
+                    </div>
+                    <div>
+                        <h3 class="cc-act-title mb-0" style="font-size: 1.15rem;">Catalog Breakdown by Category ({{ cat_data|length }} Taxonomies)</h3>
+                        <p class="text-muted small mb-0 mt-0.5">Hierarchical taxonomy view with listed product counts and inventory unit volumes across all subcategories.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleAllTaxonomies" onclick="toggleAllTaxonomies()">
+                    <i class="bi bi-arrows-expand me-1"></i><span>Expand All Subcategories</span>
+                </button>
+                <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill font-monospace fw-semibold" style="font-size: 0.78rem;">
+                    <i class="bi bi-box-seam text-primary me-1"></i>{{ kpi.total_products|default:"0" }} Products &bull; {{ kpi.total_units|default:"0"|intcomma }} Units
+                </span>
+            </div>
+        </div>
+
+        <div class="table-responsive border rounded-3 overflow-hidden">
+            <table class="cat-breakdown-table" id="taxonomiesTable">
+                <thead>
+                    <tr>
+                        <th style="min-width: 280px;">Category Name (Taxonomy)</th>
+                        <th class="text-center" style="width: 170px;">Subcategories</th>
+                        <th class="text-end" style="width: 140px;">Listed Products</th>
+                        <th class="text-end" style="width: 150px;">Total Units</th>
+                        <th style="width: 170px;">Catalog Share</th>
+                        <th class="text-end pe-3" style="width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in cat_data %}
+                    <!-- Main Category Row -->
+                    <tr class="cat-main-row" onclick="toggleCatDrawer('{{ c.id }}', event)">
+                        <td>
+                            <div class="d-flex align-items-center gap-2.5">
+                                <button type="button" class="cat-chevron-btn" id="chevron-{{ c.id }}" aria-expanded="false" onclick="event.stopPropagation(); toggleCatDrawer('{{ c.id }}')">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.92rem;">
+                                        {{ c.name }}
+                                    </div>
+                                    <div class="text-muted small" style="font-size: 0.74rem;">
+                                        ID #{{ c.id }} &bull; {{ c.subcategories_count }} subcategories defined
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if c.active_subcategories_count > 0 %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.74rem;">
+                                <i class="bi bi-check-circle-fill me-1"></i>{{ c.active_subcategories_count }} of {{ c.subcategories_count }} active
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.74rem;">
+                                0 of {{ c.subcategories_count }} active
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold text-dark font-monospace fs-6">{{ c.product_count }}</span>
+                            <span class="text-muted small ms-0.5">items</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-semibold text-secondary font-monospace" style="font-size: 0.86rem;">
+                                {{ c.total_units|intcomma }}
+                            </span>
+                            <span class="text-muted small ms-0.5">units</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="cat-share-bar-wrap">
+                                    <div class="cat-share-bar-fill" style="width: {{ c.share_pct }}%;"></div>
+                                </div>
+                                <span class="text-secondary small font-monospace fw-semibold">{{ c.share_pct }}%</span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-3" onclick="event.stopPropagation();">
+                            <a href="/admin/reports/products/?category={{ c.name|urlencode }}" class="btn btn-sm btn-outline-secondary px-2.5 py-1" style="font-size: 0.76rem;" title="View in Products Report">
+                                <span>Filter</span> <i class="bi bi-arrow-right ms-0.5"></i>
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Subcategories Drawer (Collapsible) -->
+                    <tr id="drawer-{{ c.id }}" class="cat-sub-drawer" style="display: none;">
+                        <td colspan="6" class="p-0">
+                            <div class="subcat-box">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                                    <div class="small fw-semibold text-dark">
+                                        <i class="bi bi-diagram-2 text-primary me-1.5"></i>Subcategories in <strong>{{ c.name }}</strong> ({{ c.subcategories|length }} total):
+                                    </div>
+                                    <div class="small text-muted font-monospace">
+                                        <span class="text-success fw-bold">{{ c.active_subcategories_count }}</span> active with products &bull; <span class="text-muted">{{ c.subcategories_count|add:"-"|add:c.active_subcategories_count }}</span> empty
+                                    </div>
+                                </div>
+
+                                <div class="subcat-grid">
+                                    {% for sc in c.subcategories %}
+                                    <a href="/admin/reports/products/?category={{ c.name|urlencode }}&q={{ sc.name|urlencode }}" 
+                                       class="subcat-item-card {% if sc.product_count > 0 %}has-products{% else %}empty-cat{% endif %}"
+                                       title="Filter products in {{ sc.name }}">
+                                        <div class="min-w-0">
+                                            <div class="fw-semibold text-dark text-truncate" style="font-size: 0.84rem;">
+                                                <i class="bi bi-arrow-return-right text-muted me-1.5 opacity-50" style="font-size: 0.72rem;"></i>{{ sc.name }}
+                                            </div>
+                                            <div class="text-muted small mt-0.5 font-monospace" style="font-size: 0.72rem;">
+                                                {% if sc.total_units > 0 %}{{ sc.total_units|intcomma }} units in stock{% else %}No stock recorded{% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0">
+                                            {% if sc.product_count > 0 %}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1" style="font-size: 0.76rem;">
+                                                {{ sc.product_count }} {% if sc.product_count == 1 %}product{% else %}products{% endif %}
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-light text-muted border font-monospace px-2 py-0.5" style="font-size: 0.70rem;">
+                                                0 products
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                    {% empty %}
+                                    <div class="text-muted small py-2">No subcategories defined for this category.</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted small">
+                            No category data recorded in the catalog.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Bottom Explanatory Banner -->
     <div class="cc-why-banner">
         <p>
@@ -940,4 +1246,51 @@
     </div>
 
 </div>
+
+<script>
+function toggleCatDrawer(catId, event) {
+    var drawer = document.getElementById('drawer-' + catId);
+    var btn = document.getElementById('chevron-' + catId);
+    if (!drawer) return;
+    
+    var isHidden = (drawer.style.display === 'none' || drawer.style.display === '');
+    drawer.style.display = isHidden ? 'table-row' : 'none';
+    if (btn) {
+        if (isHidden) {
+            btn.classList.add('expanded');
+            btn.setAttribute('aria-expanded', 'true');
+        } else {
+            btn.classList.remove('expanded');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+}
+
+var allTaxonomiesExpanded = false;
+function toggleAllTaxonomies() {
+    allTaxonomiesExpanded = !allTaxonomiesExpanded;
+    var drawers = document.querySelectorAll('.cat-sub-drawer');
+    var btns = document.querySelectorAll('.cat-chevron-btn');
+    var btnToggle = document.getElementById('btnToggleAllTaxonomies');
+    
+    drawers.forEach(function(drawer) {
+        drawer.style.display = allTaxonomiesExpanded ? 'table-row' : 'none';
+    });
+    btns.forEach(function(btn) {
+        if (allTaxonomiesExpanded) {
+            btn.classList.add('expanded');
+            btn.setAttribute('aria-expanded', 'true');
+        } else {
+            btn.classList.remove('expanded');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+    
+    if (btnToggle) {
+        btnToggle.innerHTML = allTaxonomiesExpanded ? 
+            '<i class="bi bi-arrows-collapse me-1"></i><span>Collapse All Subcategories</span>' : 
+            '<i class="bi bi-arrows-expand me-1"></i><span>Expand All Subcategories</span>';
+    }
+}
+</script>
 {% endblock %}

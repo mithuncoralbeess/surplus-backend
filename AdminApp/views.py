@@ -9440,12 +9440,34 @@ def reports_dashboard_view(request):
                 total_companies=Count('id', filter=~Q(company_name__isnull=True) & ~Q(company_name='')),
             )
 
-            # 4. Category Breakdown + Supply vs Demand by Category & Subcategory
+            # 4. Category Breakdown + Subcategories + Product Counts
             from .models import SubCategory
-            subcat_counts_map = {
-                sc['main_category_id']: sc['cnt']
-                for sc in SubCategory.objects.values('main_category_id').annotate(cnt=Count('id'))
-            }
+
+            # Aggregated product counts & units by (category_id, subcategory_id)
+            subcat_prod_map = {}
+            for s in (
+                prod_filtered
+                .filter(category__isnull=False, subcategory__isnull=False)
+                .values('category_id', 'subcategory_id')
+                .annotate(
+                    p_cnt=Count('id'),
+                    u_cnt=Coalesce(Sum('quantity'), Value(0))
+                )
+            ):
+                subcat_prod_map[(s['category_id'], s['subcategory_id'])] = (s['p_cnt'], s['u_cnt'])
+
+            # Products with category set but subcategory null
+            unassigned_map = {}
+            for u in (
+                prod_filtered
+                .filter(category__isnull=False, subcategory__isnull=True)
+                .values('category_id')
+                .annotate(
+                    p_cnt=Count('id'),
+                    u_cnt=Coalesce(Sum('quantity'), Value(0))
+                )
+            ):
+                unassigned_map[u['category_id']] = (u['p_cnt'], u['u_cnt'])
 
             cat_counts = (
                 prod_filtered
@@ -9453,20 +9475,58 @@ def reports_dashboard_view(request):
                 .values('category_id', 'category__name')
                 .annotate(
                     product_count=Count('id'),
-                    total_units=Sum('quantity')
+                    total_units=Coalesce(Sum('quantity'), Value(0))
                 )
                 .order_by('-product_count')[:10]
             )
-            cat_data = [
-                {
-                    'id': c['category_id'],
+
+            top_cat_ids = [c['category_id'] for c in cat_counts if c['category_id']]
+            all_subcats_by_cat = {}
+            for sc in SubCategory.objects.filter(main_category_id__in=top_cat_ids).values('id', 'name', 'main_category_id').order_by('name'):
+                all_subcats_by_cat.setdefault(sc['main_category_id'], []).append(sc)
+
+            total_prods_baseline = max(1, prod_stats['total_products'] or 1)
+
+            cat_data = []
+            for c in cat_counts:
+                cat_id = c['category_id']
+                cat_subs_raw = all_subcats_by_cat.get(cat_id, [])
+
+                sub_list = []
+                for sc in cat_subs_raw:
+                    p_cnt, u_cnt = subcat_prod_map.get((cat_id, sc['id']), (0, 0))
+                    sub_list.append({
+                        'id': sc['id'],
+                        'name': sc['name'],
+                        'product_count': p_cnt,
+                        'total_units': u_cnt,
+                    })
+
+                unassigned_p, unassigned_u = unassigned_map.get(cat_id, (0, 0))
+                if unassigned_p > 0:
+                    sub_list.append({
+                        'id': None,
+                        'name': 'Other / Unassigned Subcategory',
+                        'product_count': unassigned_p,
+                        'total_units': unassigned_u,
+                        'is_unassigned': True,
+                    })
+
+                sub_list.sort(key=lambda x: (x['product_count'], x['total_units']), reverse=True)
+
+                active_subs_count = sum(1 for s in sub_list if s['product_count'] > 0)
+                share_pct = round((c['product_count'] / total_prods_baseline) * 100, 1)
+
+                cat_data.append({
+                    'id': cat_id,
                     'name': c['category__name'] or 'Uncategorized',
                     'product_count': c['product_count'],
                     'total_units': c['total_units'] or 0,
-                    'subcategories_count': subcat_counts_map.get(c['category_id'], 0),
-                }
-                for c in cat_counts
-            ]
+                    'subcategories_count': len(sub_list),
+                    'active_subcategories_count': active_subs_count,
+                    'share_pct': share_pct,
+                    'subcategories': sub_list,
+                })
 
             # Supply listings grouped by Category and SubCategory (diverse top categories)
             subcat_supply_qs = (
@@ -9654,6 +9714,7 @@ def reports_dashboard_view(request):
                     'gap_demand': gap_demand,
                     'activity': summary_bundle.get("activity", []),
                     'alerts': summary_bundle.get("alerts", []),
+                    'cat_data': cat_data,
                 },
                 'kpi': {
                     'total_valuation': prod_stats['total_valuation'] or Decimal("0.00"),
