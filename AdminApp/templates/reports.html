@@ -626,6 +626,7 @@
     cursor: pointer;
     text-decoration: none;
     flex-shrink: 0;
+    margin-right: 0.85rem;
 }
 
 .cat-chevron-btn:hover {
@@ -1131,8 +1132,8 @@
                     <!-- Main Category Row -->
                     <tr class="cat-main-row" onclick="toggleCatDrawer('{{ c.id }}', event)">
                         <td>
-                            <div class="d-flex align-items-center gap-2.5">
-                                <button type="button" class="cat-chevron-btn" id="chevron-{{ c.id }}" aria-expanded="false" onclick="event.stopPropagation(); toggleCatDrawer('{{ c.id }}')">
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button" class="cat-chevron-btn me-2" id="chevron-{{ c.id }}" aria-expanded="false" onclick="event.stopPropagation(); toggleCatDrawer('{{ c.id }}')">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
                                 <div>
