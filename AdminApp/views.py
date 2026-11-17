@@ -9682,7 +9682,10 @@ def reports_dashboard_view(request):
             pending_approval = (prod_stats['pending_products'] or 0) + (lot_stats['pending_lots'] or 0)
 
             # 7. Command Center Redesign Aggregation (from SummaryReportView)
-            from reports.views import SummaryReportView
+            try:
+                from reports.views import SummaryReportView
+            except (ImportError, ModuleNotFoundError):
+                from reports import SummaryReportView
             summary_gen = SummaryReportView()
             days_count = 30
             if period == "7d":
