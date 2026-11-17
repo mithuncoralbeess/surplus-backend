@@ -101,9 +101,25 @@ def _fmt_money(amount, currency="USD"):
         cur = (currency or "USD").strip()
         if "-" in cur:
             cur = cur.split("-")[0].strip()
-        return f"{cur} {val:,.2f}"
+        return f"${val:,.2f}" if cur == "USD" else f"{cur} {val:,.2f}"
     except (ValueError, TypeError):
         return "—"
+
+
+def _calc_waiting(dt):
+    if not dt:
+        return "—", "neutral", False
+    now = timezone.now()
+    diff = now - dt
+    days = diff.days
+    hours = int(diff.total_seconds() // 3600)
+    if days >= 1:
+        tone = "danger" if days >= 3 else "warning"
+        return f"{days} day" if days == 1 else f"{days} days", tone, days >= 1
+    if hours >= 1:
+        return f"{hours} hrs", "neutral", False
+    mins = max(1, int(diff.total_seconds() // 60))
+    return f"{mins} mins", "neutral", False
 
 
 def _col(key, label, align="left", sortable=True, kind="text", visible=True):
@@ -226,6 +242,22 @@ def _build_products_report(request, for_export=False):
     if app_dt:
         qs = qs.filter(date_approved__gte=app_dt)
 
+    # Segment Filtering & Counting per Redesign Spec
+    seg_param = request.GET.get("segment")
+    if seg_param is None and not status_f:
+        seg_param = "needs_approval"
+    elif not seg_param:
+        seg_param = "all"
+
+    if seg_param == "needs_approval":
+        qs = qs.filter(enquiry_status__in=["PENDING", "CORRECTION_NEEDED"])
+    elif seg_param == "live":
+        qs = qs.filter(enquiry_status="APPROVED", is_active=True)
+    elif seg_param == "declined":
+        qs = qs.filter(enquiry_status="DECLINED")
+    elif seg_param == "correction":
+        qs = qs.filter(enquiry_status="CORRECTION_NEEDED")
+
     sort_map = {
         "product_code": "product_code",
         "product_name": "product_name",
@@ -241,7 +273,25 @@ def _build_products_report(request, for_export=False):
         "enquiry_status": "enquiry_status",
         "created_at": "created_at",
     }
-    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, "-created_at")
+    default_sort = "created_at" if seg_param == "needs_approval" else "-created_at"
+    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, default_sort)
+
+    # Compute Segment Counts
+    base_prod = Product.objects.all()
+    c_agg = base_prod.aggregate(
+        needs_approval=Count("id", filter=Q(enquiry_status__in=["PENDING", "CORRECTION_NEEDED"])),
+        live=Count("id", filter=Q(enquiry_status="APPROVED", is_active=True)),
+        declined=Count("id", filter=Q(enquiry_status="DECLINED")),
+        correction=Count("id", filter=Q(enquiry_status="CORRECTION_NEEDED")),
+        all=Count("id"),
+    )
+    segments = [
+        {"key": "needs_approval", "label": "Needs approval", "count": c_agg["needs_approval"], "is_active": (seg_param == "needs_approval")},
+        {"key": "live", "label": "Live", "count": c_agg["live"], "is_active": (seg_param == "live")},
+        {"key": "declined", "label": "Declined", "count": c_agg["declined"], "is_active": (seg_param == "declined")},
+        {"key": "correction", "label": "Correction", "count": c_agg["correction"], "is_active": (seg_param == "correction")},
+        {"key": "all", "label": "All", "count": c_agg["all"], "is_active": (seg_param == "all")},
+    ]
 
     stats = qs.aggregate(
         total=Count("id"),
@@ -311,25 +361,33 @@ def _build_products_report(request, for_export=False):
     def _serialize_row(p):
         vendor_lbl = (p.vendor.company_name or p.vendor.full_name or p.vendor.username) if p.vendor else "Admin / Direct"
         curr = p.currency or "USD"
+        waiting_str, waiting_tone, _ = _calc_waiting(p.created_at)
+        code_str = p.product_code or p.product_id or f"PRO-{p.id:05d}"
+        brand_str = p.brand_name or "Brand"
+        country_str = p.inventory_country or p.manufacturing_country or "Global"
+        subline = f"{code_str} · {brand_str} · {country_str}"
         return {
             "id": p.id,
             "drill_kind": "product",
             "detail_url": f"/admin/products/{p.id}/",
             "cells": {
-                "product_code": p.product_code or p.product_id or f"PRO-{p.id:05d}",
+                "product_code": code_str,
                 "product_name": p.product_name,
+                "subline": subline,
                 "category": p.category.name if p.category else "—",
                 "subcategory": p.subcategory.name if p.subcategory else "—",
-                "brand_name": p.brand_name or "—",
+                "brand_name": brand_str,
                 "quantity": f"{p.quantity:,}",
                 "msrp": _fmt_money(p.msrp, curr) if p.msrp is not None else "—",
                 "current_price": _fmt_money(p.current_price, curr),
                 "offer": f"{float(p.offer or 0):.0f}%",
-                "inventory_country": p.inventory_country or "—",
+                "inventory_country": country_str,
                 "vendor": vendor_lbl,
                 "views_count": f"{p.views_count:,}",
                 "enquiry_status": p.get_enquiry_status_display(),
                 "status_raw": (p.enquiry_status or "").lower(),
+                "waiting": waiting_str,
+                "waiting_tone": waiting_tone,
                 "created_at": _fmt_dt(p.created_at),
             },
         }
@@ -342,8 +400,8 @@ def _build_products_report(request, for_export=False):
     rows = [_serialize_row(p) for p in page_obj]
     return {
         "report_type": "products",
-        "title": "Products Report",
-        "subtitle": "Every single-product listing across products, categories, and vendors.",
+        "title": "Products",
+        "subtitle": "Opens on the queue that needs action, not all 248 rows.",
         "kpis": kpis,
         "columns": columns,
         "filters": filters,
@@ -351,6 +409,8 @@ def _build_products_report(request, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": active_sort,
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Maps to products.*. Buyer price = current_price (liquidating_price x 1.10). Row click opens specs & product image gallery.",
     }
 
@@ -434,6 +494,20 @@ def _build_lots_report(request, for_export=False):
     if start_dt:
         qs = qs.filter(created_at__gte=start_dt)
 
+    # Segment Filtering & Counting per Redesign Spec
+    seg_param = request.GET.get("segment")
+    if seg_param is None and not status_f:
+        seg_param = "pending"
+    elif not seg_param:
+        seg_param = "all"
+
+    if seg_param == "pending":
+        qs = qs.filter(enquiry_status="pending")
+    elif seg_param == "live":
+        qs = qs.filter(enquiry_status="approved", is_active=True)
+    elif seg_param == "declined":
+        qs = qs.filter(enquiry_status="declined")
+
     sort_map = {
         "lot_number": "lot_number",
         "title": "title",
@@ -448,7 +522,23 @@ def _build_lots_report(request, for_export=False):
         "enquiry_status": "enquiry_status",
         "created_at": "created_at",
     }
-    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, "-created_at")
+    default_sort = "created_at" if seg_param == "pending" else "-created_at"
+    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, default_sort)
+
+    # Compute Segment Counts
+    lot_base = Lot.objects.all()
+    c_agg = lot_base.aggregate(
+        pending=Count("id", filter=Q(enquiry_status="pending")),
+        live=Count("id", filter=Q(enquiry_status="approved", is_active=True)),
+        declined=Count("id", filter=Q(enquiry_status="declined")),
+        all=Count("id"),
+    )
+    segments = [
+        {"key": "pending", "label": "Pending", "count": c_agg["pending"], "is_active": (seg_param == "pending")},
+        {"key": "live", "label": "Live", "count": c_agg["live"], "is_active": (seg_param == "live")},
+        {"key": "declined", "label": "Declined", "count": c_agg["declined"], "is_active": (seg_param == "declined")},
+        {"key": "all", "label": "All", "count": c_agg["all"], "is_active": (seg_param == "all")},
+    ]
 
     stats = qs.aggregate(
         total=Count("id"),
@@ -530,6 +620,10 @@ def _build_lots_report(request, for_export=False):
         ret = float(l.total_est_retail_value_msrp or 0)
         ask = float(l.ask_price_surplus_payout or 0)
         pct_str = f"{(ask / ret * 100):.0f}%" if ret > 0 and ask > 0 else "—"
+        waiting_str, waiting_tone, _ = _calc_waiting(l.created_at)
+        skus_str = f"{l.number_of_distinct_skus or 0} SKUs"
+        source_str = l.source_type or "Overstock"
+        subline = f"{l.lot_number} · {skus_str} · {source_str}"
         return {
             "id": l.id,
             "drill_kind": "lot",
@@ -537,17 +631,21 @@ def _build_lots_report(request, for_export=False):
             "cells": {
                 "lot_number": l.lot_number,
                 "title": l.title or f"Lot {l.lot_number}",
-                "condition": l.condition or "—",
-                "source_type": l.source_type or "—",
+                "subline": subline,
+                "condition": l.condition or "New Surplus",
+                "source_type": source_str,
                 "number_of_distinct_skus": f"{l.number_of_distinct_skus or 0:,}",
                 "total_units_quantity": f"{l.total_units_quantity or 0:,}",
                 "total_est_retail_value_msrp": _fmt_money(l.total_est_retail_value_msrp, curr) if l.total_est_retail_value_msrp else "—",
                 "ask_price_surplus_payout": _fmt_money(l.ask_price_surplus_payout, curr) if l.ask_price_surplus_payout else "—",
+                "pct_of_retail": pct_str,
                 "pct_retail": pct_str,
                 "inventory_country": l.inventory_country or "—",
                 "sale_method": (l.sale_method or "offer").title(),
                 "enquiry_status": (l.enquiry_status or "pending").replace("_", " ").title(),
                 "status_raw": (l.enquiry_status or "").lower(),
+                "waiting": waiting_str,
+                "waiting_tone": waiting_tone,
                 "created_at": _fmt_dt(l.created_at),
             },
         }
@@ -559,8 +657,8 @@ def _build_lots_report(request, for_export=False):
     paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
     return {
         "report_type": "lots",
-        "title": "Lots Report",
-        "subtitle": "Every bulk lot / pallet. Row click opens the lot_products manifest drill-down.",
+        "title": "Lots",
+        "subtitle": "Pending lots first. Row opens the manifest.",
         "kpis": kpis,
         "columns": columns,
         "filters": filters,
@@ -568,6 +666,8 @@ def _build_lots_report(request, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": active_sort,
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Maps to lots.*. % Retail = ask_price_surplus_payout / total_est_retail_value_msrp. Row click loads extracted lot_products items.",
     }
 
@@ -627,6 +727,22 @@ def _build_users_report(request, for_export=False):
     if start_dt:
         qs = qs.filter(created_at__gte=start_dt)
 
+    # Segment Filtering & Counting per Redesign Spec
+    seg_param = request.GET.get("segment")
+    if seg_param is None and not utype_f:
+        seg_param = "new"
+    elif not seg_param:
+        seg_param = "all"
+
+    if seg_param == "new":
+        qs = qs.filter(created_at__gte=timezone.now() - timedelta(days=30))
+    elif seg_param == "buyers":
+        qs = qs.filter(user_type__in=["BUYER", "BOTH"])
+    elif seg_param == "sellers":
+        qs = qs.filter(user_type__in=["SELLER", "BOTH"])
+    elif seg_param == "both":
+        qs = qs.filter(user_type="BOTH")
+
     sort_map = {
         "username": "username",
         "full_name": "full_name",
@@ -638,7 +754,25 @@ def _build_users_report(request, for_export=False):
         "status": "status",
         "created_at": "created_at",
     }
-    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, "-created_at")
+    default_sort = "-created_at"
+    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, default_sort)
+
+    # Compute Segment Counts
+    user_base = VendorDetails.objects.all()
+    c_agg = user_base.aggregate(
+        new=Count("id", filter=Q(created_at__gte=timezone.now() - timedelta(days=30))),
+        buyers=Count("id", filter=Q(user_type__in=["BUYER", "BOTH"])),
+        sellers=Count("id", filter=Q(user_type__in=["SELLER", "BOTH"])),
+        both=Count("id", filter=Q(user_type="BOTH")),
+        all=Count("id"),
+    )
+    segments = [
+        {"key": "new", "label": "New (30d)", "count": c_agg["new"], "is_active": (seg_param == "new")},
+        {"key": "buyers", "label": "Buyers", "count": c_agg["buyers"], "is_active": (seg_param == "buyers")},
+        {"key": "sellers", "label": "Sellers", "count": c_agg["sellers"], "is_active": (seg_param == "sellers")},
+        {"key": "both", "label": "Both", "count": c_agg["both"], "is_active": (seg_param == "both")},
+        {"key": "all", "label": "All", "count": c_agg["all"], "is_active": (seg_param == "all")},
+    ]
 
     stats = qs.aggregate(
         total=Count("id"),
@@ -695,17 +829,19 @@ def _build_users_report(request, for_export=False):
     def _serialize_row(u):
         cats = u.category_interested if isinstance(u.category_interested, list) else []
         cats_str = ", ".join(str(c) for c in cats[:3]) + (f" +{len(cats)-3}" if len(cats) > 3 else "")
+        subline = f"{u.username} · {u.email}"
         return {
             "id": u.id,
             "drill_kind": "",
             "detail_url": f"/admin/users/vendors/{u.id}/",
             "cells": {
                 "username": u.username,
-                "full_name": u.full_name or "—",
+                "full_name": u.full_name or u.username or "—",
+                "subline": subline,
                 "email": u.email,
                 "mobile_number": u.mobile_number or "—",
                 "user_type": u.user_type,
-                "account_entity_type": (u.account_entity_type or "").title(),
+                "account_entity_type": (u.account_entity_type or "Company").title(),
                 "company_name": u.company_name or "—",
                 "country": u.country or "—",
                 "category_interested": cats_str or "—",
@@ -722,8 +858,8 @@ def _build_users_report(request, for_export=False):
     paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
     return {
         "report_type": "users",
-        "title": "Users / Vendors Report",
-        "subtitle": "Buyers, sellers, and dual accounts segmented by entity, geography, and interests.",
+        "title": "Users",
+        "subtitle": "New sign-ups first; segment by buyers or sellers.",
         "kpis": kpis,
         "columns": columns,
         "filters": filters,
@@ -731,6 +867,8 @@ def _build_users_report(request, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": active_sort,
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Maps to vendor_details.*. Type={BUYER, SELLER, BOTH}, Entity={INDIVIDUAL, COMPANY}.",
     }
 
@@ -799,6 +937,20 @@ def _build_rfqs_report(request, for_export=False):
     if start_dt:
         qs = qs.filter(created_at__gte=start_dt)
 
+    # Segment Filtering & Counting per Redesign Spec
+    seg_param = request.GET.get("segment")
+    if seg_param is None and not status_f:
+        seg_param = "open"
+    elif not seg_param:
+        seg_param = "all"
+
+    if seg_param == "open":
+        qs = qs.filter(status__in=["PENDING", "QUOTED"])
+    elif seg_param == "quoted":
+        qs = qs.filter(status="QUOTED")
+    elif seg_param == "accepted":
+        qs = qs.filter(status="ACCEPTED")
+
     sort_map = {
         "reference": "reference",
         "company_name": "company_name",
@@ -812,7 +964,23 @@ def _build_rfqs_report(request, for_export=False):
         "status": "status",
         "created_at": "created_at",
     }
-    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, "-created_at")
+    default_sort = "created_at" if seg_param == "open" else "-created_at"
+    qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, default_sort)
+
+    # Compute Segment Counts
+    rfq_base = RfqEnquiry.objects.all()
+    c_agg = rfq_base.aggregate(
+        open=Count("id", filter=Q(status__in=["PENDING", "QUOTED"])),
+        quoted=Count("id", filter=Q(status="QUOTED")),
+        accepted=Count("id", filter=Q(status="ACCEPTED")),
+        all=Count("id"),
+    )
+    segments = [
+        {"key": "open", "label": "Open / unquoted", "count": c_agg["open"], "is_active": (seg_param == "open")},
+        {"key": "quoted", "label": "Quoted", "count": c_agg["quoted"], "is_active": (seg_param == "quoted")},
+        {"key": "accepted", "label": "Accepted", "count": c_agg["accepted"], "is_active": (seg_param == "accepted")},
+        {"key": "all", "label": "All", "count": c_agg["all"], "is_active": (seg_param == "all")},
+    ]
 
     stats = qs.aggregate(
         total=Count("id", distinct=True),
@@ -872,14 +1040,18 @@ def _build_rfqs_report(request, for_export=False):
     def _serialize_row(r):
         curr = r.currency or "USD"
         buyer_lbl = r.company_name or (r.buyer.company_name if r.buyer else "") or r.contact_person
+        waiting_str, waiting_tone, _ = _calc_waiting(r.created_at)
+        email_str = r.email or (r.buyer.email if r.buyer else "") or "—"
+        subline = f"{buyer_lbl} · {email_str}"
         return {
             "id": r.id,
             "drill_kind": "rfq",
-            "detail_url": f"/admin/rfq-requests/{r.id}/",
+            "detail_url": f"/admin/rfq-requests/{r.id}/detail/",
             "cells": {
                 "reference": r.reference,
                 "company_name": buyer_lbl or "—",
-                "email": r.email or (r.buyer.email if r.buyer else "—"),
+                "subline": subline,
+                "email": email_str,
                 "country": r.country or "—",
                 "destination_port": r.destination_port or "—",
                 "incoterm": r.incoterm or "EXW",
@@ -887,8 +1059,10 @@ def _build_rfqs_report(request, for_export=False):
                 "total_units": f"{r.total_units:,}",
                 "estimated_value": _fmt_money(r.estimated_value, curr),
                 "payment_method": r.payment_method or "—",
-                "status": (r.status or "PENDING").title(),
+                "status": "Unquoted" if (r.status or "").upper() == "PENDING" else (r.status or "PENDING").title(),
                 "status_raw": (r.status or "").lower(),
+                "waiting": waiting_str,
+                "waiting_tone": waiting_tone,
                 "created_at": _fmt_dt(r.created_at),
             },
         }
@@ -900,8 +1074,8 @@ def _build_rfqs_report(request, for_export=False):
     paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
     return {
         "report_type": "rfqs",
-        "title": "RFQs Report (Demand)",
-        "subtitle": "Consolidated buyer quotation requests. Row click opens requested rfq_enquiry_items.",
+        "title": "RFQs",
+        "subtitle": "Unquoted requests first — these are revenue waiting on a response.",
         "kpis": kpis,
         "columns": columns,
         "filters": filters,
@@ -909,6 +1083,8 @@ def _build_rfqs_report(request, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": active_sort,
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Maps to rfq_enquiries.* + rfq_enquiry_items. Uses distinct COUNT on items to avoid duplicate rows on JOIN filters.",
     }
 
@@ -924,6 +1100,7 @@ def _build_enquiries_report(request, for_export=False):
     from .models import ContactUsEnquiry, Lot, PartnershipEnquiry, Product
 
     q = request.GET.get("q", "").strip()
+    seg_param = request.GET.get("segment", "open").strip().lower()
     type_f = request.GET.get("type", "").strip()
     status_f = request.GET.get("status", "").strip()
     blocked_f = request.GET.get("is_blocked", "").strip()
@@ -972,20 +1149,60 @@ def _build_enquiries_report(request, for_export=False):
     elif blocked_f == "no":
         cont_qs = cont_qs.filter(is_blocked=False)
 
-    # Counts per source (applying filters except `type` so KPI breakdown stays clear)
-    prod_cnt = prod_qs.count() if not blocked_f else 0
-    lot_cnt = lot_qs.count() if not blocked_f else 0
-    part_cnt = part_qs.count() if not blocked_f else 0
-    cont_cnt = cont_qs.count()
+    # Calculate segment counts
+    open_prod_cnt = prod_qs.filter(enquiry_status__in=["pending", "correction_needed"]).count()
+    open_lot_cnt = lot_qs.filter(enquiry_status__in=["pending", "correction_needed"]).count()
+    open_part_cnt = part_qs.filter(status__in=["pending", "reviewed"]).count()
+    open_cont_cnt = cont_qs.filter(status="PENDING", is_blocked=False).count()
+    open_total = open_prod_cnt + open_lot_cnt + open_part_cnt + open_cont_cnt
+
+    sp_total = prod_qs.count()
+    lb_total = lot_qs.count()
+    part_total = part_qs.count()
+    cont_total = cont_qs.count()
+    all_total = sp_total + lb_total + part_total + cont_total
+
+    segments = [
+        {"key": "open", "label": "Open", "count": open_total},
+        {"key": "seller_product", "label": "Seller product", "count": sp_total},
+        {"key": "lot_batch", "label": "Lot batch", "count": lb_total},
+        {"key": "partnership", "label": "Partnership", "count": part_total},
+        {"key": "contact", "label": "Contact", "count": cont_total},
+        {"key": "all", "label": "All", "count": all_total},
+    ]
+
+    # Filter according to segment
+    if seg_param == "open":
+        prod_qs = prod_qs.filter(enquiry_status__in=["pending", "correction_needed"])
+        lot_qs = lot_qs.filter(enquiry_status__in=["pending", "correction_needed"])
+        part_qs = part_qs.filter(status__in=["pending", "reviewed"])
+        cont_qs = cont_qs.filter(status="PENDING", is_blocked=False)
+    elif seg_param == "seller_product":
+        lot_qs = lot_qs.none()
+        part_qs = part_qs.none()
+        cont_qs = cont_qs.none()
+    elif seg_param == "lot_batch":
+        prod_qs = prod_qs.none()
+        part_qs = part_qs.none()
+        cont_qs = cont_qs.none()
+    elif seg_param == "partnership":
+        prod_qs = prod_qs.none()
+        lot_qs = lot_qs.none()
+        cont_qs = cont_qs.none()
+    elif seg_param == "contact":
+        prod_qs = prod_qs.none()
+        lot_qs = lot_qs.none()
+        part_qs = part_qs.none()
 
     rows = []
     limit_each = 1000 if for_export else 150
 
-    if type_f in ("", "seller_product") and not blocked_f:
+    if type_f in ("", "seller_product") and not blocked_f and prod_qs.exists():
         for p in prod_qs.order_by("-created_at")[:limit_each]:
             v_email = p.vendor.email if p.vendor else "—"
             v_phone = p.vendor.mobile_number if p.vendor else "—"
             val = (p.liquidating_price or Decimal("0")) * (p.quantity or 0)
+            waiting_str, waiting_tone, _ = _calc_waiting(p.created_at)
             rows.append({
                 "id": p.id,
                 "drill_kind": "product",
@@ -993,21 +1210,26 @@ def _build_enquiries_report(request, for_export=False):
                 "sort_dt": p.created_at,
                 "cells": {
                     "type": "Seller Product",
+                    "name": p.product_name,
                     "reference": f"{p.product_name} ({p.product_code or p.product_id})",
                     "email": v_email,
                     "phone": v_phone or "—",
+                    "category": f"{p.category.name if p.category else 'General'} · {p.quantity:,} units",
                     "subject": f"{p.category.name if p.category else 'General'} · {p.quantity:,} units",
                     "value": _fmt_money(val, p.currency or "USD"),
+                    "waiting": waiting_str,
+                    "waiting_tone": waiting_tone,
                     "status": p.get_enquiry_status_display(),
                     "status_raw": (p.enquiry_status or "").lower(),
                     "created_at": _fmt_dt(p.created_at),
                 },
             })
 
-    if type_f in ("", "lot") and not blocked_f:
+    if type_f in ("", "lot") and not blocked_f and lot_qs.exists():
         for l in lot_qs.order_by("-created_at")[:limit_each]:
             v_email = l.vendor.email if l.vendor else "—"
             v_phone = l.vendor.mobile_number if l.vendor else "—"
+            waiting_str, waiting_tone, _ = _calc_waiting(l.created_at)
             rows.append({
                 "id": l.id,
                 "drill_kind": "lot",
@@ -1015,19 +1237,24 @@ def _build_enquiries_report(request, for_export=False):
                 "sort_dt": l.created_at,
                 "cells": {
                     "type": "Lot Submission",
+                    "name": l.title or "Bulk Lot",
                     "reference": f"{l.lot_number} · {l.title or 'Bulk Lot'}",
                     "email": v_email,
                     "phone": v_phone or "—",
+                    "category": f"{l.lot_number} · {l.number_of_distinct_skus or 0} SKUs",
                     "subject": f"{l.number_of_distinct_skus or 0} SKUs · {l.total_units_quantity or 0:,} units",
                     "value": _fmt_money(l.ask_price_surplus_payout, l.currency or "USD") if l.ask_price_surplus_payout else "—",
+                    "waiting": waiting_str,
+                    "waiting_tone": waiting_tone,
                     "status": (l.enquiry_status or "pending").replace("_", " ").title(),
                     "status_raw": (l.enquiry_status or "").lower(),
                     "created_at": _fmt_dt(l.created_at),
                 },
             })
 
-    if type_f in ("", "partnership") and not blocked_f:
+    if type_f in ("", "partnership") and not blocked_f and part_qs.exists():
         for pe in part_qs.order_by("-created_at")[:limit_each]:
+            waiting_str, waiting_tone, _ = _calc_waiting(pe.created_at)
             rows.append({
                 "id": pe.id,
                 "drill_kind": "",
@@ -1035,19 +1262,24 @@ def _build_enquiries_report(request, for_export=False):
                 "sort_dt": pe.created_at,
                 "cells": {
                     "type": "Partnership",
+                    "name": pe.name,
                     "reference": pe.name,
                     "email": pe.email,
                     "phone": "—",
+                    "category": pe.partnership_interest or pe.subject or "Partnership",
                     "subject": pe.subject or pe.partnership_interest or "Partnership",
                     "value": "—",
+                    "waiting": waiting_str,
+                    "waiting_tone": waiting_tone,
                     "status": (pe.status or "PENDING").title(),
                     "status_raw": (pe.status or "").lower(),
                     "created_at": _fmt_dt(pe.created_at),
                 },
             })
 
-    if type_f in ("", "contact"):
+    if type_f in ("", "contact") and cont_qs.exists():
         for ce in cont_qs.order_by("-created_at")[:limit_each]:
+            waiting_str, waiting_tone, _ = _calc_waiting(ce.created_at)
             rows.append({
                 "id": ce.id,
                 "drill_kind": "",
@@ -1055,11 +1287,15 @@ def _build_enquiries_report(request, for_export=False):
                 "sort_dt": ce.created_at,
                 "cells": {
                     "type": "Contact",
+                    "name": ce.full_name,
                     "reference": ce.full_name,
                     "email": ce.email,
                     "phone": ce.phone or "—",
+                    "category": ce.enquiry_type or (ce.message[:45] if ce.message else "General"),
                     "subject": ce.enquiry_type or (ce.message[:45] if ce.message else "General"),
                     "value": "—",
+                    "waiting": waiting_str,
+                    "waiting_tone": waiting_tone,
                     "status": "Blocked" if ce.is_blocked else (ce.status or "PENDING").title(),
                     "status_raw": "declined" if ce.is_blocked else (ce.status or "").lower(),
                     "created_at": _fmt_dt(ce.created_at),
@@ -1070,13 +1306,12 @@ def _build_enquiries_report(request, for_export=False):
     reverse = sort_param != "created_at"
     rows.sort(key=lambda r: r["sort_dt"].timestamp() if r["sort_dt"] else 0, reverse=reverse)
 
-    total_all = prod_cnt + lot_cnt + part_cnt + cont_cnt
     kpis = [
-        _kpi_card("ALL ENQUIRIES", f"{total_all:,}"),
-        _kpi_card("SELLER PRODUCTS", f"{prod_cnt:,}", "primary"),
-        _kpi_card("BULK LOTS", f"{lot_cnt:,}", "warning"),
-        _kpi_card("PARTNERSHIP", f"{part_cnt:,}", "success"),
-        _kpi_card("CONTACT / SUPPORT", f"{cont_cnt:,}", "neutral"),
+        _kpi_card("OPEN ENQUIRIES", f"{open_total:,}", "warning"),
+        _kpi_card("SELLER PRODUCTS", f"{sp_total:,}", "primary"),
+        _kpi_card("BULK LOTS", f"{lb_total:,}", "warning"),
+        _kpi_card("PARTNERSHIP", f"{part_total:,}", "success"),
+        _kpi_card("CONTACT / SUPPORT", f"{cont_total:,}", "neutral"),
     ]
 
     columns = [
@@ -1113,6 +1348,8 @@ def _build_enquiries_report(request, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": "-created_at" if reverse else "created_at",
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Combines live products, lots, partnership_enquiries, and contact_us_enquiries (unlike legacy seller_product_enquiries / lot_batch_enquiries).",
     }
 
@@ -1121,6 +1358,7 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
     from .models import Auction, AuctionBid, MainCategory
 
     q = request.GET.get("q", "").strip()
+    seg_param = request.GET.get("segment", "live").strip().lower()
     status_f = request.GET.get("status", "").strip()
     itype_f = request.GET.get("item_type", "").strip()
     cat_f = request.GET.get("category", "").strip()
@@ -1191,6 +1429,26 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
     }
     qs, active_sort = _safe_order_by(qs, request.GET.get("sort"), sort_map, "-created_at")
 
+    # Calculate segments
+    live_cnt = qs.filter(status__iexact="live").count()
+    sched_cnt = qs.filter(status__iexact="scheduled").count()
+    ended_cnt = qs.filter(status__in=["ended", "sold", "reserve_not_met", "cancelled"]).count()
+    all_cnt = qs.count()
+
+    segments = [
+        {"key": "live", "label": "Live", "count": live_cnt},
+        {"key": "scheduled", "label": "Scheduled", "count": sched_cnt},
+        {"key": "ended", "label": "Ended", "count": ended_cnt},
+        {"key": "all", "label": "All", "count": all_cnt},
+    ]
+
+    if seg_param == "live":
+        qs = qs.filter(status__iexact="live")
+    elif seg_param == "scheduled":
+        qs = qs.filter(status__iexact="scheduled")
+    elif seg_param == "ended":
+        qs = qs.filter(status__in=["ended", "sold", "reserve_not_met", "cancelled"])
+
     stats = qs.aggregate(
         total=Count("id"),
         live=Count("id", filter=Q(status__iexact="live")),
@@ -1199,10 +1457,10 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
         bids_sum=Sum("total_bids"),
     )
     kpis = [
+        _kpi_card("LIVE AUCTIONS", f"{live_cnt:,}", "success"),
         _kpi_card("TOTAL AUCTIONS", f"{stats['total'] or 0:,}"),
-        _kpi_card("LIVE", f"{stats['live'] or 0:,}", "success"),
-        _kpi_card("SCHEDULED", f"{stats['scheduled'] or 0:,}", "warning"),
-        _kpi_card("ENDED / SOLD", f"{stats['ended_sold'] or 0:,}", "neutral"),
+        _kpi_card("SCHEDULED", f"{sched_cnt:,}", "warning"),
+        _kpi_card("ENDED / SOLD", f"{ended_cnt:,}", "neutral"),
         _kpi_card("TOTAL BIDS", f"{stats['bids_sum'] or 0:,}", "primary"),
     ]
 
@@ -1242,15 +1500,38 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
     def _serialize_row(a):
         curr = a.currency or "USD"
         winner_lbl = (a.winner.company_name or a.winner.full_name or a.winner.username) if a.winner else "—"
+
+        now = timezone.now()
+        ends_in_str = "Ended"
+        if a.end_time:
+            if a.end_time > now:
+                delta = a.end_time - now
+                hours = int(delta.total_seconds() // 3600)
+                mins = int((delta.total_seconds() % 3600) // 60)
+                if hours > 24:
+                    ends_in_str = f"{hours // 24}d {hours % 24}h"
+                elif hours > 0:
+                    ends_in_str = f"{hours}h {mins}m"
+                else:
+                    ends_in_str = f"{mins}m"
+            else:
+                ends_in_str = "Ended"
+
+        reserve_flag = False
+        if a.reserve_price and a.current_bid:
+            reserve_flag = a.current_bid < a.reserve_price
+
         cells = {
             "auction_id": a.auction_id,
             "title": a.title,
-            "item_type": (a.item_type or "custom").title(),
-            "category": a.category.name if a.category else "—",
+            "item_type": (a.item_type or "custom").lower(),
+            "category": a.category.name if a.category else "General",
             "starting_bid": _fmt_money(a.starting_bid, curr),
             "current_bid": _fmt_money(a.current_bid, curr),
             "total_bids": f"{a.total_bids:,}",
             "winner": winner_lbl,
+            "ends_in": ends_in_str,
+            "reserve_not_met": reserve_flag,
             "status": a.get_status_display(),
             "status_raw": (a.status or "").lower(),
             "end_time": _fmt_dt(a.end_time),
@@ -1280,6 +1561,8 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
         "paginator": paginator,
         "page_obj": page_obj,
         "active_sort": active_sort,
+        "segments": segments,
+        "active_segment": seg_param,
         "dev_note": "Maps to auctions.* + auction_bids. Reserve price is restricted to Admin/SuperAdmin roles.",
     }
 

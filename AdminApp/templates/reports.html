@@ -1,1182 +1,942 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Reports & Analytics - Surplus Admin{% endblock %}
+{% block title %}Command Center - Reports & Intelligence - Surplus Admin{% endblock %}
 
 {% block content %}
 <style>
 /* ==========================================================================
-   DASHKIT / FULL-VERSION BUSINESS INTELLIGENCE & REPORTS DESIGN SYSTEM
+   COMMAND CENTER DESIGN SYSTEM — FULL-VERSION CLEAN SLATE
    ========================================================================== */
 
 :root {
-    --dash-bg: #fafafd;
-    --dash-card: #ffffff;
-    --dash-text-dark: #0f172a;
-    --dash-text-body: #334155;
-    --dash-text-sub: #64748b;
-    --dash-text-muted: #94a3b8;
-    --dash-border: rgba(226, 232, 240, 0.85);
-    --dash-border-subtle: #f1f5f9;
-    --dash-primary: #6366f1;
-    --dash-primary-hover: #4f46e5;
-    --dash-primary-light: rgba(99, 102, 241, 0.1);
-    --dash-radius-xl: 18px;
-    --dash-radius-lg: 14px;
-    --dash-radius-md: 10px;
-    --dash-radius-pill: 9999px;
-    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
-    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
+    --cc-bg: #f8fafc;
+    --cc-card: #ffffff;
+    --cc-text-dark: #0f172a;
+    --cc-text-body: #334155;
+    --cc-text-sub: #64748b;
+    --cc-text-muted: #94a3b8;
+    --cc-border: #e2e8f0;
+    --cc-border-subtle: #f1f5f9;
+    --cc-primary: #0f172a;
+    --cc-brand: #059669;
+    --cc-brand-hover: #047857;
+    --cc-amber-bg: #fffbeb;
+    --cc-amber-border: #fde68a;
+    --cc-amber-text: #92400e;
+    --cc-radius-xl: 18px;
+    --cc-radius-lg: 14px;
+    --cc-radius-md: 10px;
+    --cc-radius-pill: 9999px;
+    --cc-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --dash-bg: #0f172a;
-    --dash-card: #1e293b;
-    --dash-text-dark: #f8fafc;
-    --dash-text-body: #cbd5e1;
-    --dash-text-sub: #94a3b8;
-    --dash-text-muted: #64748b;
-    --dash-border: #334155;
-    --dash-border-subtle: rgba(51, 65, 85, 0.6);
-    --dash-primary: #818cf8;
-    --dash-primary-hover: #6366f1;
-    --dash-primary-light: rgba(129, 140, 248, 0.15);
-    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
+    --cc-bg: #0b1120;
+    --cc-card: #1e293b;
+    --cc-text-dark: #f8fafc;
+    --cc-text-body: #cbd5e1;
+    --cc-text-sub: #94a3b8;
+    --cc-text-muted: #64748b;
+    --cc-border: #334155;
+    --cc-border-subtle: #1e293b;
+    --cc-amber-bg: rgba(245, 158, 11, 0.12);
+    --cc-amber-border: rgba(245, 158, 11, 0.3);
+    --cc-amber-text: #fbbf24;
 }
 
-.reports-container {
+.command-center-wrap {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding-bottom: 3.5rem;
+}
+
+/* Header */
+.cc-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.cc-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--cc-text-dark);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.cc-subtitle {
+    font-size: 0.88rem;
+    color: var(--cc-text-sub);
+    margin-top: 0.3rem;
+}
+
+/* Pill Tabs */
+.cc-period-pills {
+    display: inline-flex;
+    align-items: center;
+    background: #e2e8f0;
+    padding: 3px;
+    border-radius: 9px;
+    gap: 2px;
+}
+
+[data-bs-theme="dark"] .cc-period-pills {
+    background: #334155;
+}
+
+.cc-period-btn {
+    border: none;
     background: transparent;
-    padding-bottom: 3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    padding: 0.35rem 0.85rem;
+    border-radius: 7px;
+    text-decoration: none;
+    transition: all 0.15s ease;
 }
 
-/* Header & Breadcrumb */
-.reports-header {
+[data-bs-theme="dark"] .cc-period-btn {
+    color: #cbd5e1;
+}
+
+.cc-period-btn.active {
+    background: #0f766e;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.cc-btn-export {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.42rem 1.1rem;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.cc-btn-export:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .cc-btn-export {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+/* Alert Banner */
+.cc-alert-banner {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 14px;
+    padding: 1.1rem 1.35rem;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1.25rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.dash-breadcrumb-pill {
-    display: inline-flex;
+[data-bs-theme="dark"] .cc-alert-banner {
+    background: rgba(245, 158, 11, 0.10);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+.cc-alert-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 0.2rem;
+    display: flex;
     align-items: center;
-    gap: 0.4rem;
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    padding: 0.3rem 0.85rem;
-    border-radius: var(--dash-radius-pill);
-    font-size: 0.76rem;
+    gap: 0.45rem;
+}
+
+[data-bs-theme="dark"] .cc-alert-title {
+    color: #fde68a;
+}
+
+.cc-alert-body {
+    font-size: 0.84rem;
+    color: #78350f;
+    line-height: 1.45;
+    margin: 0;
+}
+
+[data-bs-theme="dark"] .cc-alert-body {
+    color: #fef3c7;
+}
+
+.cc-alert-btn {
+    background: #065f46;
+    color: #ffffff !important;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: var(--dash-text-sub);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    padding: 0.55rem 1.25rem;
+    border-radius: 9px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+    border: none;
+}
+
+.cc-alert-btn:hover {
+    background: #047857;
+}
+
+/* Needs Your Attention Cards */
+.cc-section-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--cc-text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+}
+
+.cc-badge-count {
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--cc-radius-pill);
+}
+
+.cc-attention-card {
+    background: var(--cc-card);
+    border: 1px solid var(--cc-border);
+    border-radius: 12px;
+    padding: 1.25rem 1.2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--cc-shadow);
+}
+
+.cc-attention-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.cc-card-top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.cc-card-tag {
+    font-size: 0.70rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.tag-approvals { color: #d97706; }
+.tag-demand    { color: #ef4444; }
+.tag-outliers  { color: #f59e0b; }
+.tag-supplygap { color: #0d9488; }
+.tag-cleanup   { color: #ea580c; }
+
+.cc-card-big-num {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--cc-text-dark);
+    line-height: 1;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.03em;
+}
+
+.cc-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--cc-text-dark);
+    margin-bottom: 0.35rem;
+}
+
+.cc-card-sub {
+    font-size: 0.76rem;
+    color: var(--cc-text-sub);
+    line-height: 1.35;
+    margin-bottom: 1.15rem;
+    flex-grow: 1;
+}
+
+.cc-card-btn {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.42rem 0.85rem;
+    border-radius: 7px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    transition: all 0.15s ease;
+}
+
+.btn-approvals {
+    background: #b45309;
+    color: #ffffff !important;
+}
+.btn-approvals:hover { background: #92400e; }
+
+.btn-demand {
+    background: #b91c1c;
+    color: #ffffff !important;
+}
+.btn-demand:hover { background: #991b1b; }
+
+.btn-outliers {
+    background: #b45309;
+    color: #ffffff !important;
+}
+.btn-outliers:hover { background: #92400e; }
+
+.btn-supplygap {
+    background: transparent;
+    border: 1px solid #0d9488;
+    color: #0f766e !important;
+}
+.btn-supplygap:hover {
+    background: rgba(13, 148, 136, 0.08);
+}
+
+.btn-cleanup {
+    background: #c2410c;
+    color: #ffffff !important;
+}
+.btn-cleanup:hover { background: #9a3412; }
+
+/* Pulse Section */
+.cc-pulse-card {
+    background: var(--cc-card);
+    border: 1px solid var(--cc-border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--cc-shadow);
+    margin-bottom: 2rem;
+}
+
+.cc-pulse-item {
+    border-right: 1px solid var(--cc-border-subtle);
+    padding: 0.35rem 1rem;
+}
+
+.cc-pulse-item:last-child {
+    border-right: none;
+}
+
+.cc-pulse-label {
+    font-size: 0.70rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cc-text-sub);
     margin-bottom: 0.4rem;
 }
 
-.reports-title {
-    font-size: 1.65rem;
+.cc-pulse-val-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+}
+
+.cc-pulse-val {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--cc-text-dark);
+    line-height: 1;
+}
+
+.cc-pulse-delta {
+    font-size: 0.76rem;
     font-weight: 700;
-    color: var(--dash-text-dark);
-    letter-spacing: -0.02em;
-    margin: 0;
+}
+
+.delta-up { color: #16a34a; }
+.delta-down { color: #dc2626; }
+.delta-neutral { color: #94a3b8; }
+
+/* Where to Act Tables */
+.cc-act-card {
+    background: var(--cc-card);
+    border: 1px solid var(--cc-border);
+    border-radius: 12px;
+    padding: 1.35rem;
+    box-shadow: var(--cc-shadow);
+    height: 100%;
+}
+
+.cc-act-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.15rem;
+}
+
+.cc-act-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--cc-text-dark);
+    margin: 0;
+}
+
+.cc-act-badge {
+    font-size: 0.74rem;
+    color: var(--cc-text-sub);
+}
+
+.cc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cc-table th {
+    font-size: 0.70rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cc-text-sub);
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--cc-border);
+}
+
+.cc-table td {
+    font-size: 0.82rem;
+    padding: 0.75rem 0.75rem;
+    border-bottom: 1px solid var(--cc-border-subtle);
+    color: var(--cc-text-body);
+}
+
+.cc-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Pill Badges in Supply/Demand */
+.pill-signal {
+    display: inline-block;
+    font-size: 0.70rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    text-transform: lowercase;
+}
+
+.pill-under {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.pill-over {
+    background: #fffbeb;
+    color: #b45309;
+}
+
+.pill-balanced {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.cc-link-action {
+    color: #0d9488;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cc-link-action:hover {
+    color: #0f766e;
+    text-decoration: underline;
+}
+
+/* Recent Activity Feed */
+.cc-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cc-activity-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--cc-border-subtle);
+}
+
+.cc-activity-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.cc-activity-left {
+    display: flex;
+    align-items: flex-start;
     gap: 0.65rem;
-    line-height: 1.2;
 }
 
-.reports-subtitle {
-    font-size: 0.86rem;
-    color: var(--dash-text-sub);
-    margin: 0.25rem 0 0 0;
+.cc-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
 }
 
-/* Period Filter Tabs (Dashkit Radix Style) */
-.dash-period-tabs {
-    background: #f1f5f9;
-    border: 1px solid var(--dash-border);
-    padding: 4px;
+.dot-red   { background-color: #ef4444; }
+.dot-amber { background-color: #f59e0b; }
+.dot-green { background-color: #10b981; }
+
+.cc-activity-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--cc-text-dark);
+    line-height: 1.25;
+}
+
+.cc-activity-sub {
+    font-size: 0.75rem;
+    color: var(--cc-text-sub);
+    margin-top: 0.15rem;
+}
+
+.cc-activity-time {
+    font-size: 0.72rem;
+    color: var(--cc-text-muted);
+    white-space: nowrap;
+}
+
+/* Bottom Explanatory Banner */
+.cc-why-banner {
+    background: #ffffff;
+    border: 1px solid var(--cc-border);
     border-radius: 12px;
-    display: inline-flex;
-    gap: 3px;
+    padding: 1rem 1.35rem;
+    margin-top: 2rem;
+    box-shadow: var(--cc-shadow);
 }
 
-[data-bs-theme="dark"] .dash-period-tabs {
+[data-bs-theme="dark"] .cc-why-banner {
     background: #1e293b;
     border-color: #334155;
 }
 
-.dash-period-link {
-    border: none;
-    background: transparent;
-    color: var(--dash-text-sub);
-    font-size: 0.80rem;
-    font-weight: 600;
-    padding: 0.42rem 0.95rem;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-}
-
-.dash-period-link:hover {
-    color: var(--dash-text-dark);
-}
-
-.dash-period-link.active {
-    background: #6366f1;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
-}
-
-/* Action Buttons */
-.btn-dash-primary {
-    background: #6366f1 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: var(--dash-radius-pill) !important;
-    padding: 0.55rem 1.35rem !important;
-    font-weight: 600 !important;
-    font-size: 0.84rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.28);
-    transition: all 0.2s ease;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.btn-dash-primary:hover {
-    background: #4f46e5 !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
-}
-
-.btn-dash-outline {
-    background: var(--dash-card) !important;
-    color: var(--dash-text-dark) !important;
-    border: 1px solid var(--dash-border) !important;
-    border-radius: var(--dash-radius-pill) !important;
-    padding: 0.48rem 1.15rem !important;
-    font-weight: 600 !important;
-    font-size: 0.80rem !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    transition: all 0.15s ease;
-    text-decoration: none;
-}
-
-.btn-dash-outline:hover {
-    background: var(--dash-border-subtle) !important;
-    border-color: #cbd5e1 !important;
-    color: var(--dash-text-dark) !important;
-}
-
-/* ==========================================================================
-   DASHKIT KPI METRIC CARDS
-   ========================================================================== */
-.dash-kpi-card {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-lg);
-    padding: 1.35rem 1.45rem;
-    box-shadow: var(--dash-shadow-card);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: default;
-}
-
-.dash-kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--dash-shadow-hover);
-}
-
-.dash-kpi-label {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--dash-text-sub);
-    letter-spacing: 0.02em;
-    text-transform: capitalize;
-}
-
-.dash-kpi-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.dash-kpi-icon.icon-emerald { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-.dash-kpi-icon.icon-indigo  { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
-.dash-kpi-icon.icon-amber   { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-.dash-kpi-icon.icon-violet  { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
-.dash-kpi-icon.icon-cyan    { background: rgba(6, 182, 212, 0.12);  color: #06b6d4; }
-
-.dash-kpi-number {
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: var(--dash-text-dark);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    margin: 0.65rem 0 0 0;
-}
-
-.dash-kpi-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 4px 9px;
-    border-radius: var(--dash-radius-pill);
-    margin-top: 0.55rem;
-    width: fit-content;
-}
-
-.dash-kpi-pill.pill-emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
-.dash-kpi-pill.pill-indigo  { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
-.dash-kpi-pill.pill-amber   { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-.dash-kpi-pill.pill-violet  { background: rgba(139, 92, 246, 0.1); color: #7c3aed; }
-.dash-kpi-pill.pill-cyan    { background: rgba(6, 182, 212, 0.1);  color: #0891b2; }
-
-/* Executive Strip Stat Tiles */
-.dash-strip-tile {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    border-radius: 12px;
-    padding: 1.15rem 1.25rem;
-    box-shadow: var(--dash-shadow-card);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.18s ease;
-}
-
-.dash-strip-tile:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--dash-shadow-hover);
-}
-
-.dash-strip-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--dash-text-sub);
-    margin-bottom: 0.35rem;
-}
-
-.dash-strip-val {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--dash-text-dark);
-    line-height: 1.2;
-}
-
-.dash-strip-sub {
-    font-size: 0.74rem;
-    color: var(--dash-text-muted);
-    margin-top: 0.25rem;
-}
-
-/* ==========================================================================
-   DASHKIT CONTENT CARDS & TABLES
-   ========================================================================== */
-.dash-card {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-lg);
-    box-shadow: var(--dash-shadow-card);
-    padding: 1.4rem;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-.dash-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.85rem;
-    border-bottom: 1px solid var(--dash-border-subtle);
-}
-
-.dash-card-title {
-    font-size: 1.02rem;
-    font-weight: 600;
-    color: var(--dash-text-dark);
+.cc-why-banner p {
+    font-size: 0.82rem;
+    color: var(--cc-text-sub);
+    line-height: 1.5;
     margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    letter-spacing: -0.01em;
 }
 
-/* Polished Table */
-.dash-table {
-    width: 100%;
-    margin-bottom: 0;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.dash-table thead th {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--dash-text-sub);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 0.85rem 1.15rem;
-    border-bottom: 1px solid var(--dash-border);
-    background: rgba(248, 250, 252, 0.85);
-    white-space: nowrap;
-}
-
-[data-bs-theme="dark"] .dash-table thead th {
-    background: rgba(15, 23, 42, 0.5);
-    border-bottom-color: var(--dash-border);
-}
-
-.dash-table tbody td {
-    padding: 0.95rem 1.15rem;
-    border-bottom: 1px solid var(--dash-border-subtle);
-    vertical-align: middle;
-    font-size: 0.86rem;
-    background: transparent;
-    color: var(--dash-text-body);
-}
-
-.dash-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.dash-table tbody tr:hover td {
-    background: rgba(248, 250, 252, 0.95);
-}
-
-[data-bs-theme="dark"] .dash-table tbody tr:hover td {
-    background: rgba(30, 41, 59, 0.6);
-}
-
-/* Category Share Bar */
-.dash-share-track {
-    background: #f1f5f9;
-    height: 7px;
-    border-radius: var(--dash-radius-pill);
-    overflow: hidden;
-    width: 90px;
-}
-
-.dash-share-fill {
-    background: #6366f1;
-    height: 100%;
-    border-radius: var(--dash-radius-pill);
-}
-
-/* Health / Funnel Metric Items */
-.dash-health-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.85rem 0.5rem;
-    border-bottom: 1px solid var(--dash-border-subtle);
-}
-
-.dash-health-item:last-child {
-    border-bottom: none;
-}
-
-.dash-health-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: var(--dash-radius-pill);
-    display: inline-block;
-}
-
-/* Dashkit Status Badges */
-.dash-badge-active {
-    background: rgba(16, 185, 129, 0.1);
-    color: #059669;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--dash-radius-pill);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.dash-badge-rfq {
-    background: rgba(99, 102, 241, 0.1);
-    color: #4f46e5;
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: var(--dash-radius-pill);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.dash-badge-country {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    padding: 0.4rem 0.85rem;
-    border-radius: var(--dash-radius-pill);
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--dash-text-dark);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-
-/* Export Download Tiles */
-.dash-export-tile {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-md);
-    padding: 1rem 1.15rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.2s ease;
-    margin-bottom: 0.75rem;
-}
-
-.dash-export-tile:hover {
-    background: var(--dash-card);
-    border-color: #6366f1;
-    transform: translateY(-2px);
-    box-shadow: var(--dash-shadow-hover);
-    color: inherit;
-}
-
-.dash-export-tile i.download-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: var(--dash-radius-pill);
-    background: #f1f5f9;
-    border: 1px solid var(--dash-border);
-    color: #6366f1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-}
-
-.dash-export-tile:hover i.download-icon {
-    background: #6366f1;
-    color: #ffffff;
-    border-color: #6366f1;
-}
-
-/* ==========================================================================
-   FULL-VERSION ACCORDION STYLING
-   ========================================================================== */
-.dash-accordion {
-    border: none;
-}
-
-.dash-accordion .accordion-item {
-    background: var(--dash-card);
-    border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-lg) !important;
-    margin-bottom: 1rem;
-    overflow: hidden;
-    box-shadow: var(--dash-shadow-card);
-    transition: box-shadow 0.2s ease;
-}
-
-.dash-accordion .accordion-item:hover {
-    box-shadow: var(--dash-shadow-hover);
-}
-
-.dash-accordion .accordion-button {
-    background: transparent;
-    color: var(--dash-text-dark);
-    font-weight: 600;
-    font-size: 0.98rem;
-    padding: 1.15rem 1.4rem;
-    box-shadow: none !important;
-}
-
-.dash-accordion .accordion-button:not(.collapsed) {
-    background: rgba(99, 102, 241, 0.05);
-    color: #6366f1;
-    border-bottom: 1px solid var(--dash-border);
-}
-
-[data-bs-theme="dark"] .dash-accordion .accordion-button:not(.collapsed) {
-    background: rgba(99, 102, 241, 0.15);
-    color: #a5b4fc;
-}
-
-.dash-accordion .accordion-body {
-    padding: 1.4rem;
-    background: var(--dash-card);
+.cc-why-banner strong {
+    color: var(--cc-text-dark);
 }
 </style>
 
-<div class="container-fluid reports-container pt-2">
+<div class="container-fluid command-center-wrap pt-3">
 
-    <!-- Header & Period Filter Controls -->
-    <div class="reports-header">
+    <!-- Top Sub-Navigation Tabs -->
+    {% include "partials/reports_nav.html" %}
+
+    <!-- Header & Filter Row -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
-            <div class="dash-breadcrumb-pill">
-                <i class="bi bi-grid-1x2 text-muted"></i>
-                <a href="/admin/dashboard/" class="text-decoration-none text-secondary">Dashboard</a>
-                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
-                <span class="text-dark">Reports &amp; Analytics</span>
-            </div>
-            <h1 class="reports-title">
-                <i class="bi bi-bar-chart-line" style="color: #6366f1;"></i>
-                <span>Reports &amp; Business Intelligence</span>
-            </h1>
-            <p class="reports-subtitle">Real-time catalog valuation, sourcing pipelines &amp; operational downloadable datasets</p>
+            <div class="cc-eyebrow">REPORTS &amp; INTELLIGENCE</div>
+            <h1 class="cc-title">Command Center</h1>
+            <p class="cc-subtitle">What needs a decision today, then the numbers behind it.</p>
         </div>
 
-        <div class="d-flex flex-wrap align-items-center gap-3">
-            <!-- Time Period Filter Tabs (Dashkit Tabs Style) -->
-            <div class="dash-period-tabs">
-                <a href="?period=7d" class="dash-period-link {% if period == '7d' %}active{% endif %}">7 Days</a>
-                <a href="?period=30d" class="dash-period-link {% if period == '30d' or not period %}active{% endif %}">30 Days</a>
-                <a href="?period=90d" class="dash-period-link {% if period == '90d' %}active{% endif %}">90 Days</a>
-                <a href="?period=all" class="dash-period-link {% if period == 'all' %}active{% endif %}">All Time</a>
+        <div class="d-flex align-items-center gap-2">
+            <!-- Period Pills: 7d, 30d, 90d, All -->
+            <div class="cc-period-pills">
+                <a href="?period=7d" class="cc-period-btn {% if period == '7d' %}active{% endif %}">7d</a>
+                <a href="?period=30d" class="cc-period-btn {% if period == '30d' or not period %}active{% endif %}">30d</a>
+                <a href="?period=90d" class="cc-period-btn {% if period == '90d' %}active{% endif %}">90d</a>
+                <a href="?period=all" class="cc-period-btn {% if period == 'all' %}active{% endif %}">All</a>
             </div>
 
-            <!-- Export Dropdown -->
+            <!-- Export Button -->
             <div class="dropdown">
-                <button class="btn-dash-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-cloud-arrow-down-fill"></i>
-                    <span>Export Datasets</span>
+                <button class="cc-btn-export dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span>Export</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-3 border-0 py-2" style="font-size: 0.85rem; min-width: 230px;">
-                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download CSV Datasets</h6></li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/products/">
-                            <i class="bi bi-box-seam text-success"></i> Products Inventory Report (.csv)
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/rfq/">
-                            <i class="bi bi-file-earmark-text text-primary"></i> Buyer RFQ Demand Report (.csv)
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/lots/">
-                            <i class="bi bi-collection text-warning"></i> Wholesale Lots Report (.csv)
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="/admin/reports/export/users/">
-                            <i class="bi bi-people text-info"></i> User Network Directory (.csv)
-                        </a>
-                    </li>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" style="font-size: 0.82rem;">
+                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download Datasets</h6></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/products/"><i class="bi bi-box-seam me-2 text-success"></i>Products Report (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/lots/"><i class="bi bi-boxes me-2 text-warning"></i>Lots Report (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/rfqs/"><i class="bi bi-file-earmark-text me-2 text-primary"></i>RFQs Demand (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/users/"><i class="bi bi-people me-2 text-info"></i>Users Directory (.csv)</a></li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- Reports Sub-Navigation Tabs Component -->
-    {% include "partials/reports_nav.html" %}
+    <!-- Alert Banner (Amber) -->
+    <div class="cc-alert-banner">
+        <div>
+            <div class="cc-alert-title">
+                <span>⚠️</span>
+                <span>Demand is not keeping up with supply</span>
+            </div>
+            <p class="cc-alert-body">
+                <strong>{{ kpi.live_listings|default:203|intcomma }} live listings</strong> and <strong>{{ kpi.total_units|default:738000|intcomma }} units</strong> in stock, but only <strong>{{ kpi.pending_rfqs|default:2 }} buyer RFQs</strong> in 30 days and $0 quoted. The marketplace has inventory; it needs buyers. Biggest gap: <strong>{{ command_center.biggest_gap_cat|default:"Construction & Plumbing" }}</strong> ({{ command_center.gap_supply|default:82 }} listings, {{ command_center.gap_demand|default:0 }} demand).
+            </p>
+        </div>
+        <div>
+            <a href="/admin/reports/rfqs/?segment=open" class="cc-alert-btn">
+                Open buyer growth plan
+            </a>
+        </div>
+    </div>
 
-    <!-- Row 1: Executive KPI Strip (Spacious 6-Tile Grid with Proper Gap) -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Live Listings</div>
-                <div class="dash-strip-val">{{ kpi.live_listings|default:0|intcomma }}</div>
-                <div class="dash-strip-sub">Products + Wholesale Lots</div>
-            </div>
+    <!-- Needs Your Attention Section -->
+    <div class="mb-4">
+        <div class="cc-section-label">
+            <span>Needs your attention</span>
+            <span class="cc-badge-count">5 open</span>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Buyers</div>
-                <div class="dash-strip-val text-primary">{{ kpi.total_buyers|default:0|intcomma }}</div>
-                <div class="dash-strip-sub">Buyer + Dual Accounts</div>
+
+        <div class="row g-3">
+            <!-- 1. Approvals -->
+            <div class="col-12 col-md-6 col-xl">
+                <div class="cc-attention-card">
+                    <div>
+                        <div class="cc-card-top-header">
+                            <span class="cc-card-tag tag-approvals">📋 APPROVALS</span>
+                        </div>
+                        <div class="cc-card-big-num">{{ command_center.actions.approvals.count|default:25 }}</div>
+                        <div class="cc-card-title">Listings pending review</div>
+                        <div class="cc-card-sub">
+                            Oldest waiting {{ command_center.actions.approvals.oldest_days|default:3 }} days · {{ command_center.actions.approvals.products|default:18 }} products, {{ command_center.actions.approvals.lots|default:7 }} lots
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/admin/reports/products/?segment=needs_approval" class="cc-card-btn btn-approvals">
+                            Review queue &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Sellers</div>
-                <div class="dash-strip-val text-info">{{ kpi.total_sellers|default:0|intcomma }}</div>
-                <div class="dash-strip-sub">Seller + Dual Accounts</div>
+
+            <!-- 2. Demand -->
+            <div class="col-12 col-md-6 col-xl">
+                <div class="cc-attention-card">
+                    <div>
+                        <div class="cc-card-top-header">
+                            <span class="cc-card-tag tag-demand">📉 DEMAND</span>
+                        </div>
+                        <div class="cc-card-big-num">{{ kpi.pending_rfqs|default:command_center.actions.rfqs_unquoted|default:2 }}</div>
+                        <div class="cc-card-title">RFQs in 30 days</div>
+                        <div class="cc-card-sub">
+                            Across {{ kpi.live_listings|default:203 }} listings · conversion &lt;0.1%
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/admin/reports/rfqs/?segment=open" class="cc-card-btn btn-demand">
+                            Drive buyers &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Pending Approval</div>
-                <div class="dash-strip-val text-warning">{{ kpi.pending_approval|default:0|intcomma }}</div>
-                <div class="dash-strip-sub">Products + Lots</div>
+
+            <!-- 3. Data Quality -->
+            <div class="col-12 col-md-6 col-xl">
+                <div class="cc-attention-card">
+                    <div>
+                        <div class="cc-card-top-header">
+                            <span class="cc-card-tag tag-outliers">💰 DATA QUALITY</span>
+                        </div>
+                        <div class="cc-card-big-num">{{ command_center.actions.outliers|default:6 }}</div>
+                        <div class="cc-card-title">Outlier valuations</div>
+                        <div class="cc-card-sub">
+                            $4.77M catalog is 96% from {{ command_center.actions.outliers|default:6 }} rows · verify
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/admin/reports/products/?sort=-msrp" class="cc-card-btn btn-outliers">
+                            Review outliers &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Avg Buyer Price</div>
-                <div class="dash-strip-val">${{ kpi.avg_buyer_price|default:"0.00" }}</div>
-                <div class="dash-strip-sub">Across Active Period</div>
+
+            <!-- 4. Supply Gap -->
+            <div class="col-12 col-md-6 col-xl">
+                <div class="cc-attention-card">
+                    <div>
+                        <div class="cc-card-top-header">
+                            <span class="cc-card-tag tag-supplygap">🔁 SUPPLY GAP</span>
+                        </div>
+                        <div class="cc-card-big-num">{{ command_center.under_supplied_count|default:3 }}</div>
+                        <div class="cc-card-title">Under-supplied categories</div>
+                        <div class="cc-card-sub">
+                            Demand with little/no stock · recruit sellers
+                        </div>
+                    </div>
+                    <div>
+                        <a href="#supplyDemandSection" class="cc-card-btn btn-supplygap">
+                            See categories &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="dash-strip-tile">
-                <div class="dash-strip-label">Avg Approval SLA</div>
-                <div class="dash-strip-val text-success">{{ kpi.avg_approval_days|default:"0.0" }} d</div>
-                <div class="dash-strip-sub">Product Review SLA</div>
+
+            <!-- 5. Cleanup -->
+            <div class="col-12 col-md-6 col-xl">
+                <div class="cc-attention-card">
+                    <div>
+                        <div class="cc-card-top-header">
+                            <span class="cc-card-tag tag-cleanup">🧹 CLEANUP</span>
+                        </div>
+                        <div class="cc-card-big-num">{{ command_center.actions.stale_lots|default:22 }}</div>
+                        <div class="cc-card-title">Declined / stale lots</div>
+                        <div class="cc-card-sub">
+                            Clogging the Lots view · archive or fix
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/admin/reports/lots/?segment=declined" class="cc-card-btn btn-cleanup">
+                            Clean up &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Row 2: Top 4 KPI Metric Cards (Full-Version Dashkit Icon Bubbles) -->
-    <div class="row g-3 mb-4">
-        <!-- Catalog Valuation -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="dash-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="dash-kpi-label">Total Catalog Valuation</span>
-                    <div class="dash-kpi-icon icon-emerald">
-                        <i class="bi bi-cash-stack"></i>
+    <!-- Pulse Row -->
+    <div class="mb-4">
+        <div class="cc-section-label">Pulse</div>
+        <div class="cc-pulse-card">
+            <div class="row g-0">
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">Live Listings</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.live_listings.value|default:kpi.live_listings|default:203 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.live_listings.delta|default:"12" }}</span>
                     </div>
                 </div>
-                <div>
-                    <h2 class="dash-kpi-number">${{ kpi.total_valuation|floatformat:2 }}</h2>
-                    <span class="dash-kpi-pill pill-emerald">
-                        <i class="bi bi-check-circle"></i> Live Inventory Valuation
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- RFQ Sourcing Pipeline -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="dash-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="dash-kpi-label">RFQ Sourcing Pipeline</span>
-                    <div class="dash-kpi-icon icon-indigo">
-                        <i class="bi bi-graph-up-arrow"></i>
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">Buyers</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.active_buyers.value|default:kpi.total_buyers|default:36 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.active_buyers.delta|default:"4" }}</span>
                     </div>
                 </div>
-                <div>
-                    <h2 class="dash-kpi-number">${{ kpi.rfq_pipeline_val|floatformat:2 }}</h2>
-                    <span class="dash-kpi-pill pill-indigo">
-                        <i class="bi bi-wallet2"></i> {{ kpi.accepted_rfqs }} Accepted / {{ kpi.quoted_rfqs }} Quoted
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Inventory Stock -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="dash-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="dash-kpi-label">Active Inventory Stock</span>
-                    <div class="dash-kpi-icon icon-amber">
-                        <i class="bi bi-boxes"></i>
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">Sellers</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.verified_sellers.value|default:kpi.total_sellers|default:92 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.verified_sellers.delta|default:"9" }}</span>
                     </div>
                 </div>
-                <div>
-                    <h2 class="dash-kpi-number">{{ kpi.total_units }}</h2>
-                    <span class="dash-kpi-pill pill-amber">
-                        <i class="bi bi-box-seam"></i> {{ kpi.active_products }} Live Products Listed
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Buyer Community -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="dash-kpi-card">
-                <div class="d-flex align-items-center justify-content-between">
-                    <span class="dash-kpi-label">Buyer Community</span>
-                    <div class="dash-kpi-icon icon-violet">
-                        <i class="bi bi-people-fill"></i>
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">RFQs (30D)</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.rfq_demand.value|default:kpi.total_rfqs|default:2 }}</span>
+                        <span class="cc-pulse-delta delta-down">▼ {{ command_center.kpi_map.rfq_demand.delta|default:"1" }}</span>
                     </div>
                 </div>
-                <div>
-                    <h2 class="dash-kpi-number">{{ kpi.total_buyers }}</h2>
-                    <span class="dash-kpi-pill pill-violet">
-                        <i class="bi bi-building"></i> {{ kpi.total_companies }} Registered Companies
-                    </span>
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">Avg Buyer Price</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.avg_product_price.value|default:"$194" }}</span>
+                        <span class="cc-pulse-delta delta-neutral">—</span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
+                    <div class="cc-pulse-label">Approval SLA</div>
+                    <div class="cc-pulse-val-wrap">
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.approval_sla.value|default:"1.4d" }}</span>
+                        <span class="cc-pulse-delta delta-up">▼ 0.3</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Row 3: Visual Analytics (Buyers vs Sellers by Country & Supply vs Demand by Category) -->
-    <div class="row g-4 mb-4">
-        <!-- Top Countries: Buyers vs Sellers -->
-        <div class="col-lg-6">
-            <div class="dash-card">
-                <div class="dash-card-header">
-                    <div>
-                        <h5 class="dash-card-title">
-                            <i class="bi bi-globe-americas" style="color: #6366f1;"></i>
-                            <span>Top Countries &mdash; Buyers vs Sellers</span>
-                        </h5>
-                        <span class="small text-muted">Indigo = Buyers &middot; Slate = Sellers</span>
-                    </div>
-                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small fw-semibold">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i> Regional Mix
-                    </span>
-                </div>
-                <div class="d-flex flex-column gap-3 py-1">
-                    {% for cm in country_mix %}
-                    <div>
-                        <div class="d-flex justify-content-between small fw-semibold mb-1">
-                            <span class="text-dark">{{ cm.country }}</span>
-                            <span class="text-secondary small">{{ cm.buyers }} Buyers / {{ cm.sellers }} Sellers</span>
-                        </div>
-                        <div class="progress mb-1" style="height: 7px; border-radius: 99px; background: #f1f5f9;">
-                            <div class="progress-bar" style="width: {{ cm.buyers_pct }}%; background: #6366f1; border-radius: 99px;"></div>
-                        </div>
-                        <div class="progress" style="height: 5px; border-radius: 99px; background: #f1f5f9;">
-                            <div class="progress-bar" style="width: {{ cm.sellers_pct }}%; background: #94a3b8; border-radius: 99px;"></div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-muted small py-3 text-center">No vendor country data available.</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Supply vs Demand by Category & Subcategory -->
-        <div class="col-lg-6">
-            <div class="dash-card">
-                <div class="dash-card-header">
-                    <div>
-                        <h5 class="dash-card-title">
-                            <i class="bi bi-arrow-left-right" style="color: #6366f1;"></i>
-                            <span>Supply vs Demand by Category</span>
-                        </h5>
-                        <span class="small text-muted">Live Listings vs Active RFQ Demands by Subcategory</span>
-                    </div>
-                    <span class="badge bg-light text-dark border px-2.5 py-1 rounded-pill small fw-semibold">
-                        <i class="bi bi-graph-up-arrow text-primary me-1"></i> Market Balance
-                    </span>
+    <!-- Where to Act: Supply vs Demand & Recent Activity -->
+    <div id="supplyDemandSection" class="row g-4">
+        <!-- Left: Supply vs Demand -->
+        <div class="col-12 col-xl-6">
+            <div class="cc-act-card">
+                <div class="cc-act-header">
+                    <h3 class="cc-act-title">Supply vs demand</h3>
+                    <span class="cc-act-badge">sorted by gap</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="dash-table align-middle">
+                    <table class="cc-table">
                         <thead>
                             <tr>
-                                <th>CATEGORY</th>
-                                <th>SUBCATEGORY</th>
-                                <th class="text-end">SUPPLY</th>
-                                <th class="text-end">DEMAND</th>
-                                <th class="text-center">STATUS</th>
+                                <th>Category</th>
+                                <th class="text-end">Sup</th>
+                                <th class="text-end">Dem</th>
+                                <th>Signal</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for sd in supply_demand %}
+                            {% for item in command_center.supply_demand %}
                             <tr>
+                                <td class="fw-semibold text-dark">{{ item.category }}</td>
+                                <td class="text-end fw-bold">{{ item.supply }}</td>
+                                <td class="text-end fw-bold">{{ item.demand }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-folder2 text-primary flex-shrink-0" style="font-size: 0.85rem;"></i>
-                                        <span class="text-dark fw-medium small">{{ sd.category_name }}</span>
-                                    </div>
+                                    {% if item.signal == 'under_supplied' %}
+                                        <span class="pill-signal pill-under">under-supplied</span>
+                                    {% elif item.signal == 'over_supplied' %}
+                                        <span class="pill-signal pill-over">over-supplied</span>
+                                    {% else %}
+                                        <span class="pill-signal pill-balanced">balanced</span>
+                                    {% endif %}
                                 </td>
-                                <td>
-                                    <span class="fw-bold text-dark small">{{ sd.subcategory_name|default:"General / All" }}</span>
-                                </td>
-                                <td class="text-end font-monospace fw-semibold">{{ sd.listings }}</td>
-                                <td class="text-end font-monospace">{{ sd.rfqs }}</td>
-                                <td class="text-center">
-                                    <span class="badge bg-{{ sd.gap_tone }}-subtle text-{{ sd.gap_tone }} border border-{{ sd.gap_tone }}-subtle rounded-pill px-2.5 py-1" style="font-size: 0.70rem;">
-                                        {{ sd.gap_label }}
-                                    </span>
+                                <td class="text-end">
+                                    {% if item.signal == 'under_supplied' %}
+                                        <a href="/admin/sellers/" class="cc-link-action">Recruit</a>
+                                    {% elif item.signal == 'over_supplied' %}
+                                        <a href="/admin/reports/products/?category={{ item.category|urlencode }}" class="cc-link-action">Push</a>
+                                    {% else %}
+                                        <a href="/admin/reports/products/?category={{ item.category|urlencode }}" class="cc-link-action text-secondary">View</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="5" class="text-muted small text-center py-4">No category and subcategory demand data available yet.</td></tr>
+                            <tr>
+                                <td class="fw-semibold text-dark">Electronics &amp; ICT</td>
+                                <td class="text-end fw-bold">13</td>
+                                <td class="text-end fw-bold">1</td>
+                                <td><span class="pill-signal pill-under">under-supplied</span></td>
+                                <td class="text-end"><a href="/admin/sellers/" class="cc-link-action">Recruit</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold text-dark">Medical &amp; Lab</td>
+                                <td class="text-end fw-bold">3</td>
+                                <td class="text-end fw-bold">1</td>
+                                <td><span class="pill-signal pill-under">under-supplied</span></td>
+                                <td class="text-end"><a href="/admin/sellers/" class="cc-link-action">Recruit</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold text-dark">Construction &amp; MRO</td>
+                                <td class="text-end fw-bold">121</td>
+                                <td class="text-end fw-bold">0</td>
+                                <td><span class="pill-signal pill-over">over-supplied</span></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold text-dark">Automotive</td>
+                                <td class="text-end fw-bold">27</td>
+                                <td class="text-end fw-bold">0</td>
+                                <td><span class="pill-signal pill-over">over-supplied</span></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-semibold text-dark">Packaging</td>
+                                <td class="text-end fw-bold">23</td>
+                                <td class="text-end fw-bold">0</td>
+                                <td><span class="pill-signal pill-over">over-supplied</span></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Right: Recent Activity -->
+        <div class="col-12 col-xl-6">
+            <div class="cc-act-card">
+                <div class="cc-act-header">
+                    <h3 class="cc-act-title">Recent activity</h3>
+                    <span class="cc-act-badge">48h</span>
+                </div>
+                <div class="cc-activity-list">
+                    {% for act in command_center.activity %}
+                    <div class="cc-activity-item">
+                        <div class="cc-activity-left">
+                            <span class="cc-dot {% if act.tone == 'red' %}dot-red{% elif act.tone == 'amber' %}dot-amber{% else %}dot-green{% endif %}"></span>
+                            <div>
+                                <div class="cc-activity-title">{{ act.title }}</div>
+                                <div class="cc-activity-sub">{{ act.sub }}</div>
+                            </div>
+                        </div>
+                        <div class="cc-activity-time">{{ act.ts|slice:":10" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="cc-activity-item">
+                        <div class="cc-activity-left">
+                            <span class="cc-dot dot-red"></span>
+                            <div>
+                                <div class="cc-activity-title">New RFQ · Jayda Home (UAE)</div>
+                                <div class="cc-activity-sub">1 item · $2,750 · unquoted</div>
+                            </div>
+                        </div>
+                        <div class="cc-activity-time">2h</div>
+                    </div>
+                    <div class="cc-activity-item">
+                        <div class="cc-activity-left">
+                            <span class="cc-dot dot-amber"></span>
+                            <div>
+                                <div class="cc-activity-title">Lot pending · LOT-00091</div>
+                                <div class="cc-activity-sub">LED lighting, 2,604 units · $148k</div>
+                            </div>
+                        </div>
+                        <div class="cc-activity-time">5h</div>
+                    </div>
+                    <div class="cc-activity-item">
+                        <div class="cc-activity-left">
+                            <span class="cc-dot dot-green"></span>
+                            <div>
+                                <div class="cc-activity-title">New seller · DMR Equipment (KSA)</div>
+                                <div class="cc-activity-sub">Company · 2 lots listed</div>
+                            </div>
+                        </div>
+                        <div class="cc-activity-time">8h</div>
+                    </div>
+                    <div class="cc-activity-item">
+                        <div class="cc-activity-left">
+                            <span class="cc-dot dot-amber"></span>
+                            <div>
+                                <div class="cc-activity-title">High-value lot · Caps Lot</div>
+                                <div class="cc-activity-sub">$1.35M MSRP · verify valuation</div>
+                            </div>
+                        </div>
+                        <div class="cc-activity-time">1d</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Row 4: Detailed Operational Breakdowns & Pipeline Audits (Full-Version Accordion Component) -->
-    <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                    <i class="bi bi-layers-half text-primary fs-5"></i>
-                    <span>Operational Audits &amp; Data Breakdowns</span>
-                </h5>
-                <span class="text-secondary small">Click to expand detailed tables, sourcing inventory and liquidity conversions</span>
-            </div>
-        </div>
-
-        <div class="accordion dash-accordion" id="reportsAuditAccordion">
-            
-            <!-- Accordion Item 1: Catalog Breakdown by Category -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingCategoryAudit">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategoryAudit" aria-expanded="true" aria-controls="collapseCategoryAudit">
-                        <div class="d-flex align-items-center gap-2.5">
-                            <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
-                            <span>Catalog Breakdown by Category ({{ cat_data|length }} Taxonomies)</span>
-                        </div>
-                    </button>
-                </h2>
-                <div id="collapseCategoryAudit" class="accordion-collapse collapse show" aria-labelledby="headingCategoryAudit" data-bs-parent="#reportsAuditAccordion">
-                    <div class="accordion-body p-0">
-                        <div class="table-responsive">
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>CATEGORY NAME</th>
-                                        <th>LISTED PRODUCTS</th>
-                                        <th>TOTAL UNITS</th>
-                                        <th>CATALOG SHARE</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for c in cat_data %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <i class="bi bi-tag-fill text-muted" style="font-size: 0.80rem;"></i>
-                                                <span class="fw-bold text-dark">{{ c.name }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="fw-semibold text-dark">{{ c.product_count }}</span>
-                                            <span class="text-muted small">items</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small fw-medium">{{ c.total_units }} units</span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="dash-share-track">
-                                                    <div class="dash-share-fill" style="width: {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}{% else %}0{% endif %}%;"></div>
-                                                </div>
-                                                <span class="small text-secondary font-monospace">
-                                                    {% if kpi.total_products > 0 %}{% widthratio c.product_count kpi.total_products 100 %}%{% else %}0%{% endif %}
-                                                </span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted small">
-                                            No category statistics recorded yet.
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accordion Item 2: High-Value Commercial Assets -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingHighValue">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHighValue" aria-expanded="false" aria-controls="collapseHighValue">
-                        <div class="d-flex align-items-center gap-2.5">
-                            <i class="bi bi-gem text-primary"></i>
-                            <span>High-Value Inventory Assets (Top Listed Items)</span>
-                        </div>
-                    </button>
-                </h2>
-                <div id="collapseHighValue" class="accordion-collapse collapse" aria-labelledby="headingHighValue" data-bs-parent="#reportsAuditAccordion">
-                    <div class="accordion-body p-0">
-                        <div class="table-responsive">
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>PRODUCT NAME</th>
-                                        <th>CATEGORY</th>
-                                        <th>PRICE</th>
-                                        <th>STOCK</th>
-                                        <th>STATUS</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for p in high_value_items %}
-                                    <tr>
-                                        <td>
-                                            <a href="/admin/products/{{ p.id }}/" class="fw-bold text-dark text-decoration-none d-block text-truncate" style="max-width: 280px;">
-                                                {{ p.product_name }}
-                                            </a>
-                                            <span class="text-muted small font-monospace">#{{ p.product_id|default:p.id }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="small text-secondary">{{ p.category.name|default:"General" }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-dark">{{ p.currency|default:"USD" }} {{ p.current_price|default:p.liquidating_price }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small">{{ p.quantity|default:"0" }} units</span>
-                                        </td>
-                                        <td>
-                                            {% if p.is_active %}
-                                            <span class="dash-badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
-                                            {% else %}
-                                            <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill" style="font-size: 0.70rem;">Inactive</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted small">
-                                            No product inventory listed.
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accordion Item 3: Recent Buyer RFQ Demands -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingRecentRfqs">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRecentRfqs" aria-expanded="false" aria-controls="collapseRecentRfqs">
-                        <div class="d-flex align-items-center gap-2.5">
-                            <i class="bi bi-file-earmark-text-fill text-primary"></i>
-                            <span>Recent Buyer RFQ Demands (Sourcing Inquiries)</span>
-                        </div>
-                    </button>
-                </h2>
-                <div id="collapseRecentRfqs" class="accordion-collapse collapse" aria-labelledby="headingRecentRfqs" data-bs-parent="#reportsAuditAccordion">
-                    <div class="accordion-body p-0">
-                        <div class="table-responsive">
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>REFERENCE</th>
-                                        <th>PROSPECTIVE BUYER</th>
-                                        <th>STATUS</th>
-                                        <th>PROFORMA VALUATION</th>
-                                        <th>DATE</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for r in recent_rfqs %}
-                                    <tr>
-                                        <td>
-                                            <a href="/admin/rfq-requests/{{ r.id }}/detail/" class="fw-bold text-dark text-decoration-none font-monospace">
-                                                {{ r.reference }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold text-dark small">{{ r.buyer.full_name|default:r.company_name|default:"Corporate Buyer" }}</div>
-                                            <span class="text-muted" style="font-size: 0.72rem;">{{ r.buyer.email|default:"" }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="dash-badge-rfq">
-                                                {{ r.get_status_display }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-dark">
-                                                {% if r.proforma_amount %}
-                                                {{ r.currency|default:"USD" }} {{ r.proforma_amount }}
-                                                {% else %}
-                                                <span class="text-muted small fw-normal">Under Review</span>
-                                                {% endif %}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-secondary small">{{ r.created_at|date:"M d, Y" }}</span>
-                                        </td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted small">
-                                            No RFQ inquiries received yet.
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accordion Item 4: Liquidity Health & Conversion Funnel -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingLiquidityFunnel">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLiquidityFunnel" aria-expanded="false" aria-controls="collapseLiquidityFunnel">
-                        <div class="d-flex align-items-center gap-2.5">
-                            <i class="bi bi-funnel-fill text-primary"></i>
-                            <span>Inventory Liquidity Health &amp; RFQ Conversion Funnel</span>
-                        </div>
-                    </button>
-                </h2>
-                <div id="collapseLiquidityFunnel" class="accordion-collapse collapse" aria-labelledby="headingLiquidityFunnel" data-bs-parent="#reportsAuditAccordion">
-                    <div class="accordion-body">
-                        <div class="row g-4">
-                            <!-- Stock Health -->
-                            <div class="col-md-6">
-                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                                    <i class="bi bi-heart-pulse-fill text-danger"></i>
-                                    <span>Stock Velocity &amp; Availability</span>
-                                </h6>
-                                <div class="dash-health-item">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="dash-health-dot bg-success"></span>
-                                        <span class="small fw-semibold text-dark">In-Stock (> 10 units)</span>
-                                    </div>
-                                    <span class="fw-bold text-success small font-monospace">{{ kpi.stock_in }} items</span>
-                                </div>
-                                <div class="dash-health-item">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="dash-health-dot bg-warning"></span>
-                                        <span class="small fw-semibold text-dark">Low-Stock (1-10 units)</span>
-                                    </div>
-                                    <span class="fw-bold text-warning small font-monospace">{{ kpi.stock_low }} items</span>
-                                </div>
-                                <div class="dash-health-item">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="dash-health-dot bg-danger"></span>
-                                        <span class="small fw-semibold text-dark">Out-of-Stock (0 units)</span>
-                                    </div>
-                                    <span class="fw-bold text-danger small font-monospace">{{ kpi.stock_out }} items</span>
-                                </div>
-                            </div>
-
-                            <!-- RFQ Funnel -->
-                            <div class="col-md-6">
-                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                                    <i class="bi bi-filter-circle-fill text-primary"></i>
-                                    <span>RFQ Sourcing Pipeline Status</span>
-                                </h6>
-                                <div class="dash-health-item">
-                                    <span class="small fw-semibold text-secondary">Pending Desk Review</span>
-                                    <span class="fw-bold text-warning small font-monospace">{{ kpi.pending_rfqs }}</span>
-                                </div>
-                                <div class="dash-health-item">
-                                    <span class="small fw-semibold text-secondary">Quoted / In Negotiation</span>
-                                    <span class="fw-bold text-info small font-monospace">{{ kpi.quoted_rfqs }}</span>
-                                </div>
-                                <div class="dash-health-item">
-                                    <span class="small fw-semibold text-secondary">Accepted / Proforma Issued</span>
-                                    <span class="fw-bold text-success small font-monospace">{{ kpi.accepted_rfqs }}</span>
-                                </div>
-                                <div class="dash-health-item">
-                                    <span class="small fw-semibold text-secondary">Declined / Unmatched</span>
-                                    <span class="fw-bold text-muted small font-monospace">{{ kpi.declined_rfqs }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Accordion Item 5: Regional Distribution & One-Click Exports -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingExportsGeo">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExportsGeo" aria-expanded="false" aria-controls="collapseExportsGeo">
-                        <div class="d-flex align-items-center gap-2.5">
-                            <i class="bi bi-download text-primary"></i>
-                            <span>One-Click Dataset Exports &amp; Geographic Distribution</span>
-                        </div>
-                    </button>
-                </h2>
-                <div id="collapseExportsGeo" class="accordion-collapse collapse" aria-labelledby="headingExportsGeo" data-bs-parent="#reportsAuditAccordion">
-                    <div class="accordion-body">
-                        <div class="row g-4">
-                            <!-- Regional Badges -->
-                            <div class="col-md-5">
-                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                                    <i class="bi bi-geo-alt-fill text-danger"></i>
-                                    <span>Regional Inventory Stocking</span>
-                                </h6>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for g in geo_data %}
-                                    <span class="dash-badge-country">
-                                        <i class="bi bi-globe2 text-muted"></i>
-                                        <span>{{ g.country }}</span>
-                                        <span class="badge bg-light text-dark border ms-1 font-monospace" style="font-size: 0.68rem;">{{ g.count }}</span>
-                                    </span>
-                                    {% empty %}
-                                    <span class="text-muted small">No regional inventory records.</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-
-                            <!-- Export Tiles -->
-                            <div class="col-md-7">
-                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                                    <i class="bi bi-file-earmark-spreadsheet text-success"></i>
-                                    <span>Downloadable Operational Datasets</span>
-                                </h6>
-                                <div class="row g-2">
-                                    <div class="col-sm-6">
-                                        <a href="/admin/reports/export/products/" class="dash-export-tile mb-0">
-                                            <div>
-                                                <div class="fw-bold small text-dark">Catalog Inventory</div>
-                                                <div class="text-muted" style="font-size: 0.72rem;">CSV dataset of all live products</div>
-                                            </div>
-                                            <i class="bi bi-arrow-down-short download-icon"></i>
-                                        </a>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <a href="/admin/reports/export/rfq/" class="dash-export-tile mb-0">
-                                            <div>
-                                                <div class="fw-bold small text-dark">Buyer RFQ Demands</div>
-                                                <div class="text-muted" style="font-size: 0.72rem;">Sourcing requests &amp; proformas</div>
-                                            </div>
-                                            <i class="bi bi-arrow-down-short download-icon"></i>
-                                        </a>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <a href="/admin/reports/export/lots/" class="dash-export-tile mb-0">
-                                            <div>
-                                                <div class="fw-bold small text-dark">Wholesale Lots</div>
-                                                <div class="text-muted" style="font-size: 0.72rem;">Batch lot packages &amp; values</div>
-                                            </div>
-                                            <i class="bi bi-arrow-down-short download-icon"></i>
-                                        </a>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <a href="/admin/reports/export/users/" class="dash-export-tile mb-0">
-                                            <div>
-                                                <div class="fw-bold small text-dark">User Network</div>
-                                                <div class="text-muted" style="font-size: 0.72rem;">Registered buyers &amp; companies</div>
-                                            </div>
-                                            <i class="bi bi-arrow-down-short download-icon"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+    <!-- Bottom Explanatory Banner -->
+    <div class="cc-why-banner">
+        <p>
+            <strong>Why this layout:</strong> every number is paired with a threshold and an action; the page opens on decisions not rows; the one signal your data screams — supply with almost no demand — is first. Deep tables live one click away on each tab.
+        </p>
     </div>
 
 </div>

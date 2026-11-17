@@ -9621,7 +9621,40 @@ def reports_dashboard_view(request):
             live_listings = (prod_stats['active_products'] or 0) + (lot_stats['active_lots'] or 0)
             pending_approval = (prod_stats['pending_products'] or 0) + (lot_stats['pending_lots'] or 0)
 
+            # 7. Command Center Redesign Aggregation (from SummaryReportView)
+            from reports.views import SummaryReportView
+            summary_gen = SummaryReportView()
+            days_count = 30
+            if period == "7d":
+                days_count = 7
+            elif period == "90d":
+                days_count = 90
+            summary_bundle = summary_gen.build_summary_data(days_count, period or "30d")
+
+            # Index KPIs by key for fast template lookup
+            kpi_by_key = {k["key"]: k for k in summary_bundle.get("kpis", [])}
+
+            # Under-supplied count
+            sd_items = summary_bundle.get("supply_demand", [])
+            under_count = sum(1 for item in sd_items if item.get("signal") == "under_supplied")
+            biggest_gap_cat = next((item["category"] for item in sd_items if item.get("signal") == "over_supplied"), "General Surplus")
+            gap_item = next((item for item in sd_items if item["category"] == biggest_gap_cat), None)
+            gap_supply = gap_item["supply"] if gap_item else (prod_stats['active_products'] or 0)
+            gap_demand = gap_item["demand"] if gap_item else 0
+
             context_data = {
+                'command_center': {
+                    'actions': summary_bundle.get("actions", {}),
+                    'kpis': summary_bundle.get("kpis", []),
+                    'kpi_map': kpi_by_key,
+                    'supply_demand': sd_items,
+                    'under_supplied_count': under_count,
+                    'biggest_gap_cat': biggest_gap_cat,
+                    'gap_supply': gap_supply,
+                    'gap_demand': gap_demand,
+                    'activity': summary_bundle.get("activity", []),
+                    'alerts': summary_bundle.get("alerts", []),
+                },
                 'kpi': {
                     'total_valuation': prod_stats['total_valuation'] or Decimal("0.00"),
                     'total_products': prod_stats['total_products'] or 0,
