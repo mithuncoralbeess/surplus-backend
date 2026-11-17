@@ -20,7 +20,7 @@ from typing import Any, Dict, List
 from django.core.cache import cache
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import connection
-from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models import Avg, Count, F, Min, Q, Sum
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils import timezone
 from rest_framework import permissions, status
@@ -779,32 +779,61 @@ class SummaryReportView(APIView):
         return Response(data)
 
     def build_summary_data(self, days: int, range_label: str) -> dict:
+        cache_key = f"reports_command_center_summary_data_{range_label}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return cached_data
+
         now = timezone.now()
         cur_start = now - timedelta(days=days)
         prev_start = now - timedelta(days=days * 2)
 
         # ----------------------------------------------------------------------
-        # 1. Action Counts
+        # 1. Consolidated Aggregates (Minimal Network Roundtrips)
         # ----------------------------------------------------------------------
-        # Approvals: Product (PENDING/CORRECTION_NEEDED) + Lot (pending)
-        p_pending = Product.objects.filter(enquiry_status__in=["PENDING", "CORRECTION_NEEDED"])
-        l_pending = Lot.objects.filter(enquiry_status="pending")
-        p_count = p_pending.count()
-        l_count = l_pending.count()
+        p_agg = Product.objects.aggregate(
+            cur_live=Count("id", filter=Q(is_active=True)),
+            prev_live=Count("id", filter=Q(is_active=True, created_at__lt=cur_start)),
+            cur_avg_px=Avg("current_price", filter=Q(is_active=True)),
+            prev_avg_px=Avg("current_price", filter=Q(is_active=True, created_at__lt=cur_start)),
+            p_pending=Count("id", filter=Q(enquiry_status__in=["PENDING", "CORRECTION_NEEDED"])),
+            p_min=Min("created_at", filter=Q(enquiry_status__in=["PENDING", "CORRECTION_NEEDED"])),
+        )
 
-        p_min = p_pending.aggregate(m=models_Min("created_at"))["m"] if p_count > 0 else None
-        l_min = l_pending.aggregate(m=models_Min("created_at"))["m"] if l_count > 0 else None
+        l_agg = Lot.objects.aggregate(
+            cur_live=Count("id", filter=Q(is_active=True)),
+            prev_live=Count("id", filter=Q(is_active=True, created_at__lt=cur_start)),
+            l_pending=Count("id", filter=Q(enquiry_status="pending")),
+            l_min=Min("created_at", filter=Q(enquiry_status="pending")),
+            stale_lots=Count(
+                "id",
+                filter=Q(enquiry_status="declined") | Q(enquiry_status="pending", created_at__lt=since(14)),
+            ),
+        )
+
+        v_agg = VendorDetails.objects.aggregate(
+            cur_buyers=Count("id", filter=Q(user_type__in=["BUYER", "BOTH"])),
+            prev_buyers=Count("id", filter=Q(user_type__in=["BUYER", "BOTH"], created_at__lt=cur_start)),
+            cur_sellers=Count("id", filter=Q(user_type__in=["SELLER", "BOTH"])),
+            prev_sellers=Count("id", filter=Q(user_type__in=["SELLER", "BOTH"], created_at__lt=cur_start)),
+        )
+
+        r_agg = RfqEnquiry.objects.aggregate(
+            unquoted=Count("id", filter=Q(status="PENDING")),
+            cur_rfqs=Count("id", filter=Q(created_at__gte=cur_start)),
+            prev_rfqs=Count("id", filter=Q(created_at__gte=prev_start, created_at__lt=cur_start)),
+        )
+
+        p_count = p_agg["p_pending"] or 0
+        l_count = l_agg["l_pending"] or 0
+        p_min = p_agg["p_min"] if p_count > 0 else None
+        l_min = l_agg["l_min"] if l_count > 0 else None
         oldest_dates = [x for x in [p_min, l_min] if x is not None]
         oldest_ts = min(oldest_dates) if oldest_dates else None
         oldest_days = max(0, (now - oldest_ts).days) if oldest_ts else 0
 
-        # RFQs unquoted (status='PENDING')
-        rfqs_unquoted = RfqEnquiry.objects.filter(status="PENDING").count()
-
-        # Stale lots: declined or pending > 14 days
-        stale_lots = Lot.objects.filter(
-            Q(enquiry_status="declined") | Q(enquiry_status="pending", created_at__lt=since(14))
-        ).count()
+        rfqs_unquoted = r_agg["unquoted"] or 0
+        stale_lots = l_agg["stale_lots"] or 0
 
         # Valuation Outliers (top 80% cumulative share of MSRP)
         outlier_count = 0
@@ -841,33 +870,33 @@ class SummaryReportView(APIView):
         # ----------------------------------------------------------------------
         # 2. KPIs with period-over-period delta
         # ----------------------------------------------------------------------
-        # Current window vs Previous window
-        cur_live = Product.objects.filter(is_active=True).count() + Lot.objects.filter(is_active=True).count()
-        prev_live = (
-            Product.objects.filter(is_active=True, created_at__lt=cur_start).count()
-            + Lot.objects.filter(is_active=True, created_at__lt=cur_start).count()
-        )
+        cur_live = (p_agg["cur_live"] or 0) + (l_agg["cur_live"] or 0)
+        prev_live = (p_agg["prev_live"] or 0) + (l_agg["prev_live"] or 0)
 
-        cur_buyers = VendorDetails.objects.filter(user_type__in=["BUYER", "BOTH"]).count()
-        prev_buyers = VendorDetails.objects.filter(
-            user_type__in=["BUYER", "BOTH"], created_at__lt=cur_start
-        ).count()
+        cur_buyers = v_agg["cur_buyers"] or 0
+        prev_buyers = v_agg["prev_buyers"] or 0
 
-        cur_sellers = VendorDetails.objects.filter(user_type__in=["SELLER", "BOTH"]).count()
-        prev_sellers = VendorDetails.objects.filter(
-            user_type__in=["SELLER", "BOTH"], created_at__lt=cur_start
-        ).count()
+        cur_sellers = v_agg["cur_sellers"] or 0
+        prev_sellers = v_agg["prev_sellers"] or 0
 
-        cur_rfqs = RfqEnquiry.objects.filter(created_at__gte=cur_start).count()
-        prev_rfqs = RfqEnquiry.objects.filter(created_at__gte=prev_start, created_at__lt=cur_start).count()
+        cur_rfqs = r_agg["cur_rfqs"] or 0
+        prev_rfqs = r_agg["prev_rfqs"] or 0
 
-        cur_avg_px = Product.objects.filter(is_active=True).aggregate(a=Avg("current_price"))["a"] or 0
-        prev_avg_px = (
-            Product.objects.filter(is_active=True, created_at__lt=cur_start).aggregate(a=Avg("current_price"))["a"]
-            or cur_avg_px
-        )
+        cur_avg_px = p_agg["cur_avg_px"] or 0
+        prev_avg_px = p_agg["prev_avg_px"] or cur_avg_px
 
-        # SLA: average days from created_at to date_approved
+        # SLA: average days from created_at to date_approved (using lightweight values_list)
+        def calc_sla_days(qs):
+            pairs = list(qs.values_list("created_at", "date_approved")[:100])
+            if not pairs:
+                return 0.0
+            total_sec = sum(
+                max(0, (da - ca).total_seconds())
+                for ca, da in pairs
+                if da and ca
+            )
+            return round(total_sec / (len(pairs) * 86400.0), 1)
+
         cur_approved = Product.objects.filter(
             enquiry_status="APPROVED", date_approved__isnull=False, date_approved__gte=cur_start
         )
@@ -877,17 +906,6 @@ class SummaryReportView(APIView):
             date_approved__gte=prev_start,
             date_approved__lt=cur_start,
         )
-
-        def calc_sla_days(qs):
-            cnt = qs.count()
-            if not cnt:
-                return 0.0
-            total_sec = sum(
-                max(0, (o.date_approved - o.created_at).total_seconds())
-                for o in qs[:200]
-                if o.date_approved and o.created_at
-            )
-            return round(total_sec / (cnt * 86400.0), 1)
 
         cur_sla = calc_sla_days(cur_approved)
         prev_sla = calc_sla_days(prev_approved) or cur_sla
@@ -959,7 +977,6 @@ class SummaryReportView(APIView):
         supply_map: Dict[str, int] = {}
         demand_map: Dict[str, int] = {}
 
-        # Supply from active products
         prod_cats = (
             Product.objects.filter(is_active=True, category__isnull=False)
             .values("category__name")
@@ -969,7 +986,6 @@ class SummaryReportView(APIView):
             cat_name = row["category__name"] or "General"
             supply_map[cat_name] = supply_map.get(cat_name, 0) + row["n"]
 
-        # Demand from RFQ enquiry items
         rfq_cats = (
             RfqEnquiryItem.objects.exclude(category__isnull=True)
             .exclude(category="")
@@ -999,11 +1015,15 @@ class SummaryReportView(APIView):
             })
 
         # ----------------------------------------------------------------------
-        # 4. Merged Activity Feed
+        # 4. Merged Activity Feed (Optimized with .only() and .select_related())
         # ----------------------------------------------------------------------
         feed = []
-        # Newest 5 pending lots
-        for lot in Lot.objects.filter(enquiry_status="pending").order_by("-created_at")[:5]:
+        for lot in (
+            Lot.objects.filter(enquiry_status="pending")
+            .only("id", "lot_number", "title", "created_at", "vendor_id")
+            .select_related("vendor")
+            .order_by("-created_at")[:5]
+        ):
             feed.append({
                 "tone": "amber",
                 "type": "lot_pending",
@@ -1013,8 +1033,10 @@ class SummaryReportView(APIView):
                 "_dt": lot.created_at or now,
             })
 
-        # Newest 5 RFQs
-        for rfq in RfqEnquiry.objects.order_by("-created_at")[:5]:
+        for rfq in (
+            RfqEnquiry.objects.only("id", "reference", "total_units", "company_name", "created_at")
+            .order_by("-created_at")[:5]
+        ):
             feed.append({
                 "tone": "red",
                 "type": "rfq",
@@ -1024,8 +1046,11 @@ class SummaryReportView(APIView):
                 "_dt": rfq.created_at or now,
             })
 
-        # Newest 5 Sellers
-        for v in VendorDetails.objects.filter(user_type__in=["SELLER", "BOTH"]).order_by("-created_at")[:5]:
+        for v in (
+            VendorDetails.objects.filter(user_type__in=["SELLER", "BOTH"])
+            .only("id", "company_name", "full_name", "username", "country", "account_entity_type", "created_at")
+            .order_by("-created_at")[:5]
+        ):
             feed.append({
                 "tone": "brand",
                 "type": "seller",
@@ -1066,15 +1091,12 @@ class SummaryReportView(APIView):
                 "body": f"{outlier_count} active catalog items make up 80% of aggregate inventory retail valuation.",
             })
 
-        return {
+        result = {
             "alerts": alerts,
             "actions": actions,
             "kpis": kpis,
             "supply_demand": supply_demand,
             "activity": feed,
         }
-
-
-def models_Min(field_name):
-    from django.db.models import Min
-    return Min(field_name)
+        cache.set(cache_key, result, timeout=180)
+        return result

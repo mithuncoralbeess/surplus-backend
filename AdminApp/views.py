@@ -9481,9 +9481,12 @@ def reports_dashboard_view(request):
             )
 
             top_cat_ids = [c['category_id'] for c in cat_counts if c['category_id']]
-            all_subcats_by_cat = {}
-            for sc in SubCategory.objects.filter(main_category_id__in=top_cat_ids).values('id', 'name', 'main_category_id').order_by('name'):
-                all_subcats_by_cat.setdefault(sc['main_category_id'], []).append(sc)
+            all_subcats_by_cat = cache.get("reports_subcats_taxonomy_map")
+            if all_subcats_by_cat is None:
+                all_subcats_by_cat = {}
+                for sc in SubCategory.objects.values('id', 'name', 'main_category_id').order_by('name'):
+                    all_subcats_by_cat.setdefault(sc['main_category_id'], []).append(sc)
+                cache.set("reports_subcats_taxonomy_map", all_subcats_by_cat, 3600)
 
             total_prods_baseline = max(1, prod_stats['total_products'] or 1)
 
@@ -9755,6 +9758,15 @@ def reports_dashboard_view(request):
         except Exception as e:
             logger.exception("Failed to compute reports analytics: %s", e)
             context_data = {
+                'command_center': {
+                    'actions': {},
+                    'kpis': [],
+                    'kpi_map': {},
+                    'supply_demand': [],
+                    'activity': [],
+                    'alerts': [],
+                    'cat_data': [],
+                },
                 'kpi': {
                     'total_valuation': Decimal("0.00"),
                     'total_products': 0,

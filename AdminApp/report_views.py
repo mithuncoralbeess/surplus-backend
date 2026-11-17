@@ -78,8 +78,10 @@ def _safe_order_by(qs, sort_param: str, allowed_map: dict, default_sort: str):
     return qs.order_by(order_expr, "-id"), order_expr
 
 
-def _paginate(qs_or_list, page_num, per_page=50):
+def _paginate(qs_or_list, page_num, per_page=50, total_count=None):
     paginator = Paginator(qs_or_list, per_page)
+    if total_count is not None:
+        paginator.count = total_count
     try:
         page_obj = paginator.page(page_num)
     except PageNotAnInteger:
@@ -278,7 +280,7 @@ def _build_products_report(request, for_export=False):
     categories = cache.get("rpt_prod_cats")
     if categories is None:
         categories = list(MainCategory.objects.filter(is_active=True).order_by("name").values_list("name", flat=True))
-        cache.set("rpt_prod_cats", categories, 300)
+        cache.set("rpt_prod_cats", categories, 3600)
 
     countries = cache.get("rpt_prod_countries")
     if countries is None:
@@ -290,7 +292,7 @@ def _build_products_report(request, for_export=False):
                 .distinct()
             )
         )
-        cache.set("rpt_prod_countries", countries, 300)
+        cache.set("rpt_prod_countries", countries, 3600)
 
     currencies = ["USD", "AED", "EUR", "GBP", "SAR", "INR"]
     filters = [
@@ -338,7 +340,7 @@ def _build_products_report(request, for_export=False):
         items = list(qs[:10000])
         return columns, [_serialize_row(p) for p in items]
 
-    paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
+    paginator, page_obj = _paginate(qs, request.GET.get("page", 1), total_count=stats.get("total"))
     rows = [_serialize_row(p) for p in page_obj]
     return {
         "report_type": "products",
@@ -507,7 +509,7 @@ def _build_lots_report(request, for_export=False):
                 .distinct()
             )
         )
-        cache.set("rpt_lot_countries", countries, 300)
+        cache.set("rpt_lot_countries", countries, 3600)
 
     filters = [
         _filter_def("q", "Search", "text", placeholder="Lot #, title, brands..."),
@@ -556,7 +558,7 @@ def _build_lots_report(request, for_export=False):
         items = list(qs[:10000])
         return columns, [_serialize_row(l) for l in items]
 
-    paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
+    paginator, page_obj = _paginate(qs, request.GET.get("page", 1), total_count=stats.get("total"))
     return {
         "report_type": "lots",
         "title": "Lots Report",
@@ -679,7 +681,7 @@ def _build_users_report(request, for_export=False):
                 .distinct()
             )
         )
-        cache.set("rpt_user_countries", countries, 300)
+        cache.set("rpt_user_countries", countries, 3600)
 
     filters = [
         _filter_def("q", "Search", "text", placeholder="Name, email, company, username..."),
@@ -719,7 +721,7 @@ def _build_users_report(request, for_export=False):
         items = list(qs[:10000])
         return columns, [_serialize_row(u) for u in items]
 
-    paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
+    paginator, page_obj = _paginate(qs, request.GET.get("page", 1), total_count=stats.get("total"))
     return {
         "report_type": "users",
         "title": "Users / Vendors Report",
@@ -854,7 +856,7 @@ def _build_rfqs_report(request, for_export=False):
                 .distinct()
             )
         )
-        cache.set("rpt_rfq_countries", countries, 300)
+        cache.set("rpt_rfq_countries", countries, 3600)
 
     filters = [
         _filter_def("q", "Search", "text", placeholder="Ref, company, email..."),
@@ -897,7 +899,7 @@ def _build_rfqs_report(request, for_export=False):
         items = list(qs[:10000])
         return columns, [_serialize_row(r) for r in items]
 
-    paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
+    paginator, page_obj = _paginate(qs, request.GET.get("page", 1), total_count=stats.get("total"))
     return {
         "report_type": "rfqs",
         "title": "RFQs Report (Demand)",
@@ -973,13 +975,21 @@ def _build_enquiries_report(request, for_export=False):
         cont_qs = cont_qs.filter(is_blocked=False)
 
     # Counts per source (applying filters except `type` so KPI breakdown stays clear)
-    prod_cnt = prod_qs.count() if not blocked_f else 0
-    lot_cnt = lot_qs.count() if not blocked_f else 0
-    part_cnt = part_qs.count() if not blocked_f else 0
-    cont_cnt = cont_qs.count()
+    if not q and not status_f and not blocked_f and period_f == "all":
+        counts_key = "rpt_enquiries_default_counts"
+        counts = cache.get(counts_key)
+        if counts is None:
+            counts = (prod_qs.count(), lot_qs.count(), part_qs.count(), cont_qs.count())
+            cache.set(counts_key, counts, 300)
+        prod_cnt, lot_cnt, part_cnt, cont_cnt = counts
+    else:
+        prod_cnt = prod_qs.count() if not blocked_f else 0
+        lot_cnt = lot_qs.count() if not blocked_f else 0
+        part_cnt = part_qs.count() if not blocked_f else 0
+        cont_cnt = cont_qs.count()
 
     rows = []
-    limit_each = 1000 if for_export else 150
+    limit_each = 1000 if for_export else 50
 
     if type_f in ("", "seller_product") and not blocked_f:
         for p in prod_qs.order_by("-created_at")[:limit_each]:
@@ -1226,7 +1236,7 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
     categories = cache.get("rpt_prod_cats")
     if categories is None:
         categories = list(MainCategory.objects.filter(is_active=True).order_by("name").values_list("name", flat=True))
-        cache.set("rpt_prod_cats", categories, 300)
+        cache.set("rpt_prod_cats", categories, 3600)
 
     filters = [
         _filter_def("q", "Search", "text", placeholder="Auction #, title, ref..."),
@@ -1268,7 +1278,7 @@ def _build_auctions_report(request, is_privileged=True, for_export=False):
         items = list(qs[:10000])
         return columns, [_serialize_row(a) for a in items]
 
-    paginator, page_obj = _paginate(qs, request.GET.get("page", 1))
+    paginator, page_obj = _paginate(qs, request.GET.get("page", 1), total_count=stats.get("total"))
     return {
         "report_type": "auctions",
         "title": "Auctions Report",
