@@ -818,12 +818,8 @@
                 <span>Demand is not keeping up with supply</span>
             </div>
             <p class="cc-alert-body">
-                <strong>{{ kpi.live_listings|default:203|intcomma }} live listings</strong> and <strong>{{
-                    kpi.total_units|default:738000|intcomma }} units</strong> in stock, but only <strong>{{
-                    kpi.pending_rfqs|default:2 }} buyer RFQs</strong> in 30 days and $0 quoted. The marketplace has
-                inventory; it needs buyers. Biggest gap: <strong>{{ command_center.biggest_gap_cat|default:"Construction
-                    & Plumbing" }}</strong> ({{ command_center.gap_supply|default:82 }} listings, {{
-                command_center.gap_demand|default:0 }} demand).
+                <strong>{{ kpi.live_listings|default:203|intcomma }} live listings</strong> and <strong>{{ kpi.total_units|default:738000|intcomma }} units</strong> in stock, but only <strong>{{ kpi.pending_rfqs|default:2 }} buyer RFQs</strong> in 30 days and $0 quoted. The marketplace has
+                inventory; it needs buyers. Biggest gap: <strong>{{ command_center.biggest_gap_cat|default:"Construction & Plumbing" }}</strong> ({{ command_center.gap_supply|default:82 }} listings, {{ command_center.gap_demand|default:0 }} demand).
             </p>
         </div>
         <div>
@@ -851,9 +847,7 @@
                         <div class="cc-card-big-num">{{ command_center.actions.approvals.count|default:25 }}</div>
                         <div class="cc-card-title">Listings pending review</div>
                         <div class="cc-card-sub">
-                            Oldest waiting {{ command_center.actions.approvals.oldest_days|default:3 }} days · {{
-                            command_center.actions.approvals.products|default:18 }} products, {{
-                            command_center.actions.approvals.lots|default:7 }} lots
+                            Oldest waiting {{ command_center.actions.approvals.oldest_days|default:3 }} days · {{ command_center.actions.approvals.products|default:18 }} products, {{ command_center.actions.approvals.lots|default:7 }} lots
                         </div>
                     </div>
                     <div>
@@ -871,8 +865,7 @@
                         <div class="cc-card-top-header">
                             <span class="cc-card-tag tag-demand">📉 DEMAND</span>
                         </div>
-                        <div class="cc-card-big-num">{{
-                            kpi.pending_rfqs|default:command_center.actions.rfqs_unquoted|default:2 }}</div>
+                        <div class="cc-card-big-num">{{ kpi.pending_rfqs|default:command_center.actions.rfqs_unquoted|default:2 }}</div>
                         <div class="cc-card-title">RFQs in 30 days</div>
                         <div class="cc-card-sub">
                             Across {{ kpi.live_listings|default:203 }} listings · conversion &lt;0.1%
@@ -959,44 +952,35 @@
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Live Listings</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{
-                            command_center.kpi_map.live_listings.value|default:kpi.live_listings|default:203 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{
-                            command_center.kpi_map.live_listings.delta|default:"12" }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.live_listings.value|default:kpi.live_listings|default:203 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.live_listings.delta|default:"12" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Buyers</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{
-                            command_center.kpi_map.active_buyers.value|default:kpi.total_buyers|default:36 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{
-                            command_center.kpi_map.active_buyers.delta|default:"4" }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.active_buyers.value|default:kpi.total_buyers|default:36 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.active_buyers.delta|default:"4" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Sellers</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{
-                            command_center.kpi_map.verified_sellers.value|default:kpi.total_sellers|default:92 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{
-                            command_center.kpi_map.verified_sellers.delta|default:"9" }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.verified_sellers.value|default:kpi.total_sellers|default:92 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.verified_sellers.delta|default:"9" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">RFQs (30D)</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{
-                            command_center.kpi_map.rfq_demand.value|default:kpi.total_rfqs|default:2 }}</span>
-                        <span class="cc-pulse-delta delta-down">▼ {{ command_center.kpi_map.rfq_demand.delta|default:"1"
-                            }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.rfq_demand.value|default:kpi.total_rfqs|default:2 }}</span>
+                        <span class="cc-pulse-delta delta-down">▼ {{ command_center.kpi_map.rfq_demand.delta|default:"1" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Avg Buyer Price</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.avg_product_price.value|default:"$194"
-                            }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.avg_product_price.value|default:"$194" }}</span>
                         <span class="cc-pulse-delta delta-neutral">—</span>
                     </div>
                 </div>
@@ -1181,8 +1165,7 @@
                         <i class="bi bi-grid-3x3-gap-fill" style="font-size: 1.15rem;"></i>
                     </div>
                     <div>
-                        <h3 class="cc-act-title mb-0" style="font-size: 1.15rem;">Catalog Breakdown by Category ({{
-                            cat_data|length }} Taxonomies)</h3>
+                        <h3 class="cc-act-title mb-0" style="font-size: 1.15rem;">Catalog Breakdown by Category ({{ cat_data|length }} Taxonomies)</h3>
                         <p class="text-muted small mb-0 mt-0.5">Hierarchical taxonomy view with listed product counts
                             and inventory unit volumes across all subcategories.</p>
                     </div>
@@ -1239,8 +1222,7 @@
                             <span
                                 class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 font-monospace"
                                 style="font-size: 0.74rem;">
-                                <i class="bi bi-check-circle-fill me-1"></i>{{ c.active_subcategories_count }} of {{
-                                c.subcategories_count }} active
+                                <i class="bi bi-check-circle-fill me-1"></i>{{ c.active_subcategories_count }} of {{ c.subcategories_count }} active
                             </span>
                             {% else %}
                             <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 font-monospace"
@@ -1283,13 +1265,11 @@
                                 <div
                                     class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
                                     <div class="small fw-semibold text-dark">
-                                        <i class="bi bi-diagram-2 text-primary me-1.5"></i>Subcategories in <strong>{{
-                                            c.name }}</strong> ({{ c.subcategories|length }} total):
+                                        <i class="bi bi-diagram-2 text-primary me-1.5"></i>Subcategories in <strong>{{ c.name }}</strong> ({{ c.subcategories|length }} total):
                                     </div>
                                     <div class="small text-muted font-monospace">
                                         <span class="text-success fw-bold">{{ c.active_subcategories_count }}</span>
-                                        active with products &bull; <span class="text-muted">{{
-                                            c.subcategories_count|add:"-"|add:c.active_subcategories_count }}</span>
+                                        active with products &bull; <span class="text-muted">{{ c.subcategories_count|add:"-"|add:c.active_subcategories_count }}</span>
                                         empty
                                     </div>
                                 </div>
@@ -1316,8 +1296,7 @@
                                             <span
                                                 class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1"
                                                 style="font-size: 0.76rem;">
-                                                {{ sc.product_count }} {% if sc.product_count == 1 %}product{% else
-                                                %}products{% endif %}
+                                                {{ sc.product_count }} {% if sc.product_count == 1 %}product{% else %}products{% endif %}
                                             </span>
                                             {% else %}
                                             <span class="badge bg-light text-muted border font-monospace px-2 py-0.5"
