@@ -5,717 +5,765 @@
 
 {% block content %}
 <style>
-/* ==========================================================================
+    /* ==========================================================================
    COMMAND CENTER DESIGN SYSTEM — FULL-VERSION CLEAN SLATE
    ========================================================================== */
 
-:root {
-    --cc-bg: #f8fafc;
-    --cc-card: #ffffff;
-    --cc-text-dark: #0f172a;
-    --cc-text-body: #334155;
-    --cc-text-sub: #64748b;
-    --cc-text-muted: #94a3b8;
-    --cc-border: #e2e8f0;
-    --cc-border-subtle: #f1f5f9;
-    --cc-primary: #0f172a;
-    --cc-brand: #059669;
-    --cc-brand-hover: #047857;
-    --cc-amber-bg: #fffbeb;
-    --cc-amber-border: #fde68a;
-    --cc-amber-text: #92400e;
-    --cc-radius-xl: 18px;
-    --cc-radius-lg: 14px;
-    --cc-radius-md: 10px;
-    --cc-radius-pill: 9999px;
-    --cc-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-}
-
-[data-bs-theme="dark"] {
-    --cc-bg: #0b1120;
-    --cc-card: #1e293b;
-    --cc-text-dark: #f8fafc;
-    --cc-text-body: #cbd5e1;
-    --cc-text-sub: #94a3b8;
-    --cc-text-muted: #64748b;
-    --cc-border: #334155;
-    --cc-border-subtle: #1e293b;
-    --cc-amber-bg: rgba(245, 158, 11, 0.12);
-    --cc-amber-border: rgba(245, 158, 11, 0.3);
-    --cc-amber-text: #fbbf24;
-}
-
-.command-center-wrap {
-    max-width: 1480px;
-    margin: 0 auto;
-    padding-bottom: 3.5rem;
-}
-
-/* Header */
-.cc-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #64748b;
-    margin-bottom: 0.25rem;
-}
-
-.cc-title {
-    font-size: 1.85rem;
-    font-weight: 800;
-    color: var(--cc-text-dark);
-    letter-spacing: -0.03em;
-    line-height: 1.15;
-    margin: 0;
-}
-
-.cc-subtitle {
-    font-size: 0.88rem;
-    color: var(--cc-text-sub);
-    margin-top: 0.3rem;
-}
-
-/* Pill Tabs */
-.cc-period-pills {
-    display: inline-flex;
-    align-items: center;
-    background: #e2e8f0;
-    padding: 3px;
-    border-radius: 9px;
-    gap: 2px;
-}
-
-[data-bs-theme="dark"] .cc-period-pills {
-    background: #334155;
-}
-
-.cc-period-btn {
-    border: none;
-    background: transparent;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #475569;
-    padding: 0.35rem 0.85rem;
-    border-radius: 7px;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-
-[data-bs-theme="dark"] .cc-period-btn {
-    color: #cbd5e1;
-}
-
-.cc-period-btn.active {
-    background: #0f766e;
-    color: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-}
-
-.cc-btn-export {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    color: #334155;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.42rem 1.1rem;
-    border-radius: 9px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-
-.cc-btn-export:hover {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #94a3b8;
-}
-
-[data-bs-theme="dark"] .cc-btn-export {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
-}
-
-/* Alert Banner */
-.cc-alert-banner {
-    background: #fffbeb;
-    border: 1px solid #fef3c7;
-    border-radius: 14px;
-    padding: 1.1rem 1.35rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-[data-bs-theme="dark"] .cc-alert-banner {
-    background: rgba(245, 158, 11, 0.10);
-    border-color: rgba(245, 158, 11, 0.25);
-}
-
-.cc-alert-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #92400e;
-    margin-bottom: 0.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-}
-
-[data-bs-theme="dark"] .cc-alert-title {
-    color: #fde68a;
-}
-
-.cc-alert-body {
-    font-size: 0.84rem;
-    color: #78350f;
-    line-height: 1.45;
-    margin: 0;
-}
-
-[data-bs-theme="dark"] .cc-alert-body {
-    color: #fef3c7;
-}
-
-.cc-alert-btn {
-    background: #065f46;
-    color: #ffffff !important;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.55rem 1.25rem;
-    border-radius: 9px;
-    white-space: nowrap;
-    text-decoration: none;
-    transition: background-color 0.15s ease;
-    border: none;
-}
-
-.cc-alert-btn:hover {
-    background: #047857;
-}
-
-/* Needs Your Attention Cards */
-.cc-section-label {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--cc-text-dark);
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    margin-bottom: 1rem;
-}
-
-.cc-badge-count {
-    background: #fee2e2;
-    color: #991b1b;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 0.15rem 0.55rem;
-    border-radius: var(--cc-radius-pill);
-}
-
-.cc-attention-card {
-    background: var(--cc-card);
-    border: 1px solid var(--cc-border);
-    border-radius: 12px;
-    padding: 1.25rem 1.2rem;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: var(--cc-shadow);
-}
-
-.cc-attention-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-
-.cc-card-top-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-}
-
-.cc-card-tag {
-    font-size: 0.70rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.tag-approvals { color: #d97706; }
-.tag-demand    { color: #ef4444; }
-.tag-outliers  { color: #f59e0b; }
-.tag-supplygap { color: #0d9488; }
-.tag-cleanup   { color: #ea580c; }
-
-.cc-card-big-num {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--cc-text-dark);
-    line-height: 1;
-    margin-bottom: 0.35rem;
-    letter-spacing: -0.03em;
-}
-
-.cc-card-title {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--cc-text-dark);
-    margin-bottom: 0.35rem;
-}
-
-.cc-card-sub {
-    font-size: 0.76rem;
-    color: var(--cc-text-sub);
-    line-height: 1.35;
-    margin-bottom: 1.15rem;
-    flex-grow: 1;
-}
-
-.cc-card-btn {
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 0.42rem 0.85rem;
-    border-radius: 7px;
-    text-align: center;
-    text-decoration: none;
-    display: block;
-    width: 100%;
-    transition: all 0.15s ease;
-}
-
-.btn-approvals {
-    background: #b45309;
-    color: #ffffff !important;
-}
-.btn-approvals:hover { background: #92400e; }
-
-.btn-demand {
-    background: #b91c1c;
-    color: #ffffff !important;
-}
-.btn-demand:hover { background: #991b1b; }
-
-.btn-outliers {
-    background: #b45309;
-    color: #ffffff !important;
-}
-.btn-outliers:hover { background: #92400e; }
-
-.btn-supplygap {
-    background: transparent;
-    border: 1px solid #0d9488;
-    color: #0f766e !important;
-}
-.btn-supplygap:hover {
-    background: rgba(13, 148, 136, 0.08);
-}
-
-.btn-cleanup {
-    background: #c2410c;
-    color: #ffffff !important;
-}
-.btn-cleanup:hover { background: #9a3412; }
-
-/* Pulse Section */
-.cc-pulse-card {
-    background: var(--cc-card);
-    border: 1px solid var(--cc-border);
-    border-radius: 12px;
-    padding: 1.25rem 1.5rem;
-    box-shadow: var(--cc-shadow);
-    margin-bottom: 2rem;
-}
-
-.cc-pulse-item {
-    border-right: 1px solid var(--cc-border-subtle);
-    padding: 0.35rem 1rem;
-}
-
-.cc-pulse-item:last-child {
-    border-right: none;
-}
-
-.cc-pulse-label {
-    font-size: 0.70rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--cc-text-sub);
-    margin-bottom: 0.4rem;
-}
-
-.cc-pulse-val-wrap {
-    display: flex;
-    align-items: baseline;
-    gap: 0.45rem;
-}
-
-.cc-pulse-val {
-    font-size: 1.55rem;
-    font-weight: 800;
-    color: var(--cc-text-dark);
-    line-height: 1;
-}
-
-.cc-pulse-delta {
-    font-size: 0.76rem;
-    font-weight: 700;
-}
-
-.delta-up { color: #16a34a; }
-.delta-down { color: #dc2626; }
-.delta-neutral { color: #94a3b8; }
-
-/* Where to Act Tables */
-.cc-act-card {
-    background: var(--cc-card);
-    border: 1px solid var(--cc-border);
-    border-radius: 12px;
-    padding: 1.35rem;
-    box-shadow: var(--cc-shadow);
-    height: 100%;
-}
-
-.cc-act-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.15rem;
-}
-
-.cc-act-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--cc-text-dark);
-    margin: 0;
-}
-
-.cc-act-badge {
-    font-size: 0.74rem;
-    color: var(--cc-text-sub);
-}
-
-.cc-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.cc-table th {
-    font-size: 0.70rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--cc-text-sub);
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--cc-border);
-}
-
-.cc-table td {
-    font-size: 0.82rem;
-    padding: 0.75rem 0.75rem;
-    border-bottom: 1px solid var(--cc-border-subtle);
-    color: var(--cc-text-body);
-}
-
-.cc-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* Pill Badges in Supply/Demand */
-.pill-signal {
-    display: inline-block;
-    font-size: 0.70rem;
-    font-weight: 700;
-    padding: 0.2rem 0.55rem;
-    border-radius: 6px;
-    text-transform: lowercase;
-}
-
-.pill-under {
-    background: #fef2f2;
-    color: #b91c1c;
-}
-
-.pill-over {
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.pill-balanced {
-    background: #f0fdf4;
-    color: #15803d;
-}
-
-.cc-link-action {
-    color: #0d9488;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.cc-link-action:hover {
-    color: #0f766e;
-    text-decoration: underline;
-}
-
-/* Recent Activity Feed */
-.cc-activity-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.cc-activity-item {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-bottom: 0.85rem;
-    border-bottom: 1px solid var(--cc-border-subtle);
-}
-
-.cc-activity-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.cc-activity-left {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.65rem;
-}
-
-.cc-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-top: 5px;
-    flex-shrink: 0;
-}
-
-.dot-red   { background-color: #ef4444; }
-.dot-amber { background-color: #f59e0b; }
-.dot-green { background-color: #10b981; }
-
-.cc-activity-title {
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: var(--cc-text-dark);
-    line-height: 1.25;
-}
-
-.cc-activity-sub {
-    font-size: 0.75rem;
-    color: var(--cc-text-sub);
-    margin-top: 0.15rem;
-}
-
-.cc-activity-time {
-    font-size: 0.72rem;
-    color: var(--cc-text-muted);
-    white-space: nowrap;
-}
-
-/* Bottom Explanatory Banner */
-.cc-why-banner {
-    background: #ffffff;
-    border: 1px solid var(--cc-border);
-    border-radius: 12px;
-    padding: 1rem 1.35rem;
-    margin-top: 2rem;
-    box-shadow: var(--cc-shadow);
-}
-
-[data-bs-theme="dark"] .cc-why-banner {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-.cc-why-banner p {
-    font-size: 0.82rem;
-    color: var(--cc-text-sub);
-    line-height: 1.5;
-    margin: 0;
-}
-
-.cc-why-banner strong {
-    color: var(--cc-text-dark);
-}
-
-/* Catalog Breakdown by Category & Subcategories */
-.cat-breakdown-card {
-    background: #ffffff;
-    border: 1px solid var(--cc-border);
-    border-radius: 14px;
-    padding: 1.35rem 1.5rem;
-    box-shadow: var(--cc-shadow);
-    margin-top: 1.75rem;
-}
-
-[data-bs-theme="dark"] .cat-breakdown-card {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-.cat-breakdown-table {
-    width: 100%;
-    margin-bottom: 0;
-}
-
-.cat-breakdown-table thead th {
-    background: #f8fafc;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--cc-text-sub);
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--cc-border);
-    white-space: nowrap;
-}
-
-[data-bs-theme="dark"] .cat-breakdown-table thead th {
-    background: #0f172a;
-    border-color: #334155;
-}
-
-.cat-main-row {
-    transition: background 0.15s ease;
-    cursor: pointer;
-}
-
-.cat-main-row:hover {
-    background: rgba(241, 245, 249, 0.7);
-}
-
-[data-bs-theme="dark"] .cat-main-row:hover {
-    background: rgba(51, 65, 85, 0.4);
-}
-
-.cat-main-row td {
-    padding: 0.95rem 1rem;
-    border-bottom: 1px solid var(--cc-border-subtle);
-    vertical-align: middle;
-}
-
-.cat-chevron-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    background: var(--cc-border-subtle);
-    border: 1px solid var(--cc-border);
-    color: var(--cc-text-sub);
-    font-size: 0.78rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    text-decoration: none;
-    flex-shrink: 0;
-    margin-right: 0.85rem;
-}
-
-.cat-chevron-btn:hover {
-    background: #0f766e;
-    color: #ffffff;
-    border-color: #0f766e;
-}
-
-.cat-chevron-btn.expanded i {
-    transform: rotate(90deg);
-}
-
-.cat-chevron-btn i {
-    transition: transform 0.2s ease;
-}
-
-.cat-sub-drawer {
-    background: #fafbfd;
-    border-bottom: 1px solid var(--cc-border);
-}
-
-[data-bs-theme="dark"] .cat-sub-drawer {
-    background: #0f172a;
-    border-color: #334155;
-}
-
-.subcat-box {
-    padding: 1.1rem 1.25rem 1.25rem 2.5rem;
-}
-
-.subcat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 0.75rem;
-}
-
-.subcat-item-card {
-    background: #ffffff;
-    border: 1px solid var(--cc-border);
-    border-radius: 10px;
-    padding: 0.7rem 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    color: inherit;
-}
-
-[data-bs-theme="dark"] .subcat-item-card {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-.subcat-item-card:hover {
-    border-color: #0f766e;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0,0,0,0.04);
-}
-
-.subcat-item-card.has-products {
-    border-left: 3.5px solid #0f766e;
-}
-
-.subcat-item-card.empty-cat {
-    opacity: 0.75;
-}
-
-.cat-share-bar-wrap {
-    width: 90px;
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 999px;
-    overflow: hidden;
-}
-
-[data-bs-theme="dark"] .cat-share-bar-wrap {
-    background: #334155;
-}
-
-.cat-share-bar-fill {
-    height: 100%;
-    background: #0f766e;
-    border-radius: 999px;
-}
+    :root {
+        --cc-bg: #f8fafc;
+        --cc-card: #ffffff;
+        --cc-text-dark: #0f172a;
+        --cc-text-body: #334155;
+        --cc-text-sub: #64748b;
+        --cc-text-muted: #94a3b8;
+        --cc-border: #e2e8f0;
+        --cc-border-subtle: #f1f5f9;
+        --cc-primary: #0f172a;
+        --cc-brand: #059669;
+        --cc-brand-hover: #047857;
+        --cc-amber-bg: #fffbeb;
+        --cc-amber-border: #fde68a;
+        --cc-amber-text: #92400e;
+        --cc-radius-xl: 18px;
+        --cc-radius-lg: 14px;
+        --cc-radius-md: 10px;
+        --cc-radius-pill: 9999px;
+        --cc-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    [data-bs-theme="dark"] {
+        --cc-bg: #0b1120;
+        --cc-card: #1e293b;
+        --cc-text-dark: #f8fafc;
+        --cc-text-body: #cbd5e1;
+        --cc-text-sub: #94a3b8;
+        --cc-text-muted: #64748b;
+        --cc-border: #334155;
+        --cc-border-subtle: #1e293b;
+        --cc-amber-bg: rgba(245, 158, 11, 0.12);
+        --cc-amber-border: rgba(245, 158, 11, 0.3);
+        --cc-amber-text: #fbbf24;
+    }
+
+    .command-center-wrap {
+        max-width: 1480px;
+        margin: 0 auto;
+        padding-bottom: 3.5rem;
+    }
+
+    /* Header */
+    .cc-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .cc-title {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: var(--cc-text-dark);
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        margin: 0;
+    }
+
+    .cc-subtitle {
+        font-size: 0.88rem;
+        color: var(--cc-text-sub);
+        margin-top: 0.3rem;
+    }
+
+    /* Pill Tabs */
+    .cc-period-pills {
+        display: inline-flex;
+        align-items: center;
+        background: #e2e8f0;
+        padding: 3px;
+        border-radius: 9px;
+        gap: 2px;
+    }
+
+    [data-bs-theme="dark"] .cc-period-pills {
+        background: #334155;
+    }
+
+    .cc-period-btn {
+        border: none;
+        background: transparent;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #475569;
+        padding: 0.35rem 0.85rem;
+        border-radius: 7px;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    [data-bs-theme="dark"] .cc-period-btn {
+        color: #cbd5e1;
+    }
+
+    .cc-period-btn.active {
+        background: #0f766e;
+        color: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .cc-btn-export {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.42rem 1.1rem;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .cc-btn-export:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+
+    [data-bs-theme="dark"] .cc-btn-export {
+        background: #1e293b;
+        border-color: #334155;
+        color: #e2e8f0;
+    }
+
+    /* Alert Banner */
+    .cc-alert-banner {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 14px;
+        padding: 1.1rem 1.35rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    [data-bs-theme="dark"] .cc-alert-banner {
+        background: rgba(245, 158, 11, 0.10);
+        border-color: rgba(245, 158, 11, 0.25);
+    }
+
+    .cc-alert-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    [data-bs-theme="dark"] .cc-alert-title {
+        color: #fde68a;
+    }
+
+    .cc-alert-body {
+        font-size: 0.84rem;
+        color: #78350f;
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    [data-bs-theme="dark"] .cc-alert-body {
+        color: #fef3c7;
+    }
+
+    .cc-alert-btn {
+        background: #065f46;
+        color: #ffffff !important;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 0.55rem 1.25rem;
+        border-radius: 9px;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: background-color 0.15s ease;
+        border: none;
+    }
+
+    .cc-alert-btn:hover {
+        background: #047857;
+    }
+
+    /* Needs Your Attention Cards */
+    .cc-section-label {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--cc-text-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin-bottom: 1rem;
+    }
+
+    .cc-badge-count {
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.15rem 0.55rem;
+        border-radius: var(--cc-radius-pill);
+    }
+
+    .cc-attention-card {
+        background: var(--cc-card);
+        border: 1px solid var(--cc-border);
+        border-radius: 12px;
+        padding: 1.25rem 1.2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: var(--cc-shadow);
+    }
+
+    .cc-attention-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    }
+
+    .cc-card-top-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .cc-card-tag {
+        font-size: 0.70rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .tag-approvals {
+        color: #d97706;
+    }
+
+    .tag-demand {
+        color: #ef4444;
+    }
+
+    .tag-outliers {
+        color: #f59e0b;
+    }
+
+    .tag-supplygap {
+        color: #0d9488;
+    }
+
+    .tag-cleanup {
+        color: #ea580c;
+    }
+
+    .cc-card-big-num {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--cc-text-dark);
+        line-height: 1;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.03em;
+    }
+
+    .cc-card-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--cc-text-dark);
+        margin-bottom: 0.35rem;
+    }
+
+    .cc-card-sub {
+        font-size: 0.76rem;
+        color: var(--cc-text-sub);
+        line-height: 1.35;
+        margin-bottom: 1.15rem;
+        flex-grow: 1;
+    }
+
+    .cc-card-btn {
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.42rem 0.85rem;
+        border-radius: 7px;
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+        transition: all 0.15s ease;
+    }
+
+    .btn-approvals {
+        background: #b45309;
+        color: #ffffff !important;
+    }
+
+    .btn-approvals:hover {
+        background: #92400e;
+    }
+
+    .btn-demand {
+        background: #b91c1c;
+        color: #ffffff !important;
+    }
+
+    .btn-demand:hover {
+        background: #991b1b;
+    }
+
+    .btn-outliers {
+        background: #b45309;
+        color: #ffffff !important;
+    }
+
+    .btn-outliers:hover {
+        background: #92400e;
+    }
+
+    .btn-supplygap {
+        background: transparent;
+        border: 1px solid #0d9488;
+        color: #0f766e !important;
+    }
+
+    .btn-supplygap:hover {
+        background: rgba(13, 148, 136, 0.08);
+    }
+
+    .btn-cleanup {
+        background: #c2410c;
+        color: #ffffff !important;
+    }
+
+    .btn-cleanup:hover {
+        background: #9a3412;
+    }
+
+    /* Pulse Section */
+    .cc-pulse-card {
+        background: var(--cc-card);
+        border: 1px solid var(--cc-border);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--cc-shadow);
+        margin-bottom: 2rem;
+    }
+
+    .cc-pulse-item {
+        border-right: 1px solid var(--cc-border-subtle);
+        padding: 0.35rem 1rem;
+    }
+
+    .cc-pulse-item:last-child {
+        border-right: none;
+    }
+
+    .cc-pulse-label {
+        font-size: 0.70rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--cc-text-sub);
+        margin-bottom: 0.4rem;
+    }
+
+    .cc-pulse-val-wrap {
+        display: flex;
+        align-items: baseline;
+        gap: 0.45rem;
+    }
+
+    .cc-pulse-val {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: var(--cc-text-dark);
+        line-height: 1;
+    }
+
+    .cc-pulse-delta {
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .delta-up {
+        color: #16a34a;
+    }
+
+    .delta-down {
+        color: #dc2626;
+    }
+
+    .delta-neutral {
+        color: #94a3b8;
+    }
+
+    /* Where to Act Tables */
+    .cc-act-card {
+        background: var(--cc-card);
+        border: 1px solid var(--cc-border);
+        border-radius: 12px;
+        padding: 1.35rem;
+        box-shadow: var(--cc-shadow);
+        height: 100%;
+    }
+
+    .cc-act-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.15rem;
+    }
+
+    .cc-act-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--cc-text-dark);
+        margin: 0;
+    }
+
+    .cc-act-badge {
+        font-size: 0.74rem;
+        color: var(--cc-text-sub);
+    }
+
+    .cc-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .cc-table th {
+        font-size: 0.70rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--cc-text-sub);
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--cc-border);
+    }
+
+    .cc-table td {
+        font-size: 0.82rem;
+        padding: 0.75rem 0.75rem;
+        border-bottom: 1px solid var(--cc-border-subtle);
+        color: var(--cc-text-body);
+    }
+
+    .cc-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Pill Badges in Supply/Demand */
+    .pill-signal {
+        display: inline-block;
+        font-size: 0.70rem;
+        font-weight: 700;
+        padding: 0.2rem 0.55rem;
+        border-radius: 6px;
+        text-transform: lowercase;
+    }
+
+    .pill-under {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .pill-over {
+        background: #fffbeb;
+        color: #b45309;
+    }
+
+    .pill-balanced {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    .cc-link-action {
+        color: #0d9488;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .cc-link-action:hover {
+        color: #0f766e;
+        text-decoration: underline;
+    }
+
+    /* Recent Activity Feed */
+    .cc-activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .cc-activity-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding-bottom: 0.85rem;
+        border-bottom: 1px solid var(--cc-border-subtle);
+    }
+
+    .cc-activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .cc-activity-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+    }
+
+    .cc-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+
+    .dot-red {
+        background-color: #ef4444;
+    }
+
+    .dot-amber {
+        background-color: #f59e0b;
+    }
+
+    .dot-green {
+        background-color: #10b981;
+    }
+
+    .cc-activity-title {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--cc-text-dark);
+        line-height: 1.25;
+    }
+
+    .cc-activity-sub {
+        font-size: 0.75rem;
+        color: var(--cc-text-sub);
+        margin-top: 0.15rem;
+    }
+
+    .cc-activity-time {
+        font-size: 0.72rem;
+        color: var(--cc-text-muted);
+        white-space: nowrap;
+    }
+
+    /* Bottom Explanatory Banner */
+    .cc-why-banner {
+        background: #ffffff;
+        border: 1px solid var(--cc-border);
+        border-radius: 12px;
+        padding: 1rem 1.35rem;
+        margin-top: 2rem;
+        box-shadow: var(--cc-shadow);
+    }
+
+    [data-bs-theme="dark"] .cc-why-banner {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    .cc-why-banner p {
+        font-size: 0.82rem;
+        color: var(--cc-text-sub);
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .cc-why-banner strong {
+        color: var(--cc-text-dark);
+    }
+
+    /* Catalog Breakdown by Category & Subcategories */
+    .cat-breakdown-card {
+        background: #ffffff;
+        border: 1px solid var(--cc-border);
+        border-radius: 14px;
+        padding: 1.35rem 1.5rem;
+        box-shadow: var(--cc-shadow);
+        margin-top: 1.75rem;
+    }
+
+    [data-bs-theme="dark"] .cat-breakdown-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    .cat-breakdown-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .cat-breakdown-table thead th {
+        background: #f8fafc;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--cc-text-sub);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--cc-border);
+        white-space: nowrap;
+    }
+
+    [data-bs-theme="dark"] .cat-breakdown-table thead th {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    .cat-main-row {
+        transition: background 0.15s ease;
+        cursor: pointer;
+    }
+
+    .cat-main-row:hover {
+        background: rgba(241, 245, 249, 0.7);
+    }
+
+    [data-bs-theme="dark"] .cat-main-row:hover {
+        background: rgba(51, 65, 85, 0.4);
+    }
+
+    .cat-main-row td {
+        padding: 0.95rem 1rem;
+        border-bottom: 1px solid var(--cc-border-subtle);
+        vertical-align: middle;
+    }
+
+    .cat-chevron-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        max-width: 28px !important;
+        max-height: 28px !important;
+        padding: 0 !important;
+        border-radius: 6px;
+        background: var(--cc-border-subtle);
+        border: 1px solid var(--cc-border);
+        color: var(--cc-text-sub);
+        font-size: 0.78rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-decoration: none;
+        flex-shrink: 0 !important;
+        margin-right: 1.25rem !important;
+    }
+
+    .cat-chevron-btn:hover {
+        background: #0f766e;
+        color: #ffffff;
+        border-color: #0f766e;
+    }
+
+    .cat-chevron-btn.expanded i {
+        transform: rotate(90deg);
+    }
+
+    .cat-chevron-btn i {
+        transition: transform 0.2s ease;
+    }
+
+    .cat-sub-drawer {
+        background: #fafbfd;
+        border-bottom: 1px solid var(--cc-border);
+    }
+
+    [data-bs-theme="dark"] .cat-sub-drawer {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    .subcat-box {
+        padding: 1.1rem 1.25rem 1.25rem 2.5rem;
+    }
+
+    .subcat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .subcat-item-card {
+        background: #ffffff;
+        border: 1px solid var(--cc-border);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        transition: all 0.15s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    [data-bs-theme="dark"] .subcat-item-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    .subcat-item-card:hover {
+        border-color: #0f766e;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+    }
+
+    .subcat-item-card.has-products {
+        border-left: 3.5px solid #0f766e;
+    }
+
+    .subcat-item-card.empty-cat {
+        opacity: 0.75;
+    }
+
+    .cat-share-bar-wrap {
+        width: 90px;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    [data-bs-theme="dark"] .cat-share-bar-wrap {
+        background: #334155;
+    }
+
+    .cat-share-bar-fill {
+        height: 100%;
+        background: #0f766e;
+        border-radius: 999px;
+    }
 </style>
 
-<div class="container-fluid command-center-wrap pt-3">
+<div class="container-fluid pt-3">
 
     <!-- Top Sub-Navigation Tabs -->
     {% include "partials/reports_nav.html" %}
@@ -732,22 +780,31 @@
             <!-- Period Pills: 7d, 30d, 90d, All -->
             <div class="cc-period-pills">
                 <a href="?period=7d" class="cc-period-btn {% if period == '7d' %}active{% endif %}">7d</a>
-                <a href="?period=30d" class="cc-period-btn {% if period == '30d' or not period %}active{% endif %}">30d</a>
+                <a href="?period=30d"
+                    class="cc-period-btn {% if period == '30d' or not period %}active{% endif %}">30d</a>
                 <a href="?period=90d" class="cc-period-btn {% if period == '90d' %}active{% endif %}">90d</a>
                 <a href="?period=all" class="cc-period-btn {% if period == 'all' %}active{% endif %}">All</a>
             </div>
 
             <!-- Export Button -->
             <div class="dropdown">
-                <button class="cc-btn-export dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="cc-btn-export dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
                     <span>Export</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3" style="font-size: 0.82rem;">
-                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download Datasets</h6></li>
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/products/"><i class="bi bi-box-seam me-2 text-success"></i>Products Report (.csv)</a></li>
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/lots/"><i class="bi bi-boxes me-2 text-warning"></i>Lots Report (.csv)</a></li>
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/rfqs/"><i class="bi bi-file-earmark-text me-2 text-primary"></i>RFQs Demand (.csv)</a></li>
-                    <li><a class="dropdown-item py-2" href="/admin/reports/export/users/"><i class="bi bi-people me-2 text-info"></i>Users Directory (.csv)</a></li>
+                    <li>
+                        <h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.68rem;">Download
+                            Datasets</h6>
+                    </li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/products/"><i
+                                class="bi bi-box-seam me-2 text-success"></i>Products Report (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/lots/"><i
+                                class="bi bi-boxes me-2 text-warning"></i>Lots Report (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/rfqs/"><i
+                                class="bi bi-file-earmark-text me-2 text-primary"></i>RFQs Demand (.csv)</a></li>
+                    <li><a class="dropdown-item py-2" href="/admin/reports/export/users/"><i
+                                class="bi bi-people me-2 text-info"></i>Users Directory (.csv)</a></li>
                 </ul>
             </div>
         </div>
@@ -761,7 +818,12 @@
                 <span>Demand is not keeping up with supply</span>
             </div>
             <p class="cc-alert-body">
-                <strong>{{ kpi.live_listings|default:203|intcomma }} live listings</strong> and <strong>{{ kpi.total_units|default:738000|intcomma }} units</strong> in stock, but only <strong>{{ kpi.pending_rfqs|default:2 }} buyer RFQs</strong> in 30 days and $0 quoted. The marketplace has inventory; it needs buyers. Biggest gap: <strong>{{ command_center.biggest_gap_cat|default:"Construction & Plumbing" }}</strong> ({{ command_center.gap_supply|default:82 }} listings, {{ command_center.gap_demand|default:0 }} demand).
+                <strong>{{ kpi.live_listings|default:203|intcomma }} live listings</strong> and <strong>{{
+                    kpi.total_units|default:738000|intcomma }} units</strong> in stock, but only <strong>{{
+                    kpi.pending_rfqs|default:2 }} buyer RFQs</strong> in 30 days and $0 quoted. The marketplace has
+                inventory; it needs buyers. Biggest gap: <strong>{{ command_center.biggest_gap_cat|default:"Construction
+                    & Plumbing" }}</strong> ({{ command_center.gap_supply|default:82 }} listings, {{
+                command_center.gap_demand|default:0 }} demand).
             </p>
         </div>
         <div>
@@ -789,7 +851,9 @@
                         <div class="cc-card-big-num">{{ command_center.actions.approvals.count|default:25 }}</div>
                         <div class="cc-card-title">Listings pending review</div>
                         <div class="cc-card-sub">
-                            Oldest waiting {{ command_center.actions.approvals.oldest_days|default:3 }} days · {{ command_center.actions.approvals.products|default:18 }} products, {{ command_center.actions.approvals.lots|default:7 }} lots
+                            Oldest waiting {{ command_center.actions.approvals.oldest_days|default:3 }} days · {{
+                            command_center.actions.approvals.products|default:18 }} products, {{
+                            command_center.actions.approvals.lots|default:7 }} lots
                         </div>
                     </div>
                     <div>
@@ -807,7 +871,8 @@
                         <div class="cc-card-top-header">
                             <span class="cc-card-tag tag-demand">📉 DEMAND</span>
                         </div>
-                        <div class="cc-card-big-num">{{ kpi.pending_rfqs|default:command_center.actions.rfqs_unquoted|default:2 }}</div>
+                        <div class="cc-card-big-num">{{
+                            kpi.pending_rfqs|default:command_center.actions.rfqs_unquoted|default:2 }}</div>
                         <div class="cc-card-title">RFQs in 30 days</div>
                         <div class="cc-card-sub">
                             Across {{ kpi.live_listings|default:203 }} listings · conversion &lt;0.1%
@@ -894,35 +959,44 @@
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Live Listings</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.live_listings.value|default:kpi.live_listings|default:203 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.live_listings.delta|default:"12" }}</span>
+                        <span class="cc-pulse-val">{{
+                            command_center.kpi_map.live_listings.value|default:kpi.live_listings|default:203 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{
+                            command_center.kpi_map.live_listings.delta|default:"12" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Buyers</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.active_buyers.value|default:kpi.total_buyers|default:36 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.active_buyers.delta|default:"4" }}</span>
+                        <span class="cc-pulse-val">{{
+                            command_center.kpi_map.active_buyers.value|default:kpi.total_buyers|default:36 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{
+                            command_center.kpi_map.active_buyers.delta|default:"4" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Sellers</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.verified_sellers.value|default:kpi.total_sellers|default:92 }}</span>
-                        <span class="cc-pulse-delta delta-up">▲ {{ command_center.kpi_map.verified_sellers.delta|default:"9" }}</span>
+                        <span class="cc-pulse-val">{{
+                            command_center.kpi_map.verified_sellers.value|default:kpi.total_sellers|default:92 }}</span>
+                        <span class="cc-pulse-delta delta-up">▲ {{
+                            command_center.kpi_map.verified_sellers.delta|default:"9" }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">RFQs (30D)</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.rfq_demand.value|default:kpi.total_rfqs|default:2 }}</span>
-                        <span class="cc-pulse-delta delta-down">▼ {{ command_center.kpi_map.rfq_demand.delta|default:"1" }}</span>
+                        <span class="cc-pulse-val">{{
+                            command_center.kpi_map.rfq_demand.value|default:kpi.total_rfqs|default:2 }}</span>
+                        <span class="cc-pulse-delta delta-down">▼ {{ command_center.kpi_map.rfq_demand.delta|default:"1"
+                            }}</span>
                     </div>
                 </div>
                 <div class="col-6 col-md-4 col-xl-2 cc-pulse-item">
                     <div class="cc-pulse-label">Avg Buyer Price</div>
                     <div class="cc-pulse-val-wrap">
-                        <span class="cc-pulse-val">{{ command_center.kpi_map.avg_product_price.value|default:"$194" }}</span>
+                        <span class="cc-pulse-val">{{ command_center.kpi_map.avg_product_price.value|default:"$194"
+                            }}</span>
                         <span class="cc-pulse-delta delta-neutral">—</span>
                     </div>
                 </div>
@@ -965,20 +1039,22 @@
                                 <td class="text-end fw-bold">{{ item.demand }}</td>
                                 <td>
                                     {% if item.signal == 'under_supplied' %}
-                                        <span class="pill-signal pill-under">under-supplied</span>
+                                    <span class="pill-signal pill-under">under-supplied</span>
                                     {% elif item.signal == 'over_supplied' %}
-                                        <span class="pill-signal pill-over">over-supplied</span>
+                                    <span class="pill-signal pill-over">over-supplied</span>
                                     {% else %}
-                                        <span class="pill-signal pill-balanced">balanced</span>
+                                    <span class="pill-signal pill-balanced">balanced</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
                                     {% if item.signal == 'under_supplied' %}
-                                        <a href="/admin/sellers/" class="cc-link-action">Recruit</a>
+                                    <a href="/admin/sellers/" class="cc-link-action">Recruit</a>
                                     {% elif item.signal == 'over_supplied' %}
-                                        <a href="/admin/reports/products/?category={{ item.category|urlencode }}" class="cc-link-action">Push</a>
+                                    <a href="/admin/reports/products/?category={{ item.category|urlencode }}"
+                                        class="cc-link-action">Push</a>
                                     {% else %}
-                                        <a href="/admin/reports/products/?category={{ item.category|urlencode }}" class="cc-link-action text-secondary">View</a>
+                                    <a href="/admin/reports/products/?category={{ item.category|urlencode }}"
+                                        class="cc-link-action text-secondary">View</a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -1002,21 +1078,24 @@
                                 <td class="text-end fw-bold">121</td>
                                 <td class="text-end fw-bold">0</td>
                                 <td><span class="pill-signal pill-over">over-supplied</span></td>
-                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold text-dark">Automotive</td>
                                 <td class="text-end fw-bold">27</td>
                                 <td class="text-end fw-bold">0</td>
                                 <td><span class="pill-signal pill-over">over-supplied</span></td>
-                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a>
+                                </td>
                             </tr>
                             <tr>
                                 <td class="fw-semibold text-dark">Packaging</td>
                                 <td class="text-end fw-bold">23</td>
                                 <td class="text-end fw-bold">0</td>
                                 <td><span class="pill-signal pill-over">over-supplied</span></td>
-                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a></td>
+                                <td class="text-end"><a href="/admin/reports/products/" class="cc-link-action">Push</a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -1036,7 +1115,8 @@
                     {% for act in command_center.activity %}
                     <div class="cc-activity-item">
                         <div class="cc-activity-left">
-                            <span class="cc-dot {% if act.tone == 'red' %}dot-red{% elif act.tone == 'amber' %}dot-amber{% else %}dot-green{% endif %}"></span>
+                            <span
+                                class="cc-dot {% if act.tone == 'red' %}dot-red{% elif act.tone == 'amber' %}dot-amber{% else %}dot-green{% endif %}"></span>
                             <div>
                                 <div class="cc-activity-title">{{ act.title }}</div>
                                 <div class="cc-activity-sub">{{ act.sub }}</div>
@@ -1096,21 +1176,27 @@
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
             <div>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
+                    <div
+                        class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
                         <i class="bi bi-grid-3x3-gap-fill" style="font-size: 1.15rem;"></i>
                     </div>
                     <div>
-                        <h3 class="cc-act-title mb-0" style="font-size: 1.15rem;">Catalog Breakdown by Category ({{ cat_data|length }} Taxonomies)</h3>
-                        <p class="text-muted small mb-0 mt-0.5">Hierarchical taxonomy view with listed product counts and inventory unit volumes across all subcategories.</p>
+                        <h3 class="cc-act-title mb-0" style="font-size: 1.15rem;">Catalog Breakdown by Category ({{
+                            cat_data|length }} Taxonomies)</h3>
+                        <p class="text-muted small mb-0 mt-0.5">Hierarchical taxonomy view with listed product counts
+                            and inventory unit volumes across all subcategories.</p>
                     </div>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleAllTaxonomies" onclick="toggleAllTaxonomies()">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleAllTaxonomies"
+                    onclick="toggleAllTaxonomies()">
                     <i class="bi bi-arrows-expand me-1"></i><span>Expand All Subcategories</span>
                 </button>
-                <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill font-monospace fw-semibold" style="font-size: 0.78rem;">
-                    <i class="bi bi-box-seam text-primary me-1"></i>{{ kpi.total_products|default:"0" }} Products &bull; {{ kpi.total_units|default:"0"|intcomma }} Units
+                <span class="badge bg-light text-dark border px-3 py-1.5 rounded-pill font-monospace fw-semibold"
+                    style="font-size: 0.78rem;">
+                    <i class="bi bi-box-seam text-primary me-1"></i>{{ kpi.total_products|default:"0" }} Products &bull;
+                    {{ kpi.total_units|default:"0"|intcomma }} Units
                 </span>
             </div>
         </div>
@@ -1132,12 +1218,14 @@
                     <!-- Main Category Row -->
                     <tr class="cat-main-row" onclick="toggleCatDrawer('{{ c.id }}', event)">
                         <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <button type="button" class="cat-chevron-btn me-2" id="chevron-{{ c.id }}" aria-expanded="false" onclick="event.stopPropagation(); toggleCatDrawer('{{ c.id }}')">
+                            <div class="d-flex align-items-center">
+                                <button type="button" class="cat-chevron-btn me-3 flex-shrink-0" id="chevron-{{ c.id }}"
+                                    aria-expanded="false"
+                                    onclick="event.stopPropagation(); toggleCatDrawer('{{ c.id }}')">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
-                                <div>
-                                    <div class="fw-bold text-dark" style="font-size: 0.92rem;">
+                                <div class="ps-1">
+                                    <div class="fw-bold text-dark" style="font-size: 0.92rem; line-height: 1.3;">
                                         {{ c.name }}
                                     </div>
                                     <div class="text-muted small" style="font-size: 0.74rem;">
@@ -1148,11 +1236,15 @@
                         </td>
                         <td class="text-center">
                             {% if c.active_subcategories_count > 0 %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.74rem;">
-                                <i class="bi bi-check-circle-fill me-1"></i>{{ c.active_subcategories_count }} of {{ c.subcategories_count }} active
+                            <span
+                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 font-monospace"
+                                style="font-size: 0.74rem;">
+                                <i class="bi bi-check-circle-fill me-1"></i>{{ c.active_subcategories_count }} of {{
+                                c.subcategories_count }} active
                             </span>
                             {% else %}
-                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 font-monospace" style="font-size: 0.74rem;">
+                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1 font-monospace"
+                                style="font-size: 0.74rem;">
                                 0 of {{ c.subcategories_count }} active
                             </span>
                             {% endif %}
@@ -1176,7 +1268,9 @@
                             </div>
                         </td>
                         <td class="text-end pe-3" onclick="event.stopPropagation();">
-                            <a href="/admin/reports/products/?category={{ c.name|urlencode }}" class="btn btn-sm btn-outline-secondary px-2.5 py-1" style="font-size: 0.76rem;" title="View in Products Report">
+                            <a href="/admin/reports/products/?category={{ c.name|urlencode }}"
+                                class="btn btn-sm btn-outline-secondary px-2.5 py-1" style="font-size: 0.76rem;"
+                                title="View in Products Report">
                                 <span>Filter</span> <i class="bi bi-arrow-right ms-0.5"></i>
                             </a>
                         </td>
@@ -1186,35 +1280,48 @@
                     <tr id="drawer-{{ c.id }}" class="cat-sub-drawer" style="display: none;">
                         <td colspan="6" class="p-0">
                             <div class="subcat-box">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                                <div
+                                    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
                                     <div class="small fw-semibold text-dark">
-                                        <i class="bi bi-diagram-2 text-primary me-1.5"></i>Subcategories in <strong>{{ c.name }}</strong> ({{ c.subcategories|length }} total):
+                                        <i class="bi bi-diagram-2 text-primary me-1.5"></i>Subcategories in <strong>{{
+                                            c.name }}</strong> ({{ c.subcategories|length }} total):
                                     </div>
                                     <div class="small text-muted font-monospace">
-                                        <span class="text-success fw-bold">{{ c.active_subcategories_count }}</span> active with products &bull; <span class="text-muted">{{ c.subcategories_count|add:"-"|add:c.active_subcategories_count }}</span> empty
+                                        <span class="text-success fw-bold">{{ c.active_subcategories_count }}</span>
+                                        active with products &bull; <span class="text-muted">{{
+                                            c.subcategories_count|add:"-"|add:c.active_subcategories_count }}</span>
+                                        empty
                                     </div>
                                 </div>
 
                                 <div class="subcat-grid">
                                     {% for sc in c.subcategories %}
-                                    <a href="/admin/reports/products/?category={{ c.name|urlencode }}&q={{ sc.name|urlencode }}" 
-                                       class="subcat-item-card {% if sc.product_count > 0 %}has-products{% else %}empty-cat{% endif %}"
-                                       title="Filter products in {{ sc.name }}">
+                                    <a href="/admin/reports/products/?category={{ c.name|urlencode }}&q={{ sc.name|urlencode }}"
+                                        class="subcat-item-card {% if sc.product_count > 0 %}has-products{% else %}empty-cat{% endif %}"
+                                        title="Filter products in {{ sc.name }}">
                                         <div class="min-w-0">
-                                            <div class="fw-semibold text-dark text-truncate" style="font-size: 0.84rem;">
-                                                <i class="bi bi-arrow-return-right text-muted me-1.5 opacity-50" style="font-size: 0.72rem;"></i>{{ sc.name }}
+                                            <div class="fw-semibold text-dark text-truncate"
+                                                style="font-size: 0.84rem;">
+                                                <i class="bi bi-arrow-return-right text-muted me-1.5 opacity-50"
+                                                    style="font-size: 0.72rem;"></i>{{ sc.name }}
                                             </div>
-                                            <div class="text-muted small mt-0.5 font-monospace" style="font-size: 0.72rem;">
-                                                {% if sc.total_units > 0 %}{{ sc.total_units|intcomma }} units in stock{% else %}No stock recorded{% endif %}
+                                            <div class="text-muted small mt-0.5 font-monospace"
+                                                style="font-size: 0.72rem;">
+                                                {% if sc.total_units > 0 %}{{ sc.total_units|intcomma }} units in
+                                                stock{% else %}No stock recorded{% endif %}
                                             </div>
                                         </div>
                                         <div class="text-end flex-shrink-0">
                                             {% if sc.product_count > 0 %}
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1" style="font-size: 0.76rem;">
-                                                {{ sc.product_count }} {% if sc.product_count == 1 %}product{% else %}products{% endif %}
+                                            <span
+                                                class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-bold px-2 py-1"
+                                                style="font-size: 0.76rem;">
+                                                {{ sc.product_count }} {% if sc.product_count == 1 %}product{% else
+                                                %}products{% endif %}
                                             </span>
                                             {% else %}
-                                            <span class="badge bg-light text-muted border font-monospace px-2 py-0.5" style="font-size: 0.70rem;">
+                                            <span class="badge bg-light text-muted border font-monospace px-2 py-0.5"
+                                                style="font-size: 0.70rem;">
                                                 0 products
                                             </span>
                                             {% endif %}
@@ -1242,56 +1349,58 @@
     <!-- Bottom Explanatory Banner -->
     <div class="cc-why-banner">
         <p>
-            <strong>Why this layout:</strong> every number is paired with a threshold and an action; the page opens on decisions not rows; the one signal your data screams — supply with almost no demand — is first. Deep tables live one click away on each tab.
+            <strong>Why this layout:</strong> every number is paired with a threshold and an action; the page opens on
+            decisions not rows; the one signal your data screams — supply with almost no demand — is first. Deep tables
+            live one click away on each tab.
         </p>
     </div>
 
 </div>
 
 <script>
-function toggleCatDrawer(catId, event) {
-    var drawer = document.getElementById('drawer-' + catId);
-    var btn = document.getElementById('chevron-' + catId);
-    if (!drawer) return;
-    
-    var isHidden = (drawer.style.display === 'none' || drawer.style.display === '');
-    drawer.style.display = isHidden ? 'table-row' : 'none';
-    if (btn) {
-        if (isHidden) {
-            btn.classList.add('expanded');
-            btn.setAttribute('aria-expanded', 'true');
-        } else {
-            btn.classList.remove('expanded');
-            btn.setAttribute('aria-expanded', 'false');
-        }
-    }
-}
+    function toggleCatDrawer(catId, event) {
+        var drawer = document.getElementById('drawer-' + catId);
+        var btn = document.getElementById('chevron-' + catId);
+        if (!drawer) return;
 
-var allTaxonomiesExpanded = false;
-function toggleAllTaxonomies() {
-    allTaxonomiesExpanded = !allTaxonomiesExpanded;
-    var drawers = document.querySelectorAll('.cat-sub-drawer');
-    var btns = document.querySelectorAll('.cat-chevron-btn');
-    var btnToggle = document.getElementById('btnToggleAllTaxonomies');
-    
-    drawers.forEach(function(drawer) {
-        drawer.style.display = allTaxonomiesExpanded ? 'table-row' : 'none';
-    });
-    btns.forEach(function(btn) {
-        if (allTaxonomiesExpanded) {
-            btn.classList.add('expanded');
-            btn.setAttribute('aria-expanded', 'true');
-        } else {
-            btn.classList.remove('expanded');
-            btn.setAttribute('aria-expanded', 'false');
+        var isHidden = (drawer.style.display === 'none' || drawer.style.display === '');
+        drawer.style.display = isHidden ? 'table-row' : 'none';
+        if (btn) {
+            if (isHidden) {
+                btn.classList.add('expanded');
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                btn.classList.remove('expanded');
+                btn.setAttribute('aria-expanded', 'false');
+            }
         }
-    });
-    
-    if (btnToggle) {
-        btnToggle.innerHTML = allTaxonomiesExpanded ? 
-            '<i class="bi bi-arrows-collapse me-1"></i><span>Collapse All Subcategories</span>' : 
-            '<i class="bi bi-arrows-expand me-1"></i><span>Expand All Subcategories</span>';
     }
-}
+
+    var allTaxonomiesExpanded = false;
+    function toggleAllTaxonomies() {
+        allTaxonomiesExpanded = !allTaxonomiesExpanded;
+        var drawers = document.querySelectorAll('.cat-sub-drawer');
+        var btns = document.querySelectorAll('.cat-chevron-btn');
+        var btnToggle = document.getElementById('btnToggleAllTaxonomies');
+
+        drawers.forEach(function (drawer) {
+            drawer.style.display = allTaxonomiesExpanded ? 'table-row' : 'none';
+        });
+        btns.forEach(function (btn) {
+            if (allTaxonomiesExpanded) {
+                btn.classList.add('expanded');
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                btn.classList.remove('expanded');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        if (btnToggle) {
+            btnToggle.innerHTML = allTaxonomiesExpanded ?
+                '<i class="bi bi-arrows-collapse me-1"></i><span>Collapse All Subcategories</span>' :
+                '<i class="bi bi-arrows-expand me-1"></i><span>Expand All Subcategories</span>';
+        }
+    }
 </script>
 {% endblock %}

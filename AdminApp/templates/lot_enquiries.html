@@ -1,51 +1,57 @@
 {% extends "base.html" %}
+{% load static humanize %}
 
 {% block title %}Lot Batch Enquiries - Surplus Admin{% endblock %}
 
 {% block content %}
 <style>
 /* ==========================================================================
-   SHOPEERS-INSPIRED MODERN CLEAN AESTHETIC DESIGN SYSTEM - LOT ENQUIRIES
+   DASHKIT / FULL-VERSION LOT ENQUIRIES DESIGN SYSTEM
    ========================================================================== */
 
 :root {
-    --shopeers-bg: #f5f6fa;
-    --shopeers-card: #ffffff;
-    --shopeers-text-dark: #111827;
-    --shopeers-text-sub: #6b7280;
-    --shopeers-text-muted: #9ca3af;
-    --shopeers-border: #f1f3f7;
-    --shopeers-blue: #0a5c48;
-    --shopeers-blue-hover: #084c3b;
-    --shopeers-blue-light: #e8f5f1;
-    --shopeers-radius-lg: 22px;
-    --shopeers-radius-md: 14px;
-    --shopeers-radius-pill: 9999px;
-    --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-    --shopeers-shadow-hover: 0 10px 28px -4px rgba(15, 23, 42, 0.08), 0 3px 8px -2px rgba(15, 23, 42, 0.03);
+    --dash-bg: #fafafd;
+    --dash-card: #ffffff;
+    --dash-text-dark: #0f172a;
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-border: rgba(226, 232, 240, 0.85);
+    --dash-border-subtle: #f1f5f9;
+    --dash-primary: #6366f1;
+    --dash-primary-hover: #4f46e5;
+    --dash-primary-light: rgba(99, 102, 241, 0.1);
+    --dash-radius-xl: 18px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.06), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.10), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
 }
 
 [data-bs-theme="dark"] {
-    --shopeers-bg: #0b1120;
-    --shopeers-card: #111827;
-    --shopeers-text-dark: #f9fafb;
-    --shopeers-text-sub: #9ca3af;
-    --shopeers-text-muted: #6b7280;
-    --shopeers-border: #1f2937;
-    --shopeers-blue: #0ea27e;
-    --shopeers-blue-hover: #0a5c48;
-    --shopeers-blue-light: rgba(14, 162, 126, 0.15);
-    --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    --shopeers-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --dash-bg: #0f172a;
+    --dash-card: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-border: #334155;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
+    --dash-primary: #818cf8;
+    --dash-primary-hover: #6366f1;
+    --dash-primary-light: rgba(129, 140, 248, 0.15);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
-.shopeers-viewport {
+.enquiries-viewport {
     background: transparent;
-    padding-bottom: 2rem;
+    padding-bottom: 3rem;
 }
 
 /* Header & Breadcrumb */
-.shopeers-header {
+.enquiries-header {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -54,427 +60,452 @@
     margin-bottom: 1.5rem;
 }
 
-.shopeers-breadcrumb-nav {
+.dash-breadcrumb-nav {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     font-size: 0.78rem;
-    color: var(--shopeers-text-muted);
+    color: var(--dash-text-muted);
     margin-bottom: 0.35rem;
 }
 
-.shopeers-breadcrumb-nav a {
-    color: var(--shopeers-text-sub);
+.dash-breadcrumb-nav a {
+    color: var(--dash-text-sub);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.15s ease;
 }
 
-.shopeers-breadcrumb-nav a:hover {
-    color: var(--shopeers-blue);
+.dash-breadcrumb-nav a:hover {
+    color: var(--dash-primary);
 }
 
-.shopeers-page-title {
+.dash-page-title {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     font-size: 1.55rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     margin: 0;
     line-height: 1.2;
 }
 
-.shopeers-page-subtitle {
+.dash-page-subtitle {
     font-size: 0.85rem;
-    color: var(--shopeers-text-sub);
+    color: var(--dash-text-sub);
     margin: 0.2rem 0 0 0;
 }
 
-/* Top Shopeers KPI Stat Metric Cards (Static Display Cards) */
-.shopeers-kpi-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    padding: 1.25rem 1.35rem;
-    box-shadow: var(--shopeers-shadow);
+/* KPI Stat Cards (Full-Version Dashcode Style) */
+.dash-kpi-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    padding: 1.2rem 1.3rem;
+    box-shadow: var(--dash-shadow-card);
     text-decoration: none;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
-    cursor: default;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    cursor: pointer;
 }
 
-.shopeers-kpi-label {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--shopeers-text-sub);
-    letter-spacing: 0.2px;
+.dash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-hover);
 }
 
-.shopeers-kpi-icon {
+.dash-kpi-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--dash-text-sub);
+}
+
+.dash-kpi-icon {
     width: 38px;
     height: 38px;
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     flex-shrink: 0;
 }
 
-.icon-emerald-theme { background: #e8f5f1; color: #0a5c48; }
-.icon-amber { background: #fffbeb; color: #f59e0b; }
-.icon-emerald { background: #ecfdf5; color: #10b981; }
-.icon-violet { background: #f5f3ff; color: #8b5cf6; }
-.icon-rose { background: #fff1f2; color: #f43f5e; }
+.icon-dash-indigo { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.icon-dash-amber { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.icon-dash-emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
+.icon-dash-purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.icon-dash-rose { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
 
-.shopeers-kpi-number {
+.dash-kpi-number {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     font-size: 1.65rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     letter-spacing: -0.02em;
     line-height: 1.1;
     margin: 0.45rem 0 0 0;
 }
 
-.shopeers-kpi-trend {
+.dash-kpi-trend {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     font-size: 0.70rem;
     font-weight: 600;
-    padding: 2px 7px;
-    border-radius: var(--shopeers-radius-pill);
+    padding: 2px 8px;
+    border-radius: var(--dash-radius-pill);
     margin-top: 0.4rem;
     width: fit-content;
 }
 
 .trend-all { background: #f1f5f9; color: #475569; }
-.trend-pending { background: #fffbeb; color: #b45309; }
-.trend-approved { background: #ecfdf5; color: #047857; }
-.trend-correction { background: #f5f3ff; color: #6d28d9; }
-.trend-declined { background: #fff1f2; color: #be123c; }
+.trend-pending { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+.trend-approved { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.trend-correction { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+.trend-declined { background: rgba(239, 68, 68, 0.12); color: #be123c; }
 
-/* Main Table Container Card */
-.shopeers-main-card {
-    background: var(--shopeers-card);
-    border: 1px solid var(--shopeers-border);
-    border-radius: var(--shopeers-radius-lg);
-    box-shadow: var(--shopeers-shadow);
+/* Main Card Container */
+.dash-main-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
-/* Toolbar Bar */
-.shopeers-toolbar {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--shopeers-border);
+/* Toolbar */
+.dash-toolbar {
+    padding: 1.15rem 1.4rem;
+    border-bottom: 1px solid var(--dash-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    background: var(--dash-card);
 }
 
-/* Capsule Search Bar */
-.shopeers-search-capsule {
+/* Dashcode Search Capsule */
+.dash-search-capsule {
     display: flex;
     align-items: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 2px 6px 2px 14px;
-    min-width: 260px;
-    max-width: 380px;
-    flex-grow: 1;
-    transition: all 0.15s ease;
+    border-radius: var(--dash-radius-pill);
+    padding: 3px 4px 3px 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 320px;
 }
 
-[data-bs-theme="dark"] .shopeers-search-capsule {
+[data-bs-theme="dark"] .dash-search-capsule {
     background: #1e293b;
     border-color: #334155;
 }
 
-.shopeers-search-capsule:focus-within {
+.dash-search-capsule:focus-within {
     background: #ffffff;
-    border-color: var(--shopeers-blue);
-    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-.shopeers-search-input {
+.dash-search-input {
     border: none !important;
     background: transparent !important;
-    font-size: 0.85rem;
-    color: var(--shopeers-text-dark);
+    font-size: 0.84rem;
+    color: var(--dash-text-dark);
     outline: none !important;
     box-shadow: none !important;
     width: 100%;
     padding: 0.35rem 0.4rem;
 }
 
-.shopeers-search-btn {
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.4rem 0.95rem;
-    font-size: 0.80rem;
+.dash-search-btn {
+    border-radius: var(--dash-radius-pill);
+    padding: 0.38rem 0.95rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    background: var(--shopeers-blue);
+    background: var(--dash-primary);
     color: #ffffff;
     border: none;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
-.shopeers-search-btn:hover {
-    background: var(--shopeers-blue-hover);
+.dash-search-btn:hover {
+    background: var(--dash-primary-hover);
     color: #ffffff;
 }
 
-/* Shopeers Segmented Status Tabs */
-.shopeers-segmented-pills {
+/* Segmented Status Tabs */
+.dash-segmented-pills {
     display: inline-flex;
     align-items: center;
     background: #f1f5f9;
     padding: 4px;
-    border-radius: var(--shopeers-radius-pill);
-    border: 1px solid var(--shopeers-border);
+    border-radius: var(--dash-radius-pill);
+    border: 1px solid var(--dash-border);
     gap: 2px;
 }
 
-[data-bs-theme="dark"] .shopeers-segmented-pills {
-    background: #1e293b;
+[data-bs-theme="dark"] .dash-segmented-pills {
+    background: #0f172a;
 }
 
-.shopeers-pill-tab {
+.dash-pill-tab {
     padding: 0.35rem 0.95rem;
-    font-size: 0.82rem;
+    font-size: 0.80rem;
     font-weight: 600;
-    border-radius: var(--shopeers-radius-pill);
-    color: var(--shopeers-text-sub);
+    border-radius: var(--dash-radius-pill);
+    color: var(--dash-text-sub);
     text-decoration: none;
     transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
-.shopeers-pill-tab:hover {
-    color: var(--shopeers-text-dark);
+.dash-pill-tab:hover {
+    color: var(--dash-text-dark);
 }
 
-.shopeers-pill-tab.active {
+.dash-pill-tab.active {
     background: #ffffff;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-[data-bs-theme="dark"] .shopeers-pill-tab.active {
-    background: #0f172a;
+[data-bs-theme="dark"] .dash-pill-tab.active {
+    background: #1e293b;
     color: #ffffff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.shopeers-pill-tab.active-pending {
-    background: #fffbeb;
+.dash-pill-tab.active-pending {
+    background: rgba(245, 158, 11, 0.12);
     color: #b45309 !important;
 }
 
-.shopeers-pill-tab.active-approved {
-    background: #ecfdf5;
+.dash-pill-tab.active-approved {
+    background: rgba(16, 185, 129, 0.12);
     color: #047857 !important;
 }
 
-.shopeers-pill-tab.active-correction {
-    background: #f5f3ff;
+.dash-pill-tab.active-correction {
+    background: rgba(139, 92, 246, 0.12);
     color: #6d28d9 !important;
 }
 
-.shopeers-pill-tab.active-declined {
-    background: #fff1f2;
+.dash-pill-tab.active-declined {
+    background: rgba(239, 68, 68, 0.12);
     color: #be123c !important;
 }
 
-/* Custom Dropdown Filters */
-.shopeers-select {
+.dash-pill-count {
+    font-size: 0.70rem;
+    padding: 1px 6px;
+    border-radius: var(--dash-radius-pill);
+    background: rgba(100, 116, 139, 0.12);
+}
+
+/* Custom Select Dropdowns */
+.dash-select {
     background-color: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: var(--shopeers-radius-pill) !important;
-    font-size: 0.82rem !important;
+    border-radius: var(--dash-radius-pill) !important;
+    font-size: 0.80rem !important;
     font-weight: 500;
-    color: var(--shopeers-text-dark) !important;
-    padding: 0.42rem 2.2rem 0.42rem 0.95rem !important;
-    height: 38px;
+    color: var(--dash-text-dark) !important;
+    padding: 0.40rem 2rem 0.40rem 0.90rem !important;
+    height: 36px;
     transition: all 0.15s ease;
 }
 
-[data-bs-theme="dark"] .shopeers-select {
+[data-bs-theme="dark"] .dash-select {
     background-color: #1e293b !important;
     border-color: #334155 !important;
 }
 
-.shopeers-select:focus {
+.dash-select:focus {
     background-color: #ffffff !important;
-    border-color: var(--shopeers-blue) !important;
-    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12) !important;
+    border-color: var(--dash-primary) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
 }
 
 /* Buttons */
-.btn-shopeers-primary {
+.btn-dash-primary {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    background: var(--shopeers-blue);
+    background: var(--dash-primary);
     color: #ffffff !important;
     border: none;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.45rem 1.25rem;
-    font-size: 0.82rem !important;
+    border-radius: var(--dash-radius-pill);
+    padding: 0.42rem 1.15rem;
+    font-size: 0.80rem !important;
     font-weight: 600;
-    box-shadow: 0 4px 14px rgba(10, 92, 72, 0.25);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
     transition: all 0.18s ease;
     text-decoration: none;
-    height: 38px;
+    height: 36px;
 }
 
-.btn-shopeers-primary:hover {
-    background: var(--shopeers-blue-hover);
-    box-shadow: 0 6px 18px rgba(10, 92, 72, 0.35);
+.btn-dash-primary:hover {
+    background: var(--dash-primary-hover);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
     transform: translateY(-1px);
     color: #ffffff !important;
 }
 
-.btn-shopeers-ghost {
+.btn-dash-outline {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: var(--shopeers-text-sub) !important;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.42rem 0.95rem;
-    font-size: 0.82rem !important;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text-dark) !important;
+    border-radius: var(--dash-radius-pill);
+    padding: 0.40rem 0.95rem;
+    font-size: 0.80rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
     text-decoration: none;
-    height: 38px;
+    height: 36px;
 }
 
-[data-bs-theme="dark"] .btn-shopeers-ghost {
+[data-bs-theme="dark"] .btn-dash-outline {
     background: #1e293b;
     border-color: #334155;
 }
 
-.btn-shopeers-ghost:hover {
-    background: #f1f5f9;
-    color: var(--shopeers-text-dark) !important;
+.btn-dash-outline:hover {
+    background: var(--dash-border-subtle);
     border-color: #cbd5e1;
+    color: var(--dash-text-dark) !important;
 }
 
-.btn-shopeers-clear {
+.btn-dash-clear {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    color: #f43f5e !important;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.42rem 0.85rem;
-    font-size: 0.82rem !important;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626 !important;
+    border-radius: var(--dash-radius-pill);
+    padding: 0.40rem 0.85rem;
+    font-size: 0.80rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
     text-decoration: none;
-    height: 38px;
+    height: 36px;
 }
 
-.btn-shopeers-clear:hover {
-    background: #ffe4e6;
-    color: #e11d48 !important;
+.btn-dash-clear:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #b91c1c !important;
 }
 
-/* Shopeers Table Grid */
-.shopeers-table {
+/* Polished Table (Dashcode Style) */
+.dash-table {
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
 }
 
-.shopeers-table thead th {
-    background: transparent;
-    border-bottom: 1px solid var(--shopeers-border);
-    padding: 1rem 1.5rem;
-    font-size: 0.70rem;
+.dash-table thead th {
+    background: rgba(248, 250, 252, 0.85);
+    border-bottom: 1px solid var(--dash-border);
+    padding: 0.85rem 1.25rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: var(--shopeers-text-muted);
+    color: var(--dash-text-sub);
+    white-space: nowrap;
 }
 
-.shopeers-table tbody tr {
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom-color: var(--dash-border);
+}
+
+.dash-table tbody tr {
     transition: background-color 0.12s ease;
 }
 
-.shopeers-table tbody tr:hover {
-    background-color: #f8fafc;
+.dash-table tbody tr:hover {
+    background-color: rgba(248, 250, 252, 0.95);
 }
 
-[data-bs-theme="dark"] .shopeers-table tbody tr:hover {
-    background-color: #1e293b;
+[data-bs-theme="dark"] .dash-table tbody tr:hover {
+    background-color: rgba(30, 41, 59, 0.6);
 }
 
-.shopeers-table tbody td {
-    padding: 1.15rem 1.5rem;
-    border-bottom: 1px solid var(--shopeers-border);
+.dash-table tbody td {
+    padding: 0.95rem 1.25rem;
+    border-bottom: 1px solid var(--dash-border-subtle);
     vertical-align: middle;
+    font-size: 0.84rem;
+    color: var(--dash-text-body);
 }
 
-/* Product Avatar Box */
-.shopeers-product-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+/* Lot Avatar Box */
+.dash-avatar-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #f1f5f9;
-    color: #1e293b;
+    color: #475569;
     font-size: 1.15rem;
     flex-shrink: 0;
-    border: 1px solid var(--shopeers-border);
+    border: 1px solid var(--dash-border);
 }
 
-[data-bs-theme="dark"] .shopeers-product-avatar {
+[data-bs-theme="dark"] .dash-avatar-box {
     background: #1e293b;
-    color: #f8fafc;
+    color: #94a3b8;
 }
 
-.shopeers-id-badge {
+.dash-code-badge {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.90rem;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-.shopeers-id-badge:hover {
-    color: var(--shopeers-blue);
+.dash-code-badge:hover {
+    color: var(--dash-primary);
 }
 
-.shopeers-product-title {
-    font-size: 0.86rem;
+.dash-table-title {
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
     margin-top: 0.2rem;
     line-height: 1.35;
-    max-width: 340px;
+    max-width: 380px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 /* Compact Metadata Pills */
-.shopeers-meta-pill {
+.dash-meta-pill {
     display: inline-flex;
     align-items: center;
     padding: 2px 8px;
@@ -483,27 +514,25 @@
     font-weight: 500;
     background: #f1f5f9;
     color: #475569;
-    border: 1px solid #e2e8f0;
 }
 
-[data-bs-theme="dark"] .shopeers-meta-pill {
+[data-bs-theme="dark"] .dash-meta-pill {
     background: #1e293b;
     color: #94a3b8;
-    border-color: #334155;
 }
 
-.shopeers-dot-pill {
+.dash-dot-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
     padding: 2px 8px;
-    border-radius: var(--shopeers-radius-pill);
+    border-radius: var(--dash-radius-pill);
     font-size: 0.70rem;
     font-weight: 600;
 }
 
 .dot-pill-active {
-    background: #ecfdf5;
+    background: rgba(16, 185, 129, 0.1);
     color: #059669;
 }
 
@@ -521,49 +550,73 @@
 .pulse-dot-gray { background: #94a3b8; }
 
 /* Status Badges */
-.shopeers-status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 4px 12px;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-}
-
-.status-approved-pill {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #d1fae5;
-}
-
-.status-pending-pill {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fef3c7;
-}
-
-.status-correction-pill {
-    background: #f5f3ff;
-    color: #6d28d9;
-    border: 1px solid #ede9fe;
-}
-
-.status-declined-pill {
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #ffe4e6;
-}
-
-/* Action Buttons */
-.shopeers-action-btn {
+.dash-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.35rem 0.85rem;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.78rem !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.dash-badge-approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.dash-badge-pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.dash-badge-correction {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.dash-badge-declined {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Spreadsheet Download Pill */
+.btn-spreadsheet-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669 !important;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: var(--dash-radius-pill);
+    padding: 0.30rem 0.80rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-spreadsheet-pill:hover {
+    background: #059669;
+    color: #ffffff !important;
+    border-color: #059669;
+    transform: translateY(-1px);
+}
+
+/* Action Buttons */
+.dash-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.80rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.76rem !important;
     font-weight: 600;
     transition: all 0.15s ease;
     border: 1px solid transparent;
@@ -571,66 +624,43 @@
     line-height: 1.25;
 }
 
-.action-approve-pill {
-    background: #ecfdf5;
+.dash-action-approve {
+    background: rgba(16, 185, 129, 0.1);
     color: #059669;
-    border-color: #a7f3d0;
+    border-color: rgba(16, 185, 129, 0.25);
 }
-.action-approve-pill:hover {
+.dash-action-approve:hover {
     background: #059669;
     color: #ffffff;
     border-color: #059669;
     transform: translateY(-1px);
 }
 
-.action-correction-pill {
-    background: #fffbeb;
+.dash-action-correction {
+    background: rgba(245, 158, 11, 0.1);
     color: #d97706;
-    border-color: #fde68a;
+    border-color: rgba(245, 158, 11, 0.25);
 }
-.action-correction-pill:hover {
+.dash-action-correction:hover {
     background: #d97706;
     color: #ffffff;
     border-color: #d97706;
     transform: translateY(-1px);
 }
 
-.action-decline-pill {
-    background: #fff1f2;
-    color: #e11d48;
-    border-color: #fecdd3;
+.dash-action-decline {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.25);
 }
-.action-decline-pill:hover {
-    background: #e11d48;
+.dash-action-decline:hover {
+    background: #dc2626;
     color: #ffffff;
-    border-color: #e11d48;
+    border-color: #dc2626;
     transform: translateY(-1px);
 }
 
-/* Download Spreadsheet Pill Button */
-.btn-spreadsheet-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #16a34a !important;
-    border-radius: var(--shopeers-radius-pill);
-    padding: 0.35rem 0.85rem;
-    font-size: 0.78rem !important;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-
-.btn-spreadsheet-pill:hover {
-    background: #16a34a;
-    color: #ffffff !important;
-    border-color: #16a34a;
-    transform: translateY(-1px);
-}
-
-.shopeers-more-btn {
+.dash-more-btn {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -639,25 +669,25 @@
     justify-content: center;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    color: var(--shopeers-text-sub);
+    color: var(--dash-text-sub);
     transition: all 0.15s ease;
     cursor: pointer;
 }
 
-[data-bs-theme="dark"] .shopeers-more-btn {
+[data-bs-theme="dark"] .dash-more-btn {
     background: #1e293b;
     border-color: #334155;
 }
 
-.shopeers-more-btn:hover {
+.dash-more-btn:hover {
     background: #f1f5f9;
-    color: var(--shopeers-text-dark);
+    color: var(--dash-text-dark);
 }
 
 /* Pagination Footer */
-.shopeers-pagination-footer {
-    padding: 1.15rem 1.5rem;
-    border-top: 1px solid var(--shopeers-border);
+.dash-pagination-footer {
+    padding: 1rem 1.4rem;
+    border-top: 1px solid var(--dash-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -665,159 +695,171 @@
     gap: 0.75rem;
 }
 
-.shopeers-page-pill {
+.dash-page-pill {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 0.75rem;
-    border-radius: var(--shopeers-radius-pill);
-    font-size: 0.80rem;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.65rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.78rem;
     font-weight: 600;
     text-decoration: none;
-    color: var(--shopeers-text-sub);
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    color: var(--dash-text-sub);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
     transition: all 0.15s ease;
 }
 
-[data-bs-theme="dark"] .shopeers-page-pill {
+[data-bs-theme="dark"] .dash-page-pill {
     background: #1e293b;
     border-color: #334155;
 }
 
-.shopeers-page-pill:hover:not(.disabled) {
-    background: #f8fafc;
-    color: var(--shopeers-text-dark);
+.dash-page-pill:hover:not(.disabled) {
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-dark);
 }
 
-.shopeers-page-pill.active {
-    background: var(--shopeers-blue);
+.dash-page-pill.active {
+    background: var(--dash-primary);
     color: #ffffff !important;
-    border-color: var(--shopeers-blue);
-    box-shadow: 0 4px 12px rgba(10, 92, 72, 0.3);
+    border-color: var(--dash-primary);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 }
 
-.shopeers-page-pill.disabled {
+.dash-page-pill.disabled {
     opacity: 0.4;
     pointer-events: none;
 }
 </style>
 
-<div class="shopeers-viewport">
+<div class="container-fluid enquiries-viewport pt-2">
     <!-- Header -->
-    <div class="shopeers-header">
+    <div class="enquiries-header">
         <div>
-            <div class="shopeers-breadcrumb-nav">
+            <div class="dash-breadcrumb-nav">
                 <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
                 <span>&rsaquo;</span>
                 <span>Enquiries</span>
                 <span>&rsaquo;</span>
-                <span class="text-dark fw-semibold">Lot Enquiries</span>
+                <span class="text-dark fw-semibold">Lot Batch Enquiries</span>
             </div>
-            <h1 class="shopeers-page-title">Lot Batch Enquiries</h1>
-            <p class="shopeers-page-subtitle">Review, verify spreadsheets, and manage bulk inventory batch packages</p>
+            <h1 class="dash-page-title">Lot Batch Enquiries</h1>
+            <p class="dash-page-subtitle">Review, approve, and manage bulk inventory manifests and liquidation batches submitted by vendors</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/lots/add/" class="btn-shopeers-primary">
+            <a href="/admin/lots/add/" class="btn-dash-primary">
                 <i class="bi bi-plus-lg"></i>
-                <span>Create Lot Package</span>
+                <span>Add Lot</span>
             </a>
-            <button type="button" class="btn-shopeers-ghost" onclick="window.location.reload()" title="Refresh Table">
+            <button type="button" class="btn-dash-outline" onclick="window.location.reload()" title="Refresh Table">
                 <i class="bi bi-arrow-clockwise"></i>
                 <span>Refresh</span>
             </button>
         </div>
     </div>
 
-    <!-- 5 Shopeers Top Stat Metric Cards (Static Display Cards) -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 14px; background: var(--dash-card);">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium text-dark">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 5 Dashcode KPI Stat Cards -->
     <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
-        <!-- 1. All Enquiries -->
+        <!-- 1. All Lots -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <a href="/admin/enquiries/lots/" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">All Lot Enquiries</span>
-                    <div class="shopeers-kpi-icon icon-emerald-theme">
+                    <span class="dash-kpi-label">All Lots</span>
+                    <div class="dash-kpi-icon icon-dash-indigo">
                         <i class="bi bi-boxes"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.total|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-all">Total Catalogue</span>
+                    <h3 class="dash-kpi-number">{{ counts.total|default:"0"|intcomma }}</h3>
+                    <span class="dash-kpi-trend trend-all">Total Lots</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- 2. Pending Review -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <a href="/admin/enquiries/lots/pending/" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Pending Review</span>
-                    <div class="shopeers-kpi-icon icon-amber">
+                    <span class="dash-kpi-label">Pending Review</span>
+                    <div class="dash-kpi-icon icon-dash-amber">
                         <i class="bi bi-hourglass-split"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.pending|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-pending">Requires Action</span>
+                    <h3 class="dash-kpi-number">{{ counts.pending|default:"0"|intcomma }}</h3>
+                    <span class="dash-kpi-trend trend-pending">Requires Action</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- 3. Approved -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <a href="/admin/enquiries/lots/approved/" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Approved Lots</span>
-                    <div class="shopeers-kpi-icon icon-emerald">
+                    <span class="dash-kpi-label">Approved Lots</span>
+                    <div class="dash-kpi-icon icon-dash-emerald">
                         <i class="bi bi-check2-circle"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.approved|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-approved">Live on Marketplace</span>
+                    <h3 class="dash-kpi-number">{{ counts.approved|default:"0"|intcomma }}</h3>
+                    <span class="dash-kpi-trend trend-approved">Live on Market</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- 4. Correction -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <a href="/admin/enquiries/lots/correction/" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Needs Correction</span>
-                    <div class="shopeers-kpi-icon icon-violet">
+                    <span class="dash-kpi-label">Needs Correction</span>
+                    <div class="dash-kpi-icon icon-dash-purple">
                         <i class="bi bi-pencil-square"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.correction|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-correction">Pending Revision</span>
+                    <h3 class="dash-kpi-number">{{ counts.correction|default:"0"|intcomma }}</h3>
+                    <span class="dash-kpi-trend trend-correction">Pending Revision</span>
                 </div>
-            </div>
+            </a>
         </div>
 
         <!-- 5. Declined -->
         <div class="col">
-            <div class="shopeers-kpi-card">
+            <a href="/admin/enquiries/lots/declined/" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <span class="shopeers-kpi-label">Declined Lots</span>
-                    <div class="shopeers-kpi-icon icon-rose">
+                    <span class="dash-kpi-label">Declined Lots</span>
+                    <div class="dash-kpi-icon icon-dash-rose">
                         <i class="bi bi-x-circle-fill"></i>
                     </div>
                 </div>
                 <div>
-                    <h3 class="shopeers-kpi-number">{{ counts.declined|default:"0" }}</h3>
-                    <span class="shopeers-kpi-trend trend-declined">Rejected Packages</span>
+                    <h3 class="dash-kpi-number">{{ counts.declined|default:"0"|intcomma }}</h3>
+                    <span class="dash-kpi-trend trend-declined">Rejected Lots</span>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
-    <!-- Shopeers Main Table Card Container -->
-    <div class="shopeers-main-card">
-        <!-- Card Title Bar (Shopeers Style) -->
-        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-1">
+    <!-- Main Table Container Card -->
+    <div class="dash-main-card">
+        <!-- Card Title Bar (Dashcode Style) -->
+        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-2">
             <div>
                 <h5 class="fw-bold mb-0 text-dark" style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Lot Batch Packages</h5>
                 <p class="text-muted small mb-0 mt-0.5">Bulk inventory manifests and seller verification workflow</p>
@@ -829,9 +871,9 @@
             </div>
         </div>
 
-        <!-- Toolbar -->
+        <!-- Selected User Filter Banner -->
         {% if selected_user %}
-        <div class="alert alert-primary border border-primary-subtle rounded-3 px-3 py-2 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="alert alert-primary border border-primary-subtle rounded-3 mx-4 my-2 px-3 py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="small">
                 <i class="bi bi-person-check-fill me-1"></i>
                 Showing Lots for <strong>{{ selected_user.full_name|default:selected_user.username }}</strong>
@@ -841,42 +883,48 @@
         </div>
         {% endif %}
 
-        <div class="shopeers-toolbar">
+        <!-- Filter & Search Toolbar -->
+        <div class="dash-toolbar">
             <!-- Search Capsule -->
-            <div class="shopeers-search-capsule">
+            <div class="dash-search-capsule">
                 <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
-                <input type="text" id="lotSearch" class="shopeers-search-input" placeholder="Search by Batch ID, Title, Keyword..." value="{{ search }}">
-                <button class="shopeers-search-btn" type="button" id="btnLotSearch">Search</button>
+                <input type="text" id="lotSearch" class="dash-search-input" placeholder="Search by Batch ID, Title, Keyword..." value="{{ search }}">
+                <button class="dash-search-btn" type="button" id="btnLotSearch">Search</button>
             </div>
 
             <!-- Segmented Status Tabs -->
-            <div class="shopeers-segmented-pills">
+            <div class="dash-segmented-pills">
                 <a href="/admin/enquiries/lots/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="shopeers-pill-tab {% if current_status == 'all' %}active{% endif %}">
-                    All
+                   class="dash-pill-tab {% if current_status == 'all' %}active{% endif %}">
+                    <span>All</span>
+                    <span class="dash-pill-count">{{ counts.total|default:"0" }}</span>
                 </a>
                 <a href="/admin/enquiries/lots/pending/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="shopeers-pill-tab {% if current_status == 'pending' %}active active-pending{% endif %}">
-                    Pending
+                   class="dash-pill-tab {% if current_status == 'pending' %}active active-pending{% endif %}">
+                    <span>Pending</span>
+                    <span class="dash-pill-count" style="color: #b45309;">{{ counts.pending|default:"0" }}</span>
                 </a>
                 <a href="/admin/enquiries/lots/approved/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="shopeers-pill-tab {% if current_status == 'approved' %}active active-approved{% endif %}">
-                    Approved
+                   class="dash-pill-tab {% if current_status == 'approved' %}active active-approved{% endif %}">
+                    <span>Approved</span>
+                    <span class="dash-pill-count" style="color: #047857;">{{ counts.approved|default:"0" }}</span>
                 </a>
                 <a href="/admin/enquiries/lots/correction/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="shopeers-pill-tab {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active active-correction{% endif %}">
-                    Needs Correction
+                   class="dash-pill-tab {% if current_status == 'correction' or current_status == 'correction_needed' or current_status == 'needs_correction' %}active active-correction{% endif %}">
+                    <span>Correction</span>
+                    <span class="dash-pill-count" style="color: #6d28d9;">{{ counts.correction|default:"0" }}</span>
                 </a>
                 <a href="/admin/enquiries/lots/declined/{% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' %}?{% if category_filter and category_filter != 'all' %}category={{ category_filter|urlencode }}&{% endif %}{% if country_filter and country_filter != 'all' %}country={{ country_filter|urlencode }}{% endif %}{% endif %}" 
-                   class="shopeers-pill-tab {% if current_status == 'declined' %}active active-declined{% endif %}">
-                    Declined
+                   class="dash-pill-tab {% if current_status == 'declined' %}active active-declined{% endif %}">
+                    <span>Declined</span>
+                    <span class="dash-pill-count" style="color: #be123c;">{{ counts.declined|default:"0" }}</span>
                 </a>
             </div>
 
             <!-- Filters -->
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- Category Select -->
-                <select class="form-select shopeers-select" id="categoryFilter" style="min-width: 150px; max-width: 200px;">
+                <select class="form-select dash-select" id="categoryFilter" style="min-width: 150px; max-width: 200px;">
                     <option value="all">All Categories</option>
                     {% for cat in categories %}
                     <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
@@ -884,7 +932,7 @@
                 </select>
 
                 <!-- Country Select -->
-                <select class="form-select shopeers-select" id="countryFilter" style="min-width: 140px; max-width: 180px;">
+                <select class="form-select dash-select" id="countryFilter" style="min-width: 140px; max-width: 180px;">
                     <option value="all">All Countries</option>
                     {% for c in countries %}
                     <option value="{{ c }}" {% if country_filter == c %}selected{% endif %}>{{ c }}</option>
@@ -892,7 +940,7 @@
                 </select>
 
                 <!-- Date Select -->
-                <select class="form-select shopeers-select" id="dateFilter" style="width: 125px;">
+                <select class="form-select dash-select" id="dateFilter" style="width: 125px;">
                     <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
                     <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
                     <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
@@ -900,7 +948,7 @@
                 </select>
 
                 {% if category_filter and category_filter != 'all' or country_filter and country_filter != 'all' or search or date_filter != 'all' %}
-                <a href="/admin/enquiries/lots/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-shopeers-clear" title="Clear All Filters">
+                <a href="/admin/enquiries/lots/{% if current_status != 'all' %}{{ current_status }}/{% endif %}" class="btn-dash-clear" title="Clear All Filters">
                     <i class="bi bi-x-lg"></i>
                     <span>Clear</span>
                 </a>
@@ -908,9 +956,9 @@
             </div>
         </div>
 
-        <!-- Table Grid (Shopeers Best Selling Style) -->
+        <!-- Table Grid (Dashcode Style) -->
         <div class="table-responsive" style="min-height: 320px;">
-            <table class="table shopeers-table align-middle mb-0" id="lotTable">
+            <table class="dash-table align-middle mb-0" id="lotTable">
                 <thead>
                     <tr>
                         <th style="min-width: 280px;">Lot Package</th>
@@ -927,30 +975,30 @@
                         <!-- Lot Package Details -->
                         <td>
                             <div class="d-flex align-items-center gap-3">
-                                <div class="shopeers-product-avatar">
+                                <div class="dash-avatar-box">
                                     <i class="bi bi-boxes"></i>
                                 </div>
                                 <div class="min-w-0 flex-grow-1">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <a href="{% url 'lot_enquiry_detail' enquiry_id=item.id %}" class="shopeers-id-badge">
+                                        <a href="{% url 'lot_enquiry_detail' enquiry_id=item.id %}" class="dash-code-badge">
                                             {{ item.lot_number }}
                                         </a>
                                         {% if item.active_status == 'active' %}
-                                        <span class="shopeers-dot-pill dot-pill-active" title="Active on Marketplace">
+                                        <span class="dash-dot-pill dot-pill-active" title="Active on Marketplace">
                                             <span class="pulse-dot-sm pulse-dot-green"></span> Active
                                         </span>
                                         {% else %}
-                                        <span class="shopeers-dot-pill dot-pill-inactive" title="Hidden / Inactive">
+                                        <span class="dash-dot-pill dot-pill-inactive" title="Hidden / Inactive">
                                             <span class="pulse-dot-sm pulse-dot-gray"></span> Inactive
                                         </span>
                                         {% endif %}
                                     </div>
-                                    <div class="shopeers-product-title" title="{{ item.title|default:'Lot Inventory Package' }}">
+                                    <div class="dash-table-title" title="{{ item.title|default:'Lot Inventory Package' }}">
                                         {{ item.title|default:'Lot Inventory Package' }}
                                     </div>
                                     {% if item.admin %}
                                     <div class="mt-1">
-                                        <span class="shopeers-meta-pill text-primary font-monospace" style="background: #eff6ff; font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }}">
+                                        <span class="dash-meta-pill text-primary font-monospace" style="background: rgba(99, 102, 241, 0.1); font-size: 0.68rem;" title="Assisted Intake: ADM-{{ item.admin.id|stringformat:'04d' }} • {{ item.admin.full_name|default:item.admin.username }}">
                                             <i class="bi bi-shield-check me-1"></i>ADM-{{ item.admin.id|stringformat:"04d" }}
                                         </span>
                                     </div>
@@ -962,7 +1010,7 @@
                         <!-- Category & Location -->
                         <td>
                             {% if item.primary_category %}
-                            <div class="shopeers-meta-pill text-truncate mb-1" style="max-width: 200px;" title="{{ item.primary_category }}">
+                            <div class="dash-meta-pill text-truncate mb-1" style="max-width: 200px;" title="{{ item.primary_category }}">
                                 <i class="bi bi-tag-fill me-1 text-primary"></i>{{ item.primary_category }}
                             </div>
                             {% endif %}
@@ -988,7 +1036,7 @@
 
                         <!-- Date & Time -->
                         <td style="white-space: nowrap;">
-                            <div class="fw-semibold" style="font-size: 0.84rem; color: var(--shopeers-text-dark);">
+                            <div class="fw-semibold text-dark" style="font-size: 0.84rem;">
                                 {{ item.created_at|date:"M d, Y" }}
                             </div>
                             <div class="mt-0.5 text-muted" style="font-size: 0.75rem;">
@@ -999,20 +1047,20 @@
                         <!-- Status Badge -->
                         <td style="white-space: nowrap;">
                             {% if item.enquiry_status|lower == 'approved' %}
-                            <span class="shopeers-status-pill status-approved-pill" id="status-badge-{{ item.id }}">
+                            <span class="dash-badge dash-badge-approved" id="status-badge-{{ item.id }}">
                                 <span class="pulse-dot-sm pulse-dot-green"></span> Approved
                             </span>
                             {% elif item.enquiry_status|lower == 'declined' %}
-                            <span class="shopeers-status-pill status-declined-pill" id="status-badge-{{ item.id }}">
-                                <span class="pulse-dot-sm" style="background: #f43f5e;"></span> Declined
+                            <span class="dash-badge dash-badge-declined" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #dc2626;"></span> Declined
                             </span>
                             {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
-                            <span class="shopeers-status-pill status-correction-pill" id="status-badge-{{ item.id }}">
-                                <span class="pulse-dot-sm" style="background: #8b5cf6;"></span> Correction
+                            <span class="dash-badge dash-badge-correction" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #6366f1;"></span> Correction
                             </span>
                             {% else %}
-                            <span class="shopeers-status-pill status-pending-pill" id="status-badge-{{ item.id }}">
-                                <span class="pulse-dot-sm" style="background: #f59e0b;"></span> Pending
+                            <span class="dash-badge dash-badge-pending" id="status-badge-{{ item.id }}">
+                                <span class="pulse-dot-sm" style="background: #d97706;"></span> Pending
                             </span>
                             {% endif %}
                         </td>
@@ -1021,44 +1069,44 @@
                         <td class="text-end pe-4" style="white-space: nowrap;">
                             <div class="d-flex align-items-center justify-content-end gap-1.5">
                                 {% if item.enquiry_status|lower == 'approved' %}
-                                <button type="button" class="shopeers-action-btn action-correction-pill btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="dash-action-btn dash-action-correction btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
-                                <button type="button" class="shopeers-action-btn action-decline-pill btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
+                                <button type="button" class="dash-action-btn dash-action-decline btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
                                     <i class="bi bi-x-lg"></i> Decline
                                 </button>
                                 {% elif item.enquiry_status|lower == 'declined' %}
-                                <button type="button" class="shopeers-action-btn action-approve-pill btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
+                                <button type="button" class="dash-action-btn dash-action-approve btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
-                                <button type="button" class="shopeers-action-btn action-correction-pill btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="dash-action-btn dash-action-correction btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
                                 {% elif item.enquiry_status|lower == 'correction_needed' or item.enquiry_status|lower == 'needs_correction' or item.enquiry_status|lower == 'correction' %}
-                                <button type="button" class="shopeers-action-btn action-approve-pill btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
+                                <button type="button" class="dash-action-btn dash-action-approve btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
-                                <button type="button" class="shopeers-action-btn action-decline-pill btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
+                                <button type="button" class="dash-action-btn dash-action-decline btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
                                     <i class="bi bi-x-lg"></i> Decline
                                 </button>
                                 {% else %}
-                                <button type="button" class="shopeers-action-btn action-approve-pill btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
+                                <button type="button" class="dash-action-btn dash-action-approve btn-lot-status" data-id="{{ item.id }}" data-status="approved" title="Approve Lot">
                                     <i class="bi bi-check-lg"></i> Approve
                                 </button>
-                                <button type="button" class="shopeers-action-btn action-correction-pill btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
+                                <button type="button" class="dash-action-btn dash-action-correction btn-lot-status" data-id="{{ item.id }}" data-status="correction_needed" title="Request Correction">
                                     <i class="bi bi-pencil-square"></i> Correction
                                 </button>
-                                <button type="button" class="shopeers-action-btn action-decline-pill btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
+                                <button type="button" class="dash-action-btn dash-action-decline btn-lot-status" data-id="{{ item.id }}" data-status="declined" title="Decline Lot">
                                     <i class="bi bi-x-lg"></i> Decline
                                 </button>
                                 {% endif %}
 
                                 <!-- More Dropdown -->
                                 <div class="dropdown d-inline-block">
-                                    <button class="shopeers-more-btn" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
+                                    <button class="dash-more-btn" type="button" data-bs-toggle="dropdown" title="More Options" data-bs-boundary="window">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="border-radius: 14px; min-width: 200px; padding: 6px;">
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-1" style="border-radius: 12px; min-width: 190px; padding: 6px; background: var(--dash-card); border: 1px solid var(--dash-border) !important;">
                                         <li>
                                             <a class="dropdown-item py-1.5" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="{% url 'lot_enquiry_detail' enquiry_id=item.id %}">
                                                 <i class="bi bi-eye text-primary me-2"></i> View Details
@@ -1066,7 +1114,7 @@
                                         </li>
                                         <li>
                                             <a class="dropdown-item py-1.5 text-primary" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="{% url 'lot_enquiry_detail' enquiry_id=item.id %}?action=edit">
-                                                <i class="bi bi-pencil-square me-2"></i> Edit Lot Batch
+                                                <i class="bi bi-pencil-square me-2"></i> Edit Lot
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider my-1 opacity-25"></li>
@@ -1076,7 +1124,7 @@
                                                 <i class="bi bi-pause-circle me-2"></i> Mark as Inactive
                                             </a>
                                         </li>
-                                        {% elif item.enquiry_status|lower == 'approved' %}
+                                        {% else %}
                                         <li>
                                             <a class="dropdown-item py-1.5 text-success btn-lot-active-status" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-active="active">
                                                 <i class="bi bi-play-circle-fill me-2"></i> Mark as Active
@@ -1094,7 +1142,7 @@
                                         {% endif %}
                                         <li>
                                             <a class="dropdown-item py-1.5 text-danger btn-lot-delete" style="border-radius: 8px; font-size: 0.82rem; font-weight: 500;" href="javascript:void(0)" data-id="{{ item.id }}" data-lid="{{ item.lot_number }}">
-                                                <i class="bi bi-trash3 me-2"></i> Delete Lot Enquiry
+                                                <i class="bi bi-trash3 me-2"></i> Delete Lot
                                             </a>
                                         </li>
                                     </ul>
@@ -1106,12 +1154,12 @@
                     <tr>
                         <td colspan="6" class="text-center py-5">
                             <div class="py-4">
-                                <div class="shopeers-product-avatar mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
-                                    <i class="bi bi-boxes text-muted"></i>
+                                <div class="dash-avatar-box mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                                    <i class="bi bi-inbox text-muted"></i>
                                 </div>
-                                <h5 class="fw-bold" style="font-size: 1.05rem; color: var(--shopeers-text-dark);">No Lot Enquiries Found</h5>
-                                <p class="small mb-3" style="color: var(--shopeers-text-sub);">No lot batch packages match your selected status or filter parameters.</p>
-                                <a href="/admin/enquiries/lots/" class="btn-shopeers-ghost">
+                                <h5 class="fw-bold text-dark" style="font-size: 1.05rem;">No Lot Enquiries Found</h5>
+                                <p class="small text-muted mb-3">No lot packages match your selected status or filter parameters.</p>
+                                <a href="/admin/enquiries/lots/" class="btn-dash-outline">
                                     <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
                                 </a>
                             </div>
@@ -1122,30 +1170,30 @@
             </table>
         </div>
 
-        <!-- Shopeers Pagination Footer -->
-        <div class="shopeers-pagination-footer">
-            <div class="small fw-medium" style="color: var(--shopeers-text-sub);">
-                Showing <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.start_index|default:0 }}</span> to 
-                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.end_index|default:0 }}</span> of 
-                <span class="fw-bold" style="color: var(--shopeers-text-dark);">{{ page_obj.paginator.count|default:0 }}</span> enquiries
+        <!-- Dashcode Pagination Footer -->
+        <div class="dash-pagination-footer">
+            <div class="small text-muted">
+                Showing <span class="fw-bold text-dark">{{ page_obj.start_index|default:0 }}</span> to 
+                <span class="fw-bold text-dark">{{ page_obj.end_index|default:0 }}</span> of 
+                <span class="fw-bold text-dark">{{ page_obj.paginator.count|default:0|intcomma }}</span> lots (50 / page)
             </div>
             {% if page_obj.has_other_pages %}
             <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0 align-items-center gap-1.5 list-unstyled d-flex">
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1 list-unstyled d-flex">
                     {% if page_obj.has_previous %}
                     <li>
-                        <a class="shopeers-page-pill" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
+                        <a class="dash-page-pill" href="?page=1{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="First Page">
                             <i class="bi bi-chevron-double-left"></i>
                         </a>
                     </li>
                     <li>
-                        <a class="shopeers-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                            Prev
+                        <a class="dash-page-pill" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="shopeers-page-pill disabled">Prev</span>
+                        <span class="dash-page-pill disabled"><i class="bi bi-chevron-left"></i></span>
                     </li>
                     {% endif %}
 
@@ -1153,11 +1201,11 @@
                         {% if p >= page_obj.number|add:"-2" and p <= page_obj.number|add:"2" %}
                             {% if p == page_obj.number %}
                             <li>
-                                <span class="shopeers-page-pill active">{{ p }}</span>
+                                <span class="dash-page-pill active">{{ p }}</span>
                             </li>
                             {% else %}
                             <li>
-                                <a class="shopeers-page-pill" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
+                                <a class="dash-page-pill" href="?page={{ p }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">{{ p }}</a>
                             </li>
                             {% endif %}
                         {% endif %}
@@ -1165,18 +1213,18 @@
 
                     {% if page_obj.has_next %}
                     <li>
-                        <a class="shopeers-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
-                            Next
+                        <a class="dash-page-pill" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>
                     <li>
-                        <a class="shopeers-page-pill" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
+                        <a class="dash-page-pill" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if date_filter != 'all' %}&date_filter={{ date_filter|urlencode }}{% endif %}{% if category_filter and category_filter != 'all' %}&category={{ category_filter|urlencode }}{% endif %}{% if country_filter and country_filter != 'all' %}&country={{ country_filter|urlencode }}{% endif %}" title="Last Page">
                             <i class="bi bi-chevron-double-right"></i>
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <span class="shopeers-page-pill disabled">Next</span>
+                        <span class="dash-page-pill disabled"><i class="bi bi-chevron-right"></i></span>
                     </li>
                     {% endif %}
                 </ul>
@@ -1283,7 +1331,7 @@
 
                 if (newStatus && newStatus.toLowerCase() === 'declined') {
                     const tr = btn.closest('tr');
-                    const title = tr ? (tr.querySelector('.shopeers-id-badge')?.textContent || `Lot #${id}`) : `Lot #${id}`;
+                    const title = tr ? (tr.querySelector('.dash-code-badge')?.textContent || `Lot #${id}`) : `Lot #${id}`;
                     if (typeof window.openRejectionModal === 'function') {
                         window.openRejectionModal({
                             id: id,
@@ -1297,7 +1345,7 @@
 
                 if (newStatus && (newStatus.toLowerCase() === 'correction_needed' || newStatus.toLowerCase() === 'correction')) {
                     const tr = btn.closest('tr');
-                    const title = tr ? (tr.querySelector('.shopeers-id-badge')?.textContent || `Lot #${id}`) : `Lot #${id}`;
+                    const title = tr ? (tr.querySelector('.dash-code-badge')?.textContent || `Lot #${id}`) : `Lot #${id}`;
                     if (typeof window.openCorrectionModal === 'function') {
                         window.openCorrectionModal({
                             id: id,
