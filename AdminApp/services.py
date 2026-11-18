@@ -49,6 +49,26 @@ class EmailService:
         else:
             to_recipients = [str(to_email).strip()]
 
+        # Strict user directive: All admin notification emails must ONLY be sent to contact@surplusmarket.com
+        admin_services = {
+            "RFQAdminAlert",
+            "AdminProductReview",
+            "ProductReview",
+            "AdminLotReview",
+            "ContactAdminAlert",
+            "PartnershipAdminAlert",
+            "AdminUserRegistered",
+        }
+        if service_name in admin_services:
+            to_recipients = ["contact@surplusmarket.com"]
+        else:
+            # Exclude super@gmail.com, mithun.coralbees, or any other staff emails from receiving alerts
+            if service_name != "AdminOTP":
+                to_recipients = [
+                    r for r in to_recipients
+                    if r.lower() not in {"super@gmail.com", "mithun.coralbees@gmail.com"}
+                ]
+
         if not to_recipients:
             logger.warning("[EmailService] No valid recipient email address provided.")
             return False
@@ -1257,51 +1277,16 @@ class EmailService:
     @classmethod
     def get_admin_notification_emails(cls) -> list:
         """
-        Resolves list of target email addresses for admin alerts:
-        1. Reads ADMIN_NOTIFICATION_EMAIL from env/settings (supports comma-separated list).
-        2. Includes active SuperAdmins and Admins from AdminDetails table.
-        3. Deduplicates and cleans addresses.
+        Resolves list of target email addresses for admin alerts.
+        STRICT USER DIRECTIVE: Admin notification emails must ONLY be sent to contact@surplusmarket.com.
+        No other email addresses (such as super@gmail.com, DB admin emails, etc.) are allowed under any circumstances.
         """
-        recipients = []
-        seen = set()
-
-        def _add(email_str):
-            clean = str(email_str or "").strip().strip("'\"")
-            clean_lower = clean.lower()
-            # Explicitly exclude mithun.coralbees from admin alerts per user directive
-            if (
-                clean
-                and "@" in clean
-                and "mithun.coralbees" not in clean_lower
-                and clean_lower not in seen
-            ):
-                seen.add(clean_lower)
-                recipients.append(clean)
-
-        env_val = os.getenv("ADMIN_NOTIFICATION_EMAIL", getattr(settings, "ADMIN_NOTIFICATION_EMAIL", "") or "")
-        if env_val:
-            for em in str(env_val).split(","):
-                _add(em)
-
-        try:
-            from .models import AdminDetails
-            for adm in AdminDetails.objects.filter(status=True).exclude(email="").values_list("email", flat=True):
-                clean_adm = str(adm).strip().strip("'\"")
-                if not clean_adm.endswith("@example.com"):
-                    _add(clean_adm)
-        except Exception:
-            pass
-
-        if not recipients:
-            recipients.append("contact@surplusmarket.com")
-
-        return recipients
+        return ["contact@surplusmarket.com"]
 
     @classmethod
     def get_admin_notification_email(cls) -> str:
-        """Resolves primary target email for admin alerts."""
-        emails = cls.get_admin_notification_emails()
-        return emails[0] if emails else "contact@surplusmarket.com"
+        """Resolves primary target email for admin alerts. Strictly contact@surplusmarket.com."""
+        return "contact@surplusmarket.com"
 
     @classmethod
     def send_contact_us_emails(cls, enquiry) -> dict:
