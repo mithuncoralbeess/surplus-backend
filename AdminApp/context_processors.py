@@ -46,7 +46,7 @@ def _get_global_pending_counts():
     Uses exact indexed status lookups instead of un-indexed LOWER() function scans.
     Cached for 300s (5 minutes).
     """
-    key = "ctx_pending_counts_v5"
+    key = "ctx_pending_counts_v7"
     counts = cache.get(key)
     if counts is None:
         try:
@@ -56,7 +56,9 @@ def _get_global_pending_counts():
                         (SELECT COUNT(*) FROM lots WHERE enquiry_status IN ('pending', 'PENDING')),
                         (SELECT COUNT(*) FROM products WHERE enquiry_status IN ('pending', 'PENDING')),
                         (SELECT COUNT(*) FROM rfq_enquiries WHERE status IN ('pending', 'PENDING')),
-                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE status IN ('pending', 'PENDING'))
+                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM sourcing_enquiries WHERE status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM regional_enquiries WHERE status IN ('pending', 'PENDING'))
                 """)
                 row = cur.fetchone()
                 counts = {
@@ -64,6 +66,8 @@ def _get_global_pending_counts():
                     "pending_seller_enquiries_count": row[1] or 0,
                     "pending_rfqs_count": row[2] or 0,
                     "pending_general_enquiries_count": row[3] or 0,
+                    "pending_sourcing_count": row[4] or 0,
+                    "pending_regional_count": row[5] or 0,
                 }
         except Exception:
             counts = {
@@ -71,6 +75,8 @@ def _get_global_pending_counts():
                 "pending_seller_enquiries_count": 0,
                 "pending_rfqs_count": 0,
                 "pending_general_enquiries_count": 0,
+                "pending_sourcing_count": 0,
+                "pending_regional_count": 0,
             }
         cache.set(key, counts, timeout=300)
     return counts
@@ -129,6 +135,7 @@ def maintenance_mode_context(request):
         "pending_seller_enquiries_count": 0,
         "pending_rfqs_count": 0,
         "pending_general_enquiries_count": 0,
+        "pending_sourcing_count": 0,
         "admin_unread_notifications_count": 0,
         "admin_recent_notifications": [],
     }

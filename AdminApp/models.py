@@ -2178,6 +2178,88 @@ class ContactUsEnquiry(models.Model):
         return f"{self.full_name} ({self.email}) - {self.enquiry_type}"
 
 
+class SourcingEnquiry(models.Model):
+    """
+    Inquiries submitted from frontend /browse page 'Can't Find It? Contact Us For Fast Sourcing' widget
+    and dedicated B2B product procurement desks.
+    """
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, default="")
+    phone = models.CharField(max_length=50, blank=True, default="")
+    item_name = models.CharField(max_length=255, verbose_name="Sourcing Item / Product Specs")
+    quantity = models.CharField(max_length=100, blank=True, default="1")
+    target_price = models.CharField(max_length=100, blank=True, default="")
+    notes = models.TextField(blank=True, default="", verbose_name="Additional Notes / Specs")
+    search_query = models.CharField(max_length=255, blank=True, default="", verbose_name="Search Context")
+    raw_message = models.TextField(blank=True, default="")
+    source_widget = models.CharField(max_length=100, default="BrowseSourcingDesk")
+
+    STATUS_CHOICES = (
+        ("PENDING", "Pending Review"),
+        ("IN_PROGRESS", "In Progress"),
+        ("CONTACTED", "Contacted"),
+        ("SOURCED", "Sourced"),
+        ("CLOSED", "Closed"),
+    )
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="PENDING", db_index=True)
+    is_blocked = models.BooleanField(default=False, db_index=True)
+    admin_notes = models.TextField(blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Sourcing Enquiry"
+        verbose_name_plural = "Sourcing Enquiries"
+        db_table = "sourcing_enquiries"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"SRC #{self.id} - {self.item_name} ({self.full_name})"
+
+
+class RegionalEnquiry(models.Model):
+    """
+    Dedicated inquiries submitted from Regional Landing Pages (e.g. Saudi Arabia /saudi, UAE /uae,
+    Qatar /qatar, India /india, etc.) via RegionalHeroBanner.
+    """
+    country = models.CharField(max_length=100, default="Saudi Arabia", db_index=True)
+    country_slug = models.CharField(max_length=100, blank=True, default="", db_index=True)
+    full_name = models.CharField(max_length=255, blank=True, default="")
+    business_email = models.EmailField(db_index=True)
+    phone = models.CharField(max_length=50, blank=True, default="")
+    item_name = models.CharField(max_length=255, verbose_name="Looking For / Product Specs")
+    quantity = models.CharField(max_length=100, blank=True, default="1")
+    target_price = models.CharField(max_length=100, blank=True, default="")
+    currency = models.CharField(max_length=10, blank=True, default="USD")
+    notes = models.TextField(blank=True, default="", verbose_name="Notes / Specs")
+    raw_message = models.TextField(blank=True, default="")
+    source_widget = models.CharField(max_length=100, default="RegionalHeroBanner")
+
+    STATUS_CHOICES = (
+        ("PENDING", "Pending Review"),
+        ("IN_PROGRESS", "In Progress"),
+        ("CONTACTED", "Contacted"),
+        ("SOURCED", "Sourced"),
+        ("CLOSED", "Closed"),
+    )
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="PENDING", db_index=True)
+    is_blocked = models.BooleanField(default=False, db_index=True)
+    admin_notes = models.TextField(blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Regional Enquiry"
+        verbose_name_plural = "Regional Enquiries"
+        db_table = "regional_enquiries"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"REG #{self.id} [{self.country}] - {self.item_name} ({self.business_email})"
+
+
 class BlogPost(models.Model):
     STATUS_CHOICES = (
         ("published", "Published"),

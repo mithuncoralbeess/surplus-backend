@@ -1,0 +1,1076 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Sourcing Enquiries - Fast Sourcing & Regional Quote Requests | Surplus Admin{% endblock %}
+
+{% block content %}
+<style>
+/* DashKit / DashCode Core Tokens */
+:root {
+    --dash-primary: #6366f1;
+    --dash-primary-hover: #4f46e5;
+    --dash-primary-light: #eef2ff;
+    --dash-surface: #f8fafc;
+    --dash-card: #ffffff;
+    --dash-border: #e2e8f0;
+    --dash-border-subtle: #f1f5f9;
+    --dash-text-dark: #0f172a;
+    --dash-text-muted: #64748b;
+    --dash-text-sub: #475569;
+    --dash-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --dash-shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --dash-radius-card: 16px;
+    --dash-radius-pill: 9999px;
+    --dash-radius-sm: 8px;
+}
+
+[data-bs-theme="dark"] {
+    --dash-surface: #0b1120;
+    --dash-card: #1e293b;
+    --dash-border: #334155;
+    --dash-border-subtle: #1e293b;
+    --dash-text-dark: #f8fafc;
+    --dash-text-muted: #94a3b8;
+    --dash-text-sub: #cbd5e1;
+    --dash-primary-light: rgba(99, 102, 241, 0.15);
+}
+
+.enquiries-viewport {
+    background-color: var(--dash-surface);
+    min-height: 100vh;
+    padding-bottom: 3rem;
+}
+
+.enquiries-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.dash-breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--dash-text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.dash-breadcrumb-nav a {
+    color: var(--dash-text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.dash-breadcrumb-nav a:hover {
+    color: var(--dash-primary);
+}
+
+.dash-page-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--dash-text-dark);
+    margin: 0;
+}
+
+.dash-page-subtitle {
+    font-size: 0.84rem;
+    color: var(--dash-text-muted);
+    margin: 0.2rem 0 0 0;
+}
+
+/* KPI Cards */
+.dash-kpi-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-card);
+    padding: 1.15rem 1.25rem;
+    box-shadow: var(--dash-shadow-sm);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.dash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--dash-shadow-md);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.dash-kpi-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--dash-text-muted);
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.dash-kpi-val {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--dash-text-dark);
+    font-family: var(--bs-font-monospace);
+}
+
+.dash-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.icon-dash-indigo { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.icon-dash-amber { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+.icon-dash-blue { background: rgba(14, 165, 233, 0.14); color: #0284c7; }
+.icon-dash-emerald { background: rgba(16, 185, 129, 0.14); color: #059669; }
+.icon-dash-purple { background: rgba(168, 85, 247, 0.14); color: #9333ea; }
+
+/* Main Card */
+.dash-main-card {
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-card);
+    box-shadow: var(--dash-shadow-sm);
+    overflow: hidden;
+}
+
+.dash-controls-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--dash-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--dash-card);
+}
+
+/* Status Tabs */
+.dash-status-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--dash-border-subtle);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-pill);
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.dash-status-pill-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--dash-text-muted);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.dash-status-pill-link:hover {
+    color: var(--dash-text-dark);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.dash-status-pill-link.active {
+    background: var(--dash-primary);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.dash-pill-count {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: var(--bs-font-monospace);
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.dash-status-pill-link.active .dash-pill-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+/* Search Box */
+.dash-search-capsule {
+    display: flex;
+    align-items: center;
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-pill);
+    padding: 0.3rem 0.85rem;
+    min-width: 260px;
+    transition: all 0.18s ease;
+}
+
+.dash-search-capsule:focus-within {
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    background: var(--dash-card);
+}
+
+.dash-search-capsule input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.82rem;
+    color: var(--dash-text-dark);
+    width: 100%;
+    margin-left: 0.4rem;
+}
+
+/* Table */
+.dash-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.dash-table thead th {
+    background: var(--dash-surface);
+    color: var(--dash-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--dash-border);
+    border-top: none;
+    white-space: nowrap;
+}
+
+.dash-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.dash-table tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.025);
+}
+
+.dash-table tbody td {
+    padding: 1rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--dash-border-subtle);
+    font-size: 0.84rem;
+    color: var(--dash-text-dark);
+}
+
+/* Monospace ID Badge */
+.dash-code-badge {
+    font-family: var(--bs-font-monospace);
+    font-weight: 700;
+    font-size: 0.74rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    background: var(--dash-border-subtle);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text-sub);
+    text-decoration: none;
+    display: inline-block;
+}
+
+/* User Box */
+.dash-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+/* Status Badges */
+.dash-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--dash-radius-pill);
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.dash-badge-pending {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.dash-badge-in-progress {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.dash-badge-contacted {
+    background: #faf5ff;
+    color: #7e22ce;
+    border: 1px solid #e9d5ff;
+}
+
+.dash-badge-sourced {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.dash-badge-closed {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot-pending { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+.dot-in-progress { background: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+.dot-contacted { background: #a855f7; box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2); }
+.dot-sourced { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+.dot-closed { background: #94a3b8; }
+
+/* Buttons */
+.btn-dash-primary {
+    background: var(--dash-primary);
+    color: #ffffff;
+    border: 1px solid var(--dash-primary);
+    border-radius: 10px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-dash-primary:hover {
+    background: var(--dash-primary-hover);
+    color: #ffffff;
+}
+
+.btn-dash-outline {
+    background: var(--dash-card);
+    color: var(--dash-text-sub);
+    border: 1px solid var(--dash-border);
+    border-radius: 10px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-dash-outline:hover {
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-dark);
+}
+
+.dash-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--dash-border);
+    background: var(--dash-card);
+    color: var(--dash-text-sub);
+    font-size: 0.85rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.dash-action-btn:hover {
+    background: var(--dash-primary-light);
+    color: var(--dash-primary);
+    border-color: var(--dash-primary);
+}
+
+/* Pagination */
+.dash-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--dash-border);
+    background: var(--dash-card);
+}
+
+.dash-page-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 0.65rem;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--dash-text-sub);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    transition: all 0.15s ease;
+}
+
+.dash-page-pill:hover:not(.disabled) {
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-dark);
+}
+
+.dash-page-pill.active {
+    background: var(--dash-primary);
+    color: #ffffff !important;
+    border-color: var(--dash-primary);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+}
+
+.dash-page-pill.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+</style>
+
+<div class="container-fluid enquiries-viewport pt-2">
+    <!-- Header -->
+    <div class="enquiries-header">
+        <div>
+            <div class="dash-breadcrumb-nav">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
+                <span>&rsaquo;</span>
+                <span>Enquiries</span>
+                <span>&rsaquo;</span>
+                <span class="text-dark fw-semibold">Sourcing Enquiries</span>
+            </div>
+            <h1 class="dash-page-title">B2B Sourcing Enquiries</h1>
+            <p class="dash-page-subtitle">Track, source, and fulfill buyer procurement requests from the /browse Fast Sourcing Desk widget</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/admin/enquiries/regional/" class="btn-dash-outline" title="View Regional Quote Requests">
+                <i class="bi bi-globe-americas text-primary"></i>
+                <span>Regional Enquiries</span>
+            </a>
+            <button type="button" class="btn-dash-outline" onclick="window.location.reload()" title="Refresh Table">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert" style="border-radius: 14px; background: var(--dash-card);">
+            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            <div class="fw-medium text-dark">{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- 5 Dashcode KPI Stat Cards -->
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5">
+        <!-- 1. All Enquiries -->
+        <div class="col">
+            <a href="?status=ALL" class="dash-kpi-card text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <span class="dash-kpi-label">All Enquiries</span>
+                        <div class="dash-kpi-val">{{ counts.ALL|default:0 }}</div>
+                    </div>
+                    <div class="dash-kpi-icon icon-dash-indigo">
+                        <i class="bi bi-search-heart"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 2. Pending Review -->
+        <div class="col">
+            <a href="?status=PENDING" class="dash-kpi-card text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <span class="dash-kpi-label">Pending Review</span>
+                        <div class="dash-kpi-val text-warning">{{ counts.PENDING|default:0 }}</div>
+                    </div>
+                    <div class="dash-kpi-icon icon-dash-amber">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 3. In Progress -->
+        <div class="col">
+            <a href="?status=IN_PROGRESS" class="dash-kpi-card text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <span class="dash-kpi-label">In Progress</span>
+                        <div class="dash-kpi-val text-primary">{{ counts.IN_PROGRESS|default:0 }}</div>
+                    </div>
+                    <div class="dash-kpi-icon icon-dash-blue">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 4. Contacted -->
+        <div class="col">
+            <a href="?status=CONTACTED" class="dash-kpi-card text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <span class="dash-kpi-label">Contacted</span>
+                        <div class="dash-kpi-val text-purple">{{ counts.CONTACTED|default:0 }}</div>
+                    </div>
+                    <div class="dash-kpi-icon icon-dash-purple">
+                        <i class="bi bi-chat-left-dots"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 5. Sourced / Fulfillable -->
+        <div class="col">
+            <a href="?status=SOURCED" class="dash-kpi-card text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <span class="dash-kpi-label">Sourced</span>
+                        <div class="dash-kpi-val text-success">{{ counts.SOURCED|default:0 }}</div>
+                    </div>
+                    <div class="dash-kpi-icon icon-dash-emerald">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="dash-main-card">
+        <!-- Controls Header: Status Tabs + Search Capsule + Filters -->
+        <div class="dash-controls-header">
+            <!-- Left: Segmented Status Pill Tabs -->
+            <div class="dash-status-pills">
+                <a href="?status=ALL{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'ALL' or not status_filter %}active{% endif %}">
+                    <span>All</span>
+                    <span class="dash-pill-count">{{ counts.ALL|default:0 }}</span>
+                </a>
+                <a href="?status=PENDING{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'PENDING' %}active{% endif %}">
+                    <span>Pending</span>
+                    <span class="dash-pill-count">{{ counts.PENDING|default:0 }}</span>
+                </a>
+                <a href="?status=IN_PROGRESS{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'IN_PROGRESS' %}active{% endif %}">
+                    <span>In Progress</span>
+                    <span class="dash-pill-count">{{ counts.IN_PROGRESS|default:0 }}</span>
+                </a>
+                <a href="?status=CONTACTED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'CONTACTED' %}active{% endif %}">
+                    <span>Contacted</span>
+                    <span class="dash-pill-count">{{ counts.CONTACTED|default:0 }}</span>
+                </a>
+                <a href="?status=SOURCED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'SOURCED' %}active{% endif %}">
+                    <span>Sourced</span>
+                    <span class="dash-pill-count">{{ counts.SOURCED|default:0 }}</span>
+                </a>
+                <a href="?status=CLOSED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
+                   class="dash-status-pill-link {% if status_filter == 'CLOSED' %}active{% endif %}">
+                    <span>Closed</span>
+                    <span class="dash-pill-count">{{ counts.CLOSED|default:0 }}</span>
+                </a>
+            </div>
+
+            <!-- Right: Search Capsule & Date Dropdown -->
+            <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0 justify-content-end">
+                <form method="GET" class="d-flex align-items-center gap-2 m-0">
+                    <input type="hidden" name="status" value="{{ status_filter }}">
+                    <div class="dash-search-capsule">
+                        <i class="bi bi-search text-muted"></i>
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search item, buyer, email, phone...">
+                        {% if search_query %}
+                        <a href="?status={{ status_filter }}" class="text-muted text-decoration-none ms-1" title="Clear Search">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    <select name="date_filter" class="form-select form-select-sm" style="width: auto; border-radius: var(--dash-radius-pill); font-size: 0.8rem;" onchange="this.form.submit()">
+                        <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Past 7 Days</option>
+                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Past 30 Days</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="table-responsive">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Enquiry ID</th>
+                        <th style="min-width: 200px;">Buyer / Requester</th>
+                        <th style="min-width: 250px;">Requested Sourcing Item</th>
+                        <th style="width: 130px;">Quantity</th>
+                        <th style="width: 160px;">Origin / Context</th>
+                        <th style="width: 140px;">Date</th>
+                        <th style="width: 130px;" class="text-center">Status</th>
+                        <th style="width: 120px;" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in enquiries %}
+                    <tr id="enquiryRow-{{ item.id }}">
+                        <!-- ID -->
+                        <td>
+                            <span class="dash-code-badge">#SRC-{{ item.id|stringformat:"04d" }}</span>
+                        </td>
+
+                        <!-- Buyer / Requester -->
+                        <td>
+                            <div class="d-flex align-items-center gap-2.5">
+                                <div class="dash-user-avatar">
+                                    {{ item.full_name|slice:":1"|upper|default:"B" }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;">
+                                        {{ item.full_name|default:"Valued Buyer" }}
+                                    </div>
+                                    <div class="text-muted small text-truncate" style="font-size: 0.76rem;">
+                                        <a href="mailto:{{ item.email }}" class="text-decoration-none text-muted hover-primary">
+                                            <i class="bi bi-envelope me-1"></i>{{ item.email }}
+                                        </a>
+                                    </div>
+                                    {% if item.phone %}
+                                    <div class="text-muted small mt-0.5" style="font-size: 0.74rem;">
+                                        <a href="https://wa.me/{{ item.phone|cut:' '|cut:'+'|cut:'-' }}" target="_blank" class="text-success text-decoration-none fw-semibold">
+                                            <i class="bi bi-whatsapp me-1"></i>{{ item.phone }}
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Requested Item & Specs -->
+                        <td>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size: 0.90rem;">
+                                    {{ item.item_name }}
+                                </div>
+                                {% if item.target_price %}
+                                <div class="mt-1">
+                                    <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem;">
+                                        Target: {{ item.target_price }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                                {% if item.notes %}
+                                <div class="text-muted small text-truncate mt-1" style="max-width: 280px; font-size: 0.76rem;" title="{{ item.notes }}">
+                                    {{ item.notes }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Quantity -->
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2.5 py-1" style="font-size: 0.78rem;">
+                                {{ item.quantity|default:"1" }} units
+                            </span>
+                        </td>
+
+                        <!-- Origin / Source -->
+                        <td>
+                            {% if "Saudi" in item.search_query or "Regional" in item.source_widget %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.73rem;">
+                                <i class="bi bi-geo-alt-fill me-1"></i>{{ item.search_query|default:"Saudi Arabia" }}
+                            </span>
+                            {% elif item.search_query %}
+                            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 text-truncate" style="max-width: 150px; font-size: 0.73rem;" title="{{ item.search_query }}">
+                                <i class="bi bi-search me-1"></i>{{ item.search_query }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.73rem;">
+                                <i class="bi bi-funnel me-1"></i>Fast Sourcing Desk
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Date -->
+                        <td>
+                            <div class="text-dark fw-medium" style="font-size: 0.82rem;">
+                                {{ item.created_at|date:"M d, Y" }}
+                            </div>
+                            <div class="text-muted small" style="font-size: 0.74rem;">
+                                {{ item.created_at|date:"h:i A" }}
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="text-center">
+                            {% if item.status == "PENDING" %}
+                            <span class="dash-badge dash-badge-pending">
+                                <span class="status-dot dot-pending"></span>Pending Review
+                            </span>
+                            {% elif item.status == "IN_PROGRESS" %}
+                            <span class="dash-badge dash-badge-in-progress">
+                                <span class="status-dot dot-in-progress"></span>In Progress
+                            </span>
+                            {% elif item.status == "CONTACTED" %}
+                            <span class="dash-badge dash-badge-contacted">
+                                <span class="status-dot dot-contacted"></span>Contacted
+                            </span>
+                            {% elif item.status == "SOURCED" %}
+                            <span class="dash-badge dash-badge-sourced">
+                                <span class="status-dot dot-sourced"></span>Sourced
+                            </span>
+                            {% elif item.status == "CLOSED" %}
+                            <span class="dash-badge dash-badge-closed">
+                                <span class="status-dot dot-closed"></span>Closed
+                            </span>
+                            {% else %}
+                            <span class="dash-badge dash-badge-pending">
+                                <span class="status-dot dot-pending"></span>{{ item.status|title }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-end">
+                            <div class="d-flex align-items-center justify-content-end gap-1.5">
+                                <!-- View Details Modal Trigger -->
+                                <button type="button" class="dash-action-btn" title="View Enquiry Details"
+                                        onclick="openDetailFromButton(this)"
+                                        data-id="{{ item.id }}"
+                                        data-name="{{ item.full_name|default:'' }}"
+                                        data-email="{{ item.email|default:'' }}"
+                                        data-phone="{{ item.phone|default:'' }}"
+                                        data-item="{{ item.item_name|default:'' }}"
+                                        data-qty="{{ item.quantity|default:'' }}"
+                                        data-price="{{ item.target_price|default:'' }}"
+                                        data-context="{{ item.search_query|default:'' }}"
+                                        data-notes="{{ item.notes|default:'' }}"
+                                        data-status="{{ item.status|default:'PENDING' }}"
+                                        data-created="{{ item.created_at|date:'M d, Y h:i A' }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                                <!-- WhatsApp Button -->
+                                {% if item.phone %}
+                                <a href="https://wa.me/{{ item.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hi%20{{ item.full_name|urlencode }},%20Surplus%20Market%20B2B%20Sourcing%20Desk%20has%20reviewed%20your%20request%20for%20{{ item.item_name|urlencode }}."
+                                   target="_blank" class="dash-action-btn text-success" title="Message on WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                {% endif %}
+
+                                <!-- Status Dropdown -->
+                                <div class="dropdown d-inline-block">
+                                    <button class="dash-action-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change Status">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border" style="border-radius: 12px; font-size: 0.82rem;">
+                                        <li><h6 class="dropdown-header text-uppercase small" style="font-size: 0.68rem;">Set Status</h6></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus('{{ item.id }}', 'PENDING'); return false;"><i class="bi bi-clock me-2 text-warning"></i>Mark as Pending</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus('{{ item.id }}', 'IN_PROGRESS'); return false;"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Mark In Progress</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus('{{ item.id }}', 'CONTACTED'); return false;"><i class="bi bi-chat-dots me-2 text-purple"></i>Mark as Contacted</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus('{{ item.id }}', 'SOURCED'); return false;"><i class="bi bi-check-circle me-2 text-success"></i>Mark as Sourced</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStatus('{{ item.id }}', 'CLOSED'); return false;"><i class="bi bi-x-circle me-2 text-muted"></i>Mark as Closed</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteEnquiry('{{ item.id }}'); return false;"><i class="bi bi-trash3 me-2"></i>Delete Enquiry</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="py-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-inbox text-muted opacity-50" style="font-size: 3rem;"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark" style="font-size: 1.05rem;">No Sourcing Enquiries Found</h5>
+                                <p class="text-muted small mb-0">
+                                    {% if search_query or status_filter != 'ALL' %}
+                                    No requests matched your search criteria or status filter. Try clearing filters.
+                                    {% else %}
+                                    When buyers submit sourcing requests through /browse or regional quote banners, they will appear here.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Footer -->
+        {% if page_obj.has_other_pages %}
+        <div class="dash-pagination">
+            <div class="text-muted small">
+                Showing <strong>{{ page_obj.start_index }}</strong> to <strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> enquiries
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}" class="dash-page-pill">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="dash-page-pill disabled"><i class="bi bi-chevron-left"></i></span>
+                {% endif %}
+
+                {% for p in page_obj.paginator.page_range %}
+                    {% if p == page_obj.number %}
+                    <span class="dash-page-pill active">{{ p }}</span>
+                    {% elif p > page_obj.number|add:"-3" and p < page_obj.number|add:"3" %}
+                    <a href="?page={{ p }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}" class="dash-page-pill">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}" class="dash-page-pill">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="dash-page-pill disabled"><i class="bi bi-chevron-right"></i></span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Enquiry Details & Procurement Desk Action -->
+<div class="modal fade" id="sourcingDetailModal" tabindex="-1" aria-labelledby="sourcingDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+            <div class="modal-header border-bottom py-3 px-4" style="background: var(--dash-surface);">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="dash-code-badge" id="modalEnquiryId">#SRC-0000</span>
+                    <h5 class="modal-title fw-bold text-dark fs-6 mb-0" id="sourcingDetailModalLabel">Sourcing Enquiry Details</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- Left: Requested Item & Specs -->
+                    <div class="col-12 col-md-7">
+                        <div class="p-3.5 rounded-3 border bg-light mb-3">
+                            <div class="text-uppercase small text-muted fw-bold mb-1" style="font-size: 0.7rem;">Target Sourcing Item</div>
+                            <h4 class="fw-bold text-dark fs-5 mb-2" id="modalItemName">-</h4>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge bg-primary text-white font-monospace" id="modalQuantity">1 units</span>
+                                <span class="badge bg-secondary text-white font-monospace" id="modalTargetPrice">Price Open</span>
+                                <span class="badge bg-info-subtle text-info border font-monospace" id="modalContext">Browse Desk</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.72rem;">Buyer Specifications / Notes</label>
+                            <div class="p-3 rounded-3 border bg-white small text-dark" id="modalNotes" style="white-space: pre-wrap; min-height: 90px; max-height: 200px; overflow-y: auto;">
+                                None provided.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Buyer Contact & Status -->
+                    <div class="col-12 col-md-5">
+                        <div class="p-3.5 rounded-3 border bg-white mb-3">
+                            <div class="text-uppercase small text-muted fw-bold mb-2" style="font-size: 0.7rem;">Buyer Details</div>
+                            <div class="mb-2">
+                                <div class="text-muted small" style="font-size: 0.74rem;">Full Name</div>
+                                <div class="fw-bold text-dark" id="modalBuyerName">-</div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="text-muted small" style="font-size: 0.74rem;">Email Address</div>
+                                <div><a href="#" id="modalBuyerEmail" class="text-primary text-decoration-none fw-medium small">-</a></div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="text-muted small" style="font-size: 0.74rem;">Phone / WhatsApp</div>
+                                <div class="fw-bold text-dark" id="modalBuyerPhone">-</div>
+                            </div>
+                            <div>
+                                <div class="text-muted small" style="font-size: 0.74rem;">Submission Date</div>
+                                <div class="text-muted small" id="modalCreatedAt">-</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-3 border bg-white">
+                            <div class="text-uppercase small text-muted fw-bold mb-2" style="font-size: 0.7rem;">Update Sourcing Status</div>
+                            <select id="modalStatusSelect" class="form-select form-select-sm mb-3" style="border-radius: 8px;">
+                                <option value="PENDING">Pending Review</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="CONTACTED">Contacted</option>
+                                <option value="SOURCED">Sourced</option>
+                                <option value="CLOSED">Closed</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-primary w-100" id="btnSaveModalStatus" onclick="saveModalStatus()">
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-2.5 px-4 d-flex justify-content-between">
+                <a href="#" id="modalWhatsAppBtn" target="_blank" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1.5" style="border-radius: 8px;">
+                    <i class="bi bi-whatsapp"></i> Chat on WhatsApp
+                </a>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentActiveEnquiryId = null;
+
+function openDetailFromButton(btn) {
+    if (!btn) return;
+    const d = btn.dataset;
+    openDetailModal(
+        d.id,
+        d.name,
+        d.email,
+        d.phone,
+        d.item,
+        d.qty,
+        d.price,
+        d.context,
+        d.notes,
+        d.status,
+        d.created
+    );
+}
+
+function openDetailModal(id, name, email, phone, item, qty, targetPrice, context, notes, status, createdAt) {
+    currentActiveEnquiryId = id;
+    document.getElementById('modalEnquiryId').innerText = `#SRC-${String(id).padStart(4, '0')}`;
+    document.getElementById('modalItemName').innerText = item || 'Custom Sourcing Request';
+    document.getElementById('modalQuantity').innerText = `${qty || '1'} units`;
+    document.getElementById('modalTargetPrice').innerText = targetPrice ? `Target: ${targetPrice}` : 'Price Open';
+    document.getElementById('modalContext').innerText = context || 'Browse Sourcing Desk';
+    document.getElementById('modalNotes').innerText = notes || 'No extra notes provided.';
+    document.getElementById('modalBuyerName').innerText = name || 'Valued Buyer';
+    
+    const emailLink = document.getElementById('modalBuyerEmail');
+    emailLink.innerText = email || 'N/A';
+    emailLink.href = `mailto:${email}`;
+
+    document.getElementById('modalBuyerPhone').innerText = phone || 'Not provided';
+    document.getElementById('modalCreatedAt').innerText = createdAt || '';
+    document.getElementById('modalStatusSelect').value = status || 'PENDING';
+
+    const waBtn = document.getElementById('modalWhatsAppBtn');
+    if (phone) {
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        waBtn.href = `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(name)},%20Surplus%20Market%20Sourcing%20Desk%20has%20an%20update%20for%20your%20request%20"${encodeURIComponent(item)}".`;
+        waBtn.style.display = 'inline-flex';
+    } else {
+        waBtn.style.display = 'none';
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('sourcingDetailModal'));
+    modal.show();
+}
+
+function updateStatus(enquiryId, newStatus) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+    fetch(`/admin/api/enquiries/sourcing/${enquiryId}/status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Error updating status');
+        }
+    })
+    .catch(err => {
+        alert('Network error while updating status');
+    });
+}
+
+function saveModalStatus() {
+    if (!currentActiveEnquiryId) return;
+    const newStatus = document.getElementById('modalStatusSelect').value;
+    updateStatus(currentActiveEnquiryId, newStatus);
+}
+
+function deleteEnquiry(enquiryId) {
+    if (!confirm(`Are you sure you want to permanently delete Sourcing Enquiry #${enquiryId}?`)) return;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+    fetch(`/admin/api/enquiries/sourcing/${enquiryId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById(`enquiryRow-${enquiryId}`);
+            if (row) row.remove();
+            window.location.reload();
+        } else {
+            alert(data.message || 'Error deleting enquiry');
+        }
+    })
+    .catch(err => {
+        alert('Network error while deleting enquiry');
+    });
+}
+</script>
+{% endblock %}

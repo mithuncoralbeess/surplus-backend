@@ -923,7 +923,7 @@ def _build_enquiries_report(request, for_export=False):
       - Partnership Enquiries (partnership_enquiries)
       - Contact / Support Enquiries (contact_us_enquiries)
     """
-    from .models import ContactUsEnquiry, Lot, PartnershipEnquiry, Product
+    from .models import ContactUsEnquiry, Lot, PartnershipEnquiry, Product, SourcingEnquiry
 
     q = request.GET.get("q", "").strip()
     type_f = request.GET.get("type", "").strip()
@@ -950,24 +950,30 @@ def _build_enquiries_report(request, for_export=False):
     cont_qs = ContactUsEnquiry.objects.only(
         "id", "full_name", "email", "phone", "enquiry_type", "message", "is_blocked", "status", "created_at"
     )
+    source_qs = SourcingEnquiry.objects.only(
+        "id", "full_name", "email", "phone", "source_widget", "item_name", "quantity", "target_price", "status", "created_at"
+    )
 
     if start_dt:
         prod_qs = prod_qs.filter(created_at__gte=start_dt)
         lot_qs = lot_qs.filter(created_at__gte=start_dt)
         part_qs = part_qs.filter(created_at__gte=start_dt)
         cont_qs = cont_qs.filter(created_at__gte=start_dt)
+        source_qs = source_qs.filter(created_at__gte=start_dt)
 
     if q:
         prod_qs = prod_qs.filter(Q(product_name__icontains=q) | Q(product_code__icontains=q) | Q(vendor__email__icontains=q))
         lot_qs = lot_qs.filter(Q(title__icontains=q) | Q(lot_number__icontains=q) | Q(vendor__email__icontains=q))
         part_qs = part_qs.filter(Q(name__icontains=q) | Q(email__icontains=q) | Q(subject__icontains=q))
         cont_qs = cont_qs.filter(Q(full_name__icontains=q) | Q(email__icontains=q) | Q(enquiry_type__icontains=q) | Q(message__icontains=q))
+        source_qs = source_qs.filter(Q(full_name__icontains=q) | Q(email__icontains=q) | Q(item_name__icontains=q) | Q(source_widget__icontains=q) | Q(notes__icontains=q) | Q(raw_message__icontains=q))
 
     if status_f:
         prod_qs = prod_qs.filter(enquiry_status__iexact=status_f)
         lot_qs = lot_qs.filter(enquiry_status__iexact=status_f)
         part_qs = part_qs.filter(status__iexact=status_f)
         cont_qs = cont_qs.filter(status__iexact=status_f)
+        source_qs = source_qs.filter(status__iexact=status_f)
 
     if blocked_f == "yes":
         cont_qs = cont_qs.filter(is_blocked=True)
@@ -976,17 +982,18 @@ def _build_enquiries_report(request, for_export=False):
 
     # Counts per source (applying filters except `type` so KPI breakdown stays clear)
     if not q and not status_f and not blocked_f and period_f == "all":
-        counts_key = "rpt_enquiries_default_counts"
+        counts_key = "rpt_enquiries_default_counts_v2"
         counts = cache.get(counts_key)
         if counts is None:
-            counts = (prod_qs.count(), lot_qs.count(), part_qs.count(), cont_qs.count())
+            counts = (prod_qs.count(), lot_qs.count(), part_qs.count(), cont_qs.count(), source_qs.count())
             cache.set(counts_key, counts, 300)
-        prod_cnt, lot_cnt, part_cnt, cont_cnt = counts
+        prod_cnt, lot_cnt, part_cnt, cont_cnt, source_cnt = counts
     else:
         prod_cnt = prod_qs.count() if not blocked_f else 0
         lot_cnt = lot_qs.count() if not blocked_f else 0
         part_cnt = part_qs.count() if not blocked_f else 0
         cont_cnt = cont_qs.count()
+        source_cnt = source_qs.count() if not blocked_f else 0
 
     rows = []
     limit_each = 1000 if for_export else 50
@@ -1056,6 +1063,26 @@ def _build_enquiries_report(request, for_export=False):
                 },
             })
 
+    if type_f in ("", "sourcing") and not blocked_f:
+        for se in source_qs.order_by("-created_at")[:limit_each]:
+            rows.append({
+                "id": se.id,
+                "drill_kind": "",
+                "detail_url": "/admin/enquiries/sourcing/",
+                "sort_dt": se.created_at,
+                "cells": {
+                    "type": "Sourcing",
+                    "reference": se.full_name,
+                    "email": se.email,
+                    "phone": se.phone or "—",
+                    "subject": f"{se.item_name} ({se.quantity or 'Any qty'})" if se.item_name else (se.source_widget or "Sourcing Desk"),
+                    "value": str(se.target_price) if se.target_price else "—",
+                    "status": (se.status or "PENDING").replace("_", " ").title(),
+                    "status_raw": (se.status or "").lower(),
+                    "created_at": _fmt_dt(se.created_at),
+                },
+            })
+
     if type_f in ("", "contact"):
         for ce in cont_qs.order_by("-created_at")[:limit_each]:
             rows.append({
@@ -1080,11 +1107,12 @@ def _build_enquiries_report(request, for_export=False):
     reverse = sort_param != "created_at"
     rows.sort(key=lambda r: r["sort_dt"].timestamp() if r["sort_dt"] else 0, reverse=reverse)
 
-    total_all = prod_cnt + lot_cnt + part_cnt + cont_cnt
+    total_all = prod_cnt + lot_cnt + part_cnt + cont_cnt + source_cnt
     kpis = [
         _kpi_card("ALL ENQUIRIES", f"{total_all:,}"),
         _kpi_card("SELLER PRODUCTS", f"{prod_cnt:,}", "primary"),
         _kpi_card("BULK LOTS", f"{lot_cnt:,}", "warning"),
+        _kpi_card("SOURCING DESK", f"{source_cnt:,}", "info"),
         _kpi_card("PARTNERSHIP", f"{part_cnt:,}", "success"),
         _kpi_card("CONTACT / SUPPORT", f"{cont_cnt:,}", "neutral"),
     ]
@@ -1102,8 +1130,8 @@ def _build_enquiries_report(request, for_export=False):
 
     filters = [
         _filter_def("q", "Search", "text", placeholder="Name, email, subject, code..."),
-        _filter_def("type", "Source Type", "select", [("seller_product", "Seller Product"), ("lot", "Lot Submission"), ("partnership", "Partnership"), ("contact", "Contact / Support")]),
-        _filter_def("status", "Status", "select", [("PENDING", "Pending"), ("APPROVED", "Approved"), ("DECLINED", "Declined"), ("CORRECTION_NEEDED", "Needs Correction"), ("REVIEWED", "Reviewed"), ("CONTACTED", "Contacted")]),
+        _filter_def("type", "Source Type", "select", [("seller_product", "Seller Product"), ("lot", "Lot Submission"), ("sourcing", "Sourcing Desk"), ("partnership", "Partnership"), ("contact", "Contact / Support")]),
+        _filter_def("status", "Status", "select", [("PENDING", "Pending"), ("APPROVED", "Approved"), ("DECLINED", "Declined"), ("CORRECTION_NEEDED", "Needs Correction"), ("REVIEWED", "Reviewed"), ("CONTACTED", "Contacted"), ("IN_PROGRESS", "In Progress"), ("SOURCED", "Sourced"), ("CLOSED", "Closed")]),
         _filter_def("is_blocked", "Blocked (Contact)", "select", [("yes", "Blocked Only"), ("no", "Not Blocked")]),
         _filter_def("period", "Created", "select", [("7d", "Last 7 Days"), ("30d", "Last 30 Days"), ("90d", "Last 90 Days"), ("all", "All Time")]),
     ]
@@ -1115,7 +1143,7 @@ def _build_enquiries_report(request, for_export=False):
     return {
         "report_type": "enquiries",
         "title": "Enquiries & Leads Report",
-        "subtitle": "Unified inbox across live Seller Products, Bulk Lots, Partnership leads, and Contact enquiries.",
+        "subtitle": "Unified inbox across live Seller Products, Bulk Lots, Sourcing Desk requests, Partnership leads, and Contact enquiries.",
         "kpis": kpis,
         "columns": columns,
         "filters": filters,

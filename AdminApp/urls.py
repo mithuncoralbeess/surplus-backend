@@ -56,6 +56,12 @@ from .views import (
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
+    sourcing_enquiries_view,
+    sourcing_enquiry_update_status_api,
+    sourcing_enquiry_delete_api,
+    regional_enquiries_view,
+    regional_enquiry_update_status_api,
+    regional_enquiry_delete_api,
     whatsapp_command_center_view,
     whatsapp_preview_api,
     whatsapp_send_broadcast_api,
@@ -212,6 +218,22 @@ urlpatterns = [
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),
     path("contact-us/", contact_enquiries_view, name="contact_enquiries_alias"),
+
+    # Sourcing Enquiries (Fast Sourcing Desk from /browse & Regional Quotes from /saudi, /uae, etc.)
+    path("enquiries/sourcing/", sourcing_enquiries_view, name="sourcing_enquiries"),
+    path("enquiries/source-enquiry/", sourcing_enquiries_view, name="source_enquiry_alias"),
+    path("enquiries/sourse-enquiry/", sourcing_enquiries_view, name="sourse_enquiry_alias"),
+    path("source-enquiry/", sourcing_enquiries_view, name="source_enquiry_root_alias"),
+    path("sourse-enquiry/", sourcing_enquiries_view, name="sourse_enquiry_root_alias2"),
+    path("api/enquiries/sourcing/<int:enquiry_id>/status/", sourcing_enquiry_update_status_api, name="sourcing_enquiry_update_status_api"),
+    path("api/enquiries/sourcing/<int:enquiry_id>/delete/", sourcing_enquiry_delete_api, name="sourcing_enquiry_delete_api"),
+
+    # Regional Enquiries (Dedicated B2B Quote Requests for Saudi Arabia, UAE, Qatar, India, etc.)
+    path("enquiries/regional/", regional_enquiries_view, name="regional_enquiries"),
+    path("regional-enquiries/", regional_enquiries_view, name="regional_enquiries_alias"),
+    path("regional-enquiry/", regional_enquiries_view, name="regional_enquiry_alias2"),
+    path("api/enquiries/regional/<int:enquiry_id>/status/", regional_enquiry_update_status_api, name="regional_enquiry_update_status_api"),
+    path("api/enquiries/regional/<int:enquiry_id>/delete/", regional_enquiry_delete_api, name="regional_enquiry_delete_api"),
 
     # WhatsApp Liquidation Command Center & Two-Way Pipeline
     path("whatsapp/", whatsapp_command_center_view, name="whatsapp_command_center"),

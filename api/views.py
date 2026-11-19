@@ -1444,6 +1444,107 @@ def submit_partnership_enquiry(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+def submit_sourcing_enquiry(request):
+    """
+    Dedicated API endpoint for B2B Fast Sourcing Desk (/browse).
+    Endpoint: POST /api/enquiries/sourcing/
+    """
+    from AdminApp.models import SourcingEnquiry, ContactUsEnquiry
+    from AdminApp.services import create_admin_notification, EmailService
+
+    data = request.data or {}
+    full_name = (
+        data.get("fullName")
+        or data.get("full_name")
+        or data.get("name", "").strip()
+        or (data.get("email", "").split("@")[0] if "@" in data.get("email", "") else "Valued Buyer")
+    )
+    email = data.get("email", "").strip() or "sourcing-request@surplusmarket.com"
+    phone = data.get("phone") or data.get("contactNo") or data.get("mobile", "") or ""
+    item_name = (
+        data.get("sourcingItem")
+        or data.get("item_name")
+        or data.get("lookingFor")
+        or data.get("item")
+        or data.get("subject", "").strip()
+    )
+    quantity = data.get("quantity", "1")
+    target_price = data.get("targetPrice") or data.get("target_price", "") or ""
+    notes = data.get("notes") or data.get("message", "") or ""
+    search_query = data.get("searchQuery") or data.get("search_query") or "Browse Fast Sourcing"
+    source_widget = data.get("source") or data.get("source_widget") or "BrowseSourcingDesk"
+
+    if not item_name and not notes:
+        return Response({
+            "success": False,
+            "message": "Please specify the item or specifications you need."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    enq = SourcingEnquiry.objects.create(
+        full_name=str(full_name)[:255],
+        email=str(email),
+        phone=str(phone or ""),
+        item_name=str(item_name or "Custom Sourcing Request")[:255],
+        quantity=str(quantity or "1")[:100],
+        target_price=str(target_price or "")[:100],
+        notes=str(notes or ""),
+        search_query=str(search_query or "")[:255],
+        raw_message=str(notes or ""),
+        source_widget=str(source_widget)[:100],
+        status="PENDING",
+    )
+
+    # Mirror in ContactUsEnquiry for backward compatibility
+    try:
+        ContactUsEnquiry.objects.create(
+            full_name=full_name,
+            email=email,
+            phone=str(phone or ""),
+            enquiry_type=f"B2B Fast Sourcing - {item_name[:50]}",
+            message=f"[SOURCING REQUEST #{enq.id}]\nItem: {item_name}\nQty: {quantity}\nTarget Price: {target_price}\nContext: {search_query}\nNotes:\n{notes}",
+            status="PENDING",
+        )
+    except Exception:
+        pass
+
+    # Admin in-app notification & alert email strictly to contact@surplusmarket.com
+    try:
+        create_admin_notification(
+            title=f"New Sourcing Enquiry - {item_name}",
+            message=f"Buyer {full_name} ({email}) requested sourcing for '{item_name}' (Qty: {quantity}).",
+            notification_type="ENQUIRY",
+            action_url="/admin/enquiries/sourcing/"
+        )
+        EmailService.send_email(
+            to_email=["contact@surplusmarket.com"],
+            subject=f"New B2B Sourcing Request: {item_name} [{full_name}]",
+            html_content=(
+                f"<h2>New Fast Sourcing Request Received</h2>"
+                f"<p><strong>Enquiry ID:</strong> #{enq.id}</p>"
+                f"<p><strong>Item / Specs:</strong> {item_name}</p>"
+                f"<p><strong>Quantity:</strong> {quantity}</p>"
+                f"<p><strong>Target Price:</strong> {target_price or 'Open for offers'}</p>"
+                f"<p><strong>Buyer Name:</strong> {full_name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Phone:</strong> {phone or 'Not provided'}</p>"
+                f"<p><strong>Context / Search:</strong> {search_query}</p>"
+                f"<p><strong>Notes:</strong> {notes}</p>"
+                f"<p><a href='/admin/enquiries/sourcing/'>View Sourcing Enquiries in Admin Dashboard</a></p>"
+            ),
+            service_name="ContactAdminAlert"
+        )
+    except Exception as e:
+        logger.error(f"[submit_sourcing_enquiry] Notification error: {e}")
+
+    return Response({
+        "success": True,
+        "message": "Sourcing request submitted successfully! Our procurement desk will contact you with availability and options.",
+        "enquiry_id": enq.id,
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def submit_contact_us_enquiry(request):
     """
     Public API endpoint to submit a Contact Us / General Enquiry from the frontend.
@@ -1471,15 +1572,124 @@ def submit_contact_us_enquiry(request):
     if serializer.is_valid():
         enquiry = serializer.save()
 
+        # Check if this is a Fast Sourcing Desk inquiry or Regional Quote Request
+        msg_str = str(payload.get("message", "") or "")
+        enq_type_str = str(payload.get("enquiryType", "") or payload.get("enquiry_type", "") or "")
+        meta = payload.get("metadata", {}) or {}
+        
+        is_regional = (
+            "REGIONAL QUOTE" in enq_type_str.upper()
+            or "REGIONAL B2B QUOTE" in msg_str.upper()
+            or meta.get("source") == "RegionalHeroBanner"
+            or "lookingFor" in meta
+        )
+        is_sourcing = (
+            "SOURCING" in enq_type_str.upper()
+            or "SOURCING" in msg_str.upper()
+            or meta.get("source") == "BrowseSourcingDesk Widget"
+            or "sourcingItem" in meta
+        )
+
+        if is_regional:
+            try:
+                import re
+                from AdminApp.models import RegionalEnquiry
+
+                country_match = re.search(r"Country:\s*([^\n\(\)]+)", msg_str)
+                item_match = re.search(r"Item / Product:\s*(.*)", msg_str)
+                qty_match = re.search(r"Quantity:\s*(.*)", msg_str)
+                price_match = re.search(r"Target Price:\s*(.*)", msg_str)
+
+                country = (
+                    meta.get("country")
+                    or (country_match.group(1).strip() if country_match else "")
+                    or enq_type_str.replace("Regional Quote Request -", "").strip()
+                    or "Saudi Arabia"
+                )
+                item_name = (
+                    meta.get("lookingFor")
+                    or meta.get("sourcingItem")
+                    or (item_match.group(1).strip() if item_match else "")
+                    or f"B2B Quote Request - {country}"
+                )
+                quantity = meta.get("quantity") or (qty_match.group(1).strip() if qty_match else "") or "1"
+                target_price = meta.get("targetPrice") or (price_match.group(1).strip() if price_match else "") or ""
+
+                RegionalEnquiry.objects.create(
+                    country=country[:100],
+                    country_slug=country.lower().replace(" ", "-")[:100],
+                    full_name=enquiry.full_name or enquiry.email.split("@")[0],
+                    business_email=enquiry.email,
+                    phone=enquiry.phone or "",
+                    item_name=item_name[:255],
+                    quantity=str(quantity)[:100],
+                    target_price=str(target_price)[:100],
+                    raw_message=msg_str,
+                    source_widget="RegionalHeroBanner",
+                    status="PENDING",
+                )
+            except Exception as e:
+                logger.error(f"[submit_contact_us_enquiry] RegionalEnquiry auto-mirror error: {e}")
+
+        elif is_sourcing:
+            try:
+                import re
+                from AdminApp.models import SourcingEnquiry
+
+                item_match = re.search(r"(?:Sourcing Item / Product Specs|Item / Product):\s*(.*)", msg_str)
+                qty_match = re.search(r"(?:Required Quantity|Quantity):\s*(.*)", msg_str)
+                price_match = re.search(r"Target Price:\s*(.*)", msg_str)
+                notes_match = re.search(r"Additional Specifications / Notes:\s*(.*)", msg_str)
+                query_match = re.search(r"Search Query Context:\s*(.*)", msg_str)
+
+                item_name = (
+                    meta.get("sourcingItem")
+                    or (item_match.group(1).strip() if item_match else "")
+                    or payload.get("subject", "").replace("Fast Sourcing Inquiry:", "").strip()
+                    or "Custom Sourcing Request"
+                )
+                quantity = meta.get("quantity") or (qty_match.group(1).strip() if qty_match else "") or "1"
+                target_price = meta.get("targetPrice") or (price_match.group(1).strip() if price_match else "") or ""
+                notes = notes_match.group(1).strip() if notes_match else msg_str
+                search_query = meta.get("searchQuery") or (query_match.group(1).strip() if query_match else "") or ""
+
+                SourcingEnquiry.objects.create(
+                    full_name=enquiry.full_name or enquiry.email.split("@")[0],
+                    email=enquiry.email,
+                    phone=enquiry.phone,
+                    item_name=item_name[:255],
+                    quantity=str(quantity)[:100],
+                    target_price=str(target_price)[:100],
+                    notes=notes,
+                    search_query=search_query[:255],
+                    raw_message=msg_str,
+                    source_widget=meta.get("source") or "BrowseSourcingDesk",
+                    status="PENDING",
+                )
+            except Exception as e:
+                logger.error(f"[submit_contact_us_enquiry] SourcingEnquiry auto-mirror error: {e}")
+
         # In-app Admin Notification
         try:
             from AdminApp.services import create_admin_notification
+            if is_regional:
+                action_url = "/admin/enquiries/regional/"
+                title_prefix = f"New Regional Quote [{country}]"
+            elif is_sourcing:
+                action_url = "/admin/enquiries/sourcing/"
+                title_prefix = "New Sourcing Enquiry"
+            else:
+                action_url = "/admin/enquiries/contact-us/"
+                title_prefix = "New Contact Enquiry"
+
             create_admin_notification(
-                title=f"New Contact Enquiry - {enquiry.full_name}",
+                title=f"{title_prefix} - {enquiry.full_name}",
                 message=f"Received a new {enquiry.enquiry_type or 'General'} inquiry from {enquiry.full_name} ({enquiry.email}).",
                 notification_type="ENQUIRY",
-                action_url="/admin/enquiries/contact-us/"
+                action_url=action_url
             )
+        except Exception as e:
+            logger.error(f"[submit_contact_us_enquiry] Notification error: {e}")
         except Exception as e:
             logger.error(f"[submit_contact_us_enquiry] Admin notification error: {e}")
 
@@ -1523,6 +1733,110 @@ def submit_contact_us_enquiry(request):
         "success": False,
         "errors": serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def submit_regional_enquiry(request):
+    """
+    Dedicated API endpoint for Regional B2B Quote Requests (/saudi, /uae, /qatar, /india, etc.).
+    Endpoint: POST /api/enquiries/regional/
+    """
+    from AdminApp.models import RegionalEnquiry, ContactUsEnquiry
+    from AdminApp.services import create_admin_notification, EmailService
+
+    data = request.data or {}
+    country = data.get("country") or data.get("countryName") or "Saudi Arabia"
+    country_slug = data.get("countrySlug") or data.get("country_slug") or country.lower().replace(" ", "-")
+    business_email = data.get("email") or data.get("businessEmail", "").strip() or "regional-quote@surplusmarket.com"
+    full_name = (
+        data.get("fullName")
+        or data.get("name", "").strip()
+        or (business_email.split("@")[0] if "@" in business_email else f"{country} Buyer")
+    )
+    phone = data.get("phone") or data.get("contactNo") or data.get("mobile", "") or ""
+    item_name = (
+        data.get("lookingFor")
+        or data.get("sourcingItem")
+        or data.get("item_name")
+        or data.get("item")
+        or data.get("subject", "").strip()
+    )
+    quantity = data.get("quantity", "1")
+    target_price = data.get("targetPrice") or data.get("target_price", "") or ""
+    currency = data.get("currency", "USD")
+    notes = data.get("notes") or data.get("message", "") or ""
+    raw_message = data.get("rawMessage") or data.get("message", "") or ""
+    source_widget = data.get("source") or data.get("source_widget") or "RegionalHeroBanner"
+
+    if not item_name and not notes:
+        return Response({
+            "success": False,
+            "message": "Please specify the item or specifications you need."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    enq = RegionalEnquiry.objects.create(
+        country=str(country)[:100],
+        country_slug=str(country_slug)[:100],
+        full_name=str(full_name)[:255],
+        business_email=str(business_email),
+        phone=str(phone or ""),
+        item_name=str(item_name or f"B2B Quote Request - {country}")[:255],
+        quantity=str(quantity or "1")[:100],
+        target_price=str(target_price or "")[:100],
+        currency=str(currency or "USD")[:10],
+        notes=str(notes or ""),
+        raw_message=str(raw_message or f"Country: {country}\nItem: {item_name}\nQty: {quantity}\nTarget: {target_price}"),
+        source_widget=str(source_widget)[:100],
+        status="PENDING",
+    )
+
+    # Mirror in ContactUsEnquiry for backward compatibility
+    try:
+        ContactUsEnquiry.objects.create(
+            full_name=full_name,
+            email=business_email,
+            phone=str(phone or ""),
+            enquiry_type=f"Regional Quote Request - {country}",
+            message=f"[REGIONAL B2B QUOTE REQUEST #{enq.id}]\nCountry: {country} ({country_slug})\nItem / Product: {item_name}\nQuantity: {quantity}\nTarget Price: {target_price}\nBusiness Email: {business_email}",
+            status="PENDING",
+        )
+    except Exception:
+        pass
+
+    # Admin in-app notification & alert email strictly to contact@surplusmarket.com
+    try:
+        create_admin_notification(
+            title=f"New Regional Quote [{country}] - {item_name}",
+            message=f"Buyer {full_name} ({business_email}) submitted a quote request in {country} for '{item_name}' (Qty: {quantity}).",
+            notification_type="ENQUIRY",
+            action_url="/admin/enquiries/regional/"
+        )
+        EmailService.send_email(
+            to_email=["contact@surplusmarket.com"],
+            subject=f"New Regional Quote Request - {country} from {business_email}",
+            html_content=(
+                f"<h2>New Regional B2B Quote Request Received</h2>"
+                f"<p><strong>Enquiry ID:</strong> #{enq.id}</p>"
+                f"<p><strong>Country:</strong> {country} ({country_slug})</p>"
+                f"<p><strong>Item / Product:</strong> {item_name}</p>"
+                f"<p><strong>Quantity:</strong> {quantity}</p>"
+                f"<p><strong>Target Price:</strong> {target_price or 'Open for quotation'}</p>"
+                f"<p><strong>Business Email:</strong> {business_email}</p>"
+                f"<p><strong>Phone:</strong> {phone or 'Not provided'}</p>"
+                f"<p><strong>Notes:</strong> {notes}</p>"
+                f"<p><a href='/admin/enquiries/regional/'>View Regional Enquiries in Admin Dashboard</a></p>"
+            ),
+            service_name="ContactAdminAlert"
+        )
+    except Exception as e:
+        logger.error(f"[submit_regional_enquiry] Notification error: {e}")
+
+    return Response({
+        "success": True,
+        "message": f"Your quote request for {country} has been received. Our regional desk will respond shortly.",
+        "enquiry_id": enq.id,
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])

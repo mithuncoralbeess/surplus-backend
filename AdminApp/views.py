@@ -6,6 +6,7 @@ import secrets
 import json
 import logging
 import urllib.parse
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
@@ -14,6 +15,8 @@ from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.utils.dateparse import parse_date
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.cache import cache
 from django.contrib.auth import authenticate
 from django.utils import timezone
@@ -37,6 +40,8 @@ from .models import (
     LotBatchEnquiry,
     PartnershipEnquiry,
     ContactUsEnquiry,
+    SourcingEnquiry,
+    RegionalEnquiry,
     MainCategory,
     SubCategory,
     Lot,
@@ -4942,6 +4947,283 @@ def contact_enquiries_view(request):
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
+
+
+# -------------------------------------------------------------
+# B2B Sourcing Enquiries (Fast Sourcing Desk & Regional Quotes)
+# -------------------------------------------------------------
+
+def sourcing_enquiries_view(request):
+    """
+    Dedicated view for B2B Fast Sourcing Enquiries:
+    - Submissions from /browse ('Can't Find It? Contact Us For Fast Sourcing')
+    - Submissions from Regional Landing Pages (/saudi, /uae, /qatar, /india)
+    - AJAX status changes (Pending, In Progress, Contacted, Sourced, Closed)
+    - Full-text search and date filters
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    # Handle POST Actions
+    if request.method == "POST":
+        action = request.POST.get("action")
+        enquiry_id = request.POST.get("enquiry_id")
+        new_status = request.POST.get("status", "").upper()
+        selected_ids = request.POST.getlist("selected_ids") or ([enquiry_id] if enquiry_id else [])
+
+        if action == "update_status" and enquiry_id and new_status:
+            SourcingEnquiry.objects.filter(id=enquiry_id).update(status=new_status)
+            cache.delete("ctx_pending_counts_v5")
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": f"Status updated to {new_status}"})
+            messages.success(request, f"Enquiry #{enquiry_id} status updated to {new_status}.")
+            return redirect("sourcing_enquiries")
+
+        elif action == "delete" and selected_ids:
+            SourcingEnquiry.objects.filter(id__in=selected_ids).delete()
+            cache.delete("ctx_pending_counts_v5")
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": "Enquiry deleted successfully"})
+            messages.success(request, f"Deleted {len(selected_ids)} sourcing enquiries.")
+            return redirect("sourcing_enquiries")
+
+    search_query = request.GET.get("q", "").strip() or request.GET.get("search", "").strip()
+    status_filter = request.GET.get("status", "ALL").strip().upper()
+    date_filter = request.GET.get("date_filter", "all").strip().lower()
+
+    # Query all SourcingEnquiry records
+    qs = SourcingEnquiry.objects.all().order_by("-created_at")
+
+    # Date filter
+    now = timezone.now()
+    if date_filter == "today":
+        start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        qs = qs.filter(created_at__gte=start_of_today)
+    elif date_filter == "week":
+        qs = qs.filter(created_at__gte=now - timedelta(days=7))
+    elif date_filter == "month":
+        qs = qs.filter(created_at__gte=now - timedelta(days=30))
+
+    # Search filter
+    if search_query:
+        qs = qs.filter(
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(item_name__icontains=search_query) |
+            Q(notes__icontains=search_query) |
+            Q(search_query__icontains=search_query) |
+            Q(source_widget__icontains=search_query)
+        )
+
+    # Calculate status counts across full filtered set (before tab-slice)
+    counts = {
+        "ALL": qs.count(),
+        "PENDING": qs.filter(status="PENDING").count(),
+        "IN_PROGRESS": qs.filter(status="IN_PROGRESS").count(),
+        "CONTACTED": qs.filter(status="CONTACTED").count(),
+        "SOURCED": qs.filter(status="SOURCED").count(),
+        "CLOSED": qs.filter(status="CLOSED").count(),
+    }
+
+    # Apply status tab filter
+    if status_filter and status_filter != "ALL":
+        qs = qs.filter(status=status_filter)
+
+    # Pagination: 20 per page
+    paginator = Paginator(qs, 20)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "admin": admin_user,
+        "enquiries": page_obj,
+        "page_obj": page_obj,
+        "counts": counts,
+        "status_filter": status_filter,
+        "search_query": search_query,
+        "date_filter": date_filter,
+        "total_count": counts["ALL"],
+        "pending_count": counts["PENDING"],
+        "in_progress_count": counts["IN_PROGRESS"],
+        "contacted_count": counts["CONTACTED"],
+        "sourced_count": counts["SOURCED"],
+        "closed_count": counts["CLOSED"],
+        "page_title": "Sourcing Enquiries",
+        "page_subtitle": "Fast Sourcing Desk & Regional Buyer Quote Requests",
+    }
+    return render(request, "sourcing_enquiries.html", context)
+
+
+@require_http_methods(["POST"])
+def sourcing_enquiry_update_status_api(request, enquiry_id):
+    """AJAX endpoint to update status of a SourcingEnquiry."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    import json
+    data = {}
+    if request.body:
+        try:
+            data = json.loads(request.body)
+        except Exception:
+            pass
+    new_status = (data.get("status") or request.POST.get("status", "")).strip().upper()
+    valid_statuses = {"PENDING", "IN_PROGRESS", "CONTACTED", "SOURCED", "CLOSED"}
+    if new_status not in valid_statuses:
+        return JsonResponse({"success": False, "message": "Invalid status value"}, status=400)
+
+    updated = SourcingEnquiry.objects.filter(id=enquiry_id).update(status=new_status, updated_at=timezone.now())
+    if updated:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": f"Status updated to {new_status}"})
+    return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
+
+
+@require_http_methods(["POST"])
+def sourcing_enquiry_delete_api(request, enquiry_id):
+    """AJAX endpoint to delete a SourcingEnquiry."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    deleted, _ = SourcingEnquiry.objects.filter(id=enquiry_id).delete()
+    if deleted:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": "Enquiry deleted successfully"})
+    return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
+
+
+def regional_enquiries_view(request):
+    """
+    Dedicated Admin Management Dashboard for Regional B2B Quote Requests (Saudi Arabia, UAE, Qatar, India, etc.).
+    Route: /admin/enquiries/regional/
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    status_filter = request.GET.get("status", "ALL").upper()
+    country_filter = request.GET.get("country", "ALL").strip()
+    search_query = request.GET.get("q", "").strip()
+    date_filter = request.GET.get("date_filter", "all")
+
+    qs = RegionalEnquiry.objects.all().order_by("-created_at")
+
+    # Date filtering
+    now = timezone.now()
+    if date_filter == "today":
+        start_of_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        qs = qs.filter(created_at__gte=start_of_today)
+    elif date_filter == "week":
+        qs = qs.filter(created_at__gte=now - timedelta(days=7))
+    elif date_filter == "month":
+        qs = qs.filter(created_at__gte=now - timedelta(days=30))
+
+    # Search filter
+    if search_query:
+        qs = qs.filter(
+            Q(full_name__icontains=search_query) |
+            Q(business_email__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(country__icontains=search_query) |
+            Q(item_name__icontains=search_query) |
+            Q(notes__icontains=search_query) |
+            Q(raw_message__icontains=search_query)
+        )
+
+    # Country filter
+    if country_filter and country_filter != "ALL":
+        qs = qs.filter(country__iexact=country_filter)
+
+    # Status counts before status tab filter
+    counts = {
+        "ALL": qs.count(),
+        "PENDING": qs.filter(status="PENDING").count(),
+        "IN_PROGRESS": qs.filter(status="IN_PROGRESS").count(),
+        "CONTACTED": qs.filter(status="CONTACTED").count(),
+        "SOURCED": qs.filter(status="SOURCED").count(),
+        "CLOSED": qs.filter(status="CLOSED").count(),
+    }
+
+    # Available countries with their counts for quick pill filter
+    country_stats = list(
+        RegionalEnquiry.objects.values("country")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+    )
+
+    # Apply status tab filter
+    if status_filter and status_filter != "ALL":
+        qs = qs.filter(status=status_filter)
+
+    # Pagination: 20 per page
+    paginator = Paginator(qs, 20)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "admin": admin_user,
+        "enquiries": page_obj,
+        "page_obj": page_obj,
+        "counts": counts,
+        "status_filter": status_filter,
+        "country_filter": country_filter,
+        "country_stats": country_stats,
+        "search_query": search_query,
+        "date_filter": date_filter,
+        "total_count": counts["ALL"],
+        "pending_count": counts["PENDING"],
+        "in_progress_count": counts["IN_PROGRESS"],
+        "contacted_count": counts["CONTACTED"],
+        "sourced_count": counts["SOURCED"],
+        "closed_count": counts["CLOSED"],
+        "page_title": "Regional Enquiries",
+        "page_subtitle": "Regional B2B Quote Requests (Saudi Arabia, UAE, Qatar, India, etc.)",
+    }
+    return render(request, "regional_enquiries.html", context)
+
+
+@require_http_methods(["POST"])
+def regional_enquiry_update_status_api(request, enquiry_id):
+    """AJAX endpoint to update status of a RegionalEnquiry."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    import json
+    data = {}
+    if request.body:
+        try:
+            data = json.loads(request.body)
+        except Exception:
+            pass
+    new_status = (data.get("status") or request.POST.get("status", "")).strip().upper()
+    valid_statuses = {"PENDING", "IN_PROGRESS", "CONTACTED", "SOURCED", "CLOSED"}
+    if new_status not in valid_statuses:
+        return JsonResponse({"success": False, "message": "Invalid status value"}, status=400)
+
+    updated = RegionalEnquiry.objects.filter(id=enquiry_id).update(status=new_status, updated_at=timezone.now())
+    if updated:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": f"Status updated to {new_status}"})
+    return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
+
+
+@require_http_methods(["POST"])
+def regional_enquiry_delete_api(request, enquiry_id):
+    """AJAX endpoint to delete a RegionalEnquiry."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    deleted, _ = RegionalEnquiry.objects.filter(id=enquiry_id).delete()
+    if deleted:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": "Enquiry deleted successfully"})
+    return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
 
 
 
