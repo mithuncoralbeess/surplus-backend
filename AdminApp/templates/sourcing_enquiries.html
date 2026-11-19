@@ -7,37 +7,42 @@
 <style>
 /* DashKit / DashCode Core Tokens */
 :root {
-    --dash-primary: #6366f1;
-    --dash-primary-hover: #4f46e5;
-    --dash-primary-light: #eef2ff;
+    --dash-primary: #0a5c48;
+    --dash-primary-hover: #084c3b;
+    --dash-primary-light: #e8f5f1;
+    --dash-accent: #6366f1;
     --dash-surface: #f8fafc;
     --dash-card: #ffffff;
     --dash-border: #e2e8f0;
     --dash-border-subtle: #f1f5f9;
     --dash-text-dark: #0f172a;
-    --dash-text-muted: #64748b;
-    --dash-text-sub: #475569;
-    --dash-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --dash-shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+    --dash-text-body: #334155;
+    --dash-text-sub: #64748b;
+    --dash-text-muted: #94a3b8;
+    --dash-shadow-card: 0 4px 18px rgba(47, 43, 61, 0.05), 0 1px 3px rgba(47, 43, 61, 0.02);
+    --dash-shadow-hover: 0 10px 28px -4px rgba(47, 43, 61, 0.09), 0 4px 10px -2px rgba(47, 43, 61, 0.04);
     --dash-radius-card: 16px;
+    --dash-radius-lg: 14px;
+    --dash-radius-md: 10px;
     --dash-radius-pill: 9999px;
-    --dash-radius-sm: 8px;
 }
 
 [data-bs-theme="dark"] {
     --dash-surface: #0b1120;
     --dash-card: #1e293b;
     --dash-border: #334155;
-    --dash-border-subtle: #1e293b;
+    --dash-border-subtle: rgba(51, 65, 85, 0.6);
     --dash-text-dark: #f8fafc;
-    --dash-text-muted: #94a3b8;
-    --dash-text-sub: #cbd5e1;
-    --dash-primary-light: rgba(99, 102, 241, 0.15);
+    --dash-text-body: #cbd5e1;
+    --dash-text-sub: #94a3b8;
+    --dash-text-muted: #64748b;
+    --dash-primary-light: rgba(10, 92, 72, 0.2);
+    --dash-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --dash-shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
 .enquiries-viewport {
-    background-color: var(--dash-surface);
-    min-height: 100vh;
+    background-color: transparent;
     padding-bottom: 3rem;
 }
 
@@ -50,104 +55,145 @@
     margin-bottom: 1.5rem;
 }
 
-.dash-breadcrumb-nav {
-    display: flex;
+.dash-breadcrumb-pill {
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--dash-text-muted);
-    margin-bottom: 0.25rem;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-pill);
+    padding: 0.35rem 0.95rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-.dash-breadcrumb-nav a {
-    color: var(--dash-text-muted);
+.dash-breadcrumb-pill a {
+    color: var(--dash-text-sub);
     text-decoration: none;
+    font-weight: 500;
     transition: color 0.15s ease;
 }
 
-.dash-breadcrumb-nav a:hover {
+.dash-breadcrumb-pill a:hover {
     color: var(--dash-primary);
 }
 
+.dash-breadcrumb-pill .active {
+    color: var(--dash-text-dark);
+    font-weight: 600;
+}
+
 .dash-page-title {
-    font-size: 1.45rem;
-    font-weight: 800;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--dash-text-dark);
     margin: 0;
+    line-height: 1.2;
 }
 
 .dash-page-subtitle {
-    font-size: 0.84rem;
-    color: var(--dash-text-muted);
+    font-size: 0.85rem;
+    color: var(--dash-text-sub);
     margin: 0.2rem 0 0 0;
 }
 
-/* KPI Cards */
+/* KPI Cards (Full-Version Dashcode Style) */
 .dash-kpi-card {
     background: var(--dash-card);
     border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-card);
-    padding: 1.15rem 1.25rem;
-    box-shadow: var(--dash-shadow-sm);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    overflow: hidden;
+    border-radius: var(--dash-radius-lg);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--dash-shadow-card);
+    text-decoration: none;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    cursor: pointer;
 }
 
 .dash-kpi-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--dash-shadow-md);
-    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: var(--dash-shadow-hover);
+    border-color: rgba(10, 92, 72, 0.28);
 }
 
 .dash-kpi-label {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--dash-text-muted);
-    margin-bottom: 0.4rem;
-    display: block;
+    color: var(--dash-text-sub);
 }
 
-.dash-kpi-val {
-    font-size: 1.75rem;
-    font-weight: 800;
-    line-height: 1.1;
+.dash-kpi-number {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 700;
     color: var(--dash-text-dark);
-    font-family: var(--bs-font-monospace);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0.45rem 0 0 0;
 }
+
+.dash-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.70rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--dash-radius-pill);
+    margin-top: 0.4rem;
+    width: fit-content;
+}
+
+.trend-all { background: #f1f5f9; color: #475569; }
+.trend-pending { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+.trend-approved { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.trend-correction { background: rgba(139, 92, 246, 0.12); color: #6d28d9; }
+.trend-declined { background: rgba(239, 68, 68, 0.12); color: #be123c; }
 
 .dash-kpi-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
 
-.icon-dash-indigo { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
-.icon-dash-amber { background: rgba(245, 158, 11, 0.14); color: #d97706; }
-.icon-dash-blue { background: rgba(14, 165, 233, 0.14); color: #0284c7; }
-.icon-dash-emerald { background: rgba(16, 185, 129, 0.14); color: #059669; }
-.icon-dash-purple { background: rgba(168, 85, 247, 0.14); color: #9333ea; }
+.dash-kpi-card:hover .dash-kpi-icon {
+    transform: scale(1.06);
+}
 
-/* Main Card */
+.icon-dash-indigo { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.icon-dash-amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.icon-dash-blue { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
+.icon-dash-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.icon-dash-emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
+
+/* Main Card Container */
 .dash-main-card {
     background: var(--dash-card);
     border: 1px solid var(--dash-border);
-    border-radius: var(--dash-radius-card);
-    box-shadow: var(--dash-shadow-sm);
+    border-radius: var(--dash-radius-lg);
+    box-shadow: var(--dash-shadow-card);
     overflow: hidden;
+    margin-bottom: 2rem;
 }
 
-.dash-controls-header {
-    padding: 1rem 1.25rem;
+/* Toolbar */
+.dash-toolbar {
+    padding: 1.15rem 1.4rem;
     border-bottom: 1px solid var(--dash-border);
     display: flex;
     flex-wrap: wrap;
@@ -157,270 +203,348 @@
     background: var(--dash-card);
 }
 
-/* Status Tabs */
-.dash-status-pills {
-    display: inline-flex;
+/* Dashcode Search Capsule */
+.dash-search-capsule {
+    display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem;
-    background: var(--dash-border-subtle);
-    border: 1px solid var(--dash-border);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: var(--dash-radius-pill);
-    max-width: 100%;
-    overflow-x: auto;
+    padding: 3px 4px 3px 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 340px;
 }
 
-.dash-status-pill-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.85rem;
+[data-bs-theme="dark"] .dash-search-capsule {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.dash-search-capsule:focus-within {
+    background: #ffffff;
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.14);
+}
+
+.dash-search-input {
+    border: none !important;
+    background: transparent !important;
+    font-size: 0.84rem;
+    color: var(--dash-text-dark);
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    padding: 0.35rem 0.4rem;
+}
+
+.dash-search-btn {
     border-radius: var(--dash-radius-pill);
+    padding: 0.38rem 0.95rem;
     font-size: 0.78rem;
     font-weight: 600;
-    text-decoration: none;
-    color: var(--dash-text-muted);
+    background: var(--dash-primary);
+    color: #ffffff;
+    border: none;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
-.dash-status-pill-link:hover {
-    color: var(--dash-text-dark);
-    background: rgba(255, 255, 255, 0.6);
-}
-
-.dash-status-pill-link.active {
-    background: var(--dash-primary);
-    color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
-}
-
-.dash-pill-count {
-    display: inline-block;
-    padding: 0.1rem 0.45rem;
-    border-radius: 9999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    font-family: var(--bs-font-monospace);
-    background: rgba(0, 0, 0, 0.08);
-}
-
-.dash-status-pill-link.active .dash-pill-count {
-    background: rgba(255, 255, 255, 0.25);
+.dash-search-btn:hover {
+    background: var(--dash-primary-hover);
     color: #ffffff;
 }
 
-/* Search Box */
-.dash-search-capsule {
-    display: flex;
+/* Segmented Status Tabs (Dashcode Pill Tabs) */
+.dash-segmented-pills {
+    display: inline-flex;
     align-items: center;
-    background: var(--dash-surface);
-    border: 1px solid var(--dash-border);
+    background: #f1f5f9;
+    padding: 4px;
     border-radius: var(--dash-radius-pill);
-    padding: 0.3rem 0.85rem;
-    min-width: 260px;
-    transition: all 0.18s ease;
+    border: 1px solid var(--dash-border);
+    gap: 2px;
 }
 
-.dash-search-capsule:focus-within {
-    border-color: var(--dash-primary);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    background: var(--dash-card);
+[data-bs-theme="dark"] .dash-segmented-pills {
+    background: #0f172a;
+    border-color: #334155;
 }
 
-.dash-search-capsule input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 0.82rem;
+.dash-pill-tab {
+    padding: 0.35rem 0.95rem;
+    font-size: 0.80rem;
+    font-weight: 600;
+    border-radius: var(--dash-radius-pill);
+    color: var(--dash-text-sub);
+    text-decoration: none;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.dash-pill-tab:hover {
     color: var(--dash-text-dark);
-    width: 100%;
-    margin-left: 0.4rem;
 }
 
-/* Table */
+.dash-pill-tab.active {
+    background: #ffffff;
+    color: var(--dash-text-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="dark"] .dash-pill-tab.active {
+    background: #1e293b;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dash-pill-tab.active-pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309 !important;
+}
+
+.dash-pill-tab.active-inprogress {
+    background: rgba(14, 165, 233, 0.12);
+    color: #0284c7 !important;
+}
+
+.dash-pill-tab.active-contacted {
+    background: rgba(139, 92, 246, 0.12);
+    color: #6d28d9 !important;
+}
+
+.dash-pill-tab.active-sourced {
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857 !important;
+}
+
+.dash-pill-tab.active-closed {
+    background: #f1f5f9;
+    color: #475569 !important;
+}
+
+.dash-pill-count {
+    font-size: 0.70rem;
+    padding: 1px 6px;
+    border-radius: var(--dash-radius-pill);
+    background: rgba(100, 116, 139, 0.12);
+}
+
+/* Custom Select Dropdowns */
+.dash-select {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: var(--dash-radius-pill) !important;
+    font-size: 0.80rem !important;
+    font-weight: 500;
+    color: var(--dash-text-dark) !important;
+    padding: 0.40rem 2rem 0.40rem 0.90rem !important;
+    height: 36px;
+    transition: all 0.15s ease;
+}
+
+[data-bs-theme="dark"] .dash-select {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+.dash-select:focus {
+    background-color: #ffffff !important;
+    border-color: var(--dash-primary) !important;
+    box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.14) !important;
+}
+
+.btn-dash-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626 !important;
+    border-radius: var(--dash-radius-pill);
+    padding: 0.40rem 0.85rem;
+    font-size: 0.80rem !important;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    height: 36px;
+}
+
+.btn-dash-clear:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #b91c1c !important;
+}
+
+/* Polished Table (Dashcode Style) */
 .dash-table {
-    width: 100%;
     margin-bottom: 0;
     border-collapse: separate;
     border-spacing: 0;
+    width: 100%;
 }
 
 .dash-table thead th {
-    background: var(--dash-surface);
-    color: var(--dash-text-muted);
+    background: rgba(248, 250, 252, 0.85);
+    border-bottom: 1px solid var(--dash-border);
+    padding: 0.85rem 1.25rem;
     font-size: 0.72rem;
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--dash-border);
-    border-top: none;
+    text-transform: uppercase;
+    color: var(--dash-text-sub);
     white-space: nowrap;
 }
 
+[data-bs-theme="dark"] .dash-table thead th {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom-color: var(--dash-border);
+}
+
 .dash-table tbody tr {
-    transition: background-color 0.15s ease;
+    transition: background-color 0.12s ease;
 }
 
 .dash-table tbody tr:hover {
-    background-color: rgba(99, 102, 241, 0.025);
+    background-color: rgba(248, 250, 252, 0.95);
+}
+
+[data-bs-theme="dark"] .dash-table tbody tr:hover {
+    background-color: rgba(30, 41, 59, 0.6);
 }
 
 .dash-table tbody td {
-    padding: 1rem 1rem;
-    vertical-align: middle;
+    padding: 0.95rem 1.25rem;
     border-bottom: 1px solid var(--dash-border-subtle);
+    vertical-align: middle;
     font-size: 0.84rem;
-    color: var(--dash-text-dark);
-}
-
-/* Monospace ID Badge */
-.dash-code-badge {
-    font-family: var(--bs-font-monospace);
-    font-weight: 700;
-    font-size: 0.74rem;
-    padding: 0.25rem 0.55rem;
-    border-radius: 6px;
-    background: var(--dash-border-subtle);
-    border: 1px solid var(--dash-border);
-    color: var(--dash-text-sub);
-    text-decoration: none;
-    display: inline-block;
+    color: var(--dash-text-body);
 }
 
 /* User Box */
 .dash-user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
     background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
     color: #4338ca;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     flex-shrink: 0;
 }
 
-/* Status Badges */
-.dash-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.73rem;
-    font-weight: 600;
-    padding: 0.3rem 0.65rem;
-    border-radius: var(--dash-radius-pill);
-    text-transform: capitalize;
+.dash-code-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--dash-text-dark);
+    text-decoration: none;
+    transition: color 0.15s ease;
     white-space: nowrap;
 }
 
-.dash-badge-pending {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fde68a;
+.dash-code-badge:hover {
+    color: var(--dash-primary);
 }
 
-.dash-badge-in-progress {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-}
-
-.dash-badge-contacted {
-    background: #faf5ff;
-    color: #7e22ce;
-    border: 1px solid #e9d5ff;
-}
-
-.dash-badge-sourced {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
-}
-
-.dash-badge-closed {
+/* Metadata Pills */
+.dash-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.72rem;
+    font-weight: 600;
     background: #f1f5f9;
     color: #475569;
-    border: 1px solid #cbd5e1;
 }
 
-.status-dot {
-    width: 6px;
-    height: 6px;
+[data-bs-theme="dark"] .dash-meta-pill {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+/* Status Badges with Pulse Dot */
+.dash-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 4px 11px;
+    border-radius: var(--dash-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.pulse-dot {
+    width: 6.5px;
+    height: 6.5px;
     border-radius: 50%;
     display: inline-block;
 }
 
-.dot-pending { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
-.dot-in-progress { background: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
-.dot-contacted { background: #a855f7; box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2); }
-.dot-sourced { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
-.dot-closed { background: #94a3b8; }
+.status-pending  { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.status-pending .pulse-dot { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25); }
 
-/* Buttons */
-.btn-dash-primary {
-    background: var(--dash-primary);
-    color: #ffffff;
-    border: 1px solid var(--dash-primary);
-    border-radius: 10px;
-    padding: 0.45rem 1rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
+.status-quoted   { background: #ecfeff; color: #0891b2; border-color: #a5f3fc; }
+.status-quoted .pulse-dot { background: #06b6d4; box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25); }
 
-.btn-dash-primary:hover {
-    background: var(--dash-primary-hover);
-    color: #ffffff;
-}
+.status-accepted { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.status-accepted .pulse-dot { background: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25); }
 
-.btn-dash-outline {
-    background: var(--dash-card);
-    color: var(--dash-text-sub);
-    border: 1px solid var(--dash-border);
-    border-radius: 10px;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
+.status-closed   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.status-closed .pulse-dot { background: #94a3b8; }
 
-.btn-dash-outline:hover {
-    background: var(--dash-border-subtle);
-    color: var(--dash-text-dark);
-}
-
-.dash-action-btn {
+/* Action Buttons */
+.dash-more-btn {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--dash-border);
-    background: var(--dash-card);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     color: var(--dash-text-sub);
-    font-size: 0.85rem;
     transition: all 0.15s ease;
     cursor: pointer;
     text-decoration: none;
 }
 
-.dash-action-btn:hover {
-    background: var(--dash-primary-light);
+.dash-more-btn:hover {
+    background: #ffffff;
     color: var(--dash-primary);
     border-color: var(--dash-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btn-dash-light {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text-body) !important;
+    border-radius: var(--dash-radius-md);
+    padding: 0.45rem 0.95rem;
+    font-size: 0.82rem !important;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.btn-dash-light:hover {
+    background: var(--dash-border-subtle);
+    color: var(--dash-text-dark) !important;
+    border-color: #cbd5e1;
 }
 
 /* Pagination */
@@ -428,7 +552,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.25rem;
+    padding: 1.15rem 1.4rem;
     border-top: 1px solid var(--dash-border);
     background: var(--dash-card);
 }
@@ -437,11 +561,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    height: 32px;
-    padding: 0 0.65rem;
-    border-radius: var(--dash-radius-pill);
-    font-size: 0.78rem;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.75rem;
+    border-radius: var(--dash-radius-md);
+    font-size: 0.80rem;
     font-weight: 600;
     text-decoration: none;
     color: var(--dash-text-sub);
@@ -459,7 +583,7 @@
     background: var(--dash-primary);
     color: #ffffff !important;
     border-color: var(--dash-primary);
-    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 2px 8px rgba(10, 92, 72, 0.25);
 }
 
 .dash-page-pill.disabled {
@@ -704,22 +828,22 @@
     <!-- Header -->
     <div class="enquiries-header">
         <div>
-            <div class="dash-breadcrumb-nav">
+            <div class="dash-breadcrumb-pill mb-2">
                 <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
-                <span>&rsaquo;</span>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
                 <span>Enquiries</span>
-                <span>&rsaquo;</span>
-                <span class="text-dark fw-semibold">Sourcing Enquiries</span>
+                <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
+                <span class="active">Sourcing Enquiries</span>
             </div>
             <h1 class="dash-page-title">B2B Sourcing Enquiries</h1>
             <p class="dash-page-subtitle">Track, source, and fulfill buyer procurement requests from the /browse Fast Sourcing Desk widget</p>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="/admin/enquiries/regional/" class="btn-dash-outline" title="View Regional Quote Requests">
+            <a href="/admin/enquiries/regional/" class="btn-dash-light" title="View Regional Quote Requests">
                 <i class="bi bi-globe-americas text-primary"></i>
                 <span>Regional Enquiries</span>
             </a>
-            <button type="button" class="btn-dash-outline" onclick="window.location.reload()" title="Refresh Table">
+            <button type="button" class="btn-dash-light" onclick="window.location.reload()" title="Refresh Table">
                 <i class="bi bi-arrow-clockwise"></i>
                 <span>Refresh</span>
             </button>
@@ -744,13 +868,14 @@
         <div class="col">
             <a href="?status=ALL" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <span class="dash-kpi-label">All Enquiries</span>
-                        <div class="dash-kpi-val">{{ counts.ALL|default:0 }}</div>
-                    </div>
+                    <span class="dash-kpi-label">All Enquiries</span>
                     <div class="dash-kpi-icon icon-dash-indigo">
                         <i class="bi bi-search-heart"></i>
                     </div>
+                </div>
+                <div>
+                    <h3 class="dash-kpi-number">{{ counts.ALL|default:0 }}</h3>
+                    <span class="dash-kpi-trend trend-all">Total Requests</span>
                 </div>
             </a>
         </div>
@@ -759,13 +884,14 @@
         <div class="col">
             <a href="?status=PENDING" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <span class="dash-kpi-label">Pending Review</span>
-                        <div class="dash-kpi-val text-warning">{{ counts.PENDING|default:0 }}</div>
-                    </div>
+                    <span class="dash-kpi-label">Pending Review</span>
                     <div class="dash-kpi-icon icon-dash-amber">
                         <i class="bi bi-clock-history"></i>
                     </div>
+                </div>
+                <div>
+                    <h3 class="dash-kpi-number text-warning">{{ counts.PENDING|default:0 }}</h3>
+                    <span class="dash-kpi-trend trend-pending">Requires Action</span>
                 </div>
             </a>
         </div>
@@ -774,13 +900,14 @@
         <div class="col">
             <a href="?status=IN_PROGRESS" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <span class="dash-kpi-label">In Progress</span>
-                        <div class="dash-kpi-val text-primary">{{ counts.IN_PROGRESS|default:0 }}</div>
-                    </div>
+                    <span class="dash-kpi-label">In Progress</span>
                     <div class="dash-kpi-icon icon-dash-blue">
                         <i class="bi bi-arrow-repeat"></i>
                     </div>
+                </div>
+                <div>
+                    <h3 class="dash-kpi-number text-primary">{{ counts.IN_PROGRESS|default:0 }}</h3>
+                    <span class="dash-kpi-trend" style="background: rgba(14, 165, 233, 0.12); color: #0284c7;">Sourcing Active</span>
                 </div>
             </a>
         </div>
@@ -789,13 +916,14 @@
         <div class="col">
             <a href="?status=CONTACTED" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <span class="dash-kpi-label">Contacted</span>
-                        <div class="dash-kpi-val text-purple">{{ counts.CONTACTED|default:0 }}</div>
-                    </div>
+                    <span class="dash-kpi-label">Contacted</span>
                     <div class="dash-kpi-icon icon-dash-purple">
                         <i class="bi bi-chat-left-dots"></i>
                     </div>
+                </div>
+                <div>
+                    <h3 class="dash-kpi-number" style="color: #8b5cf6;">{{ counts.CONTACTED|default:0 }}</h3>
+                    <span class="dash-kpi-trend trend-correction">Buyer Contacted</span>
                 </div>
             </a>
         </div>
@@ -804,13 +932,14 @@
         <div class="col">
             <a href="?status=SOURCED" class="dash-kpi-card text-decoration-none">
                 <div class="d-flex align-items-start justify-content-between">
-                    <div>
-                        <span class="dash-kpi-label">Sourced</span>
-                        <div class="dash-kpi-val text-success">{{ counts.SOURCED|default:0 }}</div>
-                    </div>
+                    <span class="dash-kpi-label">Sourced</span>
                     <div class="dash-kpi-icon icon-dash-emerald">
                         <i class="bi bi-check2-circle"></i>
                     </div>
+                </div>
+                <div>
+                    <h3 class="dash-kpi-number text-success">{{ counts.SOURCED|default:0 }}</h3>
+                    <span class="dash-kpi-trend trend-approved">Deal Sourced</span>
                 </div>
             </a>
         </div>
@@ -818,37 +947,50 @@
 
     <!-- Main Table Container -->
     <div class="dash-main-card">
-        <!-- Controls Header: Status Tabs + Search Capsule + Filters -->
-        <div class="dash-controls-header">
+        <!-- Card Title Bar (Dashcode Style) -->
+        <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark" style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; letter-spacing: -0.01em;">Sourcing Desk Requests</h5>
+                <p class="text-muted small mb-0 mt-0.5">Live procurement requests and distributor matching workflow</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill text-secondary bg-light border px-2.5 py-1.5" style="font-size: 0.72rem; font-weight: 600;">
+                    <i class="bi bi-record-circle text-success me-1"></i>Live Sync
+                </span>
+            </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="dash-toolbar">
             <!-- Left: Segmented Status Pill Tabs -->
-            <div class="dash-status-pills">
+            <div class="dash-segmented-pills">
                 <a href="?status=ALL{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'ALL' or not status_filter %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'ALL' or not status_filter %}active{% endif %}">
                     <span>All</span>
                     <span class="dash-pill-count">{{ counts.ALL|default:0 }}</span>
                 </a>
                 <a href="?status=PENDING{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'PENDING' %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'PENDING' %}active active-pending{% endif %}">
                     <span>Pending</span>
                     <span class="dash-pill-count">{{ counts.PENDING|default:0 }}</span>
                 </a>
                 <a href="?status=IN_PROGRESS{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'IN_PROGRESS' %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'IN_PROGRESS' %}active active-inprogress{% endif %}">
                     <span>In Progress</span>
                     <span class="dash-pill-count">{{ counts.IN_PROGRESS|default:0 }}</span>
                 </a>
                 <a href="?status=CONTACTED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'CONTACTED' %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'CONTACTED' %}active active-contacted{% endif %}">
                     <span>Contacted</span>
                     <span class="dash-pill-count">{{ counts.CONTACTED|default:0 }}</span>
                 </a>
                 <a href="?status=SOURCED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'SOURCED' %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'SOURCED' %}active active-sourced{% endif %}">
                     <span>Sourced</span>
                     <span class="dash-pill-count">{{ counts.SOURCED|default:0 }}</span>
                 </a>
                 <a href="?status=CLOSED{% if search_query %}&q={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}"
-                   class="dash-status-pill-link {% if status_filter == 'CLOSED' %}active{% endif %}">
+                   class="dash-pill-tab {% if status_filter == 'CLOSED' %}active active-closed{% endif %}">
                     <span>Closed</span>
                     <span class="dash-pill-count">{{ counts.CLOSED|default:0 }}</span>
                 </a>
@@ -856,48 +998,51 @@
 
             <!-- Right: Search Capsule & Date Dropdown -->
             <div class="d-flex align-items-center gap-2 flex-grow-1 flex-md-grow-0 justify-content-end">
-                <form method="GET" class="d-flex align-items-center gap-2 m-0">
+                <form method="GET" class="d-flex align-items-center gap-2 m-0 flex-wrap">
                     <input type="hidden" name="status" value="{{ status_filter }}">
                     <div class="dash-search-capsule">
-                        <i class="bi bi-search text-muted"></i>
-                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search item, buyer, email, phone...">
-                        {% if search_query %}
-                        <a href="?status={{ status_filter }}" class="text-muted text-decoration-none ms-1" title="Clear Search">
-                            <i class="bi bi-x-circle-fill"></i>
-                        </a>
-                        {% endif %}
+                        <i class="bi bi-search text-muted me-1" style="font-size: 0.85rem;"></i>
+                        <input type="text" name="q" class="dash-search-input" value="{{ search_query }}" placeholder="Search item, buyer, email, phone...">
+                        <button class="dash-search-btn" type="submit">Search</button>
                     </div>
 
-                    <select name="date_filter" class="form-select form-select-sm" style="width: auto; border-radius: var(--dash-radius-pill); font-size: 0.8rem;" onchange="this.form.submit()">
-                        <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                    <select name="date_filter" class="form-select dash-select" style="width: 125px;" onchange="this.form.submit()">
+                        <option value="all" {% if date_filter == 'all' or not date_filter %}selected{% endif %}>All Time</option>
                         <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Past 7 Days</option>
-                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Past 30 Days</option>
+                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Last 30 Days</option>
                     </select>
+
+                    {% if search_query or date_filter and date_filter != 'all' %}
+                    <a href="?status={{ status_filter }}" class="btn-dash-clear" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                        <span>Clear</span>
+                    </a>
+                    {% endif %}
                 </form>
             </div>
         </div>
 
         <!-- Table View -->
         <div class="table-responsive">
-            <table class="dash-table">
+            <table class="dash-table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 100px;">Enquiry ID</th>
-                        <th style="min-width: 200px;">Buyer / Requester</th>
-                        <th style="min-width: 250px;">Requested Sourcing Item</th>
-                        <th style="width: 130px;">Quantity</th>
+                        <th style="width: 130px; white-space: nowrap;">Enquiry ID</th>
+                        <th style="min-width: 220px;">Buyer / Requester</th>
+                        <th style="min-width: 260px;">Requested Sourcing Item</th>
+                        <th style="width: 130px; white-space: nowrap;">Quantity</th>
                         <th style="width: 160px;">Origin / Context</th>
-                        <th style="width: 140px;">Date</th>
-                        <th style="width: 130px;" class="text-center">Status</th>
-                        <th style="width: 120px;" class="text-end">Actions</th>
+                        <th style="width: 140px; white-space: nowrap;">Date</th>
+                        <th style="width: 140px;" class="text-center">Status</th>
+                        <th style="width: 130px;" class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in enquiries %}
                     <tr id="enquiryRow-{{ item.id }}">
                         <!-- ID -->
-                        <td>
+                        <td style="white-space: nowrap;">
                             <span class="dash-code-badge">#SRC-{{ item.id|stringformat:"04d" }}</span>
                         </td>
 
@@ -949,32 +1094,32 @@
                         </td>
 
                         <!-- Quantity -->
-                        <td>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2.5 py-1" style="font-size: 0.78rem;">
-                                {{ item.quantity|default:"1" }} units
+                        <td style="white-space: nowrap;">
+                            <span class="dash-meta-pill text-primary fw-bold" style="background: rgba(10, 92, 72, 0.08); font-size: 0.78rem;">
+                                {{ item.quantity|default:"1" }}{% if "unit" not in item.quantity|lower and "pc" not in item.quantity|lower and "kg" not in item.quantity|lower and "ton" not in item.quantity|lower and "box" not in item.quantity|lower and "set" not in item.quantity|lower %} units{% endif %}
                             </span>
                         </td>
 
                         <!-- Origin / Source -->
                         <td>
                             {% if "Saudi" in item.search_query or "Regional" in item.source_widget %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" style="font-size: 0.73rem;">
-                                <i class="bi bi-geo-alt-fill me-1"></i>{{ item.search_query|default:"Saudi Arabia" }}
+                            <span class="dash-meta-pill" style="background: rgba(16, 185, 129, 0.1); color: #047857; font-weight: 600;">
+                                <i class="bi bi-globe-americas me-1"></i>{{ item.search_query|default:"Saudi Arabia" }}
                             </span>
                             {% elif item.search_query %}
-                            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 text-truncate" style="max-width: 150px; font-size: 0.73rem;" title="{{ item.search_query }}">
-                                <i class="bi bi-search me-1"></i>{{ item.search_query }}
+                            <span class="dash-meta-pill text-truncate" style="max-width: 160px;" title="{{ item.search_query }}">
+                                <i class="bi bi-search me-1 text-primary"></i>{{ item.search_query }}
                             </span>
                             {% else %}
-                            <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.73rem;">
+                            <span class="dash-meta-pill text-muted">
                                 <i class="bi bi-funnel me-1"></i>Fast Sourcing Desk
                             </span>
                             {% endif %}
                         </td>
 
                         <!-- Date -->
-                        <td>
-                            <div class="text-dark fw-medium" style="font-size: 0.82rem;">
+                        <td style="white-space: nowrap;">
+                            <div class="fw-semibold text-dark" style="font-size: 0.82rem;">
                                 {{ item.created_at|date:"M d, Y" }}
                             </div>
                             <div class="text-muted small" style="font-size: 0.74rem;">
@@ -983,39 +1128,39 @@
                         </td>
 
                         <!-- Status -->
-                        <td class="text-center">
+                        <td class="text-center" style="white-space: nowrap;">
                             {% if item.status == "PENDING" %}
-                            <span class="dash-badge dash-badge-pending">
-                                <span class="status-dot dot-pending"></span>Pending Review
+                            <span class="dash-status-pill status-pending">
+                                <span class="pulse-dot"></span>Pending Review
                             </span>
                             {% elif item.status == "IN_PROGRESS" %}
-                            <span class="dash-badge dash-badge-in-progress">
-                                <span class="status-dot dot-in-progress"></span>In Progress
+                            <span class="dash-status-pill status-quoted">
+                                <span class="pulse-dot"></span>In Progress
                             </span>
                             {% elif item.status == "CONTACTED" %}
-                            <span class="dash-badge dash-badge-contacted">
-                                <span class="status-dot dot-contacted"></span>Contacted
+                            <span class="dash-status-pill" style="background: rgba(139, 92, 246, 0.12); color: #6d28d9; border: 1px solid rgba(139, 92, 246, 0.25);">
+                                <span class="pulse-dot" style="background: #8b5cf6; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);"></span>Contacted
                             </span>
                             {% elif item.status == "SOURCED" %}
-                            <span class="dash-badge dash-badge-sourced">
-                                <span class="status-dot dot-sourced"></span>Sourced
+                            <span class="dash-status-pill status-accepted">
+                                <span class="pulse-dot"></span>Sourced
                             </span>
                             {% elif item.status == "CLOSED" %}
-                            <span class="dash-badge dash-badge-closed">
-                                <span class="status-dot dot-closed"></span>Closed
+                            <span class="dash-status-pill status-closed">
+                                <span class="pulse-dot"></span>Closed
                             </span>
                             {% else %}
-                            <span class="dash-badge dash-badge-pending">
-                                <span class="status-dot dot-pending"></span>{{ item.status|title }}
+                            <span class="dash-status-pill status-pending">
+                                <span class="pulse-dot"></span>{{ item.status|title }}
                             </span>
                             {% endif %}
                         </td>
 
                         <!-- Actions -->
-                        <td class="text-end">
+                        <td class="text-end pe-4" style="white-space: nowrap;">
                             <div class="d-flex align-items-center justify-content-end gap-1.5">
                                 <!-- View Details Modal Trigger -->
-                                <button type="button" class="dash-action-btn" title="View Enquiry Details"
+                                <button type="button" class="dash-more-btn" title="View Enquiry Details"
                                         onclick="openDetailFromButton(this)"
                                         data-id="{{ item.id }}"
                                         data-name="{{ item.full_name|default:'' }}"
@@ -1034,14 +1179,14 @@
                                 <!-- WhatsApp Button -->
                                 {% if item.phone %}
                                 <a href="https://wa.me/{{ item.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hi%20{{ item.full_name|urlencode }},%20Surplus%20Market%20B2B%20Sourcing%20Desk%20has%20reviewed%20your%20request%20for%20{{ item.item_name|urlencode }}."
-                                   target="_blank" class="dash-action-btn text-success" title="Message on WhatsApp">
+                                   target="_blank" class="dash-more-btn text-success" title="Message on WhatsApp">
                                     <i class="bi bi-whatsapp"></i>
                                 </a>
                                 {% endif %}
 
                                 <!-- Status Dropdown -->
                                 <div class="dropdown d-inline-block">
-                                    <button class="dash-action-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change Status">
+                                    <button class="dash-more-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change Status">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border" style="border-radius: 12px; font-size: 0.82rem;">
