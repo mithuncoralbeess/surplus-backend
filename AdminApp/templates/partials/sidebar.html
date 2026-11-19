@@ -531,9 +531,9 @@
 
             <!-- General Enquiries Dropdown -->
             <li class="nav-item">
-                <a class="nav-link d-flex justify-content-between align-items-center {% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}active{% endif %}"
+                <a class="nav-link d-flex justify-content-between align-items-center {% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path or '/admin/enquiries/sourcing' in request.path or '/admin/enquiries/regional' in request.path or '/source-enquiry' in request.path or '/sourse-enquiry' in request.path or '/regional-enquir' in request.path %}active{% endif %}"
                     data-bs-toggle="collapse" href="#generalEnquiriesCollapse" role="button"
-                    aria-expanded="{% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}true{% else %}false{% endif %}"
+                    aria-expanded="{% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path or '/admin/enquiries/sourcing' in request.path or '/admin/enquiries/regional' in request.path or '/source-enquiry' in request.path or '/sourse-enquiry' in request.path or '/regional-enquir' in request.path %}true{% else %}false{% endif %}"
                     aria-controls="generalEnquiriesCollapse">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-chat-dots"></i>
@@ -549,7 +549,7 @@
                         <i class="bi bi-chevron-right small arrow-indicator"></i>
                     </div>
                 </a>
-                <div class="collapse submenu-collapse {% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path %}show{% endif %}"
+                <div class="collapse submenu-collapse {% if '/admin/whatsapp' in request.path or '/admin/enquiries/whatsapp' in request.path or '/admin/enquiries/contact-us' in request.path or '/admin/enquiries/partnership' in request.path or '/admin/enquiries/sourcing' in request.path or '/admin/enquiries/regional' in request.path or '/source-enquiry' in request.path or '/sourse-enquiry' in request.path or '/regional-enquir' in request.path %}show{% endif %}"
                     id="generalEnquiriesCollapse">
                     <ul class="submenu-list">
                         <li><a href="/admin/whatsapp/"
@@ -570,7 +570,7 @@
                         <li>
                             <a href="/admin/enquiries/sourcing/"
                                 class="submenu-link d-flex align-items-center justify-content-between {% if '/admin/enquiries/sourcing' in request.path or '/source-enquiry' in request.path or '/sourse-enquiry' in request.path %}active{% endif %}">
-                                <span>Sourcing Desk</span>
+                                <span>Sourcing Enquiries</span>
                                 {% if pending_sourcing_count and pending_sourcing_count > 0 %}
                                 <span class="sidebar-submenu-badge">{{ pending_sourcing_count }}</span>
                                 {% endif %}
@@ -579,7 +579,7 @@
                         <li>
                             <a href="/admin/enquiries/regional/"
                                 class="submenu-link d-flex align-items-center justify-content-between {% if '/admin/enquiries/regional' in request.path or '/regional-enquir' in request.path %}active{% endif %}">
-                                <span>Regional Quotes</span>
+                                <span>Regional Enquiries</span>
                                 {% if pending_regional_count and pending_regional_count > 0 %}
                                 <span class="sidebar-submenu-badge">{{ pending_regional_count }}</span>
                                 {% endif %}
@@ -587,38 +587,6 @@
                         </li>
                     </ul>
                 </div>
-            </li>
-
-            <!-- Sourcing Enquiries Direct Item -->
-            <li class="nav-item">
-                <a href="/admin/enquiries/sourcing/"
-                    class="nav-link d-flex justify-content-between align-items-center {% if '/admin/enquiries/sourcing' in request.path or '/source-enquiry' in request.path or '/sourse-enquiry' in request.path %}active{% endif %}">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-search-heart"></i>
-                        <span>Sourcing Enquiries</span>
-                    </div>
-                    {% if pending_sourcing_count and pending_sourcing_count > 0 %}
-                    <span class="sidebar-alert-badge" title="{{ pending_sourcing_count }} Pending Sourcing Enquiries">
-                        {{ pending_sourcing_count }}
-                    </span>
-                    {% endif %}
-                </a>
-            </li>
-
-            <!-- Regional Enquiries Direct Item -->
-            <li class="nav-item">
-                <a href="/admin/enquiries/regional/"
-                    class="nav-link d-flex justify-content-between align-items-center {% if '/admin/enquiries/regional' in request.path or '/regional-enquir' in request.path %}active{% endif %}">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-globe-americas"></i>
-                        <span>Regional Enquiries</span>
-                    </div>
-                    {% if pending_regional_count and pending_regional_count > 0 %}
-                    <span class="sidebar-alert-badge" title="{{ pending_regional_count }} Pending Regional Enquiries">
-                        {{ pending_regional_count }}
-                    </span>
-                    {% endif %}
-                </a>
             </li>
 
             <!-- Seller Enquiries Dropdown -->
