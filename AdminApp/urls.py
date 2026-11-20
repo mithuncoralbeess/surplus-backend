@@ -56,6 +56,8 @@ from .views import (
     manage_users_view,
     delete_user_api,
     contact_enquiries_view,
+    contact_enquiry_delete_api,
+    contact_enquiry_bulk_delete_api,
     sourcing_enquiries_view,
     sourcing_enquiry_update_status_api,
     sourcing_enquiry_delete_api,
@@ -218,6 +220,8 @@ urlpatterns = [
     # Contact Us Enquiries
     path("enquiries/contact-us/", contact_enquiries_view, name="contact_enquiries"),
     path("contact-us/", contact_enquiries_view, name="contact_enquiries_alias"),
+    path("api/enquiries/contact-us/<int:enquiry_id>/delete/", contact_enquiry_delete_api, name="contact_enquiry_delete_api"),
+    path("api/enquiries/contact-us/bulk-delete/", contact_enquiry_bulk_delete_api, name="contact_enquiry_bulk_delete_api"),
 
     # Sourcing Enquiries (Fast Sourcing Desk from /browse & Regional Quotes from /saudi, /uae, etc.)
     path("enquiries/sourcing/", sourcing_enquiries_view, name="sourcing_enquiries"),

@@ -4890,27 +4890,42 @@ def admin_profile_view(request):
 def contact_enquiries_view(request):
     """
     View for the Contact Us (General Enquiries) page in Admin Portal.
-    Fetches real submissions from ContactUsEnquiry database table.
+    Fetches real contact form submissions from ContactUsEnquiry database table,
+    strictly excluding regional quotes, sourcing requests, RFQs, and partnerships.
     """
     admin_user = _get_authenticated_admin(request)
     if not admin_user:
         return redirect("admin_login_page")
 
-    # Handle POST Actions (Delete / Block / Bulk)
+    # Handle POST Actions (Delete / Bulk)
     if request.method == "POST":
         action = request.POST.get("action")
-        selected_ids = request.POST.getlist("selected_ids") or request.POST.getlist("contact_id")
+        enquiry_id = request.POST.get("enquiry_id") or request.POST.get("id")
+        selected_ids = request.POST.getlist("selected_ids") or ([enquiry_id] if enquiry_id else [])
         
         if action == "delete" and selected_ids:
-            ContactUsEnquiry.objects.filter(id__in=selected_ids).delete()
-        elif action == "block" and selected_ids:
-            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=True, status="BLOCKED")
-        elif action == "unblock" and selected_ids:
-            ContactUsEnquiry.objects.filter(id__in=selected_ids).update(is_blocked=False, status="PENDING")
+            deleted_count, _ = ContactUsEnquiry.objects.filter(id__in=selected_ids).delete()
+            cache.delete("ctx_pending_counts_v7")
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": f"{deleted_count} enquiry deleted successfully."})
+            messages.success(request, f"{deleted_count} enquiry deleted successfully.")
+            return redirect("contact_enquiries")
 
     search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
     
-    db_contacts = ContactUsEnquiry.objects.only("id", "full_name", "phone", "email", "created_at", "enquiry_type", "message", "status", "is_blocked").order_by("-created_at")
+    # Strictly fetch only real contact form data (exclude regional, sourcing, rfq, partnership)
+    db_contacts = ContactUsEnquiry.objects.only(
+        "id", "full_name", "phone", "email", "created_at", "enquiry_type", "message", "status", "is_blocked"
+    ).exclude(
+        Q(enquiry_type__icontains="Regional") |
+        Q(enquiry_type__icontains="Sourcing") |
+        Q(enquiry_type__icontains="RFQ") |
+        Q(enquiry_type__icontains="Partnership") |
+        Q(message__icontains="[REGIONAL") |
+        Q(message__icontains="[SOURCING") |
+        Q(message__icontains="[RFQ") |
+        Q(message__icontains="[PARTNERSHIP")
+    ).order_by("-created_at")
     
     if search_query:
         db_contacts = db_contacts.filter(
@@ -5224,6 +5239,44 @@ def regional_enquiry_delete_api(request, enquiry_id):
         cache.delete("ctx_pending_counts_v7")
         return JsonResponse({"success": True, "message": "Enquiry deleted successfully"})
     return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
+
+
+@require_http_methods(["POST"])
+def contact_enquiry_delete_api(request, enquiry_id):
+    """AJAX endpoint to permanently delete a ContactUsEnquiry."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    deleted, _ = ContactUsEnquiry.objects.filter(id=enquiry_id).delete()
+    if deleted:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": "Contact enquiry deleted successfully"})
+    return JsonResponse({"success": False, "message": "Enquiry not found"}, status=404)
+
+
+@require_http_methods(["POST"])
+def contact_enquiry_bulk_delete_api(request):
+    """AJAX endpoint for bulk deletion of ContactUsEnquiry items."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    try:
+        import json
+        body = json.loads(request.body) if request.body else {}
+        action = body.get("action", "delete")
+        selected_ids = body.get("ids", [])
+    except Exception:
+        action = request.POST.get("action", "delete")
+        selected_ids = request.POST.getlist("selected_ids") or request.POST.getlist("contact_id")
+
+    if action == "delete" and selected_ids:
+        deleted, _ = ContactUsEnquiry.objects.filter(id__in=selected_ids).delete()
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": f"{deleted} enquiries deleted successfully"})
+
+    return JsonResponse({"success": False, "message": "No items selected for deletion"}, status=400)
 
 
 

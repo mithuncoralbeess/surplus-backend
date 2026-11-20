@@ -5,22 +5,22 @@
 
 {% block content %}
 <div class="container-fluid">
-<!-- Page Header & Action -->
-<div class="page-header-container">
-    <div>
-        <nav class="custom-breadcrumb" aria-label="breadcrumb">
-            <ol class="breadcrumb-list">
-                <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item"><span>General Enquiries</span></li>
-                <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
-                <li class="breadcrumb-item active" aria-current="page"><span>{{ page_title }}</span></li>
-            </ol>
-        </nav>
-        <h1 class="header-title">{{ page_title }}</h1>
-        <p class="header-subtitle">{{ page_subtitle }}</p>
+    <!-- Page Header & Action -->
+    <div class="page-header-container mb-3">
+        <div>
+            <nav class="custom-breadcrumb" aria-label="breadcrumb">
+                <ol class="breadcrumb-list mb-1">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item"><span>General Enquiries</span></li>
+                    <li class="breadcrumb-separator"><i class="bi bi-chevron-right"></i></li>
+                    <li class="breadcrumb-item active" aria-current="page"><span>{{ page_title }}</span></li>
+                </ol>
+            </nav>
+            <h1 class="header-title fs-3 fw-bold mb-1">{{ page_title }}</h1>
+            <p class="header-subtitle text-muted small mb-0">{{ page_subtitle }}</p>
+        </div>
     </div>
-</div>
 
     <!-- Main Content Card -->
     <div class="card border-0 shadow-sm rounded-4">
@@ -28,112 +28,175 @@
 
             <!-- Filters & Toolbar Row -->
             <div class="d-flex flex-wrap gap-3 mb-4 justify-content-between align-items-center">
-                <!-- Search -->
-                <div class="d-flex align-items-center flex-grow-1" style="max-width: 450px;">
-                    <input type="text" class="form-control rounded-end-0" placeholder="Search In Messages"
-                        style="min-width: 250px;">
-                    <button class="btn btn-primary rounded-start-0 px-4">Search</button>
-                </div>
+                <!-- Search Form -->
+                <form method="GET" class="d-flex align-items-center flex-grow-1" style="max-width: 480px;">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search by name, email, phone, message..."
+                               value="{{ search_query }}">
+                        <button class="btn btn-primary px-4" type="submit">
+                            <i class="bi bi-search me-1"></i>Search
+                        </button>
+                        {% if search_query %}
+                        <a href="?" class="btn btn-outline-secondary" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
 
-                <!-- Export & Bulk Actions -->
+                <!-- Bulk Actions -->
                 <div class="d-flex gap-3 align-items-center">
-                    <button class="btn text-white px-3 d-flex align-items-center gap-2"
-                        style="background-color: #2e7d32; font-size: 14px !important;">
-                        <i class="bi bi-file-earmark-excel-fill"></i> Export to Excel
-                    </button>
-
                     <div class="d-flex align-items-center">
-                        <select class="form-select rounded-end-0 text-secondary" style="min-width: 150px; font-size: 14px !important;">
-                            <option>Bulk Actions</option>
-                            <option>Delete</option>
-                            <option>Block</option>
+                        <select class="form-select rounded-end-0 text-secondary" id="bulkActionSelect" style="min-width: 150px; font-size: 14px !important;">
+                            <option value="">Bulk Actions</option>
+                            <option value="delete">Delete Selected</option>
                         </select>
-                        <button class="btn text-white rounded-start-0 px-4" style="background-color: #f97316; border-color: #f97316; font-size: 14px !important;">Apply</button>
+                        <button type="button" class="btn text-white rounded-start-0 px-4"
+                                style="background-color: #f97316; border-color: #f97316; font-size: 14px !important;"
+                                onclick="applyBulkAction()">Apply</button>
                     </div>
                 </div>
             </div>
 
             <!-- Table -->
             <div class="table-responsive">
-                <table class="table table-borderless align-middle mb-0" style="font-size: 0.85rem;">
-                    <thead>
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;" id="contactTable">
+                    <thead class="table-light">
                         <tr class="border-bottom text-dark">
-                            <th class="fw-semibold pb-3 ps-3" style="width: 40px;">
-                                <input class="form-check-input" type="checkbox" value="">
+                            <th class="fw-semibold py-3 ps-3" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
                             </th>
-                            <th class="fw-semibold pb-3">User name</th>
-                            <th class="fw-semibold pb-3">contact No.</th>
-                            <th class="fw-semibold pb-3">Email</th>
-                            <th class="fw-semibold pb-3">Date</th>
-                            <th class="fw-semibold pb-3">Time</th>
-                            <th class="fw-semibold pb-3">Contact Type</th>
-                            <th class="fw-semibold pb-3" style="width: 35%;">Message</th>
-                            <th class="fw-semibold pb-3 text-center">Actions</th>
+                            <th class="fw-semibold py-3" style="min-width: 180px;">User Name</th>
+                            <th class="fw-semibold py-3" style="min-width: 140px;">Contact No.</th>
+                            <th class="fw-semibold py-3" style="min-width: 180px;">Email</th>
+                            <th class="fw-semibold py-3" style="min-width: 130px;">Date &amp; Time</th>
+                            <th class="fw-semibold py-3" style="min-width: 130px;">Contact Type</th>
+                            <th class="fw-semibold py-3" style="width: 30%;">Message</th>
+                            <th class="fw-semibold py-3 text-center" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for contact in contacts %}
-                        <tr class="border-bottom">
-                            <td class="ps-3 py-4">
-                                <input class="form-check-input border-secondary" type="checkbox"
+                        <tr class="border-bottom" id="contactRow-{{ contact.id }}">
+                            <!-- Checkbox -->
+                            <td class="ps-3 py-3">
+                                <input class="form-check-input contact-checkbox border-secondary" type="checkbox"
                                     value="{{ contact.id }}">
                             </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.name }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.phone }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.email }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.date }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.time }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary">{{ contact.type }}</span>
-                            </td>
-                            <td class="py-4">
-                                <span class="text-secondary d-inline-block text-truncate align-middle" style="max-width: 180px;" title="{{ contact.message }}">
-                                    {{ contact.message }}
-                                </span>
-                                <a href="#" class="text-primary text-decoration-none ms-1 align-middle" style="font-size: 13px;" data-bs-toggle="modal" data-bs-target="#messageModal{{ contact.id }}">Show more</a>
 
-                                <!-- Message Modal -->
-                                <div class="modal fade" id="messageModal{{ contact.id }}" tabindex="-1" aria-labelledby="messageModalLabel{{ contact.id }}" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header border-bottom-0 pb-0">
-                                                <h5 class="modal-title fw-bold" id="messageModalLabel{{ contact.id }}">Message from {{ contact.name }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body py-4">
-                                                <p class="text-secondary mb-0" style="white-space: pre-wrap;">{{ contact.message }}</p>
-                                            </div>
-                                            <div class="modal-footer border-top-0 pt-0">
-                                                <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">Close</button>
-                                            </div>
-                                        </div>
+                            <!-- User Name -->
+                            <td class="py-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center"
+                                         style="width: 32px; height: 32px; font-size: 0.80rem; flex-shrink: 0;">
+                                        {{ contact.name|slice:":1"|upper|default:"U" }}
                                     </div>
+                                    <span class="fw-semibold text-dark">{{ contact.name|default:"Anonymous" }}</span>
                                 </div>
                             </td>
-                            <td class="py-4 text-center">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <button class="btn btn-sm text-dark px-3"
-                                        style="background-color: #fbbf24; font-weight: 500; font-size: 14px !important;">Block</button>
-                                    <button class="btn btn-sm text-white px-3"
-                                        style="background-color: #e11d48; font-weight: 500; font-size: 14px !important;">Delete</button>
+
+                            <!-- Contact No -->
+                            <td class="py-3">
+                                {% if contact.phone %}
+                                <a href="https://wa.me/{{ contact.phone|cut:' '|cut:'+'|cut:'-' }}" target="_blank" class="text-success text-decoration-none fw-semibold" title="Chat on WhatsApp">
+                                    <i class="bi bi-whatsapp me-1"></i>{{ contact.phone }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Email -->
+                            <td class="py-3">
+                                {% if contact.email %}
+                                <a href="mailto:{{ contact.email }}" class="text-decoration-none text-secondary">
+                                    <i class="bi bi-envelope me-1 text-muted"></i>{{ contact.email }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Date & Time -->
+                            <td class="py-3">
+                                <div class="text-dark fw-medium">{{ contact.date }}</div>
+                                <div class="text-muted small" style="font-size: 0.74rem;">{{ contact.time }}</div>
+                            </td>
+
+                            <!-- Contact Type -->
+                            <td class="py-3">
+                                <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.74rem;">
+                                    {{ contact.type }}
+                                </span>
+                            </td>
+
+                            <!-- Message Preview -->
+                            <td class="py-3">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <span class="text-secondary text-truncate d-inline-block" style="max-width: 280px;" title="{{ contact.message }}">
+                                        {{ contact.message }}
+                                    </span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-primary" style="font-size: 0.78rem; white-space: nowrap;"
+                                            onclick="openContactDetailFromButton(this)"
+                                            data-id="{{ contact.id }}"
+                                            data-name="{{ contact.name|default:'' }}"
+                                            data-email="{{ contact.email|default:'' }}"
+                                            data-phone="{{ contact.phone|default:'' }}"
+                                            data-date="{{ contact.date }} {{ contact.time }}"
+                                            data-type="{{ contact.type|default:'General Enquiry' }}"
+                                            data-message="{{ contact.message|default:'' }}">
+                                        Read more
+                                    </button>
+                                </div>
+                            </td>
+
+                            <!-- Actions (View Icon instead of Block + Working Delete) -->
+                            <td class="py-3 text-center">
+                                <div class="d-flex justify-content-center align-items-center gap-2" style="gap: 8px !important;">
+                                    <!-- View Details Button -->
+                                    <button type="button" class="btn btn-sm btn-outline-primary px-2.5 py-1"
+                                            title="View Full Enquiry Details"
+                                            onclick="openContactDetailFromButton(this)"
+                                            data-id="{{ contact.id }}"
+                                            data-name="{{ contact.name|default:'' }}"
+                                            data-email="{{ contact.email|default:'' }}"
+                                            data-phone="{{ contact.phone|default:'' }}"
+                                            data-date="{{ contact.date }} {{ contact.time }}"
+                                            data-type="{{ contact.type|default:'General Enquiry' }}"
+                                            data-message="{{ contact.message|default:'' }}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+
+                                    <!-- WhatsApp Direct Button (if phone available) -->
+                                    {% if contact.phone %}
+                                    <a href="https://wa.me/{{ contact.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hello%20{{ contact.name|urlencode }}%2C%20regarding%20your%20enquiry%20on%20Surplus%20Market..."
+                                       target="_blank" rel="noopener noreferrer"
+                                       class="btn btn-sm btn-outline-success px-2 py-1" title="Direct WhatsApp Chat">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    <!-- Delete Button -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1"
+                                            title="Delete Enquiry"
+                                            onclick="deleteContactEnquiry('{{ contact.id }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
-                                No contact enquiries found.
+                                {% if search_query %}
+                                No contact enquiries match your search query "<strong>{{ search_query }}</strong>".
+                                <div class="mt-2">
+                                    <a href="?" class="btn btn-sm btn-outline-primary">Clear Search</a>
+                                </div>
+                                {% else %}
+                                No contact form submissions found. Submissions from the frontend /contact form will appear here.
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -144,4 +207,237 @@
         </div>
     </div>
 </div>
+
+<!-- Contact Enquiry Detail Modal -->
+<div class="modal fade" id="contactDetailModal" tabindex="-1" aria-labelledby="contactDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+            <div class="modal-header border-bottom py-3 px-4 bg-light">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="p-2 rounded-3 bg-primary-subtle text-primary">
+                        <i class="bi bi-envelope-paper-fill fs-5"></i>
+                    </span>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="modalTitle">Contact Enquiry Details</h5>
+                        <p class="text-muted small mb-0" id="modalSubtitle">Submission from Frontend Contact Us Form</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3 mb-3">
+                    <!-- Sender Profile Card -->
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Sender Name</span>
+                            <div class="fw-bold fs-6 text-dark mb-2" id="modalSenderName">—</div>
+                            
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Email Address</span>
+                            <div class="mb-2">
+                                <a href="#" id="modalEmailLink" class="text-primary fw-semibold text-decoration-none">
+                                    <i class="bi bi-envelope me-1"></i><span id="modalSenderEmail">—</span>
+                                </a>
+                            </div>
+
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Phone / WhatsApp</span>
+                            <div>
+                                <a href="#" id="modalPhoneLink" class="text-success fw-semibold text-decoration-none">
+                                    <i class="bi bi-telephone me-1"></i><span id="modalSenderPhone">—</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meta Details Card -->
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Contact Type / Subject</span>
+                            <div class="mb-3">
+                                <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 fw-semibold" id="modalContactType">General Enquiry</span>
+                            </div>
+
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Submission Date</span>
+                            <div class="text-dark fw-medium small mb-3" id="modalDate">—</div>
+
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-1">Origin Source</span>
+                            <div class="text-muted small">
+                                <i class="bi bi-globe me-1"></i>Frontend /contact Page Form
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Message Panel -->
+                <div class="mb-2">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Full Message Content</label>
+                    <div class="p-3 rounded-3 bg-light border" style="min-height: 120px; max-height: 250px; overflow-y: auto;">
+                        <p class="text-dark mb-0" id="modalMessageContent" style="white-space: pre-wrap; font-size: 0.90rem; line-height: 1.6;">—</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top py-3 px-4 bg-light d-flex justify-content-between align-items-center">
+                <!-- Delete from modal -->
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-semibold" id="modalDeleteBtn" onclick="deleteContactFromModal()">
+                    <i class="bi bi-trash me-1"></i>Delete Enquiry
+                </button>
+
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" id="modalWhatsAppAction" target="_blank" class="btn btn-success btn-sm px-3 fw-semibold d-none">
+                        <i class="bi bi-whatsapp me-1"></i>Chat on WhatsApp
+                    </a>
+                    <a href="#" id="modalEmailAction" class="btn btn-primary btn-sm px-3 fw-semibold">
+                        <i class="bi bi-envelope me-1"></i>Email Sender
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentActiveContactId = null;
+
+function getCsrfToken() {
+    const cookie = document.cookie.split("; ").find(row => row.startsWith("csrftoken="));
+    return cookie ? cookie.split("=")[1] : "";
+}
+
+function openContactDetailFromButton(btn) {
+    if (!btn) return;
+    const d = btn.dataset;
+    currentActiveContactId = d.id;
+
+    document.getElementById("modalTitle").textContent = "Contact Enquiry #" + d.id;
+    document.getElementById("modalSubtitle").textContent = "Submitted on " + (d.date || "recently");
+    document.getElementById("modalSenderName").textContent = d.name || "Anonymous";
+    document.getElementById("modalSenderEmail").textContent = d.email || "N/A";
+    document.getElementById("modalSenderPhone").textContent = d.phone || "Not Provided";
+    document.getElementById("modalDate").textContent = d.date || "—";
+    document.getElementById("modalContactType").textContent = d.type || "General Enquiry";
+    document.getElementById("modalMessageContent").textContent = d.message || "(No message content)";
+
+    // Update email link & action button
+    const emailLink = document.getElementById("modalEmailLink");
+    const emailAction = document.getElementById("modalEmailAction");
+    if (d.email) {
+        emailLink.href = "mailto:" + d.email;
+        emailAction.href = "mailto:" + d.email + "?subject=" + encodeURIComponent("Re: Surplus Market Contact Enquiry - " + (d.type || "General Enquiry"));
+        emailAction.classList.remove("disabled");
+    } else {
+        emailLink.href = "#";
+        emailAction.href = "#";
+        emailAction.classList.add("disabled");
+    }
+
+    // Update phone & WhatsApp button
+    const phoneLink = document.getElementById("modalPhoneLink");
+    const waAction = document.getElementById("modalWhatsAppAction");
+    if (d.phone && d.phone.trim()) {
+        const cleanPhone = d.phone.replace(/[^0-9+]/g, "");
+        phoneLink.href = "tel:" + cleanPhone;
+        const waClean = d.phone.replace(/[^0-9]/g, "");
+        waAction.href = "https://wa.me/" + waClean + "?text=" + encodeURIComponent("Hello " + (d.name || "") + ", regarding your enquiry on Surplus Market...");
+        waAction.classList.remove("d-none");
+    } else {
+        phoneLink.href = "#";
+        waAction.classList.add("d-none");
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById("contactDetailModal"));
+    modal.show();
+}
+
+function deleteContactEnquiry(contactId) {
+    if (!confirm("Are you sure you want to permanently delete Contact Enquiry #" + contactId + "?")) {
+        return;
+    }
+
+    fetch("/admin/api/enquiries/contact-us/" + contactId + "/delete/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken()
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.getElementById("contactRow-" + contactId);
+            if (row) {
+                row.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+                row.style.opacity = "0";
+                row.style.transform = "scale(0.95)";
+                setTimeout(() => row.remove(), 300);
+            }
+        } else {
+            alert(data.message || "Failed to delete enquiry.");
+        }
+    })
+    .catch(err => {
+        console.error("Delete error:", err);
+        alert("Network error while deleting enquiry.");
+    });
+}
+
+function deleteContactFromModal() {
+    if (!currentActiveContactId) return;
+    deleteContactEnquiry(currentActiveContactId);
+    const modalEl = document.getElementById("contactDetailModal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+}
+
+function toggleSelectAll(master) {
+    const checkboxes = document.querySelectorAll(".contact-checkbox");
+    checkboxes.forEach(cb => cb.checked = master.checked);
+}
+
+function applyBulkAction() {
+    const action = document.getElementById("bulkActionSelect").value;
+    if (!action) {
+        alert("Please select a bulk action from the dropdown.");
+        return;
+    }
+
+    const selectedCheckboxes = document.querySelectorAll(".contact-checkbox:checked");
+    const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+    if (selectedIds.length === 0) {
+        alert("Please select at least one contact enquiry using the checkboxes.");
+        return;
+    }
+
+    if (action === "delete") {
+        if (!confirm("Are you sure you want to permanently delete " + selectedIds.length + " selected enquiry(s)?")) {
+            return;
+        }
+
+        fetch("/admin/api/enquiries/contact-us/bulk-delete/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCsrfToken()
+            },
+            body: JSON.stringify({ action: "delete", ids: selectedIds })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                selectedIds.forEach(id => {
+                    const row = document.getElementById("contactRow-" + id);
+                    if (row) row.remove();
+                });
+                alert(data.message || "Selected enquiries deleted successfully.");
+            } else {
+                alert(data.message || "Bulk action failed.");
+            }
+        })
+        .catch(err => {
+            console.error("Bulk delete error:", err);
+            alert("Network error while performing bulk action.");
+        });
+    }
+}
+</script>
 {% endblock %}

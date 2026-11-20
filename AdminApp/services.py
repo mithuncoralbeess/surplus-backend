@@ -1447,6 +1447,178 @@ class EmailService:
         return results
 
     @classmethod
+    def send_sourcing_enquiry_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email (strictly to contact@surplusmarket.com)
+        and confirmation email to the buyer for a SourcingEnquiry.
+        Accepts model instance or dictionary.
+        """
+        full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Buyer"
+        email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        item_name = getattr(enquiry, "item_name", None) or (enquiry.get("item_name") if isinstance(enquiry, dict) else "") or "Custom Sourcing Request"
+        quantity = getattr(enquiry, "quantity", None) or (enquiry.get("quantity") if isinstance(enquiry, dict) else "") or "1"
+        target_price = getattr(enquiry, "target_price", None) or (enquiry.get("target_price") if isinstance(enquiry, dict) else "")
+        notes = getattr(enquiry, "notes", None) or (enquiry.get("notes") if isinstance(enquiry, dict) else "")
+        search_query = getattr(enquiry, "search_query", None) or (enquiry.get("search_query") if isinstance(enquiry, dict) else "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/sourcing/"
+        admin_emails = cls.get_admin_notification_emails()
+
+        phone_clean = "".join(c for c in str(phone) if c.isdigit())
+
+        context = {
+            "enquiry": enquiry,
+            "enquiry_id": enquiry_id,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "phone_clean": phone_clean,
+            "item_name": item_name,
+            "quantity": quantity,
+            "target_price": target_price,
+            "notes": notes,
+            "search_query": search_query,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email (strictly to contact@surplusmarket.com)
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_sourcing_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for sourcing admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Fast Sourcing Request Received</h2>"
+                f"<p><strong>Ref:</strong> #SRC-{enquiry_id}</p>"
+                f"<p><strong>Item / Specs:</strong> {item_name}</p>"
+                f"<p><strong>Quantity:</strong> {quantity}</p>"
+                f"<p><strong>Target Price:</strong> {target_price or 'Open for offers'}</p>"
+                f"<p><strong>Buyer Name:</strong> {full_name}</p>"
+                f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Phone:</strong> {phone}</p>"
+                f"<p><strong>Notes:</strong> {notes}</p>"
+                f"<p><a href='{admin_url}'>Open Sourcing Desk in Admin</a></p>"
+            )
+
+        admin_subject = f"New Fast Sourcing Request #SRC-{enquiry_id:04d}: {item_name} [{full_name}]" if isinstance(enquiry_id, int) else f"New Fast Sourcing Request: {item_name} [{full_name}]"
+        results["admin_email"] = cls.send_email(admin_emails, admin_subject, admin_html, "SourcingAdminAlert", context=context)
+
+        # 2. Buyer Confirmation Email
+        if email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_sourcing_buyer_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for sourcing buyer confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>We Have Received Your Sourcing Request</h2>"
+                    f"<p>Hello {full_name},</p>"
+                    f"<p>Thank you for submitting your procurement requirement for <strong>{item_name}</strong> (Qty: {quantity}). Our sourcing desk is actively searching our distributor network and will contact you within 2 to 4 business hours.</p>"
+                )
+
+            user_subject = f"We have received your sourcing request #SRC-{enquiry_id:04d} - Surplus Market" if isinstance(enquiry_id, int) else f"We have received your sourcing request - Surplus Market"
+            results["user_email"] = cls.send_email(email, user_subject, user_html, "SourcingBuyerConfirm", context=context)
+
+        return results
+
+    @classmethod
+    def send_regional_enquiry_emails(cls, enquiry) -> dict:
+        """
+        Sends admin alert email (strictly to contact@surplusmarket.com)
+        and confirmation email to the buyer for a RegionalEnquiry.
+        Accepts model instance or dictionary.
+        """
+        full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Buyer"
+        business_email = getattr(enquiry, "business_email", None) or (enquiry.get("business_email") if isinstance(enquiry, dict) else "") or getattr(enquiry, "email", "")
+        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        country = getattr(enquiry, "country", None) or (enquiry.get("country") if isinstance(enquiry, dict) else "") or "Regional"
+        country_slug = getattr(enquiry, "country_slug", None) or (enquiry.get("country_slug") if isinstance(enquiry, dict) else "") or country.lower().replace(" ", "-")
+        item_name = getattr(enquiry, "item_name", None) or (enquiry.get("item_name") if isinstance(enquiry, dict) else "") or f"B2B Quote Request - {country}"
+        quantity = getattr(enquiry, "quantity", None) or (enquiry.get("quantity") if isinstance(enquiry, dict) else "") or "1"
+        target_price = getattr(enquiry, "target_price", None) or (enquiry.get("target_price") if isinstance(enquiry, dict) else "")
+        notes = getattr(enquiry, "notes", None) or (enquiry.get("notes") if isinstance(enquiry, dict) else "") or getattr(enquiry, "raw_message", "")
+        enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
+
+        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        admin_url = f"{backend_base}/admin/enquiries/regional/"
+        admin_emails = cls.get_admin_notification_emails()
+
+        phone_clean = "".join(c for c in str(phone) if c.isdigit())
+
+        context = {
+            "enquiry": enquiry,
+            "enquiry_id": enquiry_id,
+            "full_name": full_name,
+            "business_email": business_email,
+            "email": business_email,
+            "phone": phone,
+            "phone_clean": phone_clean,
+            "country": country,
+            "country_slug": country_slug,
+            "item_name": item_name,
+            "quantity": quantity,
+            "target_price": target_price,
+            "notes": notes,
+            "admin_url": admin_url,
+        }
+
+        results = {"admin_email": False, "user_email": False}
+
+        # 1. Admin Alert Email (strictly to contact@surplusmarket.com)
+        try:
+            admin_html = render_to_string(
+                "FinalTemplates/partials/email_partials/email_regional_admin_alert.html",
+                context
+            )
+        except Exception as e:
+            logger.warning(f"Template rendering failed for regional admin alert email, using fallback HTML: {e}")
+            admin_html = (
+                f"<h2>New Regional B2B Quote Request Received</h2>"
+                f"<p><strong>Country:</strong> {country}</p>"
+                f"<p><strong>Ref:</strong> #REG-{enquiry_id}</p>"
+                f"<p><strong>Item / Specs:</strong> {item_name}</p>"
+                f"<p><strong>Quantity:</strong> {quantity}</p>"
+                f"<p><strong>Target Price:</strong> {target_price or 'Open for quotation'}</p>"
+                f"<p><strong>Buyer Name:</strong> {full_name}</p>"
+                f"<p><strong>Email:</strong> {business_email}</p>"
+                f"<p><strong>Phone:</strong> {phone}</p>"
+                f"<p><strong>Notes:</strong> {notes}</p>"
+                f"<p><a href='{admin_url}'>View in Regional Admin Desk</a></p>"
+            )
+
+        admin_subject = f"New Regional Quote [{country}] #REG-{enquiry_id:04d}: {item_name} [{full_name}]" if isinstance(enquiry_id, int) else f"New Regional Quote [{country}]: {item_name} [{full_name}]"
+        results["admin_email"] = cls.send_email(admin_emails, admin_subject, admin_html, "RegionalAdminAlert", context=context)
+
+        # 2. Buyer Confirmation Email
+        if business_email:
+            try:
+                user_html = render_to_string(
+                    "FinalTemplates/partials/email_partials/email_regional_buyer_confirmation.html",
+                    context
+                )
+            except Exception as e:
+                logger.warning(f"Template rendering failed for regional buyer confirmation email, using fallback HTML: {e}")
+                user_html = (
+                    f"<h2>Your B2B Quote Request for {country} has been received</h2>"
+                    f"<p>Hello {full_name},</p>"
+                    f"<p>Thank you for submitting your regional quote request for <strong>{item_name}</strong> in {country}. Our regional procurement desk is reviewing stock availability and will contact you shortly with formal wholesale pricing.</p>"
+                )
+
+            user_subject = f"Your B2B Quote Request for {country} has been received - Surplus Market [Ref #REG-{enquiry_id:04d}]" if isinstance(enquiry_id, int) else f"Your B2B Quote Request for {country} has been received - Surplus Market"
+            results["user_email"] = cls.send_email(business_email, user_subject, user_html, "RegionalBuyerConfirm", context=context)
+
+        return results
+
+    @classmethod
     def send_contact_form_email(cls, user_data: dict, form_type="query") -> bool:
         """Dispatches contact/partnership queries to admins."""
         if str(form_type).lower() in ("partnership", "partnership_enquiry"):

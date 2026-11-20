@@ -1494,20 +1494,7 @@ def submit_sourcing_enquiry(request):
         status="PENDING",
     )
 
-    # Mirror in ContactUsEnquiry for backward compatibility
-    try:
-        ContactUsEnquiry.objects.create(
-            full_name=full_name,
-            email=email,
-            phone=str(phone or ""),
-            enquiry_type=f"B2B Fast Sourcing - {item_name[:50]}",
-            message=f"[SOURCING REQUEST #{enq.id}]\nItem: {item_name}\nQty: {quantity}\nTarget Price: {target_price}\nContext: {search_query}\nNotes:\n{notes}",
-            status="PENDING",
-        )
-    except Exception:
-        pass
-
-    # Admin in-app notification & alert email strictly to contact@surplusmarket.com
+    # Admin in-app notification & alert email strictly to contact@surplusmarket.com + Buyer confirmation
     try:
         create_admin_notification(
             title=f"New Sourcing Enquiry - {item_name}",
@@ -1515,24 +1502,7 @@ def submit_sourcing_enquiry(request):
             notification_type="ENQUIRY",
             action_url="/admin/enquiries/sourcing/"
         )
-        EmailService.send_email(
-            to_email=["contact@surplusmarket.com"],
-            subject=f"New B2B Sourcing Request: {item_name} [{full_name}]",
-            html_content=(
-                f"<h2>New Fast Sourcing Request Received</h2>"
-                f"<p><strong>Enquiry ID:</strong> #{enq.id}</p>"
-                f"<p><strong>Item / Specs:</strong> {item_name}</p>"
-                f"<p><strong>Quantity:</strong> {quantity}</p>"
-                f"<p><strong>Target Price:</strong> {target_price or 'Open for offers'}</p>"
-                f"<p><strong>Buyer Name:</strong> {full_name}</p>"
-                f"<p><strong>Email:</strong> {email}</p>"
-                f"<p><strong>Phone:</strong> {phone or 'Not provided'}</p>"
-                f"<p><strong>Context / Search:</strong> {search_query}</p>"
-                f"<p><strong>Notes:</strong> {notes}</p>"
-                f"<p><a href='/admin/enquiries/sourcing/'>View Sourcing Enquiries in Admin Dashboard</a></p>"
-            ),
-            service_name="ContactAdminAlert"
-        )
+        EmailService.send_sourcing_enquiry_emails(enq)
     except Exception as e:
         logger.error(f"[submit_sourcing_enquiry] Notification error: {e}")
 
@@ -1615,7 +1585,7 @@ def submit_contact_us_enquiry(request):
                 quantity = meta.get("quantity") or (qty_match.group(1).strip() if qty_match else "") or "1"
                 target_price = meta.get("targetPrice") or (price_match.group(1).strip() if price_match else "") or ""
 
-                RegionalEnquiry.objects.create(
+                reg_enq = RegionalEnquiry.objects.create(
                     country=country[:100],
                     country_slug=country.lower().replace(" ", "-")[:100],
                     full_name=enquiry.full_name or enquiry.email.split("@")[0],
@@ -1653,7 +1623,7 @@ def submit_contact_us_enquiry(request):
                 notes = notes_match.group(1).strip() if notes_match else msg_str
                 search_query = meta.get("searchQuery") or (query_match.group(1).strip() if query_match else "") or ""
 
-                SourcingEnquiry.objects.create(
+                src_enq = SourcingEnquiry.objects.create(
                     full_name=enquiry.full_name or enquiry.email.split("@")[0],
                     email=enquiry.email,
                     phone=enquiry.phone,
@@ -1711,7 +1681,12 @@ def submit_contact_us_enquiry(request):
         # Email Notifications (Admin Alert + User Confirmation)
         try:
             from AdminApp.services import EmailService
-            EmailService.send_contact_us_emails(enquiry)
+            if is_regional and locals().get("reg_enq"):
+                EmailService.send_regional_enquiry_emails(reg_enq)
+            elif is_sourcing and locals().get("src_enq"):
+                EmailService.send_sourcing_enquiry_emails(src_enq)
+            else:
+                EmailService.send_contact_us_emails(enquiry)
         except Exception as e:
             logger.error(f"[submit_contact_us_enquiry] Email dispatch error: {e}")
 
@@ -1791,20 +1766,7 @@ def submit_regional_enquiry(request):
         status="PENDING",
     )
 
-    # Mirror in ContactUsEnquiry for backward compatibility
-    try:
-        ContactUsEnquiry.objects.create(
-            full_name=full_name,
-            email=business_email,
-            phone=str(phone or ""),
-            enquiry_type=f"Regional Quote Request - {country}",
-            message=f"[REGIONAL B2B QUOTE REQUEST #{enq.id}]\nCountry: {country} ({country_slug})\nItem / Product: {item_name}\nQuantity: {quantity}\nTarget Price: {target_price}\nBusiness Email: {business_email}",
-            status="PENDING",
-        )
-    except Exception:
-        pass
-
-    # Admin in-app notification & alert email strictly to contact@surplusmarket.com
+    # Admin in-app notification & alert email strictly to contact@surplusmarket.com + Buyer confirmation
     try:
         create_admin_notification(
             title=f"New Regional Quote [{country}] - {item_name}",
@@ -1812,23 +1774,7 @@ def submit_regional_enquiry(request):
             notification_type="ENQUIRY",
             action_url="/admin/enquiries/regional/"
         )
-        EmailService.send_email(
-            to_email=["contact@surplusmarket.com"],
-            subject=f"New Regional Quote Request - {country} from {business_email}",
-            html_content=(
-                f"<h2>New Regional B2B Quote Request Received</h2>"
-                f"<p><strong>Enquiry ID:</strong> #{enq.id}</p>"
-                f"<p><strong>Country:</strong> {country} ({country_slug})</p>"
-                f"<p><strong>Item / Product:</strong> {item_name}</p>"
-                f"<p><strong>Quantity:</strong> {quantity}</p>"
-                f"<p><strong>Target Price:</strong> {target_price or 'Open for quotation'}</p>"
-                f"<p><strong>Business Email:</strong> {business_email}</p>"
-                f"<p><strong>Phone:</strong> {phone or 'Not provided'}</p>"
-                f"<p><strong>Notes:</strong> {notes}</p>"
-                f"<p><a href='/admin/enquiries/regional/'>View Regional Enquiries in Admin Dashboard</a></p>"
-            ),
-            service_name="ContactAdminAlert"
-        )
+        EmailService.send_regional_enquiry_emails(enq)
     except Exception as e:
         logger.error(f"[submit_regional_enquiry] Notification error: {e}")
 

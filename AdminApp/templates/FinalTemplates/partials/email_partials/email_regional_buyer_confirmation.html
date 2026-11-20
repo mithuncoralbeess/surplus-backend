@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Quote Request Received - Surplus Market</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" max-width="600" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); padding: 36px 30px; text-align: center; color: #ffffff;">
+                            <span style="display: inline-block; background: rgba(255, 255, 255, 0.22); padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px;">
+                                REGIONAL PROCUREMENT DESK &bull; {{ country|upper }}
+                            </span>
+                            <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.4px;">
+                                Quote Request Received
+                            </h1>
+                            <p style="margin: 8px 0 0 0; font-size: 13px; color: #e0f2fe;">
+                                Reference: <strong style="color: #ffffff; font-family: monospace;">#REG-{{ enquiry_id|stringformat:"04d" }}</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 32px 30px;">
+                            <p style="margin: 0 0 14px 0; font-size: 15px; font-weight: 600; color: #0f172a;">
+                                Hello {{ full_name|default:"Valued Buyer" }},
+                            </p>
+                            <p style="margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                                Thank you for submitting your quote request for <strong>{{ country }}</strong> through <strong>Surplus Market</strong>. Your procurement specifications have been received by our regional trade specialists.
+                            </p>
+
+                            <!-- Summary Card -->
+                            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                                <h3 style="margin: 0 0 14px 0; font-size: 13px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; font-weight: 700;">
+                                    Quote Request Summary
+                                </h3>
+                                <table role="presentation" width="100%" style="border-collapse: collapse; font-size: 13px;">
+                                    <tr>
+                                        <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Destination Country:</td>
+                                        <td style="padding: 6px 0; color: #0284c7; font-weight: 700; text-align: right;">{{ country }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Item / Product Specs:</td>
+                                        <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right;">{{ item_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Required Quantity:</td>
+                                        <td style="padding: 6px 0; color: #0f172a; font-weight: 700; text-align: right; font-family: monospace;">{{ quantity }}</td>
+                                    </tr>
+                                    {% if target_price %}
+                                    <tr>
+                                        <td style="padding: 6px 0; color: #64748b; font-weight: 500;">Target Price:</td>
+                                        <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">{{ target_price }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+
+                            <!-- Next Steps -->
+                            <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px;">
+                                <h4 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; color: #0369a1;">
+                                    Next Steps
+                                </h4>
+                                <p style="margin: 0; font-size: 13px; color: #0284c7; line-height: 1.5;">
+                                    Our regional desk is checking stock with local warehouse hubs and authorized distributors. We will contact you with wholesale unit pricing, local customs/import guidance, and delivery options.
+                                </p>
+                            </div>
+
+                            <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                                Need to modify your quantity or provide additional specifications? Reply directly to this email or reach our regional team at <a href="mailto:contact@surplusmarket.com" style="color: #0284c7; font-weight: 600; text-decoration: none;">contact@surplusmarket.com</a>.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 22px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+                            <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Surplus Market B2B Global Trade &bull; {{ country }} Desk</p>
+                            <p style="margin: 0;">Verified excess inventory, factory overstock, and industrial equipment liquidation.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
