@@ -636,13 +636,15 @@
                                         <i class="bi bi-envelope me-1"></i>{{ enq.business_email }}
                                     </a>
                                 </div>
-                                {% if enq.phone %}
+                                {% with ph=enq.display_phone|default:enq.phone %}
+                                {% if ph %}
                                 <div class="text-muted small mt-0.5">
-                                    <a href="tel:{{ enq.phone }}" class="text-decoration-none text-muted">
-                                        <i class="bi bi-telephone me-1"></i>{{ enq.phone }}
+                                    <a href="tel:{{ ph }}" class="text-decoration-none text-muted">
+                                        <i class="bi bi-telephone me-1"></i>{{ ph }}
                                     </a>
                                 </div>
                                 {% endif %}
+                                {% endwith %}
                             </td>
 
                             <!-- Requested Item / Specs -->
@@ -707,7 +709,7 @@
                                             data-country="{{ enq.country|default:'' }}"
                                             data-name="{{ enq.full_name|default:'' }}"
                                             data-email="{{ enq.business_email|default:'' }}"
-                                            data-phone="{{ enq.phone|default:'' }}"
+                                            data-phone="{{ enq.display_phone|default:enq.phone|default:'' }}"
                                             data-item="{{ enq.item_name|default:'' }}"
                                             data-qty="{{ enq.quantity|default:'' }}"
                                             data-price="{{ enq.target_price|default:'' }}"
@@ -718,13 +720,15 @@
                                     </button>
 
                                     <!-- WhatsApp Direct Button -->
-                                    {% if enq.phone %}
-                                    <a href="https://wa.me/{{ enq.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hello%20{{ enq.full_name|urlencode }}%2C%20regarding%20your%20quote%20request%20in%20{{ enq.country|urlencode }}%20for%20{{ enq.item_name|urlencode }}%20on%20Surplus%20Market..."
+                                    {% with ph=enq.display_phone|default:enq.phone %}
+                                    {% if ph %}
+                                    <a href="https://wa.me/{{ ph|cut:' '|cut:'+'|cut:'-'|cut:'('|cut:')' }}?text=Hello%20{{ enq.full_name|urlencode }}%2C%20regarding%20your%20quote%20request%20in%20{{ enq.country|urlencode }}%20for%20{{ enq.item_name|urlencode }}%20on%20Surplus%20Market..."
                                        target="_blank" rel="noopener noreferrer"
                                        class="btn btn-sm btn-outline-success px-2 py-1" title="Direct WhatsApp Chat">
                                         <i class="bi bi-whatsapp"></i>
                                     </a>
                                     {% endif %}
+                                    {% endwith %}
 
                                     <!-- Delete Button -->
                                     <button type="button" class="btn btn-sm btn-outline-danger px-2 py-1"

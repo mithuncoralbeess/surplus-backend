@@ -3,11 +3,14 @@ import hashlib
 import hmac
 import secrets
 import string
+import logging
 from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from pgvector.django import VectorField, HnswIndex
+
+logger = logging.getLogger(__name__)
 
 
 class AdminDetails(models.Model):
@@ -2249,6 +2252,17 @@ class RegionalEnquiry(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def display_phone(self):
+        if self.phone and self.phone.strip():
+            return self.phone.strip()
+        import re
+        text = f"{self.raw_message}\n{self.notes}"
+        m = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", text, re.IGNORECASE)
+        if m:
+            return m.group(1).strip()
+        return ""
 
     class Meta:
         verbose_name = "Regional Enquiry"

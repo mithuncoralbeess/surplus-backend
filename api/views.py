@@ -1538,6 +1538,21 @@ def submit_contact_us_enquiry(request):
     elif "mobile" in payload and "phone" not in payload:
         payload["phone"] = payload.get("mobile")
 
+    if not payload.get("phone"):
+        payload["phone"] = (
+            payload.get("contactNo")
+            or payload.get("mobile")
+            or payload.get("mobile_number")
+            or payload.get("mobileNumber")
+            or payload.get("phone_number")
+            or payload.get("phoneNumber")
+            or payload.get("contact_number")
+            or payload.get("contactNumber")
+            or (payload.get("metadata", {}).get("phone") if isinstance(payload.get("metadata"), dict) else None)
+            or (payload.get("metadata", {}).get("mobile") if isinstance(payload.get("metadata"), dict) else None)
+            or ""
+        )
+
     serializer = ContactUsEnquirySerializer(data=payload)
     if serializer.is_valid():
         enquiry = serializer.save()
@@ -1569,6 +1584,7 @@ def submit_contact_us_enquiry(request):
                 item_match = re.search(r"Item / Product:\s*(.*)", msg_str)
                 qty_match = re.search(r"Quantity:\s*(.*)", msg_str)
                 price_match = re.search(r"Target Price:\s*(.*)", msg_str)
+                phone_match = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", msg_str, re.IGNORECASE)
 
                 country = (
                     meta.get("country")
@@ -1584,13 +1600,27 @@ def submit_contact_us_enquiry(request):
                 )
                 quantity = meta.get("quantity") or (qty_match.group(1).strip() if qty_match else "") or "1"
                 target_price = meta.get("targetPrice") or (price_match.group(1).strip() if price_match else "") or ""
+                phone = (
+                    enquiry.phone
+                    or payload.get("phone")
+                    or payload.get("mobile")
+                    or payload.get("mobile_number")
+                    or payload.get("mobileNumber")
+                    or payload.get("contactNo")
+                    or payload.get("phoneNumber")
+                    or payload.get("phone_number")
+                    or meta.get("phone")
+                    or meta.get("mobile")
+                    or (phone_match.group(1).strip() if phone_match else "")
+                    or ""
+                )
 
                 reg_enq = RegionalEnquiry.objects.create(
                     country=country[:100],
                     country_slug=country.lower().replace(" ", "-")[:100],
                     full_name=enquiry.full_name or enquiry.email.split("@")[0],
                     business_email=enquiry.email,
-                    phone=enquiry.phone or "",
+                    phone=str(phone or "")[:50],
                     item_name=item_name[:255],
                     quantity=str(quantity)[:100],
                     target_price=str(target_price)[:100],
@@ -1729,7 +1759,38 @@ def submit_regional_enquiry(request):
         or data.get("name", "").strip()
         or (business_email.split("@")[0] if "@" in business_email else f"{country} Buyer")
     )
-    phone = data.get("phone") or data.get("contactNo") or data.get("mobile", "") or ""
+    phone = (
+        data.get("phone")
+        or data.get("mobile")
+        or data.get("mobile_number")
+        or data.get("mobileNumber")
+        or data.get("contactNo")
+        or data.get("contact_number")
+        or data.get("contactNumber")
+        or data.get("phone_number")
+        or data.get("phoneNumber")
+        or data.get("contact")
+        or ""
+    )
+    if not phone and isinstance(data.get("metadata"), dict):
+        meta = data.get("metadata")
+        phone = (
+            meta.get("phone")
+            or meta.get("mobile")
+            or meta.get("mobile_number")
+            or meta.get("mobileNumber")
+            or meta.get("contactNo")
+            or ""
+        )
+    if not phone:
+        import re
+        msg_candidate = str(data.get("rawMessage") or data.get("message") or data.get("notes") or "")
+        phone_match = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", msg_candidate, re.IGNORECASE)
+        if phone_match:
+            phone = phone_match.group(1).strip()
+
+    phone = str(phone or "").strip()
+
     item_name = (
         data.get("lookingFor")
         or data.get("sourcingItem")
@@ -1750,27 +1811,35 @@ def submit_regional_enquiry(request):
             "message": "Please specify the item or specifications you need."
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    if not raw_message:
+        raw_message = f"Country: {country}\nItem: {item_name}\nQty: {quantity}\nTarget: {target_price}"
+        if phone:
+            raw_message += f"\nMobile: {phone}"
+    elif phone and "Mobile" not in str(raw_message) and "Phone" not in str(raw_message):
+        raw_message = str(raw_message) + f"\nMobile / WhatsApp: {phone}"
+
     enq = RegionalEnquiry.objects.create(
         country=str(country)[:100],
         country_slug=str(country_slug)[:100],
         full_name=str(full_name)[:255],
         business_email=str(business_email),
-        phone=str(phone or ""),
+        phone=str(phone or "")[:50],
         item_name=str(item_name or f"B2B Quote Request - {country}")[:255],
         quantity=str(quantity or "1")[:100],
         target_price=str(target_price or "")[:100],
         currency=str(currency or "USD")[:10],
         notes=str(notes or ""),
-        raw_message=str(raw_message or f"Country: {country}\nItem: {item_name}\nQty: {quantity}\nTarget: {target_price}"),
+        raw_message=str(raw_message),
         source_widget=str(source_widget)[:100],
         status="PENDING",
     )
 
     # Admin in-app notification & alert email strictly to contact@surplusmarket.com + Buyer confirmation
     try:
+        phone_info = f", Mobile: {phone}" if phone else ""
         create_admin_notification(
             title=f"New Regional Quote [{country}] - {item_name}",
-            message=f"Buyer {full_name} ({business_email}) submitted a quote request in {country} for '{item_name}' (Qty: {quantity}).",
+            message=f"Buyer {full_name} ({business_email}{phone_info}) submitted a quote request in {country} for '{item_name}' (Qty: {quantity}).",
             notification_type="ENQUIRY",
             action_url="/admin/enquiries/regional/"
         )

@@ -1296,7 +1296,21 @@ class EmailService:
         """
         full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Customer"
         email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
-        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        phone = (
+            getattr(enquiry, "phone", None)
+            or getattr(enquiry, "display_phone", None)
+            or (enquiry.get("phone") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile_number") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("contactNo") if isinstance(enquiry, dict) else None)
+            or ""
+        )
+        if not phone:
+            raw_text = str(getattr(enquiry, "raw_message", None) or (enquiry.get("raw_message") if isinstance(enquiry, dict) else "") or getattr(enquiry, "notes", None) or "")
+            import re
+            m = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", raw_text, re.IGNORECASE)
+            if m:
+                phone = m.group(1).strip()
         enquiry_type = getattr(enquiry, "enquiry_type", None) or (enquiry.get("enquiry_type") if isinstance(enquiry, dict) else "") or "General Inquiry"
         message = getattr(enquiry, "message", None) or (enquiry.get("message") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
@@ -1455,7 +1469,21 @@ class EmailService:
         """
         full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Buyer"
         email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
-        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        phone = (
+            getattr(enquiry, "phone", None)
+            or getattr(enquiry, "display_phone", None)
+            or (enquiry.get("phone") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile_number") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("contactNo") if isinstance(enquiry, dict) else None)
+            or ""
+        )
+        if not phone:
+            raw_text = str(getattr(enquiry, "raw_message", None) or (enquiry.get("raw_message") if isinstance(enquiry, dict) else "") or getattr(enquiry, "notes", None) or "")
+            import re
+            m = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", raw_text, re.IGNORECASE)
+            if m:
+                phone = m.group(1).strip()
         item_name = getattr(enquiry, "item_name", None) or (enquiry.get("item_name") if isinstance(enquiry, dict) else "") or "Custom Sourcing Request"
         quantity = getattr(enquiry, "quantity", None) or (enquiry.get("quantity") if isinstance(enquiry, dict) else "") or "1"
         target_price = getattr(enquiry, "target_price", None) or (enquiry.get("target_price") if isinstance(enquiry, dict) else "")
@@ -1539,7 +1567,21 @@ class EmailService:
         """
         full_name = getattr(enquiry, "full_name", None) or (enquiry.get("full_name") if isinstance(enquiry, dict) else "") or "Valued Buyer"
         business_email = getattr(enquiry, "business_email", None) or (enquiry.get("business_email") if isinstance(enquiry, dict) else "") or getattr(enquiry, "email", "")
-        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "")
+        phone = (
+            getattr(enquiry, "phone", None)
+            or getattr(enquiry, "display_phone", None)
+            or (enquiry.get("phone") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("mobile_number") if isinstance(enquiry, dict) else None)
+            or (enquiry.get("contactNo") if isinstance(enquiry, dict) else None)
+            or ""
+        )
+        if not phone:
+            raw_text = str(getattr(enquiry, "raw_message", None) or (enquiry.get("raw_message") if isinstance(enquiry, dict) else "") or getattr(enquiry, "notes", None) or "")
+            import re
+            m = re.search(r"(?:Mobile(?:\s*Number)?|Phone(?:\s*Number)?|Contact(?:\s*No)?):\s*([+\d\s\-().]{7,25})", raw_text, re.IGNORECASE)
+            if m:
+                phone = m.group(1).strip()
         country = getattr(enquiry, "country", None) or (enquiry.get("country") if isinstance(enquiry, dict) else "") or "Regional"
         country_slug = getattr(enquiry, "country_slug", None) or (enquiry.get("country_slug") if isinstance(enquiry, dict) else "") or country.lower().replace(" ", "-")
         item_name = getattr(enquiry, "item_name", None) or (enquiry.get("item_name") if isinstance(enquiry, dict) else "") or f"B2B Quote Request - {country}"
