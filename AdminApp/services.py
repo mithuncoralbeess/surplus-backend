@@ -29,8 +29,8 @@ class EmailService:
 
     @classmethod
     def get_backend_url(cls) -> str:
-        """Resolves the live backend / admin portal URL strictly using live domain."""
-        return os.getenv("BACKEND_URL", getattr(settings, "BACKEND_URL", "https://surplusmarket.com")).rstrip("/")
+        """Resolves the backend / admin portal URL (https://dev.surplusmarket.com)."""
+        return os.getenv("BACKEND_URL", getattr(settings, "BACKEND_URL", "https://dev.surplusmarket.com")).rstrip("/")
 
     @classmethod
     def get_headers(cls):
