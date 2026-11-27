@@ -28,6 +28,11 @@ class EmailService:
         return os.getenv("FRONTEND_URL", getattr(settings, "FRONTEND_URL", "https://surplusmarket.com")).rstrip("/")
 
     @classmethod
+    def get_backend_url(cls) -> str:
+        """Resolves the live backend / admin portal URL strictly using live domain."""
+        return os.getenv("BACKEND_URL", getattr(settings, "BACKEND_URL", "https://surplusmarket.com")).rstrip("/")
+
+    @classmethod
     def get_headers(cls):
         return {
             "Accept": "application/json",
@@ -273,7 +278,7 @@ class EmailService:
     @classmethod
     def notify_admin_rfq_submitted(cls, buyer_info: dict, items_list: list = None, rfq=None) -> bool:
         """Notifies admin when a Request For Quote (RFQ) is submitted."""
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         rfq_id = getattr(rfq, "id", None) or (rfq.get("id") if isinstance(rfq, dict) else "") or (buyer_info.get("id") if isinstance(buyer_info, dict) else "")
         admin_review_url = f"{backend_base}/admin/rfq-requests/{rfq_id}/detail/" if rfq_id else f"{backend_base}/admin/rfq-requests/"
 
@@ -342,7 +347,7 @@ class EmailService:
         """
         Notifies admin when a seller submits a product listing / enquiry for review.
         """
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         prod_id = getattr(product, "id", None) or (product.get("id") if isinstance(product, dict) else "")
         admin_review_url = f"{backend_base}/admin/enquiries/seller/{prod_id}/detail/" if prod_id else f"{backend_base}/admin/enquiries/seller/"
 
@@ -971,7 +976,7 @@ class EmailService:
         """
         Notifies admin when a seller submits a bulk lot listing for review.
         """
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         lot_id = getattr(lot, "id", None) or (lot.get("id") if isinstance(lot, dict) else "")
         admin_review_url = f"{backend_base}/admin/enquiries/lots/{lot_id}/detail/" if lot_id else f"{backend_base}/admin/enquiries/lots/"
 
@@ -1315,7 +1320,7 @@ class EmailService:
         message = getattr(enquiry, "message", None) or (enquiry.get("message") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         admin_url = f"{backend_base}/admin/enquiries/contact-us/"
         admin_emails = cls.get_admin_notification_emails()
 
@@ -1400,7 +1405,7 @@ class EmailService:
         collaboration_details = getattr(enquiry, "collaboration_details", None) or (enquiry.get("collaboration_details") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         admin_url = f"{backend_base}/admin/enquiries/partnership/"
         admin_emails = cls.get_admin_notification_emails()
 
@@ -1491,7 +1496,7 @@ class EmailService:
         search_query = getattr(enquiry, "search_query", None) or (enquiry.get("search_query") if isinstance(enquiry, dict) else "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         admin_url = f"{backend_base}/admin/enquiries/sourcing/"
         admin_emails = cls.get_admin_notification_emails()
 
@@ -1590,7 +1595,7 @@ class EmailService:
         notes = getattr(enquiry, "notes", None) or (enquiry.get("notes") if isinstance(enquiry, dict) else "") or getattr(enquiry, "raw_message", "")
         enquiry_id = getattr(enquiry, "id", None) or (enquiry.get("id") if isinstance(enquiry, dict) else "")
 
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         admin_url = f"{backend_base}/admin/enquiries/regional/"
         admin_emails = cls.get_admin_notification_emails()
 
@@ -1684,7 +1689,7 @@ class EmailService:
         Notifies admin when a new user completes registration on the marketplace.
         Accepts VendorDetails instance or dict.
         """
-        backend_base = os.getenv("BACKEND_URL", "https://surplus-backend-uhg0.onrender.com").rstrip("/")
+        backend_base = cls.get_backend_url()
         vendor_id = getattr(vendor, "vendor_id", None) or (vendor.get("vendor_id") if isinstance(vendor, dict) else "")
         raw_id = getattr(vendor, "id", None) or (vendor.get("id") if isinstance(vendor, dict) else "")
         if not vendor_id and raw_id:

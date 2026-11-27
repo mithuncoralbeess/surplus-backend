@@ -401,6 +401,7 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Surplus Market <noreply@su
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "noreply@surplusmarket.com")
 ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL", "contact@surplusmarket.com")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://surplusmarket.com").rstrip("/")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://surplusmarket.com").rstrip("/")
 
 # Typesense Intelligent Search Configuration
 TYPESENSE_ENABLED = os.getenv("TYPESENSE_ENABLED", "False").lower() in ("true", "1", "t")
