@@ -8887,63 +8887,90 @@ def email_template_preview_raw(request, template_key):
         import re
         from django.utils.html import strip_tags
 
-        # Fetch the latest published active blog post (prioritizing one with an excerpt if available)
-        featured_blog_post = (
-            BlogPost.objects.filter(status="published", is_active=True)
-            .exclude(excerpt__isnull=True)
-            .exclude(excerpt__exact="")
-            .order_by("-id")
-            .first()
+        # Fetch the 4 latest published active blog posts for the newsletter
+        all_posts = list(
+            BlogPost.objects.filter(status="published", is_active=True).order_by("-id")[:8]
         )
-        if not featured_blog_post:
-            featured_blog_post = BlogPost.objects.filter(status="published", is_active=True).order_by("-id").first()
 
-        if featured_blog_post:
-            b1 = featured_blog_post
-            raw_text = re.sub(r"\s+", " ", strip_tags(b1.content or "")).strip()
+        # Prioritize 'How to Solve Inventory Ageing' as featured #1 if present, otherwise latest
+        featured = next((p for p in all_posts if "Inventory Ageing" in (p.title or "")), None)
+        ordered_posts = []
+        if featured:
+            ordered_posts.append(featured)
+            ordered_posts.extend([p for p in all_posts if p.id != featured.id])
+        else:
+            ordered_posts = all_posts
+
+        latest_4 = ordered_posts[:4]
+
+        def _format_blog(b, fallback_cat, fallback_img):
+            raw_text = re.sub(r"\s+", " ", strip_tags(b.content or "")).strip()
             excerpt = (
-                b1.excerpt
-                or b1.meta_description
-                or (raw_text[:170] + "..." if len(raw_text) > 170 else raw_text)
-                or "Practical insights on managing surplus inventory, minimizing holding costs, and freeing trapped capital."
+                b.excerpt
+                or b.meta_description
+                or (raw_text[:140] + "..." if len(raw_text) > 140 else raw_text)
+                or "Practical insights and market intelligence from Surplus Market."
             )
-
-            # Determine best image URL
             img_url = ""
-            if b1.image:
+            if b.image:
                 try:
-                    if os.path.exists(b1.image.path):
-                        img_url = request.build_absolute_uri(b1.image.url) if request else f"https://surplusmarket.com{b1.image.url}"
+                    if os.path.exists(b.image.path):
+                        img_url = request.build_absolute_uri(b.image.url) if request else f"https://surplusmarket.com{b.image.url}"
                 except Exception:
                     pass
 
-            if not img_url and b1.featured_image_url:
-                if b1.featured_image_url.startswith("http"):
-                    img_url = b1.featured_image_url
+            if not img_url and b.featured_image_url:
+                if b.featured_image_url.startswith("http"):
+                    img_url = b.featured_image_url
                 else:
-                    clean_path = b1.featured_image_url if b1.featured_image_url.startswith("/") else f"/{b1.featured_image_url}"
+                    clean_path = b.featured_image_url if b.featured_image_url.startswith("/") else f"/{b.featured_image_url}"
                     local_test = os.path.join(str(settings.MEDIA_ROOT), clean_path.lstrip("/media/").replace("/", os.sep))
                     if os.path.exists(local_test):
                         img_url = request.build_absolute_uri(clean_path) if request else f"https://surplusmarket.com{clean_path}"
+                    else:
+                        img_url = f"https://surplusmarket.com{clean_path}"
 
             if not img_url:
-                img_url = "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80"
+                img_url = fallback_img
 
-            blog_url = f"https://surplusmarket.com/blog/{b1.slug}"
+            blog_url = f"https://surplusmarket.com/blog/{b.slug}"
 
-            blog_data = {
-                "title": b1.title,
+            return {
+                "title": b.title,
                 "excerpt": excerpt,
                 "url": blog_url,
-                "category": b1.category_name or "Inventory Intelligence",
-                "category_name": b1.category_name or "Inventory Intelligence",
+                "category": b.category_name or fallback_cat,
+                "category_name": b.category_name or fallback_cat,
                 "image_url": img_url,
-                "read_time": getattr(b1, "read_time", 4) or 4,
+                "read_time": getattr(b, "read_time", 4) or 4,
             }
 
-            mock_context["blog"] = blog_data
-            mock_context["blog_1"] = blog_data
-            mock_context["featured_blog"] = blog_data
+        fallback_cats = ["General", "Wholesale Sourcing", "Wholesale Lots", "Liquidation Guides"]
+        fallback_imgs = [
+            "https://surplusmarket.com/media/blog_images/How_to_Solve_Inventory_Ageing.webp",
+            "https://surplusmarket.com/media/blog_images/Best_Wholesale_Websites_in_India.webp",
+            "https://surplusmarket.com/media/blog_images/blog_banner.webp",
+            "https://surplusmarket.com/media/blog_images/Banner_image.webp",
+        ]
+
+        formatted_blogs = []
+        for i, post in enumerate(latest_4):
+            cat = fallback_cats[i] if i < len(fallback_cats) else "Market Insights"
+            img = fallback_imgs[i] if i < len(fallback_imgs) else fallback_imgs[0]
+            formatted_blogs.append(_format_blog(post, cat, img))
+
+        if formatted_blogs:
+            mock_context["blog"] = formatted_blogs[0]
+            mock_context["blog_1"] = formatted_blogs[0]
+            mock_context["featured_blog"] = formatted_blogs[0]
+        if len(formatted_blogs) > 1:
+            mock_context["blog_2"] = formatted_blogs[1]
+        if len(formatted_blogs) > 2:
+            mock_context["blog_3"] = formatted_blogs[2]
+        if len(formatted_blogs) > 3:
+            mock_context["blog_4"] = formatted_blogs[3]
+        mock_context["blogs"] = formatted_blogs
+        mock_context["latest_blogs"] = formatted_blogs[1:]
 
         mock_context["frontend_url"] = "https://surplusmarket.com"
         mock_context["inventory_url"] = "https://surplusmarket.com/lots"
