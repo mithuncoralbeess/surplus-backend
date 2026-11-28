@@ -206,88 +206,51 @@
     box-shadow: 0 4px 12px rgba(10, 92, 72, 0.25);
 }
 
-/* Cards & Container Shells - DashSpace Full-Version Aesthetics */
+/* Cards & Container Shells - DashSpace Aesthetics */
 .admin-form-card {
-    border-radius: var(--dash-radius-lg) !important;
+    border-radius: 12px !important;
     border: 1px solid var(--dash-border) !important;
     background: var(--dash-card) !important;
-    box-shadow: var(--dash-shadow-card) !important;
-    margin-bottom: 1.75rem !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
+    margin-bottom: 1.5rem !important;
     overflow: hidden;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .admin-form-card .card-header {
-    padding: 1.15rem 1.45rem !important;
+    padding: 1rem 1.35rem !important;
     background-color: var(--dash-card) !important;
     border-bottom: 1px solid var(--dash-border-subtle) !important;
 }
 
 .admin-form-card .card-body {
-    padding: 1.5rem 1.65rem !important;
+    padding: 1.35rem 1.5rem !important;
 }
 
-/* Modern Color Accent Squircle Utilities */
-.bg-emerald-subtle { background-color: #ecfdf5 !important; }
-.text-emerald { color: #059669 !important; }
-.border-emerald-subtle { border-color: #a7f3d0 !important; }
-
-.bg-primary-subtle { background-color: #eff6ff !important; }
-.text-primary { color: #2563eb !important; }
-.border-primary-subtle { border-color: #bfdbfe !important; }
-
-.bg-indigo-subtle { background-color: #eef2ff !important; }
-.text-indigo { color: #4f46e5 !important; }
-.border-indigo-subtle { border-color: #c7d2fe !important; }
-
-.bg-cyan-subtle { background-color: #f0f9ff !important; }
-.text-cyan { color: #0284c7 !important; }
-.border-cyan-subtle { border-color: #bae6fd !important; }
-
-.bg-teal-subtle { background-color: #f0fdfa !important; }
-.text-teal { color: #0d9488 !important; }
-.border-teal-subtle { border-color: #99f6e4 !important; }
-
-.bg-amber-subtle { background-color: #fffbeb !important; }
-.text-amber { color: #d97706 !important; }
-.border-amber-subtle { border-color: #fde68a !important; }
-
-.bg-danger-subtle { background-color: #fef2f2 !important; }
-.text-danger { color: #dc2626 !important; }
-
-.section-icon-badge {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+/* Step badges for card headers */
+.card-step-badge {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 0.85rem;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
     flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e0e7ff;
 }
-
-/* =============================================================
-   DASHSPACE FORM INPUT CONTROLS & UNIFORM ALIGNMENT
-   ============================================================= */
 
 /* 1. Labels */
 .form-label-custom {
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 0.45rem !important;
+    margin-bottom: 0.4rem !important;
     font-size: 0.825rem !important;
     font-weight: 600 !important;
-    color: var(--dash-text-dark) !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    text-transform: none !important;
-    letter-spacing: -0.01em !important;
+    color: #1e293b !important;
 }
 
 [data-bs-theme="dark"] .form-label-custom {
@@ -298,81 +261,68 @@
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
-    white-space: nowrap !important;
     font-weight: 600 !important;
     color: inherit !important;
 }
 
+.form-label-custom .label-hint {
+    font-size: 0.725rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    font-family: var(--bs-font-monospace, monospace) !important;
+}
+
 .form-label-custom .badge-optional {
     font-size: 0.68rem !important;
-    font-weight: 600 !important;
-    letter-spacing: normal !important;
-    text-transform: none !important;
-    padding: 0.15rem 0.55rem !important;
-    border-radius: var(--dash-radius-pill) !important;
-    background-color: var(--dash-border-subtle) !important;
-    color: var(--dash-text-sub) !important;
-    border: 1px solid var(--dash-border) !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
+    font-weight: 500 !important;
+    padding: 0.15rem 0.5rem !important;
+    border-radius: 4px !important;
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
 }
 
-/* 2. Controls: Modern 44px height across Inputs, Selects, and Input-Groups */
+/* 2. Form Controls: Clean, modern 42px height */
 .form-control-custom,
 .form-select-custom,
-.input-group-text,
-.input-group .form-control-custom,
-.input-group .form-select-custom,
-.input-group .form-control,
-.input-group .form-select {
-    height: 44px !important;
-    min-height: 44px !important;
-    max-height: 44px !important;
-    line-height: 42px !important;
-    font-size: 0.885rem !important;
+.form-control-hero {
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.85rem !important;
+    font-weight: 400 !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
-.form-control-custom,
-.form-select-custom {
-    border: 1px solid var(--dash-border) !important;
-    border-radius: 10px !important;
-    padding: 0 0.95rem !important;
+.form-control-hero {
+    font-size: 0.95rem !important;
     font-weight: 500 !important;
-    background-color: var(--dash-card) !important;
-    color: var(--dash-text-dark) !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.form-control-custom::placeholder,
+.form-control-hero::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
 }
 
 .form-control-custom:hover,
-.form-select-custom:hover {
+.form-select-custom:hover,
+.form-control-hero:hover {
     border-color: #94a3b8 !important;
 }
 
 .form-control-custom:focus,
-.form-select-custom:focus {
-    border-color: var(--dash-primary) !important;
-    background-color: #ffffff !important;
-    box-shadow: 0 0 0 3.5px var(--dash-primary-light) !important;
-    outline: none !important;
-}
-
-/* Hero Input (Listing Title) */
-.form-control-hero {
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    font-size: 1.05rem !important;
-    font-weight: 600 !important;
-    padding: 0 1.15rem !important;
-    border: 1.5px solid var(--dash-border) !important;
-    border-radius: 10px !important;
-    background-color: var(--dash-card) !important;
-    color: var(--dash-text-dark) !important;
-}
-
+.form-select-custom:focus,
 .form-control-hero:focus {
-    border-color: var(--dash-primary) !important;
-    box-shadow: 0 0 0 3.5px var(--dash-primary-light) !important;
+    border-color: #6366f1 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+    outline: none !important;
 }
 
 /* Textarea */
@@ -381,110 +331,74 @@ textarea.form-control-custom {
     min-height: 110px !important;
     max-height: none !important;
     line-height: 1.55 !important;
-    padding: 0.8rem 1rem !important;
+    padding: 0.75rem 0.85rem !important;
+    resize: vertical !important;
 }
 
 /* 3. Helper Texts */
 .form-text {
-    height: 18px !important;
-    min-height: 18px !important;
-    max-height: 18px !important;
-    font-size: 0.735rem !important;
-    color: var(--dash-text-sub) !important;
+    font-size: 0.75rem !important;
+    color: #64748b !important;
     margin-top: 0.35rem !important;
     margin-bottom: 0 !important;
-    line-height: 18px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+    line-height: 1.4 !important;
     display: block !important;
 }
 
-/* 4. Input Groups */
+/* 4. Compound Input Groups (Currency / Unit Addons) */
 .input-group {
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     position: relative;
     display: flex !important;
     flex-wrap: nowrap !important;
     width: 100% !important;
 }
 
-.addon-icon {
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    padding: 0 !important;
+.input-group-addon-dash,
+.input-group > .input-group-text {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 0.825rem !important;
+    padding: 0 0.85rem !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    text-align: center !important;
-    font-size: 1rem !important;
-    border: 1px solid var(--dash-border) !important;
-    border-right: none !important;
-    border-top-left-radius: 10px !important;
-    border-bottom-left-radius: 10px !important;
+    border-radius: 8px !important;
+    height: 42px !important;
+}
+
+.input-group > .input-group-addon-dash:first-child,
+.input-group > .input-group-text:first-child {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
-    background-color: var(--dash-border-subtle) !important;
-    color: var(--dash-text-sub) !important;
-    transition: all 0.15s ease-in-out;
-    flex-shrink: 0;
+    border-right: none !important;
 }
 
 .input-group > .form-control-custom:not(:first-child),
-.input-group > .form-select-custom:not(:first-child) {
-    border-left: none !important;
+.input-group > .form-control:not(:first-child) {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
-    border-top-right-radius: 10px !important;
-    border-bottom-right-radius: 10px !important;
 }
 
 .input-group > .form-control-custom:not(:last-child),
-.input-group > .form-select-custom:not(:last-child) {
-    border-right: none !important;
+.input-group > .form-control:not(:last-child) {
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
+    border-right: none !important;
 }
 
-.input-group > .input-group-text:last-child:not(.addon-icon) {
-    border: 1px solid var(--dash-border) !important;
+.input-group > .input-group-addon-dash:last-child,
+.input-group > .input-group-text:last-child {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
     border-left: none !important;
-    background-color: var(--dash-border-subtle) !important;
-    color: var(--dash-text-sub) !important;
-    font-weight: 600 !important;
-    font-size: 0.825rem !important;
-    border-top-right-radius: 10px !important;
-    border-bottom-right-radius: 10px !important;
-    padding: 0 0.85rem !important;
-    flex-shrink: 0;
 }
 
-.input-group > .currency-symbol {
-    border: 1px solid var(--dash-border) !important;
-    border-right: none !important;
-    border-top-left-radius: 10px !important;
-    border-bottom-left-radius: 10px !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    background-color: var(--dash-border-subtle) !important;
-    font-weight: 700 !important;
-    padding: 0 0.85rem !important;
-    flex-shrink: 0;
-}
-
-.input-group:focus-within .addon-icon,
-.input-group:focus-within .currency-symbol {
-    border-color: var(--dash-primary) !important;
-}
-
-.input-group:focus-within > .form-control-custom,
-.input-group:focus-within > .form-select-custom {
-    border-color: var(--dash-primary) !important;
-}
-
-.input-group:focus-within > .input-group-text:last-child {
-    border-color: var(--dash-primary) !important;
+.input-group:focus-within .input-group-addon-dash,
+.input-group:focus-within .input-group-text {
+    border-color: #6366f1 !important;
 }
 
 /* Channel Selection Cards in Section 0 */
@@ -668,7 +582,7 @@ textarea.form-control-custom {
     border-color: #334155 !important;
 }
 
-[data-bs-theme="dark"] .addon-icon,
+[data-bs-theme="dark"] .input-group-addon-dash,
 [data-bs-theme="dark"] .currency-symbol {
     background-color: #1e293b !important;
     border-color: #475569 !important;
@@ -777,9 +691,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-emerald-subtle text-emerald">
-                                <i class="bi bi-person-lines-fill"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-person-lines-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">0. Seller / Vendor Contact Information</h6>
                                 <div class="text-muted small">Record which vendor provided these product details (WhatsApp, Email, Offline Intake)</div>
@@ -847,12 +759,9 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="sellerNameInput">
                                     <span class="label-title">Seller Contact Name <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="seller_name" id="sellerNameInput"
+                                <input type="text" class="form-control form-control-custom" name="seller_name" id="sellerNameInput"
                                         value="{{ form_data.seller_name|default:'' }}"
                                         placeholder="e.g. Rahul Sharma / John Doe" required>
-                                </div>
                                 <div class="form-text">Individual or contact representative who provided details.</div>
                             </div>
 
@@ -876,12 +785,9 @@ textarea.form-control-custom {
                                     <span class="label-title">Seller Email</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
+                                <input type="email" class="form-control form-control-custom" name="seller_email" id="sellerEmailInput"
                                         value="{{ form_data.seller_email|default:'' }}"
                                         placeholder="e.g. vendor@company.com">
-                                </div>
                                 <div class="form-text">Auto-generated fallback if blank.</div>
                             </div>
 
@@ -890,12 +796,9 @@ textarea.form-control-custom {
                                     <span class="label-title">Company / Shop Name</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-building"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
+                                <input type="text" class="form-control form-control-custom" name="seller_company" id="sellerCompanyInput"
                                         value="{{ form_data.seller_company|default:'' }}"
                                         placeholder="e.g. Apex Industrial Solutions">
-                                </div>
                                 <div class="form-text">Registered trade or business entity.</div>
                             </div>
 
@@ -904,12 +807,9 @@ textarea.form-control-custom {
                                     <span class="label-title">Seller Business Location</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-emerald-subtle text-emerald"><i class="bi bi-geo-alt"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
+                                <input type="text" class="form-control form-control-custom" name="seller_location" id="sellerLocationInput"
                                         value="{{ form_data.seller_location|default:'' }}"
                                         placeholder="e.g. Mumbai, India / Dubai, UAE">
-                                </div>
                                 <div class="form-text">Base city of seller operation.</div>
                             </div>
                         </div>
@@ -921,9 +821,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary-subtle text-primary">
-                                <i class="bi bi-box-seam-fill"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-box-seam-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">1. Product Identification &amp; Categorization</h6>
                                 <div class="text-muted small">Standard product title, brand taxonomy, and category hierarchy</div>
@@ -971,9 +869,7 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="categorySelect">
                                     <span class="label-title">Main Category <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-primary-subtle text-primary"><i class="bi bi-grid-fill"></i></span>
-                                    <select class="form-select form-select-custom" name="category_id" id="categorySelect" required>
+                                <select class="form-select form-select-custom" name="category_id" id="categorySelect" required>
                                         <option value="" disabled {% if not form_data.category_id %}selected{% endif %}>-- Select Main Category --</option>
                                         {% for cat in categories %}
                                         <option value="{{ cat.id }}" {% if form_data.category_id|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
@@ -981,7 +877,6 @@ textarea.form-control-custom {
                                         </option>
                                         {% endfor %}
                                     </select>
-                                </div>
                                 <div class="form-text">Primary industrial sector classification.</div>
                             </div>
 
@@ -989,12 +884,9 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="subcategorySelect">
                                     <span class="label-title">Subcategory <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-primary-subtle text-primary"><i class="bi bi-diagram-3-fill"></i></span>
-                                    <select class="form-select form-select-custom" name="subcategory_id" id="subcategorySelect" required disabled>
+                                <select class="form-select form-select-custom" name="subcategory_id" id="subcategorySelect" required disabled>
                                         <option value="" selected>-- Select Subcategory --</option>
                                     </select>
-                                </div>
                                 <div class="form-text">Filtered child sub-classification.</div>
                             </div>
                         </div>
@@ -1006,12 +898,9 @@ textarea.form-control-custom {
                                     <span class="label-title">Brand / Manufacturer</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-primary-subtle text-primary"><i class="bi bi-tag-fill"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="brand_name" id="brandInput"
+                                <input type="text" class="form-control form-control-custom" name="brand_name" id="brandInput"
                                         value="{{ form_data.brand_name|default:'' }}"
                                         placeholder="e.g. Siemens, Dell, Bosch, Schneider">
-                                </div>
                                 <div class="form-text">OEM or recognized manufacturing brand.</div>
                             </div>
 
@@ -1037,9 +926,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-indigo-subtle text-indigo">
-                                <i class="bi bi-geo-alt-fill"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-geo-alt-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">2. Origin &amp; Technical Specifications</h6>
                                 <div class="text-muted small">Warehouse location, manufacturing country, dimensions, and expiry details</div>
@@ -1057,15 +944,12 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="inventoryCountrySelect">
                                     <span class="label-title">Inventory Country <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-globe"></i></span>
-                                    <select class="form-select form-select-custom" name="inventory_country" id="inventoryCountrySelect" required>
+                                <select class="form-select form-select-custom" name="inventory_country" id="inventoryCountrySelect" required>
                                         <option value="" disabled {% if not form_data.inventory_country %}selected{% endif %}>-- Select Inventory Country --</option>
                                         {% for c in countries %}
                                         <option value="{{ c }}" {% if form_data.inventory_country == c or not form_data.inventory_country and c == 'United Arab Emirates' %}selected{% endif %}>{{ c }}</option>
                                         {% endfor %}
                                     </select>
-                                </div>
                                 <div class="form-text">Physical country where inventory is stored.</div>
                             </div>
 
@@ -1073,11 +957,8 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="inventoryLocationInput">
                                     <span class="label-title">Inventory Location <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-geo-alt-fill"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
+                                <input type="text" class="form-control form-control-custom" name="inventory_location" id="inventoryLocationInput"
                                         value="{{ form_data.inventory_location|default:'' }}" placeholder="e.g. JAFZA Warehouse 4B, Dubai" required>
-                                </div>
                                 <div class="form-text">Warehouse, facility, or freezone district.</div>
                             </div>
                         </div>
@@ -1088,15 +969,12 @@ textarea.form-control-custom {
                                 <label class="form-label-custom" for="countrySelect">
                                     <span class="label-title">Manufacturing Country <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-flag-fill"></i></span>
-                                    <select class="form-select form-select-custom" name="manufacturing_country" id="countrySelect" required>
+                                <select class="form-select form-select-custom" name="manufacturing_country" id="countrySelect" required>
                                         <option value="" disabled {% if not form_data.manufacturing_country %}selected{% endif %}>-- Select Manufacturing Country --</option>
                                         {% for c in countries %}
                                         <option value="{{ c }}" {% if form_data.manufacturing_country == c %}selected{% endif %}>{{ c }}</option>
                                         {% endfor %}
                                     </select>
-                                </div>
                                 <div class="form-text">Country of fabrication / origin.</div>
                             </div>
 
@@ -1122,11 +1000,8 @@ textarea.form-control-custom {
                                     <span class="label-title">Package Dimensions</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-arrows-angle-expand"></i></span>
-                                    <input type="text" class="form-control form-control-custom" name="dimensions" id="dimensionsInput"
+                                <input type="text" class="form-control form-control-custom" name="dimensions" id="dimensionsInput"
                                         value="{{ form_data.dimensions|default:'' }}" placeholder="e.g. 400 x 300 x 150 mm / 2.5 kg">
-                                </div>
                                 <div class="form-text">Unit or package volumetric specifications.</div>
                             </div>
 
@@ -1135,11 +1010,8 @@ textarea.form-control-custom {
                                     <span class="label-title">Expiry Date</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-indigo-subtle text-indigo"><i class="bi bi-calendar-event"></i></span>
-                                    <input type="date" class="form-control form-control-custom" name="expiry_date" id="expiryDateInput"
+                                <input type="date" class="form-control form-control-custom" name="expiry_date" id="expiryDateInput"
                                         value="{{ form_data.expiry_date|default:'' }}">
-                                </div>
                                 <div class="form-text">Shelf-life expiration if consumable/chemical.</div>
                             </div>
                         </div>
@@ -1151,9 +1023,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-3 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-amber-subtle text-amber">
-                                <i class="bi bi-currency-dollar fs-5"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-currency-dollar fs-5"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">3. Pricing, Discount Engine &amp; Liquidation Analysis</h6>
                                 <div class="text-muted small">Quantity, currency, MSRP retail price, and minimum 60% liquidation rule</div>
@@ -1336,9 +1206,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-4 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-teal-subtle text-teal">
-                                <i class="bi bi-file-text-fill"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-file-text-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">4. Description, Reason to Sell &amp; Warranty</h6>
                                 <div class="text-muted small">Technical narrative, liquidation motive, warranty guarantee, and test certificates</div>
@@ -1366,16 +1234,13 @@ textarea.form-control-custom {
                             <label class="form-label-custom" for="reasonToSellSelect">
                                 <span class="label-title">Reason to Sell <span class="text-danger">*</span></span>
                             </label>
-                            <div class="input-group">
-                                <span class="input-group-text addon-icon bg-teal-subtle text-teal"><i class="bi bi-question-circle-fill"></i></span>
-                                <select class="form-select form-select-custom" name="reason_to_sell" id="reasonToSellSelect" required>
+                            <select class="form-select form-select-custom" name="reason_to_sell" id="reasonToSellSelect" required>
                                     {% for r_opt in reason_to_sell_options %}
                                     <option value="{{ r_opt }}" {% if form_data.reason_to_sell|default:'Surplus Inventory' == r_opt %}selected{% endif %}>
                                         {{ r_opt }}
                                     </option>
                                     {% endfor %}
                                 </select>
-                            </div>
                             <div class="form-text">Select liquidation context for buyer transparency.</div>
                         </div>
 
@@ -1405,12 +1270,9 @@ textarea.form-control-custom {
                                     <label class="form-label-custom" for="warrantyInput">
                                         <span class="label-title">Warranty Period / Guarantee *</span>
                                     </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text addon-icon bg-teal-subtle text-teal"><i class="bi bi-clock-history"></i></span>
-                                        <input type="text" class="form-control form-control-custom" id="warrantyInput" name="warranty"
+                                    <input type="text" class="form-control form-control-custom" id="warrantyInput" name="warranty"
                                             value="{{ form_data.warranty|default:'' }}"
                                             placeholder="e.g. 30 Days, 90 Days, 1 Year">
-                                    </div>
                                 </div>
                                 <!-- Preset Buttons -->
                                 <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
@@ -1472,9 +1334,7 @@ textarea.form-control-custom {
                 <div class="card admin-form-card card-section-5 mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-cyan-subtle text-cyan">
-                                <i class="bi bi-shield-slash-fill"></i>
-                            </div>
+                            <div class="card-step-badge"><i class="bi bi-shield-slash-fill"></i></div>
                             <div>
                                 <h6 class="fw-bold mb-0 text-dark">5. Excluded Export Countries</h6>
                                 <div class="text-muted small">Jurisdictions and restricted territories excluded from product export</div>
@@ -1498,15 +1358,12 @@ textarea.form-control-custom {
                         <!-- Modern Dropdown to select countries -->
                         <div class="row g-2 mb-2">
                             <div class="col-md-8 col-lg-7">
-                                <div class="input-group">
-                                    <span class="input-group-text addon-icon bg-light text-secondary"><i class="bi bi-globe-americas"></i></span>
-                                    <select class="form-select form-select-custom" id="addExcludedCountrySelect">
+                                <select class="form-select form-select-custom" id="addExcludedCountrySelect">
                                         <option value="" selected>-- Select a country to exclude --</option>
                                         {% for c in countries %}
                                         <option value="{{ c }}">{{ c }}</option>
                                         {% endfor %}
                                     </select>
-                                </div>
                             </div>
                         </div>
 
