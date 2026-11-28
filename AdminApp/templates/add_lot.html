@@ -1692,85 +1692,10 @@ textarea.form-control-custom {
 
             </div>
 
-            <!-- Right Sidebar Column (Sticky Preview & Actions) -->
+            <!-- Right Sidebar Column (Readiness & Actions) -->
             <div class="col-lg-4">
 
-                <!-- 1. Sticky Live Package Preview Card -->
-                <div class="card admin-form-card card-sidebar-preview mb-4 border-0 shadow-sm overflow-hidden sticky-preview-card">
-                    <div class="card-header py-3 px-4 d-flex align-items-center justify-content-between text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
-                        <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
-                            <i class="bi bi-eye-fill text-primary"></i> Live Marketplace Preview
-                        </h6>
-                        <span class="badge bg-primary text-white font-monospace" id="previewChannelBadge">WhatsApp</span>
-                    </div>
-
-                    <!-- Cover Media Preview -->
-                    <div class="position-relative bg-light text-center" style="height: 180px; overflow: hidden;" id="previewMediaContainer">
-                        <div id="previewMediaPlaceholder" class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
-                            <i class="bi bi-boxes fs-1 mb-1"></i>
-                            <span class="small">Upload warehouse photos to preview</span>
-                        </div>
-                        <img id="previewCoverImg" src="" alt="Cover Media" class="w-100 h-100 object-fit-cover d-none">
-                        <video id="previewCoverVideo" src="" class="w-100 h-100 object-fit-cover d-none" muted autoplay loop playsinline></video>
-                        <span class="position-absolute bottom-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white" id="previewPhotoCountBadge">
-                            <i class="bi bi-images me-1"></i>0 media
-                        </span>
-                        <span class="position-absolute top-0 end-0 m-2 badge bg-danger text-white d-none" id="previewDiscountPill">
-                            0% OFF
-                        </span>
-                    </div>
-
-                    <div class="card-body p-4">
-                        <h6 class="fw-bold text-dark mb-1 text-truncate-2" id="previewTitle">
-                            Package Listing Title Preview
-                        </h6>
-                        <div class="text-muted small mb-3" id="previewBrands">Key Brands: -</div>
-
-                        <!-- Price & Value Metrics -->
-                        <div class="p-3 rounded-3 bg-light border mb-3">
-                            <div class="d-flex justify-content-between align-items-baseline mb-1">
-                                <span class="small text-muted">Surplus Ask Payout:</span>
-                                <span class="fs-5 fw-bold text-success font-monospace" id="previewPrice">$0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-baseline mb-1 small">
-                                <span class="text-muted">Catalog Retail (MSRP):</span>
-                                <span class="text-muted text-decoration-line-through font-monospace" id="previewMsrp">$0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-baseline small pt-1 border-top">
-                                <span class="text-muted">Public Buyer Listing:</span>
-                                <span class="fw-semibold text-primary font-monospace" id="previewPublicPrice">$0.00</span>
-                            </div>
-                        </div>
-
-                        <!-- Lot Details Summary List -->
-                        <div class="small">
-                            <div class="d-flex justify-content-between py-1 border-bottom">
-                                <span class="text-secondary">Submitter Admin:</span>
-                                <span class="fw-bold font-monospace text-primary">
-                                    {{ admin_uid }} <span class="text-muted fw-normal font-sans-serif" style="font-size: 0.75rem;">({% if admin.full_name %}{{ admin.full_name }}{% else %}{{ admin.username }}{% endif %})</span>
-                                </span>
-                            </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom">
-                                <span class="text-secondary">Seller Name:</span>
-                                <span class="fw-bold text-dark" id="summarySellerName">-</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom">
-                                <span class="text-secondary">Distinct SKUs:</span>
-                                <span class="fw-bold text-dark" id="summarySkus">-</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-1 border-bottom">
-                                <span class="text-secondary">Total Units:</span>
-                                <span class="fw-bold text-dark" id="summaryUnits">-</span>
-                            </div>
-                            <div class="d-flex justify-content-between py-1">
-                                <span class="text-secondary">Inventory Location:</span>
-                                <span class="fw-bold text-dark" id="summaryLocation">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Dynamic Readiness Checklist -->
+                <!-- 1. Dynamic Readiness Checklist -->
                 <div class="card admin-form-card card-sidebar-readiness mb-4 border-0 shadow-sm p-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold mb-0 text-dark">
@@ -2538,38 +2463,41 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateLivePreview() {
+        if (!previewTitle && !summarySellerName) return;
         const curr = currencySelect ? currencySelect.value : 'USD';
-        const msrp = parseFloat(msrpInput.value) || 0;
-        const ask = parseFloat(askPriceInput.value) || 0;
+        const msrp = msrpInput ? (parseFloat(msrpInput.value) || 0) : 0;
+        const ask = askPriceInput ? (parseFloat(askPriceInput.value) || 0) : 0;
         const isOpen = Boolean(openForOffersCheckbox && openForOffersCheckbox.checked);
 
-        previewTitle.textContent = lotTitleInput.value.trim() || 'Package Listing Title Preview';
-        previewBrands.textContent = keyBrandsInput.value.trim() ? `Key Brands: ${keyBrandsInput.value.trim()}` : 'Key Brands: -';
+        if (previewTitle) previewTitle.textContent = (lotTitleInput && lotTitleInput.value.trim()) || 'Package Listing Title Preview';
+        if (previewBrands) previewBrands.textContent = (keyBrandsInput && keyBrandsInput.value.trim()) ? `Key Brands: ${keyBrandsInput.value.trim()}` : 'Key Brands: -';
 
         if (isOpen) {
-            previewPrice.textContent = 'Negotiable';
-            previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
-            previewPublicPrice.textContent = 'Open for Offers';
+            if (previewPrice) previewPrice.textContent = 'Negotiable';
+            if (previewMsrp) previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            if (previewPublicPrice) previewPublicPrice.textContent = 'Open for Offers';
         } else {
-            previewPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
-            previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
-            previewPublicPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            if (previewPrice) previewPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            if (previewMsrp) previewMsrp.textContent = msrp > 0 ? `${curr} ${msrp.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
+            if (previewPublicPrice) previewPublicPrice.textContent = ask > 0 ? `${curr} ${ask.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : `${curr} 0.00`;
         }
 
-        summarySellerName.textContent = sellerNameInput.value.trim() || '-';
+        if (summarySellerName) summarySellerName.textContent = (sellerNameInput && sellerNameInput.value.trim()) || '-';
         
-        const locVal = inventoryLocationInput ? inventoryLocationInput.value.trim() : '';
-        const countryVal = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
-        let combinedLoc = locVal;
-        if (locVal && countryVal && !locVal.toLowerCase().includes(countryVal.toLowerCase())) {
-            combinedLoc = `${locVal}, ${countryVal}`;
-        } else if (!locVal) {
-            combinedLoc = countryVal;
+        if (summaryLocation) {
+            const locVal = inventoryLocationInput ? inventoryLocationInput.value.trim() : '';
+            const countryVal = inventoryCountrySelect ? inventoryCountrySelect.value.trim() : '';
+            let combinedLoc = locVal;
+            if (locVal && countryVal && !locVal.toLowerCase().includes(countryVal.toLowerCase())) {
+                combinedLoc = `${locVal}, ${countryVal}`;
+            } else if (!locVal) {
+                combinedLoc = countryVal;
+            }
+            summaryLocation.textContent = combinedLoc || '-';
         }
-        summaryLocation.textContent = combinedLoc || '-';
 
-        summarySkus.textContent = distinctSkusInput.value || '-';
-        summaryUnits.textContent = totalUnitsInput.value ? Number(totalUnitsInput.value).toLocaleString() : '-';
+        if (summarySkus) summarySkus.textContent = (distinctSkusInput && distinctSkusInput.value) || '-';
+        if (summaryUnits) summaryUnits.textContent = (totalUnitsInput && totalUnitsInput.value) ? Number(totalUnitsInput.value).toLocaleString() : '-';
     }
 
     if (lotTitleInput) lotTitleInput.addEventListener('input', () => { updateLivePreview(); updateReadinessChecklist(); });
