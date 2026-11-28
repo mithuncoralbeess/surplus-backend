@@ -1772,7 +1772,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // -------------------------------------------------------------
     // 0. Standard Category List for Allocations
     // -------------------------------------------------------------
-    const STANDARD_CATEGORIES = {{ categories_json|safe|default:'["Electricals", "Electronics", "Apparel", "Industrial Hardware", "Automotive & Spare Parts", "Home & Living", "Tools & Machinery", "Medical & Health", "General Surplus", "Other"]' }};
+    const DEFAULT_STANDARD_CATEGORIES = ["Electricals", "Electronics", "Apparel", "Industrial Hardware", "Automotive & Spare Parts", "Home & Living", "Tools & Machinery", "Medical & Health", "General Surplus", "Other"];
+    let STANDARD_CATEGORIES = [...DEFAULT_STANDARD_CATEGORIES];
+    try {
+        const parsedServerCats = JSON.parse('{{ categories_json|escapejs|default:"[]" }}');
+        if (Array.isArray(parsedServerCats) && parsedServerCats.length > 0) {
+            STANDARD_CATEGORIES = parsedServerCats;
+        }
+    } catch (e) {
+        STANDARD_CATEGORIES = [...DEFAULT_STANDARD_CATEGORIES];
+    }
 
     function resolveOrAddCategory(catName) {
         if (!catName) return '';
