@@ -155,14 +155,14 @@
 
 /* Filter Bar */
 .filter-bar {
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--dash-border);
     background: #ffffff;
 }
 .search-input-wrap {
     position: relative;
-    flex-grow: 1;
-    min-width: 260px;
+    flex: 1 1 280px;
+    min-width: 220px;
 }
 .search-input-wrap i {
     position: absolute;
@@ -178,17 +178,22 @@
     border-radius: var(--dash-radius-md);
     border: 1px solid #cbd5e1;
     font-size: 0.875rem;
+    width: 100%;
 }
 .search-input-wrap .form-control:focus {
     border-color: var(--dash-primary);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.filter-select-wrap {
+    flex: 0 0 auto;
+    width: 165px;
 }
 .filter-select {
     height: 42px;
     border-radius: var(--dash-radius-md);
     border: 1px solid #cbd5e1;
     font-size: 0.875rem;
-    min-width: 150px;
+    width: 100% !important;
     color: var(--dash-text-dark);
 }
 .filter-select:focus {
@@ -471,33 +476,44 @@
 
         <!-- Filters Row -->
         <div class="filter-bar">
-            <form method="GET" action="/admin/users/" class="d-flex flex-wrap gap-2.5 align-items-center justify-content-between">
-                <div class="d-flex flex-wrap gap-2.5 flex-grow-1 align-items-center">
-                    <div class="search-input-wrap">
-                        <i class="bi bi-search"></i>
-                        <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by name, email, company, VID, phone...">
-                    </div>
+            <form method="GET" action="/admin/users/" class="d-flex flex-wrap align-items-center gap-2.5">
+                <!-- Search Input -->
+                <div class="search-input-wrap">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by name, email, company, VID, phone...">
+                </div>
+                
+                <!-- Role / Type Filter -->
+                <div class="filter-select-wrap">
                     <select name="type" class="form-select filter-select" onchange="this.form.submit()">
                         <option value="all" {% if not type_filter or type_filter == 'all' %}selected{% endif %}>All Types</option>
                         <option value="Buyer" {% if type_filter == 'Buyer' %}selected{% endif %}>Buyers Only</option>
                         <option value="Seller" {% if type_filter == 'Seller' %}selected{% endif %}>Sellers Only</option>
                         <option value="Both" {% if type_filter == 'Both' %}selected{% endif %}>Dual (Both)</option>
                     </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-select-wrap">
                     <select name="status" class="form-select filter-select" onchange="this.form.submit()">
                         <option value="any" {% if not status_filter or status_filter == 'any' %}selected{% endif %}>Any Status</option>
                         <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
                         <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
                     </select>
-                    <button class="btn btn-dash-primary" type="submit">
-                        <i class="bi bi-filter me-1"></i> Filter
-                    </button>
-                    {% if search_query or type_filter and type_filter != 'all' or status_filter and status_filter != 'any' %}
-                    <a href="/admin/users/" class="btn btn-dash-light">
-                        <i class="bi bi-x-circle me-1"></i> Clear
-                    </a>
-                    {% endif %}
                 </div>
-                <div class="d-flex align-items-center">
+
+                <!-- Action Buttons -->
+                <button class="btn btn-dash-primary px-3" type="submit">
+                    <i class="bi bi-filter me-1"></i> Filter
+                </button>
+                {% if search_query or type_filter and type_filter != 'all' or status_filter and status_filter != 'any' %}
+                <a href="/admin/users/" class="btn btn-dash-light px-3">
+                    <i class="bi bi-x-circle me-1"></i> Clear
+                </a>
+                {% endif %}
+
+                <!-- Filtered Count Badge -->
+                <div class="ms-auto d-flex align-items-center">
                     <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill font-monospace" style="font-size: 0.78rem;">
                         {{ users|length }} User{% if users|length != 1 %}s{% endif %} Filtered
                     </span>
