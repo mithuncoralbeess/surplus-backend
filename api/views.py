@@ -546,6 +546,8 @@ def get_public_blogs_list(request):
             "featured_image": img_url,
             "featured_image_url": img_url,
             "absolute_image_url": abs_img_url,
+            "newsletter_image": b.newsletter_image.url if getattr(b, "newsletter_image", None) else "",
+            "newsletter_image_url": f"https://dev.surplusmarket.com{b.newsletter_image.url}" if getattr(b, "newsletter_image", None) and b.newsletter_image else "",
             "read_time": b.read_time,
             "total_reads": b.total_reads,
             "seo": {
@@ -619,6 +621,8 @@ def get_public_blog_detail(request, slug):
         "featured_image": img_url,
         "featured_image_url": img_url,
         "absolute_image_url": abs_img_url,
+        "newsletter_image": blog.newsletter_image.url if getattr(blog, "newsletter_image", None) else "",
+        "newsletter_image_url": f"https://dev.surplusmarket.com{blog.newsletter_image.url}" if getattr(blog, "newsletter_image", None) and blog.newsletter_image else "",
         "read_time": blog.read_time,
         "total_reads": blog.total_reads,
         "seo": {

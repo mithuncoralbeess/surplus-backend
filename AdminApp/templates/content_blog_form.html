@@ -681,6 +681,60 @@
                         <div id="fileInfoText" class="text-muted small mt-1 px-1 text-truncate" style="font-size: 0.72rem;"></div>
                     </div>
                 </div>
+
+                <!-- Newsletter Email Image Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold text-dark mb-0"><i class="bi bi-envelope-paper text-success me-2"></i>Newsletter Email Image</h6>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle small px-2 py-1">Newsletter</span>
+                    </div>
+                    <p class="text-muted small mb-3" style="font-size: 0.75rem;">
+                        Dedicated image used when this blog is featured in email newsletters (Recommended ratio: ~4:3, e.g. 540&times;400px). If omitted, the featured banner image is used.
+                    </p>
+
+                    <!-- File Upload Dropzone for Newsletter Image -->
+                    <div id="newsletterFileUploadSection">
+                        <input type="file" id="newsletterImageFileInput" name="newsletter_image" accept="image/png, image/jpeg, image/jpg, image/webp" class="d-none">
+                        
+                        <div id="newsletterDropzoneArea" class="border border-2 border-dashed rounded-3 p-3 text-center bg-light" style="cursor: pointer; border-color: #cbd5e1 !important; transition: all 0.2s ease;">
+                            <div class="py-2">
+                                <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                                    <i class="bi bi-cloud-arrow-up fs-4"></i>
+                                </div>
+                                <div class="fw-semibold text-dark small mb-1">Click to browse or drag & drop</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">PNG, JPG, WEBP up to 10MB</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden flag to track newsletter image removal -->
+                    <input type="hidden" id="clearNewsletterImageInput" name="clear_newsletter_image" value="false">
+
+                    <!-- Live Newsletter Image Preview Card -->
+                    <div id="newsletterPreviewContainer" class="mt-3 p-2 bg-light rounded-3 border position-relative" style="display: {% if blog and blog.newsletter_image %}block{% else %}none{% endif %};">
+                        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle small" id="newsletterPreviewBadge">
+                                {% if blog and blog.newsletter_image %}Current Newsletter Image{% else %}Selected Image{% endif %}
+                            </span>
+                            <button type="button" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small fw-semibold" id="removeNewsletterImageBtn" title="Remove Newsletter Image">
+                                <i class="bi bi-trash3 me-1"></i>Remove
+                            </button>
+                        </div>
+                        
+                        <div class="text-center rounded overflow-hidden bg-white border" style="min-height: 100px; max-height: 180px;">
+                            <img id="newsletterPreviewElement" 
+                                 src="{% if blog and blog.newsletter_image %}{{ blog.newsletter_image.url }}{% endif %}" 
+                                 class="img-fluid w-100" 
+                                 style="max-height: 180px; object-fit: cover; display: block;"
+                                 alt="Newsletter Image Preview">
+                            <div id="newsletterPreviewFallbackMsg" class="p-3 text-muted small text-center" style="display: none;">
+                                <i class="bi bi-image text-secondary fs-3 d-block mb-1 opacity-50"></i>
+                                Newsletter image missing.<br>Click above to upload.
+                            </div>
+                        </div>
+                        <div id="newsletterFileInfoText" class="text-muted small mt-1 px-1 text-truncate" style="font-size: 0.72rem;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
@@ -1022,6 +1076,109 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // =========================================================
+    // NEWSLETTER EMAIL IMAGE UPLOAD & PREVIEW
+    // =========================================================
+    const newsletterDropzoneArea = document.getElementById('newsletterDropzoneArea');
+    const newsletterFileInput = document.getElementById('newsletterImageFileInput');
+    const clearNewsletterImageInput = document.getElementById('clearNewsletterImageInput');
+    const newsletterPreviewContainer = document.getElementById('newsletterPreviewContainer');
+    const newsletterPreviewElement = document.getElementById('newsletterPreviewElement');
+    const newsletterPreviewFallback = document.getElementById('newsletterPreviewFallbackMsg');
+    const newsletterPreviewBadge = document.getElementById('newsletterPreviewBadge');
+    const newsletterFileInfoText = document.getElementById('newsletterFileInfoText');
+    const removeNewsletterImageBtn = document.getElementById('removeNewsletterImageBtn');
+
+    let selectedNewsletterFile = null;
+
+    if (newsletterDropzoneArea && newsletterFileInput) {
+        newsletterDropzoneArea.addEventListener('click', () => newsletterFileInput.click());
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            newsletterDropzoneArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                newsletterDropzoneArea.style.borderColor = '#10b981';
+                newsletterDropzoneArea.style.backgroundColor = '#ecfdf5';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            newsletterDropzoneArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                newsletterDropzoneArea.style.borderColor = '#cbd5e1';
+                newsletterDropzoneArea.style.backgroundColor = '#f8fafc';
+            });
+        });
+
+        newsletterDropzoneArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleNewsletterFileSelect(files[0]);
+            }
+        });
+
+        newsletterFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleNewsletterFileSelect(e.target.files[0]);
+            }
+        });
+    }
+
+    function handleNewsletterFileSelect(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file (PNG, JPG, or WEBP).');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Newsletter image file size exceeds 10MB limit. Please choose a smaller image.');
+            return;
+        }
+
+        selectedNewsletterFile = file;
+        if (clearNewsletterImageInput) clearNewsletterImageInput.value = 'false';
+
+        const objectUrl = URL.createObjectURL(file);
+        if (newsletterPreviewElement) {
+            newsletterPreviewElement.src = objectUrl;
+            newsletterPreviewElement.style.display = 'block';
+        }
+        if (newsletterPreviewFallback) newsletterPreviewFallback.style.display = 'none';
+        if (newsletterPreviewContainer) newsletterPreviewContainer.style.display = 'block';
+        if (newsletterPreviewBadge) {
+            newsletterPreviewBadge.textContent = 'Ready to Upload';
+            newsletterPreviewBadge.className = 'badge bg-success-subtle text-success border border-success-subtle small';
+        }
+        if (newsletterFileInfoText) {
+            newsletterFileInfoText.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        }
+    }
+
+    if (newsletterPreviewElement) {
+        newsletterPreviewElement.addEventListener('error', () => {
+            newsletterPreviewElement.style.display = 'none';
+            if (newsletterPreviewFallback) newsletterPreviewFallback.style.display = 'block';
+        });
+
+        newsletterPreviewElement.addEventListener('load', () => {
+            newsletterPreviewElement.style.display = 'block';
+            if (newsletterPreviewFallback) newsletterPreviewFallback.style.display = 'none';
+        });
+    }
+
+    if (removeNewsletterImageBtn) {
+        removeNewsletterImageBtn.addEventListener('click', () => {
+            selectedNewsletterFile = null;
+            if (newsletterFileInput) newsletterFileInput.value = '';
+            if (clearNewsletterImageInput) clearNewsletterImageInput.value = 'true';
+            if (newsletterPreviewContainer) newsletterPreviewContainer.style.display = 'none';
+            if (newsletterPreviewElement) newsletterPreviewElement.src = '';
+            if (newsletterFileInfoText) newsletterFileInfoText.textContent = '';
+        });
+    }
+
     // Helper to extract CSRF Token
     function getCsrfToken() {
         const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -1270,9 +1427,13 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.set('read_time', document.getElementById('readTimeInput')?.value || '3');
             formData.set('status', document.getElementById('blogStatusSelect')?.value || 'published');
             formData.set('clear_image', clearImageInput?.value || 'false');
+            formData.set('clear_newsletter_image', clearNewsletterImageInput?.value || 'false');
 
             if (selectedImageFile) {
                 formData.set('image', selectedImageFile);
+            }
+            if (selectedNewsletterFile) {
+                formData.set('newsletter_image', selectedNewsletterFile);
             }
 
             if (!formData.get('title')) {

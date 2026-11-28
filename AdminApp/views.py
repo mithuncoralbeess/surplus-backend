@@ -1459,6 +1459,14 @@ def content_blog_editor_view(request, blog_id=None):
             blog.image = None
             blog.featured_image_url = ""
 
+        if str(request.POST.get("clear_newsletter_image") or "").lower() in ("true", "1", "yes"):
+            if blog.newsletter_image:
+                try:
+                    blog.newsletter_image.delete(save=False)
+                except Exception:
+                    pass
+            blog.newsletter_image = None
+
         if "image" in request.FILES:
             blog.image = request.FILES["image"]
             blog.save()
@@ -1466,8 +1474,13 @@ def content_blog_editor_view(request, blog_id=None):
                 blog.featured_image_url = blog.image.url
                 blog.save(update_fields=["featured_image_url"])
                 _sync_blog_image_to_frontends(blog.image.name)
-        else:
+
+        if "newsletter_image" in request.FILES:
+            blog.newsletter_image = request.FILES["newsletter_image"]
             blog.save()
+            _sync_blog_image_to_frontends(blog.newsletter_image.name)
+
+        blog.save()
 
         return redirect("content_blogs_view")
 
@@ -1602,6 +1615,14 @@ def content_blogs_api(request, blog_id=None):
             blog.image = None
             blog.featured_image_url = ""
 
+        if str(payload.get("clear_newsletter_image", "")).lower() in ("true", "1", "yes"):
+            if blog.newsletter_image:
+                try:
+                    blog.newsletter_image.delete(save=False)
+                except Exception:
+                    pass
+            blog.newsletter_image = None
+
         try:
             # Handle uploaded image file
             if "image" in request.FILES:
@@ -1615,7 +1636,13 @@ def content_blogs_api(request, blog_id=None):
                 featured_url = str(payload.get("featured_image_url") or "").strip()
                 if featured_url:
                     blog.featured_image_url = featured_url
+
+            if "newsletter_image" in request.FILES:
+                blog.newsletter_image = request.FILES["newsletter_image"]
                 blog.save()
+                _sync_blog_image_to_frontends(blog.newsletter_image.name)
+
+            blog.save()
         except Exception as save_err:
             return Response({
                 "success": False,
@@ -8905,14 +8932,29 @@ def email_template_preview_raw(request, template_key):
 
         def _format_blog(b, fallback_cat, fallback_img):
             raw_text = re.sub(r"\s+", " ", strip_tags(b.content or "")).strip()
-            excerpt = (
+            raw_excerpt = (
                 b.excerpt
                 or b.meta_description
-                or (raw_text[:140] + "..." if len(raw_text) > 140 else raw_text)
+                or raw_text
                 or "Practical insights and market intelligence from Surplus Market."
             )
+            # Ensure strictly 3 lines for email layout (~120-130 chars)
+            if len(raw_excerpt) > 130:
+                truncated = raw_excerpt[:125].rsplit(" ", 1)[0]
+                excerpt = f"{truncated}..."
+            else:
+                excerpt = raw_excerpt
             img_url = ""
-            if b.image:
+            # 1. Prioritize dedicated newsletter_image
+            if getattr(b, "newsletter_image", None):
+                try:
+                    if b.newsletter_image and b.newsletter_image.url:
+                        img_url = f"https://dev.surplusmarket.com{b.newsletter_image.url}"
+                except Exception:
+                    pass
+
+            # 2. Main blog image
+            if not img_url and b.image:
                 try:
                     img_url = f"https://dev.surplusmarket.com{b.image.url}"
                 except Exception:

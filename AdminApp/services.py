@@ -1898,14 +1898,29 @@ class EmailService:
 
         def _format_blog(b, fallback_cat, fallback_img):
             raw_text = re.sub(r"\s+", " ", strip_tags(b.content or "")).strip()
-            excerpt = (
+            raw_excerpt = (
                 b.excerpt
                 or b.meta_description
-                or (raw_text[:140] + "..." if len(raw_text) > 140 else raw_text)
+                or raw_text
                 or "Practical insights and market intelligence from Surplus Market."
             )
+            # Ensure strictly 3 lines for email layout (~120-130 chars)
+            if len(raw_excerpt) > 130:
+                truncated = raw_excerpt[:125].rsplit(" ", 1)[0]
+                excerpt = f"{truncated}..."
+            else:
+                excerpt = raw_excerpt
             img_url = ""
-            if b.image:
+            # 1. Prioritize dedicated newsletter_image
+            if getattr(b, "newsletter_image", None):
+                try:
+                    if b.newsletter_image and b.newsletter_image.url:
+                        img_url = f"https://dev.surplusmarket.com{b.newsletter_image.url}"
+                except Exception:
+                    pass
+
+            # 2. Main blog image
+            if not img_url and b.image:
                 try:
                     img_url = f"https://dev.surplusmarket.com{b.image.url}"
                 except Exception:

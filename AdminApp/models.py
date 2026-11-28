@@ -2289,6 +2289,7 @@ class BlogPost(models.Model):
     content = models.TextField(blank=True, default="")
     image = models.ImageField(upload_to="blog_images/", blank=True, null=True)
     featured_image_url = models.CharField(max_length=500, blank=True, default="")
+    newsletter_image = models.ImageField(upload_to="blog_newsletter_images/", blank=True, null=True, help_text="Image specifically used in newsletter email template")
     
     # Yoast SEO & Meta Tags
     focus_keyphrase = models.CharField(max_length=255, blank=True, default="", help_text="Main target search keyword")
