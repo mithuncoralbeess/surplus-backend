@@ -143,4 +143,14 @@ class RfqEnquiryItemAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 
+from .models import PartnershipEnquiry
+
+@admin.register(PartnershipEnquiry)
+class PartnershipEnquiryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "email", "phone", "business_location", "partnership_interest", "subject", "status", "created_at")
+    list_filter = ("status", "partnership_interest", "created_at")
+    search_fields = ("name", "email", "phone", "business_location", "partnership_interest", "subject")
+    readonly_fields = ("created_at", "updated_at")
+
+
 

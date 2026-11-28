@@ -2127,6 +2127,7 @@ class ProductImage(models.Model):
 class PartnershipEnquiry(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField()
+    phone = models.CharField(max_length=50, blank=True, default="")
     business_location = models.CharField(max_length=255, blank=True, default="")
     partnership_interest = models.CharField(max_length=255, blank=True, default="")
     subject = models.CharField(max_length=255, blank=True, default="")

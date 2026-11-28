@@ -1389,6 +1389,8 @@ def submit_partnership_enquiry(request):
     payload = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
     
     # Map frontend field names to model field names if provided
+    if "phone" not in payload and "mobile_number" in payload:
+        payload["phone"] = payload.get("mobile_number", "")
     if "location" in payload and "business_location" not in payload:
         payload["business_location"] = payload.pop("location")
     if "interest" in payload and "partnership_interest" not in payload:
@@ -1403,9 +1405,10 @@ def submit_partnership_enquiry(request):
         # In-app Admin Notification
         try:
             from AdminApp.services import create_admin_notification
+            phone_text = f" | Tel: {enquiry.phone}" if enquiry.phone else ""
             create_admin_notification(
                 title=f"New Partnership Proposal - {enquiry.name}",
-                message=f"Received a partnership proposal ({enquiry.partnership_interest or 'Strategic Partnership'}) from {enquiry.name} ({enquiry.email}) in {enquiry.business_location or 'N/A'}.",
+                message=f"Received a partnership proposal ({enquiry.partnership_interest or 'Strategic Partnership'}) from {enquiry.name} ({enquiry.email}{phone_text}) in {enquiry.business_location or 'N/A'}.",
                 notification_type="ENQUIRY",
                 action_url="/admin/enquiries/partnership/"
             )
@@ -1903,7 +1906,7 @@ def subscribe_newsletter(request):
             title=f"New Newsletter Subscriber - {email}",
             message=f"{email} subscribed to the Surplus Market Newsletter ({source}).",
             notification_type="ENQUIRY",
-            action_url="/admin/enquiries/contact-us/"
+            action_url="/admin/enquiries/newsletter/"
         )
     except Exception as e:
         logger.error(f"[subscribe_newsletter] Admin notification error: {e}")

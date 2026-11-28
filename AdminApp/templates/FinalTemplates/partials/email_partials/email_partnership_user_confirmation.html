@@ -99,6 +99,9 @@
                             <div class="mobile-detail-box break-word" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 18px; margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">
                                 <p style="margin: 0 0 6px 0;"><strong>Proposal Reference:</strong> <span style="font-family: monospace; color: #0a5c48; font-weight: 700;">#{% if enquiry_id %}{{ enquiry_id }}{% elif enquiry.id %}{{ enquiry.id }}{% else %}General{% endif %}</span></p>
                                 <p style="margin: 0 0 6px 0;"><strong>Partnership Track:</strong> {% if partnership_interest %}{{ partnership_interest }}{% elif enquiry.partnership_interest %}{{ enquiry.partnership_interest }}{% else %}Strategic Collaboration{% endif %}</p>
+                                {% if phone or enquiry.phone %}
+                                <p style="margin: 0 0 6px 0;"><strong>Contact Phone:</strong> {{ phone|default:enquiry.phone }}</p>
+                                {% endif %}
                                 {% if business_location %}
                                 <p style="margin: 0 0 6px 0;"><strong>Location:</strong> {{ business_location }}</p>
                                 {% elif enquiry.business_location %}

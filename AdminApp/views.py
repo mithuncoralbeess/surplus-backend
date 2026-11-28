@@ -4940,7 +4940,7 @@ def contact_enquiries_view(request):
 
     search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
     
-    # Strictly fetch only real contact form data (exclude regional, sourcing, rfq, partnership)
+    # Strictly fetch only real contact form data (exclude regional, sourcing, rfq, partnership, newsletter)
     db_contacts = ContactUsEnquiry.objects.only(
         "id", "full_name", "phone", "email", "created_at", "enquiry_type", "message", "status", "is_blocked"
     ).exclude(
@@ -4948,10 +4948,12 @@ def contact_enquiries_view(request):
         Q(enquiry_type__icontains="Sourcing") |
         Q(enquiry_type__icontains="RFQ") |
         Q(enquiry_type__icontains="Partnership") |
+        Q(enquiry_type__icontains="Newsletter") |
         Q(message__icontains="[REGIONAL") |
         Q(message__icontains="[SOURCING") |
         Q(message__icontains="[RFQ") |
-        Q(message__icontains="[PARTNERSHIP")
+        Q(message__icontains="[PARTNERSHIP") |
+        Q(message__icontains="Newsletter")
     ).order_by("-created_at")
     
     if search_query:
@@ -4989,6 +4991,188 @@ def contact_enquiries_view(request):
         "page_subtitle": "All Contact Enquiries"
     }
     return render(request, "contact_us.html", context)
+
+
+# -------------------------------------------------------------
+# Newsletter Enquiries (General Enquiries)
+# -------------------------------------------------------------
+
+def newsletter_enquiries_view(request):
+    """
+    Dedicated view for Newsletter Enquiries / Subscriptions in Admin Portal under General Enquiries.
+    Displays all newsletter leads/subscribers with metrics, search, filtering, and delete/export tools.
+    """
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+
+    # Handle POST Actions (Delete / Bulk Delete / Status update)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        enquiry_id = request.POST.get("enquiry_id") or request.POST.get("id")
+        selected_ids = request.POST.getlist("selected_ids") or ([enquiry_id] if enquiry_id else [])
+        
+        if action == "delete" and selected_ids:
+            deleted_count, _ = ContactUsEnquiry.objects.filter(
+                id__in=selected_ids
+            ).filter(
+                Q(enquiry_type__icontains="Newsletter") | Q(message__icontains="Newsletter")
+            ).delete()
+            cache.delete("ctx_pending_counts_v7")
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": True, "message": f"{deleted_count} subscriber(s) deleted successfully."})
+            messages.success(request, f"{deleted_count} subscriber(s) deleted successfully.")
+            return redirect("newsletter_enquiries")
+
+        elif action == "update_status" and enquiry_id:
+            new_status = request.POST.get("status", "").upper()
+            if new_status in ["PENDING", "REVIEWED", "CONTACTED", "BLOCKED"]:
+                ContactUsEnquiry.objects.filter(id=enquiry_id).update(status=new_status)
+                cache.delete("ctx_pending_counts_v7")
+                if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                    return JsonResponse({"success": True, "message": f"Status updated to {new_status}."})
+                messages.success(request, f"Status updated to {new_status}.")
+                return redirect("newsletter_enquiries")
+
+    search_query = request.GET.get("search", "").strip() or request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip().upper()
+
+    # Query strictly newsletter enquiries
+    base_qs = ContactUsEnquiry.objects.filter(
+        Q(enquiry_type__icontains="Newsletter") | Q(message__icontains="Newsletter")
+    )
+
+    # Compute KPI statistics
+    total_count = base_qs.count()
+    active_count = base_qs.filter(is_blocked=False).exclude(status="BLOCKED").count()
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    month_count = base_qs.filter(created_at__gte=month_start).count()
+    today_count = base_qs.filter(created_at__gte=today_start).count()
+
+    filtered_qs = base_qs
+    if search_query:
+        filtered_qs = filtered_qs.filter(
+            Q(email__icontains=search_query) |
+            Q(full_name__icontains=search_query) |
+            Q(message__icontains=search_query)
+        )
+
+    if status_filter and status_filter != "ALL":
+        filtered_qs = filtered_qs.filter(status=status_filter)
+
+    filtered_qs = filtered_qs.order_by("-created_at")
+
+    subscribers_list = []
+    for item in filtered_qs:
+        # Extract source channel from message if present (e.g. "via Footer Newsletter")
+        source_label = "Website"
+        if item.message:
+            msg_str = item.message
+            if " via " in msg_str:
+                source_label = msg_str.split(" via ", 1)[1].rstrip(".")
+            elif "Newsletter Subscription" in (item.enquiry_type or ""):
+                source_label = "Newsletter Form"
+            elif item.enquiry_type:
+                source_label = item.enquiry_type
+
+        subscribers_list.append({
+            "id": item.id,
+            "email": item.email,
+            "name": item.full_name or item.email.split("@")[0].replace(".", " ").title(),
+            "phone": item.phone or "—",
+            "source": source_label,
+            "message": item.message,
+            "status": item.status or "PENDING",
+            "is_blocked": item.is_blocked,
+            "date": timezone.localtime(item.created_at).strftime("%b. %d, %Y") if item.created_at else "",
+            "time": timezone.localtime(item.created_at).strftime("%I:%M %p").lower() if item.created_at else "",
+            "created_at": item.created_at,
+        })
+
+    context = {
+        "admin": admin_user,
+        "subscribers": subscribers_list,
+        "search_query": search_query,
+        "status_filter": status_filter,
+        "total_count": total_count,
+        "active_count": active_count,
+        "month_count": month_count,
+        "today_count": today_count,
+        "page_title": "Newsletter Enquiries",
+        "page_subtitle": "Subscribers and newsletter leads captured across Surplus Market",
+    }
+    return render(request, "newsletter_enquiries.html", context)
+
+
+def newsletter_enquiry_delete_api(request, enquiry_id):
+    """AJAX endpoint to permanently delete a newsletter subscription."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    deleted, _ = ContactUsEnquiry.objects.filter(
+        id=enquiry_id
+    ).filter(
+        Q(enquiry_type__icontains="Newsletter") | Q(message__icontains="Newsletter")
+    ).delete()
+    if deleted:
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "message": "Newsletter subscriber removed successfully"})
+    return JsonResponse({"success": False, "message": "Subscriber record not found"}, status=404)
+
+
+@require_http_methods(["POST"])
+def newsletter_enquiry_bulk_delete_api(request):
+    """AJAX endpoint for bulk deletion of Newsletter Enquiry items."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return JsonResponse({"success": False, "message": "Unauthorized"}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        ids = data.get("ids", [])
+        if not ids:
+            return JsonResponse({"success": False, "message": "No IDs provided"}, status=400)
+
+        deleted_count, _ = ContactUsEnquiry.objects.filter(
+            id__in=ids
+        ).filter(
+            Q(enquiry_type__icontains="Newsletter") | Q(message__icontains="Newsletter")
+        ).delete()
+        cache.delete("ctx_pending_counts_v7")
+        return JsonResponse({"success": True, "deleted_count": deleted_count})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+def newsletter_export_csv(request):
+    """Export newsletter subscribers as a downloadable CSV."""
+    admin_user = _get_authenticated_admin(request)
+    if not admin_user:
+        return redirect("admin_login_page")
+    import csv
+    from django.http import HttpResponse
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="newsletter_subscribers.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(["ID", "Email", "Name", "Phone", "Source", "Status", "Subscribed At"])
+
+    qs = ContactUsEnquiry.objects.filter(
+        Q(enquiry_type__icontains="Newsletter") | Q(message__icontains="Newsletter")
+    ).order_by("-created_at")
+
+    for item in qs:
+        source_label = "Website"
+        if item.message and " via " in item.message:
+            source_label = item.message.split(" via ", 1)[1].rstrip(".")
+        date_str = timezone.localtime(item.created_at).strftime("%Y-%m-%d %H:%M:%S") if item.created_at else ""
+        writer.writerow([item.id, item.email, item.full_name, item.phone, source_label, item.status, date_str])
+
+    return response
 
 
 # -------------------------------------------------------------
@@ -6008,7 +6192,7 @@ def partnership_enquiries_view(request):
     if enquiries_list is None:
         db_enquiries = (
             PartnershipEnquiry.objects
-            .only("id", "name", "email", "business_location", "partnership_interest", "subject", "collaboration_details", "created_at", "status")
+            .only("id", "name", "email", "phone", "business_location", "partnership_interest", "subject", "collaboration_details", "created_at", "status")
             .order_by("-created_at")
         )
         enquiries_list = []
@@ -6017,6 +6201,7 @@ def partnership_enquiries_view(request):
                 "id": item.id,
                 "name": item.name,
                 "email": item.email,
+                "phone": item.phone or "N/A",
                 "location": item.business_location or "N/A",
                 "interest": item.partnership_interest or "Partnership",
                 "subject": item.subject or "Strategic Proposal",

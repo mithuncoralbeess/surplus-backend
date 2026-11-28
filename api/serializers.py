@@ -94,6 +94,8 @@ class PartnershipEnquirySerializer(serializers.ModelSerializer):
     location = serializers.CharField(write_only=True, required=False, allow_blank=True)
     interest = serializers.CharField(write_only=True, required=False, allow_blank=True)
     message = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    mobile_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = PartnershipEnquiry
@@ -101,6 +103,8 @@ class PartnershipEnquirySerializer(serializers.ModelSerializer):
             'id',
             'name', 
             'email', 
+            'phone',
+            'mobile_number',
             'business_location', 
             'partnership_interest', 
             'subject', 
@@ -115,6 +119,8 @@ class PartnershipEnquirySerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'phone' not in data_copy and 'mobile_number' in data_copy:
+            data_copy['phone'] = data_copy.get('mobile_number', '')
         if 'location' in data_copy and 'business_location' not in data_copy:
             data_copy['business_location'] = data_copy.get('location', '')
         if 'interest' in data_copy and 'partnership_interest' not in data_copy:

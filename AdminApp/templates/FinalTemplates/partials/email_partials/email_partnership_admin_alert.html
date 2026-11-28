@@ -97,6 +97,9 @@
                                 <p style="margin: 0 0 8px 0;"><strong>Proposal ID:</strong> <span style="font-family: monospace;">#{{ enquiry.id }}</span></p>
                                 <p style="margin: 0 0 8px 0;"><strong>Partner Name:</strong> {{ enquiry.name }}</p>
                                 <p style="margin: 0 0 8px 0;" class="break-word"><strong>Email:</strong> <a href="mailto:{{ enquiry.email }}" style="color: #0a5c48; text-decoration: none; font-weight: 600;">{{ enquiry.email }}</a></p>
+                                {% if enquiry.phone or phone %}
+                                <p style="margin: 0 0 8px 0;"><strong>Phone:</strong> <a href="tel:{{ enquiry.phone|default:phone }}" style="color: #0a5c48; text-decoration: none; font-weight: 600;">{{ enquiry.phone|default:phone }}</a></p>
+                                {% endif %}
                                 <p style="margin: 0 0 8px 0;"><strong>Business Location:</strong> {{ enquiry.business_location|default:"Not specified" }}</p>
                                 <p style="margin: 0 0 8px 0;"><strong>Partnership Interest:</strong> <span style="display: inline-block; background: #0a5c48; color: #ffffff; padding: 3px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">{{ enquiry.partnership_interest|default:"Strategic Partnership" }}</span></p>
                                 {% if enquiry.subject %}

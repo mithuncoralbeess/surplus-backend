@@ -1399,6 +1399,7 @@ class EmailService:
         """
         name = getattr(enquiry, "name", None) or (enquiry.get("name") if isinstance(enquiry, dict) else "") or "Prospective Partner"
         email = getattr(enquiry, "email", None) or (enquiry.get("email") if isinstance(enquiry, dict) else "")
+        phone = getattr(enquiry, "phone", None) or (enquiry.get("phone") if isinstance(enquiry, dict) else "") or (enquiry.get("mobile_number") if isinstance(enquiry, dict) else "")
         business_location = getattr(enquiry, "business_location", None) or (enquiry.get("business_location") if isinstance(enquiry, dict) else "")
         partnership_interest = getattr(enquiry, "partnership_interest", None) or (enquiry.get("partnership_interest") if isinstance(enquiry, dict) else "") or "Strategic Partnership"
         subject_text = getattr(enquiry, "subject", None) or (enquiry.get("subject") if isinstance(enquiry, dict) else "")
@@ -1413,6 +1414,7 @@ class EmailService:
             "enquiry": enquiry,
             "name": name,
             "email": email,
+            "phone": phone,
             "business_location": business_location,
             "partnership_interest": partnership_interest,
             "subject": subject_text,
@@ -1435,6 +1437,7 @@ class EmailService:
                 f"<h2>New Partnership Proposal Received</h2>"
                 f"<p><strong>Partner Name:</strong> {name}</p>"
                 f"<p><strong>Email:</strong> {email}</p>"
+                f"<p><strong>Phone:</strong> {phone or 'Not Provided'}</p>"
                 f"<p><strong>Location:</strong> {business_location}</p>"
                 f"<p><strong>Interest:</strong> {partnership_interest}</p>"
                 f"<p><strong>Subject:</strong> {subject_text}</p>"
