@@ -4,168 +4,212 @@
 {% block title %}Register Buyer | Surplus Admin Portal{% endblock %}
 
 {% block content %}
-<div class="container-fluid pb-5">
 <style>
 /* =============================================================
-   SURPLUS ADMIN PORTAL: BUYER REGISTRATION BY ADMIN
-   Strict Uniform Alignment & Dashkit Visual Standards
+   DASHSPACE DESIGN SYSTEM TOKENS & STYLES (REGISTER BUYER)
    ============================================================= */
-
-/* Admin Submitter Status Verification Banner */
-.admin-verification-banner {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(16, 185, 129, 0.06) 100%);
-    border: 1.5px solid rgba(37, 99, 235, 0.22);
+:root {
+    --dash-primary: #4f46e5;
+    --dash-primary-hover: #4338ca;
+    --dash-primary-light: rgba(79, 70, 229, 0.08);
+    --dash-primary-subtle: #eef2ff;
+    --dash-dark: #0f172a;
+    --dash-card: #ffffff;
+    --dash-border: #e2e8f0;
+    --dash-border-subtle: #f8fafc;
+    --dash-text-dark: #1e293b;
+    --dash-text-sub: #64748b;
+    --dash-radius-sm: 6px;
+    --dash-radius-md: 8px;
+    --dash-radius-lg: 12px;
+    --dash-radius-pill: 9999px;
+    --dash-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
 }
 
-[data-bs-theme="dark"] .admin-verification-banner {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
-    border-color: rgba(37, 99, 235, 0.35);
+/* Breadcrumbs */
+.dash-breadcrumb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--dash-radius-pill);
+    background: #f1f5f9;
+    border: 1px solid var(--dash-border);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+.dash-breadcrumb-pill a {
+    color: var(--dash-text-sub);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.dash-breadcrumb-pill a:hover {
+    color: var(--dash-primary);
+}
+.dash-breadcrumb-pill .sep {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+.dash-breadcrumb-pill .current {
+    color: var(--dash-text-dark);
+    font-weight: 600;
+}
+
+/* Page Header */
+.dash-header-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--dash-text-dark);
+    letter-spacing: -0.02em;
+}
+
+/* Buttons */
+.btn-dash-primary {
+    background: var(--dash-primary);
+    border: 1px solid var(--dash-primary-hover);
+    color: #ffffff !important;
+    font-weight: 600;
+    border-radius: var(--dash-radius-md);
+    padding: 0.55rem 1.25rem;
+    font-size: 0.875rem;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+}
+.btn-dash-primary:hover {
+    background: var(--dash-primary-hover);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+    transform: translateY(-1px);
+}
+.btn-dash-light {
+    background: #ffffff;
+    border: 1px solid var(--dash-border);
+    color: var(--dash-text-dark) !important;
+    font-weight: 600;
+    border-radius: var(--dash-radius-md);
+    padding: 0.55rem 1.15rem;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+}
+.btn-dash-light:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* Admin Verification Banner */
+.admin-verification-banner {
+    background: #ffffff !important;
+    border: 1px solid var(--dash-border) !important;
+    border-left: 4px solid var(--dash-primary) !important;
+    border-radius: var(--dash-radius-lg) !important;
+    box-shadow: var(--dash-shadow-card) !important;
+    padding: 1.15rem 1.45rem !important;
 }
 
 .admin-avatar-pill {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--dash-primary) 0%, #312e81 100%);
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
 }
 
-/* Cards & Container Shells with Color-Coded Section Tops */
+/* Cards & Sections */
 .admin-form-card {
-    border-radius: 1rem !important;
-    border: 1.5px solid #e2e8f0 !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
-    margin-bottom: 2rem !important;
+    border-radius: var(--dash-radius-lg) !important;
+    border: 1px solid var(--dash-border) !important;
+    background: var(--dash-card) !important;
+    box-shadow: var(--dash-shadow-card) !important;
+    margin-bottom: 1.5rem !important;
     overflow: hidden;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .admin-form-card .card-header {
-    padding: 1.15rem 1.65rem !important;
-    background-color: #ffffff !important;
-    border-bottom: 1.5px solid #f1f5f9 !important;
+    padding: 1rem 1.35rem !important;
+    background-color: var(--dash-card) !important;
+    border-bottom: 1px solid var(--dash-border) !important;
 }
 
 .admin-form-card .card-body {
-    padding: 1.85rem !important;
+    padding: 1.35rem 1.5rem !important;
 }
 
-/* Color-Coded Card Top Accent Strips */
-.card-section-0 { border-top: 4px solid #10b981 !important; }
-.card-section-1 { border-top: 4px solid #2563eb !important; }
-.card-section-2 { border-top: 4px solid #6366f1 !important; }
-.card-section-3 { border-top: 4px solid #f59e0b !important; }
-
-/* Color Accent System Utilities */
-.bg-emerald-subtle { background-color: #ecfdf5 !important; }
-.text-emerald { color: #059669 !important; }
-.border-emerald-subtle { border-color: #a7f3d0 !important; }
-
-.bg-primary-subtle { background-color: #eff6ff !important; }
-.text-primary { color: #2563eb !important; }
-.border-primary-subtle { border-color: #bfdbfe !important; }
-
-.bg-indigo-subtle { background-color: #eef2ff !important; }
-.text-indigo { color: #4f46e5 !important; }
-.border-indigo-subtle { border-color: #c7d2fe !important; }
-
-.bg-amber-subtle { background-color: #fffbeb !important; }
-.text-amber { color: #d97706 !important; }
-.border-amber-subtle { border-color: #fde68a !important; }
-
-.section-icon-badge {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+/* Step Badges */
+.card-step-badge {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 0.85rem;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e0e7ff;
 }
 
-/* Labels: Strict 24px height prevents any vertical misalignment across columns */
+/* Form Labels */
 .form-label-custom {
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 0.45rem !important;
+    margin-bottom: 0.4rem !important;
     font-size: 0.825rem !important;
     font-weight: 600 !important;
     color: #1e293b !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    letter-spacing: -0.01em !important;
-}
-
-[data-bs-theme="dark"] .form-label-custom {
-    color: #cbd5e1 !important;
 }
 
 .form-label-custom .label-title {
     display: inline-flex !important;
     align-items: center !important;
     gap: 0.35rem !important;
-    white-space: nowrap !important;
     font-weight: 600 !important;
     color: inherit !important;
 }
 
 .form-label-custom .badge-optional {
     font-size: 0.68rem !important;
-    font-weight: 600 !important;
-    padding: 0.15rem 0.55rem !important;
-    border-radius: 999px !important;
+    font-weight: 500 !important;
+    padding: 0.15rem 0.5rem !important;
+    border-radius: 4px !important;
     background-color: #f1f5f9 !important;
     color: #64748b !important;
     border: 1px solid #e2e8f0 !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
 }
 
-/* Controls: Strict 46px height across Inputs, Selects, and Input-Groups */
-.form-control-custom,
-.form-select-custom,
-.input-group-text,
-.input-group .form-control-custom,
-.input-group .form-select-custom,
-.input-group .form-control,
-.input-group .form-select {
-    height: 46px !important;
-    min-height: 46px !important;
-    max-height: 46px !important;
-    line-height: 44px !important;
-    font-size: 0.895rem !important;
-}
-
+/* Form Controls: Clean DashSpace 42px height */
 .form-control-custom,
 .form-select-custom {
-    border: 1.5px solid #cbd5e1 !important;
-    border-radius: 0.65rem !important;
-    padding: 0 0.95rem !important;
-    font-weight: 500 !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 0.875rem !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.85rem !important;
+    font-weight: 400 !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.form-control-custom::placeholder {
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
 }
 
 .form-control-custom:hover,
 .form-select-custom:hover {
     border-color: #94a3b8 !important;
-    background-color: #f8fafc !important;
 }
 
 .form-control-custom:focus,
 .form-select-custom:focus {
-    border-color: #2563eb !important;
+    border-color: #6366f1 !important;
     background-color: #ffffff !important;
-    box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
     outline: none !important;
 }
 
@@ -174,82 +218,40 @@ textarea.form-control-custom {
     min-height: 95px !important;
     max-height: none !important;
     line-height: 1.55 !important;
-    padding: 0.8rem 1rem !important;
+    padding: 0.75rem 0.85rem !important;
+    resize: vertical !important;
 }
 
-/* Input Groups */
-.input-group {
-    border-radius: 0.65rem !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    position: relative;
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
-}
-
-.addon-icon {
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    font-size: 1.05rem !important;
-    border: 1.5px solid #cbd5e1 !important;
-    border-right: none !important;
-    border-top-left-radius: 0.65rem !important;
-    border-bottom-left-radius: 0.65rem !important;
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    background-color: #f8fafc !important;
+.form-text {
+    font-size: 0.75rem !important;
     color: #64748b !important;
-    transition: all 0.15s ease-in-out;
-    flex-shrink: 0;
+    margin-top: 0.35rem !important;
+    line-height: 1.4 !important;
+    display: block !important;
 }
 
-.input-group > .form-control-custom:not(:first-child),
-.input-group > .form-select-custom:not(:first-child) {
-    border-left: none !important;
-    border-top-left-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-    border-top-right-radius: 0.65rem !important;
-    border-bottom-right-radius: 0.65rem !important;
-}
-
-.input-group:focus-within .addon-icon {
-    border-color: #2563eb !important;
-}
-
-.input-group:focus-within > .form-control-custom,
-.input-group:focus-within > .form-select-custom {
-    border-color: #2563eb !important;
-}
-
-/* Entity Type Toggle Pills */
+/* Entity Toggle Cards */
 .entity-toggle-btn {
-    border: 1.5px solid #e2e8f0;
-    border-radius: 0.75rem;
-    padding: 0.85rem 1rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: var(--dash-radius-lg);
+    background: #ffffff;
+    padding: 1.15rem 1.25rem;
     cursor: pointer;
     transition: all 0.15s ease;
-    background: #ffffff;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
+    height: 100%;
 }
-
 .entity-toggle-btn:hover {
     background: #f8fafc;
-    border-color: #cbd5e1;
+    border-color: #94a3b8;
 }
-
 .entity-radio input:checked + .entity-toggle-btn {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #1e40af;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+    border-color: var(--dash-primary);
+    background: #eef2ff;
+    color: #312e81;
+    box-shadow: 0 0 0 1px var(--dash-primary), 0 2px 8px rgba(79, 70, 229, 0.12);
 }
 
 /* Category Checkable Pills */
@@ -257,66 +259,85 @@ textarea.form-control-custom {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 999px;
-    border: 1.5px solid #e2e8f0;
+    padding: 0.45rem 0.95rem;
+    border-radius: var(--dash-radius-pill);
+    border: 1px solid #cbd5e1;
     background: #ffffff;
-    color: #475569;
+    color: #334155;
     font-size: 0.825rem;
     font-weight: 500;
     cursor: pointer;
     user-select: none;
     transition: all 0.15s ease;
 }
-
 .category-pill-label:hover {
-    border-color: #cbd5e1;
+    border-color: #94a3b8;
     background: #f8fafc;
-    color: #1e293b;
+    color: #0f172a;
 }
-
 .category-checkbox:checked + .category-pill-label {
-    border-color: #4f46e5;
+    border-color: var(--dash-primary);
     background: #eef2ff;
     color: #4338ca;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.15);
 }
 
+/* Dark Mode Adjustments */
+[data-bs-theme="dark"] .admin-form-card,
+[data-bs-theme="dark"] .admin-verification-banner {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+[data-bs-theme="dark"] .form-control-custom,
+[data-bs-theme="dark"] .form-select-custom {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+[data-bs-theme="dark"] .entity-toggle-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+[data-bs-theme="dark"] .category-pill-label {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
 </style>
 
+<div class="container-fluid py-3 px-4 pb-5">
+
     <!-- Page Header & Breadcrumb -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 pb-3 border-bottom">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <nav class="custom-breadcrumb" aria-label="breadcrumb">
-                <ol class="breadcrumb-list list-unstyled d-flex align-items-center gap-2 mb-1 p-0 small text-muted">
-                    <li class="breadcrumb-item"><a href="/admin/dashboard/" class="text-decoration-none text-muted"><i class="bi bi-house-door-fill"></i> Dashboard</a></li>
-                    <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
-                    <li class="breadcrumb-item"><a href="/admin/users/" class="text-decoration-none text-muted">User Management</a></li>
-                    <li class="breadcrumb-separator text-muted opacity-50"><i class="bi bi-chevron-right fs-xs"></i></li>
-                    <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page"><span>Register Buyer</span></li>
-                </ol>
-            </nav>
-            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
-                <h1 class="header-title mb-0 fs-3 fw-bold text-dark">Register Buyer</h1>
+            <div class="dash-breadcrumb-pill">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill"></i> Dashboard</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <a href="/admin/users/">User Management</a>
+                <span class="sep"><i class="bi bi-chevron-right"></i></span>
+                <span class="current">Register Buyer</span>
+            </div>
+            <div class="d-flex align-items-center gap-2.5 flex-wrap">
+                <h1 class="dash-header-title mb-0">Register Buyer</h1>
                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold small">
                     <i class="bi bi-person-check-fill me-1"></i>Admin Registration Desk
                 </span>
-                <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle rounded-pill px-3 py-1 fw-semibold small">
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold small">
                     <i class="bi bi-shield-check me-1"></i>Verified Buyer Account
                 </span>
             </div>
-            <p class="header-subtitle mt-1 mb-0 text-muted small">
-                Admin Assisted Registration &mdash; Register and activate a new buyer profile directly into the Surplus marketplace directory.
+            <p class="dash-header-sub mt-1">
+                Admin Assisted Registration &mdash; Register, configure, and activate a verified buyer profile directly into the Surplus marketplace directory.
             </p>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <a href="/admin/users/" class="btn btn-outline-secondary px-3 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-medium">
+        <div class="d-flex align-items-center gap-2.5">
+            <a href="/admin/users/" class="btn btn-dash-light d-inline-flex align-items-center gap-2">
                 <i class="bi bi-arrow-left"></i> Manage Users
             </a>
-            <button type="submit" form="registerBuyerForm" id="btnSubmitTop"
-                class="btn btn-primary px-4 py-2 rounded-3 d-inline-flex align-items-center gap-2 fw-semibold shadow-sm">
-                <i class="bi bi-person-plus-fill fs-6"></i> Register Buyer
+            <button type="submit" form="registerBuyerForm" id="btnSubmitTop" class="btn btn-dash-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-person-plus-fill"></i> Register Buyer
             </button>
         </div>
     </div>
@@ -325,7 +346,7 @@ textarea.form-control-custom {
     {% if messages %}
     <div class="mb-4">
         {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3 p-3"
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show border-0 d-flex align-items-center gap-2 rounded-3 p-3 shadow-xs"
             role="alert">
             {% if message.tags == 'error' %}
             <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
@@ -340,30 +361,30 @@ textarea.form-control-custom {
     {% endif %}
 
     <!-- Admin Submitter Status Strip -->
-    <div class="admin-verification-banner mb-4 p-4 rounded-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs">
+    <div class="admin-verification-banner mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
         <div class="d-flex align-items-center gap-3">
             <div class="admin-avatar-pill d-flex align-items-center justify-content-center text-white flex-shrink-0">
-                <i class="bi bi-shield-fill-check fs-4"></i>
+                <i class="bi bi-shield-fill-check fs-5"></i>
             </div>
             <div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="fw-bold text-dark" style="font-size: 0.95rem;">Assisted Buyer Registration by Verified Admin:</span>
-                    <span class="badge bg-primary text-white font-monospace px-3 py-1">{{ admin_uid }}</span>
+                    <span class="badge bg-primary text-white font-monospace px-2.5 py-1">{{ admin_uid }}</span>
                     <span class="text-secondary small fw-medium">
                         ({% if admin.full_name %}{{ admin.full_name }} &bull; {% elif admin.username and admin.username != admin.email %}{{ admin.username }} &bull; {% endif %}{% if admin.email %}{{ admin.email }}{% elif admin.username %}{{ admin.username }}{% endif %})
                     </span>
                     {% if admin.account_type %}
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace py-0.5 px-2" style="font-size: 0.72rem;">{{ admin.account_type }}</span>
+                    <span class="badge bg-light text-secondary border font-monospace py-0.5 px-2" style="font-size: 0.72rem;">{{ admin.account_type }}</span>
                     {% endif %}
                 </div>
-                <div class="text-secondary small mt-1">
-                    The newly registered buyer will be created in <strong>User Management (Buyers)</strong> with verified admin audit attribution and login credentials.
+                <div class="text-secondary small mt-0.5">
+                    The newly registered buyer will be added to <strong>User Management</strong> with verified admin attribution, active role permissions, and access credentials.
                 </div>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
-                <i class="bi bi-patch-check-fill me-1"></i>Direct Registration
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill fw-semibold">
+                <i class="bi bi-patch-check-fill me-1"></i>Direct Portal Registration
             </span>
         </div>
     </div>
@@ -373,23 +394,19 @@ textarea.form-control-custom {
         {% csrf_token %}
 
         <div class="row justify-content-center">
-
-            <!-- MAIN FORM COLUMN -->
             <div class="col-xl-9 col-lg-10">
 
                 <!-- 1. Buyer Contact & Account Details -->
-                <div class="card admin-form-card card-section-0 mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-emerald-subtle text-emerald">
-                                <i class="bi bi-person-badge"></i>
-                            </div>
+                            <div class="card-step-badge">1</div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">1. Buyer Contact &amp; Account Details</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Buyer Contact &amp; Account Details</h6>
                                 <div class="text-muted small">Enter the primary buyer contact information and account username</div>
                             </div>
                         </div>
-                        <span class="badge bg-emerald-subtle text-emerald border border-emerald-subtle px-3 py-1 rounded-pill fw-semibold small">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold small">
                             <i class="bi bi-person-check-fill me-1"></i>Primary Contact
                         </span>
                     </div>
@@ -401,22 +418,18 @@ textarea.form-control-custom {
                                 <label for="fullNameInput" class="form-label-custom">
                                     <span class="label-title">Full Name / Contact Person <span class="text-danger">*</span></span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="fullNameInput" name="full_name"
-                                        value="{{ form_data.full_name|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
-                                </div>
+                                <input type="text" class="form-control form-control-custom" id="fullNameInput" name="full_name"
+                                    value="{{ form_data.full_name|default:'' }}" placeholder="e.g. Ahmed Al-Mansoor" required>
+                                <div class="form-text">Authorized procurement officer or trade contact</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="usernameInput" class="form-label-custom">
                                     <span class="label-title">Username</span>
                                     <span class="badge-optional">Auto-generated if empty</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon">@</span>
-                                    <input type="text" class="form-control form-control-custom font-monospace" id="usernameInput" name="username"
-                                        value="{{ form_data.username|default:'' }}" placeholder="e.g. ahmed_mansoor">
-                                </div>
+                                <input type="text" class="form-control form-control-custom font-monospace" id="usernameInput" name="username"
+                                    value="{{ form_data.username|default:'' }}" placeholder="e.g. ahmed_mansoor">
+                                <div class="form-text">Unique username for marketplace login</div>
                             </div>
                         </div>
 
@@ -426,27 +439,23 @@ textarea.form-control-custom {
                                     <span class="label-title">Mobile / WhatsApp Number <span class="text-danger">*</span></span>
                                     <span class="badge-optional">Intl. Format</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-telephone"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="buyerPhoneInput" name="phone"
-                                        value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000" required>
-                                </div>
+                                <input type="text" class="form-control form-control-custom font-monospace" id="buyerPhoneInput" name="phone"
+                                    value="{{ form_data.phone|default:'' }}" placeholder="+971 50 000 0000" required>
+                                <div class="form-text">Used for WhatsApp RFQ alerts and dispatch coordination</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="buyerEmailInput" class="form-label-custom">
                                     <span class="label-title">Email Address</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
-                                        value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
-                                </div>
+                                <input type="email" class="form-control form-control-custom" id="buyerEmailInput" name="email"
+                                    value="{{ form_data.email|default:'' }}" placeholder="buyer@company.com">
+                                <div class="form-text">Official company email for statements and invoices</div>
                             </div>
                         </div>
 
                         <!-- Checkbox & Status Options -->
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2 border-top mt-3">
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input cursor-pointer" type="checkbox" name="status" id="buyerStatusToggle" value="1" checked>
                                 <label class="form-check-label fw-semibold text-dark small cursor-pointer" for="buyerStatusToggle">
@@ -456,7 +465,7 @@ textarea.form-control-custom {
                             <div class="form-check mb-0">
                                 <input class="form-check-input cursor-pointer" type="checkbox" name="send_welcome_email" id="sendWelcomeEmailCheck" value="1" checked>
                                 <label class="form-check-label fw-semibold text-dark small cursor-pointer" for="sendWelcomeEmailCheck">
-                                    <i class="bi bi-envelope-paper-heart text-primary me-1"></i> Send welcome email (if email provided)
+                                    <i class="bi bi-envelope-paper text-primary me-1"></i> Send welcome email with credentials (if email provided)
                                 </label>
                             </div>
                         </div>
@@ -465,14 +474,12 @@ textarea.form-control-custom {
                 </div>
 
                 <!-- 2. Business Profile & Entity Type -->
-                <div class="card admin-form-card card-section-1 mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-primary-subtle text-primary">
-                                <i class="bi bi-building"></i>
-                            </div>
+                            <div class="card-step-badge">2</div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">2. Business Profile &amp; Entity Type</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Business Profile &amp; Entity Type</h6>
                                 <div class="text-muted small">Specify corporate trade classification, entity type, and company credentials</div>
                             </div>
                         </div>
@@ -491,11 +498,11 @@ textarea.form-control-custom {
                             </label>
                             <div class="row g-3">
                                 <div class="col-sm-6">
-                                    <label class="entity-radio d-block cursor-pointer">
+                                    <label class="entity-radio d-block cursor-pointer mb-0">
                                         <input type="radio" name="account_entity_type" value="COMPANY" class="d-none" id="entityCompany"
                                             {% if form_data.account_entity_type == 'COMPANY' or not form_data.account_entity_type %}checked{% endif %}>
                                         <div class="entity-toggle-btn">
-                                            <i class="bi bi-buildings fs-4 text-primary"></i>
+                                            <i class="bi bi-buildings fs-3 text-primary"></i>
                                             <div>
                                                 <div class="fw-bold small text-dark">Company / Corporate Entity</div>
                                                 <div class="text-muted" style="font-size: 0.75rem;">Wholesaler, retailer, distributor, commercial enterprise</div>
@@ -504,11 +511,11 @@ textarea.form-control-custom {
                                     </label>
                                 </div>
                                 <div class="col-sm-6">
-                                    <label class="entity-radio d-block cursor-pointer">
+                                    <label class="entity-radio d-block cursor-pointer mb-0">
                                         <input type="radio" name="account_entity_type" value="INDIVIDUAL" class="d-none" id="entityIndividual"
                                             {% if form_data.account_entity_type == 'INDIVIDUAL' %}checked{% endif %}>
                                         <div class="entity-toggle-btn">
-                                            <i class="bi bi-person-badge fs-4 text-secondary"></i>
+                                            <i class="bi bi-person-badge fs-3 text-secondary"></i>
                                             <div>
                                                 <div class="fw-bold small text-dark">Individual / Independent Trader</div>
                                                 <div class="text-muted" style="font-size: 0.75rem;">Sole proprietor or independent personal buyer</div>
@@ -526,37 +533,31 @@ textarea.form-control-custom {
                                     <span class="label-title">Company Name</span>
                                     <span class="badge-optional">Commercial Name</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-building"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="buyerCompanyInput" name="company_name"
-                                        value="{{ form_data.company_name|default:'' }}" placeholder="e.g. Gulf Trading LLC">
-                                </div>
+                                <input type="text" class="form-control form-control-custom" id="buyerCompanyInput" name="company_name"
+                                    value="{{ form_data.company_name|default:'' }}" placeholder="e.g. Gulf Trading LLC">
+                                <div class="form-text">Registered trade entity name</div>
                             </div>
                             <div class="col-md-4">
                                 <label for="buyerBusinessTypeSelect" class="form-label-custom">
                                     <span class="label-title">Business Type</span>
                                     <span class="badge-optional">Industry Sector</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-briefcase"></i></span>
-                                    <select class="form-select form-select-custom" id="buyerBusinessTypeSelect" name="business_type">
-                                        <option value="">-- Select Business Type --</option>
-                                        {% for bt in business_types %}
-                                        <option value="{{ bt }}" {% if form_data.business_type == bt %}selected{% endif %}>{{ bt }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                                <select class="form-select form-select-custom" id="buyerBusinessTypeSelect" name="business_type">
+                                    <option value="">-- Select Business Type --</option>
+                                    {% for bt in business_types %}
+                                    <option value="{{ bt }}" {% if form_data.business_type == bt %}selected{% endif %}>{{ bt }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Primary commercial category</div>
                             </div>
                             <div class="col-md-4" id="taxFieldCol">
                                 <label for="taxRegInput" class="form-label-custom">
                                     <span class="label-title">TRN / Tax Registration</span>
                                     <span class="badge-optional">Optional</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-receipt"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="taxRegInput" name="tax_registration_number"
-                                        value="{{ form_data.tax_registration_number|default:'' }}" placeholder="e.g. 100XXXXXXXXX003">
-                                </div>
+                                <input type="text" class="form-control form-control-custom font-monospace" id="taxRegInput" name="tax_registration_number"
+                                    value="{{ form_data.tax_registration_number|default:'' }}" placeholder="e.g. 100XXXXXXXXX003">
+                                <div class="form-text">VAT or tax identification number</div>
                             </div>
                         </div>
 
@@ -564,18 +565,16 @@ textarea.form-control-custom {
                 </div>
 
                 <!-- 3. Geographic Location & Address -->
-                <div class="card admin-form-card card-section-2 mb-4 border-0 shadow-sm">
+                <div class="card admin-form-card mb-4">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-indigo-subtle text-indigo">
-                                <i class="bi bi-geo-alt"></i>
-                            </div>
+                            <div class="card-step-badge">3</div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">3. Geographic Location &amp; Address</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Geographic Location &amp; Address</h6>
                                 <div class="text-muted small">Registered location, country jurisdiction, and dispatch destination</div>
                             </div>
                         </div>
-                        <span class="badge bg-indigo-subtle text-indigo border border-indigo-subtle px-3 py-1 rounded-pill fw-semibold small">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill fw-semibold small">
                             <i class="bi bi-pin-map-fill me-1"></i>Location
                         </span>
                     </div>
@@ -587,25 +586,21 @@ textarea.form-control-custom {
                                     <span class="label-title">Country</span>
                                     <span class="badge-optional">Jurisdiction</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-globe"></i></span>
-                                    <select class="form-select form-select-custom" id="buyerCountrySelect" name="country">
-                                        {% for c in countries %}
-                                        <option value="{{ c }}" {% if form_data.country == c or not form_data.country and c == 'United Arab Emirates' %}selected{% endif %}>{{ c }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                                <select class="form-select form-select-custom" id="buyerCountrySelect" name="country">
+                                    {% for c in countries %}
+                                    <option value="{{ c }}" {% if form_data.country == c or not form_data.country and c == 'United Arab Emirates' %}selected{% endif %}>{{ c }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Base country of business registration</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="buyerLocationInput" class="form-label-custom">
                                     <span class="label-title">City / Business Hub</span>
                                     <span class="badge-optional">City</span>
                                 </label>
-                                <div class="input-group">
-                                    <span class="addon-icon"><i class="bi bi-buildings"></i></span>
-                                    <input type="text" class="form-control form-control-custom" id="buyerLocationInput" name="business_location"
-                                        value="{{ form_data.business_location|default:'' }}" placeholder="e.g. Dubai, Abu Dhabi, Riyadh">
-                                </div>
+                                <input type="text" class="form-control form-control-custom" id="buyerLocationInput" name="business_location"
+                                    value="{{ form_data.business_location|default:'' }}" placeholder="e.g. Dubai, Abu Dhabi, Riyadh">
+                                <div class="form-text">Commercial trading zone or freezone</div>
                             </div>
                             <div class="col-12">
                                 <label for="buyerAddressInput" class="form-label-custom">
@@ -614,25 +609,24 @@ textarea.form-control-custom {
                                 </label>
                                 <textarea class="form-control form-control-custom" id="buyerAddressInput" name="business_address" rows="2"
                                     placeholder="Street address, building name, warehouse zone, or logistics park...">{{ form_data.business_address|default:'' }}</textarea>
+                                <div class="form-text">Physical address for shipment delivery and dispatch</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 4. Interested Product Categories & Notes -->
-                <div class="card admin-form-card card-section-3 mb-4 border-0 shadow-sm" id="categorySection">
+                <div class="card admin-form-card mb-4" id="categorySection">
                     <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="section-icon-badge bg-amber-subtle text-amber">
-                                <i class="bi bi-tags"></i>
-                            </div>
+                            <div class="card-step-badge">4</div>
                             <div>
-                                <h6 class="fw-bold mb-0 text-dark">4. Interested Product Categories</h6>
+                                <h6 class="fw-bold mb-0 text-dark">Interested Product Categories</h6>
                                 <div class="text-muted small">Select the surplus categories the buyer is interested in purchasing (Min 1, Max 3)</div>
                             </div>
                         </div>
-                        <span class="badge bg-amber-subtle text-amber border border-amber-subtle px-3 py-1 rounded-pill fw-semibold small" id="categoryCountBadge">
-                            <i class="bi bi-star-fill me-1"></i>Selected: 0 / 3 (Min 1)
+                        <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill fw-semibold small font-monospace" id="categoryCountBadge">
+                            <i class="bi bi-star-fill text-warning me-1"></i>Selected: 0 / 3 (Min 1)
                         </span>
                     </div>
 
@@ -654,7 +648,7 @@ textarea.form-control-custom {
                                 <span><strong>Category selection required:</strong> Please select at least 1 interested product category (maximum 3).</span>
                             </div>
 
-                            <div class="d-flex flex-wrap gap-2 mt-1">
+                            <div class="d-flex flex-wrap gap-2 mt-2">
                                 {% for cat in categories_list %}
                                 <label class="cursor-pointer mb-0 category-pill-wrapper">
                                     <input type="checkbox" name="category_interested" value="{{ cat }}" class="d-none category-checkbox"
@@ -675,6 +669,7 @@ textarea.form-control-custom {
                             </label>
                             <textarea class="form-control form-control-custom" id="adminNotesInput" name="admin_notes" rows="2"
                                 placeholder="Registration channel, credit rating, internal verification notes, or referral source...">{{ form_data.admin_notes|default:'' }}</textarea>
+                            <div class="form-text">Private admin notes for audit tracking and account verification</div>
                         </div>
 
                     </div>
@@ -683,16 +678,15 @@ textarea.form-control-custom {
                 <!-- 5. Form Submission Action Bar -->
                 <div class="card admin-form-card border-0 shadow-sm p-4 mb-4">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                        <a href="/admin/users/"
-                            class="btn btn-outline-secondary px-4 py-2.5 rounded-3 text-decoration-none fw-medium d-inline-flex align-items-center gap-2">
+                        <a href="/admin/users/" class="btn btn-dash-light d-inline-flex align-items-center gap-2">
                             <i class="bi bi-arrow-left"></i> Cancel &amp; Return
                         </a>
                         <div class="d-flex align-items-center gap-3">
                             <span class="text-muted small d-none d-sm-inline">
-                                <i class="bi bi-shield-check text-success me-1"></i> Registered by Admin ID <strong>{{ admin_uid }}</strong>
+                                <i class="bi bi-shield-check text-success me-1"></i> Registering by Admin ID <strong class="font-monospace text-dark">{{ admin_uid }}</strong>
                             </span>
                             <button type="submit" form="registerBuyerForm" id="btnSubmitBottom"
-                                class="btn btn-primary btn-lg px-5 py-2.5 rounded-3 fw-bold d-inline-flex align-items-center gap-2 shadow-sm">
+                                class="btn btn-dash-primary btn-lg px-5 py-2.5 d-inline-flex align-items-center gap-2">
                                 <i class="bi bi-person-plus-fill"></i> Register Buyer
                             </button>
                         </div>
@@ -720,13 +714,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const count = checkedList.length;
 
         if (categoryCountBadge) {
-            categoryCountBadge.innerHTML = `<i class="bi bi-star-fill me-1"></i>Selected: ${count} / ${MAX_CATEGORIES} (Min 1)`;
+            categoryCountBadge.innerHTML = `<i class="bi bi-star-fill text-warning me-1"></i>Selected: ${count} / ${MAX_CATEGORIES} (Min 1)`;
             if (count >= MIN_CATEGORIES && count <= MAX_CATEGORIES) {
-                categoryCountBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small';
+                categoryCountBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold small font-monospace';
             } else if (count === 0) {
-                categoryCountBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1 rounded-pill fw-semibold small';
+                categoryCountBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-1 rounded-pill fw-semibold small font-monospace';
             } else {
-                categoryCountBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill fw-semibold small';
+                categoryCountBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill fw-semibold small font-monospace';
             }
         }
 
@@ -752,49 +746,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     categoryCheckboxes.forEach(cb => {
-        cb.addEventListener('change', () => {
+        cb.addEventListener('change', function () {
             const checkedList = Array.from(categoryCheckboxes).filter(c => c.checked);
             if (checkedList.length > MAX_CATEGORIES) {
-                cb.checked = false;
+                this.checked = false;
                 if (categoryLimitAlert) {
                     categoryLimitAlert.classList.remove('d-none');
-                    setTimeout(() => {
-                        categoryLimitAlert.classList.add('d-none');
-                    }, 4000);
+                    setTimeout(() => categoryLimitAlert.classList.add('d-none'), 3500);
                 }
             } else {
                 if (categoryLimitAlert) categoryLimitAlert.classList.add('d-none');
             }
             syncCategoryState();
         });
-
-        if (cb.checked) {
-            const label = cb.closest('label')?.querySelector('.category-pill-label');
-            label?.querySelector('.check-icon')?.classList.remove('d-none');
-        }
-    });
-
-    registerForm?.addEventListener('submit', function (e) {
-        const count = Array.from(categoryCheckboxes).filter(cb => cb.checked).length;
-        if (count < MIN_CATEGORIES) {
-            e.preventDefault();
-            if (categoryMinAlert) {
-                categoryMinAlert.classList.remove('d-none');
-                categoryMinAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return false;
-        }
-        if (count > MAX_CATEGORIES) {
-            e.preventDefault();
-            if (categoryLimitAlert) {
-                categoryLimitAlert.classList.remove('d-none');
-                categoryLimitAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return false;
-        }
     });
 
     syncCategoryState();
+
+    // Client-side submit validation: check required categories
+    if (registerForm) {
+        registerForm.addEventListener('submit', function (e) {
+            const checkedCount = Array.from(categoryCheckboxes).filter(cb => cb.checked).length;
+            if (checkedCount < MIN_CATEGORIES) {
+                e.preventDefault();
+                if (categoryMinAlert) {
+                    categoryMinAlert.classList.remove('d-none');
+                    categoryMinAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
