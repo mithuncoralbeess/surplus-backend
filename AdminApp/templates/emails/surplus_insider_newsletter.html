@@ -240,27 +240,27 @@
                                         <!-- Pill Badge -->
                                         <div style="display: inline-block; background-color: #e8f5f1; border-radius: 50px; padding: 5px 12px; margin-bottom: 14px; border: 1px solid #bbf7d0;">
                                             <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #0a5c48; letter-spacing: 0.2px;">
-                                                01 &middot; {{ blog.category|default:blog_1.category|default:"Featured Article" }}
+                                                01 &middot; {{ blog.category|default:"Featured Article" }}
                                             </span>
                                         </div>
 
                                         <!-- Headline -->
                                         <h2 style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 21px; line-height: 27px; font-weight: 800; color: #0b1a2b; letter-spacing: -0.3px;">
-                                            <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="color: #0b1a2b; text-decoration: none;">
-                                                {{ blog.title|default:blog_1.title|default:"7 Industries Most Affected by Overstock Problems" }}
+                                            <a href="{{ blog.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="color: #0b1a2b; text-decoration: none;">
+                                                {{ blog.title|default:"7 Industries Most Affected by Overstock Problems" }}
                                             </a>
                                         </h2>
 
                                         <!-- Description -->
                                         <p style="margin: 0 0 22px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 20px; color: #475569;">
-                                            {{ blog.excerpt|default:blog_1.excerpt|default:"Industries prone to overstock problems, why excess inventory builds up, and practical ways businesses can clear surplus stock." }}
+                                            {{ blog.excerpt|default:"Industries prone to overstock problems, why excess inventory builds up, and practical ways businesses can clear surplus stock." }}
                                         </p>
 
                                         <!-- Button -->
                                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="left" class="sec1-btn-table" style="margin: 0 !important; margin-left: 0 !important;">
                                             <tr>
                                                 <td bgcolor="#0a5c48" style="border-radius: 6px; box-shadow: 0 4px 12px rgba(10, 92, 72, 0.25);" class="sec1-btn-cell">
-                                                    <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" class="sec1-btn" style="display: inline-block; padding: 12px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 500; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
+                                                    <a href="{{ blog.url|default:'https://surplusmarket.com/blog' }}" target="_blank" class="sec1-btn" style="display: inline-block; padding: 12px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; font-weight: 500; color: #ffffff; text-decoration: none; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap;">
                                                         READ FULL ARTICLE &nbsp;&rarr;
                                                     </a>
                                                 </td>
@@ -271,8 +271,8 @@
 
                                     <!-- Right Image Column -->
                                     <td width="240" height="235" valign="top" align="right" class="sec1-right" style="width: 240px; height: 235px; vertical-align: top;">
-                                        <a href="{{ blog.url|default:blog_1.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="text-decoration: none; display: block;">
-                                            <img class="sec1-img" src="{{ blog.image_url|default:blog_1.image_url|default:'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80' }}" alt="{{ blog.title|default:blog_1.title|default:'Featured Article' }}" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
+                                        <a href="{{ blog.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="text-decoration: none; display: block;">
+                                            <img class="sec1-img" src="{{ blog.image_url|default:'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80' }}" alt="{{ blog.title|default:'Featured Article' }}" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
                                         </a>
                                     </td>
                                 </tr>
@@ -411,15 +411,57 @@
                     <!-- 7. FOOTER                                                      -->
                     <!-- ============================================================== -->
                     <tr>
-                        <td style="padding: 22px 34px 28px 34px; text-align: center;" class="mobile-pad">
-                            <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; color: #64748b; font-weight: 500; display: block; margin-bottom: 8px;">
-                                Surplus Market &nbsp;&middot;&nbsp; Where inventory meets opportunity.
-                            </span>
-                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #94a3b8;">
-                                <a href="{{ blog_list_url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="color: #0a5c48; text-decoration: none; font-weight: 600;">The Surplus Blog</a> &nbsp;&bull;&nbsp; 
-                                <a href="{{ inventory_url|default:'https://surplusmarket.com/lots' }}" target="_blank" style="color: #64748b; text-decoration: none;">Browse Wholesale Lots</a> &nbsp;&bull;&nbsp; 
-                                <a href="{{ contact_url|default:'https://surplusmarket.com/contact' }}" target="_blank" style="color: #64748b; text-decoration: none;">Contact Trade Desk</a>
+                        <td align="center" style="padding: 26px 34px 34px 34px; text-align: center; background-color: #ffffff;" class="mobile-pad">
+                            
+                            <!-- Social Media Icons (Centered Row) -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto 16px auto;">
+                                <tr>
+                                    <!-- YouTube -->
+                                    <td align="center" valign="middle" style="padding: 0 10px;">
+                                        <a href="https://www.youtube.com/@surplusmarket" target="_blank" rel="noopener noreferrer" style="text-decoration: none; display: inline-block;">
+                                            <img src="https://img.icons8.com/ios-filled/50/71717a/youtube-play.png" alt="YouTube" width="22" height="22" style="display: block; width: 22px; height: 22px; border: 0; outline: none; opacity: 0.85;" />
+                                        </a>
+                                    </td>
+                                    <!-- LinkedIn -->
+                                    <td align="center" valign="middle" style="padding: 0 10px;">
+                                        <a href="https://www.linkedin.com/company/surplusmarket" target="_blank" rel="noopener noreferrer" style="text-decoration: none; display: inline-block;">
+                                            <img src="https://img.icons8.com/ios-filled/50/71717a/linkedin.png" alt="LinkedIn" width="22" height="22" style="display: block; width: 22px; height: 22px; border: 0; outline: none; opacity: 0.85;" />
+                                        </a>
+                                    </td>
+                                    <!-- Instagram -->
+                                    <td align="center" valign="middle" style="padding: 0 10px;">
+                                        <a href="https://www.instagram.com/surplusmarket" target="_blank" rel="noopener noreferrer" style="text-decoration: none; display: inline-block;">
+                                            <img src="https://img.icons8.com/ios-filled/50/71717a/instagram-new.png" alt="Instagram" width="22" height="22" style="display: block; width: 22px; height: 22px; border: 0; outline: none; opacity: 0.85;" />
+                                        </a>
+                                    </td>
+                                    <!-- Reddit -->
+                                    <td align="center" valign="middle" style="padding: 0 10px;">
+                                        <a href="https://www.reddit.com/r/surplusmarket" target="_blank" rel="noopener noreferrer" style="text-decoration: none; display: inline-block;">
+                                            <img src="https://img.icons8.com/ios-filled/50/71717a/reddit.png" alt="Reddit" width="22" height="22" style="display: block; width: 22px; height: 22px; border: 0; outline: none; opacity: 0.85;" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Navigation Links with Pipe Separator -->
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 20px; color: #4b5563; margin-bottom: 10px;">
+                                <a href="{{ blog_list_url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="color: #4b5563; text-decoration: underline; font-weight: 500;">The Surplus Blog</a>
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                                <a href="{{ inventory_url|default:'https://surplusmarket.com/lots' }}" target="_blank" style="color: #4b5563; text-decoration: underline; font-weight: 500;">Browse Wholesale Lots</a>
+                                &nbsp;&nbsp;|&nbsp;&nbsp;
+                                <a href="{{ contact_url|default:'https://surplusmarket.com/contact' }}" target="_blank" style="color: #4b5563; text-decoration: underline; font-weight: 500;">Help &amp; Trade Desk</a>
                             </div>
+
+                            <!-- Unsubscribe Link -->
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; margin-bottom: 12px;">
+                                <a href="{{ unsubscribe_url|default:'https://surplusmarket.com/unsubscribe' }}" target="_blank" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>
+                            </div>
+
+                            <!-- Copyright & Tagline -->
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; color: #64748b;">
+                                &copy; Surplus Market &middot; Where inventory meets opportunity.
+                            </div>
+
                         </td>
                     </tr>
 
