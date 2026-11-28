@@ -155,25 +155,25 @@
 
 /* Filter Bar */
 .filter-bar {
-    padding: 1rem 1.25rem;
+    padding: 1.15rem 1.5rem;
     border-bottom: 1px solid var(--dash-border);
     background: #ffffff;
 }
 .search-input-wrap {
     position: relative;
-    flex: 1 1 280px;
-    min-width: 220px;
+    width: 320px;
+    max-width: 100%;
 }
 .search-input-wrap i {
     position: absolute;
-    left: 0.9rem;
+    left: 1rem;
     top: 50%;
     transform: translateY(-50%);
     color: #94a3b8;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 .search-input-wrap .form-control {
-    padding-left: 2.35rem;
+    padding-left: 2.5rem;
     height: 42px;
     border-radius: var(--dash-radius-md);
     border: 1px solid #cbd5e1;
@@ -185,8 +185,7 @@
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 .filter-select-wrap {
-    flex: 0 0 auto;
-    width: 165px;
+    width: 175px;
 }
 .filter-select {
     height: 42px;
@@ -476,7 +475,7 @@
 
         <!-- Filters Row -->
         <div class="filter-bar">
-            <form method="GET" action="/admin/users/" class="d-flex flex-wrap align-items-center gap-2.5">
+            <form method="GET" action="/admin/users/" class="d-flex flex-wrap align-items-center gap-3">
                 <!-- Search Input -->
                 <div class="search-input-wrap">
                     <i class="bi bi-search"></i>
@@ -503,21 +502,14 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <button class="btn btn-dash-primary px-3" type="submit">
+                <button class="btn btn-dash-primary px-3.5" type="submit">
                     <i class="bi bi-filter me-1"></i> Filter
                 </button>
                 {% if search_query or type_filter and type_filter != 'all' or status_filter and status_filter != 'any' %}
-                <a href="/admin/users/" class="btn btn-dash-light px-3">
+                <a href="/admin/users/" class="btn btn-dash-light px-3.5">
                     <i class="bi bi-x-circle me-1"></i> Clear
                 </a>
                 {% endif %}
-
-                <!-- Filtered Count Badge -->
-                <div class="ms-auto d-flex align-items-center">
-                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill font-monospace" style="font-size: 0.78rem;">
-                        {{ users|length }} User{% if users|length != 1 %}s{% endif %} Filtered
-                    </span>
-                </div>
             </form>
         </div>
 
