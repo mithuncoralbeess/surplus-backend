@@ -58,6 +58,10 @@ from .views import (
     contact_enquiries_view,
     contact_enquiry_delete_api,
     contact_enquiry_bulk_delete_api,
+    newsletter_enquiries_view,
+    newsletter_enquiry_delete_api,
+    newsletter_enquiry_bulk_delete_api,
+    newsletter_export_csv,
     sourcing_enquiries_view,
     sourcing_enquiry_update_status_api,
     sourcing_enquiry_delete_api,
@@ -222,6 +226,12 @@ urlpatterns = [
     path("contact-us/", contact_enquiries_view, name="contact_enquiries_alias"),
     path("api/enquiries/contact-us/<int:enquiry_id>/delete/", contact_enquiry_delete_api, name="contact_enquiry_delete_api"),
     path("api/enquiries/contact-us/bulk-delete/", contact_enquiry_bulk_delete_api, name="contact_enquiry_bulk_delete_api"),
+
+    # Newsletter Enquiries (Subscribers & Leads under General Enquiries)
+    path("enquiries/newsletter/", newsletter_enquiries_view, name="newsletter_enquiries"),
+    path("enquiries/newsletter/export/", newsletter_export_csv, name="newsletter_export_csv"),
+    path("api/enquiries/newsletter/<int:enquiry_id>/delete/", newsletter_enquiry_delete_api, name="newsletter_enquiry_delete_api"),
+    path("api/enquiries/newsletter/bulk-delete/", newsletter_enquiry_bulk_delete_api, name="newsletter_enquiry_bulk_delete_api"),
 
     # Sourcing Enquiries (Fast Sourcing Desk from /browse & Regional Quotes from /saudi, /uae, etc.)
     path("enquiries/sourcing/", sourcing_enquiries_view, name="sourcing_enquiries"),

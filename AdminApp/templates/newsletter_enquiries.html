@@ -1,0 +1,1027 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Admin Panel{% endblock %}
+
+{% block content %}
+<style>
+    /* ==========================================================================
+       SHOPEERS / DASHSPACE MODERN DESIGN SYSTEM - NEWSLETTER ENQUIRIES
+       ========================================================================== */
+
+    :root {
+        --shopeers-bg: #f5f6fa;
+        --shopeers-card: #ffffff;
+        --shopeers-text-dark: #111827;
+        --shopeers-text-sub: #6b7280;
+        --shopeers-text-muted: #9ca3af;
+        --shopeers-border: #f1f3f7;
+        --shopeers-blue: #0a5c48;
+        --shopeers-blue-hover: #084c3b;
+        --shopeers-blue-light: #e8f5f1;
+        --shopeers-radius-lg: 20px;
+        --shopeers-radius-md: 12px;
+        --shopeers-radius-pill: 9999px;
+        --shopeers-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
+
+    [data-bs-theme="dark"] {
+        --shopeers-bg: #0b1120;
+        --shopeers-card: #111827;
+        --shopeers-text-dark: #f9fafb;
+        --shopeers-text-sub: #9ca3af;
+        --shopeers-text-muted: #6b7280;
+        --shopeers-border: #1f2937;
+        --shopeers-blue: #0ea27e;
+        --shopeers-blue-hover: #0a5c48;
+        --shopeers-blue-light: rgba(14, 162, 126, 0.15);
+        --shopeers-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .newsletter-viewport {
+        background: transparent;
+        padding-bottom: 2.5rem;
+    }
+
+    /* Header & Breadcrumb */
+    .newsletter-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .newsletter-breadcrumb-nav {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.78rem;
+        color: var(--shopeers-text-muted);
+        margin-bottom: 0.35rem;
+    }
+
+    .newsletter-breadcrumb-nav a {
+        color: var(--shopeers-text-sub);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.15s ease;
+    }
+
+    .newsletter-breadcrumb-nav a:hover {
+        color: var(--shopeers-blue);
+    }
+
+    .newsletter-page-title {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .newsletter-page-subtitle {
+        font-size: 0.85rem;
+        color: var(--shopeers-text-sub);
+        margin: 0.2rem 0 0 0;
+    }
+
+    /* KPI Cards */
+    .newsletter-kpi-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        padding: 1.25rem 1.35rem;
+        box-shadow: var(--shopeers-shadow);
+        text-decoration: none;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .newsletter-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    .newsletter-kpi-label {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--shopeers-text-sub);
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+    }
+
+    .newsletter-kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    .icon-emerald { background: #ecfdf5; color: #0a5c48; }
+    .icon-blue    { background: #eff6ff; color: #2563eb; }
+    .icon-violet  { background: #f5f3ff; color: #7c3aed; }
+    .icon-amber   { background: #fffbeb; color: #d97706; }
+
+    .newsletter-kpi-number {
+        font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--shopeers-text-dark);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        margin: 0.45rem 0 0 0;
+    }
+
+    .newsletter-kpi-desc {
+        font-size: 0.72rem;
+        color: var(--shopeers-text-muted);
+        margin-top: 0.35rem;
+    }
+
+    /* Main Content Card */
+    .newsletter-main-card {
+        background: var(--shopeers-card);
+        border: 1px solid var(--shopeers-border);
+        border-radius: var(--shopeers-radius-lg);
+        box-shadow: var(--shopeers-shadow);
+        padding: 1.35rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Filter Toolbar */
+    .newsletter-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .newsletter-search-box {
+        position: relative;
+        min-width: 280px;
+        max-width: 420px;
+        flex: 1;
+    }
+
+    .newsletter-search-box i.bi-search {
+        position: absolute;
+        left: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .newsletter-search-input {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--shopeers-radius-pill);
+        padding: 0.5rem 2.2rem 0.5rem 2.3rem;
+        font-size: 0.84rem;
+        color: var(--shopeers-text-dark);
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .newsletter-search-input:focus {
+        background-color: #ffffff;
+        border-color: var(--shopeers-blue);
+        box-shadow: 0 0 0 3px rgba(10, 92, 72, 0.12);
+        outline: none;
+    }
+
+    .newsletter-search-clear {
+        position: absolute;
+        right: 0.85rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .newsletter-search-clear:hover {
+        color: #475569;
+    }
+
+    /* Status Filter Segment */
+    .status-filter-pills {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: var(--shopeers-radius-pill);
+        gap: 2px;
+    }
+
+    [data-bs-theme="dark"] .status-filter-pills {
+        background: #1e293b;
+    }
+
+    .status-filter-btn {
+        border: none;
+        background: transparent;
+        padding: 0.35rem 0.85rem;
+        border-radius: var(--shopeers-radius-pill);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--shopeers-text-sub);
+        text-decoration: none;
+        transition: all 0.18s ease;
+    }
+
+    .status-filter-btn:hover {
+        color: var(--shopeers-text-dark);
+    }
+
+    .status-filter-btn.active {
+        background: #ffffff;
+        color: var(--shopeers-blue);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-bs-theme="dark"] .status-filter-btn.active {
+        background: #334155;
+        color: #34d399;
+    }
+
+    /* Table Styles */
+    .newsletter-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .newsletter-table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.85rem 1rem;
+        border-top: none;
+        border-bottom: 1px solid #eef2f6;
+        white-space: nowrap;
+    }
+
+    [data-bs-theme="dark"] .newsletter-table thead th {
+        background: #1e293b;
+        color: #94a3b8;
+        border-bottom: 1px solid #334155;
+    }
+
+    .newsletter-table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    .newsletter-table tbody tr:hover {
+        background-color: #fafbfc;
+    }
+
+    [data-bs-theme="dark"] .newsletter-table tbody tr:hover {
+        background-color: #1e293b40;
+    }
+
+    .newsletter-table tbody td {
+        padding: 0.95rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 0.84rem;
+        color: var(--shopeers-text-dark);
+    }
+
+    [data-bs-theme="dark"] .newsletter-table tbody td {
+        border-bottom: 1px solid #1f2937;
+    }
+
+    /* Avatar & Text */
+    .subscriber-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e8f5f1;
+        color: #0a5c48;
+        font-weight: 700;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Source Badge */
+    .badge-source {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    [data-bs-theme="dark"] .badge-source {
+        background: #1e293b;
+        color: #94a3b8;
+        border-color: #334155;
+    }
+
+    /* Status Pill */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: var(--shopeers-radius-pill);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .status-pill-active {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .status-pill-pending {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .status-pill-contacted {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+
+    .status-pill-blocked {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    /* Action Buttons */
+    .btn-action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #64748b;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+
+    [data-bs-theme="dark"] .btn-action-icon {
+        background: #1e293b;
+        border-color: #334155;
+        color: #94a3b8;
+    }
+
+    .btn-action-icon:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    .btn-action-icon.btn-delete:hover {
+        background: #fef2f2;
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+
+    .btn-copy-email {
+        background: none;
+        border: none;
+        padding: 0 4px;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 0.75rem;
+        transition: color 0.15s ease;
+    }
+
+    .btn-copy-email:hover {
+        color: var(--shopeers-blue);
+    }
+
+    /* Bulk Action Dropdown */
+    .bulk-action-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Empty State */
+    .empty-state-box {
+        text-align: center;
+        padding: 3.5rem 1rem;
+    }
+
+    .empty-state-icon {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #94a3b8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="container-fluid newsletter-viewport">
+
+    <!-- Top Header -->
+    <div class="newsletter-header">
+        <div>
+            <nav class="newsletter-breadcrumb-nav" aria-label="breadcrumb">
+                <a href="/admin/dashboard/"><i class="bi bi-house-door-fill me-1"></i>Dashboard</a>
+                <i class="bi bi-chevron-right small text-muted"></i>
+                <span>General Enquiries</span>
+                <i class="bi bi-chevron-right small text-muted"></i>
+                <span class="text-dark fw-semibold">Newsletter Enquiries</span>
+            </nav>
+            <h1 class="newsletter-page-title">{{ page_title }}</h1>
+            <p class="newsletter-page-subtitle">{{ page_subtitle }}</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'newsletter_export_csv' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                <i class="bi bi-download"></i>
+                <span>Export CSV</span>
+            </a>
+            <a href="{% url 'newsletter_enquiries' %}" class="btn btn-primary btn-sm rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2" style="background-color: var(--shopeers-blue); border-color: var(--shopeers-blue);">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Refresh</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 KPI Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Total Subscribers -->
+        <div class="col-6 col-lg-3">
+            <div class="newsletter-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="newsletter-kpi-label">Total Subscribers</span>
+                    <div class="newsletter-kpi-icon icon-emerald">
+                        <i class="bi bi-envelope-paper-heart"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="newsletter-kpi-number">{{ total_count }}</h3>
+                    <div class="newsletter-kpi-desc">All captured signups</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Subscribers -->
+        <div class="col-6 col-lg-3">
+            <div class="newsletter-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="newsletter-kpi-label">Active / Valid</span>
+                    <div class="newsletter-kpi-icon icon-blue">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="newsletter-kpi-number">{{ active_count }}</h3>
+                    <div class="newsletter-kpi-desc">Deliverable subscriber base</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- This Month -->
+        <div class="col-6 col-lg-3">
+            <div class="newsletter-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="newsletter-kpi-label">New This Month</span>
+                    <div class="newsletter-kpi-icon icon-violet">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="newsletter-kpi-number">{{ month_count }}</h3>
+                    <div class="newsletter-kpi-desc">Monthly signup growth</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today -->
+        <div class="col-6 col-lg-3">
+            <div class="newsletter-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="newsletter-kpi-label">Subscribed Today</span>
+                    <div class="newsletter-kpi-icon icon-amber">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="newsletter-kpi-number">{{ today_count }}</h3>
+                    <div class="newsletter-kpi-desc">Recent activity today</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Container -->
+    <div class="newsletter-main-card">
+        <!-- Toolbar & Filter Row -->
+        <div class="newsletter-toolbar">
+            <!-- Search Input -->
+            <form method="GET" action="{% url 'newsletter_enquiries' %}" class="newsletter-search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" name="search" class="newsletter-search-input"
+                       placeholder="Search email, name or channel..."
+                       value="{{ search_query }}">
+                {% if search_query %}
+                <a href="{% url 'newsletter_enquiries' %}{% if status_filter %}?status={{ status_filter }}{% endif %}" class="newsletter-search-clear" title="Clear Search">
+                    <i class="bi bi-x-circle-fill"></i>
+                </a>
+                {% endif %}
+                {% if status_filter %}
+                <input type="hidden" name="status" value="{{ status_filter }}">
+                {% endif %}
+            </form>
+
+            <!-- Status Filter Segment & Bulk Action -->
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="status-filter-pills">
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}status=ALL"
+                       class="status-filter-btn {% if not status_filter or status_filter == 'ALL' %}active{% endif %}">
+                        All
+                    </a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}status=PENDING"
+                       class="status-filter-btn {% if status_filter == 'PENDING' %}active{% endif %}">
+                        Pending
+                    </a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}status=REVIEWED"
+                       class="status-filter-btn {% if status_filter == 'REVIEWED' %}active{% endif %}">
+                        Reviewed
+                    </a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}status=CONTACTED"
+                       class="status-filter-btn {% if status_filter == 'CONTACTED' %}active{% endif %}">
+                        Contacted
+                    </a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}status=BLOCKED"
+                       class="status-filter-btn {% if status_filter == 'BLOCKED' %}active{% endif %}">
+                        Blocked
+                    </a>
+                </div>
+
+                <!-- Bulk Delete -->
+                <div class="bulk-action-bar">
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1"
+                            id="bulkDeleteBtn" onclick="handleBulkDelete()" disabled>
+                        <i class="bi bi-trash3"></i>
+                        <span>Delete Selected</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="table-responsive">
+            <table class="newsletter-table align-middle" id="newsletterTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;" class="ps-3">
+                            <input class="form-check-input" type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
+                        </th>
+                        <th style="min-width: 240px;">Subscriber Email</th>
+                        <th style="min-width: 170px;">Full Name</th>
+                        <th style="min-width: 150px;">Source / Channel</th>
+                        <th style="min-width: 150px;">Subscribed Date</th>
+                        <th style="min-width: 120px;">Status</th>
+                        <th style="width: 110px;" class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscribers %}
+                    <tr id="row-{{ sub.id }}">
+                        <!-- Checkbox -->
+                        <td class="ps-3">
+                            <input class="form-check-input sub-checkbox" type="checkbox" value="{{ sub.id }}" onchange="updateBulkDeleteState()">
+                        </td>
+
+                        <!-- Email -->
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="subscriber-avatar">
+                                    {{ sub.email|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark d-flex align-items-center gap-1">
+                                        <a href="mailto:{{ sub.email }}" class="text-decoration-none text-dark hover-underline">
+                                            {{ sub.email }}
+                                        </a>
+                                        <button type="button" class="btn-copy-email" onclick="copyEmail('{{ sub.email }}', this)" title="Copy email address">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                    <div class="small text-muted" style="font-size: 0.72rem;">ID #{{ sub.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Name -->
+                        <td>
+                            <span class="fw-medium text-dark">{{ sub.name|default:"—" }}</span>
+                            {% if sub.phone and sub.phone != "—" %}
+                            <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ sub.phone }}</div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Source / Channel -->
+                        <td>
+                            <span class="badge-source">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                {{ sub.source }}
+                            </span>
+                        </td>
+
+                        <!-- Subscribed Date -->
+                        <td>
+                            <div class="fw-medium text-dark">{{ sub.date|default:"Recent" }}</div>
+                            <div class="small text-muted" style="font-size: 0.74rem;">{{ sub.time }}</div>
+                        </td>
+
+                        <!-- Status Pill / Interactive -->
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm p-0 border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {% if sub.is_blocked or sub.status == 'BLOCKED' %}
+                                        <span class="status-pill status-pill-blocked"><i class="bi bi-slash-circle me-1"></i>Blocked</span>
+                                    {% elif sub.status == 'CONTACTED' %}
+                                        <span class="status-pill status-pill-contacted"><i class="bi bi-check-lg me-1"></i>Contacted</span>
+                                    {% elif sub.status == 'REVIEWED' %}
+                                        <span class="status-pill status-pill-active"><i class="bi bi-shield-check me-1"></i>Reviewed</span>
+                                    {% else %}
+                                        <span class="status-pill status-pill-pending"><i class="bi bi-clock me-1"></i>Pending</span>
+                                    {% endif %}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" style="font-size: 0.82rem;">
+                                    <li><h6 class="dropdown-header">Update Status</h6></li>
+                                    <li><button class="dropdown-item" type="button" onclick="updateStatus({{ sub.id }}, 'PENDING')"><i class="bi bi-clock me-2 text-warning"></i>Mark as Pending</button></li>
+                                    <li><button class="dropdown-item" type="button" onclick="updateStatus({{ sub.id }}, 'REVIEWED')"><i class="bi bi-shield-check me-2 text-success"></i>Mark as Reviewed</button></li>
+                                    <li><button class="dropdown-item" type="button" onclick="updateStatus({{ sub.id }}, 'CONTACTED')"><i class="bi bi-check-lg me-2 text-primary"></i>Mark as Contacted</button></li>
+                                    <li><button class="dropdown-item text-danger" type="button" onclick="updateStatus({{ sub.id }}, 'BLOCKED')"><i class="bi bi-slash-circle me-2 text-danger"></i>Block Subscriber</button></li>
+                                </ul>
+                            </div>
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="text-end pe-3">
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <button type="button" class="btn-action-icon"
+                                        title="View Details"
+                                        onclick="showDetailsModal('{{ sub.id }}', '{{ sub.email|escapejs }}', '{{ sub.name|escapejs }}', '{{ sub.source|escapejs }}', '{{ sub.date }} {{ sub.time }}', '{{ sub.status }}', '{{ sub.message|escapejs }}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn-action-icon btn-delete"
+                                        title="Delete Subscriber"
+                                        onclick="confirmSingleDelete({{ sub.id }}, '{{ sub.email|escapejs }}')">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state-box">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-envelope-paper"></i>
+                                </div>
+                                <h5 class="fw-bold text-dark mb-1">No Newsletter Enquiries Found</h5>
+                                <p class="text-muted small mb-3">
+                                    {% if search_query or status_filter %}
+                                        No subscribers match your search filter. Try clearing filters to see all subscribers.
+                                    {% else %}
+                                        New newsletter signups from the website footer, popups, and campaigns will appear here.
+                                    {% endif %}
+                                </p>
+                                {% if search_query or status_filter %}
+                                <a href="{% url 'newsletter_enquiries' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1">
+                                    Clear Filters
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="subscriberDetailModal" tabindex="-1" aria-labelledby="subscriberDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px;">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0" id="subscriberDetailModalLabel">Subscriber Details</h5>
+                    <div class="text-muted small">Surplus Market Newsletter Subscription</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded-4 bg-light">
+                    <div class="subscriber-avatar fs-5" id="modalAvatar" style="width: 48px; height: 48px;">
+                        @
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark fs-6" id="modalEmail">—</div>
+                        <div class="text-muted small" id="modalName">—</div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="text-muted small fw-semibold text-uppercase">Channel / Source</label>
+                        <div class="fw-semibold text-dark" id="modalSource">—</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="text-muted small fw-semibold text-uppercase">Subscribed On</label>
+                        <div class="fw-semibold text-dark" id="modalDate">—</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="text-muted small fw-semibold text-uppercase">Subscription Details / Notes</label>
+                        <div class="p-3 rounded-3 bg-light text-secondary small font-monospace" id="modalMessage" style="white-space: pre-wrap; word-break: break-word;">
+                            —
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <a href="#" id="modalMailtoBtn" class="btn btn-primary rounded-pill px-4" style="background-color: var(--shopeers-blue); border-color: var(--shopeers-blue);">
+                    <i class="bi bi-envelope me-1"></i>Send Email
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg text-center p-3" style="border-radius: 18px;">
+            <div class="modal-body pt-3 pb-2">
+                <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                     style="width: 54px; height: 54px; background: #fee2e2; color: #ef4444; font-size: 1.5rem;">
+                    <i class="bi bi-trash3-fill"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Delete Subscriber?</h6>
+                <p class="text-muted small mb-0" id="deleteModalText">
+                    This email will be removed permanently from your newsletter subscriber list.
+                </p>
+                <input type="hidden" id="pendingDeleteId" value="">
+            </div>
+            <div class="modal-footer border-0 d-flex justify-content-center gap-2 pt-2 pb-3">
+                <button type="button" class="btn btn-light rounded-pill px-3 py-1 text-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 py-1 fw-semibold" id="confirmDeleteActionBtn" onclick="executeDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div id="newsletterToast" class="toast align-items-center text-white bg-dark border-0 rounded-4 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2" id="toastMessage">
+                <i class="bi bi-check-circle-fill text-success"></i> Action completed.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CSRF Token Helper
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Show Toast
+    function showToast(message, isError = false) {
+        const toastEl = document.getElementById('newsletterToast');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.innerHTML = isError
+            ? `<i class="bi bi-exclamation-circle-fill text-danger"></i> ${message}`
+            : `<i class="bi bi-check-circle-fill text-success"></i> ${message}`;
+        const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+        toast.show();
+    }
+
+    // Copy Email to Clipboard
+    function copyEmail(email, btn) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(email).then(() => {
+                showToast(`Copied ${email} to clipboard!`);
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-clipboard');
+                    icon.classList.add('bi-check2');
+                    setTimeout(() => {
+                        icon.classList.remove('bi-check2');
+                        icon.classList.add('bi-clipboard');
+                    }, 1800);
+                }
+            }).catch(() => {
+                showToast(`Failed to copy email`, true);
+            });
+        }
+    }
+
+    // Toggle Select All
+    function toggleSelectAll(master) {
+        const checkboxes = document.querySelectorAll('.sub-checkbox');
+        checkboxes.forEach(cb => cb.checked = master.checked);
+        updateBulkDeleteState();
+    }
+
+    // Update Bulk Delete Button State
+    function updateBulkDeleteState() {
+        const selected = document.querySelectorAll('.sub-checkbox:checked');
+        const bulkBtn = document.getElementById('bulkDeleteBtn');
+        const count = selected.length;
+        if (count > 0) {
+            bulkBtn.disabled = false;
+            bulkBtn.innerHTML = `<i class="bi bi-trash3"></i> <span>Delete (${count})</span>`;
+        } else {
+            bulkBtn.disabled = true;
+            bulkBtn.innerHTML = `<i class="bi bi-trash3"></i> <span>Delete Selected</span>`;
+        }
+    }
+
+    // Single Delete Flow
+    let currentDeleteId = null;
+    let isBulkDelete = false;
+
+    function confirmSingleDelete(id, email) {
+        currentDeleteId = id;
+        isBulkDelete = false;
+        document.getElementById('pendingDeleteId').value = id;
+        document.getElementById('deleteModalText').textContent = `Are you sure you want to delete "${email}" from the newsletter subscribers list?`;
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+    }
+
+    function handleBulkDelete() {
+        const selected = document.querySelectorAll('.sub-checkbox:checked');
+        if (selected.length === 0) return;
+        isBulkDelete = true;
+        document.getElementById('deleteModalText').textContent = `Are you sure you want to permanently delete ${selected.length} selected subscriber(s)?`;
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+    }
+
+    function executeDelete() {
+        const modalEl = document.getElementById('deleteConfirmModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+
+        if (isBulkDelete) {
+            const selected = Array.from(document.querySelectorAll('.sub-checkbox:checked')).map(cb => cb.value);
+            fetch("{% url 'newsletter_enquiry_bulk_delete_api' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({ ids: selected })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (modal) modal.hide();
+                if (data.success) {
+                    showToast(`${data.deleted_count || selected.length} subscriber(s) deleted successfully.`);
+                    selected.forEach(id => {
+                        const row = document.getElementById(`row-${id}`);
+                        if (row) row.remove();
+                    });
+                    updateBulkDeleteState();
+                } else {
+                    showToast(data.message || 'Error deleting subscribers', true);
+                }
+            })
+            .catch(err => {
+                if (modal) modal.hide();
+                showToast('Network error while deleting', true);
+            });
+        } else if (currentDeleteId) {
+            fetch(`/admin/api/enquiries/newsletter/${currentDeleteId}/delete/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrftoken,
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (modal) modal.hide();
+                if (data.success) {
+                    showToast('Subscriber removed successfully.');
+                    const row = document.getElementById(`row-${currentDeleteId}`);
+                    if (row) row.remove();
+                    updateBulkDeleteState();
+                } else {
+                    showToast(data.message || 'Error removing subscriber', true);
+                }
+            })
+            .catch(err => {
+                if (modal) modal.hide();
+                showToast('Network error while removing subscriber', true);
+            });
+        }
+    }
+
+    // Update Status Flow
+    function updateStatus(id, newStatus) {
+        const formData = new FormData();
+        formData.append("action", "update_status");
+        formData.append("enquiry_id", id);
+        formData.append("status", newStatus);
+
+        fetch("{% url 'newsletter_enquiries' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Status updated to ${newStatus}`);
+                setTimeout(() => location.reload(), 600);
+            } else {
+                showToast(data.message || 'Could not update status', true);
+            }
+        })
+        .catch(() => {
+            showToast('Network error updating status', true);
+        });
+    }
+
+    // Show Details Modal
+    function showDetailsModal(id, email, name, source, datetime, status, message) {
+        document.getElementById('modalAvatar').textContent = email.charAt(0).toUpperCase();
+        document.getElementById('modalEmail').textContent = email;
+        document.getElementById('modalName').textContent = name || 'Anonymous Subscriber';
+        document.getElementById('modalSource').textContent = source || 'Website';
+        document.getElementById('modalDate').textContent = datetime || '—';
+        document.getElementById('modalMessage').textContent = message || 'Standard Newsletter subscription request.';
+        document.getElementById('modalMailtoBtn').href = `mailto:${email}`;
+
+        const modal = new bootstrap.Modal(document.getElementById('subscriberDetailModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

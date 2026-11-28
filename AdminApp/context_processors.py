@@ -56,9 +56,10 @@ def _get_global_pending_counts():
                         (SELECT COUNT(*) FROM lots WHERE enquiry_status IN ('pending', 'PENDING')),
                         (SELECT COUNT(*) FROM products WHERE enquiry_status IN ('pending', 'PENDING')),
                         (SELECT COUNT(*) FROM rfq_enquiries WHERE status IN ('pending', 'PENDING')),
-                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE status IN ('pending', 'PENDING') AND (enquiry_type NOT ILIKE '%Newsletter%' AND message NOT ILIKE '%Newsletter%')),
                         (SELECT COUNT(*) FROM sourcing_enquiries WHERE status IN ('pending', 'PENDING')),
-                        (SELECT COUNT(*) FROM regional_enquiries WHERE status IN ('pending', 'PENDING'))
+                        (SELECT COUNT(*) FROM regional_enquiries WHERE status IN ('pending', 'PENDING')),
+                        (SELECT COUNT(*) FROM contact_us_enquiries WHERE enquiry_type ILIKE '%Newsletter%' OR message ILIKE '%Newsletter%')
                 """)
                 row = cur.fetchone()
                 counts = {
@@ -68,6 +69,7 @@ def _get_global_pending_counts():
                     "pending_general_enquiries_count": row[3] or 0,
                     "pending_sourcing_count": row[4] or 0,
                     "pending_regional_count": row[5] or 0,
+                    "pending_newsletter_count": row[6] or 0,
                 }
         except Exception:
             counts = {
@@ -77,6 +79,7 @@ def _get_global_pending_counts():
                 "pending_general_enquiries_count": 0,
                 "pending_sourcing_count": 0,
                 "pending_regional_count": 0,
+                "pending_newsletter_count": 0,
             }
         cache.set(key, counts, timeout=300)
     return counts
@@ -135,6 +138,7 @@ def maintenance_mode_context(request):
         "pending_seller_enquiries_count": 0,
         "pending_rfqs_count": 0,
         "pending_general_enquiries_count": 0,
+        "pending_newsletter_count": 0,
         "pending_sourcing_count": 0,
         "admin_unread_notifications_count": 0,
         "admin_recent_notifications": [],
