@@ -1873,6 +1873,98 @@ class EmailService:
         subject = "Action Needed: Complete Missing Product Information for Your Listings - Surplus Market"
         return cls.send_email(email, subject, html_content, "ProductInfoIncomplete", context=context)
 
+    @classmethod
+    def send_newsletter_email(cls, to_email: str, subject=None) -> bool:
+        """
+        Dispatches the Surplus Insider Newsletter with the 4 latest blogs,
+        fully qualified HTTPS image URLs, and live destination links.
+        """
+        from .models import BlogPost
+        import re
+        from django.utils.html import strip_tags
+
+        all_posts = list(
+            BlogPost.objects.filter(status="published", is_active=True).order_by("-id")[:8]
+        )
+        featured = next((p for p in all_posts if "Inventory Ageing" in (p.title or "")), None)
+        ordered_posts = []
+        if featured:
+            ordered_posts.append(featured)
+            ordered_posts.extend([p for p in all_posts if p.id != featured.id])
+        else:
+            ordered_posts = all_posts
+
+        latest_4 = ordered_posts[:4]
+
+        def _format_blog(b, fallback_cat, fallback_img):
+            raw_text = re.sub(r"\s+", " ", strip_tags(b.content or "")).strip()
+            excerpt = (
+                b.excerpt
+                or b.meta_description
+                or (raw_text[:140] + "..." if len(raw_text) > 140 else raw_text)
+                or "Practical insights and market intelligence from Surplus Market."
+            )
+            img_url = ""
+            if b.image:
+                try:
+                    img_url = f"https://dev.surplusmarket.com{b.image.url}"
+                except Exception:
+                    pass
+
+            if not img_url and b.featured_image_url:
+                if b.featured_image_url.startswith("http"):
+                    img_url = b.featured_image_url
+                else:
+                    clean_path = b.featured_image_url if b.featured_image_url.startswith("/") else f"/{b.featured_image_url}"
+                    img_url = f"https://dev.surplusmarket.com{clean_path}"
+
+            if not img_url:
+                img_url = fallback_img
+
+            return {
+                "title": b.title,
+                "excerpt": excerpt,
+                "url": f"https://surplusmarket.com/blog/{b.slug}",
+                "category": b.category_name or fallback_cat,
+                "image_url": img_url,
+                "read_time": getattr(b, "read_time", 4) or 4,
+            }
+
+        fallback_cats = ["General", "Wholesale Sourcing", "Wholesale Lots", "Liquidation Guides"]
+        fallback_imgs = [
+            "https://dev.surplusmarket.com/media/blog_images/How_to_Solve_Inventory_Ageing.webp",
+            "https://dev.surplusmarket.com/media/blog_images/Best_Wholesale_Websites_in_India.webp",
+            "https://dev.surplusmarket.com/media/blog_images/blog_banner.webp",
+            "https://dev.surplusmarket.com/media/blog_images/Banner_image.webp",
+        ]
+
+        formatted_blogs = [
+            _format_blog(p, fallback_cats[i] if i < len(fallback_cats) else "Market Insights", fallback_imgs[i] if i < len(fallback_imgs) else fallback_imgs[0])
+            for i, p in enumerate(latest_4)
+        ]
+
+        sub = subject or "The Surplus Insider · Turn Excess Inventory Into Opportunity (Issue 001)"
+        context = {
+            "email": to_email,
+            "subject": sub,
+            "logo_url": "https://dev.surplusmarket.com/static/images/surplus_main_logo.png",
+            "frontend_url": "https://surplusmarket.com",
+            "inventory_url": "https://surplusmarket.com/lots",
+            "contact_url": "https://surplusmarket.com/contact",
+            "blog_list_url": "https://surplusmarket.com/blog",
+            "blog": formatted_blogs[0] if len(formatted_blogs) > 0 else {},
+            "blog_1": formatted_blogs[0] if len(formatted_blogs) > 0 else {},
+            "blog_2": formatted_blogs[1] if len(formatted_blogs) > 1 else {},
+            "blog_3": formatted_blogs[2] if len(formatted_blogs) > 2 else {},
+            "blog_4": formatted_blogs[3] if len(formatted_blogs) > 3 else {},
+            "blogs": formatted_blogs,
+            "latest_blogs": formatted_blogs[1:],
+        }
+
+        from django.template.loader import render_to_string
+        html_content = render_to_string("emails/surplus_insider_newsletter.html", context)
+        return cls.send_email(to_email, sub, html_content, "Newsletter")
+
 
 # Backwards compatibility alias
 EmailNotificationService = EmailService

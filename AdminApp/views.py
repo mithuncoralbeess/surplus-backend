@@ -8914,8 +8914,7 @@ def email_template_preview_raw(request, template_key):
             img_url = ""
             if b.image:
                 try:
-                    if os.path.exists(b.image.path):
-                        img_url = request.build_absolute_uri(b.image.url) if request else f"https://surplusmarket.com{b.image.url}"
+                    img_url = f"https://dev.surplusmarket.com{b.image.url}"
                 except Exception:
                     pass
 
@@ -8924,11 +8923,7 @@ def email_template_preview_raw(request, template_key):
                     img_url = b.featured_image_url
                 else:
                     clean_path = b.featured_image_url if b.featured_image_url.startswith("/") else f"/{b.featured_image_url}"
-                    local_test = os.path.join(str(settings.MEDIA_ROOT), clean_path.lstrip("/media/").replace("/", os.sep))
-                    if os.path.exists(local_test):
-                        img_url = request.build_absolute_uri(clean_path) if request else f"https://surplusmarket.com{clean_path}"
-                    else:
-                        img_url = f"https://surplusmarket.com{clean_path}"
+                    img_url = f"https://dev.surplusmarket.com{clean_path}"
 
             if not img_url:
                 img_url = fallback_img

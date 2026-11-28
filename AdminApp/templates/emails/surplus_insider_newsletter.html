@@ -206,7 +206,7 @@
                                                         <td valign="middle" style="padding-right: 16px; line-height: 0;">
                                                             <a href="https://surplusmarket.com" target="_blank" style="text-decoration: none; display: inline-block;">
                                                                 <div style="background-color: #ffffff; padding: 6px 14px; border-radius: 8px; display: inline-block; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);">
-                                                                    <img src="{% static 'images/surplus_main_logo.png' %}" alt="Surplus Market" style="height: 28px; width: auto; max-width: 150px; display: block; object-fit: contain; border: 0;">
+                                                                    <img src="{% if logo_url %}{% if 'http' in logo_url %}{{ logo_url }}{% else %}https://dev.surplusmarket.com{{ logo_url }}{% endif %}{% else %}https://dev.surplusmarket.com/static/images/surplus_main_logo.png{% endif %}" alt="Surplus Market" style="height: 28px; width: auto; max-width: 150px; display: block; object-fit: contain; border: 0;">
                                                                 </div>
                                                             </a>
                                                         </td>
@@ -291,7 +291,7 @@
                                     <!-- Right Image Column -->
                                     <td width="240" height="235" valign="top" align="right" class="sec1-right" style="width: 240px; height: 235px; vertical-align: top;">
                                         <a href="{{ blog.url|default:'https://surplusmarket.com/blog' }}" target="_blank" style="text-decoration: none; display: block;">
-                                            <img class="sec1-img" src="{{ blog.image_url|default:'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=480&h=470&q=80' }}" alt="{{ blog.title|default:'Featured Article' }}" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
+                                            <img class="sec1-img" src="{% if blog.image_url %}{% if 'http' in blog.image_url %}{{ blog.image_url }}{% else %}https://dev.surplusmarket.com{{ blog.image_url }}{% endif %}{% else %}https://dev.surplusmarket.com/media/blog_images/How_to_Solve_Inventory_Ageing.webp{% endif %}" alt="{{ blog.title|default:'Featured Article' }}" width="240" height="235" style="width: 240px; max-width: 240px; height: 235px; max-height: 235px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);">
                                         </a>
                                     </td>
                                 </tr>
@@ -336,7 +336,7 @@
                                     <!-- Left Thumbnail Image Column -->
                                     <td width="130" valign="top" class="sec-blog-thumb-cell" style="width: 130px; padding-right: 18px; vertical-align: top;">
                                         <a href="{{ blog_2.url|default:'https://surplusmarket.com/blog/top-11-best-wholesale-websites-in-india' }}" target="_blank" style="text-decoration: none; display: block;">
-                                            <img class="sec-blog-thumb" src="{{ blog_2.image_url|default:'https://surplusmarket.com/media/blog_images/Best_Wholesale_Websites_in_India.webp' }}" alt="{{ blog_2.title|default:'Top 11 Best Wholesale Websites in India' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                                            <img class="sec-blog-thumb" src="{% if blog_2.image_url %}{% if 'http' in blog_2.image_url %}{{ blog_2.image_url }}{% else %}https://dev.surplusmarket.com{{ blog_2.image_url }}{% endif %}{% else %}https://dev.surplusmarket.com/media/blog_images/Best_Wholesale_Websites_in_India.webp{% endif %}" alt="{{ blog_2.title|default:'Top 11 Best Wholesale Websites in India' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                                         </a>
                                     </td>
 
@@ -390,7 +390,7 @@
                                     <!-- Left Thumbnail Image Column -->
                                     <td width="130" valign="top" class="sec-blog-thumb-cell" style="width: 130px; padding-right: 18px; vertical-align: top;">
                                         <a href="{{ blog_3.url|default:'https://surplusmarket.com/blog/lot-wholesale-returns-profitable-customer-return-lots' }}" target="_blank" style="text-decoration: none; display: block;">
-                                            <img class="sec-blog-thumb" src="{{ blog_3.image_url|default:'https://surplusmarket.com/media/blog_images/blog_banner.webp' }}" alt="{{ blog_3.title|default:'Lot Wholesale Returns' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                                            <img class="sec-blog-thumb" src="{% if blog_3.image_url %}{% if 'http' in blog_3.image_url %}{{ blog_3.image_url }}{% else %}https://dev.surplusmarket.com{{ blog_3.image_url }}{% endif %}{% else %}https://dev.surplusmarket.com/media/blog_images/blog_banner.webp{% endif %}" alt="{{ blog_3.title|default:'Lot Wholesale Returns' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                                         </a>
                                     </td>
 
@@ -444,7 +444,7 @@
                                     <!-- Left Thumbnail Image Column -->
                                     <td width="130" valign="top" class="sec-blog-thumb-cell" style="width: 130px; padding-right: 18px; vertical-align: top;">
                                         <a href="{{ blog_4.url|default:'https://surplusmarket.com/blog/how-to-buy-liquidation-pallets' }}" target="_blank" style="text-decoration: none; display: block;">
-                                            <img class="sec-blog-thumb" src="{{ blog_4.image_url|default:'https://surplusmarket.com/media/blog_images/Banner_image.webp' }}" alt="{{ blog_4.title|default:'How to Buy Liquidation Pallets' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                                            <img class="sec-blog-thumb" src="{% if blog_4.image_url %}{% if 'http' in blog_4.image_url %}{{ blog_4.image_url }}{% else %}https://dev.surplusmarket.com{{ blog_4.image_url }}{% endif %}{% else %}https://dev.surplusmarket.com/media/blog_images/Banner_image.webp{% endif %}" alt="{{ blog_4.title|default:'How to Buy Liquidation Pallets' }}" width="130" height="96" style="width: 130px; max-width: 130px; height: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                                         </a>
                                     </td>
 
